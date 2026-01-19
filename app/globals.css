@@ -1,0 +1,226 @@
+@import "tailwindcss";
+
+@layer theme {
+  :root {
+    --radius: 0.5rem;
+    --background: 255 255 255;
+    --foreground: 32 45 58;
+    --surface: 255 255 255;
+    --surface-variant: 248 248 248;
+    --on-surface: 66 94 123;
+    --on-surface-variant: 95 99 104;
+    --primary: 66 94 123;
+    --primary-hover: 42 49 56;
+    --link: 26 115 232;
+    --link-hover: 23 101 204;
+    --outline: 218 220 224;
+  }
+
+  .dark {
+    --background: 0 0 0;
+    --foreground: 232 234 237;
+    --surface: 26 31 38;
+    --surface-variant: 42 49 56;
+    --on-surface: 232 234 237;
+    --on-surface-variant: 154 160 166;
+    --primary: 138 180 248;
+    --primary-hover: 174 203 250;
+    --link: 138 180 248;
+    --link-hover: 174 203 250;
+    --outline: 60 64 67;
+  }
+}
+
+@layer base {
+  * {
+    border-color: rgb(var(--outline));
+  }
+
+  body {
+    background-color: rgb(var(--background));
+    color: rgb(var(--on-surface));
+    font-feature-settings: "kern" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-weight: normal;
+    letter-spacing: -0.025em;
+  }
+}
+
+@layer utilities {
+  .bg-background {
+    background-color: rgb(var(--background));
+  }
+
+  .bg-surface {
+    background-color: rgb(var(--surface));
+  }
+
+  .bg-surface-variant {
+    background-color: rgb(var(--surface-variant));
+  }
+
+  .bg-primary {
+    background-color: rgb(var(--primary));
+  }
+
+  .text-on-surface {
+    color: rgb(var(--on-surface));
+  }
+
+  .text-on-surface-variant {
+    color: rgb(var(--on-surface-variant));
+  }
+
+  .text-foreground {
+    color: rgb(var(--foreground));
+  }
+
+  .text-link {
+    color: rgb(var(--link));
+  }
+
+  .border-outline {
+    border-color: rgb(var(--outline));
+  }
+
+  .hover\:bg-primary-hover:hover {
+    background-color: rgb(var(--primary-hover));
+  }
+
+  .hover\:bg-surface-variant:hover {
+    background-color: rgb(var(--surface-variant));
+  }
+
+  .hover\:text-link-hover:hover {
+    color: rgb(var(--link-hover));
+  }
+
+  .text-display-large {
+    font-size: 80px;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+
+  @media (min-width: 768px) {
+    .text-display-large {
+      font-size: 120px;
+    }
+  }
+
+  .text-display-medium {
+    font-size: 44px;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+
+  @media (min-width: 768px) {
+    .text-display-medium {
+      font-size: 56px;
+    }
+  }
+
+  .text-display-small {
+    font-size: 36px;
+    line-height: 1.2;
+  }
+
+  @media (min-width: 768px) {
+    .text-display-small {
+      font-size: 44px;
+    }
+  }
+
+  .text-headline-large {
+    font-size: 32px;
+    line-height: 1.25;
+  }
+
+  .text-headline-medium {
+    font-size: 28px;
+    line-height: 1.3;
+  }
+
+  .text-headline-small {
+    font-size: 24px;
+    line-height: 1.35;
+  }
+
+  .text-body-large {
+    font-size: 18px;
+    line-height: 1.6;
+  }
+
+  @media (min-width: 768px) {
+    .text-body-large {
+      font-size: 20px;
+    }
+  }
+
+  .text-body-medium {
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  .text-body-small {
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .google-button-primary {
+    background-color: rgb(var(--primary));
+    color: white;
+    font-weight: 500;
+    font-family: var(--font-montserrat);
+    border-radius: 4px;
+    transition: all 0.2s;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  }
+
+  .google-button-primary:hover {
+    background-color: rgb(var(--primary-hover));
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+
+  .google-button-secondary {
+    background-color: transparent;
+    border: 1px solid rgb(var(--outline));
+    color: rgb(var(--on-surface));
+    font-weight: 500;
+    border-radius: 4px;
+    transition: all 0.2s;
+  }
+
+  .google-button-secondary:hover {
+    background-color: rgb(var(--surface-variant));
+  }
+
+  .google-link {
+    color: rgb(var(--link));
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+
+  .google-link:hover {
+    color: rgb(var(--link-hover));
+  }
+
+  .google-card {
+    background-color: rgb(var(--surface));
+    border: 1px solid rgb(var(--outline));
+    border-radius: 0.5rem;
+    transition: box-shadow 0.2s;
+  }
+
+  .google-card:hover {
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  }
+}
