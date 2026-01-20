@@ -93,7 +93,7 @@ export function InvoiceList({ invoices, slug }: InvoiceListProps) {
                 {invoices.map((invoice) => (
                     <div
                         key={invoice.id}
-                        className="flex items-center justify-between p-4 rounded-lg border border-outline hover:bg-surface-variant transition-colors duration-200"
+                        className="flex items-center justify-between p-4 rounded-lg border border-outline transition-colors duration-200"
                     >
                         <div className="flex items-center gap-4">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-variant">
@@ -136,13 +136,13 @@ export function InvoiceList({ invoices, slug }: InvoiceListProps) {
                             </span>
                             {invoice.status === 'open' ? (
                                 <Link href={`/${slug}/billing/invoices/${invoice.id}/pay`}>
-                                    <button className="google-button-primary py-2 px-4 text-sm">
+                                    <button className="google-button-primary py-2 px-4 text-sm cursor-pointer">
                                         Pay Now
                                     </button>
                                 </Link>
                             ) : (
                                 <button
-                                    className="google-button-secondary py-2 px-4 text-sm flex items-center gap-2"
+                                    className="google-button-secondary py-2 px-4 text-sm flex items-center gap-2 cursor-pointer"
                                     onClick={() => handleDownload(invoice.id, invoice.invoice_number)}
                                 >
                                     <Download className="h-4 w-4" />

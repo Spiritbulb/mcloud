@@ -36,13 +36,8 @@ export default async function InvoicesPage({
                 description="View and download your billing invoices"
             />
 
-            <Card className="google-card border-outline bg-surface">
-                <CardHeader>
-                    <CardTitle className="text-headline-small text-on-surface">
-                        Invoice History
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card className="border-none shadow-none">
+                <CardContent className="p-0">
                     <InvoiceList invoices={invoices || []} slug={slug} />
                 </CardContent>
             </Card>

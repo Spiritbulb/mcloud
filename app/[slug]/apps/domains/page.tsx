@@ -5,6 +5,7 @@ import { Globe, CheckCircle, AlertCircle, XCircle, Plus } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/server"
 import { redirect } from "next/navigation"
+import { Button } from "@/components/ui/button"
 
 export default async function DomainsPage({
     params,
@@ -77,16 +78,16 @@ export default async function DomainsPage({
                     {apps.map((app) => {
                         const appDomains = domains?.filter(d => d.app_id === app.id) || []
                         return (
-                            <Card key={app.id} className="google-card border-outline bg-surface">
+                            <Card key={app.id} className="border-none">
                                 <CardHeader>
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-title-medium text-on-surface">
                                             {app.name}
                                         </CardTitle>
                                         <Link href={`/${slug}/apps/${app.slug}/domains/new`}>
-                                            <button className="google-button-text p-2">
+                                            <Button className="p-2 bg-primary cursor-pointer">
                                                 <Plus className="h-4 w-4" />
-                                            </button>
+                                            </Button>
                                         </Link>
                                     </div>
                                 </CardHeader>
@@ -113,16 +114,8 @@ export default async function DomainsPage({
                                             ))}
                                         </div>
                                     ) : (
-                                        <div className="text-center py-6">
-                                            <Globe className="h-8 w-8 text-on-surface-variant mx-auto mb-2" />
-                                            <p className="text-xs text-on-surface-variant mb-3">
-                                                No domains yet
-                                            </p>
-                                            <Link href={`/${slug}/apps/${app.slug}/domains/new`}>
-                                                <button className="google-button-secondary py-1.5 px-3 text-sm">
-                                                    Add Domain
-                                                </button>
-                                            </Link>
+                                        <div className="hidden">
+
                                         </div>
                                     )}
                                 </CardContent>

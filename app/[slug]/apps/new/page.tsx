@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { createClient } from "@/lib/client"
 import { useRouter, useParams } from "next/navigation"
-import { AlertCircle, CheckCircle } from "lucide-react"
+import { AlertCircle } from "lucide-react"
 
 export default function NewAppPage() {
     const router = useRouter()
@@ -65,6 +65,7 @@ export default function NewAppPage() {
                     description: formData.description,
                     status: formData.status,
                     user_id: user.id,
+                    org: slug
                 })
 
             if (insertError) throw insertError
@@ -160,7 +161,6 @@ export default function NewAppPage() {
                         <div className="p-4 rounded-lg bg-surface-variant border border-outline">
                             <h4 className="text-sm font-medium text-on-surface mb-2">What's next?</h4>
                             <ul className="text-xs text-on-surface-variant space-y-1">
-                                <li>• You'll receive an API key to integrate analytics</li>
                                 <li>• Configure domains for your app</li>
                                 <li>• Start tracking user activity and events</li>
                             </ul>

@@ -164,12 +164,7 @@ export default function TeamPage() {
                 </Card>
             ) : (
                 <Card className="border-none shadow-none">
-                    <CardHeader>
-                        <CardTitle className="text-headline-small text-on-surface">
-                            Team Members ({members.length})
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
+                    <CardContent className="p-0">
                         <div className="space-y-3">
                             {members.map((member) => {
                                 const isCurrentUser = member.user_id === currentUserId
@@ -179,7 +174,7 @@ export default function TeamPage() {
                                 return (
                                     <div
                                         key={member.id}
-                                        className="flex items-center justify-between p-4 rounded-lg border border-outline hover:bg-surface-variant transition-colors duration-200"
+                                        className="flex items-center justify-between p-4 border border-outline transition-colors duration-200"
                                     >
                                         <div className="flex items-center gap-4">
                                             <Avatar className="h-10 w-10">

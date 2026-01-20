@@ -82,7 +82,7 @@ export default async function OrgLayout({
                     orgLogo={organization.logo_url}
                     orgRole={organization.role}
                 />
-                <main className="flex-1 bg-surface-variant">
+                <main className="flex-1">
                     <div className="p-6 md:p-8">
                         {children}
                     </div>

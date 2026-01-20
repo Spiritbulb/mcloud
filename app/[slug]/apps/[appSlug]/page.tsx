@@ -17,6 +17,7 @@ import {
 import Link from "next/link"
 import { AppActions } from "@/components/apps/app-actions"
 import { AppStats } from "@/components/apps/app-stats"
+import { Badge } from "@/components/ui/badge"
 
 export default async function AppDetailPage({
     params,
@@ -85,15 +86,15 @@ export default async function AppDetailPage({
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'active':
-                return 'bg-green-100 dark:bg-green-950 text-green-700 dark:text-green-400'
+                return 'border-green-700 dark:border-green-400 text-green-700 dark:text-green-400'
             case 'beta':
-                return 'bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400'
+                return 'border-blue-700 dark:border-blue-400 text-blue-700 dark:text-blue-400'
             case 'maintenance':
-                return 'bg-orange-100 dark:bg-orange-950 text-orange-700 dark:text-orange-400'
+                return 'border-orange-700 dark:border-orange-400 text-orange-700 dark:text-orange-400'
             case 'archived':
-                return 'bg-gray-100 dark:bg-gray-950 text-gray-700 dark:text-gray-400'
+                return 'border-gray-700 dark:border-gray-400 text-gray-700 dark:text-gray-400'
             default:
-                return 'bg-surface-variant text-on-surface-variant'
+                return 'border-on-surface-variant text-on-surface-variant'
         }
     }
 
@@ -116,13 +117,8 @@ export default async function AppDetailPage({
             />
 
             {/* App Info Card */}
-            <Card className="google-card border-outline bg-surface">
-                <CardHeader>
-                    <CardTitle className="text-headline-small text-on-surface">
-                        App Information
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
+            <Card className="rounded-none border-none shadow-none p-0">
+                <CardContent className="space-y-4 p-0">
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <p className="text-sm text-on-surface-variant mb-1">App ID</p>
@@ -130,9 +126,9 @@ export default async function AppDetailPage({
                         </div>
                         <div>
                             <p className="text-sm text-on-surface-variant mb-1">Status</p>
-                            <span className={`px-3 py-1 rounded-full text-xs font-medium capitalize ${getStatusBadge(app.status)}`}>
+                            <Badge className={`px-3 py-1 capitalize bg-transparent ${getStatusBadge(app.status)}`}>
                                 {app.status}
-                            </span>
+                            </Badge>
                         </div>
                         <div>
                             <p className="text-sm text-on-surface-variant mb-1">Slug</p>

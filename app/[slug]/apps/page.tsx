@@ -82,44 +82,8 @@ export default async function AppsPage({
                 }
             />
 
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                <StatCard
-                    title="Total Apps"
-                    value={totalApps.toString()}
-                    subtitle={`${activeApps} active`}
-                    icon={Globe}
-                    colorClass="bg-surface-variant"
-                />
-                <StatCard
-                    title="Active Apps"
-                    value={activeApps.toString()}
-                    subtitle={`${betaApps} in beta`}
-                    icon={Activity}
-                    colorClass="bg-surface-variant"
-                />
-                <StatCard
-                    title="Total Users"
-                    value={totalUsers?.toString() || '0'}
-                    subtitle="Across all apps"
-                    icon={Users}
-                    colorClass="bg-surface-variant"
-                />
-                <StatCard
-                    title="Avg Uptime"
-                    value="99.5%"
-                    subtitle="Last 30 days"
-                    icon={TrendingUp}
-                    colorClass="bg-surface-variant"
-                />
-            </div>
-
-            <Card className="google-card border-outline bg-surface">
-                <CardHeader>
-                    <CardTitle className="text-headline-small text-on-surface">
-                        Your Applications
-                    </CardTitle>
-                </CardHeader>
-                <CardContent>
+            <Card className="rounded-none border-none shadow-none p-0">
+                <CardContent className="p-0">
                     {!apps || apps.length === 0 ? (
                         <div className="text-center py-12">
                             <Globe className="h-12 w-12 text-on-surface-variant mx-auto mb-4" />
@@ -140,7 +104,7 @@ export default async function AppsPage({
                             {apps.map((app) => (
                                 <div
                                     key={app.id}
-                                    className="flex items-center justify-between p-4 rounded-lg border border-outline hover:bg-surface-variant transition-colors duration-200"
+                                    className="flex items-center justify-between p-4 rounded-none border border-outline transition-colors duration-200"
                                 >
                                     <div className="flex items-center gap-4">
                                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -161,7 +125,7 @@ export default async function AppsPage({
                                         </span>
                                         <Link
                                             href={`/${slug}/apps/${app.slug}`}
-                                            className="google-button-secondary py-2 px-4 text-sm"
+                                            className="google-button-primary py-2 px-4 text-sm"
                                         >
                                             Manage
                                         </Link>

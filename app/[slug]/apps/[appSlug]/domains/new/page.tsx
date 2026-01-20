@@ -331,7 +331,7 @@ export default function NewDomainPage() {
     return (
         <div className="space-y-6">
             <PageHeader
-                title="Add Domain"
+                title="Onboard a domain"
                 description="Add a new domain to track analytics"
             />
 
