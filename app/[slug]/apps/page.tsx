@@ -76,7 +76,6 @@ export default async function AppsPage({
                     <Link href={`/${slug}/apps/new`}>
                         <button className="google-button-primary py-2 px-4 text-body-medium flex items-center gap-2">
                             <Plus className="h-4 w-4" />
-                            New App
                         </button>
                     </Link>
                 }

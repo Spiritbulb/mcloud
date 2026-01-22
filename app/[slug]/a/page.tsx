@@ -32,7 +32,6 @@ export default async function ManagePage({
     const { data: organizations, error: orgsError } = await supabase
         .from('organizations')
         .select('id, name, slug, created_at')
-        .eq('user_id', user.id)
         .order('created_at', { ascending: false })
 
     if (orgsError) {
@@ -45,13 +44,11 @@ export default async function ManagePage({
     const { count: totalApps } = await supabase
         .from('apps')
         .select('*', { count: 'exact', head: true })
-        .eq('user_id', user.id)
 
     // Get all domains
     const { data: apps } = await supabase
         .from('apps')
         .select('id')
-        .eq('user_id', user.id)
 
     const appIds = apps?.map(app => app.id) || []
 
@@ -72,7 +69,7 @@ export default async function ManagePage({
 
     // Get team members count
     const { count: totalMembers } = await supabase
-        .from('organization_members')
+        .from('team_members')
         .select('*', { count: 'exact', head: true })
         .in('organization_id', orgIds)
 

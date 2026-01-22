@@ -22,9 +22,14 @@ export default async function OrganizationsPage({
     // Get all organizations
     const { data: organizations, error } = await supabase
         .from('organizations')
-        .select('*, organization_members(count)')
-        .eq('user_id', user.id)
+        .select('*, team_members(count)')
         .order('created_at', { ascending: false })
+
+    // Get team members count
+    const { count: teamMembersCount } = await supabase
+        .from('team_members')
+        .select('*', { count: 'exact', head: true })
+        .in('organization_id', (organizations || []).map((org) => org.id))
 
     if (error) {
         console.error('Error fetching organizations:', error)
@@ -36,11 +41,11 @@ export default async function OrganizationsPage({
             const { count: appsCount } = await supabase
                 .from('apps')
                 .select('*', { count: 'exact', head: true })
-                .eq('user_id', user.id)
 
             return {
                 ...org,
                 appsCount: appsCount || 0,
+                teamMembersCount: teamMembersCount || 0,
             }
         })
     )
@@ -54,7 +59,6 @@ export default async function OrganizationsPage({
                     <Link href={`/${slug}/manage/organizations/new`}>
                         <button className="google-button-primary py-2 px-4 text-body-medium flex items-center gap-2">
                             <Plus className="h-4 w-4" />
-                            New Organization
                         </button>
                     </Link>
                 }
@@ -92,7 +96,7 @@ export default async function OrganizationsPage({
                                         <Users className="h-4 w-4 text-on-surface-variant" />
                                         <div>
                                             <p className="text-sm font-medium text-on-surface">
-                                                {org.organization_members?.[0]?.count || 0}
+                                                {org.teamMembersCount}
                                             </p>
                                             <p className="text-xs text-on-surface-variant">Members</p>
                                         </div>
