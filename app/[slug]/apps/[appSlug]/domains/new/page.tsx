@@ -99,8 +99,8 @@ export default function NewDomainPage() {
             setDomainId(newDomain.id)
             setDomain(cleanDomain)
             setStep('verify')
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An error occurred')
         } finally {
             setLoading(false)
         }
@@ -133,8 +133,8 @@ export default function NewDomainPage() {
             if (updateError) throw updateError
 
             router.push(`/${slug}/apps/${appSlug}/domains`)
-        } catch (err: any) {
-            setError(err.message)
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'An error occurred')
         } finally {
             setLoading(false)
         }
@@ -158,7 +158,7 @@ export default function NewDomainPage() {
 
                 {error && (
                     <div className="flex items-center gap-3 p-4 rounded-lg bg-surface-variant border border-outline">
-                        <AlertCircle className="h-5 w-5 text-on-surface-variant flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 text-on-surface-variant shrink-0" />
                         <p className="text-sm text-on-surface">{error}</p>
                     </div>
                 )}
@@ -177,7 +177,7 @@ export default function NewDomainPage() {
                                 Method 1: DNS TXT Record (Recommended)
                             </h3>
                             <p className="text-sm text-on-surface-variant mb-4">
-                                Add a TXT record to your domain's DNS settings
+                                Add a TXT record to your domain&apos;s DNS settings
                             </p>
 
                             <div className="space-y-3">
@@ -190,6 +190,8 @@ export default function NewDomainPage() {
                                         <button
                                             onClick={() => copyToClipboard('TXT')}
                                             className="google-button-secondary py-2 px-3 text-sm"
+                                            title="Copy Record Type"
+                                            aria-label="Copy Record Type"
                                         >
                                             <Copy className="h-4 w-4" />
                                         </button>
@@ -205,6 +207,8 @@ export default function NewDomainPage() {
                                         <button
                                             onClick={() => copyToClipboard('_nuru-verification')}
                                             className="google-button-secondary py-2 px-3 text-sm"
+                                            title="Copy Host/Name"
+                                            aria-label="Copy Host/Name"
                                         >
                                             <Copy className="h-4 w-4" />
                                         </button>
@@ -220,6 +224,8 @@ export default function NewDomainPage() {
                                         <button
                                             onClick={() => copyToClipboard(verificationToken)}
                                             className="google-button-secondary py-2 px-3 text-sm"
+                                            title="Copy Verification Token"
+                                            aria-label="Copy Verification Token"
                                         >
                                             <Copy className="h-4 w-4" />
                                         </button>
@@ -263,6 +269,8 @@ export default function NewDomainPage() {
                                         <button
                                             onClick={() => copyToClipboard(verificationToken)}
                                             className="google-button-secondary py-2 px-3 text-sm"
+                                            title="Copy Content"
+                                            aria-label="Copy Content"
                                         >
                                             <Copy className="h-4 w-4" />
                                         </button>
@@ -311,7 +319,7 @@ export default function NewDomainPage() {
                 <Card className="google-card border-outline bg-surface-variant max-w-3xl">
                     <CardContent className="p-4">
                         <div className="flex items-start gap-3">
-                            <CheckCircle className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                            <CheckCircle className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                             <div>
                                 <h4 className="text-sm font-semibold text-on-surface mb-1">
                                     Why verify your domain?
@@ -337,7 +345,7 @@ export default function NewDomainPage() {
 
             {error && (
                 <div className="flex items-center gap-3 p-4 rounded-lg bg-surface-variant border border-outline">
-                    <AlertCircle className="h-5 w-5 text-on-surface-variant flex-shrink-0" />
+                    <AlertCircle className="h-5 w-5 text-on-surface-variant shrink-0" />
                     <p className="text-sm text-on-surface">{error}</p>
                 </div>
             )}
@@ -370,7 +378,7 @@ export default function NewDomainPage() {
                         <div className="p-4 rounded-lg bg-surface-variant border border-outline">
                             <h4 className="text-sm font-semibold text-on-surface mb-2">What happens next?</h4>
                             <ul className="text-xs text-on-surface-variant space-y-1">
-                                <li>• You'll receive a verification token to prove domain ownership [web:9]</li>
+                                <li>• You&apos;ll receive a verification token to prove domain ownership [web:9]</li>
                                 <li>• Add a DNS TXT record or upload a verification file [web:5][web:10]</li>
                                 <li>• Once verified, analytics tracking will be enabled</li>
                                 <li>• Install the tracking script on your website</li>
