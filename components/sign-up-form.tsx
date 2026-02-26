@@ -3,35 +3,31 @@
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/client'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
-export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
+interface SignUpFormProps {
+  className?: string
+  slug?: string
+  onSwitch?: () => void
+}
+
+const generateSlug = (name: string) =>
+  name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+
+export function SignUpForm({ className, slug: prefillSlug, onSwitch }: SignUpFormProps) {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [repeatPassword, setRepeatPassword] = useState('')
   const [fullName, setFullName] = useState('')
-  const [companyName, setCompanyName] = useState('')
+  const [storeName, setStoreName] = useState(prefillSlug ?? '')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
   const router = useRouter()
 
-  const generateSlug = (name: string) => {
-    return name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, '-')
-      .replace(/^-+|-+$/g, '')
-  }
+  const derivedSlug = generateSlug(storeName)
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -45,187 +41,181 @@ export function SignUpForm({ className, ...props }: React.ComponentPropsWithoutR
       return
     }
 
-    if (!companyName.trim()) {
-      setError('Company name is required')
+    if (!storeName.trim()) {
+      setError('Store name is required')
       setIsLoading(false)
       return
     }
 
     try {
-      // 1. Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            full_name: fullName,
-          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+          data: { full_name: fullName, slug: derivedSlug },
         },
       })
-
       if (authError) throw authError
       if (!authData.user) throw new Error('User creation failed')
 
-      // 2. Create organization
-      const slug = generateSlug(companyName)
-
-      // Check if slug exists
-      const { data: existingOrg } = await supabase
-        .from('organizations')
+      // Check slug availability
+      const { data: existingStore } = await supabase
+        .from('stores')
         .select('slug')
-        .eq('slug', slug)
+        .eq('slug', derivedSlug)
         .single()
 
-      let finalSlug = slug
-      if (existingOrg) {
-        // Add random number if slug exists
-        finalSlug = `${slug}-${Math.floor(Math.random() * 10000)}`
-      }
+      const finalSlug = existingStore
+        ? `${derivedSlug}-${Math.floor(Math.random() * 10000)}`
+        : derivedSlug
 
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
+      // 1. Create store
+      const { error: storeError } = await supabase
+        .from('stores')
         .insert({
-          name: companyName,
+          name: storeName,
           slug: finalSlug,
           owner_id: authData.user.id,
+          currency: 'KES',
+          timezone: 'Africa/Nairobi',
+          is_active: true,
         })
-        .select()
+      if (storeError) throw storeError
+
+      // 2. Add owner to store_members
+      const { data: store } = await supabase
+        .from('stores')
+        .select('id')
+        .eq('slug', finalSlug)
         .single()
 
-      if (orgError) throw orgError
-
-      // 3. Update user profile with organization
-      const { error: profileError } = await supabase
-        .from('user_profiles')
-        .update({
-          organization_id: org.id,
-          full_name: fullName,
-          company: companyName,
-        })
-        .eq('id', authData.user.id)
-
-      if (profileError) throw profileError
-
-      // 4. Add user as owner in team_members
-      const { error: teamError } = await supabase
-        .from('team_members')
+      const { error: memberError } = await supabase
+        .from('store_members')
         .insert({
-          organization_id: org.id,
+          store_id: store!.id,
           user_id: authData.user.id,
           role: 'owner',
-          status: 'active',
-          joined_at: new Date().toISOString(),
         })
+      if (memberError) throw memberError
 
-      if (teamError) throw teamError
-
-      // 5. Redirect to organization dashboard or success page
-      if (authData.user.confirmed_at) {
-        // User is auto-confirmed, redirect to dashboard
-        router.push(`/${finalSlug}`)
-      } else {
-        // User needs to verify email
-        router.push('/auth/sign-up-success')
-      }
+      router.push('/auth/sign-up-success')
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
+
+
   }
 
   return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-2xl">Sign up</CardTitle>
-          <CardDescription>Create a new account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSignUp}>
-            <div className="flex flex-col gap-6">
-              <div className="grid gap-2">
-                <Label htmlFor="full-name">Full Name</Label>
-                <Input
-                  id="full-name"
-                  type="text"
-                  placeholder="John Doe"
-                  required
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                />
-              </div>
+    <div className={cn('flex flex-col gap-5', className)}>
+      <form onSubmit={handleSignUp} className="flex flex-col gap-4">
+        <div className="grid gap-1.5">
+          <Label htmlFor="full-name" className="text-sm">Full name</Label>
+          <Input
+            id="full-name"
+            type="text"
+            placeholder="Amina Wanjiru"
+            required
+            value={fullName}
+            onChange={(e) => setFullName(e.target.value)}
+            className="h-10 rounded-none"
+          />
+        </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="company-name">Company Name</Label>
-                <Input
-                  id="company-name"
-                  type="text"
-                  placeholder="Spiritbulb LTD"
-                  required
-                  value={companyName}
-                  onChange={(e) => setCompanyName(e.target.value)}
-                />
-                {companyName && (
-                  <p className="text-xs text-on-surface-variant">
-                    Your URL will be: {window.location.origin}/{generateSlug(companyName)}
-                  </p>
-                )}
-              </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="store-name" className="text-sm">Store name</Label>
+          <div className="flex items-center border focus-within:ring-1 focus-within:ring-ring">
+            <span className="pl-3 text-xs text-muted-foreground font-mono whitespace-nowrap">
+              menengai.cloud/
+            </span>
+            <input
+              id="store-name"
+              type="text"
+              placeholder="kikoskincare"
+              required
+              value={storeName}
+              onChange={(e) => setStoreName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
+              className="flex-1 h-10 bg-transparent px-2 text-sm font-mono outline-none"
+            />
+          </div>
+          {storeName && (
+            <p className="text-xs text-muted-foreground font-mono">
+              → {derivedSlug}.menengai.cloud
+            </p>
+          )}
+        </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                />
-              </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="signup-email" className="text-sm">Email</Label>
+          <Input
+            id="signup-email"
+            type="email"
+            placeholder="you@example.com"
+            required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-10 rounded-none"
+          />
+        </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  required
-                  minLength={6}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-                <p className="text-xs text-on-surface-variant">
-                  At least 6 characters
-                </p>
-              </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="signup-password" className="text-sm">Password</Label>
+          <Input
+            id="signup-password"
+            type="password"
+            required
+            minLength={6}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="h-10 rounded-none"
+          />
+          <p className="text-xs text-muted-foreground">At least 6 characters</p>
+        </div>
 
-              <div className="grid gap-2">
-                <Label htmlFor="repeat-password">Repeat Password</Label>
-                <Input
-                  id="repeat-password"
-                  type="password"
-                  required
-                  value={repeatPassword}
-                  onChange={(e) => setRepeatPassword(e.target.value)}
-                />
-              </div>
+        <div className="grid gap-1.5">
+          <Label htmlFor="repeat-password" className="text-sm">Confirm password</Label>
+          <Input
+            id="repeat-password"
+            type="password"
+            required
+            value={repeatPassword}
+            onChange={(e) => setRepeatPassword(e.target.value)}
+            className="h-10 rounded-none"
+          />
+        </div>
 
-              {error && <p className="text-sm text-on-surface-variant">{error}</p>}
+        {error && (
+          <p className="text-xs text-destructive bg-destructive/10 px-3 py-2">{error}</p>
+        )}
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? 'Creating account...' : 'Sign up'}
-              </Button>
-            </div>
-            <div className="mt-4 text-center text-sm">
-              Already have an account?{' '}
-              <Link href="/auth/login" className="underline underline-offset-4">
-                Login
-              </Link>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+        <Button
+          type="submit"
+          className="w-full h-10 rounded-none google-button-primary mt-1"
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <span className="flex items-center gap-2">
+              <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              Creating your store...
+            </span>
+          ) : (
+            "Claim your free store"
+          )}
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Already have a store?{" "}
+        <button
+          onClick={() => router.push('/auth/login')}
+          className="text-foreground font-medium hover:underline underline-offset-4"
+        >
+          Sign in
+        </button>
+      </p>
     </div>
   )
 }

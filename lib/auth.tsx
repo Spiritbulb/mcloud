@@ -1,35 +1,41 @@
 'use client'
 
-import { SignUpForm } from "@/components/sign-up-form"
-import { LoginForm } from "@/components/login-form"
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { ArrowRight } from "lucide-react"
+import { useRouter } from "next/navigation"
 
-export default function AuthPopup() {
-    const [isLogin, setIsLogin] = useState(true);
+interface AuthPopupProps {
+    slug?: string
+}
+
+export default function AuthPopup({ slug }: AuthPopupProps) {
+    const router = useRouter()
+
+    const handleSignUp = () => {
+        const params = slug ? `?slug=${slug}` : ''
+        router.push(`/auth/sign-up${params}`)
+    }
+
+    const handleLogin = () => {
+        router.push('/auth/login')
+    }
 
     return (
-        <div className="w-full max-w-md mx-auto">
-            {/* Toggle buttons */}
-            <div className="flex gap-2 mb-4">
-                <Button
-                    variant={isLogin ? "default" : "outline"}
-                    onClick={() => setIsLogin(true)}
-                    className="flex-1"
-                >
-                    Login
-                </Button>
-                <Button
-                    variant={!isLogin ? "default" : "outline"}
-                    onClick={() => setIsLogin(false)}
-                    className="flex-1"
-                >
-                    Sign Up
-                </Button>
-            </div>
-
-            {/* Show the appropriate form */}
-            {isLogin ? <LoginForm /> : <SignUpForm />}
+        <div className="flex flex-col gap-3 pt-2">
+            <Button
+                className="w-full h-11 rounded-none google-button-primary cursor-pointer"
+                onClick={handleSignUp}
+            >
+                Claim your free store
+                <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+            <Button
+                variant="ghost"
+                className="w-full h-11 rounded-none cursor-pointer"
+                onClick={handleLogin}
+            >
+                I already have an account
+            </Button>
         </div>
     )
 }

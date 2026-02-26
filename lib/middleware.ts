@@ -50,72 +50,7 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url)
   }
 
-  // If user is logged in and on auth page, redirect to their org
-  if (user && pathname.startsWith('/auth')) {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('organization_id')
-      .eq('id', user.sub)
-      .single()
-
-    console.log('Auth page - profile:', profile)
-
-    if (profile?.organization_id) {
-      const { data: org } = await supabase
-        .from('organizations')
-        .select('slug')
-        .eq('id', profile.organization_id)
-        .single()
-
-      console.log('Auth page - org:', org)
-
-      if (org?.slug) {
-        const redirectTo = request.nextUrl.searchParams.get('redirect')
-        console.log('Redirecting to org:', org.slug)
-        return NextResponse.redirect(
-          new URL(redirectTo || `/${org.slug}`, request.url)
-        )
-      }
-    }
-  }
-
-  // If accessing an org route, verify user has access
-  if (user && potentialSlug && !pathname.startsWith('/auth') && pathname !== '/') {
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('organization_id')
-      .eq('id', user.sub)
-      .single()
-
-    console.log('Org route - profile:', profile)
-
-    if (!profile?.organization_id) {
-      console.log('Redirecting to login - no org in profile')
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url)
-    }
-
-    const { data: org } = await supabase
-      .from('organizations')
-      .select('slug')
-      .eq('id', profile.organization_id)
-      .single()
-
-    console.log('Org route - org:', org)
-    console.log('Org route - slug match:', org?.slug === potentialSlug)
-
-    if (!org || org.slug !== potentialSlug) {
-      console.log('Redirecting to login - slug mismatch')
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url)
-    }
-  }
-
-  return supabaseResponse
 }
-
 export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',

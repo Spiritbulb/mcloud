@@ -1,7 +1,7 @@
 'use client'
 
 import { Header } from "./header"
-import { Footer } from "./footer"
+
 import { usePathname } from "next/navigation"
 
 // Routes where header/footer should be hidden
@@ -22,7 +22,6 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
         <>
             {showHeader && <Header />}
             {children}
-            {showFooter && <Footer />}
         </>
     )
 }
