@@ -20,7 +20,7 @@ export function LayoutWrapper({ children }: { children: React.ReactNode }) {
 
     return (
         <>
-            {showHeader && <Header />}
+
             {children}
         </>
     )
