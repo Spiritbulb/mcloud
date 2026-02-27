@@ -13,6 +13,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog"
+import { WordRotate } from "@/components/ui/word-rotate"
 import AuthPopup from "@/lib/auth"
 
 
@@ -219,6 +220,8 @@ export default function Home() {
     { label: "Travel", icon: "https://img.icons8.com/3d-fluency/94/sun-lounger.png" },
   ]
 
+  const words = ["Your store", "Your portfolio", "Your gallery", "Your links", "Your brand", "Your story"]
+
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
 
@@ -263,15 +266,15 @@ export default function Home() {
               variants={fadeUp}
               className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-white leading-[1.05] mb-6"
             >
-              Your store.<br />
-              <span className="text-white/60">Live in seconds.</span>
+              <WordRotate words={words} className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-white py-4" duration={1700} />
+              <span className="text-white/60">in 2 seconds</span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
               className="text-lg md:text-xl text-white/70 max-w-xl mx-auto mb-12"
             >
-              Stop waiting on agencies. Type your name, verify your email — and you're live.
+              That's right, stop waiting on agencies. Type your name, verify your email... and you're live.
             </motion.p>
 
             {/* Slug input */}
@@ -411,8 +414,8 @@ export default function Home() {
               <div className="relative border bg-background p-8 space-y-6 hover:shadow-md transition-shadow">
                 <CornerPlus className="text-foreground size-6 absolute -top-3 -left-3" />
                 <CornerPlus className="text-foreground size-6 absolute -top-3 -right-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-3 -left-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-3 -right-3" />
+                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -left-3" />
+                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -right-3" />
                 <div>
                   <p className="text-headline-small font-montserrat mb-1">Free</p>
                   <p className="text-muted-foreground text-body-medium">For creators just getting started.</p>
@@ -443,12 +446,12 @@ export default function Home() {
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
-                className="relative bg-[#1c2228] p-8 space-y-6 cursor-pointer"
+                className="relative bg-primary p-8 space-y-6 cursor-pointer"
               >
-                <CornerPlus className="text-white/30 size-6 absolute -top-3 -left-3" />
-                <CornerPlus className="text-white/30 size-6 absolute -top-3 -right-3" />
-                <CornerPlus className="text-white/30 size-6 absolute -bottom-3 -left-3" />
-                <CornerPlus className="text-white/30 size-6 absolute -bottom-3 -right-3" />
+                <CornerPlus className="text-foreground size-6 absolute -top-3 -left-3" />
+                <CornerPlus className="text-foreground size-6 absolute -top-3 -right-3" />
+                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -left-3" />
+                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -right-3" />
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
                   <Badge className="bg-white text-[#1c2228] px-3 py-1 text-xs font-semibold">
                     Own your brand
@@ -459,7 +462,7 @@ export default function Home() {
                   <p className="text-white/50 text-body-medium">For serious creators and businesses.</p>
                 </div>
                 <div>
-                  <span className="text-[48px] font-montserrat font-normal text-white">Ksh 9,500</span>
+                  <span className="text-[48px] font-montserrat font-normal text-white">Ksh 3,500</span>
                   <span className="text-white/50 font-montserrat">/month</span>
                 </div>
                 <ul className="space-y-3">
@@ -499,7 +502,7 @@ export default function Home() {
                   body: "No waiting, no onboarding calls, no back-and-forth. Your store is live before you finish your coffee.",
                 },
                 {
-                  icon: "https://img.icons8.com/3d-fluency/94/security-shield-green.png",
+                  icon: "https://img.icons8.com/3d-fluency/94/security-checked.png",
                   title: "Actually maintained",
                   body: "SSL, backups, uptime monitoring — all handled. You'll never touch a cPanel or a server again.",
                 },
@@ -528,7 +531,7 @@ export default function Home() {
       </section>
 
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[60vh] flex items-center justify-center overflow-hidden bg-[#1c2228]">
+      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-[#1c2228]">
         <div className="absolute inset-0 z-0">
           <Image
             src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80"

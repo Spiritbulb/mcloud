@@ -10,6 +10,15 @@ import { Check, Store, Palette, Globe, Link2, CreditCard, Bell } from 'lucide-re
 import { motion, AnimatePresence } from 'framer-motion'
 import ImageUpload from './image-upload'
 
+interface HeroSlide {
+    title: string
+    subtitle?: string
+    image?: string
+    imagePath?: string
+    accent?: string
+    buttonText?: string
+}
+
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface StoreData {
     id: string
@@ -26,6 +35,9 @@ interface StoreData {
         heroTitle?: string
         heroSubtitle?: string
         heroImage?: string
+        logoPath?: string
+        heroSlides?: HeroSlide[]
+        heroImagePath?: string
         socialLinks?: {
             instagram?: string
             twitter?: string
@@ -126,6 +138,12 @@ export default function StoreSettings({ store }: { store: StoreData }) {
     const [heroSubtitle, setHeroSubtitle] = useState(store.settings?.heroSubtitle ?? '')
     const [heroImage, setHeroImage] = useState(store.settings?.heroImage ?? '')
     const [logoUrl, setLogoUrl] = useState(store.logo_url ?? '')
+    const [logoPath, setLogoPath] = useState(store.settings?.logoPath ?? '')
+    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(
+        store.settings?.heroSlides ?? []
+    )
+    const [heroImagePath, setHeroImagePath] = useState(store.settings?.heroImagePath ?? '')
+
 
     // Social
     const [instagram, setInstagram] = useState(store.settings?.socialLinks?.instagram ?? '')
@@ -152,6 +170,10 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                     heroTitle: heroTitle || undefined,
                     heroSubtitle: heroSubtitle || undefined,
                     heroImage: heroImage || undefined,
+                    logoPath: logoPath || undefined,
+                    heroSlides: heroSlides.length > 0 ? heroSlides : undefined,
+
+                    heroImagePath: heroImagePath || undefined,
                     socialLinks: {
                         instagram: instagram || undefined,
                         tiktok: tiktok || undefined,
@@ -319,9 +341,13 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                                 <ImageUpload
                                                     label="Store logo"
                                                     value={logoUrl}
-                                                    onChange={setLogoUrl}
+                                                    pathInDb={logoPath}                        // ← add
+                                                    onChange={(url, path) => {                 // ← was: onChange={setLogoUrl}
+                                                        setLogoUrl(url)
+                                                        setLogoPath(path)
+                                                    }}
                                                     bucket="store-assets"
-                                                    path={`${store.id}/logo`}
+                                                    pathPrefix={`${store.id}/logo`}            // ← was: path=
                                                     aspectRatio="square"
                                                 />
                                                 {logoUrl && (
@@ -373,9 +399,13 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                                 <ImageUpload
                                                     label="Hero image"
                                                     value={heroImage}
-                                                    onChange={setHeroImage}
+                                                    pathInDb={heroImagePath}                   // ← add
+                                                    onChange={(url, path) => {                 // ← was: onChange={setHeroImage}
+                                                        setHeroImage(url)
+                                                        setHeroImagePath(path)
+                                                    }}
                                                     bucket="store-assets"
-                                                    path={`${store.id}/hero`}
+                                                    pathPrefix={`${store.id}/hero`}            // ← was: path=
                                                     aspectRatio="wide"
                                                 />
                                                 <p className="text-xs text-muted-foreground">
@@ -395,6 +425,160 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                                     </span>
                                                 </div>
                                             </div>
+
+                                            {/* ── Hero Slides ───────────────────────────────────────── */}
+                                            <div className="space-y-3">
+                                                <div className="flex items-center justify-between">
+                                                    <div>
+                                                        <p className="text-sm font-medium">Hero slides</p>
+                                                        <p className="text-xs text-muted-foreground">
+                                                            Multiple slides replace the single hero. Leave empty to use the hero image above.
+                                                        </p>
+                                                    </div>
+                                                    <Button
+                                                        type="button"
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="rounded-none text-xs h-8"
+                                                        onClick={() =>
+                                                            setHeroSlides((prev) => [
+                                                                ...prev,
+                                                                { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' },
+                                                            ])
+                                                        }
+                                                    >
+                                                        + Add slide
+                                                    </Button>
+                                                </div>
+
+                                                {heroSlides.length === 0 && (
+                                                    <p className="text-xs text-muted-foreground border border-dashed p-4 text-center">
+                                                        No slides added — using hero image & title above as a single slide.
+                                                    </p>
+                                                )}
+
+                                                <div className="space-y-4">
+                                                    {heroSlides.map((slide, idx) => (
+                                                        <div key={idx} className="border p-4 space-y-3">
+                                                            <div className="flex items-center justify-between">
+                                                                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                                                                    Slide {idx + 1}
+                                                                </p>
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Move up */}
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={idx === 0}
+                                                                        onClick={() => {
+                                                                            const next = [...heroSlides]
+                                                                                ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
+                                                                            setHeroSlides(next)
+                                                                        }}
+                                                                        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                                                    >
+                                                                        ↑
+                                                                    </button>
+                                                                    {/* Move down */}
+                                                                    <button
+                                                                        type="button"
+                                                                        disabled={idx === heroSlides.length - 1}
+                                                                        onClick={() => {
+                                                                            const next = [...heroSlides]
+                                                                                ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
+                                                                            setHeroSlides(next)
+                                                                        }}
+                                                                        className="text-xs text-muted-foreground hover:text-foreground disabled:opacity-30"
+                                                                    >
+                                                                        ↓
+                                                                    </button>
+                                                                    {/* Remove */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setHeroSlides((prev) => prev.filter((_, i) => i !== idx))}
+                                                                        className="text-xs text-destructive hover:underline"
+                                                                    >
+                                                                        Remove
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid gap-1.5">
+                                                                <Label className="text-xs">Title *</Label>
+                                                                <Input
+                                                                    value={slide.title}
+                                                                    onChange={(e) => {
+                                                                        const next = [...heroSlides]
+                                                                        next[idx] = { ...next[idx], title: e.target.value }
+                                                                        setHeroSlides(next)
+                                                                    }}
+                                                                    placeholder="Your statement of confidence"
+                                                                    className="h-8 rounded-none text-sm max-w-sm"
+                                                                />
+                                                            </div>
+
+                                                            <div className="grid gap-1.5">
+                                                                <Label className="text-xs">Subtitle</Label>
+                                                                <Input
+                                                                    value={slide.subtitle ?? ''}
+                                                                    onChange={(e) => {
+                                                                        const next = [...heroSlides]
+                                                                        next[idx] = { ...next[idx], subtitle: e.target.value }
+                                                                        setHeroSlides(next)
+                                                                    }}
+                                                                    placeholder="Discover our bestsellers..."
+                                                                    className="h-8 rounded-none text-sm max-w-sm"
+                                                                />
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-3 max-w-sm">
+                                                                <div className="grid gap-1.5">
+                                                                    <Label className="text-xs">Accent badge</Label>
+                                                                    <Input
+                                                                        value={slide.accent ?? ''}
+                                                                        onChange={(e) => {
+                                                                            const next = [...heroSlides]
+                                                                            next[idx] = { ...next[idx], accent: e.target.value }
+                                                                            setHeroSlides(next)
+                                                                        }}
+                                                                        placeholder="New Arrivals"
+                                                                        className="h-8 rounded-none text-sm"
+                                                                    />
+                                                                </div>
+                                                                <div className="grid gap-1.5">
+                                                                    <Label className="text-xs">Button text</Label>
+                                                                    <Input
+                                                                        value={slide.buttonText ?? ''}
+                                                                        onChange={(e) => {
+                                                                            const next = [...heroSlides]
+                                                                            next[idx] = { ...next[idx], buttonText: e.target.value }
+                                                                            setHeroSlides(next)
+                                                                        }}
+                                                                        placeholder="Shop now"
+                                                                        className="h-8 rounded-none text-sm"
+                                                                    />
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid gap-1.5">
+                                                                <Label className="text-xs">Slide image</Label>
+                                                                <ImageUpload
+                                                                    value={slide.image ?? ''}
+                                                                    pathInDb={slide.imagePath ?? ''}
+                                                                    onChange={(url, path) => {
+                                                                        const next = [...heroSlides]
+                                                                        next[idx] = { ...next[idx], image: url, imagePath: path }
+                                                                        setHeroSlides(next)
+                                                                    }}
+                                                                    bucket="store-assets"
+                                                                    pathPrefix={`${store.id}/slides/${idx}`}
+                                                                    aspectRatio="wide"
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
                                         </div>
                                     </>
                                 )}
