@@ -29,7 +29,7 @@ const stickers = [
 ]
 
 // ─── Typewriter slugs ─────────────────────────────────────────────────────────
-const exampleSlugs = ["kikoskincare", "nairobi.eats", "andrewkibe", "fashionbyamina", "techwithtony"]
+const exampleSlugs = ["locdessence", "reeeaach", "josemaua", "dressedbyjuliet", "miketech"]
 
 const fadeUp: Variants = {
   hidden: { opacity: 0, y: 40 },
@@ -185,7 +185,7 @@ export default function Home() {
     {
       title: "Built for creators who mean business.",
       body: "Whether you're selling merch, running a blog, or building a subscriber base — your store is ready before your competition even opens a browser tab.",
-      image: "https://images.unsplash.com/photo-1611162617474-5b21e879e113?w=800&q=80",
+      image: "https://images.unsplash.com/photo-1635830625698-3b9bd74671ca?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
       alt: "Creator filming content",
       reverse: false,
     },
@@ -365,7 +365,7 @@ export default function Home() {
               </h2>
               <p className="text-body-large text-muted-foreground leading-relaxed">{f.body}</p>
               <Button
-                variant="ghost"
+                variant="outline"
                 className="px-0 font-medium cursor-pointer group"
                 onClick={() => setIsAuthOpen(true)}
               >

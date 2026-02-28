@@ -26,16 +26,21 @@ function isPublicPath(pathname: string) {
 
 // ─── Extract subdomain from host ──────────────────────────────────────────────
 function getTenantSlug(host: string): string | null {
-  // Dev fallback: check for ?_tenant=slug query param
-  // Prod: extract from subdomain
   const isProd = host.endsWith('.menengai.cloud')
   if (isProd) {
     const subdomain = host.replace('.menengai.cloud', '')
-    // Ignore www and app (main platform domain)
     if (subdomain === 'www' || subdomain === 'app' || !subdomain) return null
     return subdomain
   }
   return null
+}
+
+// ─── Build subdomain redirect URL ────────────────────────────────────────────
+function toSubdomainUrl(request: NextRequest, slug: string, remainingPath: string): URL {
+  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+  // remainingPath is the path after stripping /store/[slug] or /[slug]
+  const destination = new URL(`${proto}://${slug}.menengai.cloud${remainingPath || '/'}`)
+  return destination
 }
 
 export async function proxy(request: NextRequest) {
@@ -45,11 +50,10 @@ export async function proxy(request: NextRequest) {
   // ── Dev tenant simulation via ?_tenant=slug ──────────────────────────────
   const devTenant = searchParams.get('_tenant')
 
-  // ── Resolve tenant slug ───────────────────────────────────────────────────
+  // ── Resolve tenant slug (incoming subdomain request) ─────────────────────
   const tenantSlug = getTenantSlug(host) ?? devTenant ?? null
 
-
-  // The rewrite target is now /store/[slug] to avoid confusion with platform routes
+  // ── Subdomain hit → rewrite internally to /store/[slug]/... ──────────────
   if (tenantSlug) {
     const url = request.nextUrl.clone()
     if (!pathname.startsWith('/store/')) {
@@ -59,8 +63,36 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
+  // ── Main platform (app.menengai.cloud or localhost) ───────────────────────
 
-  // ── Main platform domain — apply auth session ─────────────────────────────
+  // Redirect /store/[slug] → https://[slug].menengai.cloud/
+  const storeMatch = pathname.match(/^\/store\/([^/]+)(\/.*)?$/)
+  if (storeMatch) {
+    const [, slug, rest = '/'] = storeMatch
+    // Only redirect in production (skip on localhost dev)
+    if (host.endsWith('.menengai.cloud') || host.startsWith('app.')) {
+      return NextResponse.redirect(toSubdomainUrl(request, slug, rest), 308)
+    }
+    // In local dev, allow the /store/[slug] page to render normally
+    return NextResponse.next()
+  }
+
+  // Redirect /[slug]/settings → https://[slug].menengai.cloud/settings
+  // Uses a heuristic: single dynamic segment followed by /settings (or deeper)
+  // Adjust the regex if you have other top-level routes that look like /[slug]/...
+  const slugSettingsMatch = pathname.match(/^\/([^/]+)(\/settings(?:\/.*)?|\/settings)$/)
+  if (slugSettingsMatch) {
+    const [, slug, rest] = slugSettingsMatch
+    // Guard against known platform-level paths
+    const PLATFORM_SEGMENTS = new Set(['auth', 'store', 'api', 'dashboard', '_next'])
+    if (!PLATFORM_SEGMENTS.has(slug)) {
+      if (host.endsWith('.menengai.cloud') || host.startsWith('app.')) {
+        return NextResponse.redirect(toSubdomainUrl(request, slug, rest), 308)
+      }
+    }
+  }
+
+  // ── Auth guard for all other platform routes ──────────────────────────────
   if (isPublicPath(pathname)) {
     return NextResponse.next()
   }
