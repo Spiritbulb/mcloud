@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
 
 // ─── Path prefixes that are always public ─────────────────────────────────────
 const PUBLIC_PREFIXES = [
+  '/api',
   '/auth/',
   '/store/',
 ]
@@ -76,6 +77,19 @@ export async function proxy(request: NextRequest) {
     // In local dev, allow the /store/[slug] page to render normally
     return NextResponse.next()
   }
+
+  // In proxy.ts, add after the existing storeMatch but before slugSettingsMatch:
+  const productsMatch = pathname.match(/^\/store\/([^/]+)\/products\/([^/]+)(\/.*)?$/);
+  if (productsMatch) {
+    const [, slug, productSlug, rest = ''] = productsMatch;
+    if (host.endsWith('.menengai.cloud') || host.startsWith('app.')) {
+      return NextResponse.redirect(
+        toSubdomainUrl(request, slug, `/products/${productSlug}${rest}`),
+        308
+      );
+    }
+  }
+
 
   // ── Auth guard for all other platform routes ──────────────────────────────
   if (isPublicPath(pathname)) {
