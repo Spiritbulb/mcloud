@@ -77,21 +77,6 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // Redirect /[slug]/settings → https://[slug].menengai.cloud/settings
-  // Uses a heuristic: single dynamic segment followed by /settings (or deeper)
-  // Adjust the regex if you have other top-level routes that look like /[slug]/...
-  const slugSettingsMatch = pathname.match(/^\/([^/]+)(\/settings(?:\/.*)?|\/settings)$/)
-  if (slugSettingsMatch) {
-    const [, slug, rest] = slugSettingsMatch
-    // Guard against known platform-level paths
-    const PLATFORM_SEGMENTS = new Set(['auth', 'store', 'api', 'dashboard', '_next'])
-    if (!PLATFORM_SEGMENTS.has(slug)) {
-      if (host.endsWith('.menengai.cloud') || host.startsWith('app.')) {
-        return NextResponse.redirect(toSubdomainUrl(request, slug, rest), 308)
-      }
-    }
-  }
-
   // ── Auth guard for all other platform routes ──────────────────────────────
   if (isPublicPath(pathname)) {
     return NextResponse.next()
