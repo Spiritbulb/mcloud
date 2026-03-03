@@ -132,20 +132,14 @@ export async function proxy(request: NextRequest) {
     const internalPath = `/store/${slug}${cleanPathname}`
     request.nextUrl.pathname = internalPath
 
-    console.log('[custom-domain] slug:', slug, 'pathname:', pathname)
-
 
     request.nextUrl.pathname = `/store/${slug}${pathname}`
 
     if (isProtected) {
-      // updateSession now sees the rewritten URL and valid cookies
       const sessionResponse = await updateSession(request)
 
-      if (!sessionResponse) {
-        throw new Error('updateSession returned undefined')
-      }
+      if (!sessionResponse) throw new Error('updateSession returned undefined')
 
-      // Redirect any auth bounces to platform login, not the custom domain
       if ([302, 307, 308].includes(sessionResponse.status)) {
         const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}`)
         return NextResponse.redirect(
@@ -154,6 +148,8 @@ export async function proxy(request: NextRequest) {
         )
       }
 
+      // Tell the page that middleware already verified auth
+      sessionResponse.headers.set('x-middleware-auth', 'verified')
       return sessionResponse
     }
 
