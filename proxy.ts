@@ -85,14 +85,46 @@ export async function proxy(request: NextRequest) {
       .eq('custom_domain', host)
       .single()
 
-    if (store?.slug) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/store/${store.slug}${pathname}`
-      return NextResponse.rewrite(url)
+    if (!store?.slug) {
+      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
     }
 
-    // No store found for this domain
-    return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+    const slug = store.slug
+
+    // ── Pass through auth, API, and Next.js internals untouched ────────────
+    if (
+      pathname.startsWith('/auth/') ||
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next/')
+    ) {
+      return NextResponse.next()
+    }
+
+    // ── Enforce auth on owner/admin subpaths ────────────────────────────────
+    const afterSlug = pathname // custom domain root IS the store root
+    if (PROTECTED_STORE_SUBPATHS.some((sub) => afterSlug.startsWith(sub))) {
+      const sessionResponse = await updateSession(request)
+
+      if (!sessionResponse) {
+        throw new Error('updateSession returned undefined')
+      }
+
+      if ([302, 307, 308].includes(sessionResponse.status)) {
+        const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+        const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}`)
+        return NextResponse.redirect(
+          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
+          302
+        )
+      }
+
+      return sessionResponse
+    }
+
+    // ── Public storefront pages → rewrite to internal /store/[slug] ─────────
+    const url = request.nextUrl.clone()
+    url.pathname = `/store/${slug}${pathname}`
+    return NextResponse.rewrite(url)
   }
 
 
