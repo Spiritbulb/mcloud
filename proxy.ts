@@ -30,8 +30,8 @@ const PROTECTED_STORE_SUBPATHS = [
 ]
 
 
-// ─── Paths that must never be redirected to a custom domain ───────────────────
-const BYPASS_CUSTOM_DOMAIN_REDIRECT = [
+// ─── Paths that bypass all routing logic ─────────────────────────────────────
+const BYPASS_PREFIXES = [
   '/auth/',
   '/api/',
   '/_next/',
@@ -54,7 +54,6 @@ function isPublicPath(pathname: string) {
 }
 
 
-// ─── Extract subdomain slug from host ────────────────────────────────────────
 function getTenantSlug(host: string): string | null {
   if (host.endsWith('.menengai.cloud')) {
     const subdomain = host.replace('.menengai.cloud', '')
@@ -65,67 +64,20 @@ function getTenantSlug(host: string): string | null {
 }
 
 
-// ─── Build a URL on the subdomain ────────────────────────────────────────────
 function toSubdomainUrl(request: NextRequest, slug: string, remainingPath: string): URL {
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
   return new URL(`${proto}://${slug}.menengai.cloud${remainingPath || '/'}`)
 }
 
 
-// ─── Build a URL on a custom domain ──────────────────────────────────────────
 function toCustomDomainUrl(request: NextRequest, customDomain: string, remainingPath: string): URL {
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
   return new URL(`${proto}://${customDomain}${remainingPath || '/'}`)
 }
 
 
-// ─── Check if running in production ──────────────────────────────────────────
 function isProduction(host: string): boolean {
   return host.endsWith('.menengai.cloud') || host === 'menengai.cloud'
-}
-
-
-// ─── Shared: enforce auth on a protected path, redirect to platform login ────
-async function enforceAuth(
-  request: NextRequest,
-  proto: string,
-  redirectBackUrl: string,
-  internalPathname?: string,
-): Promise<NextResponse> {
-  const sessionResponse = await updateSession(request)
-
-  if (!sessionResponse) {
-    throw new Error('updateSession returned undefined')
-  }
-
-  if ([302, 307, 308].includes(sessionResponse.status)) {
-    const redirectBack = encodeURIComponent(redirectBackUrl)
-    return NextResponse.redirect(
-      `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
-      302,
-    )
-  }
-
-  // If an internal pathname is provided, rewrite to it while preserving session cookies
-  if (internalPathname) {
-    const internalUrl = request.nextUrl.clone()
-    internalUrl.pathname = internalPathname
-    const rewriteResponse = NextResponse.rewrite(internalUrl)
-    sessionResponse.headers.forEach((value, key) => {
-      rewriteResponse.headers.set(key, value)
-    })
-    return rewriteResponse
-  }
-
-  return sessionResponse
-}
-
-
-// ─── Shared: rewrite a request to /store/[slug][path] ────────────────────────
-function rewriteToStore(request: NextRequest, slug: string, path: string): NextResponse {
-  const url = request.nextUrl.clone()
-  url.pathname = `/store/${slug}${path === '/' ? '' : path}`
-  return NextResponse.rewrite(url)
 }
 
 
@@ -138,73 +90,70 @@ export async function proxy(request: NextRequest) {
   // ════════════════════════════════════════════════════════════════════════════
   // 1. CUSTOM DOMAIN HIT
   // ════════════════════════════════════════════════════════════════════════════
-  if (!host.endsWith('.menengai.cloud') && host !== 'menengai.cloud' && !host.includes('localhost')) {
-    try {
-      const { createClient } = await import('@/lib/server')
-      const supabase = await createClient()
-      const { data: store } = await supabase
-        .from('stores')
-        .select('slug')
-        .eq('custom_domain', host)
-        .single()
+  if (
+    !host.endsWith('.menengai.cloud') &&
+    host !== 'menengai.cloud' &&
+    !host.includes('localhost')
+  ) {
+    // Always pass through internals first — before any DB call
+    if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next()
+    }
 
-      if (!store?.slug) {
-        return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+    const { createClient } = await import('@/lib/server')
+    const supabase = await createClient()
+    const { data: store } = await supabase
+      .from('stores')
+      .select('slug')
+      .eq('custom_domain', host)
+      .single()
+
+    if (!store?.slug) {
+      return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+    }
+
+    const slug = store.slug
+
+    // Strip accidental /store/[slug] prefix someone may have bookmarked
+    const storePrefix = `/store/${slug}`
+    if (pathname.startsWith(storePrefix)) {
+      const cleanPath = pathname.slice(storePrefix.length) || '/'
+      return NextResponse.redirect(
+        toCustomDomainUrl(request, host, `${cleanPath}${request.nextUrl.search}`),
+        308,
+      )
+    }
+
+    // ── Rewrite request URL to internal /store/[slug][path] ──────────────────
+    // This must happen BEFORE updateSession so the session refresh and any
+    // downstream rendering operate on a valid Next.js route.
+    // We mutate nextUrl directly — this is the standard Vercel platforms pattern.
+    const isProtected = PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))
+
+    request.nextUrl.pathname = `/store/${slug}${pathname}`
+
+    if (isProtected) {
+      // updateSession now sees the rewritten URL and valid cookies
+      const sessionResponse = await updateSession(request)
+
+      if (!sessionResponse) {
+        throw new Error('updateSession returned undefined')
       }
 
-      const slug = store.slug
-
-      // Pass through internals untouched
-      if (BYPASS_CUSTOM_DOMAIN_REDIRECT.some((p) => pathname.startsWith(p))) {
-        return NextResponse.next()
-      }
-
-      // Strip accidental /store/[slug] prefix
-      const storePrefix = `/store/${slug}`
-      if (pathname.startsWith(storePrefix)) {
-        const cleanPath = pathname.slice(storePrefix.length) || '/'
+      // Redirect any auth bounces to platform login, not the custom domain
+      if ([302, 307, 308].includes(sessionResponse.status)) {
+        const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}`)
         return NextResponse.redirect(
-          toCustomDomainUrl(request, host, `${cleanPath}${request.nextUrl.search}`),
-          308,
+          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
+          302,
         )
       }
 
-      // ── Enforce auth on owner/admin subpaths ──────────────────────────────
-      if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-        const sessionResponse = await updateSession(request)
-
-        if (!sessionResponse) {
-          throw new Error('updateSession returned undefined')
-        }
-
-        if ([302, 307, 308].includes(sessionResponse.status)) {
-          const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}`)
-          return NextResponse.redirect(
-            `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
-            302,
-          )
-        }
-
-        // Authenticated → rewrite to internal route, preserve session cookies
-        const internalUrl = request.nextUrl.clone()
-        internalUrl.pathname = `/store/${slug}${pathname}`
-        const rewriteResponse = NextResponse.rewrite(internalUrl)
-        sessionResponse.headers.forEach((value, key) => {
-          rewriteResponse.headers.set(key, value)
-        })
-        return rewriteResponse
-      }
-
-      // Public storefront page → rewrite to internal /store/[slug][path]
-      return rewriteToStore(request, slug, pathname)
-
-    } catch (err) {
-      console.error('[custom-domain] middleware error:', err)
-      return NextResponse.json(
-        { error: 'Middleware error', detail: String(err) },
-        { status: 500 },
-      )
+      return sessionResponse
     }
+
+    // Public storefront page — just rewrite
+    return NextResponse.rewrite(request.nextUrl)
   }
 
 
@@ -217,16 +166,12 @@ export async function proxy(request: NextRequest) {
   if (tenantSlug) {
     const url = request.nextUrl.clone()
 
-    // Pass through internals untouched
-    if (
-      pathname.startsWith('/auth/') ||
-      pathname.startsWith('/api/') ||
-      pathname.startsWith('/_next/')
-    ) {
+    // Pass through internals
+    if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
       return NextResponse.next()
     }
 
-    // Check if this store has a custom domain → redirect there
+    // If this store has a custom domain → redirect there permanently
     if (!devTenant && isProduction(host)) {
       const { createClient } = await import('@/lib/server')
       const supabase = await createClient()
@@ -259,7 +204,7 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // Rewrite to internal /store/[slug][path]
+    // Rewrite to internal route
     if (!pathname.startsWith('/store/')) {
       url.pathname = `/store/${tenantSlug}${pathname}`
       return NextResponse.rewrite(url)
@@ -268,11 +213,21 @@ export async function proxy(request: NextRequest) {
     // Enforce auth on owner routes
     const afterSlug = pathname.replace(/^\/store\/[^/]+/, '')
     if (PROTECTED_STORE_SUBPATHS.some((sub) => afterSlug.startsWith(sub))) {
-      return enforceAuth(
-        request,
-        proto,
-        `${proto}://${tenantSlug}.menengai.cloud${pathname}`,
-      )
+      const sessionResponse = await updateSession(request)
+
+      if (!sessionResponse) {
+        throw new Error('updateSession returned undefined')
+      }
+
+      if ([302, 307, 308].includes(sessionResponse.status)) {
+        const redirectBack = encodeURIComponent(`${proto}://${tenantSlug}.menengai.cloud${pathname}`)
+        return NextResponse.redirect(
+          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
+          302,
+        )
+      }
+
+      return sessionResponse
     }
 
     return NextResponse.next()
@@ -283,7 +238,7 @@ export async function proxy(request: NextRequest) {
   // 3. MAIN PLATFORM  (menengai.cloud or localhost)
   // ════════════════════════════════════════════════════════════════════════════
 
-  // Products match before generic store match
+  // Products match must come before generic store match
   const productsMatch = pathname.match(/^\/store\/([^/]+)\/products\/([^/]+)(\/.*)?$/)
   if (productsMatch) {
     const [, slug, productSlug, rest = ''] = productsMatch
@@ -296,15 +251,10 @@ export async function proxy(request: NextRequest) {
         .eq('slug', slug)
         .single()
 
-      if (store?.custom_domain) {
-        return NextResponse.redirect(
-          toCustomDomainUrl(request, store.custom_domain, `/products/${productSlug}${rest}`),
-          308,
-        )
-      }
-
       return NextResponse.redirect(
-        toSubdomainUrl(request, slug, `/products/${productSlug}${rest}`),
+        store?.custom_domain
+          ? toCustomDomainUrl(request, store.custom_domain, `/products/${productSlug}${rest}`)
+          : toSubdomainUrl(request, slug, `/products/${productSlug}${rest}`),
         308,
       )
     }
@@ -323,14 +273,12 @@ export async function proxy(request: NextRequest) {
         .eq('slug', slug)
         .single()
 
-      if (store?.custom_domain) {
-        return NextResponse.redirect(
-          toCustomDomainUrl(request, store.custom_domain, rest),
-          308,
-        )
-      }
-
-      return NextResponse.redirect(toSubdomainUrl(request, slug, rest), 308)
+      return NextResponse.redirect(
+        store?.custom_domain
+          ? toCustomDomainUrl(request, store.custom_domain, rest)
+          : toSubdomainUrl(request, slug, rest),
+        308,
+      )
     }
     return NextResponse.next()
   }
