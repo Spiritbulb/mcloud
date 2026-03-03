@@ -1,5 +1,5 @@
 import { updateSession } from '@/lib/middleware'
-import { type NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 
 
 // ─── Routes that don't require authentication ─────────────────────────────────
@@ -107,7 +107,11 @@ async function enforceAuth(
     )
   }
 
-  return sessionResponse
+  // Rewrite response to serve the internal /store/[slug]/... route
+  // while keeping the custom domain URL visible in the browser
+  return NextResponse.rewrite(request.nextUrl, {
+    headers: sessionResponse.headers, // preserve Set-Cookie / session headers
+  })
 }
 
 
@@ -160,10 +164,15 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // Enforce auth on owner/admin subpaths
+    // Enforce auth on owner/admin subpaths — rewrite first so updateSession
+    // operates on a valid /store/[slug]/settings route, not a bare /settings
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      return enforceAuth(request, proto, `${proto}://${host}${pathname}`)
+      const rewritten = request.nextUrl.clone()
+      rewritten.pathname = `/store/${slug}${pathname}`
+      const rewrittenRequest = new NextRequest(rewritten, request)
+      return enforceAuth(rewrittenRequest, proto, `${proto}://${host}${pathname}`)
     }
+
 
     // Public storefront page → rewrite internally to /store/[slug][path]
     return rewriteToStore(request, slug, pathname)
