@@ -75,6 +75,26 @@ export async function proxy(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
 
+  // ── Custom domain hit → look up store by custom_domain ───────────────────
+  if (!host.endsWith('.menengai.cloud') && host !== 'menengai.cloud' && !host.includes('localhost')) {
+    const { createClient } = await import('@/lib/server')
+    const supabase = await createClient()
+    const { data: store } = await supabase
+      .from('stores')
+      .select('slug')
+      .eq('custom_domain', host)
+      .single()
+
+    if (store?.slug) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/store/${store.slug}${pathname}`
+      return NextResponse.rewrite(url)
+    }
+
+    // No store found for this domain
+    return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+  }
+
 
   // ── Dev tenant simulation via ?_tenant=slug ──────────────────────────────
   const devTenant = searchParams.get('_tenant')
@@ -87,6 +107,17 @@ export async function proxy(request: NextRequest) {
   // ── Subdomain hit → rewrite internally to /store/[slug]/... ──────────────
   if (tenantSlug) {
     const url = request.nextUrl.clone()
+
+    // ── If someone hits locd26.menengai.cloud/store/locd26/... → strip the prefix ──
+    const storePrefix = `/store/${tenantSlug}`
+    if (pathname.startsWith(storePrefix)) {
+      const cleanPath = pathname.slice(storePrefix.length) || '/'
+      const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+      return NextResponse.redirect(
+        new URL(`${proto}://${tenantSlug}.menengai.cloud${cleanPath}${url.search}`),
+        308
+      )
+    }
 
     // ── Pass through auth, API, and Next.js internals untouched ─────────────
     if (

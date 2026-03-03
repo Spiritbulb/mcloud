@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import DomainSettings from './domain-settings'
 import { Check, Store, Palette, Globe, Link2, CreditCard, Bell } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import ImageUpload from './image-upload'
@@ -585,14 +586,9 @@ export default function StoreSettings({ store }: { store: StoreData }) {
 
                                 {/* ── DOMAIN ───────────────────────────────────────── */}
                                 {activeTab === 'domain' && (
-                                    <>
-                                        <div>
-                                            <h2 className="text-base font-semibold mb-1">Custom Domain</h2>
-                                            <p className="text-sm text-muted-foreground">Connect your own domain to your store</p>
-                                        </div>
-                                        <ProGate feature="Custom domain" />
-                                    </>
+                                    <DomainSettings storeId={store.id} currentDomain={store.custom_domain} />
                                 )}
+
 
                                 {/* ── SOCIAL ───────────────────────────────────────── */}
                                 {activeTab === 'social' && (
