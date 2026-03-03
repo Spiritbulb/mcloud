@@ -2,18 +2,14 @@
 
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Search, ShoppingBag, ArrowRight, Check } from 'lucide-react'
+import { Search, ShoppingBag, ArrowRight } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { motion } from 'framer-motion'
-import { Playfair_Display } from 'next/font/google'
-
-const playfair = Playfair_Display({ subsets: ['latin'], variable: '--font-playfair' })
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 interface HeroSlide {
@@ -32,7 +28,6 @@ interface Store {
     logo_url: string | null
     currency: string
     settings: {
-        primaryColor?: string
         heroTitle?: string
         heroSubtitle?: string
         heroImage?: string
@@ -55,7 +50,7 @@ interface Product {
     description: string | null
     price: number
     compare_at_price: number | null
-    images: { url: string; alt?: string }[]
+    images: string[]
     inventory_quantity: number
     track_inventory: boolean
 }
@@ -97,37 +92,36 @@ function ProductCard({ product, currency, storeSlug }: {
 }) {
     const inStock = isInStock(product)
     const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
-    const image = product.images?.[0]?.url ?? null
+    const image = product.images?.[0] || null
 
     return (
-        <Link href={`/store/${storeSlug}/products/${product.slug}`} className="group block">
-            <Card className="overflow-hidden border-border/50 hover:border-foreground/20 transition-all pt-0 cursor-pointer">
-                <div className="relative overflow-hidden bg-muted h-56 sm:h-64">
+        <Link href={`/store/${storeSlug}/${product.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
                     {image ? (
-                        <Image
+                        <img
                             src={image}
                             alt={product.name}
-                            fill
-                            className="object-cover transition-transform duration-500 group-hover:scale-105"
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-8 h-8 text-muted-foreground/40" />
+                            <ShoppingBag className="w-8 h-8 opacity-30" />
                         </div>
                     )}
                     {!inStock && (
-                        <div className="absolute inset-0 bg-background/60 flex items-center justify-center">
+                        <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
                             <Badge variant="secondary">Out of stock</Badge>
                         </div>
                     )}
                     {hasDiscount && inStock && (
-                        <Badge className="absolute top-2 left-2 bg-destructive text-destructive-foreground rounded-none">
+                        <Badge className="absolute top-2 left-2 sf-badge-sale sf-border-radius">
                             Sale
                         </Badge>
                     )}
                 </div>
                 <CardHeader className="space-y-1 px-4 pt-4 pb-2">
-                    <CardTitle className={`text-base font-normal line-clamp-2 ${playfair.className}`}>
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">
                         {product.name}
                     </CardTitle>
                     {product.description && (
@@ -142,7 +136,7 @@ function ProductCard({ product, currency, storeSlug }: {
                             {formatPrice(product.price, currency)}
                         </span>
                         {hasDiscount && (
-                            <span className="text-xs text-muted-foreground line-through">
+                            <span className="text-xs line-through opacity-50">
                                 {formatPrice(product.compare_at_price!, currency)}
                             </span>
                         )}
@@ -164,9 +158,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
     const [currentSlide, setCurrentSlide] = useState(0)
 
     const settings = store.settings ?? {}
-    const primaryColor = settings.primaryColor ?? '#1c2228'
 
-    // Build slides — use heroSlides array if present, else single fallback slide
     const heroSlides: HeroSlide[] =
         settings.heroSlides && settings.heroSlides.length > 0
             ? settings.heroSlides
@@ -180,7 +172,6 @@ export default function StoreFront({ store, products, collections, featuredProdu
                 },
             ]
 
-    // Auto-advance slides
     useEffect(() => {
         if (heroSlides.length <= 1) return
         const timer = setInterval(() => {
@@ -190,19 +181,19 @@ export default function StoreFront({ store, products, collections, featuredProdu
     }, [heroSlides.length])
 
     const filtered = useMemo(() => {
-        return products.filter((p) => {
-            return query
+        return products.filter((p) =>
+            query
                 ? p.name.toLowerCase().includes(query.toLowerCase()) ||
                 p.description?.toLowerCase().includes(query.toLowerCase())
                 : true
-        })
+        )
     }, [products, query])
 
     return (
-        <div className={`min-h-screen bg-background ${playfair.variable}`}>
+        <div className="min-h-screen">
 
             {/* ── NAV ───────────────────────────────────────────────────────── */}
-            <nav className="border-b sticky top-0 z-40 bg-background">
+            <nav className="sf-nav border-b sticky top-0 z-40">
                 <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         {store.logo_url ? (
@@ -214,21 +205,18 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                 className="rounded-lg object-cover"
                             />
                         ) : (
-                            <div
-                                className="w-7 h-7 rounded-full flex items-center justify-center text-white text-xs font-bold"
-                                style={{ backgroundColor: primaryColor }}
-                            >
+                            <div className="sf-logo-fallback w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">
                                 {store.name[0].toUpperCase()}
                             </div>
                         )}
-                        <span className={`font-semibold text-sm hidden sm:block ${playfair.className}`}>
+                        <span className="sf-heading font-semibold text-sm hidden sm:block">
                             {store.name}
                         </span>
                     </div>
 
                     {/* Search — desktop */}
                     <div className="hidden md:flex flex-1 max-w-sm relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-40" />
                         <Input
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
@@ -246,7 +234,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
 
                 {/* Search — mobile */}
                 <div className="md:hidden px-4 pb-3 relative">
-                    <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground" />
+                    <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-40" />
                     <Input
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
@@ -270,12 +258,12 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                     <img
                                         src={slide.image}
                                         alt={slide.title}
-                                        className="object-cover"
+                                        className="w-full h-full object-cover"
                                     />
                                     <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
                                 </>
                             ) : (
-                                <div className="absolute inset-0" style={{ backgroundColor: primaryColor }}>
+                                <div className="sf-hero-fallback absolute inset-0">
                                     <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_50%,white,transparent_60%)]" />
                                 </div>
                             )}
@@ -290,23 +278,23 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                     transition={{ duration: 0.5 }}
                                     className="w-full px-4 sm:px-6 md:px-8 pb-16 md:pb-0"
                                 >
-                                    <div className="max-w-xl space-y-4 bg-background p-5 sm:p-6">
+                                    <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
                                         {slide.accent && (
-                                            <Badge variant="outline" className="border-foreground">
+                                            <Badge variant="outline" className="sf-badge-outline">
                                                 {slide.accent}
                                             </Badge>
                                         )}
-                                        <h1 className={`text-3xl md:text-5xl font-bold tracking-tight ${playfair.className}`}>
+                                        <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">
                                             {slide.title}
                                         </h1>
                                         {slide.subtitle && (
-                                            <p className="text-muted-foreground text-base md:text-lg font-light">
+                                            <p className="text-base md:text-lg font-light opacity-70">
                                                 {slide.subtitle}
                                             </p>
                                         )}
                                         <Button
                                             size="lg"
-                                            className="mt-2 group rounded-none text-white"
+                                            className="sf-btn-primary mt-2 group rounded-none"
                                             onClick={() =>
                                                 document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' })
                                             }
@@ -320,7 +308,6 @@ export default function StoreFront({ store, products, collections, featuredProdu
                         </div>
                     ))}
 
-                    {/* Slide indicators — only shown for multiple slides */}
                     {heroSlides.length > 1 && (
                         <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
                             {heroSlides.map((_, index) => (
@@ -341,14 +328,14 @@ export default function StoreFront({ store, products, collections, featuredProdu
             {!query && collections.length > 0 && (
                 <>
                     <Separator />
-                    <section className="py-12 md:py-20 bg-muted/20">
+                    <section className="sf-section-muted py-12 md:py-20">
                         <div className="container mx-auto px-4 md:px-6">
                             <div className="mb-10 md:mb-14">
                                 <Badge variant="outline" className="mb-3">Collections</Badge>
-                                <h2 className={`text-3xl md:text-4xl font-light tracking-tight ${playfair.className}`}>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">
                                     Shop by Category
                                 </h2>
-                                <p className="text-muted-foreground font-light text-sm mt-2">
+                                <p className="font-light text-sm mt-2 opacity-60">
                                     Curated selections for every need
                                 </p>
                             </div>
@@ -357,9 +344,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
                             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
                                 <button
                                     onClick={() => setActiveCollection(null)}
-                                    className={`shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null
-                                        ? 'bg-foreground text-background border-foreground'
-                                        : 'bg-background text-foreground border-border hover:border-foreground'
+                                    className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null ? 'sf-pill-active' : 'sf-pill-inactive'
                                         }`}
                                 >
                                     All
@@ -368,9 +353,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                     <button
                                         key={c.id}
                                         onClick={() => setActiveCollection(c.id)}
-                                        className={`shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id
-                                            ? 'bg-foreground text-background border-foreground'
-                                            : 'bg-background text-foreground border-border hover:border-foreground'
+                                        className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id ? 'sf-pill-active' : 'sf-pill-inactive'
                                             }`}
                                     >
                                         {c.name}
@@ -383,28 +366,24 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                 {collections.map((collection) => (
                                     <Card
                                         key={collection.id}
-                                        className="group cursor-pointer overflow-hidden hover:shadow-lg transition-shadow pt-0"
+                                        className="sf-card group cursor-pointer overflow-hidden hover:shadow-lg transition-shadow pt-0"
                                         onClick={() =>
                                             router.push(`/store/${store.slug}/collections/${collection.slug}`)
                                         }
                                     >
-                                        <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+                                        <div className="relative aspect-[4/3] overflow-hidden sf-bg-muted">
                                             {collection.image_url ? (
-                                                <Image
+                                                <img
                                                     src={collection.image_url}
                                                     alt={collection.name}
-                                                    fill
-                                                    className="object-cover transition-transform group-hover:scale-105"
+                                                    className="absolute inset-0 w-full h-full object-cover"
                                                 />
                                             ) : (
-                                                <div
-                                                    className="w-full h-full"
-                                                    style={{ backgroundColor: primaryColor + '33' }}
-                                                />
+                                                <div className="sf-collection-placeholder w-full h-full" />
                                             )}
                                         </div>
                                         <CardHeader className="px-4 pt-4 pb-2">
-                                            <CardTitle className={`text-xl font-light ${playfair.className}`}>
+                                            <CardTitle className="sf-heading text-xl font-light">
                                                 {collection.name}
                                             </CardTitle>
                                             {collection.description && (
@@ -437,7 +416,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                     <Badge variant="outline">Featured Collection</Badge>
                                     <div className="h-px flex-1 bg-border" />
                                 </div>
-                                <h2 className={`text-3xl md:text-4xl font-light text-center tracking-tight ${playfair.className}`}>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
                                     Top Picks
                                 </h2>
                             </div>
@@ -457,14 +436,14 @@ export default function StoreFront({ store, products, collections, featuredProdu
                 </>
             )}
 
-            {/* ── ALL PRODUCTS (search + browse) ────────────────────────────── */}
+            {/* ── ALL PRODUCTS ──────────────────────────────────────────────── */}
             <section id="products" className="py-12 md:py-20">
                 <div className="container mx-auto px-4 md:px-6">
                     <div className="mb-10 md:mb-14">
                         {query ? (
-                            <p className="text-sm text-muted-foreground">
+                            <p className="text-sm opacity-60">
                                 {filtered.length} result{filtered.length !== 1 ? 's' : ''} for{' '}
-                                <span className="font-medium text-foreground">"{query}"</span>
+                                <span className="font-medium opacity-100">"{query}"</span>
                             </p>
                         ) : (
                             <>
@@ -473,7 +452,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                     <Badge variant="outline">All Products</Badge>
                                     <div className="h-px flex-1 bg-border" />
                                 </div>
-                                <h2 className={`text-3xl md:text-4xl font-light text-center tracking-tight ${playfair.className}`}>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
                                     Browse Everything
                                 </h2>
                             </>
@@ -482,14 +461,14 @@ export default function StoreFront({ store, products, collections, featuredProdu
 
                     {filtered.length === 0 ? (
                         <div className="text-center py-24 space-y-3">
-                            <ShoppingBag className="w-10 h-10 text-muted-foreground/30 mx-auto" />
-                            <p className="text-muted-foreground text-sm">
+                            <ShoppingBag className="w-10 h-10 opacity-20 mx-auto" />
+                            <p className="text-sm opacity-60">
                                 {query ? 'No products match your search' : 'No products yet'}
                             </p>
                             {query && (
                                 <button
                                     onClick={() => setQuery('')}
-                                    className="text-sm text-foreground underline underline-offset-4"
+                                    className="text-sm underline underline-offset-4"
                                 >
                                     Clear search
                                 </button>
@@ -511,28 +490,28 @@ export default function StoreFront({ store, products, collections, featuredProdu
             </section>
 
             {/* ── FOOTER ────────────────────────────────────────────────────── */}
-            <footer className="border-t py-8 bg-muted/10">
-                <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
+            <footer className="sf-footer border-t py-8">
+                <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-60">
                     <p>© {new Date().getFullYear()} {store.name}</p>
                     {settings.socialLinks && (
                         <div className="flex items-center gap-4">
                             {settings.socialLinks.instagram && (
-                                <a href={settings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                                <a href={settings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
                                     Instagram
                                 </a>
                             )}
                             {settings.socialLinks.tiktok && (
-                                <a href={settings.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                                <a href={settings.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
                                     TikTok
                                 </a>
                             )}
                             {settings.socialLinks.twitter && (
-                                <a href={settings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                                <a href={settings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
                                     Twitter / X
                                 </a>
                             )}
                             {settings.socialLinks.whatsapp && (
-                                <a href={`https://wa.me/${settings.socialLinks.whatsapp}`} target="_blank" rel="noopener noreferrer" className="hover:text-foreground transition-colors">
+                                <a href={`https://wa.me/${settings.socialLinks.whatsapp}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
                                     WhatsApp
                                 </a>
                             )}
@@ -540,7 +519,7 @@ export default function StoreFront({ store, products, collections, featuredProdu
                     )}
                     <p className="text-xs">
                         Powered by{' '}
-                        <a href="https://menengai.cloud" className="hover:text-foreground transition-colors">
+                        <a href="https://menengai.cloud" className="hover:opacity-100 transition-opacity">
                             Menengai Cloud
                         </a>
                     </p>

@@ -22,8 +22,8 @@ import Image from 'next/image';
 interface GuestDetails {
     mpesaPhone: string;
     mpesaCode: string;
-    whatsapp: string;      // optional, defaults to mpesaPhone if blank
-    email: string;         // optional
+    whatsapp: string;
+    email: string;
 }
 
 const EMPTY_GUEST: GuestDetails = {
@@ -48,6 +48,42 @@ export default function CartPage() {
     const supabase = createClient();
     const safeCartItems = Array.isArray(cartItems) ? cartItems : [];
 
+    const [mpesaConfig, setMpesaConfig] = useState<{
+        type: 'till' | 'paybill'
+        number: string
+        account?: string
+        enabled: boolean
+        paypalEnabled: boolean
+    } | null>(null);
+
+    useEffect(() => {
+        if (!storeSlug) return;
+        supabase
+            .from('stores')
+            .select('id')
+            .eq('slug', storeSlug)
+            .single()
+            .then(({ data: store }) => {
+                if (!store) return;
+                supabase
+                    .from('store_integrations')
+                    .select('provider, is_active, config')
+                    .eq('store_id', store.id)
+                    .in('provider', ['mpesa', 'paypal'])
+                    .then(({ data }) => {
+                        const m = data?.find((i) => i.provider === 'mpesa');
+                        const p = data?.find((i) => i.provider === 'paypal');
+                        setMpesaConfig({
+                            type: m?.config?.mpesa_type ?? 'till',
+                            number: m?.config?.mpesa_till ?? m?.config?.mpesa_paybill ?? '',
+                            account: m?.config?.mpesa_account,
+                            enabled: m?.is_active ?? false,
+                            paypalEnabled: p?.is_active ?? false,
+                        });
+                    });
+            });
+    }, [storeSlug]);
+
     useEffect(() => {
         if (!loading && cartItems.length > 0) refreshCart();
     }, []);
@@ -69,15 +105,15 @@ export default function CartPage() {
             if (!/^(?:\+?254|0)[17]\d{8}$/.test(guest.mpesaPhone.trim()))
                 return 'Enter a valid Kenyan phone number (e.g. 0712345678)';
             if (!guest.mpesaCode.trim()) return 'M-PESA transaction code is required';
-            const code = guest.mpesaCode.trim().toUpperCase();
-            if (!/^[A-Z0-9]{6,20}$/.test(code)) return 'Invalid M-PESA transaction code format';
+            if (!/^[A-Z0-9]{6,20}$/.test(guest.mpesaCode.trim().toUpperCase()))
+                return 'Invalid M-PESA transaction code format';
         }
         if (guest.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email))
             return 'Enter a valid email address';
         return null;
     };
 
-    // ── Create order (no auth required) ────────────────────────────
+    // ── Create order ────────────────────────────────────────────────
     const createOrder = async (): Promise<string> => {
         if (safeCartItems.length === 0) throw new Error('Your cart is empty');
 
@@ -90,7 +126,6 @@ export default function CartPage() {
 
         if (storeError || !store) throw new Error('Store not found');
 
-        // Upsert guest customer by mpesa_phone (or email fallback)
         const phoneKey = guest.mpesaPhone.trim() || null;
         const emailKey = guest.email.trim() || null;
 
@@ -104,7 +139,6 @@ export default function CartPage() {
 
         if (existing) {
             customerId = existing.id;
-            // Update email/whatsapp if provided
             await supabase.from('customers').update({
                 ...(emailKey && { email: emailKey }),
                 whatsapp_number: guest.whatsapp.trim() || phoneKey,
@@ -250,26 +284,30 @@ export default function CartPage() {
 
     // ── Render ──────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8">
 
                 {loading ? (
                     <div className="flex justify-center items-center min-h-[400px]">
-                        <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                        <Loader2 className="w-12 h-12 sf-text-primary animate-spin" />
                     </div>
 
                 ) : safeCartItems.length === 0 ? (
                     <div className="text-center py-12 sm:py-20 px-4">
-                        <Card className="max-w-md mx-auto border-border/50">
+                        <Card className="sf-card max-w-md mx-auto">
                             <CardContent className="pt-10 pb-10">
-                                <div className="w-20 h-20 bg-muted flex items-center justify-center mx-auto mb-6">
-                                    <ShoppingBag className="w-10 h-10 text-muted-foreground" />
+                                <div className="w-20 h-20 sf-bg-muted flex items-center justify-center mx-auto mb-6">
+                                    <ShoppingBag className="w-10 h-10 opacity-40" />
                                 </div>
-                                <h3 className="text-2xl font-light mb-3">Your cart is empty</h3>
-                                <p className="text-muted-foreground mb-6 font-light text-sm">
+                                <h3 className="sf-heading text-2xl font-light mb-3">Your cart is empty</h3>
+                                <p className="opacity-50 mb-6 font-light text-sm">
                                     Discover our amazing collection of products.
                                 </p>
-                                <Button size="lg" onClick={() => router.push(`/store/${storeSlug}/products`)}>
+                                <Button
+                                    size="lg"
+                                    className="sf-btn-primary"
+                                    onClick={() => router.push(`/store/${storeSlug}/products`)}
+                                >
                                     <ShoppingBag className="mr-2 h-5 w-5" />
                                     Start Shopping
                                 </Button>
@@ -282,13 +320,13 @@ export default function CartPage() {
 
                         {/* ── Cart items ── */}
                         <div className="lg:col-span-8">
-                            <Card className="border-border/50">
+                            <Card className="sf-card">
                                 <CardHeader className="px-4 sm:px-6">
                                     <div className="flex items-center justify-between">
                                         <CardTitle className="text-lg sm:text-xl font-light">
                                             Shopping Cart ({safeCartItems.length})
                                         </CardTitle>
-                                        <div className="hidden sm:flex items-center gap-2 text-sm text-muted-foreground">
+                                        <div className="hidden sm:flex items-center gap-2 text-sm opacity-40">
                                             <Shield className="w-4 h-4" />
                                             <span>Secure checkout</span>
                                         </div>
@@ -300,10 +338,10 @@ export default function CartPage() {
                                 <CardContent className="p-0">
                                     <div className="divide-y">
                                         {safeCartItems.map((item) => (
-                                            <div key={item.variantId} className="p-4 sm:p-6 hover:bg-muted/30 transition-colors">
+                                            <div key={item.variantId} className="p-4 sm:p-6 sf-cart-row transition-colors">
                                                 <div className="flex gap-3 sm:gap-6">
                                                     <div className="relative flex-shrink-0">
-                                                        <div className="w-20 h-20 sm:w-24 sm:h-24 bg-muted overflow-hidden relative">
+                                                        <div className="w-20 h-20 sm:w-24 sm:h-24 sf-bg-muted overflow-hidden relative">
                                                             <Image
                                                                 src={item.image || '/api/placeholder/200/200'}
                                                                 alt={item.name}
@@ -325,13 +363,18 @@ export default function CartPage() {
                                                     </div>
 
                                                     <div className="flex-1 min-w-0">
-                                                        <h3 className="font-normal text-sm sm:text-base mb-1 line-clamp-2">{item.name}</h3>
-                                                        <p className="text-xs text-muted-foreground mb-3">SKU: {item.variantId?.slice(-8) || 'N/A'}</p>
+                                                        <h3 className="font-normal text-sm sm:text-base mb-1 line-clamp-2">
+                                                            {item.name}
+                                                        </h3>
+                                                        <p className="text-xs opacity-40 mb-3">
+                                                            SKU: {item.variantId?.slice(-8) || 'N/A'}
+                                                        </p>
 
                                                         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
                                                             <div className="flex items-center border w-fit">
                                                                 <Button
-                                                                    variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10"
+                                                                    variant="ghost" size="icon"
+                                                                    className="h-8 w-8 sm:h-10 sm:w-10"
                                                                     onClick={() => updateCartLine(item.variantId, item.quantity - 1)}
                                                                     disabled={itemLoadingStates[item.variantId] || item.quantity <= 1}
                                                                 >
@@ -341,7 +384,8 @@ export default function CartPage() {
                                                                     <span className="font-normal text-sm">{item.quantity}</span>
                                                                 </div>
                                                                 <Button
-                                                                    variant="ghost" size="icon" className="h-8 w-8 sm:h-10 sm:w-10"
+                                                                    variant="ghost" size="icon"
+                                                                    className="h-8 w-8 sm:h-10 sm:w-10"
                                                                     onClick={() => updateCartLine(item.variantId, item.quantity + 1)}
                                                                     disabled={itemLoadingStates[item.variantId]}
                                                                 >
@@ -352,8 +396,12 @@ export default function CartPage() {
                                                             </div>
 
                                                             <div className="text-left sm:text-right">
-                                                                <div className="text-base sm:text-xl font-light text-primary">{formatKES(item.price)}</div>
-                                                                <div className="text-xs text-muted-foreground">{formatKES(item.price * item.quantity)} total</div>
+                                                                <div className="text-base sm:text-xl font-light sf-text-primary">
+                                                                    {formatKES(item.price)}
+                                                                </div>
+                                                                <div className="text-xs opacity-40">
+                                                                    {formatKES(item.price * item.quantity)} total
+                                                                </div>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -369,11 +417,11 @@ export default function CartPage() {
                         <div className="lg:col-span-4">
                             <div className="lg:sticky lg:top-24 space-y-4">
 
-                                <Card className="border-border/50">
+                                <Card className="sf-card">
                                     <CardHeader className="px-4 sm:px-6">
                                         <CardTitle className="text-lg sm:text-xl font-light flex items-center gap-3">
-                                            <div className="w-8 h-8 bg-primary flex items-center justify-center flex-shrink-0">
-                                                <ShoppingBag className="w-4 h-4 text-primary-foreground" />
+                                            <div className="w-8 h-8 sf-bg-primary flex items-center justify-center flex-shrink-0">
+                                                <ShoppingBag className="w-4 h-4 text-white" />
                                             </div>
                                             Order Summary
                                         </CardTitle>
@@ -382,20 +430,23 @@ export default function CartPage() {
                                     <Separator />
 
                                     <CardContent className="space-y-4 pt-5 px-4 sm:px-6">
+
                                         {/* Totals */}
                                         <div className="space-y-3">
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Subtotal</span>
+                                                <span className="opacity-50">Subtotal</span>
                                                 <span>{formatKES(subtotalKES)}</span>
                                             </div>
                                             <div className="flex justify-between text-sm">
-                                                <span className="text-muted-foreground">Shipping</span>
+                                                <span className="opacity-50">Shipping</span>
                                                 <span>{formatKES(shippingKES)}</span>
                                             </div>
                                             <Separator />
                                             <div className="flex justify-between items-center">
                                                 <span className="text-base font-normal">Total</span>
-                                                <span className="text-2xl font-light text-primary">{formatKES(totalKES)}</span>
+                                                <span className="text-2xl font-light sf-text-primary">
+                                                    {formatKES(totalKES)}
+                                                </span>
                                             </div>
                                         </div>
 
@@ -406,43 +457,66 @@ export default function CartPage() {
                                                 <Button
                                                     type="button"
                                                     variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
-                                                    className="flex-1"
+                                                    className={`flex-1 ${paymentMethod === 'mpesa' ? 'sf-btn-primary' : ''}`}
                                                     onClick={() => setPaymentMethod('mpesa')}
-                                                    disabled={isProcessing}
+                                                    disabled={isProcessing || !mpesaConfig?.enabled}
                                                 >
                                                     M-PESA
                                                 </Button>
-                                                <Button
-                                                    type="button"
-                                                    variant={paymentMethod === 'paypal' ? 'default' : 'outline'}
-                                                    className="flex-1"
-                                                    onClick={() => setPaymentMethod('paypal')}
-                                                    disabled={isProcessing}
-                                                >
-                                                    PayPal
-                                                </Button>
+                                                {mpesaConfig?.paypalEnabled && (
+                                                    <Button
+                                                        type="button"
+                                                        variant={paymentMethod === 'paypal' ? 'default' : 'outline'}
+                                                        className={`flex-1 ${paymentMethod === 'paypal' ? 'sf-btn-primary' : ''}`}
+                                                        onClick={() => setPaymentMethod('paypal')}
+                                                        disabled={isProcessing}
+                                                    >
+                                                        PayPal
+                                                    </Button>
+                                                )}
                                             </div>
+                                            {!mpesaConfig?.enabled && (
+                                                <p className="text-xs opacity-40">
+                                                    Payments are not yet configured for this store.
+                                                </p>
+                                            )}
                                         </div>
 
-                                        {/* ── Guest details form ── */}
+                                        {/* ── M-PESA guest form ── */}
                                         {paymentMethod === 'mpesa' && (
                                             <div className="space-y-3">
-                                                {/* M-PESA instructions */}
-                                                <div className="rounded-md border bg-muted/30 p-3 text-xs text-muted-foreground">
+                                                <div className="sf-mpesa-instructions rounded-md border p-3 text-xs opacity-70">
                                                     <ol className="space-y-2 leading-relaxed list-decimal pl-4">
-                                                        <li>M-PESA Menu → Lipa na M-PESA → Buy Goods and Services</li>
+                                                        <li>M-PESA Menu → Lipa na M-PESA →{' '}
+                                                            {mpesaConfig?.type === 'paybill' ? 'Pay Bill' : 'Buy Goods and Services'}
+                                                        </li>
                                                         <li className="space-y-1">
-                                                            <div>Enter Business Number</div>
+                                                            <div>
+                                                                {mpesaConfig?.type === 'paybill' ? 'Business Number' : 'Till Number'}
+                                                            </div>
                                                             <div className="flex items-center gap-2">
-                                                                <span className="inline-flex items-center rounded border bg-background px-2 py-1 font-mono text-foreground">
-                                                                    4202518
+                                                                <span className="sf-mono-tag inline-flex items-center rounded border px-2 py-1 font-mono">
+                                                                    {mpesaConfig?.number || '—'}
                                                                 </span>
-                                                                <CopyButton content="4202518" size="xs" />
+                                                                {mpesaConfig?.number && (
+                                                                    <CopyButton content={mpesaConfig.number} size="xs" />
+                                                                )}
                                                             </div>
                                                         </li>
+                                                        {mpesaConfig?.type === 'paybill' && mpesaConfig.account && (
+                                                            <li className="space-y-1">
+                                                                <div>Account Number</div>
+                                                                <div className="flex items-center gap-2">
+                                                                    <span className="sf-mono-tag inline-flex items-center rounded border px-2 py-1 font-mono">
+                                                                        {mpesaConfig.account}
+                                                                    </span>
+                                                                    <CopyButton content={mpesaConfig.account} size="xs" />
+                                                                </div>
+                                                            </li>
+                                                        )}
                                                         <li>
                                                             Amount:{' '}
-                                                            <span className="rounded border bg-background px-1.5 py-0.5 font-semibold text-foreground">
+                                                            <span className="sf-mono-tag rounded border px-1.5 py-0.5 font-semibold">
                                                                 {formatKES(totalKES)}
                                                             </span>
                                                         </li>
@@ -451,11 +525,10 @@ export default function CartPage() {
                                                     </ol>
                                                 </div>
 
-                                                {/* M-PESA phone — required */}
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="mpesa-phone" className="text-sm flex items-center gap-1.5">
                                                         <Phone className="w-3.5 h-3.5" />
-                                                        M-PESA Phone Number <span className="text-destructive">*</span>
+                                                        M-PESA Phone Number <span className="sf-required">*</span>
                                                     </Label>
                                                     <Input
                                                         id="mpesa-phone"
@@ -468,10 +541,9 @@ export default function CartPage() {
                                                     />
                                                 </div>
 
-                                                {/* M-PESA transaction code — required */}
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="mpesa-code" className="text-sm flex items-center gap-1.5">
-                                                        M-PESA Transaction Code <span className="text-destructive">*</span>
+                                                        M-PESA Transaction Code <span className="sf-required">*</span>
                                                     </Label>
                                                     <Input
                                                         id="mpesa-code"
@@ -484,12 +556,11 @@ export default function CartPage() {
                                                     />
                                                 </div>
 
-                                                {/* WhatsApp — optional */}
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="whatsapp" className="text-sm flex items-center gap-1.5">
                                                         <MessageCircle className="w-3.5 h-3.5" />
                                                         WhatsApp Number
-                                                        <span className="text-muted-foreground text-xs">(if different from M-PESA)</span>
+                                                        <span className="text-xs opacity-40">(if different from M-PESA)</span>
                                                     </Label>
                                                     <Input
                                                         id="whatsapp"
@@ -502,12 +573,11 @@ export default function CartPage() {
                                                     />
                                                 </div>
 
-                                                {/* Email — optional */}
                                                 <div className="space-y-1.5">
                                                     <Label htmlFor="email" className="text-sm flex items-center gap-1.5">
                                                         <Mail className="w-3.5 h-3.5" />
                                                         Email Address
-                                                        <span className="text-muted-foreground text-xs">(optional, for receipt)</span>
+                                                        <span className="text-xs opacity-40">(optional, for receipt)</span>
                                                     </Label>
                                                     <Input
                                                         id="email"
@@ -523,11 +593,14 @@ export default function CartPage() {
                                             </div>
                                         )}
 
+                                        {/* ── PayPal info ── */}
                                         {paymentMethod === 'paypal' && (
-                                            <Alert className="border-blue-200 bg-blue-50">
-                                                <Info className="h-4 w-4 text-blue-600 flex-shrink-0" />
-                                                <AlertTitle className="text-blue-800 text-sm font-normal">Payment in USD</AlertTitle>
-                                                <AlertDescription className="text-xs text-blue-700">
+                                            <Alert className="sf-alert-info">
+                                                <Info className="h-4 w-4 flex-shrink-0 sf-alert-info-icon" />
+                                                <AlertTitle className="text-sm font-normal sf-alert-info-title">
+                                                    Payment in USD
+                                                </AlertTitle>
+                                                <AlertDescription className="text-xs sf-alert-info-body">
                                                     You'll be charged approximately <strong>{formatUSD(totalUSD)}</strong> USD.
                                                 </AlertDescription>
                                             </Alert>
@@ -540,7 +613,12 @@ export default function CartPage() {
                                             </Alert>
                                         )}
 
-                                        <Button size="lg" className="w-full" disabled={isProcessing} onClick={handleCheckout}>
+                                        <Button
+                                            size="lg"
+                                            className="w-full sf-btn-primary"
+                                            disabled={isProcessing}
+                                            onClick={handleCheckout}
+                                        >
                                             {isProcessing ? (
                                                 <>
                                                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -557,7 +635,7 @@ export default function CartPage() {
                                             <Link href={`/store/${storeSlug}/products`}>Continue Shopping</Link>
                                         </Button>
 
-                                        <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground bg-muted p-3">
+                                        <div className="sf-security-badge flex items-center justify-center gap-2 text-xs p-3">
                                             <Shield className="w-4 h-4 flex-shrink-0" />
                                             <span>
                                                 {paymentMethod === 'mpesa'
@@ -566,10 +644,10 @@ export default function CartPage() {
                                             </span>
                                         </div>
 
-                                        <p className="text-xs text-muted-foreground text-center leading-relaxed">
+                                        <p className="text-xs opacity-40 text-center leading-relaxed">
                                             By completing your purchase you agree to our{' '}
-                                            <Link href="/terms" className="text-primary hover:underline">Terms</Link>{' '}and{' '}
-                                            <Link href="/privacy" className="text-primary hover:underline">Privacy Policy</Link>
+                                            <Link href="/terms" className="sf-text-primary hover:underline">Terms</Link>{' '}and{' '}
+                                            <Link href="/privacy" className="sf-text-primary hover:underline">Privacy Policy</Link>
                                         </p>
                                     </CardContent>
                                 </Card>

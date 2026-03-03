@@ -1,0 +1,290 @@
+/* app/store/[slug]/storefront.css */
+/* These CSS custom properties are injected at runtime via the layout.
+   The :root defaults here serve as fallbacks only. */
+
+.storefront-root {
+    --sf-primary: #1c2228;
+    --sf-secondary: #f5f0eb;
+    --sf-accent: #c9a96e;
+    --sf-background: #ffffff;
+    --sf-foreground: #1c2228;
+    --sf-muted: #f4f4f5;
+    --sf-border-radius: 0px;
+    --sf-font-heading: 'Playfair Display', serif;
+    --sf-font-body: 'Inter', sans-serif;
+    --sf-font-scale: 1;
+
+    background-color: var(--sf-background);
+    color: var(--sf-foreground);
+    font-family: var(--sf-font-body);
+}
+
+@media (prefers-color-scheme: dark) {
+    .storefront-root {
+        --sf-primary: var(--sf-dark-primary, #e8e0d8);
+        --sf-background: var(--sf-dark-background, #0f0f10);
+        --sf-foreground: var(--sf-dark-foreground, #f0ece6);
+        --sf-muted: var(--sf-dark-muted, #27272a);
+    }
+}
+
+/* Utility classes using the tokens */
+.sf-bg-primary {
+    background-color: var(--sf-primary);
+}
+
+.sf-text-primary {
+    color: var(--sf-primary);
+}
+
+.sf-bg-accent {
+    background-color: var(--sf-accent);
+}
+
+.sf-text-accent {
+    color: var(--sf-accent);
+}
+
+.sf-bg-muted {
+    background-color: var(--sf-muted);
+}
+
+.sf-border-radius {
+    border-radius: var(--sf-border-radius);
+}
+
+.sf-heading {
+    font-family: var(--sf-font-heading);
+}
+
+/* Nav */
+.sf-nav {
+    background-color: var(--sf-background);
+    color: var(--sf-foreground);
+}
+
+/* Logo fallback avatar */
+.sf-logo-fallback {
+    background-color: var(--sf-primary);
+    color: #fff;
+}
+
+/* Hero fallback background (no image) */
+.sf-hero-fallback {
+    background-color: var(--sf-primary);
+}
+
+/* Hero text card */
+.sf-hero-card {
+    background-color: var(--sf-background);
+    color: var(--sf-foreground);
+}
+
+/* Primary CTA button */
+.sf-btn-primary {
+    background-color: var(--sf-primary);
+    color: #fff;
+}
+
+.sf-btn-primary:hover {
+    opacity: 0.9;
+}
+
+/* Muted section background */
+.sf-section-muted {
+    background-color: color-mix(in srgb, var(--sf-muted) 20%, transparent);
+}
+
+/* Muted bg for image placeholders */
+.sf-bg-muted {
+    background-color: var(--sf-muted);
+}
+
+/* Out-of-stock overlay */
+.sf-bg-overlay {
+    background-color: color-mix(in srgb, var(--sf-background) 60%, transparent);
+}
+
+/* Collection placeholder (no image) */
+.sf-collection-placeholder {
+    background-color: color-mix(in srgb, var(--sf-primary) 20%, transparent);
+}
+
+/* Sale badge */
+.sf-badge-sale {
+    background-color: var(--sf-accent);
+    color: #fff;
+}
+
+/* Outline badge */
+.sf-badge-outline {
+    border-color: var(--sf-foreground);
+}
+
+/* Filter pills */
+.sf-pill {
+    border-color: var(--sf-foreground);
+}
+
+.sf-pill-active {
+    background-color: var(--sf-foreground);
+    color: var(--sf-background);
+    border-color: var(--sf-foreground);
+}
+
+.sf-pill-inactive {
+    background-color: var(--sf-background);
+    color: var(--sf-foreground);
+    border-color: var(--sf-muted);
+}
+
+.sf-pill-inactive:hover {
+    border-color: var(--sf-foreground);
+}
+
+/* Cards */
+.sf-card {
+    border-color: color-mix(in srgb, var(--sf-foreground) 15%, transparent);
+}
+
+.sf-card:hover {
+    border-color: color-mix(in srgb, var(--sf-foreground) 30%, transparent);
+}
+
+/* Footer */
+.sf-footer {
+    background-color: color-mix(in srgb, var(--sf-muted) 10%, transparent);
+    color: var(--sf-foreground);
+}
+
+/* Sold out overlay */
+.sf-bg-sold-out {
+    background-color: color-mix(in srgb, var(--sf-primary) 80%, transparent);
+}
+
+/* Star fill using accent color */
+.sf-fill-accent {
+    fill: var(--sf-accent);
+    color: var(--sf-accent);
+}
+
+/* Accent-colored text (e.g. "Collection" heading span) */
+.sf-text-accent {
+    color: var(--sf-accent);
+}
+
+/* Cart row hover */
+.sf-cart-row:hover {
+    background-color: color-mix(in srgb, var(--sf-muted) 30%, transparent);
+}
+
+/* Order summary icon bg */
+.sf-bg-primary {
+    background-color: var(--sf-primary);
+}
+
+/* M-PESA instructions box */
+.sf-mpesa-instructions {
+    background-color: color-mix(in srgb, var(--sf-muted) 30%, transparent);
+    border-color: color-mix(in srgb, var(--sf-foreground) 10%, transparent);
+}
+
+/* Mono code tags inside instructions */
+.sf-mono-tag {
+    background-color: var(--sf-background);
+    color: var(--sf-foreground);
+    border-color: color-mix(in srgb, var(--sf-foreground) 15%, transparent);
+}
+
+/* Required field asterisk */
+.sf-required {
+    color: var(--sf-accent);
+}
+
+/* PayPal info alert */
+.sf-alert-info {
+    background-color: color-mix(in srgb, var(--sf-primary) 8%, transparent);
+    border-color: color-mix(in srgb, var(--sf-primary) 20%, transparent);
+}
+
+.sf-alert-info-icon {
+    color: var(--sf-primary);
+}
+
+.sf-alert-info-title {
+    color: var(--sf-foreground);
+}
+
+.sf-alert-info-body {
+    color: var(--sf-foreground);
+    opacity: 0.7;
+}
+
+/* Security badge strip */
+.sf-security-badge {
+    background-color: color-mix(in srgb, var(--sf-muted) 50%, transparent);
+    color: var(--sf-foreground);
+    opacity: 0.6;
+}
+
+/* Image loading spinner */
+.sf-image-spinner {
+    border-color: var(--sf-foreground);
+    opacity: 0.3;
+}
+
+/* Carousel dot indicators */
+.sf-dot-active {
+    background-color: var(--sf-primary);
+}
+
+.sf-dot-inactive {
+    background-color: color-mix(in srgb, var(--sf-primary) 30%, transparent);
+}
+
+/* Thumbnail borders */
+.sf-thumb-active {
+    border-color: var(--sf-primary);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--sf-primary) 20%, transparent);
+}
+
+.sf-thumb-inactive {
+    border-color: color-mix(in srgb, var(--sf-foreground) 15%, transparent);
+}
+
+.sf-thumb-inactive:hover {
+    border-color: color-mix(in srgb, var(--sf-foreground) 30%, transparent);
+}
+
+/* Star ratings */
+.sf-star-filled {
+    color: var(--sf-accent);
+    fill: var(--sf-accent);
+}
+
+.sf-star-empty {
+    color: var(--sf-foreground);
+    opacity: 0.2;
+}
+
+/* Stock status */
+.sf-dot-instock {
+    background-color: #22c55e;
+}
+
+.sf-dot-outofstock {
+    background-color: var(--sf-accent);
+}
+
+.sf-text-instock {
+    color: #16a34a;
+}
+
+.sf-text-outofstock {
+    color: var(--sf-accent);
+}
+
+/* Prose / description area */
+.sf-prose {
+    color: var(--sf-foreground);
+}
