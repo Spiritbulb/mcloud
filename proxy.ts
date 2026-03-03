@@ -87,6 +87,16 @@ export async function proxy(request: NextRequest) {
   // ── Subdomain hit → rewrite internally to /store/[slug]/... ──────────────
   if (tenantSlug) {
     const url = request.nextUrl.clone()
+
+    // ── Pass through auth, API, and Next.js internals untouched ─────────────
+    if (
+      pathname.startsWith('/auth/') ||
+      pathname.startsWith('/api/') ||
+      pathname.startsWith('/_next/')
+    ) {
+      return NextResponse.next()
+    }
+
     if (!pathname.startsWith('/store/')) {
       url.pathname = `/store/${tenantSlug}${pathname}`
       return NextResponse.rewrite(url)
@@ -117,7 +127,6 @@ export async function proxy(request: NextRequest) {
 
     return NextResponse.next()
   }
-
 
   // ── Main platform (menengai.cloud or localhost) ───────────────────────────
 

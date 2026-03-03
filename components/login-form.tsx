@@ -47,14 +47,28 @@ function Form({ className, onSwitch }: LoginFormProps) {
 
       const slug = storesData.slug as string
       const redirect = searchParams.get('redirect')
-      router.push(redirect?.startsWith(`/${slug}`) ? redirect : `/${slug}/settings`)
+
+      // redirect is a full encoded URL from middleware
+      const destination = (() => {
+        if (!redirect) return `https://${slug}.menengai.cloud/settings`
+        try {
+          const decoded = decodeURIComponent(redirect)
+          const url = new URL(decoded)
+          // Safety check: only allow redirects to *.menengai.cloud
+          if (url.hostname.endsWith('.menengai.cloud')) return decoded
+        } catch {
+          // invalid URL, fall through to default
+        }
+        return `https://${slug}.menengai.cloud/settings`
+      })()
+
+      window.location.href = destination
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
     } finally {
       setIsLoading(false)
     }
   }
-
 
   return (
     <div className={cn('flex flex-col gap-5', className)}>
