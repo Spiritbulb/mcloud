@@ -1,9 +1,10 @@
-// app/store/[slug]/layout.tsx
 import './storefront.css'
 import { CartProvider } from '@/contexts/CartContext'
 import { createClient } from '@/lib/server'
 import StoreNav from '@/components/store/store-nav'
 import StoreFooter from '@/components/store/store-footer'
+import type { Metadata } from 'next'
+
 
 async function getStoreTheme(slug: string) {
     const supabase = await createClient()
@@ -24,6 +25,7 @@ async function getStoreTheme(slug: string) {
     return theme
 }
 
+
 async function getStore(slug: string) {
     const supabase = await createClient()
     const { data: store } = await supabase
@@ -34,6 +36,28 @@ async function getStore(slug: string) {
 
     return store
 }
+
+
+// ─── Dynamic favicon from store logo ─────────────────────────────────────────
+export async function generateMetadata({
+    params,
+}: {
+    params: Promise<{ slug: string }>
+}): Promise<Metadata> {
+    const { slug } = await params
+    const store = await getStore(slug)
+
+    return {
+        title: store?.name ?? 'Store',
+        icons: store?.logo_url
+            ? {
+                icon: store.logo_url,
+                apple: store.logo_url,
+            }
+            : undefined,
+    }
+}
+
 
 export default async function StoreLayout({
     children,

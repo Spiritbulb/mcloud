@@ -89,13 +89,15 @@ export async function proxy(request: NextRequest) {
 
   // ════════════════════════════════════════════════════════════════════════════
   // 1. CUSTOM DOMAIN HIT
+  //    Public storefront only. Owner routes redirect to subdomain where
+  //    cookies work normally.
   // ════════════════════════════════════════════════════════════════════════════
   if (
     !host.endsWith('.menengai.cloud') &&
     host !== 'menengai.cloud' &&
     !host.includes('localhost')
   ) {
-    // Always pass through internals first — before any DB call
+    // Pass through internals before any DB call
     if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
       return NextResponse.next()
     }
@@ -114,7 +116,7 @@ export async function proxy(request: NextRequest) {
 
     const slug = store.slug
 
-    // Strip accidental /store/[slug] prefix someone may have bookmarked
+    // Strip accidental /store/[slug] prefix
     const storePrefix = `/store/${slug}`
     if (pathname.startsWith(storePrefix)) {
       const cleanPath = pathname.slice(storePrefix.length) || '/'
@@ -124,42 +126,23 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // ── Rewrite request URL to internal /store/[slug][path] ──────────────────
-    // ── Rewrite request URL to internal /store/[slug][path] ──────────────────
-    const isProtected = PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))
-
-    const cleanPathname = pathname === '/' ? '' : pathname.startsWith('/') ? pathname : `/${pathname}`
-    const internalPath = `/store/${slug}${cleanPathname}`
-    request.nextUrl.pathname = internalPath
-
-
-    request.nextUrl.pathname = `/store/${slug}${pathname}`
-
-    if (isProtected) {
-      const sessionResponse = await updateSession(request)
-
-      if (!sessionResponse) throw new Error('updateSession returned undefined')
-
-      if ([302, 307, 308].includes(sessionResponse.status)) {
-        const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}`)
-        return NextResponse.redirect(
-          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
-          302,
-        )
-      }
-
-      // Tell the page that middleware already verified auth
-      sessionResponse.headers.set('x-middleware-auth', 'verified')
-      return sessionResponse
+    // Owner/admin routes → redirect to subdomain where auth cookies work
+    if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
+      return NextResponse.redirect(
+        `${proto}://${slug}.menengai.cloud${pathname}`,
+        307,
+      )
     }
 
-    // Public storefront page — just rewrite
+    // Public storefront page → rewrite to internal /store/[slug][path]
+    request.nextUrl.pathname = `/store/${slug}${pathname === '/' ? '' : pathname}`
     return NextResponse.rewrite(request.nextUrl)
   }
 
 
   // ════════════════════════════════════════════════════════════════════════════
   // 2. SUBDOMAIN HIT  (slug.menengai.cloud)
+  //    Serves both the storefront (if no custom domain) and owner dashboard.
   // ════════════════════════════════════════════════════════════════════════════
   const devTenant = searchParams.get('_tenant')
   const tenantSlug = getTenantSlug(host) ?? devTenant ?? null
@@ -172,26 +155,31 @@ export async function proxy(request: NextRequest) {
       return NextResponse.next()
     }
 
-    // If this store has a custom domain → redirect there permanently
+    // If store has a custom domain, redirect PUBLIC paths there
+    // Owner routes stay on subdomain intentionally
     if (!devTenant && isProduction(host)) {
-      const { createClient } = await import('@/lib/server')
-      const supabase = await createClient()
-      const { data: store } = await supabase
-        .from('stores')
-        .select('custom_domain')
-        .eq('slug', tenantSlug)
-        .single()
+      const isOwnerRoute = PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))
 
-      if (store?.custom_domain) {
-        const storePrefix = `/store/${tenantSlug}`
-        const cleanPath = pathname.startsWith(storePrefix)
-          ? pathname.slice(storePrefix.length) || '/'
-          : pathname
+      if (!isOwnerRoute) {
+        const { createClient } = await import('@/lib/server')
+        const supabase = await createClient()
+        const { data: store } = await supabase
+          .from('stores')
+          .select('custom_domain')
+          .eq('slug', tenantSlug)
+          .single()
 
-        return NextResponse.redirect(
-          toCustomDomainUrl(request, store.custom_domain, `${cleanPath}${url.search}`),
-          308,
-        )
+        if (store?.custom_domain) {
+          const storePrefix = `/store/${tenantSlug}`
+          const cleanPath = pathname.startsWith(storePrefix)
+            ? pathname.slice(storePrefix.length) || '/'
+            : pathname
+
+          return NextResponse.redirect(
+            toCustomDomainUrl(request, store.custom_domain, `${cleanPath}${url.search}`),
+            308,
+          )
+        }
       }
     }
 
