@@ -2,6 +2,8 @@
 import './storefront.css'
 import { CartProvider } from '@/contexts/CartContext'
 import { createClient } from '@/lib/server'
+import StoreNav from '@/components/store/store-nav'
+import StoreFooter from '@/components/store/store-footer'
 
 async function getStoreTheme(slug: string) {
     const supabase = await createClient()
@@ -22,6 +24,17 @@ async function getStoreTheme(slug: string) {
     return theme
 }
 
+async function getStore(slug: string) {
+    const supabase = await createClient()
+    const { data: store } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('slug', slug)
+        .single()
+
+    return store
+}
+
 export default async function StoreLayout({
     children,
     params,
@@ -31,6 +44,7 @@ export default async function StoreLayout({
 }) {
     const { slug } = await params
     const theme = await getStoreTheme(slug)
+    const store = await getStore(slug)
 
     const cssVars = theme
         ? ({
@@ -54,7 +68,9 @@ export default async function StoreLayout({
     return (
         <CartProvider storeSlug={slug}>
             <div className="storefront-root" style={cssVars}>
+                <StoreNav store={store} />
                 {children}
+                <StoreFooter store={store} settings={store.settings} />
             </div>
         </CartProvider>
     )

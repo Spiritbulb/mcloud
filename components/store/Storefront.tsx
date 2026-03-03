@@ -191,59 +191,6 @@ export default function StoreFront({ store, products, collections, featuredProdu
 
     return (
         <div className="min-h-screen">
-
-            {/* ── NAV ───────────────────────────────────────────────────────── */}
-            <nav className="sf-nav border-b sticky top-0 z-40">
-                <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        {store.logo_url ? (
-                            <img
-                                src={store.logo_url}
-                                alt={store.name}
-                                width={36}
-                                height={36}
-                                className="rounded-lg object-cover"
-                            />
-                        ) : (
-                            <div className="sf-logo-fallback w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold">
-                                {store.name[0].toUpperCase()}
-                            </div>
-                        )}
-                        <span className="sf-heading font-semibold text-sm hidden sm:block">
-                            {store.name}
-                        </span>
-                    </div>
-
-                    {/* Search — desktop */}
-                    <div className="hidden md:flex flex-1 max-w-sm relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-40" />
-                        <Input
-                            value={query}
-                            onChange={(e) => setQuery(e.target.value)}
-                            placeholder="Search products..."
-                            className="pl-8 h-8 text-sm rounded-none"
-                        />
-                    </div>
-
-                    <Link href={`/store/${store.slug}/cart`}>
-                        <Button variant="ghost" size="icon">
-                            <ShoppingBag className="w-4 h-4" />
-                        </Button>
-                    </Link>
-                </div>
-
-                {/* Search — mobile */}
-                <div className="md:hidden px-4 pb-3 relative">
-                    <Search className="absolute left-7 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-40" />
-                    <Input
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search products..."
-                        className="pl-8 h-8 text-sm rounded-none"
-                    />
-                </div>
-            </nav>
-
             {/* ── HERO ──────────────────────────────────────────────────────── */}
             {!query && (
                 <section className="relative w-full h-[70vh] sm:h-[90vh] overflow-hidden">
@@ -489,42 +436,6 @@ export default function StoreFront({ store, products, collections, featuredProdu
                 </div>
             </section>
 
-            {/* ── FOOTER ────────────────────────────────────────────────────── */}
-            <footer className="sf-footer border-t py-8">
-                <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-60">
-                    <p>© {new Date().getFullYear()} {store.name}</p>
-                    {settings.socialLinks && (
-                        <div className="flex items-center gap-4">
-                            {settings.socialLinks.instagram && (
-                                <a href={settings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                    Instagram
-                                </a>
-                            )}
-                            {settings.socialLinks.tiktok && (
-                                <a href={settings.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                    TikTok
-                                </a>
-                            )}
-                            {settings.socialLinks.twitter && (
-                                <a href={settings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                    Twitter / X
-                                </a>
-                            )}
-                            {settings.socialLinks.whatsapp && (
-                                <a href={`https://wa.me/${settings.socialLinks.whatsapp}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                    WhatsApp
-                                </a>
-                            )}
-                        </div>
-                    )}
-                    <p className="text-xs">
-                        Powered by{' '}
-                        <a href="https://menengai.cloud" className="hover:opacity-100 transition-opacity">
-                            Menengai Cloud
-                        </a>
-                    </p>
-                </div>
-            </footer>
         </div>
     )
 }
