@@ -125,10 +125,15 @@ export async function proxy(request: NextRequest) {
     }
 
     // ── Rewrite request URL to internal /store/[slug][path] ──────────────────
-    // This must happen BEFORE updateSession so the session refresh and any
-    // downstream rendering operate on a valid Next.js route.
-    // We mutate nextUrl directly — this is the standard Vercel platforms pattern.
+    // ── Rewrite request URL to internal /store/[slug][path] ──────────────────
     const isProtected = PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))
+
+    const cleanPathname = pathname === '/' ? '' : pathname.startsWith('/') ? pathname : `/${pathname}`
+    const internalPath = `/store/${slug}${cleanPathname}`
+    request.nextUrl.pathname = internalPath
+
+    console.log('[custom-domain] slug:', slug, 'pathname:', pathname)
+
 
     request.nextUrl.pathname = `/store/${slug}${pathname}`
 
