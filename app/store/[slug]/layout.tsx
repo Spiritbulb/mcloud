@@ -1,8 +1,6 @@
-import './storefront.css'
 import { CartProvider } from '@/contexts/CartContext'
 import { createClient } from '@/lib/server'
-import StoreNav from '@/components/store/store-nav'
-import StoreFooter from '@/components/store/store-footer'
+import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
 
 
@@ -38,7 +36,6 @@ async function getStore(slug: string) {
 }
 
 
-// ─── Dynamic favicon from store logo ─────────────────────────────────────────
 export async function generateMetadata({
     params,
 }: {
@@ -67,6 +64,7 @@ export default async function StoreLayout({
     params: Promise<{ slug: string }>
 }) {
     const { slug } = await params
+
     const theme = await getStoreTheme(slug)
     const store = await getStore(slug)
 
@@ -91,11 +89,9 @@ export default async function StoreLayout({
 
     return (
         <CartProvider storeSlug={slug}>
-            <div className="storefront-root" style={cssVars}>
-                <StoreNav store={store} />
+            <LayoutWrapper store={store} settings={store.settings} cssVars={cssVars}>
                 {children}
-                <StoreFooter store={store} settings={store.settings} />
-            </div>
+            </LayoutWrapper>
         </CartProvider>
     )
 }

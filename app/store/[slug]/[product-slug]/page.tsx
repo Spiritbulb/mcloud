@@ -1,21 +1,20 @@
 'use client';
 
+import '@/app/store/[slug]/storefront.css'
 import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import ReactMarkdown from 'react-markdown';
 import {
-    ArrowLeft, Heart, ShoppingCart, Star, Minus, Plus,
+    ArrowLeft, ShoppingCart, Star, Minus, Plus,
     Shield, Truck, RefreshCw, Loader2,
     ChevronLeft, ChevronRight
 } from 'lucide-react';
 import { createClient } from '@/lib/client';
 import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { cn } from '@/lib/utils';
 
@@ -177,9 +176,14 @@ export default function ProductDetailPage() {
             <div className="min-h-screen pt-20">
                 <div className="max-w-7xl mx-auto px-8 py-12">
                     <div className="flex justify-center items-center min-h-[60vh]">
-                        <div className="text-center">
-                            <Loader2 className="w-12 h-12 sf-text-primary animate-spin mx-auto mb-4" />
-                            <p className="opacity-50 font-light">Loading product details...</p>
+                        <div className="text-center space-y-3">
+                            <Loader2
+                                className="w-10 h-10 animate-spin mx-auto"
+                                style={{ color: 'var(--sf-foreground)', opacity: 0.5 }}
+                            />
+                            <p className="text-sm font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                Loading product details...
+                            </p>
                         </div>
                     </div>
                 </div>
@@ -193,18 +197,24 @@ export default function ProductDetailPage() {
             <div className="min-h-screen">
                 <div className="max-w-7xl mx-auto px-8 py-12">
                     <div className="flex justify-center items-center min-h-[60vh]">
-                        <Alert variant="destructive" className="max-w-md">
-                            <AlertTitle>Product Not Found</AlertTitle>
-                            <AlertDescription>
+                        <div
+                            className="sf-card max-w-md w-full p-6 border space-y-3"
+                            style={{ borderColor: 'var(--sf-border-strong)' }}
+                        >
+                            <p className="sf-heading font-semibold" style={{ color: 'var(--sf-foreground)' }}>
+                                Product Not Found
+                            </p>
+                            <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                 {error || "The product you're looking for doesn't exist."}
-                                <Button variant="outline" className="mt-4 w-full" asChild>
-                                    <Link href="/products">
-                                        <ArrowLeft className="mr-2 h-4 w-4" />
-                                        Back to Products
-                                    </Link>
-                                </Button>
-                            </AlertDescription>
-                        </Alert>
+                            </p>
+                            <Link
+                                href="/products"
+                                className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-4 py-2 text-sm mt-2"
+                            >
+                                <ArrowLeft className="h-4 w-4" />
+                                Back to Products
+                            </Link>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -218,6 +228,7 @@ export default function ProductDetailPage() {
     const rating = product.metadata?.rating || 4;
     const reviews = product.metadata?.reviews || 24;
     const variantLoading = selectedVariant?.id ? itemLoadingStates[selectedVariant.id] : false;
+    const hasDiscount = product.compare_at_price && product.compare_at_price > (selectedVariant?.price || product.price);
 
     const availableOptions: Record<string, Set<string>> = {};
     product.variants?.forEach(variant => {
@@ -229,74 +240,90 @@ export default function ProductDetailPage() {
 
     // ── Main render ───────────────────────────────────────────────────────────
     return (
-        <div className="min-h-screen pt-8">
-            <div className="max-w-7xl mx-auto px-8 py-8">
+        <div className="min-h-screen pt-4">
+            <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
 
-                <Button variant="ghost" className="mb-8 -ml-4" asChild>
-                    <Link href="/products">
-                        <ArrowLeft className="mr-2 h-4 w-4" />
-                        Back to Products
-                    </Link>
-                </Button>
+                {/* Back link */}
+                <Link
+                    href="/products"
+                    className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-3 py-1.5 text-sm mb-8"
+                >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back to Products
+                </Link>
 
-                <div className="grid lg:grid-cols-2 gap-12">
+                <div className="grid lg:grid-cols-2 gap-10 xl:gap-16">
 
-                    {/* ── Product Images ── */}
-                    <div className="space-y-4">
+                    {/* ── Images ─────────────────────────────────────────────── */}
+                    <div className="space-y-3">
+                        {/* Main image */}
                         <Card className="sf-card overflow-hidden py-0">
                             <div className="relative aspect-square sf-bg-muted">
-                                {currentImage && (
+                                {currentImage ? (
                                     <Image
                                         src={currentImage}
                                         alt={product.name}
                                         fill
                                         className={cn(
-                                            "object-cover transition-opacity",
+                                            "object-cover transition-opacity duration-300",
                                             imageLoaded ? 'opacity-100' : 'opacity-0'
                                         )}
                                         onLoad={() => setImageLoaded(true)}
                                     />
-                                )}
+                                ) : null}
 
                                 {!imageLoaded && (
                                     <div className="absolute inset-0 flex items-center justify-center">
-                                        <div className="sf-image-spinner h-8 w-8 border-2 border-t-transparent rounded-full animate-spin" />
+                                        <div
+                                            className="sf-image-spinner h-8 w-8 border-2 border-t-transparent rounded-full animate-spin"
+                                        />
                                     </div>
                                 )}
 
+                                {/* Prev / next arrows */}
                                 {product.images.length > 1 && (
                                     <>
-                                        <Button
-                                            variant="secondary"
-                                            size="icon"
+                                        <button
                                             onClick={prevImage}
-                                            className="absolute left-4 top-1/2 -translate-y-1/2"
+                                            className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center"
+                                            style={{
+                                                backgroundColor: 'var(--sf-background)',
+                                                color: 'var(--sf-foreground)',
+                                                border: '1px solid var(--sf-border-strong)',
+                                            }}
+                                            aria-label="Previous image"
                                         >
-                                            <ChevronLeft className="h-5 w-5" />
-                                        </Button>
-                                        <Button
-                                            variant="secondary"
-                                            size="icon"
+                                            <ChevronLeft className="h-4 w-4" />
+                                        </button>
+                                        <button
                                             onClick={nextImage}
-                                            className="absolute right-4 top-1/2 -translate-y-1/2"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center"
+                                            style={{
+                                                backgroundColor: 'var(--sf-background)',
+                                                color: 'var(--sf-foreground)',
+                                                border: '1px solid var(--sf-border-strong)',
+                                            }}
+                                            aria-label="Next image"
                                         >
-                                            <ChevronRight className="h-5 w-5" />
-                                        </Button>
+                                            <ChevronRight className="h-4 w-4" />
+                                        </button>
                                     </>
                                 )}
 
+                                {/* Dot indicators */}
                                 {product.images.length > 1 && (
-                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
                                         {product.images.map((_, index) => (
                                             <button
                                                 key={index}
                                                 onClick={() => setCurrentImageIndex(index)}
                                                 className={cn(
-                                                    "h-1.5 rounded-full transition-all",
+                                                    "h-1 rounded-full transition-all",
                                                     index === currentImageIndex
                                                         ? 'sf-dot-active w-6'
                                                         : 'sf-dot-inactive w-1.5'
                                                 )}
+                                                aria-label={`View image ${index + 1}`}
                                             />
                                         ))}
                                     </div>
@@ -304,18 +331,23 @@ export default function ProductDetailPage() {
                             </div>
                         </Card>
 
+                        {/* Thumbnails */}
                         {product.images.length > 1 && (
-                            <div className="flex gap-2 overflow-x-auto pb-2 -mb-2">
+                            <div className="flex gap-2 overflow-x-auto pb-1">
                                 {product.images.map((image, index) => (
                                     <button
                                         key={index}
-                                        onClick={() => setCurrentImageIndex(index)}
+                                        onClick={() => {
+                                            setCurrentImageIndex(index);
+                                            setImageLoaded(false);
+                                        }}
                                         className={cn(
-                                            "flex-shrink-0 w-20 h-20 overflow-hidden border-2 rounded-lg transition-all",
+                                            "flex-shrink-0 w-20 h-20 overflow-hidden border-2 transition-all",
                                             index === currentImageIndex
                                                 ? 'sf-thumb-active'
                                                 : 'sf-thumb-inactive'
                                         )}
+                                        aria-label={`View image ${index + 1}`}
                                     >
                                         <Image
                                             src={image}
@@ -330,47 +362,61 @@ export default function ProductDetailPage() {
                         )}
                     </div>
 
-                    {/* ── Product Info ── */}
-                    <div className="space-y-6 lg:max-w-2xl">
+                    {/* ── Product info ────────────────────────────────────────── */}
+                    <div className="space-y-6 lg:max-w-lg">
 
-                        <h1 className="sf-heading text-3xl lg:text-4xl font-light tracking-tight">
-                            {product.name}
-                        </h1>
+                        {/* Title + sale badge */}
+                        <div className="space-y-2">
+                            {hasDiscount && (
+                                <span className="sf-badge-sale inline-flex items-center px-2.5 py-0.5 text-xs font-medium">
+                                    Sale
+                                </span>
+                            )}
+                            <h1 className="sf-heading text-3xl lg:text-4xl font-light tracking-tight">
+                                {product.name}
+                            </h1>
+                        </div>
 
                         {/* Rating */}
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-0.5">
                                 {[...Array(5)].map((_, i) => (
                                     <Star
                                         key={i}
                                         className={cn(
-                                            "h-4 w-4 transition-colors",
-                                            i < Math.floor(rating)
-                                                ? 'sf-star-filled'
-                                                : 'sf-star-empty'
+                                            "h-4 w-4",
+                                            i < Math.floor(rating) ? 'sf-star-filled' : 'sf-star-empty'
                                         )}
                                     />
                                 ))}
                             </div>
-                            <span className="text-sm opacity-50">
-                                {rating.toFixed(1)} ({reviews} reviews)
+                            <span className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                {rating.toFixed(1)} &middot; {reviews} reviews
                             </span>
                         </div>
 
                         {/* Price */}
-                        <div className="flex items-baseline gap-4">
-                            <div className="text-3xl lg:text-4xl font-light sf-text-primary">
+                        <div className="flex items-baseline gap-3">
+                            <span className="text-3xl font-light" style={{ color: 'var(--sf-foreground)' }}>
                                 {selectedVariant ? formatPrice(selectedVariant.price) : formatPrice(product.price)}
-                            </div>
-                            {product.compare_at_price && product.compare_at_price > (selectedVariant?.price || product.price) && (
-                                <div className="text-xl opacity-40 line-through">
-                                    {formatPrice(product.compare_at_price)}
-                                </div>
+                            </span>
+                            {hasDiscount && (
+                                <span
+                                    className="text-lg line-through"
+                                    style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}
+                                >
+                                    {formatPrice(product.compare_at_price!)}
+                                </span>
                             )}
                         </div>
 
+                        <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
+
                         {/* Description */}
-                        <div className="sf-prose text-sm leading-relaxed font-light opacity-70">
+                        <div
+                            className="sf-prose text-sm leading-relaxed font-light"
+                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                        >
                             {product.metadata?.descriptionHtml ? (
                                 <div
                                     className="prose prose-sm max-w-none prose-headings:font-normal prose-p:my-3 prose-ul:my-3 prose-ol:my-3 prose-li:my-1"
@@ -389,7 +435,11 @@ export default function ProductDetailPage() {
                                         strong: ({ children }) => <strong className="font-medium">{children}</strong>,
                                         em: ({ children }) => <em className="italic">{children}</em>,
                                         a: ({ children, href }) => (
-                                            <a href={href} className="sf-text-primary hover:underline font-medium">
+                                            <a
+                                                href={href}
+                                                className="underline underline-offset-2"
+                                                style={{ color: 'var(--sf-foreground)' }}
+                                            >
                                                 {children}
                                             </a>
                                         ),
@@ -400,13 +450,15 @@ export default function ProductDetailPage() {
                             )}
                         </div>
 
+                        <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
+
                         {/* Stock status */}
-                        <div className="flex items-center gap-3">
-                            <div className={cn("h-2 w-2 rounded-full", isInStock ? 'sf-dot-instock' : 'sf-dot-outofstock')} />
-                            <span className={cn("text-sm font-normal", isInStock ? 'sf-text-instock' : 'sf-text-outofstock')}>
+                        <div className="flex items-center gap-2">
+                            <div className={cn("h-2 w-2 rounded-full flex-shrink-0", isInStock ? 'sf-dot-instock' : 'sf-dot-outofstock')} />
+                            <span className={cn("text-sm", isInStock ? 'sf-text-instock' : 'sf-text-outofstock')}>
                                 {isInStock
-                                    ? `In Stock (${selectedVariant?.inventory_quantity || 0} available)`
-                                    : 'Out of Stock'}
+                                    ? `In stock — ${selectedVariant?.inventory_quantity} available`
+                                    : 'Out of stock'}
                             </span>
                         </div>
 
@@ -415,24 +467,27 @@ export default function ProductDetailPage() {
                             <div className="space-y-4">
                                 {Object.entries(availableOptions).map(([optionName, values]) => (
                                     <div key={optionName}>
-                                        <label className="text-sm font-normal mb-2 block capitalize">
-                                            {optionName}:
+                                        <label
+                                            className="text-xs uppercase tracking-wider mb-2 block"
+                                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                                        >
+                                            {optionName}
                                         </label>
                                         <div className="flex flex-wrap gap-2">
-                                            {Array.from(values).map((value) => (
-                                                <Button
-                                                    key={value}
-                                                    variant={selectedOptions[optionName] === value ? 'default' : 'outline'}
-                                                    size="sm"
-                                                    onClick={() => handleOptionChange(optionName, value)}
-                                                    className={cn(
-                                                        "capitalize",
-                                                        selectedOptions[optionName] === value && 'sf-btn-primary'
-                                                    )}
-                                                >
-                                                    {value}
-                                                </Button>
-                                            ))}
+                                            {Array.from(values).map((value) => {
+                                                const active = selectedOptions[optionName] === value;
+                                                return (
+                                                    <button
+                                                        key={value}
+                                                        onClick={() => handleOptionChange(optionName, value)}
+                                                        className={cn("sf-pill capitalize px-4 py-1.5 text-sm border transition-colors",
+                                                            active ? 'sf-pill-active' : 'sf-pill-inactive'
+                                                        )}
+                                                    >
+                                                        {value}
+                                                    </button>
+                                                );
+                                            })}
                                         </div>
                                     </div>
                                 ))}
@@ -442,86 +497,109 @@ export default function ProductDetailPage() {
                         {/* Quantity */}
                         {isInStock && (
                             <div className="flex items-center gap-4">
-                                <label className="text-sm font-normal whitespace-nowrap">Quantity:</label>
-                                <div className="flex items-center border rounded-lg px-1">
-                                    <Button
-                                        variant="ghost" size="icon"
-                                        className="h-10 w-10 p-0 hover:bg-transparent"
+                                <label
+                                    className="text-xs uppercase tracking-wider"
+                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                >
+                                    Quantity
+                                </label>
+                                <div
+                                    className="inline-flex items-center"
+                                    style={{ border: '1px solid var(--sf-border-strong)' }}
+                                >
+                                    <button
+                                        className="w-10 h-10 flex items-center justify-center transition-colors disabled:opacity-30"
+                                        style={{ color: 'var(--sf-foreground)' }}
                                         onClick={() => setQuantity(Math.max(1, quantity - 1))}
                                         disabled={quantity <= 1}
+                                        aria-label="Decrease quantity"
                                     >
-                                        <Minus className="h-4 w-4" />
-                                    </Button>
-                                    <span className="px-4 py-2 text-sm font-normal min-w-[3rem] text-center">
+                                        <Minus className="h-3.5 w-3.5" />
+                                    </button>
+                                    <span
+                                        className="px-4 text-sm min-w-[3rem] text-center tabular-nums"
+                                        style={{ color: 'var(--sf-foreground)' }}
+                                    >
                                         {quantity}
                                     </span>
-                                    <Button
-                                        variant="ghost" size="icon"
-                                        className="h-10 w-10 p-0 hover:bg-transparent"
+                                    <button
+                                        className="w-10 h-10 flex items-center justify-center transition-colors disabled:opacity-30"
+                                        style={{ color: 'var(--sf-foreground)' }}
                                         onClick={() => setQuantity(Math.min(maxQuantity, quantity + 1))}
                                         disabled={quantity >= maxQuantity}
+                                        aria-label="Increase quantity"
                                     >
-                                        <Plus className="h-4 w-4" />
-                                    </Button>
+                                        <Plus className="h-3.5 w-3.5" />
+                                    </button>
                                 </div>
                             </div>
                         )}
 
-                        {/* Add to Cart */}
-                        <div className="flex gap-3">
-                            <Button
-                                onClick={handleAddToCart}
-                                disabled={!isInStock || variantLoading}
-                                className="flex-1 justify-center sf-btn-primary"
-                                size="lg"
-                            >
-                                {variantLoading ? (
-                                    <>
-                                        <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                                        Adding...
-                                    </>
-                                ) : (
-                                    <>
-                                        <ShoppingCart className="mr-2 h-5 w-5" />
-                                        {isInStock ? 'Add to Cart' : 'Out of Stock'}
-                                    </>
-                                )}
-                            </Button>
-                            <Button variant="outline" size="icon" className="h-12 w-12 shrink-0">
-                                <Heart className="h-5 w-5" />
-                            </Button>
-                        </div>
-
-                        <Separator />
+                        {/* Add to Cart — full width, no wishlist */}
+                        <Button
+                            onClick={handleAddToCart}
+                            disabled={!isInStock || variantLoading}
+                            className="w-full sf-btn-primary justify-center"
+                            size="lg"
+                        >
+                            {variantLoading ? (
+                                <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Adding...
+                                </>
+                            ) : (
+                                <>
+                                    <ShoppingCart className="mr-2 h-4 w-4" />
+                                    {isInStock ? 'Add to Cart' : 'Out of Stock'}
+                                </>
+                            )}
+                        </Button>
 
                         {/* Guarantees */}
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                            <div className="flex items-start gap-3 opacity-60">
-                                <Truck className="h-5 w-5 mt-0.5 shrink-0 sf-text-primary" />
-                                <span>Fast Shipping</span>
-                            </div>
-                            <div className="flex items-start gap-3 opacity-60">
-                                <Shield className="h-5 w-5 mt-0.5 shrink-0 sf-text-primary" />
-                                <span>Secure Payment</span>
-                            </div>
-                            <div className="flex items-start gap-3 opacity-60">
-                                <RefreshCw className="h-5 w-5 mt-0.5 shrink-0 sf-text-primary" />
-                                <span>30-Day Returns</span>
-                            </div>
+                        <div
+                            className="grid grid-cols-3 gap-3 pt-2"
+                            style={{ borderTop: '1px solid var(--sf-border)' }}
+                        >
+                            {[
+                                { icon: Truck, label: 'Fast Shipping' },
+                                { icon: Shield, label: 'Secure Payment' },
+                                { icon: RefreshCw, label: '30-Day Returns' },
+                            ].map(({ icon: Icon, label }) => (
+                                <div key={label} className="flex flex-col items-center gap-1.5 text-center">
+                                    <Icon
+                                        className="h-4 w-4"
+                                        style={{ color: 'var(--sf-foreground)', opacity: 0.45 }}
+                                    />
+                                    <span
+                                        className="text-xs leading-tight"
+                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                    >
+                                        {label}
+                                    </span>
+                                </div>
+                            ))}
                         </div>
 
+                        {/* Tags */}
                         {tags.length > 0 && (
-                            <>
-                                <Separator />
-                                <div>
-                                    <h3 className="text-sm font-normal mb-3">Tags:</h3>
-                                    <div className="flex flex-wrap gap-2">
-                                        {tags.map((tag) => (
-                                            <Badge key={tag} variant="secondary">{tag}</Badge>
-                                        ))}
-                                    </div>
+                            <div style={{ borderTop: '1px solid var(--sf-border)', paddingTop: '1rem' }}>
+                                <p
+                                    className="text-xs uppercase tracking-wider mb-2"
+                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                >
+                                    Tags
+                                </p>
+                                <div className="flex flex-wrap gap-2">
+                                    {tags.map((tag) => (
+                                        <span
+                                            key={tag}
+                                            className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs"
+                                        >
+                                            {tag}
+                                        </span>
+                                    ))}
                                 </div>
-                            </>
+                            </div>
                         )}
                     </div>
                 </div>

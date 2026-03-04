@@ -1,5 +1,6 @@
 'use client';
 
+import '@/app/store/[slug]/storefront.css'
 import { useEffect, useState, useCallback } from 'react';
 import {
     Search, Loader2, ShoppingBag, X,
@@ -10,8 +11,6 @@ import { useCart } from '@/contexts/CartContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -69,6 +68,7 @@ function ProductCard({ product, className }: ProductCardProps) {
 
     return (
         <Card className={cn("sf-card group hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col py-0", className)}>
+            {/* Image */}
             <div className="relative overflow-hidden aspect-[4/5] sf-bg-muted">
                 <Image
                     src={imageUrl}
@@ -79,9 +79,9 @@ function ProductCard({ product, className }: ProductCardProps) {
                 />
 
                 {hasDiscount && (
-                    <Badge className="absolute top-3 left-3 z-10 sf-badge-sale shadow-lg">
+                    <span className="sf-badge-sale absolute top-3 left-3 z-10 shadow-lg inline-flex items-center px-2.5 py-0.5 text-xs font-medium">
                         -{discount}%
-                    </Badge>
+                    </span>
                 )}
 
                 {stock === 0 && (
@@ -94,30 +94,43 @@ function ProductCard({ product, className }: ProductCardProps) {
 
             <CardContent className="pt-4 pb-6 flex-1 flex flex-col">
                 <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-1 text-sm opacity-50 mb-1">
-                        <Star className="w-3 h-3 sf-fill-accent" />
+                    {/* Star rating — use sf-foreground at low opacity, not a default blue */}
+                    <div className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--sf-foreground)', opacity: 0.45 }}>
+                        <Star className="w-3 h-3 sf-star-filled" />
                         <span>4.8 (23)</span>
                     </div>
 
                     <Link href={`/${product.slug}`} className="block">
-                        <CardTitle className="sf-heading text-lg font-normal leading-tight hover:sf-text-primary transition-colors line-clamp-2 group-hover:underline">
+                        <CardTitle
+                            className="sf-heading text-lg font-normal leading-tight line-clamp-2 group-hover:underline"
+                            style={{ color: 'var(--sf-foreground)' }}
+                        >
                             {product.name}
                         </CardTitle>
                     </Link>
 
-                    <CardDescription className="text-sm opacity-60 line-clamp-2">
-                        {product.description || 'Premium quality product for your needs.'}
+                    {/* CardDescription: override shadcn's text-muted-foreground (blue-gray) */}
+                    <CardDescription>
+                        <span
+                            className="text-sm line-clamp-2 block"
+                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                        >
+                            {/* 120 characters */}
+                            {product.description?.slice(0, 100) + '...' || 'Premium quality product for your needs.'}
+                        </span>
                     </CardDescription>
                 </div>
 
-                <div className="border-t pt-4 space-y-3 flex-1 flex flex-col justify-end">
+                <div className="flex-1 flex flex-col justify-end space-y-3"
+                    style={{ borderTop: '1px solid var(--sf-border)', paddingTop: '1rem' }}
+                >
                     <div className="flex items-end justify-between">
                         <div className="space-y-1">
-                            <div className="text-xl font-light sf-text-primary">
+                            <div className="text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
                                 KSh {product.price.toLocaleString()}
                             </div>
                             {hasDiscount && (
-                                <div className="text-sm opacity-40 line-through">
+                                <div className="text-sm line-through" style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}>
                                     KSh {product.compare_at_price!.toLocaleString()}
                                 </div>
                             )}
@@ -138,14 +151,17 @@ function ProductCard({ product, className }: ProductCardProps) {
                                 Add to Cart
                             </Button>
                         ) : (
-                            <Badge variant="secondary" className="flex-shrink-0">
-                                <Package className="w-3 h-3 mr-1" />
+                            /* Replaced Badge variant="secondary" (shadcn blue-gray) with sf token span */
+                            <span
+                                className="sf-badge-oos flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium"
+                            >
+                                <Package className="w-3 h-3" />
                                 Sold Out
-                            </Badge>
+                            </span>
                         )}
                     </div>
 
-                    <div className="flex items-center justify-between text-xs opacity-40 pt-2">
+                    <div className="flex items-center justify-between text-xs pt-2" style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}>
                         <span>SKU: {product.sku || product.id.slice(-8)}</span>
                         {stock > 0 && (
                             <span className="flex items-center gap-1">
@@ -241,8 +257,11 @@ export default function ProductsPage({
                 <div className="max-w-7xl mx-auto px-8 py-12">
                     <div className="flex justify-center items-center min-h-[60vh]">
                         <div className="text-center">
-                            <Loader2 className="w-12 h-12 sf-text-primary animate-spin mx-auto mb-4" />
-                            <p className="opacity-50">Loading products...</p>
+                            <Loader2
+                                className="w-12 h-12 animate-spin mx-auto mb-4"
+                                style={{ color: 'var(--sf-foreground)' }}
+                            />
+                            <p style={{ color: 'var(--sf-foreground-subtle)' }}>Loading products...</p>
                         </div>
                     </div>
                 </div>
@@ -256,16 +275,25 @@ export default function ProductsPage({
             <div className="min-h-screen">
                 <div className="max-w-7xl mx-auto px-8 py-12">
                     <div className="flex justify-center items-center min-h-[60vh]">
-                        <Alert variant="destructive" className="max-w-md">
-                            <ShoppingBag className="h-5 w-5" />
-                            <AlertTitle>Error Loading Products</AlertTitle>
-                            <AlertDescription className="mt-2">
+                        {/* Replaced shadcn Alert variant="destructive" — uses red from app theme, not sf tokens */}
+                        <div
+                            className="sf-card max-w-md w-full p-6 space-y-3 border"
+                            style={{ borderColor: 'var(--sf-border-strong)' }}
+                        >
+                            <div className="flex items-center gap-2" style={{ color: 'var(--sf-foreground)' }}>
+                                <ShoppingBag className="h-5 w-5 flex-shrink-0" />
+                                <span className="sf-heading font-semibold">Error Loading Products</span>
+                            </div>
+                            <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                 {error}
-                                <Button onClick={fetchProducts} variant="outline" className="mt-4 w-full">
-                                    Try Again
-                                </Button>
-                            </AlertDescription>
-                        </Alert>
+                            </p>
+                            <button
+                                onClick={fetchProducts}
+                                className="sf-pill sf-pill-inactive border w-full py-2 text-sm mt-2"
+                            >
+                                Try Again
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -280,16 +308,20 @@ export default function ProductsPage({
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="sf-heading text-4xl md:text-5xl font-light tracking-tight mb-4">
-                        The Full <span className="sf-text-accent">Collection</span>
+                        The Full{' '}
+                        <span className="sf-text-accent">Collection</span>
                     </h1>
-                    <p className="opacity-60 text-lg max-w-2xl mx-auto mb-8 font-light">
+                    <p className="text-lg max-w-2xl mx-auto mb-8 font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
                         Premium hair care, elegant jewelry, and beauty essentials for your unique style
                     </p>
 
                     {/* Search Bar */}
                     <div className="max-w-2xl mx-auto">
                         <div className="relative">
-                            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 opacity-40" />
+                            <Search
+                                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
+                                style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}
+                            />
                             <Input
                                 type="text"
                                 placeholder="Search for products..."
@@ -298,20 +330,20 @@ export default function ProductsPage({
                                 className="pl-12 pr-12 h-12"
                             />
                             {searchQuery && (
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
+                                <button
                                     onClick={() => setSearchQuery('')}
-                                    className="absolute right-2 top-1/2 -translate-y-1/2"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1"
+                                    style={{ color: 'var(--sf-foreground)', opacity: 0.5 }}
+                                    aria-label="Clear search"
                                 >
                                     <X className="w-4 h-4" />
-                                </Button>
+                                </button>
                             )}
                         </div>
 
                         {debouncedSearch && (
-                            <p className="text-sm opacity-50 mt-3">
-                                {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'} for "{debouncedSearch}"
+                            <p className="text-sm mt-3" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                {filteredProducts.length} {filteredProducts.length === 1 ? 'result' : 'results'} for &ldquo;{debouncedSearch}&rdquo;
                             </p>
                         )}
                     </div>
@@ -323,24 +355,27 @@ export default function ProductsPage({
                         <Card className="sf-card max-w-md mx-auto">
                             <CardContent className="pt-12 pb-12">
                                 <div className="w-20 h-20 sf-bg-muted flex items-center justify-center mx-auto mb-6">
-                                    <Search className="w-10 h-10 opacity-30" />
+                                    <Search
+                                        className="w-10 h-10"
+                                        style={{ color: 'var(--sf-foreground)', opacity: 0.25 }}
+                                    />
                                 </div>
                                 <h3 className="sf-heading text-2xl font-light mb-3">
                                     {debouncedSearch ? 'No Products Found' : 'No Products Available'}
                                 </h3>
-                                <p className="opacity-50 mb-6 font-light">
+                                <p className="mb-6 font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                     {debouncedSearch
                                         ? `We couldn't find any products matching "${debouncedSearch}".`
                                         : 'Check back soon for new arrivals.'
                                     }
                                 </p>
                                 {debouncedSearch && (
-                                    <Button
-                                        className="sf-btn-primary"
+                                    <button
+                                        className="sf-btn-primary px-6 py-2 text-sm"
                                         onClick={() => setSearchQuery('')}
                                     >
                                         Clear Search
-                                    </Button>
+                                    </button>
                                 )}
                             </CardContent>
                         </Card>
@@ -354,11 +389,11 @@ export default function ProductsPage({
                         </div>
 
                         <div className="mt-12 text-center">
-                            <p className="opacity-40 text-sm font-light">
+                            <p className="text-sm font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                 Showing{' '}
-                                <span className="font-normal opacity-100">{filteredProducts.length}</span>{' '}
+                                <span style={{ color: 'var(--sf-foreground)' }}>{filteredProducts.length}</span>{' '}
                                 of{' '}
-                                <span className="font-normal opacity-100">{products.length}</span>{' '}
+                                <span style={{ color: 'var(--sf-foreground)' }}>{products.length}</span>{' '}
                                 products
                             </p>
                         </div>

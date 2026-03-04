@@ -1,44 +1,91 @@
 @import "tailwindcss";
 
-@layer theme {
-  :root {
-    --radius: 0.5rem;
-    --background: 255 255 255;
-    --foreground: 32 45 58;
-    --surface: 255 255 255;
-    --surface-variant: 248 248 248;
-    --on-surface: 66 94 123;
-    --on-surface-variant: 95 99 104;
-    --primary: 66 94 123;
-    --primary-hover: 42 49 56;
-    --link: 26 115 232;
-    --link-hover: 23 101 204;
-    --outline: 218 220 224;
-  }
+/* ============================================================
+   THEME TOKENS
+   Brand primary: #425e7b (steel blue)
+   ============================================================ */
+@theme {
+  --radius: 0.5rem;
+  --radius-sm: 0.25rem;
+  --radius-lg: 0.75rem;
 
+  /* ── Light mode (default) ───────────────────────────────── */
+  --color-background: 250 251 252;
+  /* warm off-white */
+  --color-surface: 255 255 255;
+  --color-surface-variant: 244 246 248;
+  --color-foreground: 22 32 45;
+  /* deep navy */
+  --color-on-surface: 66 94 123;
+  /* brand blue — #425e7b */
+  --color-on-surface-muted: 100 108 117;
+  /* neutral mid-grey */
+  --color-primary: 66 94 123;
+  /* #425e7b */
+  --color-primary-hover: 50 72 97;
+  /* #324861 — 15% darker */
+  --color-primary-foreground: 255 255 255;
+  --color-link: 56 100 160;
+  /* blue, stays in brand family */
+  --color-link-hover: 40 78 130;
+  --color-outline: 218 222 227;
+  --color-outline-strong: 175 184 194;
+
+  /* ── Dark section panels (hero / stats / CTA) ───────────── */
+  /* Intentionally darker than dark-mode background           */
+  --color-section-dark: 8 11 16;
+  /* near-black, not pure */
+  --color-on-dark: 228 232 237;
+  /* soft white — not blinding */
+  --color-on-dark-secondary: 160 170 182;
+  /* muted blue-grey */
+  --color-on-dark-dim: 110 120 132;
+  /* subtle — placeholders */
+  --color-on-dark-muted: 72 82 94;
+  /* very quiet — meta text */
+}
+
+/* ============================================================
+   DARK MODE OVERRIDES
+   ============================================================ */
+@layer theme {
   .dark {
-    --background: 0 0 0;
-    --foreground: 232 234 237;
-    --surface: 26 31 38;
-    --surface-variant: 42 49 56;
-    --on-surface: 232 234 237;
-    --on-surface-variant: 154 160 166;
-    --primary: 138 180 248;
-    --primary-hover: 174 203 250;
-    --link: 138 180 248;
-    --link-hover: 174 203 250;
-    --outline: 60 64 67;
+    --color-background: 3 3 3;
+    /* deep slate — not pure black */
+    --color-surface: 22 28 36;
+    /* cards sit above background */
+    --color-surface-variant: 30 38 48;
+    /* hover states, alt rows */
+    --color-foreground: 220 226 234;
+    /* near-white heading text */
+    --color-on-surface: 185 200 218;
+    /* brand-tinted light text */
+    --color-on-surface-muted: 120 132 147;
+    /* secondary text */
+    --color-primary: 110 145 185;
+    /* #6e91b9 — brand lightened for dark */
+    --color-primary-hover: 140 172 210;
+    /* lighter on hover */
+    --color-primary-foreground: 10 15 22;
+    /* dark text on light primary */
+    --color-link: 110 155 210;
+    --color-link-hover: 145 185 235;
+    --color-outline: 40 50 63;
+    --color-outline-strong: 58 72 90;
   }
 }
 
+/* ============================================================
+   BASE STYLES
+   ============================================================ */
 @layer base {
   * {
-    border-color: rgb(var(--outline));
+    border-color: rgb(var(--color-outline));
   }
 
   body {
-    background-color: rgb(var(--background));
-    color: rgb(var(--on-surface));
+    background-color: rgb(var(--color-background));
+    color: rgb(var(--color-on-surface));
     font-feature-settings: "kern" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -52,58 +99,23 @@
   h6 {
     font-weight: normal;
     letter-spacing: -0.025em;
+    color: rgb(var(--color-foreground));
+  }
+
+  a {
+    color: rgb(var(--color-link));
+    transition: color 0.2s;
+  }
+
+  a:hover {
+    color: rgb(var(--color-link-hover));
   }
 }
 
+/* ============================================================
+   TYPOGRAPHY SCALE
+   ============================================================ */
 @layer utilities {
-  .bg-background {
-    background-color: rgb(var(--background));
-  }
-
-  .bg-surface {
-    background-color: rgb(var(--surface));
-  }
-
-  .bg-surface-variant {
-    background-color: rgb(var(--surface-variant));
-  }
-
-  .bg-primary {
-    background-color: rgb(var(--primary));
-  }
-
-  .text-on-surface {
-    color: rgb(var(--on-surface));
-  }
-
-  .text-on-surface-variant {
-    color: rgb(var(--on-surface-variant));
-  }
-
-  .text-foreground {
-    color: rgb(var(--foreground));
-  }
-
-  .text-link {
-    color: rgb(var(--link));
-  }
-
-  .border-outline {
-    border-color: rgb(var(--outline));
-  }
-
-  .hover\:bg-primary-hover:hover {
-    background-color: rgb(var(--primary-hover));
-  }
-
-  .hover\:bg-surface-variant:hover {
-    background-color: rgb(var(--surface-variant));
-  }
-
-  .hover\:text-link-hover:hover {
-    color: rgb(var(--link-hover));
-  }
-
   .text-display-large {
     font-size: 80px;
     line-height: 1.1;
@@ -174,57 +186,131 @@
     font-size: 14px;
     line-height: 1.45;
   }
+}
 
-  .google-button-primary {
-    background-color: rgb(var(--primary));
-    color: white;
+/* ============================================================
+   DARK SECTION UTILITIES
+   Used on hero, stats, and CTA sections
+   ============================================================ */
+@layer utilities {
+  .dark-section {
+    background-color: rgb(var(--color-section-dark));
+  }
+
+  /* Gradient fade for hero parallax bg image */
+  .gradient-section-dark {
+    background: linear-gradient(to bottom,
+        rgb(var(--color-section-dark) / 0.5),
+        rgb(var(--color-section-dark) / 0.3),
+        rgb(var(--color-section-dark)));
+  }
+
+  /* Semi-opaque overlay for CTA bg image */
+  .overlay-section-dark {
+    background-color: rgb(var(--color-section-dark) / 0.75);
+  }
+
+  /* Text on dark section backgrounds — uses dedicated tokens, not white */
+  .text-on-dark {
+    color: rgb(var(--color-on-dark));
+  }
+
+  .text-on-dark-secondary {
+    color: rgb(var(--color-on-dark-secondary));
+  }
+
+  .text-on-dark-dim {
+    color: rgb(var(--color-on-dark-dim));
+  }
+
+  .text-on-dark-muted {
+    color: rgb(var(--color-on-dark-muted));
+  }
+}
+
+/* ============================================================
+   COMPONENT CLASSES
+   ============================================================ */
+@layer utilities {
+
+  /* --- Primary button --- */
+  .btn-primary {
+    background-color: rgb(var(--color-primary));
+    color: rgb(var(--color-primary-foreground));
     font-weight: 500;
-    font-family: var(--font-montserrat);
-    border-radius: 4px;
-    transition: all 0.2s;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.08);
   }
 
-  .google-button-primary:hover {
-    background-color: rgb(var(--primary-hover));
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  .btn-primary:hover {
+    background-color: rgb(var(--color-primary-hover));
+    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.12);
   }
 
-  .google-button-secondary {
+  /* --- Secondary / outline button --- */
+  .btn-secondary {
     background-color: transparent;
-    border: 1px solid rgb(var(--outline));
-    color: rgb(var(--on-surface));
+    border: 1px solid rgb(var(--color-outline));
+    color: rgb(var(--color-on-surface));
     font-weight: 500;
-    border-radius: 4px;
-    transition: all 0.2s;
+    border-radius: var(--radius-sm);
+    transition: background-color 0.2s, border-color 0.2s;
   }
 
-  .google-button-secondary:hover {
-    background-color: rgb(var(--surface-variant));
+  .btn-secondary:hover {
+    background-color: rgb(var(--color-surface-variant));
+    border-color: rgb(var(--color-outline-strong));
   }
 
-  .google-link {
-    color: rgb(var(--link));
+  /* --- Inverted button (for dark sections) --- */
+  /* Light surface bg + primary-colored text */
+  .btn-inverted {
+    background-color: rgb(var(--color-on-dark));
+    color: rgb(var(--color-section-dark));
+    font-weight: 600;
+    border-radius: var(--radius-sm);
+    transition: opacity 0.2s;
+  }
+
+  .btn-inverted:hover {
+    opacity: 0.88;
+  }
+
+  /* --- Badge on dark/primary backgrounds --- */
+  .badge-inverted {
+    background-color: rgb(var(--color-on-dark));
+    color: rgb(var(--color-primary));
+    font-weight: 600;
+  }
+
+  /* --- Links --- */
+  .link {
+    color: rgb(var(--color-link));
     cursor: pointer;
     transition: color 0.2s;
   }
 
-  .google-link:hover {
-    color: rgb(var(--link-hover));
+  .link:hover {
+    color: rgb(var(--color-link-hover));
   }
 
-  .google-card {
-    background-color: rgb(var(--surface));
-    border: 1px solid rgb(var(--outline));
-    border-radius: 0.5rem;
+  /* --- Cards --- */
+  .card {
+    background-color: rgb(var(--color-surface));
+    border: 1px solid rgb(var(--color-outline));
+    border-radius: var(--radius);
     transition: box-shadow 0.2s;
   }
 
-  .google-card:hover {
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+  .card:hover {
+    box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.1);
   }
 }
 
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
 @keyframes marquee {
   from {
     transform: translateX(0);

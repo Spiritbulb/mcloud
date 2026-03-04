@@ -97,6 +97,7 @@ function ProductCard({ product, currency, storeSlug }: {
     return (
         <Link href={`/store/${storeSlug}/${product.slug}`} className="group block">
             <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                {/* Image */}
                 <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
                     {image ? (
                         <img
@@ -106,44 +107,74 @@ function ProductCard({ product, currency, storeSlug }: {
                         />
                     ) : (
                         <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-8 h-8 opacity-30" />
+                            {/* Icon inherits sf-foreground via currentColor */}
+                            <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
                         </div>
                     )}
+
+                    {/* Out of stock overlay */}
                     {!inStock && (
                         <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
-                            <Badge variant="secondary">Out of stock</Badge>
+                            {/* Use sf-badge-oos so it doesn't pull from shadcn "secondary" (blue-gray) */}
+                            <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">
+                                Out of stock
+                            </span>
                         </div>
                     )}
+
+                    {/* Sale badge */}
                     {hasDiscount && inStock && (
-                        <Badge className="absolute top-2 left-2 sf-badge-sale sf-border-radius">
+                        <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">
                             Sale
-                        </Badge>
+                        </span>
                     )}
                 </div>
+
+                {/* Text */}
                 <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    {/* CardTitle: explicitly set sf-heading so it gets sf-foreground, not shadcn default */}
                     <CardTitle className="sf-heading text-base font-normal line-clamp-2">
                         {product.name}
                     </CardTitle>
                     {product.description && (
-                        <CardDescription className="text-xs line-clamp-2">
-                            {product.description}
+                        /* CardDescription: shadcn renders this as text-muted-foreground (often blue-gray).
+                           Wrap content in a span with explicit color to override. */
+                        <CardDescription>
+                            <span
+                                className="text-xs line-clamp-2"
+                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                            >
+                                {product.description}
+                            </span>
                         </CardDescription>
                     )}
                 </CardHeader>
+
                 <CardFooter className="flex justify-between items-center px-4 pb-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-base font-light">
+                        <span
+                            className="text-base font-light"
+                            style={{ color: 'var(--sf-foreground)' }}
+                        >
                             {formatPrice(product.price, currency)}
                         </span>
                         {hasDiscount && (
-                            <span className="text-xs line-through opacity-50">
+                            <span
+                                className="text-xs line-through"
+                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                            >
                                 {formatPrice(product.compare_at_price!, currency)}
                             </span>
                         )}
                     </div>
-                    <Button variant="ghost" size="sm" className="gap-1">
+                    {/* Ghost button: override shadcn color so it doesn't show as blue */}
+                    <button
+                        className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border"
+                        tabIndex={-1}
+                        aria-hidden="true"
+                    >
                         View <ArrowRight className="h-3 w-3" />
-                    </Button>
+                    </button>
                 </CardFooter>
             </Card>
         </Link>
@@ -227,15 +258,18 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                 >
                                     <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
                                         {slide.accent && (
-                                            <Badge variant="outline" className="sf-badge-outline">
+                                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
                                                 {slide.accent}
-                                            </Badge>
+                                            </span>
                                         )}
                                         <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">
                                             {slide.title}
                                         </h1>
                                         {slide.subtitle && (
-                                            <p className="text-base md:text-lg font-light opacity-70">
+                                            <p
+                                                className="text-base md:text-lg font-light"
+                                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                                            >
                                                 {slide.subtitle}
                                             </p>
                                         )}
@@ -278,11 +312,16 @@ export default function StoreFront({ store, products, collections, featuredProdu
                     <section className="sf-section-muted py-12 md:py-20">
                         <div className="container mx-auto px-4 md:px-6">
                             <div className="mb-10 md:mb-14">
-                                <Badge variant="outline" className="mb-3">Collections</Badge>
+                                <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
+                                    Collections
+                                </span>
                                 <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">
                                     Shop by Category
                                 </h2>
-                                <p className="font-light text-sm mt-2 opacity-60">
+                                <p
+                                    className="font-light text-sm mt-2"
+                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                >
                                     Curated selections for every need
                                 </p>
                             </div>
@@ -334,13 +373,20 @@ export default function StoreFront({ store, products, collections, featuredProdu
                                                 {collection.name}
                                             </CardTitle>
                                             {collection.description && (
-                                                <CardDescription className="line-clamp-2 text-sm">
-                                                    {collection.description}
+                                                <CardDescription>
+                                                    <span
+                                                        className="line-clamp-2 text-sm"
+                                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                    >
+                                                        {collection.description}
+                                                    </span>
                                                 </CardDescription>
                                             )}
                                         </CardHeader>
                                         <CardFooter className="px-4 pb-4">
-                                            <Button variant="outline" size="sm">Explore</Button>
+                                            <button className="sf-pill sf-pill-inactive border px-3 py-1.5 text-sm">
+                                                Explore
+                                            </button>
                                         </CardFooter>
                                     </Card>
                                 ))}
@@ -359,9 +405,11 @@ export default function StoreFront({ store, products, collections, featuredProdu
                         <div className="container mx-auto px-4 md:px-6">
                             <div className="mb-10 md:mb-14">
                                 <div className="flex items-center gap-4 mb-3">
-                                    <div className="h-px flex-1 bg-border" />
-                                    <Badge variant="outline">Featured Collection</Badge>
-                                    <div className="h-px flex-1 bg-border" />
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+                                        Featured Collection
+                                    </span>
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
                                 </div>
                                 <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
                                     Top Picks
@@ -388,16 +436,18 @@ export default function StoreFront({ store, products, collections, featuredProdu
                 <div className="container mx-auto px-4 md:px-6">
                     <div className="mb-10 md:mb-14">
                         {query ? (
-                            <p className="text-sm opacity-60">
+                            <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                 {filtered.length} result{filtered.length !== 1 ? 's' : ''} for{' '}
-                                <span className="font-medium opacity-100">"{query}"</span>
+                                <span style={{ color: 'var(--sf-foreground)', fontWeight: 500 }}>"{query}"</span>
                             </p>
                         ) : (
                             <>
                                 <div className="flex items-center gap-4 mb-3">
-                                    <div className="h-px flex-1 bg-border" />
-                                    <Badge variant="outline">All Products</Badge>
-                                    <div className="h-px flex-1 bg-border" />
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+                                        All Products
+                                    </span>
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
                                 </div>
                                 <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
                                     Browse Everything
@@ -408,14 +458,18 @@ export default function StoreFront({ store, products, collections, featuredProdu
 
                     {filtered.length === 0 ? (
                         <div className="text-center py-24 space-y-3">
-                            <ShoppingBag className="w-10 h-10 opacity-20 mx-auto" />
-                            <p className="text-sm opacity-60">
+                            <ShoppingBag
+                                className="w-10 h-10 mx-auto"
+                                style={{ color: 'var(--sf-foreground)', opacity: 0.2 }}
+                            />
+                            <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                 {query ? 'No products match your search' : 'No products yet'}
                             </p>
                             {query && (
                                 <button
                                     onClick={() => setQuery('')}
                                     className="text-sm underline underline-offset-4"
+                                    style={{ color: 'var(--sf-foreground)' }}
                                 >
                                     Clear search
                                 </button>
@@ -435,7 +489,6 @@ export default function StoreFront({ store, products, collections, featuredProdu
                     )}
                 </div>
             </section>
-
         </div>
     )
 }

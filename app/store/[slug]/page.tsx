@@ -1,3 +1,4 @@
+import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import StoreFront from '@/components/store/Storefront'

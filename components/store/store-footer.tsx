@@ -29,41 +29,53 @@ interface Store {
         }
     }
 }
-export default function StoreFooter({ store, settings }: { store: Store, settings: any }) {
+
+export default function StoreFooter({ store, settings }: { store: Store; settings: any }) {
+    const links = [
+        settings.socialLinks?.instagram && { href: settings.socialLinks.instagram, label: 'Instagram' },
+        settings.socialLinks?.tiktok && { href: settings.socialLinks.tiktok, label: 'TikTok' },
+        settings.socialLinks?.twitter && { href: settings.socialLinks.twitter, label: 'Twitter / X' },
+        settings.socialLinks?.whatsapp && { href: `https://wa.me/${settings.socialLinks.whatsapp}`, label: 'WhatsApp' },
+    ].filter(Boolean) as { href: string; label: string }[]
+
     return (
-        <footer className="sf-footer border-t py-8">
-            <div className="container mx-auto px-4 md:px-6 flex flex-col md:flex-row items-center justify-between gap-4 text-sm opacity-60">
-                <p>© {new Date().getFullYear()} {store.name}</p>
-                {settings.socialLinks && (
-                    <div className="flex items-center gap-4">
-                        {settings.socialLinks.instagram && (
-                            <a href={settings.socialLinks.instagram} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                Instagram
+        <footer className="sf-footer">
+            <div className="container mx-auto px-4 md:px-6 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm">
+                <p style={{ color: 'var(--sf-foreground-subtle)' }}>
+                    © {new Date().getFullYear()} {store.name}
+                </p>
+
+                {links.length > 0 && (
+                    <div className="flex items-center gap-5">
+                        {links.map(({ href, label }) => (
+                            <a
+                                key={label}
+                                href={href}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="transition-colors"
+                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                                onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
+                                onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
+                            >
+                                {label}
                             </a>
-                        )}
-                        {settings.socialLinks.tiktok && (
-                            <a href={settings.socialLinks.tiktok} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                TikTok
-                            </a>
-                        )}
-                        {settings.socialLinks.twitter && (
-                            <a href={settings.socialLinks.twitter} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                Twitter / X
-                            </a>
-                        )}
-                        {settings.socialLinks.whatsapp && (
-                            <a href={`https://wa.me/${settings.socialLinks.whatsapp}`} target="_blank" rel="noopener noreferrer" className="hover:opacity-100 transition-opacity">
-                                WhatsApp
-                            </a>
-                        )}
+                        ))}
                     </div>
                 )}
-                <p className="text-xs">
+
+                <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
                     Powered by{' '}
-                    <a href="https://menengai.cloud" className="hover:opacity-100 transition-opacity">
+                    <a
+                        href="https://menengai.cloud"
+                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
+                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
+                    >
                         Menengai Cloud
                     </a>
                 </p>
             </div>
-        </footer>)
+        </footer>
+    )
 }

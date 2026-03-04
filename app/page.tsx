@@ -1,7 +1,7 @@
 'use client'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Check, ArrowRight, Zap, Shield, Globe } from "lucide-react"
+import { Check, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
 import { motion, useScroll, useTransform, useInView, AnimatePresence } from "framer-motion"
@@ -16,8 +16,6 @@ import {
 import { WordRotate } from "@/components/ui/word-rotate"
 import AuthPopup from "@/lib/auth"
 
-
-
 // ─── Floating sticker data ────────────────────────────────────────────────────
 const stickers = [
   { src: "https://img.icons8.com/3d-fluency/94/movie-video-camera.png", x: "8%", y: "20%", delay: 0, duration: 6 },
@@ -28,7 +26,6 @@ const stickers = [
   { src: "https://img.icons8.com/3d-fluency/94/color-palette.png", x: "92%", y: "75%", delay: 0.3, duration: 7.5 },
 ]
 
-// ─── Typewriter slugs ─────────────────────────────────────────────────────────
 const exampleSlugs = ["locdessence", "reeeaach", "josemaua", "dressedbyjuliet", "miketech"]
 
 const fadeUp: Variants = {
@@ -36,18 +33,15 @@ const fadeUp: Variants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }, // cubic bezier instead of string
+    transition: { duration: 0.6, ease: [0.25, 0.1, 0.25, 1] },
   },
 }
 
 const staggerContainer: Variants = {
   hidden: {},
-  visible: {
-    transition: { staggerChildren: 0.15 },
-  },
+  visible: { transition: { staggerChildren: 0.15 } },
 }
 
-// ─── Section fade wrapper ─────────────────────────────────────────────────────
 function FadeIn({
   children,
   className,
@@ -72,7 +66,6 @@ function FadeIn({
   )
 }
 
-// ─── Corner plus SVG ──────────────────────────────────────────────────────────
 function CornerPlus({ className }: { className: string }) {
   return (
     <svg
@@ -90,19 +83,13 @@ function CornerPlus({ className }: { className: string }) {
   )
 }
 
-// ─── Floating Sticker ─────────────────────────────────────────────────────────
 function FloatingStickerImage({ s, size = 56 }: { s: typeof stickers[0]; size?: number }) {
   return (
     <motion.div
       className="absolute select-none pointer-events-none z-10"
       style={{ left: s.x, top: s.y }}
       animate={{ y: [0, -18, 0], rotate: [-4, 4, -4] }}
-      transition={{
-        duration: s.duration,
-        delay: s.delay,
-        repeat: Infinity,
-        ease: "easeInOut",
-      }}
+      transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: "easeInOut" }}
     >
       <Image src={s.src} alt="" width={size} height={size} className="drop-shadow-xl" />
     </motion.div>
@@ -121,7 +108,6 @@ export default function Home() {
   const heroY = useTransform(scrollYProgress, [0, 1], ["0%", "30%"])
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0])
 
-  // Typewriter effect
   useEffect(() => {
     if (slug) return
     const current = exampleSlugs[slugIndex]
@@ -185,7 +171,7 @@ export default function Home() {
     {
       title: "Built for creators who mean business.",
       body: "Whether you're selling merch, running a blog, or building a subscriber base — your store is ready before your competition even opens a browser tab.",
-      image: "https://images.unsplash.com/photo-1635830625698-3b9bd74671ca?q=80&w=1332&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D",
+      image: "https://images.unsplash.com/photo-1635830625698-3b9bd74671ca?q=80&w=1332&auto=format&fit=crop",
       alt: "Creator filming content",
       reverse: false,
     },
@@ -228,60 +214,55 @@ export default function Home() {
       {/* ── HERO ─────────────────────────────────────────────────────────── */}
       <section
         ref={heroRef}
-        className="relative min-h-screen flex items-center justify-center overflow-hidden bg-[#1c2228]"
+        className="dark-section relative min-h-screen flex items-center justify-center overflow-hidden"
       >
-        {/* Parallax bg */}
         <motion.div style={{ y: heroY }} className="absolute inset-0 z-0">
           <Image
-            src="https://images.unsplash.com/photo-1543343237-2259bf758f53?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D"
+            src="https://images.unsplash.com/photo-1543343237-2259bf758f53?q=80&w=1170&auto=format&fit=crop"
             alt="Creative workspace"
             fill
             className="object-cover opacity-20"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-b from-[#1c2228]/60 via-[#1c2228]/40 to-[#1c2228]" />
+          {/* Gradient uses the same token via CSS class */}
+          <div className="gradient-section-dark absolute inset-0" />
         </motion.div>
 
-        {/* Floating stickers */}
         {stickers.map((s, i) => (
           <FloatingStickerImage key={i} s={s} size={56} />
         ))}
 
-        {/* Hero content — outer div handles parallax opacity only */}
         <motion.div
           style={{ opacity: heroOpacity }}
           className="relative z-20 container mx-auto px-6 md:px-12 text-center"
         >
-          {/* Inner div orchestrates stagger */}
-          <motion.div
-            variants={staggerContainer}
-            initial="hidden"
-            animate="visible"
-          >
-            <motion.div variants={fadeUp}>
-
-            </motion.div>
+          <motion.div variants={staggerContainer} initial="hidden" animate="visible">
+            <motion.div variants={fadeUp} />
 
             <motion.h1
               variants={fadeUp}
-              className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-white leading-[1.05] mb-6"
+              className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-on-dark leading-[1.05] mb-6"
             >
-              <WordRotate words={words} className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-white py-4" duration={1700} />
-              <span className="text-white/60">in 2 seconds</span>
+              <WordRotate
+                words={words}
+                className="text-5xl md:text-7xl lg:text-8xl font-montserrat font-bold text-on-dark py-4"
+                duration={1700}
+              />
+              <span className="text-on-dark-secondary">in 2 seconds</span>
             </motion.h1>
 
             <motion.p
               variants={fadeUp}
-              className="text-lg md:text-xl text-white/70 max-w-xl mx-auto mb-12"
+              className="text-body-large text-on-dark-secondary max-w-xl mx-auto mb-12"
             >
               That's right, stop waiting on agencies. Type your name, verify your email... and you're live.
             </motion.p>
 
             {/* Slug input */}
             <motion.div variants={fadeUp} className="max-w-xl mx-auto">
-              <div className="flex flex-col sm:flex-row gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-2">
+              <div className="flex flex-col sm:flex-row gap-3 bg-on-dark/10 backdrop-blur-md border border-on-dark/20 p-2">
                 <div className="flex-1 flex items-center gap-2 px-3">
-                  <span className="text-white/40 text-sm whitespace-nowrap font-mono">
+                  <span className="text-on-dark-dim text-sm whitespace-nowrap font-mono">
                     menengai.cloud/
                   </span>
                   <input
@@ -291,14 +272,14 @@ export default function Home() {
                       setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
                     }
                     placeholder={displaySlug}
-                    className="bg-transparent text-white placeholder-white/40 outline-none text-sm font-mono w-full"
+                    className="bg-transparent text-on-dark placeholder:text-on-dark-dim outline-none text-sm font-mono w-full"
                     onKeyDown={(e) => e.key === "Enter" && handleClaim()}
                   />
                 </div>
                 <Button
                   onClick={handleClaim}
                   disabled={!slug.trim()}
-                  className="bg-white text-[#1c2228] hover:bg-white/90 font-semibold px-6 h-10 rounded-none disabled:opacity-40 cursor-pointer"
+                  className="btn-inverted px-6 h-10 rounded-none disabled:opacity-40 cursor-pointer"
                 >
                   Claim it free
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -310,7 +291,7 @@ export default function Home() {
                     initial={{ opacity: 0, y: -6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0 }}
-                    className="text-white/50 text-xs mt-2 font-mono text-left px-2"
+                    className="text-on-dark-dim text-xs mt-2 font-mono text-left px-2"
                   >
                     ✓ {slug}.menengai.cloud will be yours
                   </motion.p>
@@ -318,10 +299,7 @@ export default function Home() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.p
-              variants={fadeUp}
-              className="text-white/30 text-sm mt-6"
-            >
+            <motion.p variants={fadeUp} className="text-on-dark-muted text-body-small mt-6">
               Join creators already live on Menengai Cloud
             </motion.p>
           </motion.div>
@@ -329,10 +307,13 @@ export default function Home() {
       </section>
 
       {/* ── MARQUEE ──────────────────────────────────────────────────────── */}
-      <div className="border-y border-border bg-background py-4 overflow-hidden">
+      <div className="border-y border-outline bg-background py-4 overflow-hidden">
         <div className="flex animate-marquee whitespace-nowrap">
           {[...marqueeItems, ...marqueeItems].map((item, i) => (
-            <span key={i} className="inline-flex items-center gap-2 mx-8 text-sm font-medium text-muted-foreground">
+            <span
+              key={i}
+              className="inline-flex items-center gap-2 mx-8 text-body-small font-medium text-on-surface-muted"
+            >
               <Image src={item.icon} alt={item.label} width={22} height={22} />
               {item.label}
             </span>
@@ -342,10 +323,7 @@ export default function Home() {
 
       {/* ── FEATURES ─────────────────────────────────────────────────────── */}
       {features.map((f, i) => (
-        <section
-          key={i}
-          className={`py-24 ${i % 2 !== 0 ? "bg-surface" : "bg-background"}`}
-        >
+        <section key={i} className={i % 2 !== 0 ? "bg-surface py-24" : "bg-background py-24"}>
           <div
             className={`container mx-auto px-6 md:px-12 max-w-6xl flex flex-col ${f.reverse ? "md:flex-row-reverse" : "md:flex-row"
               } gap-16 items-center`}
@@ -360,13 +338,12 @@ export default function Home() {
               />
             </FadeIn>
             <FadeIn className="flex-1 space-y-6" delay={0.2}>
-              <h2 className="text-4xl md:text-5xl font-montserrat font-bold leading-tight">
+              <h2 className="text-4xl md:text-5xl font-montserrat font-bold leading-tight text-foreground">
                 {f.title}
               </h2>
-              <p className="text-body-large text-muted-foreground leading-relaxed">{f.body}</p>
+              <p className="text-body-large text-on-surface-muted leading-relaxed">{f.body}</p>
               <Button
-                variant="outline"
-                className="px-0 font-medium cursor-pointer group"
+                className="btn-secondary px-0 font-medium cursor-pointer group border-0 border-b rounded-none"
                 onClick={() => setIsAuthOpen(true)}
               >
                 Get started free
@@ -378,7 +355,7 @@ export default function Home() {
       ))}
 
       {/* ── STATS ────────────────────────────────────────────────────────── */}
-      <section className="bg-[#1c2228] py-24">
+      <section className="dark-section py-24">
         <div className="container mx-auto px-6 md:px-12">
           <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
             {[
@@ -388,8 +365,8 @@ export default function Home() {
               { stat: "∞", label: "Earning potential" },
             ].map((item, i) => (
               <FadeIn key={i} delay={i * 0.1}>
-                <p className="text-5xl font-montserrat font-bold text-white mb-2">{item.stat}</p>
-                <p className="text-white/50 text-sm">{item.label}</p>
+                <p className="text-5xl font-montserrat font-bold text-on-dark mb-2">{item.stat}</p>
+                <p className="text-on-dark-dim text-body-small">{item.label}</p>
               </FadeIn>
             ))}
           </div>
@@ -400,40 +377,40 @@ export default function Home() {
       <section id="pricing" className="bg-background">
         <div className="container mx-auto px-6 md:px-12 py-24">
           <FadeIn className="max-w-2xl mx-auto text-center mb-16">
-            <h2 className="text-display-small font-montserrat mb-4">
+            <h2 className="text-display-small font-montserrat mb-4 text-foreground">
               Start free. Own it when you're ready.
             </h2>
-            <p className="text-body-large text-muted-foreground">
+            <p className="text-body-large text-on-surface-muted">
               Your free store stays free. Upgrade only when your brand outgrows a subdomain.
             </p>
           </FadeIn>
 
           <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
-            {/* Free */}
+            {/* Free tier */}
             <FadeIn delay={0}>
-              <div className="relative border bg-background p-8 space-y-6 hover:shadow-md transition-shadow">
-                <CornerPlus className="text-foreground size-6 absolute -top-3 -left-3" />
-                <CornerPlus className="text-foreground size-6 absolute -top-3 -right-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -left-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -right-3" />
+              <div className="relative border border-outline bg-background p-8 space-y-6 hover:shadow-md transition-shadow">
+                <CornerPlus className="text-on-surface size-6 absolute -top-3 -left-3" />
+                <CornerPlus className="text-on-surface size-6 absolute -top-3 -right-3" />
+                <CornerPlus className="text-on-surface size-6 absolute -bottom-9 -left-3" />
+                <CornerPlus className="text-on-surface size-6 absolute -bottom-9 -right-3" />
                 <div>
-                  <p className="text-headline-small font-montserrat mb-1">Free</p>
-                  <p className="text-muted-foreground text-body-medium">For creators just getting started.</p>
+                  <p className="text-headline-small font-montserrat mb-1 text-foreground">Free</p>
+                  <p className="text-on-surface-muted text-body-medium">For creators just getting started.</p>
                 </div>
                 <div>
-                  <span className="text-[48px] font-montserrat font-normal">Ksh 0</span>
-                  <span className="text-muted-foreground font-montserrat">/month</span>
+                  <span className="text-[48px] font-montserrat font-normal text-foreground">Ksh 0</span>
+                  <span className="text-on-surface-muted font-montserrat">/month</span>
                 </div>
                 <ul className="space-y-3">
                   {freeFeatures.map((feat, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                      <span className="text-body-medium">{feat}</span>
+                      <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-on-surface" />
+                      <span className="text-body-medium text-on-surface">{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full h-11 google-button-secondary cursor-pointer"
+                  className="btn-secondary w-full h-11 cursor-pointer"
                   onClick={() => setIsAuthOpen(true)}
                 >
                   Get your free store
@@ -441,40 +418,40 @@ export default function Home() {
               </div>
             </FadeIn>
 
-            {/* Pro */}
+            {/* Pro tier */}
             <FadeIn delay={0.15}>
               <motion.div
                 whileHover={{ scale: 1.02 }}
                 transition={{ type: "spring", stiffness: 300 }}
                 className="relative bg-primary p-8 space-y-6 cursor-pointer"
               >
-                <CornerPlus className="text-foreground size-6 absolute -top-3 -left-3" />
-                <CornerPlus className="text-foreground size-6 absolute -top-3 -right-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -left-3" />
-                <CornerPlus className="text-foreground size-6 absolute -bottom-9 -right-3" />
+                <CornerPlus className="text-on-dark/40 size-6 absolute -top-3 -left-3" />
+                <CornerPlus className="text-on-dark/40 size-6 absolute -top-3 -right-3" />
+                <CornerPlus className="text-on-dark/40 size-6 absolute -bottom-9 -left-3" />
+                <CornerPlus className="text-on-dark/40 size-6 absolute -bottom-9 -right-3" />
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                  <Badge className="bg-white text-[#1c2228] px-3 py-1 text-xs font-semibold">
+                  <Badge className="badge-inverted px-3 py-1 text-xs">
                     Own your brand
                   </Badge>
                 </div>
                 <div>
-                  <p className="text-headline-small font-montserrat mb-1 text-white">Pro</p>
-                  <p className="text-white/50 text-body-medium">For serious creators and businesses.</p>
+                  <p className="text-headline-small font-montserrat mb-1 text-on-dark">Pro</p>
+                  <p className="text-on-dark-secondary text-body-medium">For serious creators and businesses.</p>
                 </div>
                 <div>
-                  <span className="text-[48px] font-montserrat font-normal text-white">Ksh 3,500</span>
-                  <span className="text-white/50 font-montserrat">/month</span>
+                  <span className="text-[48px] font-montserrat font-normal text-on-dark">Ksh 3,500</span>
+                  <span className="text-on-dark-secondary font-montserrat">/month</span>
                 </div>
                 <ul className="space-y-3">
                   {proFeatures.map((feat, i) => (
                     <li key={i} className="flex items-start gap-3">
-                      <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-white" />
-                      <span className="text-body-medium text-white/80">{feat}</span>
+                      <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-on-dark" />
+                      <span className="text-body-medium text-on-dark-secondary">{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
-                  className="w-full h-11 bg-white text-[#1c2228] hover:bg-white/90 font-semibold rounded-none cursor-pointer"
+                  className="btn-inverted w-full h-11 rounded-none cursor-pointer"
                   onClick={() => setIsAuthOpen(true)}
                 >
                   Go Pro
@@ -490,7 +467,7 @@ export default function Home() {
       <section className="bg-surface">
         <div className="container mx-auto px-6 md:px-12 py-24">
           <FadeIn className="max-w-6xl mx-auto">
-            <h2 className="text-display-small font-montserrat mb-16 max-w-2xl">
+            <h2 className="text-display-small font-montserrat mb-16 max-w-2xl text-foreground">
               Built for people who create,{" "}
               <span className="font-bold">not IT departments</span>
             </h2>
@@ -514,14 +491,11 @@ export default function Home() {
               ].map((item, i) => (
                 <FadeIn key={i} delay={i * 0.15}>
                   <div className="space-y-4">
-                    <motion.div
-                      whileHover={{ scale: 1.1, rotate: 5 }}
-                      className="w-14 h-14"
-                    >
+                    <motion.div whileHover={{ scale: 1.1, rotate: 5 }} className="w-14 h-14">
                       <Image src={item.icon} alt={item.title} width={56} height={56} className="drop-shadow-md" />
                     </motion.div>
-                    <h3 className="text-headline-small font-montserrat">{item.title}</h3>
-                    <p className="text-body-medium text-muted-foreground">{item.body}</p>
+                    <h3 className="text-headline-small font-montserrat text-foreground">{item.title}</h3>
+                    <p className="text-body-medium text-on-surface-muted">{item.body}</p>
                   </div>
                 </FadeIn>
               ))}
@@ -531,7 +505,7 @@ export default function Home() {
       </section>
 
       {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-      <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden bg-[#1c2228]">
+      <section className="dark-section relative min-h-[80vh] flex items-center justify-center overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
             src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80"
@@ -539,33 +513,32 @@ export default function Home() {
             fill
             className="object-cover opacity-10"
           />
-          <div className="absolute inset-0 bg-[#1c2228]/80" />
+          <div className="overlay-section-dark absolute inset-0" />
         </div>
 
-        {/* Stickers in CTA — smaller, only first 3 */}
         {stickers.slice(0, 3).map((s, i) => (
           <FloatingStickerImage key={i} s={s} size={48} />
         ))}
 
         <div className="relative z-20 container mx-auto px-6 md:px-12 text-center">
           <FadeIn>
-            <h2 className="text-5xl md:text-7xl font-montserrat font-bold text-white mb-6">
+            <h2 className="text-5xl md:text-7xl font-montserrat font-bold text-on-dark mb-6">
               Your audience<br />is waiting.
             </h2>
-            <p className="text-white/60 text-lg max-w-xl mx-auto mb-10">
+            <p className="text-on-dark-secondary text-body-large max-w-xl mx-auto mb-10">
               Every day without your own platform is a day you're building someone else's business.
               Your store is free. Take it.
             </p>
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
               <Button
-                className="bg-white text-[#1c2228] hover:bg-white/90 font-semibold px-10 py-6 text-base h-auto rounded-none cursor-pointer"
+                className="btn-inverted px-10 py-6 text-base h-auto rounded-none cursor-pointer"
                 onClick={() => setIsAuthOpen(true)}
               >
                 Claim your free store now
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </motion.div>
-            <p className="text-white/30 text-sm mt-6">
+            <p className="text-on-dark-muted text-body-small mt-6">
               Free forever · No credit card · Live in seconds
             </p>
           </FadeIn>
@@ -586,7 +559,6 @@ export default function Home() {
           <AuthPopup slug={slug} />
         </DialogContent>
       </Dialog>
-
     </div>
   )
 }

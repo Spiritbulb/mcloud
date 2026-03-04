@@ -1,5 +1,6 @@
 'use client';
 
+import '@/app/store/[slug]/storefront.css'
 import { useEffect, useState } from 'react';
 import { useCart } from '@/contexts/CartContext';
 import {
@@ -12,7 +13,6 @@ import { createClient } from '@/lib/client';
 import { convertKEStoUSD, formatKES, formatUSD } from '@/lib/currency';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { CopyButton } from '@/components/animate-ui/components/buttons/copy';
 import { Input } from '@/components/ui/input';
@@ -92,13 +92,11 @@ export default function CartPage() {
         (e: React.ChangeEvent<HTMLInputElement>) =>
             setGuest(prev => ({ ...prev, [field]: e.target.value }));
 
-    // ── Totals ──────────────────────────────────────────────────────
     const subtotalKES = safeCartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shippingKES = 0;
     const totalKES = subtotalKES + shippingKES;
     const totalUSD = convertKEStoUSD(totalKES);
 
-    // ── Validation ──────────────────────────────────────────────────
     const validateGuest = (): string | null => {
         if (paymentMethod === 'mpesa') {
             if (!guest.mpesaPhone.trim()) return 'M-PESA phone number is required';
@@ -113,7 +111,6 @@ export default function CartPage() {
         return null;
     };
 
-    // ── Create order ────────────────────────────────────────────────
     const createOrder = async (): Promise<string> => {
         if (safeCartItems.length === 0) throw new Error('Your cart is empty');
 
@@ -208,7 +205,6 @@ export default function CartPage() {
         return orderNumber;
     };
 
-    // ── M-PESA checkout ─────────────────────────────────────────────
     const handleMpesaCheckout = async () => {
         const validationError = validateGuest();
         if (validationError) { setError(validationError); return; }
@@ -241,7 +237,6 @@ export default function CartPage() {
         }
     };
 
-    // ── PayPal checkout ─────────────────────────────────────────────
     const handlePaypalCheckout = async () => {
         setError('');
         setIsProcessing(true);
@@ -282,380 +277,537 @@ export default function CartPage() {
     const handleCheckout = () =>
         paymentMethod === 'mpesa' ? handleMpesaCheckout() : handlePaypalCheckout();
 
-    // ── Render ──────────────────────────────────────────────────────
+    // ── Loading ───────────────────────────────────────────────────────────────
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <Loader2
+                    className="w-10 h-10 animate-spin"
+                    style={{ color: 'var(--sf-foreground)', opacity: 0.4 }}
+                />
+            </div>
+        );
+    }
+
+    // ── Empty cart ────────────────────────────────────────────────────────────
+    if (safeCartItems.length === 0) {
+        return (
+            <div className="min-h-screen flex items-center justify-center px-4">
+                <div className="text-center space-y-4 max-w-sm w-full">
+                    <div
+                        className="w-16 h-16 flex items-center justify-center mx-auto"
+                        style={{ backgroundColor: 'var(--sf-muted)' }}
+                    >
+                        <ShoppingBag
+                            className="w-8 h-8"
+                            style={{ color: 'var(--sf-foreground)', opacity: 0.3 }}
+                        />
+                    </div>
+                    <h3 className="sf-heading text-2xl font-light">Your cart is empty</h3>
+                    <p className="text-sm font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        Discover our amazing collection of products.
+                    </p>
+                    <button
+                        className="sf-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-2"
+                        onClick={() => router.push(`/store/${storeSlug}/products`)}
+                    >
+                        <ShoppingBag className="h-4 w-4" />
+                        Start Shopping
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    // ── Main render ───────────────────────────────────────────────────────────
     return (
         <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-8">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-8 py-6 sm:py-10">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-10">
 
-                {loading ? (
-                    <div className="flex justify-center items-center min-h-[400px]">
-                        <Loader2 className="w-12 h-12 sf-text-primary animate-spin" />
-                    </div>
+                    {/* ── Cart items ────────────────────────────────────────── */}
+                    <div className="lg:col-span-7 xl:col-span-8 space-y-2">
 
-                ) : safeCartItems.length === 0 ? (
-                    <div className="text-center py-12 sm:py-20 px-4">
-                        <Card className="sf-card max-w-md mx-auto">
-                            <CardContent className="pt-10 pb-10">
-                                <div className="w-20 h-20 sf-bg-muted flex items-center justify-center mx-auto mb-6">
-                                    <ShoppingBag className="w-10 h-10 opacity-40" />
-                                </div>
-                                <h3 className="sf-heading text-2xl font-light mb-3">Your cart is empty</h3>
-                                <p className="opacity-50 mb-6 font-light text-sm">
-                                    Discover our amazing collection of products.
-                                </p>
-                                <Button
-                                    size="lg"
-                                    className="sf-btn-primary"
-                                    onClick={() => router.push(`/store/${storeSlug}/products`)}
+                        {/* Header row */}
+                        <div className="flex items-center justify-between mb-4">
+                            <h1 className="sf-heading text-2xl font-light">
+                                Cart
+                                <span
+                                    className="text-base ml-2 font-normal"
+                                    style={{ color: 'var(--sf-foreground-subtle)' }}
                                 >
-                                    <ShoppingBag className="mr-2 h-5 w-5" />
-                                    Start Shopping
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </div>
-
-                ) : (
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8">
-
-                        {/* ── Cart items ── */}
-                        <div className="lg:col-span-8">
-                            <Card className="sf-card">
-                                <CardHeader className="px-4 sm:px-6">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-lg sm:text-xl font-light">
-                                            Shopping Cart ({safeCartItems.length})
-                                        </CardTitle>
-                                        <div className="hidden sm:flex items-center gap-2 text-sm opacity-40">
-                                            <Shield className="w-4 h-4" />
-                                            <span>Secure checkout</span>
-                                        </div>
-                                    </div>
-                                </CardHeader>
-
-                                <Separator />
-
-                                <CardContent className="p-0">
-                                    <div className="divide-y">
-                                        {safeCartItems.map((item) => (
-                                            <div key={item.variantId} className="p-4 sm:p-6 sf-cart-row transition-colors">
-                                                <div className="flex gap-3 sm:gap-6">
-                                                    <div className="relative flex-shrink-0">
-                                                        <div className="w-20 h-20 sm:w-24 sm:h-24 sf-bg-muted overflow-hidden relative">
-                                                            <Image
-                                                                src={item.image || '/api/placeholder/200/200'}
-                                                                alt={item.name}
-                                                                fill
-                                                                className="object-cover"
-                                                            />
-                                                        </div>
-                                                        <Button
-                                                            variant="destructive"
-                                                            size="icon"
-                                                            onClick={() => removeFromCart(item.variantId)}
-                                                            disabled={itemLoadingStates[item.variantId]}
-                                                            className="absolute -top-2 -right-2 h-6 w-6"
-                                                        >
-                                                            {itemLoadingStates[item.variantId]
-                                                                ? <Loader2 className="h-3 w-3 animate-spin" />
-                                                                : <Trash2 className="h-3 w-3" />}
-                                                        </Button>
-                                                    </div>
-
-                                                    <div className="flex-1 min-w-0">
-                                                        <h3 className="font-normal text-sm sm:text-base mb-1 line-clamp-2">
-                                                            {item.name}
-                                                        </h3>
-                                                        <p className="text-xs opacity-40 mb-3">
-                                                            SKU: {item.variantId?.slice(-8) || 'N/A'}
-                                                        </p>
-
-                                                        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-                                                            <div className="flex items-center border w-fit">
-                                                                <Button
-                                                                    variant="ghost" size="icon"
-                                                                    className="h-8 w-8 sm:h-10 sm:w-10"
-                                                                    onClick={() => updateCartLine(item.variantId, item.quantity - 1)}
-                                                                    disabled={itemLoadingStates[item.variantId] || item.quantity <= 1}
-                                                                >
-                                                                    <Minus className="h-3 w-3" />
-                                                                </Button>
-                                                                <div className="w-10 sm:w-12 flex items-center justify-center">
-                                                                    <span className="font-normal text-sm">{item.quantity}</span>
-                                                                </div>
-                                                                <Button
-                                                                    variant="ghost" size="icon"
-                                                                    className="h-8 w-8 sm:h-10 sm:w-10"
-                                                                    onClick={() => updateCartLine(item.variantId, item.quantity + 1)}
-                                                                    disabled={itemLoadingStates[item.variantId]}
-                                                                >
-                                                                    {itemLoadingStates[item.variantId]
-                                                                        ? <Loader2 className="h-4 w-4 animate-spin" />
-                                                                        : <Plus className="h-3 w-3" />}
-                                                                </Button>
-                                                            </div>
-
-                                                            <div className="text-left sm:text-right">
-                                                                <div className="text-base sm:text-xl font-light sf-text-primary">
-                                                                    {formatKES(item.price)}
-                                                                </div>
-                                                                <div className="text-xs opacity-40">
-                                                                    {formatKES(item.price * item.quantity)} total
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-
-                        {/* ── Order summary + checkout ── */}
-                        <div className="lg:col-span-4">
-                            <div className="lg:sticky lg:top-24 space-y-4">
-
-                                <Card className="sf-card">
-                                    <CardHeader className="px-4 sm:px-6">
-                                        <CardTitle className="text-lg sm:text-xl font-light flex items-center gap-3">
-                                            <div className="w-8 h-8 sf-bg-primary flex items-center justify-center flex-shrink-0">
-                                                <ShoppingBag className="w-4 h-4 text-white" />
-                                            </div>
-                                            Order Summary
-                                        </CardTitle>
-                                    </CardHeader>
-
-                                    <Separator />
-
-                                    <CardContent className="space-y-4 pt-5 px-4 sm:px-6">
-
-                                        {/* Totals */}
-                                        <div className="space-y-3">
-                                            <div className="flex justify-between text-sm">
-                                                <span className="opacity-50">Subtotal</span>
-                                                <span>{formatKES(subtotalKES)}</span>
-                                            </div>
-                                            <div className="flex justify-between text-sm">
-                                                <span className="opacity-50">Shipping</span>
-                                                <span>{formatKES(shippingKES)}</span>
-                                            </div>
-                                            <Separator />
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-base font-normal">Total</span>
-                                                <span className="text-2xl font-light sf-text-primary">
-                                                    {formatKES(totalKES)}
-                                                </span>
-                                            </div>
-                                        </div>
-
-                                        {/* Payment method toggle */}
-                                        <div className="space-y-2">
-                                            <Label className="text-sm font-normal">Payment method</Label>
-                                            <div className="flex gap-2">
-                                                <Button
-                                                    type="button"
-                                                    variant={paymentMethod === 'mpesa' ? 'default' : 'outline'}
-                                                    className={`flex-1 ${paymentMethod === 'mpesa' ? 'sf-btn-primary' : ''}`}
-                                                    onClick={() => setPaymentMethod('mpesa')}
-                                                    disabled={isProcessing || !mpesaConfig?.enabled}
-                                                >
-                                                    M-PESA
-                                                </Button>
-                                                {mpesaConfig?.paypalEnabled && (
-                                                    <Button
-                                                        type="button"
-                                                        variant={paymentMethod === 'paypal' ? 'default' : 'outline'}
-                                                        className={`flex-1 ${paymentMethod === 'paypal' ? 'sf-btn-primary' : ''}`}
-                                                        onClick={() => setPaymentMethod('paypal')}
-                                                        disabled={isProcessing}
-                                                    >
-                                                        PayPal
-                                                    </Button>
-                                                )}
-                                            </div>
-                                            {!mpesaConfig?.enabled && (
-                                                <p className="text-xs opacity-40">
-                                                    Payments are not yet configured for this store.
-                                                </p>
-                                            )}
-                                        </div>
-
-                                        {/* ── M-PESA guest form ── */}
-                                        {paymentMethod === 'mpesa' && (
-                                            <div className="space-y-3">
-                                                <div className="sf-mpesa-instructions rounded-md border p-3 text-xs opacity-70">
-                                                    <ol className="space-y-2 leading-relaxed list-decimal pl-4">
-                                                        <li>M-PESA Menu → Lipa na M-PESA →{' '}
-                                                            {mpesaConfig?.type === 'paybill' ? 'Pay Bill' : 'Buy Goods and Services'}
-                                                        </li>
-                                                        <li className="space-y-1">
-                                                            <div>
-                                                                {mpesaConfig?.type === 'paybill' ? 'Business Number' : 'Till Number'}
-                                                            </div>
-                                                            <div className="flex items-center gap-2">
-                                                                <span className="sf-mono-tag inline-flex items-center rounded border px-2 py-1 font-mono">
-                                                                    {mpesaConfig?.number || '—'}
-                                                                </span>
-                                                                {mpesaConfig?.number && (
-                                                                    <CopyButton content={mpesaConfig.number} size="xs" />
-                                                                )}
-                                                            </div>
-                                                        </li>
-                                                        {mpesaConfig?.type === 'paybill' && mpesaConfig.account && (
-                                                            <li className="space-y-1">
-                                                                <div>Account Number</div>
-                                                                <div className="flex items-center gap-2">
-                                                                    <span className="sf-mono-tag inline-flex items-center rounded border px-2 py-1 font-mono">
-                                                                        {mpesaConfig.account}
-                                                                    </span>
-                                                                    <CopyButton content={mpesaConfig.account} size="xs" />
-                                                                </div>
-                                                            </li>
-                                                        )}
-                                                        <li>
-                                                            Amount:{' '}
-                                                            <span className="sf-mono-tag rounded border px-1.5 py-0.5 font-semibold">
-                                                                {formatKES(totalKES)}
-                                                            </span>
-                                                        </li>
-                                                        <li>Enter PIN and send</li>
-                                                        <li>Paste the confirmation code below</li>
-                                                    </ol>
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label htmlFor="mpesa-phone" className="text-sm flex items-center gap-1.5">
-                                                        <Phone className="w-3.5 h-3.5" />
-                                                        M-PESA Phone Number <span className="sf-required">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="mpesa-phone"
-                                                        value={guest.mpesaPhone}
-                                                        onChange={setField('mpesaPhone')}
-                                                        placeholder="0712 345 678"
-                                                        inputMode="tel"
-                                                        autoComplete="tel"
-                                                        disabled={isProcessing}
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label htmlFor="mpesa-code" className="text-sm flex items-center gap-1.5">
-                                                        M-PESA Transaction Code <span className="sf-required">*</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="mpesa-code"
-                                                        value={guest.mpesaCode}
-                                                        onChange={(e) => setGuest(p => ({ ...p, mpesaCode: e.target.value.toUpperCase() }))}
-                                                        placeholder="e.g. QW12ABCDEF"
-                                                        inputMode="text"
-                                                        autoComplete="off"
-                                                        disabled={isProcessing}
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label htmlFor="whatsapp" className="text-sm flex items-center gap-1.5">
-                                                        <MessageCircle className="w-3.5 h-3.5" />
-                                                        WhatsApp Number
-                                                        <span className="text-xs opacity-40">(if different from M-PESA)</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="whatsapp"
-                                                        value={guest.whatsapp}
-                                                        onChange={setField('whatsapp')}
-                                                        placeholder="0712 345 678"
-                                                        inputMode="tel"
-                                                        autoComplete="tel"
-                                                        disabled={isProcessing}
-                                                    />
-                                                </div>
-
-                                                <div className="space-y-1.5">
-                                                    <Label htmlFor="email" className="text-sm flex items-center gap-1.5">
-                                                        <Mail className="w-3.5 h-3.5" />
-                                                        Email Address
-                                                        <span className="text-xs opacity-40">(optional, for receipt)</span>
-                                                    </Label>
-                                                    <Input
-                                                        id="email"
-                                                        value={guest.email}
-                                                        onChange={setField('email')}
-                                                        placeholder="you@example.com"
-                                                        inputMode="email"
-                                                        autoComplete="email"
-                                                        type="email"
-                                                        disabled={isProcessing}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
-
-                                        {/* ── PayPal info ── */}
-                                        {paymentMethod === 'paypal' && (
-                                            <Alert className="sf-alert-info">
-                                                <Info className="h-4 w-4 flex-shrink-0 sf-alert-info-icon" />
-                                                <AlertTitle className="text-sm font-normal sf-alert-info-title">
-                                                    Payment in USD
-                                                </AlertTitle>
-                                                <AlertDescription className="text-xs sf-alert-info-body">
-                                                    You'll be charged approximately <strong>{formatUSD(totalUSD)}</strong> USD.
-                                                </AlertDescription>
-                                            </Alert>
-                                        )}
-
-                                        {error && (
-                                            <Alert variant="destructive">
-                                                <AlertCircle className="h-4 w-4" />
-                                                <AlertDescription className="text-sm">{error}</AlertDescription>
-                                            </Alert>
-                                        )}
-
-                                        <Button
-                                            size="lg"
-                                            className="w-full sf-btn-primary"
-                                            disabled={isProcessing}
-                                            onClick={handleCheckout}
-                                        >
-                                            {isProcessing ? (
-                                                <>
-                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                                    {paymentMethod === 'mpesa' ? 'Submitting…' : 'Redirecting to PayPal…'}
-                                                </>
-                                            ) : paymentMethod === 'mpesa' ? (
-                                                <><Shield className="mr-2 h-4 w-4" /> Confirm M-PESA Payment</>
-                                            ) : (
-                                                <><Shield className="mr-2 h-4 w-4" /> Pay with PayPal · {formatUSD(totalUSD)}</>
-                                            )}
-                                        </Button>
-
-                                        <Button variant="outline" className="w-full" asChild>
-                                            <Link href={`/store/${storeSlug}/products`}>Continue Shopping</Link>
-                                        </Button>
-
-                                        <div className="sf-security-badge flex items-center justify-center gap-2 text-xs p-3">
-                                            <Shield className="w-4 h-4 flex-shrink-0" />
-                                            <span>
-                                                {paymentMethod === 'mpesa'
-                                                    ? 'M-PESA payment requires transaction confirmation'
-                                                    : 'Secure payment powered by PayPal'}
-                                            </span>
-                                        </div>
-
-                                        <p className="text-xs opacity-40 text-center leading-relaxed">
-                                            By completing your purchase you agree to our{' '}
-                                            <Link href="/terms" className="sf-text-primary hover:underline">Terms</Link>{' '}and{' '}
-                                            <Link href="/privacy" className="sf-text-primary hover:underline">Privacy Policy</Link>
-                                        </p>
-                                    </CardContent>
-                                </Card>
+                                    ({safeCartItems.length} {safeCartItems.length === 1 ? 'item' : 'items'})
+                                </span>
+                            </h1>
+                            <div
+                                className="hidden sm:flex items-center gap-1.5 text-xs"
+                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                            >
+                                <Shield className="w-3.5 h-3.5" />
+                                Secure checkout
                             </div>
                         </div>
 
+                        {/* Item list */}
+                        <div
+                            className="sf-card divide-y"
+                            style={{ borderColor: 'var(--sf-border)', border: '1px solid var(--sf-border)' }}
+                        >
+                            {safeCartItems.map((item) => (
+                                <div key={item.variantId} className="p-4 sm:p-5 sf-cart-row transition-colors">
+                                    <div className="flex gap-4">
+                                        {/* Image */}
+                                        <div
+                                            className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 overflow-hidden"
+                                            style={{ backgroundColor: 'var(--sf-muted)' }}
+                                        >
+                                            <Image
+                                                src={item.image || '/api/placeholder/200/200'}
+                                                alt={item.name}
+                                                fill
+                                                className="object-cover"
+                                            />
+                                        </div>
+
+                                        {/* Details */}
+                                        <div className="flex-1 min-w-0 space-y-1">
+                                            <div className="flex items-start justify-between gap-2">
+                                                <h3
+                                                    className="text-sm sm:text-base font-normal line-clamp-2 leading-snug"
+                                                    style={{ color: 'var(--sf-foreground)' }}
+                                                >
+                                                    {item.name}
+                                                </h3>
+                                                {/* Remove — inline, no destructive red */}
+                                                <button
+                                                    onClick={() => removeFromCart(item.variantId)}
+                                                    disabled={itemLoadingStates[item.variantId]}
+                                                    className="flex-shrink-0 p-1 transition-opacity hover:opacity-100 disabled:opacity-30"
+                                                    style={{ color: 'var(--sf-foreground)', opacity: 0.35 }}
+                                                    aria-label="Remove item"
+                                                >
+                                                    {itemLoadingStates[item.variantId]
+                                                        ? <Loader2 className="h-4 w-4 animate-spin" />
+                                                        : <Trash2 className="h-4 w-4" />}
+                                                </button>
+                                            </div>
+
+                                            <p
+                                                className="text-xs"
+                                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                                            >
+                                                SKU: {item.variantId?.slice(-8) || 'N/A'}
+                                            </p>
+
+                                            <div className="flex items-center justify-between pt-2 gap-4 flex-wrap">
+                                                {/* Quantity stepper */}
+                                                <div
+                                                    className="inline-flex items-center"
+                                                    style={{ border: '1px solid var(--sf-border-strong)' }}
+                                                >
+                                                    <button
+                                                        className="w-8 h-8 flex items-center justify-center disabled:opacity-30 transition-colors"
+                                                        style={{ color: 'var(--sf-foreground)' }}
+                                                        onClick={() => updateCartLine(item.variantId, item.quantity - 1)}
+                                                        disabled={itemLoadingStates[item.variantId] || item.quantity <= 1}
+                                                        aria-label="Decrease quantity"
+                                                    >
+                                                        <Minus className="h-3 w-3" />
+                                                    </button>
+                                                    <span
+                                                        className="w-9 text-center text-sm tabular-nums select-none"
+                                                        style={{ color: 'var(--sf-foreground)' }}
+                                                    >
+                                                        {item.quantity}
+                                                    </span>
+                                                    <button
+                                                        className="w-8 h-8 flex items-center justify-center disabled:opacity-30 transition-colors"
+                                                        style={{ color: 'var(--sf-foreground)' }}
+                                                        onClick={() => updateCartLine(item.variantId, item.quantity + 1)}
+                                                        disabled={itemLoadingStates[item.variantId]}
+                                                        aria-label="Increase quantity"
+                                                    >
+                                                        {itemLoadingStates[item.variantId]
+                                                            ? <Loader2 className="h-3 w-3 animate-spin" />
+                                                            : <Plus className="h-3 w-3" />}
+                                                    </button>
+                                                </div>
+
+                                                {/* Price */}
+                                                <div className="text-right">
+                                                    <div
+                                                        className="text-base font-light"
+                                                        style={{ color: 'var(--sf-foreground)' }}
+                                                    >
+                                                        {formatKES(item.price * item.quantity)}
+                                                    </div>
+                                                    {item.quantity > 1 && (
+                                                        <div
+                                                            className="text-xs"
+                                                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                        >
+                                                            {formatKES(item.price)} each
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Continue shopping */}
+                        <div className="pt-2">
+                            <Link
+                                href={`/store/${storeSlug}/products`}
+                                className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-4 py-2 text-sm"
+                            >
+                                ← Continue Shopping
+                            </Link>
+                        </div>
                     </div>
-                )}
+
+                    {/* ── Order summary + checkout ──────────────────────────── */}
+                    <div className="lg:col-span-5 xl:col-span-4">
+                        <div className="lg:sticky lg:top-24 space-y-4">
+
+                            {/* Totals */}
+                            <Card className="sf-card">
+                                <CardHeader className="px-5 pb-3">
+                                    <CardTitle
+                                        className="sf-heading text-lg font-light"
+                                        style={{ color: 'var(--sf-foreground)' }}
+                                    >
+                                        Order Summary
+                                    </CardTitle>
+                                </CardHeader>
+
+                                <CardContent className="px-5 pb-5 space-y-3">
+                                    <div
+                                        className="flex justify-between text-sm"
+                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                    >
+                                        <span>Subtotal</span>
+                                        <span style={{ color: 'var(--sf-foreground)' }}>{formatKES(subtotalKES)}</span>
+                                    </div>
+                                    <div
+                                        className="flex justify-between text-sm"
+                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                    >
+                                        <span>Shipping</span>
+                                        <span style={{ color: 'var(--sf-foreground)' }}>
+                                            {shippingKES === 0 ? 'Free' : formatKES(shippingKES)}
+                                        </span>
+                                    </div>
+
+                                    <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
+
+                                    <div className="flex justify-between items-baseline">
+                                        <span
+                                            className="text-sm"
+                                            style={{ color: 'var(--sf-foreground)' }}
+                                        >
+                                            Total
+                                        </span>
+                                        <span
+                                            className="sf-heading text-2xl font-light"
+                                            style={{ color: 'var(--sf-foreground)' }}
+                                        >
+                                            {formatKES(totalKES)}
+                                        </span>
+                                    </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Payment + checkout */}
+                            <Card className="sf-card">
+                                <CardContent className="px-5 pt-5 pb-5 space-y-4">
+
+                                    {/* Payment method toggle */}
+                                    <div className="space-y-2">
+                                        <p
+                                            className="text-xs uppercase tracking-wider"
+                                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                                        >
+                                            Payment method
+                                        </p>
+                                        <div className="flex gap-2">
+                                            <button
+                                                type="button"
+                                                onClick={() => setPaymentMethod('mpesa')}
+                                                disabled={isProcessing || !mpesaConfig?.enabled}
+                                                className={`flex-1 py-2 text-sm border transition-colors sf-pill ${paymentMethod === 'mpesa' ? 'sf-pill-active' : 'sf-pill-inactive'}`}
+                                            >
+                                                M-PESA
+                                            </button>
+                                            {mpesaConfig?.paypalEnabled && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('paypal')}
+                                                    disabled={isProcessing}
+                                                    className={`flex-1 py-2 text-sm border transition-colors sf-pill ${paymentMethod === 'paypal' ? 'sf-pill-active' : 'sf-pill-inactive'}`}
+                                                >
+                                                    PayPal
+                                                </button>
+                                            )}
+                                        </div>
+                                        {!mpesaConfig?.enabled && (
+                                            <p
+                                                className="text-xs"
+                                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                                            >
+                                                Payments are not yet configured for this store.
+                                            </p>
+                                        )}
+                                    </div>
+
+                                    {/* M-PESA form */}
+                                    {paymentMethod === 'mpesa' && (
+                                        <div className="space-y-4">
+                                            {/* Step-by-step instructions */}
+                                            <div className="sf-mpesa-instructions p-4 text-xs space-y-2.5 leading-relaxed">
+                                                <p
+                                                    className="text-xs uppercase tracking-wider font-medium mb-3"
+                                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                >
+                                                    How to pay
+                                                </p>
+                                                <div className="space-y-2">
+                                                    {[
+                                                        <>M-PESA → Lipa na M-PESA → {mpesaConfig?.type === 'paybill' ? 'Pay Bill' : 'Buy Goods and Services'}</>,
+                                                        <>
+                                                            Enter {mpesaConfig?.type === 'paybill' ? 'Business' : 'Till'} Number:{' '}
+                                                            <span className="sf-mono-tag inline-flex items-center gap-1">
+                                                                {mpesaConfig?.number || '—'}
+                                                                {mpesaConfig?.number && (
+                                                                    <CopyButton content={mpesaConfig.number} size="xs" />
+                                                                )}
+                                                            </span>
+                                                        </>,
+                                                        ...(mpesaConfig?.type === 'paybill' && mpesaConfig.account ? [
+                                                            <>
+                                                                Account Number:{' '}
+                                                                <span className="sf-mono-tag inline-flex items-center gap-1">
+                                                                    {mpesaConfig.account}
+                                                                    <CopyButton content={mpesaConfig.account} size="xs" />
+                                                                </span>
+                                                            </>
+                                                        ] : []),
+                                                        <>Amount: <span className="sf-mono-tag font-semibold">{formatKES(totalKES)}</span></>,
+                                                        <>Enter your PIN and confirm</>,
+                                                        <>Paste the confirmation code below</>,
+                                                    ].map((step, i) => (
+                                                        <div key={i} className="flex gap-2.5">
+                                                            <span
+                                                                className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-xs font-medium rounded-full"
+                                                                style={{
+                                                                    backgroundColor: 'var(--sf-foreground)',
+                                                                    color: 'var(--sf-background)',
+                                                                    opacity: 0.7,
+                                                                    fontSize: '10px',
+                                                                }}
+                                                            >
+                                                                {i + 1}
+                                                            </span>
+                                                            <span style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                                {step}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            {/* Phone */}
+                                            <div className="space-y-1.5">
+                                                <Label
+                                                    htmlFor="mpesa-phone"
+                                                    className="text-xs uppercase tracking-wider flex items-center gap-1.5"
+                                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                >
+                                                    <Phone className="w-3 h-3" />
+                                                    M-PESA Phone <span className="sf-required">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="mpesa-phone"
+                                                    value={guest.mpesaPhone}
+                                                    onChange={setField('mpesaPhone')}
+                                                    placeholder="0712 345 678"
+                                                    inputMode="tel"
+                                                    autoComplete="tel"
+                                                    disabled={isProcessing}
+                                                />
+                                            </div>
+
+                                            {/* Transaction code */}
+                                            <div className="space-y-1.5">
+                                                <Label
+                                                    htmlFor="mpesa-code"
+                                                    className="text-xs uppercase tracking-wider flex items-center gap-1.5"
+                                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                >
+                                                    Transaction Code <span className="sf-required">*</span>
+                                                </Label>
+                                                <Input
+                                                    id="mpesa-code"
+                                                    value={guest.mpesaCode}
+                                                    onChange={(e) => setGuest(p => ({ ...p, mpesaCode: e.target.value.toUpperCase() }))}
+                                                    placeholder="e.g. QW12ABCDEF"
+                                                    inputMode="text"
+                                                    autoComplete="off"
+                                                    disabled={isProcessing}
+                                                />
+                                            </div>
+
+                                            {/* Divider */}
+                                            <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
+
+                                            {/* Optional contact fields */}
+                                            <p
+                                                className="text-xs uppercase tracking-wider"
+                                                style={{ color: 'var(--sf-foreground-subtle)' }}
+                                            >
+                                                Contact (optional)
+                                            </p>
+
+                                            <div className="space-y-1.5">
+                                                <Label
+                                                    htmlFor="whatsapp"
+                                                    className="text-xs flex items-center gap-1.5"
+                                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                >
+                                                    <MessageCircle className="w-3 h-3" />
+                                                    WhatsApp
+                                                    <span style={{ opacity: 0.55 }}>(if different from M-PESA number)</span>
+                                                </Label>
+                                                <Input
+                                                    id="whatsapp"
+                                                    value={guest.whatsapp}
+                                                    onChange={setField('whatsapp')}
+                                                    placeholder="0712 345 678"
+                                                    inputMode="tel"
+                                                    autoComplete="tel"
+                                                    disabled={isProcessing}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1.5">
+                                                <Label
+                                                    htmlFor="email"
+                                                    className="text-xs flex items-center gap-1.5"
+                                                    style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                >
+                                                    <Mail className="w-3 h-3" />
+                                                    Email
+                                                    <span style={{ opacity: 0.55 }}>(for receipt)</span>
+                                                </Label>
+                                                <Input
+                                                    id="email"
+                                                    value={guest.email}
+                                                    onChange={setField('email')}
+                                                    placeholder="you@example.com"
+                                                    inputMode="email"
+                                                    autoComplete="email"
+                                                    type="email"
+                                                    disabled={isProcessing}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* PayPal info */}
+                                    {paymentMethod === 'paypal' && (
+                                        <div
+                                            className="sf-alert-info p-3 text-xs space-y-1 border"
+                                            style={{ borderColor: 'var(--sf-border)' }}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Info className="h-3.5 w-3.5 flex-shrink-0 sf-alert-info-icon" />
+                                                <span className="font-medium sf-alert-info-title">Payment in USD</span>
+                                            </div>
+                                            <p className="sf-alert-info-body pl-5">
+                                                You'll be charged approximately{' '}
+                                                <strong style={{ color: 'var(--sf-foreground)' }}>{formatUSD(totalUSD)}</strong>.
+                                            </p>
+                                        </div>
+                                    )}
+
+                                    {/* Validation error */}
+                                    {error && (
+                                        <div
+                                            className="flex items-start gap-2 p-3 text-xs border"
+                                            style={{
+                                                backgroundColor: 'color-mix(in srgb, var(--sf-accent) 8%, var(--sf-background))',
+                                                borderColor: 'color-mix(in srgb, var(--sf-accent) 30%, transparent)',
+                                                color: 'var(--sf-foreground)',
+                                            }}
+                                        >
+                                            <AlertCircle
+                                                className="h-3.5 w-3.5 flex-shrink-0 mt-0.5"
+                                                style={{ color: 'var(--sf-accent)' }}
+                                            />
+                                            <span>{error}</span>
+                                        </div>
+                                    )}
+
+                                    {/* CTA */}
+                                    <Button
+                                        size="lg"
+                                        className="w-full sf-btn-primary"
+                                        disabled={isProcessing}
+                                        onClick={handleCheckout}
+                                    >
+                                        {isProcessing ? (
+                                            <>
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                {paymentMethod === 'mpesa' ? 'Submitting…' : 'Redirecting to PayPal…'}
+                                            </>
+                                        ) : paymentMethod === 'mpesa' ? (
+                                            <><Shield className="mr-2 h-4 w-4" />Confirm M-PESA Payment</>
+                                        ) : (
+                                            <><Shield className="mr-2 h-4 w-4" />Pay with PayPal · {formatUSD(totalUSD)}</>
+                                        )}
+                                    </Button>
+
+                                    {/* Footer note */}
+                                    <div
+                                        className="sf-security-badge flex items-center justify-center gap-1.5 text-xs py-2"
+                                    >
+                                        <Shield className="w-3.5 h-3.5 flex-shrink-0" />
+                                        <span>
+                                            {paymentMethod === 'mpesa'
+                                                ? 'Your transaction code verifies this payment'
+                                                : 'Secured by PayPal'}
+                                        </span>
+                                    </div>
+
+                                    <p
+                                        className="text-xs text-center leading-relaxed"
+                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                    >
+                                        By completing your purchase you agree to our{' '}
+                                        <Link
+                                            href="/terms"
+                                            className="underline underline-offset-2"
+                                            style={{ color: 'var(--sf-foreground)' }}
+                                        >
+                                            Terms
+                                        </Link>
+                                        {' '}and{' '}
+                                        <Link
+                                            href="/privacy"
+                                            className="underline underline-offset-2"
+                                            style={{ color: 'var(--sf-foreground)' }}
+                                        >
+                                            Privacy Policy
+                                        </Link>
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+
+                </div>
             </div>
         </div>
     );

@@ -95,7 +95,8 @@ export async function proxy(request: NextRequest) {
   if (
     !host.endsWith('.menengai.cloud') &&
     host !== 'menengai.cloud' &&
-    !host.includes('localhost')
+    !host.includes('localhost') &&
+    !host.includes('192.168.1.')
   ) {
     // Pass through internals before any DB call
     if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
