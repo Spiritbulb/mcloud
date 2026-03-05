@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { createClient } from '@/lib/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -45,6 +45,7 @@ interface StoreData {
         logoPath?: string
         heroSlides?: HeroSlide[]
         heroImagePath?: string
+        themeId?: string
         socialLinks?: {
             instagram?: string
             twitter?: string
@@ -87,7 +88,6 @@ const TABS: Tab[] = [
     { id: 'notifications', label: 'Notifications', icon: <Bell className="w-4 h-4" />, pro: true },
 ]
 
-// ─── Save toast ───────────────────────────────────────────────────────────────
 function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }) {
     return (
         <AnimatePresence>
@@ -118,21 +118,21 @@ function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }) {
     )
 }
 
-// ─── Pro gate ─────────────────────────────────────────────────────────────────
-function ProGate({ feature, setActiveTab }: { feature: string, setActiveTab: (tab: string) => void }) {
+function ProGate({ feature, setActiveTab }: { feature: string; setActiveTab: (tab: string) => void }) {
     return (
         <Card className="border-dashed">
             <CardContent className="py-12 text-center space-y-3">
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto">
                     {feature} is not available yet. Please check back soon.
                 </p>
-                <Button variant="outline" size="sm" className="h-8 px-5 text-xs mt-1" onClick={() => setActiveTab('general')}>Go back</Button>
+                <Button variant="outline" size="sm" className="h-8 px-5 text-xs mt-1" onClick={() => setActiveTab('general')}>
+                    Go back
+                </Button>
             </CardContent>
         </Card>
     )
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
 export default function StoreSettings({ store }: { store: StoreData }) {
     const [activeTab, setActiveTab] = useState('general')
     const [navOpen, setNavOpen] = useState(false)
@@ -148,30 +148,65 @@ export default function StoreSettings({ store }: { store: StoreData }) {
     const [timezone, setTimezone] = useState(store.timezone)
     const [isActive, setIsActive] = useState(store.is_active)
 
-    // ── Appearance — hero content ──────────────────────────────────────────────
-    const [heroTitle, setHeroTitle] = useState(store.settings?.heroTitle ?? '')
-    const [heroSubtitle, setHeroSubtitle] = useState(store.settings?.heroSubtitle ?? '')
-    const [heroImage, setHeroImage] = useState(store.settings?.heroImage ?? '')
-    const [logoUrl, setLogoUrl] = useState(store.logo_url ?? '')
-    const [logoPath, setLogoPath] = useState(store.settings?.logoPath ?? '')
-    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(store.settings?.heroSlides ?? [])
-    const [heroImagePath, setHeroImagePath] = useState(store.settings?.heroImagePath ?? '')
+    // ── Appearance — hero content ─────────────────────────────────────────────
+    // Initialised empty; the useEffect below hydrates from DB values.
+    // This prevents the color pickers flashing wrong defaults when store.theme
+    // arrives after the initial render (or wasn't joined in the server query).
+    const [themeId, setThemeId] = useState('')
+    const [heroTitle, setHeroTitle] = useState('')
+    const [heroSubtitle, setHeroSubtitle] = useState('')
+    const [heroImage, setHeroImage] = useState('')
+    const [logoUrl, setLogoUrl] = useState('')
+    const [logoPath, setLogoPath] = useState('')
+    const [heroSlides, setHeroSlides] = useState<HeroSlide[]>([])
+    const [heroImagePath, setHeroImagePath] = useState('')
 
-    // ── Theme ─────────────────────────────────────────────────────────────────
-    const t = store.theme ?? {}
-    const [primaryColor, setPrimaryColor] = useState(t.primary_color ?? '#425e7b')
-    const [secondaryColor, setSecondaryColor] = useState(t.secondary_color ?? '#f5f0eb')
-    const [accentColor, setAccentColor] = useState(t.accent_color ?? '#c9a96e')
-    const [bgColor, setBgColor] = useState(t.background_color ?? '#fafbfc')
-    const [fgColor, setFgColor] = useState(t.foreground_color ?? '#16202d')
-    const [mutedColor, setMutedColor] = useState(t.muted_color ?? '#f4f6f8')
-    const [darkPrimaryColor, setDarkPrimaryColor] = useState(t.dark_primary_color ?? '#6e91b9')
-    const [darkBgColor, setDarkBgColor] = useState(t.dark_background_color ?? '#0f1319')
-    const [darkFgColor, setDarkFgColor] = useState(t.dark_foreground_color ?? '#dce2e9')
-    const [darkMutedColor, setDarkMutedColor] = useState(t.dark_muted_color ?? '#1c2432')
-    const [headingFont, setHeadingFont] = useState(t.heading_font ?? 'Playfair Display')
-    const [bodyFont, setBodyFont] = useState(t.body_font ?? 'Inter')
-    const [borderRadius, setBorderRadius] = useState(t.border_radius ?? '0px')
+    // ── Theme tokens ──────────────────────────────────────────────────────────
+    const [primaryColor, setPrimaryColor] = useState('')
+    const [secondaryColor, setSecondaryColor] = useState('')
+    const [accentColor, setAccentColor] = useState('')
+    const [bgColor, setBgColor] = useState('')
+    const [fgColor, setFgColor] = useState('')
+    const [mutedColor, setMutedColor] = useState('')
+    const [darkPrimaryColor, setDarkPrimaryColor] = useState('')
+    const [darkBgColor, setDarkBgColor] = useState('')
+    const [darkFgColor, setDarkFgColor] = useState('')
+    const [darkMutedColor, setDarkMutedColor] = useState('')
+    const [headingFont, setHeadingFont] = useState('')
+    const [bodyFont, setBodyFont] = useState('')
+    const [borderRadius, setBorderRadius] = useState('')
+
+    // ── Hydrate appearance state from DB ──────────────────────────────────────
+    // Keyed on store.id so it re-runs if a different store is loaded.
+    // All DB values take precedence; hardcoded strings here are last-resort
+    // fallbacks only used when the DB row genuinely has no value.
+    useEffect(() => {
+        const s = store.settings ?? {}
+        const t = store.theme ?? {}
+
+        setThemeId(s.themeId ?? 'classic')
+        setHeroTitle(s.heroTitle ?? store.name ?? '')
+        setHeroSubtitle(s.heroSubtitle ?? store.description ?? '')
+        setHeroImage(s.heroImage ?? '')
+        setHeroImagePath(s.heroImagePath ?? '')
+        setHeroSlides(s.heroSlides ?? [])
+        setLogoUrl(store.logo_url ?? '')
+        setLogoPath(s.logoPath ?? '')
+
+        setPrimaryColor(t.primary_color ?? '#1c2228')
+        setSecondaryColor(t.secondary_color ?? '#f5f0eb')
+        setAccentColor(t.accent_color ?? '#c9a96e')
+        setBgColor(t.background_color ?? '#ffffff')
+        setFgColor(t.foreground_color ?? '#1c2228')
+        setMutedColor(t.muted_color ?? '#f4f4f5')
+        setDarkPrimaryColor(t.dark_primary_color ?? '#e8e0d8')
+        setDarkBgColor(t.dark_background_color ?? '#0f0f10')
+        setDarkFgColor(t.dark_foreground_color ?? '#f0ece6')
+        setDarkMutedColor(t.dark_muted_color ?? '#1e1e20')
+        setHeadingFont(t.heading_font ?? 'Playfair Display')
+        setBodyFont(t.body_font ?? 'Inter')
+        setBorderRadius(t.border_radius ?? '0px')
+    }, [store.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // ── Social ────────────────────────────────────────────────────────────────
     const [instagram, setInstagram] = useState(store.settings?.socialLinks?.instagram ?? '')
@@ -195,6 +230,7 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                 logo_url: logoUrl || null,
                 settings: {
                     ...store.settings,
+                    themeId: themeId || undefined,
                     heroTitle: heroTitle || undefined,
                     heroSubtitle: heroSubtitle || undefined,
                     heroImage: heroImage || undefined,
@@ -218,6 +254,7 @@ export default function StoreSettings({ store }: { store: StoreData }) {
             .upsert(
                 {
                     store_id: store.id,
+                    theme_id: themeId || 'classic',
                     primary_color: primaryColor,
                     secondary_color: secondaryColor,
                     accent_color: accentColor,
@@ -256,7 +293,7 @@ export default function StoreSettings({ store }: { store: StoreData }) {
             />
 
             <div className="container mx-auto px-6 md:px-8">
-                <div className="flex flex-col md:flex-row gap-6 max-w-5xl">
+                <div className="flex flex-col md:flex-row gap-6 max-w-7xl">
                     <SettingsNav
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
@@ -282,7 +319,6 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                         activeTab={activeTab}
                                         setActiveTab={setActiveTab}
                                         TABS={TABS}
-                                        // Lifted state passed down
                                         name={name} setName={setName}
                                         description={description} setDescription={setDescription}
                                         currency={currency} setCurrency={setCurrency}
@@ -296,7 +332,7 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                 {activeTab === 'appearance' && (
                                     <AppearanceSettings
                                         store={store}
-                                        // Hero content
+                                        themeId={themeId} setThemeId={setThemeId}
                                         heroTitle={heroTitle} setHeroTitle={setHeroTitle}
                                         heroSubtitle={heroSubtitle} setHeroSubtitle={setHeroSubtitle}
                                         heroImage={heroImage} setHeroImage={setHeroImage}
@@ -304,7 +340,6 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                         logoPath={logoPath} setLogoPath={setLogoPath}
                                         heroSlides={heroSlides} setHeroSlides={setHeroSlides}
                                         heroImagePath={heroImagePath} setHeroImagePath={setHeroImagePath}
-                                        // Theme tokens
                                         primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}
                                         secondaryColor={secondaryColor} setSecondaryColor={setSecondaryColor}
                                         accentColor={accentColor} setAccentColor={setAccentColor}
@@ -345,7 +380,6 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                                                 Show up where your audience already is
                                             </p>
                                         </div>
-
                                         <div className="space-y-4 max-w-md">
                                             {[
                                                 { label: 'Instagram', placeholder: 'https://instagram.com/yourhandle', value: instagram, set: setInstagram },

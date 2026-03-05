@@ -89,8 +89,6 @@ export async function proxy(request: NextRequest) {
 
   // ════════════════════════════════════════════════════════════════════════════
   // 1. CUSTOM DOMAIN HIT
-  //    Public storefront only. Owner routes redirect to subdomain where
-  //    cookies work normally.
   // ════════════════════════════════════════════════════════════════════════════
   if (
     !host.endsWith('.menengai.cloud') &&
@@ -127,12 +125,22 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // Owner/admin routes → redirect to subdomain where auth cookies work
+    // Owner/admin routes → Enforce auth, then rewrite
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      return NextResponse.redirect(
-        `${proto}://${slug}.menengai.cloud${pathname}`,
-        307,
-      )
+      const sessionResponse = await updateSession(request)
+
+      if ([302, 307, 308].includes(sessionResponse.status)) {
+        const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}${request.nextUrl.search}`)
+        return NextResponse.redirect(
+          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
+          302,
+        )
+      }
+
+      request.nextUrl.pathname = `/store/${slug}${pathname}`
+      const rew = NextResponse.rewrite(request.nextUrl)
+      sessionResponse.cookies.getAll().forEach(c => rew.cookies.set(c.name, c.value, c))
+      return rew
     }
 
     // Public storefront page → rewrite to internal /store/[slug][path]
@@ -143,7 +151,6 @@ export async function proxy(request: NextRequest) {
 
   // ════════════════════════════════════════════════════════════════════════════
   // 2. SUBDOMAIN HIT  (slug.menengai.cloud)
-  //    Serves both the storefront (if no custom domain) and owner dashboard.
   // ════════════════════════════════════════════════════════════════════════════
   const devTenant = searchParams.get('_tenant')
   const tenantSlug = getTenantSlug(host) ?? devTenant ?? null
@@ -194,33 +201,27 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // Rewrite to internal route
-    if (!pathname.startsWith('/store/')) {
-      url.pathname = `/store/${tenantSlug}${pathname}`
-      return NextResponse.rewrite(url)
-    }
-
-    // Enforce auth on owner routes
-    const afterSlug = pathname.replace(/^\/store\/[^/]+/, '')
-    if (PROTECTED_STORE_SUBPATHS.some((sub) => afterSlug.startsWith(sub))) {
+    // Enforce auth on owner routes, then rewrite
+    if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
       const sessionResponse = await updateSession(request)
 
-      if (!sessionResponse) {
-        throw new Error('updateSession returned undefined')
-      }
-
       if ([302, 307, 308].includes(sessionResponse.status)) {
-        const redirectBack = encodeURIComponent(`${proto}://${tenantSlug}.menengai.cloud${pathname}`)
+        const redirectBack = encodeURIComponent(`${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`)
         return NextResponse.redirect(
           `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
           302,
         )
       }
 
-      return sessionResponse
+      url.pathname = `/store/${tenantSlug}${pathname}`
+      const rew = NextResponse.rewrite(url)
+      sessionResponse.cookies.getAll().forEach(c => rew.cookies.set(c.name, c.value, c))
+      return rew
     }
 
-    return NextResponse.next()
+    // Rewrite to internal route
+    url.pathname = `/store/${tenantSlug}${pathname === '/' ? '' : pathname}`
+    return NextResponse.rewrite(url)
   }
 
 

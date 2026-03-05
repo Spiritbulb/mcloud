@@ -28,6 +28,17 @@ export function SettingsHeader({
     return (
         <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
             <div className="container mx-auto px-4 md:px-8 h-14 flex items-center justify-between gap-4">
+                {/* Menengai Cloud Logo */}
+                <div className="flex gap-4">
+                    <Link href="/" className="flex items-center gap-2">
+                        <img
+                            src="/favicon.ico"
+                            alt="Menengai Cloud"
+                            width={28}
+                            height={28}
+                        />
+                    </Link>
+                </div>
 
                 {/* Left: breadcrumb on desktop, hamburger + breadcrumb on mobile */}
                 <div className="flex items-center gap-2 min-w-0">

@@ -43,6 +43,17 @@
   /* subtle — placeholders */
   --color-on-dark-muted: 72 82 94;
   /* very quiet — meta text */
+
+  /* ── Storefront Variables (Mapped to CSS custom properties) ── */
+  --color-sf-primary: var(--sf-primary);
+  --color-sf-secondary: var(--sf-secondary);
+  --color-sf-accent: var(--sf-accent);
+  --color-sf-background: var(--sf-background);
+  --color-sf-foreground: var(--sf-foreground);
+  --color-sf-muted: var(--sf-muted);
+  --color-sf-border: var(--sf-border);
+  --color-sf-border-strong: var(--sf-border-strong);
+  --color-sf-foreground-subtle: var(--sf-foreground-subtle);
 }
 
 /* ============================================================

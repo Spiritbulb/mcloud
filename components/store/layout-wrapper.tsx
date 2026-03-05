@@ -27,9 +27,9 @@ export default function LayoutWrapper({
 
     return (
         <div className="storefront-root" style={cssVars}>
-            <StoreNav store={store} />
+            <StoreNav store={store} themeId={store.settings?.themeId ?? 'classic'} />
             {children}
-            <StoreFooter store={store} settings={settings} />
+            <StoreFooter store={store} settings={store.settings} themeId={store.settings?.themeId ?? 'classic'} />
         </div>
     )
 }

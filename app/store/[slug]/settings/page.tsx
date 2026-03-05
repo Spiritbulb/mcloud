@@ -16,13 +16,14 @@ export default async function SettingsPage({ params }: Props) {
     // Verify ownership
     const { data: membership } = await supabase
         .from('store_members')
-        .select('role, store:stores(*)')
+        .select('role, store:stores(*, theme:store_themes(*))')
         .eq('user_id', user.id)
         .eq('role', 'owner')
         .single()
 
     if (!membership?.store) notFound()
     const store = membership.store as any
+    store.theme = store.theme?.[0] ?? null
 
     // Verify this slug matches the user's store
     if (store.slug !== slug) redirect(`/${store.slug}/settings`)

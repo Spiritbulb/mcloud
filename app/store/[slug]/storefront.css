@@ -15,7 +15,7 @@
     --sf-font-scale: 1;
 
     /* Derived semantic tokens — do not override these directly */
-    --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 55%, var(--sf-background));
+    --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 75%, var(--sf-background));
     --sf-border: color-mix(in srgb, var(--sf-foreground) 15%, transparent);
     --sf-border-strong: color-mix(in srgb, var(--sf-foreground) 30%, transparent);
 
@@ -35,7 +35,7 @@
         --sf-secondary: var(--sf-dark-secondary, #27272a);
 
         /* Re-derive these for dark mode so they stay readable */
-        --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 60%, var(--sf-background));
+        --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 80%, var(--sf-background));
         --sf-border: color-mix(in srgb, var(--sf-foreground) 18%, transparent);
         --sf-border-strong: color-mix(in srgb, var(--sf-foreground) 35%, transparent);
     }
@@ -73,6 +73,19 @@
     background-color: var(--sf-muted);
     color: var(--sf-foreground);
     border-color: transparent;
+}
+
+/* Buttons: default variant should use sf-primary, not global primary */
+.storefront-root button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
+.storefront-root [class*="Button"][data-variant="default"] {
+    background-color: var(--sf-primary);
+    color: var(--sf-background);
+}
+
+.storefront-root button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
+.storefront-root [class*="Button"][data-variant="default"]:hover {
+    background-color: var(--sf-primary);
+    opacity: 0.9;
 }
 
 /* Buttons: ghost variant should use foreground, not brand blue */

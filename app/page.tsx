@@ -14,7 +14,6 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog"
 import { WordRotate } from "@/components/ui/word-rotate"
-import AuthPopup from "@/lib/auth"
 
 // ─── Floating sticker data ────────────────────────────────────────────────────
 const stickers = [
@@ -97,7 +96,6 @@ function FloatingStickerImage({ s, size = 56 }: { s: typeof stickers[0]; size?: 
 }
 
 export default function Home() {
-  const [isAuthOpen, setIsAuthOpen] = useState(false)
   const [slug, setSlug] = useState("")
   const [displaySlug, setDisplaySlug] = useState("")
   const [slugIndex, setSlugIndex] = useState(0)
@@ -144,8 +142,8 @@ export default function Home() {
   }, [slugIndex, isTyping, slug])
 
   const handleClaim = () => {
-    if (!slug.trim()) return
-    setIsAuthOpen(true)
+    const destination = slug.trim() ? `/auth/sign-up?slug=${slug}` : '/auth/sign-up'
+    window.location.href = destination
   }
 
   const freeFeatures = [
@@ -344,7 +342,7 @@ export default function Home() {
               <p className="text-body-large text-on-surface-muted leading-relaxed">{f.body}</p>
               <Button
                 className="btn-secondary px-0 font-medium cursor-pointer group border-0 border-b rounded-none"
-                onClick={() => setIsAuthOpen(true)}
+                onClick={handleClaim}
               >
                 Get started free
                 <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
@@ -411,7 +409,7 @@ export default function Home() {
                 </ul>
                 <Button
                   className="btn-secondary w-full h-11 cursor-pointer"
-                  onClick={() => setIsAuthOpen(true)}
+                  onClick={handleClaim}
                 >
                   Get your free store
                 </Button>
@@ -436,23 +434,23 @@ export default function Home() {
                 </div>
                 <div>
                   <p className="text-headline-small font-montserrat mb-1 text-on-dark">Pro</p>
-                  <p className="text-on-dark-secondary text-body-medium">For serious creators and businesses.</p>
+                  <p className="text-primary-foreground/80 text-body-medium">For serious creators and businesses.</p>
                 </div>
                 <div>
                   <span className="text-[48px] font-montserrat font-normal text-on-dark">Ksh 3,500</span>
-                  <span className="text-on-dark-secondary font-montserrat">/month</span>
+                  <span className="text-primary-foreground/80 font-montserrat">/month</span>
                 </div>
                 <ul className="space-y-3">
                   {proFeatures.map((feat, i) => (
                     <li key={i} className="flex items-start gap-3">
                       <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-on-dark" />
-                      <span className="text-body-medium text-on-dark-secondary">{feat}</span>
+                      <span className="text-body-medium text-primary-foreground/90">{feat}</span>
                     </li>
                   ))}
                 </ul>
                 <Button
                   className="btn-inverted w-full h-11 rounded-none cursor-pointer"
-                  onClick={() => setIsAuthOpen(true)}
+                  onClick={handleClaim}
                 >
                   Go Pro
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -532,7 +530,7 @@ export default function Home() {
             <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
               <Button
                 className="btn-inverted px-10 py-6 text-base h-auto rounded-none cursor-pointer"
-                onClick={() => setIsAuthOpen(true)}
+                onClick={handleClaim}
               >
                 Claim your free store now
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -544,21 +542,6 @@ export default function Home() {
           </FadeIn>
         </div>
       </section>
-
-      {/* ── AUTH DIALOG ──────────────────────────────────────────────────── */}
-      <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Claim your free store</DialogTitle>
-            <DialogDescription>
-              {slug
-                ? `menengai.cloud/${slug} is waiting for you.`
-                : "Pick your slug and you're live in seconds."}
-            </DialogDescription>
-          </DialogHeader>
-          <AuthPopup slug={slug} />
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

@@ -1,12 +1,12 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useState, Suspense } from 'react'
+import { loginAction } from '@/app/auth/actions'
 
 interface LoginFormProps {
   className?: string
@@ -23,49 +23,24 @@ function Form({ className, onSwitch }: LoginFormProps) {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    const supabase = createClient()
     setIsLoading(true)
     setError(null)
 
+    const formData = new FormData()
+    formData.append('email', email)
+    formData.append('password', password)
+    formData.append('redirect', searchParams.get('redirect') || '')
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({ email, password })
-      if (error) throw error
-
-      // Get user's store via store_members
-      const { data: membership } = await supabase
-        .from('store_members')
-        .select('store_id, stores(slug)')
-        .eq('user_id', data.user.id)
-        .eq('role', 'owner')
-        .single()
-
-      const storesData = Array.isArray(membership?.stores)
-        ? membership.stores[0]
-        : membership?.stores
-
-      if (!storesData?.slug) throw new Error('No store found. Please contact support.')
-
-      const slug = storesData.slug as string
-      const redirect = searchParams.get('redirect')
-
-      // redirect is a full encoded URL from middleware
-      const destination = (() => {
-        if (!redirect) return `https://${slug}.menengai.cloud/settings`
-        try {
-          const decoded = decodeURIComponent(redirect)
-          const url = new URL(decoded)
-          // Safety check: only allow redirects to *.menengai.cloud
-          if (url.hostname.endsWith('.menengai.cloud')) return decoded
-        } catch {
-          // invalid URL, fall through to default
-        }
-        return `https://${slug}.menengai.cloud/settings`
-      })()
-
-      window.location.href = destination
+      const result = await loginAction(formData)
+      if (result.error) {
+        setError(result.error)
+        setIsLoading(false)
+      } else if (result.success && result.destination) {
+        window.location.href = result.destination
+      }
     } catch (error: unknown) {
       setError(error instanceof Error ? error.message : 'An error occurred')
-    } finally {
       setIsLoading(false)
     }
   }

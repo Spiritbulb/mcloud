@@ -3,7 +3,7 @@ import Image from "next/image"
 
 export function Footer() {
     return (
-        <footer className="border-t border-[#e8eaed] bg-background">
+        <footer className="border-t border-border bg-background">
             <div className="container mx-auto px-6 md:px-12 py-12">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-12">
                     {/* Company */}
@@ -79,7 +79,7 @@ export function Footer() {
                 </div>
 
                 {/* Bottom bar */}
-                <div className="pt-8 border-t border-[#e8eaed] flex flex-col md:flex-row justify-between items-center gap-4 text-foreground">
+                <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-foreground">
                     <p className="text-body-small">
                         © {new Date().getFullYear()} Menengai Cloud. All rights reserved.
                     </p>
