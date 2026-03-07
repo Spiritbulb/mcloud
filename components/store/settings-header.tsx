@@ -1,9 +1,6 @@
 'use client'
 
-import { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Loader2, Menu, X, ChevronRight } from 'lucide-react'
+import { Loader2, Menu, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 
@@ -26,66 +23,53 @@ export function SettingsHeader({
     onMenuOpen: () => void
 }) {
     return (
-        <div className="sticky top-0 z-40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
-            <div className="container mx-auto px-4 md:px-8 h-14 flex items-center justify-between gap-4">
-                {/* Menengai Cloud Logo */}
-                <div className="flex gap-4">
-                    <Link href="/" className="flex items-center gap-2">
+        <header className="sticky top-0 z-40 border-b border-outline bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
+            <div className="mx-auto px-6 md:px-10 h-[52px] flex items-center justify-between gap-6 max-w-[1400px]">
+
+                {/* Left: logo + breadcrumb */}
+                <div className="flex items-center gap-0 min-w-0">
+                    <button
+                        onClick={onMenuOpen}
+                        className="md:hidden p-1 mr-3 text-on-surface-muted hover:text-foreground transition-colors shrink-0"
+                        aria-label="Open navigation"
+                    >
+                        <Menu className="w-[18px] h-[18px]" />
+                    </button>
+
+                    <Link href="/" className="flex items-center shrink-0">
                         <img
                             src="/favicon.ico"
                             alt="Menengai Cloud"
-                            width={28}
-                            height={28}
+                            width={20}
+                            height={20}
+                            className=""
                         />
                     </Link>
-                </div>
 
-                {/* Left: breadcrumb on desktop, hamburger + breadcrumb on mobile */}
-                <div className="flex items-center gap-2 min-w-0">
-                    {/* Mobile hamburger */}
-                    <button
-                        onClick={onMenuOpen}
-                        className="md:hidden p-1.5 -ml-1.5 text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                        aria-label="Open navigation"
-                    >
-                        <Menu className="w-5 h-5" />
-                    </button>
-
-                    {/* Breadcrumb */}
-                    <div className="flex items-center gap-1.5 text-sm min-w-0">
+                    {/* Render-style breadcrumb: logo / store / Settings / Active */}
+                    <nav className="flex items-center text-[13px] min-w-0" aria-label="Breadcrumb">
+                        <span className="text-on-surface-muted select-none px-2.5">/</span>
                         <Link
                             href={`/store/${store.slug}`}
-                            className="text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap"
+                            className="text-on-surface-muted hover:text-foreground transition-colors whitespace-nowrap"
                         >
                             {store.name}
                         </Link>
-                        <span>/</span>
-                        <button onClick={() => setActiveTab('general')} className="text-muted-foreground whitespace-nowrap">Settings</button>
-                        {/* Active tab shown in breadcrumb on mobile */}
-                        <span className="md:hidden flex items-center gap-1.5 min-w-0">
-                            <span>/</span>
-                            <button onClick={() => setActiveTab(activeTab)} className="text-foreground font-medium truncate">{activeLabel}</button>
-                        </span>
-                        {/* Active tab shown in breadcrumb on desktop */}
-                        <span className="hidden md:flex items-center gap-1.5">
-                            <span>/</span>
-                            <button onClick={() => setActiveTab(activeTab)} className="text-foreground font-medium">{activeLabel}</button>
-                        </span>
-                    </div>
+                        <span className="text-on-surface-muted select-none px-2.5">/</span>
+                        <button
+                            onClick={() => setActiveTab('general')}
+                            className="text-on-surface-muted hover:text-foreground transition-colors whitespace-nowrap"
+                        >
+                            Settings
+                        </button>
+                        <span className="text-on-surface-muted select-none px-2.5">/</span>
+                        <span className="text-foreground font-semibold truncate">{activeLabel}</span>
+                    </nav>
                 </div>
 
-                {/* Right: save button */}
-                <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    size="sm"
-                    className="h-8 px-4 text-xs shrink-0"
-                >
-                    {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                    {saving ? 'Saving…' : 'Save changes'}
-                </Button>
+
             </div>
-        </div>
+        </header>
     )
 }
 
@@ -109,53 +93,78 @@ export function SettingsNav({
     }
 
     const NavList = ({ onSelect }: { onSelect: (id: string) => void }) => (
-        <ul className="space-y-0.5">
-            {TABS.map((tab) => (
-                <li key={tab.id}>
-                    <button
-                        onClick={() => onSelect(tab.id)}
-                        className={cn(
-                            'w-full flex items-center justify-between gap-3 px-3 py-2 rounded-md text-sm transition-colors text-left',
-                            activeTab === tab.id
-                                ? 'bg-secondary text-foreground font-medium'
-                                : 'text-muted-foreground hover:text-foreground hover:bg-secondary/50'
-                        )}
-                    >
-                        <span className="flex items-center gap-2.5">
-                            {tab.icon}
-                            {tab.label}
-                        </span>
-                    </button>
-                </li>
-            ))}
+        <ul className="flex flex-col">
+            {TABS.map((tab) => {
+                const isActive = activeTab === tab.id
+                return (
+                    // Render nav: full-width dividers, no rounded corners
+                    <li key={tab.id} className="border-b border-outline last:border-b-0">
+                        <button
+                            onClick={() => onSelect(tab.id)}
+                            className={cn(
+                                'w-full flex items-center gap-3 px-4 py-3.5 text-[13px] transition-colors text-left',
+                                isActive
+                                    ? 'bg-[#425e7b] text-white font-medium'
+                                    : 'text-on-surface-muted hover:text-foreground hover:bg-primary/40'
+                            )}
+                        >
+                            <span className={cn(
+                                'shrink-0 transition-colors w-[15px] h-[15px]',
+                                isActive ? 'text-foreground' : 'text-on-surface-muted'
+                            )}>
+                                {tab.icon}
+                            </span>
+                            <span className="flex-1">{tab.label}</span>
+                            {tab.pro && (
+                                <span className={cn(
+                                    'text-[9px] font-bold tracking-widest uppercase px-1.5 py-[3px] border',
+                                    isActive
+                                        ? 'border-outline-strong text-on-surface-muted'
+                                        : 'border-outline text-on-surface-muted/60'
+                                )}>
+                                    BETA
+                                </span>
+                            )}
+                        </button>
+                    </li>
+                )
+            })}
         </ul>
     )
 
     return (
         <>
             {/* Desktop sidebar */}
-            <nav className="hidden md:block md:w-52 shrink-0 pt-12">
+            <nav className="hidden md:block w-64 shrink-0 border-r border-outline">
                 <NavList onSelect={setActiveTab} />
             </nav>
 
-            {/* Mobile drawer */}
+            {/* Mobile backdrop */}
+            {open && (
+                <div
+                    className="md:hidden fixed inset-0 z-40 bg-foreground/20 backdrop-blur-sm"
+                    onClick={onClose}
+                />
+            )}
+
+            {/* Mobile drawer — matches header height exactly */}
             <div
                 className={cn(
-                    'md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-white dark:bg-black shadow-xl flex flex-col transition-transform duration-200 ease-in-out',
+                    'md:hidden fixed inset-y-0 left-0 z-50 w-64 bg-background shadow-2xl flex flex-col transition-transform duration-200 ease-out border-r border-outline',
                     open ? 'translate-x-0' : '-translate-x-full'
                 )}
             >
-                <div className="flex items-center justify-between px-4 py-3 border-b">
-                    <span className="text-sm font-semibold text-foreground">Settings</span>
+                <div className="flex items-center justify-between px-5 h-[52px] border-b border-outline shrink-0">
+                    <span className="text-[13px] font-semibold text-foreground">Settings</span>
                     <button
                         onClick={onClose}
-                        className="p-1.5 -mr-1.5 text-muted-foreground hover:text-foreground transition-colors"
-                        aria-label="Close navigation"
+                        className="p-1 text-on-surface-muted hover:text-foreground transition-colors"
+                        aria-label="Close"
                     >
-                        <X className="w-5 h-5" />
+                        <X className="w-4 h-4" />
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto px-3 py-3">
+                <div className="flex-1 overflow-y-auto">
                     <NavList onSelect={handleSelect} />
                 </div>
             </div>

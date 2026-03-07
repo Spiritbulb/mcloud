@@ -1,22 +1,13 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Badge } from '@/components/ui/badge'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select'
-import { Trash2, Check, Palette, Type, Layout } from 'lucide-react'
+import { useState } from 'react'
+import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
+import { cn } from '@/lib/utils'
+import { SettingsSection, SettingsField } from './store-settings'
 import ImageUpload from './image-upload'
 import { THEMES } from '../../src/themes'
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 interface HeroSlide {
     title: string
@@ -38,43 +29,21 @@ interface StoreData {
     custom_domain: string | null
     is_active: boolean
     settings: {
-        primaryColor?: string
+        themeId?: string
         heroTitle?: string
         heroSubtitle?: string
         heroImage?: string
         logoPath?: string
         heroSlides?: HeroSlide[]
         heroImagePath?: string
-        themeId?: string
-        socialLinks?: {
-            instagram?: string
-            twitter?: string
-            tiktok?: string
-            whatsapp?: string
-        }
+        socialLinks?: Record<string, string>
     }
-    theme?: {
-        primary_color?: string
-        secondary_color?: string
-        accent_color?: string
-        background_color?: string
-        foreground_color?: string
-        muted_color?: string
-        dark_primary_color?: string
-        dark_background_color?: string
-        dark_foreground_color?: string
-        dark_muted_color?: string
-        heading_font?: string
-        body_font?: string
-        border_radius?: string
-    }
+    theme?: Record<string, string>
 }
 
-interface AppearanceSettingsProps {
+export interface AppearanceSettingsProps {
     store: StoreData
-    // Theme
     themeId: string; setThemeId: (v: string) => void
-    // Hero content
     heroTitle: string; setHeroTitle: (v: string) => void
     heroSubtitle: string; setHeroSubtitle: (v: string) => void
     heroImage: string; setHeroImage: (v: string) => void
@@ -82,7 +51,6 @@ interface AppearanceSettingsProps {
     logoPath: string; setLogoPath: (v: string) => void
     heroSlides: HeroSlide[]; setHeroSlides: (v: HeroSlide[]) => void
     heroImagePath: string; setHeroImagePath: (v: string) => void
-    // Theme tokens
     primaryColor: string; setPrimaryColor: (v: string) => void
     secondaryColor: string; setSecondaryColor: (v: string) => void
     accentColor: string; setAccentColor: (v: string) => void
@@ -98,6 +66,8 @@ interface AppearanceSettingsProps {
     borderRadius: string; setBorderRadius: (v: string) => void
 }
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const FONTS = [
     'Inter', 'Playfair Display', 'Lato', 'Montserrat',
     'Merriweather', 'Nunito', 'Raleway', 'Roboto',
@@ -110,538 +80,443 @@ const BORDER_RADII = [
     { label: 'Pill', value: '999px' },
 ]
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── ColorRow ─────────────────────────────────────────────────────────────────
 
-function ColorField({
-    label,
-    value,
-    onChange,
-}: {
+function ColorRow({ label, value, onChange }: {
     label: string
     value: string
     onChange: (v: string) => void
 }) {
     return (
-        <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{label}</Label>
-            <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+            <span className="text-[12px] text-on-surface-muted w-24 shrink-0">{label}</span>
+            <div className="flex items-center gap-2 flex-1">
+                <label className="relative w-7 h-7 shrink-0 border border-outline cursor-pointer overflow-hidden">
+                    <div className="absolute inset-0" style={{ backgroundColor: value }} />
+                    <input
+                        type="color"
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                    />
+                </label>
                 <input
-                    type="color"
+                    type="text"
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
-                    className="w-8 h-8 rounded border cursor-pointer bg-background p-0.5 appearance-none flex-shrink-0"
-                />
-                <Input
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    placeholder="#000000"
-                    className="h-8 font-mono text-xs w-28"
+                    spellCheck={false}
+                    className="settings-input font-mono text-[12px] flex-1"
+                    style={{ height: 28 }}
                 />
             </div>
         </div>
     )
 }
 
-function SectionHeading({
-    title,
-    description,
-}: {
-    title: string
-    description?: string
+// ─── ThemeSection ─────────────────────────────────────────────────────────────
+
+function ThemeSection({ themeId, setThemeId, slug }: {
+    themeId: string
+    setThemeId: (v: string) => void
+    slug: string
 }) {
     return (
-        <div className="space-y-0.5">
-            <p className="text-sm font-medium text-foreground">{title}</p>
-            {description && (
-                <p className="text-xs text-muted-foreground">{description}</p>
+        <SettingsSection
+            title="Theme"
+            description="Layout and visual style of your storefront"
+            aside={
+                <a
+                    href={`/store/${slug}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors"
+                >
+                    View store <ExternalLink className="w-3 h-3" />
+                </a>
+            }
+        >
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {THEMES.map((theme) => {
+                    const isActive = themeId === theme.id
+                    return (
+                        <button
+                            key={theme.id}
+                            onClick={() => setThemeId(theme.id)}
+                            className={cn(
+                                'text-left border p-3 transition-colors',
+                                isActive
+                                    ? 'border-foreground bg-surface-variant'
+                                    : 'border-outline hover:border-outline-strong hover:bg-surface-variant/40'
+                            )}
+                        >
+                            <div className="flex overflow-hidden border border-outline mb-3 h-7">
+                                <div className="flex-1" style={{ backgroundColor: theme.preview.background }} />
+                                <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
+                                <div className="w-4" style={{ backgroundColor: theme.preview.accent }} />
+                            </div>
+                            <div className="flex items-start justify-between gap-2">
+                                <div>
+                                    <p className="text-[13px] font-medium text-foreground leading-none">{theme.name}</p>
+                                    <p className="text-[11px] text-on-surface-muted mt-1 leading-snug">{theme.description}</p>
+                                </div>
+                                {isActive && (
+                                    <div className="shrink-0 w-4 h-4 bg-foreground flex items-center justify-center">
+                                        <Check className="w-2.5 h-2.5 text-surface" />
+                                    </div>
+                                )}
+                            </div>
+                        </button>
+                    )
+                })}
+            </div>
+        </SettingsSection>
+    )
+}
+
+// ─── ColorsSection ────────────────────────────────────────────────────────────
+
+function ColorsSection(props: Pick<AppearanceSettingsProps,
+    | 'primaryColor' | 'setPrimaryColor'
+    | 'secondaryColor' | 'setSecondaryColor'
+    | 'accentColor' | 'setAccentColor'
+    | 'bgColor' | 'setBgColor'
+    | 'fgColor' | 'setFgColor'
+    | 'mutedColor' | 'setMutedColor'
+    | 'darkPrimaryColor' | 'setDarkPrimaryColor'
+    | 'darkBgColor' | 'setDarkBgColor'
+    | 'darkFgColor' | 'setDarkFgColor'
+    | 'darkMutedColor' | 'setDarkMutedColor'
+>) {
+    const [mode, setMode] = useState<'light' | 'dark'>('light')
+
+    return (
+        <SettingsSection
+            title="Colors"
+            description="Your storefront's color palette"
+            aside={
+                <div className="flex items-center border border-outline">
+                    <button
+                        onClick={() => setMode('light')}
+                        className={cn(
+                            'flex items-center gap-1.5 px-2.5 h-7 text-[12px] transition-colors',
+                            mode === 'light'
+                                ? 'bg-surface-variant text-foreground'
+                                : 'text-on-surface-muted hover:text-foreground'
+                        )}
+                    >
+                        <Sun className="w-3 h-3" /> Light
+                    </button>
+                    <div className="w-px h-4 bg-outline" />
+                    <button
+                        onClick={() => setMode('dark')}
+                        className={cn(
+                            'flex items-center gap-1.5 px-2.5 h-7 text-[12px] transition-colors',
+                            mode === 'dark'
+                                ? 'bg-surface-variant text-foreground'
+                                : 'text-on-surface-muted hover:text-foreground'
+                        )}
+                    >
+                        <Moon className="w-3 h-3" /> Dark
+                    </button>
+                </div>
+            }
+        >
+            {mode === 'light' ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                    <ColorRow label="Primary" value={props.primaryColor} onChange={props.setPrimaryColor} />
+                    <ColorRow label="Secondary" value={props.secondaryColor} onChange={props.setSecondaryColor} />
+                    <ColorRow label="Accent" value={props.accentColor} onChange={props.setAccentColor} />
+                    <ColorRow label="Background" value={props.bgColor} onChange={props.setBgColor} />
+                    <ColorRow label="Foreground" value={props.fgColor} onChange={props.setFgColor} />
+                    <ColorRow label="Muted" value={props.mutedColor} onChange={props.setMutedColor} />
+                </div>
+            ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                    <ColorRow label="Primary" value={props.darkPrimaryColor} onChange={props.setDarkPrimaryColor} />
+                    <ColorRow label="Background" value={props.darkBgColor} onChange={props.setDarkBgColor} />
+                    <ColorRow label="Foreground" value={props.darkFgColor} onChange={props.setDarkFgColor} />
+                    <ColorRow label="Muted" value={props.darkMutedColor} onChange={props.setDarkMutedColor} />
+                </div>
+            )}
+        </SettingsSection>
+    )
+}
+
+// ─── TypographySection ────────────────────────────────────────────────────────
+
+function TypographySection(props: Pick<AppearanceSettingsProps,
+    | 'headingFont' | 'setHeadingFont'
+    | 'bodyFont' | 'setBodyFont'
+    | 'borderRadius' | 'setBorderRadius'
+>) {
+    return (
+        <SettingsSection title="Typography & Shape">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                <SettingsField label="Heading font">
+                    <select value={props.headingFont} onChange={(e) => props.setHeadingFont(e.target.value)} className="settings-input">
+                        {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                </SettingsField>
+                <SettingsField label="Body font">
+                    <select value={props.bodyFont} onChange={(e) => props.setBodyFont(e.target.value)} className="settings-input">
+                        {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
+                    </select>
+                </SettingsField>
+            </div>
+
+            {/* Live font preview */}
+            <div className="mt-5 p-4 border border-outline bg-surface-variant/30 space-y-1.5">
+                <p style={{ fontFamily: props.headingFont, fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}>
+                    Heading — {props.headingFont}
+                </p>
+                <p style={{ fontFamily: props.bodyFont, fontSize: 13, opacity: 0.6, lineHeight: 1.5 }}>
+                    Body text — the quick brown fox jumps over the lazy dog.
+                </p>
+            </div>
+
+            <div className="mt-5">
+                <SettingsField label="Button & card radius">
+                    <div className="flex gap-2 flex-wrap mt-1">
+                        {BORDER_RADII.map((r) => (
+                            <button
+                                key={r.value}
+                                onClick={() => props.setBorderRadius(r.value)}
+                                className={cn(
+                                    'h-8 px-4 text-[12px] border transition-colors',
+                                    props.borderRadius === r.value
+                                        ? 'bg-foreground text-surface border-foreground'
+                                        : 'bg-background text-on-surface-muted border-outline hover:border-outline-strong hover:text-foreground'
+                                )}
+                            >
+                                {r.label}
+                            </button>
+                        ))}
+                    </div>
+                </SettingsField>
+            </div>
+        </SettingsSection>
+    )
+}
+
+// ─── HeroSection ──────────────────────────────────────────────────────────────
+
+function HeroSection(props: Pick<AppearanceSettingsProps,
+    | 'store'
+    | 'heroTitle' | 'setHeroTitle'
+    | 'heroSubtitle' | 'setHeroSubtitle'
+    | 'heroImage' | 'setHeroImage'
+    | 'heroImagePath' | 'setHeroImagePath'
+    | 'logoUrl' | 'setLogoUrl'
+    | 'logoPath' | 'setLogoPath'
+>) {
+    const { store } = props
+    return (
+        <SettingsSection title="Hero" description="Shown at the top of your storefront">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
+                <SettingsField label="Title">
+                    <input
+                        value={props.heroTitle}
+                        onChange={(e) => props.setHeroTitle(e.target.value)}
+                        placeholder={store.name}
+                        className="settings-input"
+                    />
+                </SettingsField>
+                <SettingsField label="Subtitle">
+                    <input
+                        value={props.heroSubtitle}
+                        onChange={(e) => props.setHeroSubtitle(e.target.value)}
+                        placeholder="Free shipping on all orders"
+                        className="settings-input"
+                    />
+                </SettingsField>
+                <SettingsField label="Hero image" hint="Used as the hero background">
+                    <ImageUpload
+                        label="Upload image"
+                        value={props.heroImage}
+                        pathInDb={props.heroImagePath}
+                        onChange={(url, path) => { props.setHeroImage(url); props.setHeroImagePath(path) }}
+                        bucket="store-assets"
+                        pathPrefix={`${store.id}/hero`}
+                        aspectRatio="wide"
+                    />
+                </SettingsField>
+                <SettingsField label="Logo">
+                    <div className="flex items-center gap-3">
+                        {props.logoUrl && (
+                            <img src={props.logoUrl} alt="Logo" className="w-10 h-10 object-cover border border-outline shrink-0" />
+                        )}
+                        <ImageUpload
+                            label="Upload logo"
+                            value={props.logoUrl}
+                            pathInDb={props.logoPath}
+                            onChange={(url, path) => { props.setLogoUrl(url); props.setLogoPath(path) }}
+                            bucket="store-assets"
+                            pathPrefix={`${store.id}/logo`}
+                            aspectRatio="square"
+                        />
+                    </div>
+                </SettingsField>
+            </div>
+        </SettingsSection>
+    )
+}
+
+// ─── SlidesSection + SlideCard ────────────────────────────────────────────────
+
+function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
+    slide: HeroSlide
+    idx: number
+    total: number
+    storeId: string
+    onChange: (v: HeroSlide) => void
+    onMove: (dir: 'up' | 'down') => void
+    onRemove: () => void
+}) {
+    const [open, setOpen] = useState(true)
+
+    return (
+        <div className="border border-outline">
+            <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline bg-surface-variant/30">
+                <button
+                    onClick={() => setOpen(!open)}
+                    className="flex items-center gap-2 text-[12px] font-medium text-foreground"
+                >
+                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform', open && 'rotate-180')} />
+                    Slide {idx + 1}
+                    {slide.title && (
+                        <span className="text-on-surface-muted font-normal truncate max-w-[140px]">— {slide.title}</span>
+                    )}
+                </button>
+                <div className="flex items-center gap-1">
+                    {(['up', 'down'] as const).map((dir) => (
+                        <button
+                            key={dir}
+                            disabled={dir === 'up' ? idx === 0 : idx === total - 1}
+                            onClick={() => onMove(dir)}
+                            className="w-6 h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
+                        >{dir === 'up' ? '↑' : '↓'}</button>
+                    ))}
+                    <button
+                        onClick={onRemove}
+                        className="w-6 h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-red-500 transition-colors"
+                    >×</button>
+                </div>
+            </div>
+
+            {open && (
+                <div className="p-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
+                        <SettingsField label="Title">
+                            <input value={slide.title} onChange={(e) => onChange({ ...slide, title: e.target.value })} placeholder="Your statement" className="settings-input" />
+                        </SettingsField>
+                        <SettingsField label="Subtitle">
+                            <input value={slide.subtitle ?? ''} onChange={(e) => onChange({ ...slide, subtitle: e.target.value })} placeholder="Discover our bestsellers…" className="settings-input" />
+                        </SettingsField>
+                        <SettingsField label="Accent badge">
+                            <input value={slide.accent ?? ''} onChange={(e) => onChange({ ...slide, accent: e.target.value })} placeholder="New Arrivals" className="settings-input" />
+                        </SettingsField>
+                        <SettingsField label="Button text">
+                            <input value={slide.buttonText ?? ''} onChange={(e) => onChange({ ...slide, buttonText: e.target.value })} placeholder="Shop now" className="settings-input" />
+                        </SettingsField>
+                    </div>
+                    <SettingsField label="Slide image">
+                        <ImageUpload
+                            value={slide.image ?? ''}
+                            pathInDb={slide.imagePath ?? ''}
+                            onChange={(url, path) => onChange({ ...slide, image: url, imagePath: path })}
+                            bucket="store-assets"
+                            pathPrefix={`${storeId}/slides/${idx}`}
+                            aspectRatio="wide"
+                        />
+                    </SettingsField>
+                </div>
             )}
         </div>
     )
 }
 
-// ─── Theme Picker ─────────────────────────────────────────────────────────────
+function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlides' | 'setHeroSlides'>) {
+    const { store, heroSlides, setHeroSlides } = props
 
-function ThemePicker({
-    value,
-    onChange,
-}: {
-    value: string
-    onChange: (id: string) => void
-}) {
     return (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            {THEMES.map((theme) => {
-                const isActive = value === theme.id
-                return (
-                    <button
-                        key={theme.id}
-                        type="button"
-                        onClick={() => onChange(theme.id)}
-                        className={`
-              group relative text-left rounded-lg border-2 p-3 transition-all
-              ${isActive
-                                ? 'border-foreground shadow-sm'
-                                : 'border-border hover:border-muted-foreground'}
-            `}
-                    >
-                        {/* Color swatch strip */}
-                        <div className="flex gap-1 mb-3 h-8 rounded overflow-hidden">
-                            <div className="flex-1" style={{ backgroundColor: theme.preview.background }} />
-                            <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
-                            <div className="w-4" style={{ backgroundColor: theme.preview.accent }} />
-                        </div>
-
-                        <div className="flex items-start justify-between gap-2">
-                            <div>
-                                <p className="text-sm font-medium leading-tight">{theme.name}</p>
-                                <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
-                                    {theme.description}
-                                </p>
-                            </div>
-                            {isActive && (
-                                <div className="flex-shrink-0 w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
-                                    <Check className="w-3 h-3 text-background" />
-                                </div>
-                            )}
-                        </div>
-                    </button>
-                )
-            })}
-        </div>
+        <SettingsSection
+            title="Hero slides"
+            description="Multiple slides replace the single hero. Leave empty to use the image above."
+            aside={
+                <button
+                    onClick={() => setHeroSlides([...heroSlides, { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' }])}
+                    className="btn-secondary h-7 px-3 text-[12px]"
+                >
+                    + Add slide
+                </button>
+            }
+        >
+            {heroSlides.length === 0 ? (
+                <p className="text-[12px] text-on-surface-muted py-1">
+                    No slides — using hero image and title above.
+                </p>
+            ) : (
+                <div className="space-y-3">
+                    {heroSlides.map((slide, idx) => (
+                        <SlideCard
+                            key={idx}
+                            slide={slide}
+                            idx={idx}
+                            total={heroSlides.length}
+                            storeId={store.id}
+                            onChange={(updated) => {
+                                const next = [...heroSlides]
+                                next[idx] = updated
+                                setHeroSlides(next)
+                            }}
+                            onMove={(dir) => {
+                                const next = [...heroSlides]
+                                const swap = dir === 'up' ? idx - 1 : idx + 1
+                                    ;[next[idx], next[swap]] = [next[swap], next[idx]]
+                                setHeroSlides(next)
+                            }}
+                            onRemove={() => setHeroSlides(heroSlides.filter((_, i) => i !== idx))}
+                        />
+                    ))}
+                </div>
+            )}
+        </SettingsSection>
     )
 }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Root ─────────────────────────────────────────────────────────────────────
 
-export default function AppearanceSettings({
-    store,
-    themeId, setThemeId,
-    heroTitle, setHeroTitle,
-    heroSubtitle, setHeroSubtitle,
-    heroImage, setHeroImage,
-    logoUrl, setLogoUrl,
-    logoPath, setLogoPath,
-    heroSlides, setHeroSlides,
-    heroImagePath, setHeroImagePath,
-    primaryColor, setPrimaryColor,
-    secondaryColor, setSecondaryColor,
-    accentColor, setAccentColor,
-    bgColor, setBgColor,
-    fgColor, setFgColor,
-    mutedColor, setMutedColor,
-    darkPrimaryColor, setDarkPrimaryColor,
-    darkBgColor, setDarkBgColor,
-    darkFgColor, setDarkFgColor,
-    darkMutedColor, setDarkMutedColor,
-    headingFont, setHeadingFont,
-    bodyFont, setBodyFont,
-    borderRadius, setBorderRadius,
-}: AppearanceSettingsProps) {
+export default function AppearanceSettings(props: AppearanceSettingsProps) {
     return (
-        <div className="space-y-10">
-            <div>
-                <h2 className="text-base font-semibold text-foreground">Appearance</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                    Customize how your storefront looks to customers
-                </p>
-            </div>
-
-            {/* ── Theme picker ─────────────────────────────────────────────── */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Layout className="w-4 h-4 text-muted-foreground" />
-                    <SectionHeading
-                        title="Theme"
-                        description="Choose a layout and visual style for your storefront"
-                    />
-                </div>
-                <ThemePicker value={themeId} onChange={setThemeId} />
-            </section>
-
-            <Separator />
-
-            {/* ── Logo ─────────────────────────────────────────────────────── */}
-            <section className="space-y-3">
-                <SectionHeading title="Logo" />
-                <div className="flex items-center gap-4">
-                    {logoUrl && (
-                        <img
-                            src={logoUrl}
-                            alt="Logo"
-                            className="w-12 h-12 rounded-full object-cover border"
-                        />
-                    )}
-                    <ImageUpload
-                        label="Upload logo"
-                        value={logoUrl}
-                        pathInDb={logoPath}
-                        onChange={(url, path) => {
-                            setLogoUrl(url)
-                            setLogoPath(path)
-                        }}
-                        bucket="store-assets"
-                        pathPrefix={`${store.id}/logo`}
-                        aspectRatio="square"
-                    />
-                </div>
-            </section>
-
-            <Separator />
-
-            {/* ── Colors ───────────────────────────────────────────────────── */}
-            <section className="space-y-6">
-                <div className="flex items-center gap-2">
-                    <Palette className="w-4 h-4 text-muted-foreground" />
-                    <SectionHeading title="Colors" />
-                </div>
-
-                <div className="space-y-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Light mode
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-                        <ColorField label="Primary" value={primaryColor} onChange={setPrimaryColor} />
-                        <ColorField label="Secondary" value={secondaryColor} onChange={setSecondaryColor} />
-                        <ColorField label="Accent" value={accentColor} onChange={setAccentColor} />
-                        <ColorField label="Background" value={bgColor} onChange={setBgColor} />
-                        <ColorField label="Foreground" value={fgColor} onChange={setFgColor} />
-                        <ColorField label="Muted" value={mutedColor} onChange={setMutedColor} />
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                        Dark mode
-                    </p>
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-x-6 gap-y-4">
-                        <ColorField label="Primary" value={darkPrimaryColor} onChange={setDarkPrimaryColor} />
-                        <ColorField label="Background" value={darkBgColor} onChange={setDarkBgColor} />
-                        <ColorField label="Foreground" value={darkFgColor} onChange={setDarkFgColor} />
-                        <ColorField label="Muted" value={darkMutedColor} onChange={setDarkMutedColor} />
-                    </div>
-                </div>
-
-                {/* Live preview swatch */}
-                <Card className="max-w-sm">
-                    <CardContent className="pt-4 pb-4 space-y-3">
-                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                            Preview
-                        </p>
-                        <div
-                            className="h-14 flex items-center justify-center rounded"
-                            style={{ backgroundColor: primaryColor, borderRadius }}
-                        >
-                            <span
-                                className="font-semibold text-sm"
-                                style={{ fontFamily: headingFont, color: bgColor }}
-                            >
-                                {heroTitle || store.name}
-                            </span>
-                        </div>
-                        <div className="flex gap-1.5 flex-wrap">
-                            {[
-                                { color: primaryColor, label: 'Primary' },
-                                { color: secondaryColor, label: 'Secondary' },
-                                { color: accentColor, label: 'Accent' },
-                                { color: bgColor, label: 'BG' },
-                                { color: fgColor, label: 'FG' },
-                                { color: mutedColor, label: 'Muted' },
-                            ].map(({ color, label }) => (
-                                <div key={label} className="flex flex-col items-center gap-1">
-                                    <div
-                                        className="w-6 h-6 rounded border"
-                                        style={{ backgroundColor: color }}
-                                        title={`${label}: ${color}`}
-                                    />
-                                    <span className="text-[10px] text-muted-foreground">{label}</span>
-                                </div>
-                            ))}
-                        </div>
-                    </CardContent>
-                </Card>
-            </section>
-
-            <Separator />
-
-            {/* ── Typography ───────────────────────────────────────────────── */}
-            <section className="space-y-4">
-                <div className="flex items-center gap-2">
-                    <Type className="w-4 h-4 text-muted-foreground" />
-                    <SectionHeading title="Typography" />
-                </div>
-                <div className="grid grid-cols-2 gap-4 max-w-sm">
-                    <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Heading font</Label>
-                        <Select value={headingFont} onValueChange={setHeadingFont}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {FONTS.map((f) => (
-                                    <SelectItem key={f} value={f}>
-                                        {f}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label className="text-xs text-muted-foreground">Body font</Label>
-                        <Select value={bodyFont} onValueChange={setBodyFont}>
-                            <SelectTrigger className="h-9">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {FONTS.map((f) => (
-                                    <SelectItem key={f} value={f}>
-                                        {f}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-
-                {/* Live font preview */}
-                <div
-                    className="max-w-sm p-4 border rounded-lg space-y-1"
-                    style={{ borderColor: 'hsl(var(--border))' }}
-                >
-                    <p style={{ fontFamily: headingFont, fontWeight: 600, fontSize: '1rem', lineHeight: 1.3 }}>
-                        Heading preview
-                    </p>
-                    <p style={{ fontFamily: bodyFont, fontSize: '0.875rem', opacity: 0.7 }}>
-                        Body text preview — the quick brown fox jumps over the lazy dog.
-                    </p>
-                </div>
-            </section>
-
-            {/* ── Border radius ────────────────────────────────────────────── */}
-            <section className="space-y-3">
-                <SectionHeading title="Border radius" />
-                <div className="flex gap-2 flex-wrap">
-                    {BORDER_RADII.map((r) => (
-                        <button
-                            key={r.value}
-                            type="button"
-                            onClick={() => setBorderRadius(r.value)}
-                            className={`
-                h-8 px-3 text-xs border rounded transition-all
-                ${borderRadius === r.value
-                                    ? 'bg-foreground text-background border-foreground'
-                                    : 'bg-background text-foreground border-border hover:border-muted-foreground'}
-              `}
-                        >
-                            {r.label}
-                        </button>
-                    ))}
-                </div>
-            </section>
-
-            <Separator />
-
-            {/* ── Hero content ─────────────────────────────────────────────── */}
-            <section className="space-y-4">
-                <SectionHeading
-                    title="Hero content"
-                    description="Shown at the top of your storefront"
-                />
-                <div className="space-y-4 max-w-md">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="hero-title">Hero title</Label>
-                        <Input
-                            id="hero-title"
-                            value={heroTitle}
-                            onChange={(e) => setHeroTitle(e.target.value)}
-                            placeholder={store.name}
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="hero-subtitle">Hero subtitle</Label>
-                        <Input
-                            id="hero-subtitle"
-                            value={heroSubtitle}
-                            onChange={(e) => setHeroSubtitle(e.target.value)}
-                            placeholder="Free shipping on all orders"
-                        />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label>Hero image</Label>
-                        <ImageUpload
-                            label="Hero image"
-                            value={heroImage}
-                            pathInDb={heroImagePath}
-                            onChange={(url, path) => {
-                                setHeroImage(url)
-                                setHeroImagePath(path)
-                            }}
-                            bucket="store-assets"
-                            pathPrefix={`${store.id}/hero`}
-                            aspectRatio="wide"
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            Displayed as background in your store hero section
-                        </p>
-                    </div>
-                </div>
-            </section>
-
-            {/* ── Hero slides ──────────────────────────────────────────────── */}
-            <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                    <SectionHeading
-                        title="Hero slides"
-                        description="Multiple slides replace the single hero. Leave empty to use the image above."
-                    />
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-8 text-xs"
-                        onClick={() =>
-                            setHeroSlides([
-                                ...heroSlides,
-                                { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' },
-                            ])
-                        }
-                    >
-                        + Add slide
-                    </Button>
-                </div>
-
-                {heroSlides.length === 0 ? (
-                    <Card className="border-dashed">
-                        <CardContent className="py-8 text-center">
-                            <p className="text-sm text-muted-foreground">
-                                No slides added — using hero image &amp; title as a single slide.
-                            </p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="space-y-3">
-                        {heroSlides.map((slide, idx) => (
-                            <Card key={idx}>
-                                <CardContent className="pt-4 space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                            Slide {idx + 1}
-                                        </p>
-                                        <div className="flex items-center gap-1">
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 w-6 p-0 text-muted-foreground"
-                                                disabled={idx === 0}
-                                                onClick={() => {
-                                                    const next = [...heroSlides]
-                                                        ;[next[idx - 1], next[idx]] = [next[idx], next[idx - 1]]
-                                                    setHeroSlides(next)
-                                                }}
-                                            >
-                                                ↑
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 w-6 p-0 text-muted-foreground"
-                                                disabled={idx === heroSlides.length - 1}
-                                                onClick={() => {
-                                                    const next = [...heroSlides]
-                                                        ;[next[idx], next[idx + 1]] = [next[idx + 1], next[idx]]
-                                                    setHeroSlides(next)
-                                                }}
-                                            >
-                                                ↓
-                                            </Button>
-                                            <Button
-                                                variant="ghost"
-                                                size="sm"
-                                                className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive"
-                                                onClick={() =>
-                                                    setHeroSlides(heroSlides.filter((_, i) => i !== idx))
-                                                }
-                                            >
-                                                <Trash2 className="w-3.5 h-3.5" />
-                                            </Button>
-                                        </div>
-                                    </div>
-
-                                    <div className="grid gap-3 max-w-md">
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs">Title *</Label>
-                                            <Input
-                                                value={slide.title}
-                                                onChange={(e) => {
-                                                    const next = [...heroSlides]
-                                                    next[idx] = { ...next[idx], title: e.target.value }
-                                                    setHeroSlides(next)
-                                                }}
-                                                placeholder="Your statement of confidence"
-                                                className="h-8 text-sm"
-                                            />
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs">Subtitle</Label>
-                                            <Input
-                                                value={slide.subtitle ?? ''}
-                                                onChange={(e) => {
-                                                    const next = [...heroSlides]
-                                                    next[idx] = { ...next[idx], subtitle: e.target.value }
-                                                    setHeroSlides(next)
-                                                }}
-                                                placeholder="Discover our bestsellers…"
-                                                className="h-8 text-sm"
-                                            />
-                                        </div>
-                                        <div className="grid grid-cols-2 gap-3">
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs">Accent badge</Label>
-                                                <Input
-                                                    value={slide.accent ?? ''}
-                                                    onChange={(e) => {
-                                                        const next = [...heroSlides]
-                                                        next[idx] = { ...next[idx], accent: e.target.value }
-                                                        setHeroSlides(next)
-                                                    }}
-                                                    placeholder="New Arrivals"
-                                                    className="h-8 text-sm"
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs">Button text</Label>
-                                                <Input
-                                                    value={slide.buttonText ?? ''}
-                                                    onChange={(e) => {
-                                                        const next = [...heroSlides]
-                                                        next[idx] = { ...next[idx], buttonText: e.target.value }
-                                                        setHeroSlides(next)
-                                                    }}
-                                                    placeholder="Shop now"
-                                                    className="h-8 text-sm"
-                                                />
-                                            </div>
-                                        </div>
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs">Slide image</Label>
-                                            <ImageUpload
-                                                value={slide.image ?? ''}
-                                                pathInDb={slide.imagePath ?? ''}
-                                                onChange={(url, path) => {
-                                                    const next = [...heroSlides]
-                                                    next[idx] = { ...next[idx], image: url, imagePath: path }
-                                                    setHeroSlides(next)
-                                                }}
-                                                bucket="store-assets"
-                                                pathPrefix={`${store.id}/slides/${idx}`}
-                                                aspectRatio="wide"
-                                            />
-                                        </div>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        ))}
-                    </div>
-                )}
-            </section>
+        <div className="space-y-4">
+            <ThemeSection themeId={props.themeId} setThemeId={props.setThemeId} slug={props.store.slug} />
+            <ColorsSection
+                primaryColor={props.primaryColor} setPrimaryColor={props.setPrimaryColor}
+                secondaryColor={props.secondaryColor} setSecondaryColor={props.setSecondaryColor}
+                accentColor={props.accentColor} setAccentColor={props.setAccentColor}
+                bgColor={props.bgColor} setBgColor={props.setBgColor}
+                fgColor={props.fgColor} setFgColor={props.setFgColor}
+                mutedColor={props.mutedColor} setMutedColor={props.setMutedColor}
+                darkPrimaryColor={props.darkPrimaryColor} setDarkPrimaryColor={props.setDarkPrimaryColor}
+                darkBgColor={props.darkBgColor} setDarkBgColor={props.setDarkBgColor}
+                darkFgColor={props.darkFgColor} setDarkFgColor={props.setDarkFgColor}
+                darkMutedColor={props.darkMutedColor} setDarkMutedColor={props.setDarkMutedColor}
+            />
+            <TypographySection
+                headingFont={props.headingFont} setHeadingFont={props.setHeadingFont}
+                bodyFont={props.bodyFont} setBodyFont={props.setBodyFont}
+                borderRadius={props.borderRadius} setBorderRadius={props.setBorderRadius}
+            />
+            <HeroSection
+                store={props.store}
+                heroTitle={props.heroTitle} setHeroTitle={props.setHeroTitle}
+                heroSubtitle={props.heroSubtitle} setHeroSubtitle={props.setHeroSubtitle}
+                heroImage={props.heroImage} setHeroImage={props.setHeroImage}
+                heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
+                logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
+                logoPath={props.logoPath} setLogoPath={props.setLogoPath}
+            />
+            <SlidesSection store={props.store} heroSlides={props.heroSlides} setHeroSlides={props.setHeroSlides} />
         </div>
     )
 }

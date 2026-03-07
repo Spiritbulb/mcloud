@@ -16,35 +16,28 @@
   --color-surface-variant: 244 246 248;
   --color-foreground: 22 32 45;
   /* deep navy */
-  --color-on-surface: 66 94 123;
-  /* brand blue — #425e7b */
-  --color-on-surface-muted: 100 108 117;
-  /* neutral mid-grey */
-  --color-primary: 66 94 123;
-  /* #425e7b */
+  --color-on-surface: 11 12 11;
+  /* neutral dark — body text */
+  --color-on-surface-muted: 11 12 11;
+  /* secondary / caption text */
+  --color-primary: 11 12 11;
+  /* #425e7b — brand blue */
   --color-primary-hover: 50 72 97;
   /* #324861 — 15% darker */
   --color-primary-foreground: 255 255 255;
   --color-link: 56 100 160;
-  /* blue, stays in brand family */
   --color-link-hover: 40 78 130;
   --color-outline: 218 222 227;
   --color-outline-strong: 175 184 194;
 
   /* ── Dark section panels (hero / stats / CTA) ───────────── */
-  /* Intentionally darker than dark-mode background           */
   --color-section-dark: 8 11 16;
-  /* near-black, not pure */
   --color-on-dark: 228 232 237;
-  /* soft white — not blinding */
   --color-on-dark-secondary: 160 170 182;
-  /* muted blue-grey */
   --color-on-dark-dim: 110 120 132;
-  /* subtle — placeholders */
   --color-on-dark-muted: 72 82 94;
-  /* very quiet — meta text */
 
-  /* ── Storefront Variables (Mapped to CSS custom properties) ── */
+  /* ── Storefront Variables ── */
   --color-sf-primary: var(--sf-primary);
   --color-sf-secondary: var(--sf-secondary);
   --color-sf-accent: var(--sf-accent);
@@ -61,29 +54,76 @@
    ============================================================ */
 @layer theme {
   .dark {
-    --color-background: 3 3 3;
-    /* deep slate — not pure black */
-    --color-surface: 22 28 36;
-    /* cards sit above background */
-    --color-surface-variant: 30 38 48;
-    /* hover states, alt rows */
+    --color-background: 11 12 11;
+    --color-surface: 3 3 3;
+    --color-surface-variant: 110 110 110;
     --color-foreground: 220 226 234;
     /* near-white heading text */
-    --color-on-surface: 185 200 218;
-    /* brand-tinted light text */
-    --color-on-surface-muted: 120 132 147;
+    --color-on-surface: 180 180 180;
+    /* neutral light — body text */
+    --color-on-surface-muted: 222 222 222;
     /* secondary text */
-    --color-primary: 110 145 185;
-    /* #6e91b9 — brand lightened for dark */
+    --color-primary: 222 222 222;
+    /* brand lightened for dark */
     --color-primary-hover: 140 172 210;
-    /* lighter on hover */
     --color-primary-foreground: 10 15 22;
-    /* dark text on light primary */
     --color-link: 110 155 210;
     --color-link-hover: 145 185 235;
     --color-outline: 40 50 63;
     --color-outline-strong: 58 72 90;
   }
+}
+
+/* ============================================================
+   SHADCN / GEIST VARIABLE OVERRIDES
+   Geist font package ships bundled shadcn :root variables.
+   These declarations win by being later in the cascade.
+   ============================================================ */
+:root {
+  --background: 215 215 215;
+  --foreground: 22 32 45;
+  --card: 255 255 255;
+  --card-foreground: 22 32 45;
+  --popover: 255 255 255;
+  --popover-foreground: 22 32 45;
+  --primary: 66 94 123;
+  --primary-foreground: 255 255 255;
+  --secondary: 244 246 248;
+  --secondary-foreground: 22 32 45;
+  --muted: 244 246 248;
+  --muted-foreground: 255 255 255;
+  /* neutral grey — NOT brand blue */
+  --accent: 244 246 248;
+  --accent-foreground: 22 32 45;
+  --destructive: 220 38 38;
+  --destructive-foreground: 255 255 255;
+  --border: 218 222 227;
+  --input: 218 222 227;
+  --ring: 66 94 123;
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 3 3 3;
+  --foreground: 220 226 234;
+  --card: 22 28 36;
+  --card-foreground: 220 226 234;
+  --popover: 22 28 36;
+  --popover-foreground: 220 226 234;
+  --primary: 110 145 185;
+  --primary-foreground: 10 15 22;
+  --secondary: 30 38 48;
+  --secondary-foreground: 220 226 234;
+  --muted: 30 38 48;
+  --muted-foreground: 255 255 255;
+  /* neutral — NOT brand */
+  --accent: 30 38 48;
+  --accent-foreground: 220 226 234;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 40 50 63;
+  --input: 40 50 63;
+  --ring: 110 145 185;
 }
 
 /* ============================================================
@@ -97,6 +137,7 @@
   body {
     background-color: rgb(var(--color-background));
     color: rgb(var(--color-on-surface));
+    /* ← neutral text, not brand */
     font-feature-settings: "kern" 1;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -108,9 +149,11 @@
   h4,
   h5,
   h6 {
-    font-weight: normal;
+    font-weight: 600;
+    /* ← restored sensible weight */
     letter-spacing: -0.025em;
     color: rgb(var(--color-foreground));
+    /* deep navy / near-white */
   }
 
   a {
@@ -201,14 +244,12 @@
 
 /* ============================================================
    DARK SECTION UTILITIES
-   Used on hero, stats, and CTA sections
    ============================================================ */
 @layer utilities {
   .dark-section {
     background-color: rgb(var(--color-section-dark));
   }
 
-  /* Gradient fade for hero parallax bg image */
   .gradient-section-dark {
     background: linear-gradient(to bottom,
         rgb(var(--color-section-dark) / 0.5),
@@ -216,12 +257,10 @@
         rgb(var(--color-section-dark)));
   }
 
-  /* Semi-opaque overlay for CTA bg image */
   .overlay-section-dark {
     background-color: rgb(var(--color-section-dark) / 0.75);
   }
 
-  /* Text on dark section backgrounds — uses dedicated tokens, not white */
   .text-on-dark {
     color: rgb(var(--color-on-dark));
   }
@@ -241,41 +280,46 @@
 
 /* ============================================================
    COMPONENT CLASSES
+   @layer components gives correct specificity in Tailwind v4
+   and ensures these are never tree-shaken.
    ============================================================ */
-@layer utilities {
+@layer components {
 
-  /* --- Primary button --- */
   .btn-primary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background-color: rgb(var(--color-primary));
     color: rgb(var(--color-primary-foreground));
     font-weight: 500;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
+    border: none;
+    cursor: pointer;
     transition: background-color 0.2s, box-shadow 0.2s;
-    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.08);
   }
 
-  .btn-primary:hover {
+  .btn-primary:hover:not(:disabled) {
     background-color: rgb(var(--color-primary-hover));
-    box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.12);
   }
 
-  /* --- Secondary / outline button --- */
   .btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background-color: transparent;
     border: 1px solid rgb(var(--color-outline));
     color: rgb(var(--color-on-surface));
     font-weight: 500;
-    border-radius: var(--radius-sm);
+    border-radius: 0;
+    cursor: pointer;
     transition: background-color 0.2s, border-color 0.2s;
   }
 
-  .btn-secondary:hover {
+  .btn-secondary:hover:not(:disabled) {
     background-color: rgb(var(--color-surface-variant));
     border-color: rgb(var(--color-outline-strong));
   }
 
-  /* --- Inverted button (for dark sections) --- */
-  /* Light surface bg + primary-colored text */
   .btn-inverted {
     background-color: rgb(var(--color-on-dark));
     color: rgb(var(--color-section-dark));
@@ -288,14 +332,12 @@
     opacity: 0.88;
   }
 
-  /* --- Badge on dark/primary backgrounds --- */
   .badge-inverted {
     background-color: rgb(var(--color-on-dark));
     color: rgb(var(--color-primary));
     font-weight: 600;
   }
 
-  /* --- Links --- */
   .link {
     color: rgb(var(--color-link));
     cursor: pointer;
@@ -306,7 +348,6 @@
     color: rgb(var(--color-link-hover));
   }
 
-  /* --- Cards --- */
   .card {
     background-color: rgb(var(--color-surface));
     border: 1px solid rgb(var(--color-outline));
@@ -316,6 +357,22 @@
 
   .card:hover {
     box-shadow: 0 4px 12px -2px rgb(0 0 0 / 0.1);
+  }
+
+  /* Nav active/inactive — explicit classes so Tailwind v4 never purges them */
+  .nav-item-active {
+    background-color: rgb(var(--color-surface-variant));
+    color: rgb(var(--color-foreground));
+    font-weight: 500;
+  }
+
+  .nav-item-inactive {
+    color: rgb(var(--color-on-surface-muted));
+  }
+
+  .nav-item-inactive:hover {
+    color: rgb(var(--color-on-surface));
+    background-color: rgb(var(--color-surface-variant) / 0.6);
   }
 }
 
@@ -334,4 +391,103 @@
 
 .animate-marquee {
   animation: marquee 25s linear infinite;
+}
+
+/* ============================================================
+   SETTINGS INPUT
+   Sharp corners, generous height — Render aesthetic
+   ============================================================ */
+.settings-input {
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 0;
+  border: 1px solid rgb(var(--color-outline));
+  background-color: rgb(var(--color-surface));
+  color: rgb(var(--color-foreground));
+  font-size: 13px;
+  line-height: 1;
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.settings-input:focus {
+  border-color: rgb(var(--color-outline-strong));
+  box-shadow: 0 0 0 3px rgb(var(--color-primary) / 0.08);
+}
+
+.settings-input::placeholder {
+  color: rgb(var(--color-on-surface-muted));
+  opacity: 0.5;
+}
+
+.settings-input:read-only {
+  background-color: rgb(var(--color-surface-variant));
+}
+
+textarea.settings-input {
+  height: auto;
+  padding: 10px 12px;
+  resize: vertical;
+  line-height: 1.55;
+}
+
+select.settings-input {
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  padding-right: 32px;
+}
+
+/* ============================================================
+   SHADCN VARIABLE OVERRIDES
+   Force shadcn components to use our token values.
+   These override whatever shadcn init injected.
+   ============================================================ */
+:root {
+  --background: 250 251 252;
+  --foreground: 22 32 45;
+  --card: 255 255 255;
+  --card-foreground: 22 32 45;
+  --popover: 255 255 255;
+  --popover-foreground: 22 32 45;
+  --primary: 66 94 123;
+  --primary-foreground: 255 255 255;
+  --secondary: 244 246 248;
+  --secondary-foreground: 22 32 45;
+  --muted: 244 246 248;
+  --muted-foreground: 255 255 255;
+  /* neutral grey — was brand blue */
+  --accent: 244 246 248;
+  --accent-foreground: 22 32 45;
+  --destructive: 220 38 38;
+  --destructive-foreground: 255 255 255;
+  --border: 218 222 227;
+  --input: 218 222 227;
+  --ring: 66 94 123;
+}
+
+.dark {
+  --background: 3 3 3;
+  --foreground: 220 226 234;
+  --card: 22 28 36;
+  --card-foreground: 220 226 234;
+  --popover: 22 28 36;
+  --popover-foreground: 220 226 234;
+  --primary: 110 145 185;
+  --primary-foreground: 10 15 22;
+  --secondary: 30 38 48;
+  --secondary-foreground: 220 226 234;
+  --muted: 30 38 48;
+  --muted-foreground: 255 255 255;
+  /* neutral — not brand */
+  --accent: 30 38 48;
+  --accent-foreground: 220 226 234;
+  --destructive: 239 68 68;
+  --destructive-foreground: 255 255 255;
+  --border: 40 50 63;
+  --input: 40 50 63;
+  --ring: 110 145 185;
 }
