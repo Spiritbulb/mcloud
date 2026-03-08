@@ -135,7 +135,7 @@ function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void 
             onClick={() => onChange(!on)}
             className={cn(
                 'relative inline-flex h-5 w-9 shrink-0 cursor-pointer transition-colors duration-150',
-                on ? 'bg-primary' : 'bg-outline-strong'
+                on ? 'bg-[#425e7b]' : 'border border-outline'
             )}
             style={{ borderRadius: 0 }}
         >

@@ -5,10 +5,9 @@ import { createClient } from '@/lib/client'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Check, Loader2, Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag } from 'lucide-react'
 import { cn } from '@/lib/utils'
-
 import DomainSettings from './domain-settings'
 import PaymentSettings from './payment-settings'
-import { SettingsHeader, SettingsNav } from './settings-header'
+import { SettingsHeader, SettingsNav, MobileSettingsNav } from './settings-header'
 import GeneralSettings from './general-settings'
 import AppearanceSettings from './appearance-settings'
 import ProductSettings from './product-settings'
@@ -195,9 +194,9 @@ export function SettingsSection({
     noPadding?: boolean
 }) {
     return (
-        <section className="border border-outline bg-surface">
+        <section className="border border-light bg-surface">
             {(title || description) && (
-                <div className="px-6 py-4 border-b border-outline flex items-start justify-between gap-4">
+                <div className="px-6 py-4 border-b border-light flex items-start justify-between gap-4">
                     <div>
                         {title && (
                             <h3 className="text-[13px] font-semibold text-foreground leading-snug">{title}</h3>
@@ -242,9 +241,47 @@ export function SettingsField({
 
 export default function StoreSettings({ store }: { store: StoreData }) {
     const [activeTab, setActiveTab] = useState('general')
-    const [navOpen, setNavOpen] = useState(false)
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+
+    // ── Auth user ─────────────────────────────────────────────────────────────
+    const [user, setUser] = useState<{
+        name: string
+        email: string
+        avatarUrl?: string
+    } | null>(null)
+
+    useEffect(() => {
+        const supabase = createClient()
+        supabase.auth.getUser().then(({ data }) => {
+            if (!data.user) return
+            const meta = data.user.user_metadata ?? {}
+            setUser({
+                name: meta.full_name ?? meta.name ?? data.user.email?.split('@')[0] ?? 'Account',
+                email: data.user.email ?? '',
+                avatarUrl: meta.avatar_url ?? meta.picture ?? undefined,
+            })
+        })
+    }, [])
+
+    const handleSignOut = async () => {
+        const supabase = createClient()
+        await supabase.auth.signOut()
+        window.location.href = '/auth/login'
+    }
+
+    const navUser = user
+        ? {
+            ...user,
+            accountHref: '/account',
+            onSignOut: handleSignOut,
+        }
+        : {
+            name: '…',
+            email: '',
+            accountHref: '/account',
+            onSignOut: handleSignOut,
+        }
 
     const activeLabel = TABS.find((t) => t.id === activeTab)?.label ?? 'General'
 
@@ -390,23 +427,30 @@ export default function StoreSettings({ store }: { store: StoreData }) {
                 activeTab={activeTab}
                 setActiveTab={setActiveTab}
                 activeLabel={activeLabel}
-                onMenuOpen={() => setNavOpen(true)}
             />
 
-            <div className="mx-auto max-w-[1400px]">
+            <div className="mx-auto w-[100vw] ">
                 <div className="flex">
+                    {/* Desktop sidebar */}
                     <SettingsNav
                         activeTab={activeTab}
                         setActiveTab={setActiveTab}
                         TABS={TABS}
-                        open={navOpen}
-                        onClose={() => setNavOpen(false)}
+                        user={navUser}
+                    />
+
+                    {/* Mobile drawer */}
+                    <MobileSettingsNav
+                        activeTab={activeTab}
+                        setActiveTab={setActiveTab}
+                        TABS={TABS}
+                        user={navUser}
                     />
 
                     {/* Content pane */}
-                    <main className="flex-1 min-w-0 px-8 md:px-12 pt-10 pb-24">
+                    <main className="flex-1 min-w-0 px-4 md:px-12 pt-6 h-[100vh] overflow-y-auto">
 
-                        {/* Page title + save — Render puts these at the top of content */}
+                        {/* Page title + save */}
                         <div className="flex items-center justify-between mb-8">
                             <h1 className="text-[22px] font-semibold text-foreground tracking-tight">
                                 {activeLabel}

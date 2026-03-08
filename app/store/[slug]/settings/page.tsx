@@ -28,5 +28,8 @@ export default async function SettingsPage({ params }: Props) {
     // Verify this slug matches the user's store
     if (store.slug !== slug) redirect(`/${store.slug}/settings`)
 
-    return <StoreSettings store={store} />
+    return (
+
+        <StoreSettings store={store} />
+    )
 }
