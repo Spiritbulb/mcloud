@@ -35,6 +35,7 @@ export default function SettingsShell({
     const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'General'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
+    const [authChecked, setAuthChecked] = useState(false)
     const [store, setStore] = useState<any>(null)
 
     useEffect(() => {
@@ -51,6 +52,7 @@ export default function SettingsShell({
                 email: data.user.email ?? '',
                 avatarUrl: meta.avatar_url ?? meta.picture ?? undefined,
             })
+            setAuthChecked(true)
         })
 
         supabase
@@ -61,7 +63,8 @@ export default function SettingsShell({
             .then(({ data }) => setStore(data))
     }, [slug])
 
-    if (!store) return null
+    // Wait for BOTH auth and store before rendering
+    if (!authChecked || !store) return null
 
     const handleSignOut = async () => {
         const supabase = createClient()
