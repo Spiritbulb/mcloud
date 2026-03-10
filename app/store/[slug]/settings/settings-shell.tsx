@@ -23,10 +23,10 @@ export type TabId = (typeof TABS)[number]['id']
 
 export default function SettingsShell({
     children,
-    store,
+    slug,
 }: {
     children: React.ReactNode
-    store: any
+    slug: any
 }) {
     const pathname = usePathname()
     const router = useRouter()
@@ -35,6 +35,18 @@ export default function SettingsShell({
     const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'General'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
+    const [store, setStore] = useState<any>(null)
+
+    useEffect(() => {
+        createClient()  // this is @/lib/client, browser-side
+            .from('stores')
+            .select('*, theme:store_themes(*)')
+            .eq('slug', slug)
+            .single()
+            .then(({ data }) => setStore(data))
+    }, [slug])
+
+    if (!store) return null
 
     useEffect(() => {
         const supabase = createClient()

@@ -32,6 +32,11 @@ export async function updateSession(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const pathSegments = pathname.split('/').filter(Boolean)
+  const potentialSlug = pathSegments[0]
+
+  console.log('Path: ', pathname)
+  console.log('User: ', user)
+  console.log('Potential Slug: ', potentialSlug)
 
   if (
     !user &&
