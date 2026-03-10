@@ -27,16 +27,11 @@ export async function updateSession(request: NextRequest) {
     }
   )
 
-  const { data } = await supabase.auth.getClaims()
-  const user = data?.claims
+  // After  
+  const { data: { user } } = await supabase.auth.getUser()
 
   const pathname = request.nextUrl.pathname
   const pathSegments = pathname.split('/').filter(Boolean)
-  const potentialSlug = pathSegments[0]
-
-  console.log('Middleware - pathname:', pathname)
-  console.log('Middleware - user:', user?.sub)
-  console.log('Middleware - potentialSlug:', potentialSlug)
 
   if (
     !user &&
