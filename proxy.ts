@@ -111,9 +111,10 @@ export async function proxy(request: NextRequest) {
 
     // Owner/admin routes → rewrite to internal path, let client handle auth
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      const url = request.nextUrl.clone()
-      url.pathname = `/store/${slug}${pathname}`
-      return NextResponse.rewrite(url)
+      return NextResponse.redirect(
+        toSubdomainUrl(request, slug, `${pathname}${request.nextUrl.search}`),
+        308,
+      )
     }
 
     // Public storefront page
