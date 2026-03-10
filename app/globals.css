@@ -491,3 +491,13 @@ select.settings-input {
   --input: 40 50 63;
   --ring: 110 145 185;
 }
+
+/* globals.css */
+[data-sidebar-provider] {
+  height: 100vh !important;
+  overflow: hidden !important;
+}
+
+body:has([data-settings-shell]) {
+  overflow: hidden;
+}

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SettingsSection, SettingsField } from './store-settings'
+import { SettingsSection, SettingsField } from '../../app/store/[slug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
 import { THEMES } from '../../src/themes'
 
@@ -91,7 +91,7 @@ function ColorRow({ label, value, onChange }: {
         <div className="flex items-center gap-3">
             <span className="text-[12px] text-on-surface-muted w-24 shrink-0">{label}</span>
             <div className="flex items-center gap-2 flex-1">
-                <label className="relative w-7 h-7 shrink-0 border border-outline cursor-pointer overflow-hidden">
+                <label className="relative w-7 h-7 shrink-0 border border-light cursor-pointer overflow-hidden">
                     <div className="absolute inset-0" style={{ backgroundColor: value }} />
                     <input
                         type="color"
@@ -149,7 +149,7 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                                     : 'border-outline hover:border-outline-strong hover:bg-surface-variant/40'
                             )}
                         >
-                            <div className="flex overflow-hidden border border-outline mb-3 h-7">
+                            <div className="flex overflow-hidden border border-light mb-3 h-7">
                                 <div className="flex-1" style={{ backgroundColor: theme.preview.background }} />
                                 <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
                                 <div className="w-4" style={{ backgroundColor: theme.preview.accent }} />
@@ -265,7 +265,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
             </div>
 
             {/* Live font preview */}
-            <div className="mt-5 p-4 border border-outline bg-surface-variant/30 space-y-1.5">
+            <div className="mt-5 p-4 border border-light bg-surface-variant/30 space-y-1.5">
                 <p style={{ fontFamily: props.headingFont, fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}>
                     Heading — {props.headingFont}
                 </p>
@@ -285,7 +285,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                                     'h-8 px-4 text-[12px] border transition-colors',
                                     props.borderRadius === r.value
                                         ? 'bg-foreground text-surface border-foreground'
-                                        : 'bg-background text-on-surface-muted border-outline hover:border-outline-strong hover:text-foreground'
+                                        : 'bg-background text-on-surface-muted border-light hover:border-outline-strong hover:text-foreground'
                                 )}
                             >
                                 {r.label}

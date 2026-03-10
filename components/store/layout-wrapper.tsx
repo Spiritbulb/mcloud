@@ -3,7 +3,6 @@
 import StoreNav from './store-nav'
 import StoreFooter from './store-footer'
 import { usePathname } from 'next/navigation'
-import { SidebarProvider } from '@/components/ui/sidebar'
 
 const isSettingsPath = (pathname: string) => pathname.includes('/settings')
 
@@ -19,24 +18,11 @@ export default function LayoutWrapper({
     cssVars: React.CSSProperties
 }) {
     const pathname = usePathname()
-    const isSettings = isSettingsPath(pathname)
 
-    // Settings: wrap in SidebarProvider so useSidebar() works anywhere in the tree.
-    // No storefront chrome (nav/footer/theme vars).
-    if (isSettings) {
-        return (
-            <SidebarProvider
-                defaultOpen={false}
-                style={{
-                    '--sidebar-background': 'var(--background)',
-                    '--sidebar-foreground': 'var(--foreground)',
-                    '--sidebar-border': 'var(--border)',
-                    '--sidebar-width': '16rem',
-                } as React.CSSProperties}
-            >
-                {children}
-            </SidebarProvider>
-        )
+    // Settings has its own layout.tsx which handles SidebarProvider,
+    // the shell, sidebar, header — everything. Just render children.
+    if (isSettingsPath(pathname)) {
+        return <>{children}</>
     }
 
     return (
