@@ -33,14 +33,14 @@ export function SettingsHeader({
                     <nav className="flex items-center text-[13px] min-w-0" aria-label="Breadcrumb">
                         <span className="text-on-surface-muted select-none px-2.5">/</span>
                         <Link
-                            href={`/store/${store.slug}`}
+                            href={`/store/${store?.slug}`}
                             className="text-on-surface-muted hover:text-foreground transition-colors whitespace-nowrap"
                         >
-                            {store.name}
+                            {store?.name}
                         </Link>
                         <span className="text-on-surface-muted select-none px-2.5">/</span>
                         <Link
-                            href={`/store/${store.slug}/settings/general`}
+                            href={`/store/${store?.slug}/settings/general`}
                             className="text-on-surface-muted hover:text-foreground transition-colors whitespace-nowrap"
                         >
                             Settings
