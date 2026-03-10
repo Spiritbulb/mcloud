@@ -126,23 +126,13 @@ export async function proxy(request: NextRequest) {
     }
 
     // Owner/admin routes → Enforce auth, then rewrite
+
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      const sessionResponse = await updateSession(request)
-
-      if ([302, 307, 308].includes(sessionResponse.status)) {
-        const redirectBack = encodeURIComponent(`${proto}://${host}${pathname}${request.nextUrl.search}`)
-        return NextResponse.redirect(
-          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
-          302,
-        )
-      }
-
+      // Don't check session here - cookie won't be present on custom domain
+      // Let the client-side auth handle the redirect
       request.nextUrl.pathname = `/store/${slug}${pathname}`
-      const rew = NextResponse.rewrite(request.nextUrl)
-      sessionResponse.cookies.getAll().forEach(c => rew.cookies.set(c.name, c.value, c))
-      return rew
+      return NextResponse.rewrite(request.nextUrl)
     }
-
     // Public storefront page → rewrite to internal /store/[slug][path]
     request.nextUrl.pathname = `/store/${slug}${pathname === '/' ? '' : pathname}`
     return NextResponse.rewrite(request.nextUrl)
@@ -203,22 +193,10 @@ export async function proxy(request: NextRequest) {
 
     // Enforce auth on owner routes, then rewrite
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      const sessionResponse = await updateSession(request)
-
-      if ([302, 307, 308].includes(sessionResponse.status)) {
-        const redirectBack = encodeURIComponent(`${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`)
-        return NextResponse.redirect(
-          `${proto}://menengai.cloud/auth/login?redirect=${redirectBack}`,
-          302,
-        )
-      }
-
-      url.pathname = `/store/${tenantSlug}${pathname}`
+      request.nextUrl.pathname = `/store/${tenantSlug}${pathname}`
       const rew = NextResponse.rewrite(url)
-      sessionResponse.cookies.getAll().forEach(c => rew.cookies.set(c.name, c.value, c))
       return rew
     }
-
     // Rewrite to internal route
     url.pathname = `/store/${tenantSlug}${pathname === '/' ? '' : pathname}`
     return NextResponse.rewrite(url)

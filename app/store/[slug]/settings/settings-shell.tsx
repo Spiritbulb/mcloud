@@ -38,7 +38,22 @@ export default function SettingsShell({
     const [store, setStore] = useState<any>(null)
 
     useEffect(() => {
-        createClient()  // this is @/lib/client, browser-side
+        const supabase = createClient()
+
+        supabase.auth.getUser().then(({ data }) => {
+            if (!data.user) {
+                window.location.href = `https://menengai.cloud/auth/login?redirect=${encodeURIComponent(window.location.href)}`
+                return
+            }
+            const meta = data.user.user_metadata ?? {}
+            setUser({
+                name: meta.full_name ?? meta.name ?? data.user.email?.split('@')[0] ?? 'Account',
+                email: data.user.email ?? '',
+                avatarUrl: meta.avatar_url ?? meta.picture ?? undefined,
+            })
+        })
+
+        supabase
             .from('stores')
             .select('*, theme:store_themes(*)')
             .eq('slug', slug)
@@ -47,19 +62,6 @@ export default function SettingsShell({
     }, [slug])
 
     if (!store) return null
-
-    useEffect(() => {
-        const supabase = createClient()
-        supabase.auth.getUser().then(({ data }) => {
-            if (!data.user) return
-            const meta = data.user.user_metadata ?? {}
-            setUser({
-                name: meta.full_name ?? meta.name ?? data.user.email?.split('@')[0] ?? 'Account',
-                email: data.user.email ?? '',
-                avatarUrl: meta.avatar_url ?? meta.picture ?? undefined,
-            })
-        })
-    }, [])
 
     const handleSignOut = async () => {
         const supabase = createClient()
