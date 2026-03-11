@@ -180,11 +180,10 @@ export async function proxy(request: NextRequest) {
       const session = await auth0.getSession(request)
 
       if (!session?.user) {
-        // ✅ returnTo survives via Auth0's own login flow — no cookie needed
-        const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`
-        const loginUrl = new URL(`${proto}://www.menengai.cloud/auth/login`)
-        loginUrl.searchParams.set('returnTo', returnTo)
-        return NextResponse.redirect(loginUrl, 302)
+        const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}`
+        const handoffUrl = new URL(`${proto}://www.menengai.cloud/auth/login-handoff`)
+        handoffUrl.searchParams.set('returnTo', returnTo)
+        return NextResponse.redirect(handoffUrl, 302)
       }
 
       const url = request.nextUrl.clone()
