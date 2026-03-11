@@ -1,4 +1,4 @@
-// app/api/stores/[slug]/route.ts
+// app/api/store/[slug]/route.ts
 import { auth0 } from '@/lib/auth0'
 import { createClient } from '@/lib/server'
 import { NextResponse } from 'next/server'

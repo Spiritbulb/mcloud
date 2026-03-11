@@ -1,4 +1,3 @@
-// app/auth/actions.ts
 'use server'
 
 import { createClient } from '@/lib/server'
@@ -14,7 +13,7 @@ export async function signUpAction(formData: FormData) {
     cookieStore.set('pending_store', JSON.stringify({ storeName, slug }), {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
-        maxAge: 60 * 10, // 10 minutes
+        maxAge: 60 * 10,
         path: '/',
     })
 
@@ -24,9 +23,22 @@ export async function signUpAction(formData: FormData) {
 export async function handleCallback(searchParams: URLSearchParams) {
     const supabase = await createClient()
     const session = await auth0.getSession()
+    if (!session?.user) return redirect('/auth/login')
+
+    const { sub: userId, email, name, picture } = session.user
+
+    // Upsert user profile
+    await supabase.from('users').upsert({
+        id: userId,
+        email,
+        name,
+        avatar_url: picture,
+        updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' })
+
+    // Handle returnTo cookie — user came from a protected subdomain route
     const cookieStore = await cookies()
     const returnTo = cookieStore.get('auth_return_to')?.value
-
     if (returnTo) {
         cookieStore.delete('auth_return_to')
         try {
@@ -37,25 +49,15 @@ export async function handleCallback(searchParams: URLSearchParams) {
         } catch { }
     }
 
-    if (!session?.user) return redirect('/auth/login')
-
-    const { sub: userId, email, name, picture } = session.user
-
-    await supabase.from('users').upsert({
-        id: userId,
-        email,
-        name,
-        avatar_url: picture,
-        updated_at: new Date().toISOString(),
-    }, { onConflict: 'id' })
-
-    const { data: existingStore } = await supabase
-        .from('stores')
-        .select('slug')
-        .eq('owner_id', userId)
+    // Check if user already has a store via store_members
+    const { data: membership } = await supabase
+        .from('store_members')
+        .select('store_id, role, stores(slug)')
+        .eq('user_id', userId)
+        .eq('role', 'owner')
         .single()
 
-    if (existingStore) {
+    if (membership) {
         return redirect(`/settings`)
     }
 
@@ -78,24 +80,23 @@ export async function handleCallback(searchParams: URLSearchParams) {
                     ? `${slug}-${Math.floor(Math.random() * 10000)}`
                     : slug
 
-                const { error: storeError } = await supabase.from('stores').insert({
-                    name: storeName,
-                    slug: finalSlug,
-                    owner_id: userId,
-                    currency: 'KES',
-                    timezone: 'Africa/Nairobi',
-                    is_active: true,
-                })
-                if (storeError) throw storeError
-
-                const { data: store } = await supabase
+                const { data: newStore, error: storeError } = await supabase
                     .from('stores')
+                    .insert({
+                        name: storeName,
+                        slug: finalSlug,
+                        owner_id: userId,
+                        currency: 'KES',
+                        timezone: 'Africa/Nairobi',
+                        is_active: true,
+                    })
                     .select('id')
-                    .eq('slug', finalSlug)
                     .single()
 
+                if (storeError) throw storeError
+
                 await supabase.from('store_members').insert({
-                    store_id: store!.id,
+                    store_id: newStore.id,
                     user_id: userId,
                     role: 'owner',
                 })
@@ -103,7 +104,7 @@ export async function handleCallback(searchParams: URLSearchParams) {
                 return redirect(`/settings`)
             }
         } catch (e) {
-            console.error('Failed to parse pending store:', e)
+            console.error('Failed to create store:', e)
         }
     }
 
