@@ -52,18 +52,14 @@ export default function SettingsShell({
                     avatarUrl: profile.picture ?? undefined,
                 })
                 setAuthChecked(true)
-
-                // Fetch store only after confirming identity, scoped to this owner
                 const res = await fetch(`/api/store/${slug}`, {
                     headers: { 'x-user-sub': profile.sub },
                 })
-
                 if (res.status === 403 || res.status === 404) {
                     // Not their store
                     window.location.href = '/'
                     return
                 }
-
                 if (res.ok) {
                     const data = await res.json()
                     setStore(data)
