@@ -35,9 +35,13 @@ export async function handleCallback(searchParams: URLSearchParams) {
         updated_at: new Date().toISOString(),
     }, { onConflict: 'id' })
 
-    // ✅ Auth0 carries returnTo through its own login flow
-    const returnTo = searchParams.get('returnTo')
+    // Read from cookie — set by login-handoff on www
+    const cookieStore = await cookies()
+    const returnTo = cookieStore.get('auth_return_to')?.value
+    console.log('[callback] auth_return_to:', returnTo) // keep until confirmed working
+
     if (returnTo) {
+        cookieStore.delete('auth_return_to')
         try {
             const url = new URL(returnTo)
             if (url.hostname === 'menengai.cloud' || url.hostname.endsWith('.menengai.cloud')) {
@@ -59,7 +63,6 @@ export async function handleCallback(searchParams: URLSearchParams) {
     }
 
     // New user — check for pending store cookie
-    const cookieStore = await cookies()
     const pending = cookieStore.get('pending_store')?.value
 
     if (pending) {
