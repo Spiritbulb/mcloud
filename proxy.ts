@@ -175,27 +175,16 @@ export async function proxy(request: NextRequest) {
       )
     }
 
-    // ✅ FIXED: Owner/admin routes — never initiate login from subdomain
+    // Owner/admin routes — force login through www, pass returnTo as query param
     if (PROTECTED_STORE_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
       const session = await auth0.getSession(request)
 
       if (!session?.user) {
-        // Force login through www so the transaction cookie is set on www.menengai.cloud
-        // After login, Auth0 will redirect back to www, then we send them to their subdomain
-        // In proxy.ts, before redirecting to login
+        // ✅ returnTo survives via Auth0's own login flow — no cookie needed
         const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`
         const loginUrl = new URL(`${proto}://www.menengai.cloud/auth/login`)
-
-        // Store returnTo in a cookie so it survives the Auth0 round trip
-        const response = NextResponse.redirect(loginUrl, 302)
-        response.cookies.set('auth_return_to', returnTo, {
-          httpOnly: true,
-          secure: true,
-          maxAge: 60 * 10, // 10 minutes
-          path: '/',
-          domain: '.menengai.cloud', // ✅ shared across subdomains
-        })
-        return response
+        loginUrl.searchParams.set('returnTo', returnTo)
+        return NextResponse.redirect(loginUrl, 302)
       }
 
       const url = request.nextUrl.clone()
@@ -292,12 +281,11 @@ export async function proxy(request: NextRequest) {
     return authResponse
   }
 
-  // All other platform routes — let Auth0 handle session + protection
   return auth0.middleware(request)
 }
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webpo)$).*)',
   ],
 }

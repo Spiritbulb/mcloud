@@ -27,7 +27,6 @@ export async function handleCallback(searchParams: URLSearchParams) {
 
     const { sub: userId, email, name, picture } = session.user
 
-    // Upsert user profile
     await supabase.from('users').upsert({
         id: userId,
         email,
@@ -36,11 +35,9 @@ export async function handleCallback(searchParams: URLSearchParams) {
         updated_at: new Date().toISOString(),
     }, { onConflict: 'id' })
 
-    // Handle returnTo cookie — user came from a protected subdomain route
-    const cookieStore = await cookies()
-    const returnTo = cookieStore.get('auth_return_to')?.value
+    // ✅ Auth0 carries returnTo through its own login flow
+    const returnTo = searchParams.get('returnTo')
     if (returnTo) {
-        cookieStore.delete('auth_return_to')
         try {
             const url = new URL(returnTo)
             if (url.hostname === 'menengai.cloud' || url.hostname.endsWith('.menengai.cloud')) {
@@ -49,10 +46,10 @@ export async function handleCallback(searchParams: URLSearchParams) {
         } catch { }
     }
 
-    // Check if user already has a store via store_members
+    // Check existing store membership
     const { data: membership } = await supabase
         .from('store_members')
-        .select('store_id, role, stores(slug)')
+        .select('store_id, role')
         .eq('user_id', userId)
         .eq('role', 'owner')
         .single()
@@ -62,6 +59,7 @@ export async function handleCallback(searchParams: URLSearchParams) {
     }
 
     // New user — check for pending store cookie
+    const cookieStore = await cookies()
     const pending = cookieStore.get('pending_store')?.value
 
     if (pending) {
