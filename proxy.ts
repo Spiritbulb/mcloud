@@ -182,10 +182,20 @@ export async function proxy(request: NextRequest) {
       if (!session?.user) {
         // Force login through www so the transaction cookie is set on www.menengai.cloud
         // After login, Auth0 will redirect back to www, then we send them to their subdomain
+        // In proxy.ts, before redirecting to login
         const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`
         const loginUrl = new URL(`${proto}://www.menengai.cloud/auth/login`)
-        loginUrl.searchParams.set('returnTo', returnTo) // ✅ no encodeURIComponent — URLSearchParams encodes it automatically
-        return NextResponse.redirect(loginUrl, 302)
+
+        // Store returnTo in a cookie so it survives the Auth0 round trip
+        const response = NextResponse.redirect(loginUrl, 302)
+        response.cookies.set('auth_return_to', returnTo, {
+          httpOnly: true,
+          secure: true,
+          maxAge: 60 * 10, // 10 minutes
+          path: '/',
+          domain: '.menengai.cloud', // ✅ shared across subdomains
+        })
+        return response
       }
 
       const url = request.nextUrl.clone()

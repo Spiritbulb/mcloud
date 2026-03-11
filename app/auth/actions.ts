@@ -24,6 +24,19 @@ export async function signUpAction(formData: FormData) {
 export async function handleCallback(searchParams: URLSearchParams) {
     const supabase = await createClient()
     const session = await auth0.getSession()
+    const cookieStore = await cookies()
+    const returnTo = cookieStore.get('auth_return_to')?.value
+
+    if (returnTo) {
+        cookieStore.delete('auth_return_to')
+        try {
+            const url = new URL(returnTo)
+            if (url.hostname === 'menengai.cloud' || url.hostname.endsWith('.menengai.cloud')) {
+                return redirect(returnTo)
+            }
+        } catch { }
+    }
+
     if (!session?.user) return redirect('/auth/login')
 
     const { sub: userId, email, name, picture } = session.user
@@ -47,7 +60,6 @@ export async function handleCallback(searchParams: URLSearchParams) {
     }
 
     // New user — check for pending store cookie
-    const cookieStore = await cookies()
     const pending = cookieStore.get('pending_store')?.value
 
     if (pending) {
