@@ -184,7 +184,7 @@ export async function proxy(request: NextRequest) {
         // After login, Auth0 will redirect back to www, then we send them to their subdomain
         const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}${request.nextUrl.search}`
         const loginUrl = new URL(`${proto}://www.menengai.cloud/auth/login`)
-        loginUrl.searchParams.set('returnTo', encodeURIComponent(returnTo))
+        loginUrl.searchParams.set('returnTo', returnTo) // ✅ no encodeURIComponent — URLSearchParams encodes it automatically
         return NextResponse.redirect(loginUrl, 302)
       }
 
