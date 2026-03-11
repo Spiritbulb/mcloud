@@ -34,44 +34,58 @@ export default function SettingsShell({
     const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'General'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
-    const [authChecked, setAuthChecked] = useState(false)
     const [store, setStore] = useState<any>(null)
+    const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetch('/auth/profile')
-            .then((r) => r.ok ? r.json() : null)
-            .then(async (profile) => {
-                if (!profile) {
-                    window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
+        async function load() {
+            try {
+                const profileRes = await fetch('/auth/profile')
+                if (!profileRes.ok) {
+                    window.location.href = `/auth/login`
                     return
                 }
+                const profile = await profileRes.json()
 
                 setUser({
                     name: profile.name ?? profile.email?.split('@')[0] ?? 'Account',
                     email: profile.email ?? '',
                     avatarUrl: profile.picture ?? undefined,
                 })
-                setAuthChecked(true)
-                const res = await fetch(`/api/store/${slug}`, {
-                    headers: { 'x-user-sub': profile.sub },
-                })
-                if (res.status === 403 || res.status === 404) {
-                    // Not their store
+
+                // ✅ No x-user-sub header — API gets identity from session cookie
+                const storeRes = await fetch(`/api/stores/${slug}`)
+
+                if (storeRes.status === 401) {
+                    window.location.href = `/auth/login`
+                    return
+                }
+                if (storeRes.status === 403 || storeRes.status === 404) {
                     window.location.href = '/'
                     return
                 }
-                if (res.ok) {
-                    const data = await res.json()
-                    setStore(data)
+                if (storeRes.ok) {
+                    setStore(await storeRes.json())
                 }
-            })
+            } catch (e) {
+                console.error('[SettingsShell]', e)
+            } finally {
+                setLoading(false)
+            }
+        }
+
+        load()
     }, [slug])
 
-    if (!authChecked || !store) return null
+    if (loading) return (
+        <div className="h-screen flex items-center justify-center bg-background">
+            <div className="w-6 h-6 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
+        </div>
+    )
 
-    const handleSignOut = () => {
-        window.location.href = '/auth/logout'
-    }
+    if (!store) return null
+
+    const handleSignOut = () => { window.location.href = '/auth/logout' }
 
     const navUser = user
         ? { ...user, accountHref: '/account', onSignOut: handleSignOut }
