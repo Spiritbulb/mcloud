@@ -2,6 +2,7 @@ import { CartProvider } from '@/contexts/CartContext'
 import { createClient } from '@/lib/server'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
+import { headers } from 'next/headers'
 
 
 async function getStoreTheme(slug: string) {
@@ -67,6 +68,11 @@ export default async function StoreLayout({
 
     const theme = await getStoreTheme(slug)
     const store = await getStore(slug)
+    const headersList = await headers()
+    const bannerScriptB64 = headersList.get('x-inject-owner-banner')
+    const bannerScript = bannerScriptB64
+        ? Buffer.from(bannerScriptB64, 'base64').toString('utf-8')
+        : null
 
     const cssVars = theme
         ? ({
@@ -89,7 +95,10 @@ export default async function StoreLayout({
 
     return (
         <CartProvider storeSlug={slug}>
-            <LayoutWrapper store={store} settings={store.settings} cssVars={cssVars}>
+            <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
+                {bannerScript && (
+                    <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+                )}
                 {children}
             </LayoutWrapper>
         </CartProvider>

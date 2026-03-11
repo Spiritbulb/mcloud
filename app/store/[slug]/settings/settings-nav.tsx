@@ -33,7 +33,7 @@ function NavList({
     TABS: readonly Tab[]
 }) {
     return (
-        <SidebarMenu className="flex flex-col gap-0 p-0">
+        <SidebarMenu className="flex flex-col gap-0 p-0 overflow-y-auto">
             {TABS.map((tab) => {
                 const isActive = activeTab === tab.id
                 return (
@@ -45,18 +45,13 @@ function NavList({
                             onClick={() => onSelect(tab.id as TabId)}
                             isActive={isActive}
                             className={cn(
-                                'w-full flex items-center gap-3 px-4 py-3.5 text-[13px] transition-colors text-left rounded-none h-auto',
+                                'w-full flex items-center gap-3 px-4 py-5 text-[20px] transition-colors text-left rounded-none h-auto',
                                 isActive
                                     ? 'bg-[#425e7b] text-white font-medium hover:bg-[#425e7b] hover:text-white active:bg-[#425e7b]'
                                     : 'text-on-surface-muted hover:text-foreground hover:bg-[#425e7b]/40'
                             )}
                         >
-                            <span className={cn(
-                                'shrink-0 transition-colors w-[15px] h-[15px]',
-                                isActive ? 'text-white' : 'text-on-surface-muted'
-                            )}>
-                                {tab.icon}
-                            </span>
+
                             <span className="flex-1">{tab.label}</span>
                             {tab.pro && (
                                 <span className={cn(
@@ -89,11 +84,11 @@ function AccountSection({ user }: { user: NavUser }) {
         .slice(0, 2)
 
     return (
-        <div className="relative border-t border-light mt-auto shrink-0">
+        <div className="relative border-t border-light mt-auto shrink-0 sticky bottom-0 bg-[#fff]/80 dark:bg-[#000]/80 backdrop-blur-sm">
             {open && (
                 <>
                     <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-                    <div className="absolute bottom-full left-0 right-0 z-20 bg-background border border-light shadow-lg">
+                    <div className="absolute bottom-full left-0 right-0 z-20 bg-[#fff] dark:bg-[#000] border border-light shadow-lg">
                         {user.accountHref && (
                             <Link
                                 href={user.accountHref}
@@ -155,7 +150,7 @@ export function SettingsNav({
     user: NavUser
 }) {
     return (
-        <nav className="hidden md:flex flex-col w-90 h-full overflow-y-auto shrink-0 border-r border-light">
+        <nav className="hidden md:flex flex-col w-80 h-full overflow-y-auto shrink-0 border-r border-light">
             <div className="flex-1">
                 <NavList activeTab={activeTab} onSelect={onSelect} TABS={TABS} />
             </div>

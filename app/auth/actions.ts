@@ -1,67 +1,99 @@
+// app/auth/actions.ts
 'use server'
 
 import { createClient } from '@/lib/server'
+import { auth0 } from '@/lib/auth0'
+import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 
-export async function loginAction(formData: FormData) {
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-    const redirectParams = formData.get('redirect') as string | null
+export async function signUpAction(formData: FormData) {
+    const storeName = formData.get('storeName') as string
+    const slug = formData.get('slug') as string
 
-    if (!email || !password) {
-        return { error: 'Email and password are required' }
-    }
-
-    const supabase = await createClient()
-
-    // This runs on the server, bypassing any browser CORS limitations
-    // and writes the auth cookies for the domain the request came from.
-    const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
+    const cookieStore = await cookies()
+    cookieStore.set('pending_store', JSON.stringify({ storeName, slug }), {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 60 * 10, // 10 minutes
+        path: '/',
     })
 
-    if (error) {
-        return { error: error.message }
-    }
+    redirect('/auth/login?screen_hint=signup')
+}
 
-    // Get user's store via store_members
-    const { data: membership } = await supabase
-        .from('store_members')
-        .select('store_id, stores(slug)')
-        .eq('user_id', data.user.id)
-        .eq('role', 'owner')
+export async function handleCallback(searchParams: URLSearchParams) {
+    const supabase = await createClient()
+    const session = await auth0.getSession()
+    if (!session?.user) return redirect('/auth/login')
+
+    const { sub: userId, email, name, picture } = session.user
+
+    await supabase.from('users').upsert({
+        id: userId,
+        email,
+        name,
+        avatar_url: picture,
+        updated_at: new Date().toISOString(),
+    }, { onConflict: 'id' })
+
+    const { data: existingStore } = await supabase
+        .from('stores')
+        .select('slug')
+        .eq('owner_id', userId)
         .single()
 
-    const storesData = Array.isArray(membership?.stores)
-        ? membership.stores[0]
-        : membership?.stores
-
-    if (!storesData?.slug) {
-        return { error: 'No store found. Please contact support.' }
+    if (existingStore) {
+        return redirect(`/settings`)
     }
 
-    const slug = storesData.slug as string
-    const redirect = redirectParams
+    // New user — check for pending store cookie
+    const cookieStore = await cookies()
+    const pending = cookieStore.get('pending_store')?.value
 
-    // redirect is a full encoded URL from middleware
-    const destination = (() => {
-        if (!redirect) return `https://${slug}.menengai.cloud/settings`
+    if (pending) {
         try {
-            const decoded = decodeURIComponent(redirect)
-            const url = new URL(decoded)
-            // Safety check: only allow redirects to *.menengai.cloud OR path starting with /
-            if (
-                url.hostname.endsWith('.menengai.cloud') ||
-                url.hostname === 'menengai.cloud' ||
-                decoded.startsWith('/')
-            ) {
-                return decoded
-            }
-        } catch {
-            // invalid URL, fall through to default
-        }
-        return `https://${slug}.menengai.cloud/settings`
-    })()
+            const { storeName, slug } = JSON.parse(pending)
+            cookieStore.delete('pending_store')
 
-    return { success: true, destination }
+            if (storeName && slug) {
+                const { data: existingSlug } = await supabase
+                    .from('stores')
+                    .select('slug')
+                    .eq('slug', slug)
+                    .single()
+
+                const finalSlug = existingSlug
+                    ? `${slug}-${Math.floor(Math.random() * 10000)}`
+                    : slug
+
+                const { error: storeError } = await supabase.from('stores').insert({
+                    name: storeName,
+                    slug: finalSlug,
+                    owner_id: userId,
+                    currency: 'KES',
+                    timezone: 'Africa/Nairobi',
+                    is_active: true,
+                })
+                if (storeError) throw storeError
+
+                const { data: store } = await supabase
+                    .from('stores')
+                    .select('id')
+                    .eq('slug', finalSlug)
+                    .single()
+
+                await supabase.from('store_members').insert({
+                    store_id: store!.id,
+                    user_id: userId,
+                    role: 'owner',
+                })
+
+                return redirect(`/settings`)
+            }
+        } catch (e) {
+            console.error('Failed to parse pending store:', e)
+        }
+    }
+
+    return redirect('/onboarding')
 }

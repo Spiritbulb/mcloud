@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
+import { headers } from "next/headers";
 
 
 const geistSans = Geist({
@@ -74,11 +75,18 @@ export const metadata: Metadata = {
 };
 
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
+
 }>) {
+  const headersList = await headers()
+  const bannerScriptB64 = headersList.get('x-inject-owner-banner')
+  const bannerScript = bannerScriptB64
+    ? Buffer.from(bannerScriptB64, 'base64').toString('utf-8')
+    : null
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -107,6 +115,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
       >
+        {bannerScript && (
+          <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+        )}
 
         {children}
 

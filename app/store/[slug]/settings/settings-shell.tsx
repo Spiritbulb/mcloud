@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { createClient } from '@/lib/client'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag } from 'lucide-react'
 import { SettingsHeader } from './settings-header'
@@ -26,7 +25,7 @@ export default function SettingsShell({
     slug,
 }: {
     children: React.ReactNode
-    slug: any
+    slug: string
 }) {
     const pathname = usePathname()
     const router = useRouter()
@@ -39,100 +38,76 @@ export default function SettingsShell({
     const [store, setStore] = useState<any>(null)
 
     useEffect(() => {
-        const supabase = createClient()
+        fetch('/auth/profile')
+            .then((r) => r.ok ? r.json() : null)
+            .then(async (profile) => {
+                if (!profile) {
+                    window.location.href = `/auth/login?redirect=${encodeURIComponent(window.location.href)}`
+                    return
+                }
 
-        supabase.auth.getUser().then(({ data }) => {
-            if (!data.user) {
-                window.location.href = `https://menengai.cloud/auth/login?redirect=${encodeURIComponent(window.location.href)}`
-                return
-            }
-            const meta = data.user.user_metadata ?? {}
-            setUser({
-                name: meta.full_name ?? meta.name ?? data.user.email?.split('@')[0] ?? 'Account',
-                email: data.user.email ?? '',
-                avatarUrl: meta.avatar_url ?? meta.picture ?? undefined,
+                setUser({
+                    name: profile.name ?? profile.email?.split('@')[0] ?? 'Account',
+                    email: profile.email ?? '',
+                    avatarUrl: profile.picture ?? undefined,
+                })
+                setAuthChecked(true)
+
+                // Fetch store only after confirming identity, scoped to this owner
+                const res = await fetch(`/api/store/${slug}`, {
+                    headers: { 'x-user-sub': profile.sub },
+                })
+
+                if (res.status === 403 || res.status === 404) {
+                    // Not their store
+                    window.location.href = '/'
+                    return
+                }
+
+                if (res.ok) {
+                    const data = await res.json()
+                    setStore(data)
+                }
             })
-            setAuthChecked(true)
-        })
-
-        supabase
-            .from('stores')
-            .select('*, theme:store_themes(*)')
-            .eq('slug', slug)
-            .single()
-            .then(({ data }) => setStore(data))
     }, [slug])
 
-    // Wait for BOTH auth and store before rendering
     if (!authChecked || !store) return null
 
-    const handleSignOut = async () => {
-        const supabase = createClient()
-        await supabase.auth.signOut()
-        window.location.href = '/auth/login'
+    const handleSignOut = () => {
+        window.location.href = '/auth/logout'
     }
 
     const navUser = user
         ? { ...user, accountHref: '/account', onSignOut: handleSignOut }
         : { name: '…', email: '', accountHref: '/account', onSignOut: handleSignOut }
 
-    const navigate = (id: TabId) => router.push(`/store/${store.slug}/settings/${id}`)
+    const navigate = (id: TabId) => router.push(`/settings/${id}`)
 
     return (
-        /*
-         * SidebarProvider must be the outermost element so useSidebar() works
-         * in SettingsHeader (for the mobile menu toggle). But its default styles
-         * (display:flex, height:100%) fight our scroll containment, so we
-         * override them inline to make it a transparent wrapper.
-         */
         <SidebarProvider
             defaultOpen={false}
             style={{
-                display: 'contents',          // ← renders no box of its own
+                display: 'contents',
                 '--sidebar-background': 'var(--background)',
                 '--sidebar-foreground': 'var(--foreground)',
                 '--sidebar-border': 'var(--border)',
                 '--sidebar-width': '16rem',
             } as React.CSSProperties}
         >
-            {/*
-             * THIS is the true viewport container.
-             * h-screen + overflow-hidden = hard ceiling at 100vh.
-             * flex-col so header + body stack vertically.
-             */}
             <div data-settings-shell className="h-screen overflow-hidden flex flex-col bg-background">
-
                 <SettingsHeader store={store} activeLabel={activeLabel} />
-
-                {/*
-                 * flex-1 = take all remaining height after the header.
-                 * min-h-0 = critical. Without this, a flex child's min-height
-                 * is `auto`, which lets it grow beyond the parent — causing the
-                 * sidebar to scroll away with the content.
-                 */}
-                <div className="flex flex-1 min-h-0 ">
-
-                    {/* Sidebar: h-full, scrolls only its own overflow */}
+                <div className="flex flex-1 min-h-0">
                     <SettingsNav activeTab={activeId} onSelect={navigate} TABS={TABS} user={navUser} />
                     <MobileSettingsNav activeTab={activeId} onSelect={navigate} TABS={TABS} user={navUser} />
-
-                    {/*
-                     * THE ONLY ELEMENT THAT SCROLLS.
-                     * min-h-0 again — same reason as the row above.
-                     * overflow-y-auto confines scrolling to this pane only.
-                     */}
                     <main className="flex-1 min-w-0 min-h-0 overflow-y-auto">
-
                         <div className="flex items-center px-4 md:px-12 py-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-light mb-8">
                             <h1 className="text-[22px] font-semibold text-foreground tracking-tight">
                                 {activeLabel}
                             </h1>
                         </div>
-
                         <div className="px-4 md:px-12 pb-16 space-y-4">
                             {children}
                         </div>
-
                     </main>
                 </div>
             </div>
