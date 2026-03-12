@@ -212,6 +212,10 @@ export async function proxy(request: NextRequest) {
   // 3. MAIN PLATFORM  (menengai.cloud or localhost)
   // ══════════════════════════════════════════════════════════════════════════
 
+  if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return auth0.middleware(request)
+  }
+
   const productsMatch = pathname.match(/^\/store\/([^/]+)\/products\/([^/]+)(\/.*)?$/)
   if (productsMatch) {
     const [, slug, productSlug, rest = ''] = productsMatch
