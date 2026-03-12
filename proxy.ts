@@ -181,7 +181,7 @@ export async function proxy(request: NextRequest) {
 
       if (!session?.user) {
         const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}`
-        const handoffUrl = new URL(`${proto}://www.menengai.cloud/auth/callback`)
+        const handoffUrl = new URL(`${proto}://www.menengai.cloud/auth/login`)
         handoffUrl.searchParams.set('returnTo', returnTo)
         return NextResponse.redirect(handoffUrl, 302)
       }
@@ -257,7 +257,6 @@ export async function proxy(request: NextRequest) {
 
   // Homepage — check for owner session and inject banner
   if (pathname === '/') {
-    const authResponse = await auth0.middleware(request)
     const owner = await getOwnerSession(request)
 
     if (owner) {
@@ -271,6 +270,7 @@ export async function proxy(request: NextRequest) {
         .single()
 
       const slug = (membership?.stores as any)?.slug
+
       if (slug) {
         return NextResponse.redirect(
           new URL(`${proto}://${slug}.menengai.cloud/settings`),
@@ -278,12 +278,9 @@ export async function proxy(request: NextRequest) {
         )
       }
     }
-
-
-    return authResponse
   }
 
-  return auth0.middleware(request)
+  return NextResponse.next()
 }
 
 export const config = {
