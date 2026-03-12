@@ -20,6 +20,8 @@ export const TABS = [
 
 export type TabId = (typeof TABS)[number]['id']
 
+type ErrorType = 'unauthenticated' | 'forbidden' | 'unknown' | null
+
 export default function SettingsShell({
     children,
     slug,
@@ -36,45 +38,35 @@ export default function SettingsShell({
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
     const [store, setStore] = useState<any>(null)
     const [loading, setLoading] = useState(true)
+    const [error, setError] = useState<ErrorType>(null)
 
     useEffect(() => {
         async function load() {
             try {
                 const profileRes = await fetch('/auth/profile')
                 if (!profileRes.ok) {
-                    window.location.href = `/auth/login`
+                    setError('unauthenticated')
                     return
                 }
                 const profile = await profileRes.json()
-
                 setUser({
                     name: profile.name ?? profile.email?.split('@')[0] ?? 'Account',
                     email: profile.email ?? '',
                     avatarUrl: profile.picture ?? undefined,
                 })
 
-                // ✅ No x-user-sub header — API gets identity from session cookie
                 const storeRes = await fetch(`/api/store/${slug}`)
-
-                if (storeRes.status === 401) {
-                    window.location.href = `/auth/login`
-                    return
-                }
-                if (storeRes.status === 403 || storeRes.status === 404) {
-                    setStore(null)
-                    setLoading(false)
-                    return
-                }
-                if (storeRes.ok) {
-                    setStore(await storeRes.json())
-                }
+                if (storeRes.status === 401) { setError('unauthenticated'); return }
+                if (storeRes.status === 403 || storeRes.status === 404) { setError('forbidden'); return }
+                if (!storeRes.ok) { setError('unknown'); return }
+                setStore(await storeRes.json())
             } catch (e) {
                 console.error('[SettingsShell]', e)
+                setError('unknown')
             } finally {
                 setLoading(false)
             }
         }
-
         load()
     }, [slug])
 
@@ -84,20 +76,27 @@ export default function SettingsShell({
         </div>
     )
 
-    if (!store) return (
-        <div className="h-screen flex items-center justify-center flex-col gap-4">
-            <p className="text-muted-foreground">Store not found or access denied.</p>
-            <a href="/auth/logout" className="text-sm underline">Sign out and try again</a>
+    if (error || !store) return (
+        <div className="h-screen flex items-center justify-center flex-col gap-3">
+            <p className="text-foreground font-medium">
+                {error === 'unauthenticated' && 'You need to be signed in to view this page.'}
+                {error === 'forbidden' && 'You don\'t have access to this store.'}
+                {error === 'unknown' && 'Something went wrong loading your store.'}
+                {!error && 'Store not found.'}
+            </p>
+            <p className="text-sm text-muted-foreground">
+                {error === 'unauthenticated'
+                    ? <a href="/auth/login" className="underline underline-offset-4">Sign in</a>
+                    : <a href="/auth/logout" className="underline underline-offset-4">Sign out and try again</a>
+                }
+            </p>
         </div>
     )
 
-
     const handleSignOut = () => { window.location.href = '/auth/logout' }
-
     const navUser = user
         ? { ...user, accountHref: '/account', onSignOut: handleSignOut }
         : { name: '…', email: '', accountHref: '/account', onSignOut: handleSignOut }
-
     const navigate = (id: TabId) => router.push(`/settings/${id}`)
 
     return (
