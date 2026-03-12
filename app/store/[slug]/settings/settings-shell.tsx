@@ -43,23 +43,18 @@ export default function SettingsShell({
     useEffect(() => {
         async function load() {
             try {
-                const profileRes = await fetch('/auth/profile')
-                if (!profileRes.ok) {
-                    setError('unauthenticated')
-                    return
-                }
-                const profile = await profileRes.json()
-                setUser({
-                    name: profile.name ?? profile.email?.split('@')[0] ?? 'Account',
-                    email: profile.email ?? '',
-                    avatarUrl: profile.picture ?? undefined,
-                })
-
                 const storeRes = await fetch(`/api/store/${slug}`)
                 if (storeRes.status === 401) { setError('unauthenticated'); return }
                 if (storeRes.status === 403 || storeRes.status === 404) { setError('forbidden'); return }
                 if (!storeRes.ok) { setError('unknown'); return }
-                setStore(await storeRes.json())
+
+                const data = await storeRes.json()
+                setStore(data)
+                setUser({
+                    name: data.owner_name ?? data.name ?? 'Account',
+                    email: data.owner_email ?? '',
+                    avatarUrl: data.owner_avatar ?? undefined,
+                })
             } catch (e) {
                 console.error('[SettingsShell]', e)
                 setError('unknown')
