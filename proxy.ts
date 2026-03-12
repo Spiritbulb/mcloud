@@ -263,19 +263,22 @@ export async function proxy(request: NextRequest) {
     if (owner) {
       const { createClient } = await import('@/lib/server')
       const supabase = await createClient()
-      const { data: store } = await supabase
-        .from('stores')
-        .select('slug')
-        .eq('owner_id', owner.sub)
+      const { data: membership } = await supabase
+        .from('store_members')
+        .select('stores(slug)')
+        .eq('user_id', owner.sub)
+        .eq('role', 'owner')
         .single()
 
-      if (store?.slug) {
-        const dashboardUrl = isProduction(host)
-          ? `${proto}://${store.slug}.menengai.cloud/settings`
-          : `/store/${store.slug}/settings`
-        injectBanner(authResponse, dashboardUrl, 'homepage')
+      const slug = (membership?.stores as any)?.slug
+      if (slug) {
+        return NextResponse.redirect(
+          new URL(`${proto}://${slug}.menengai.cloud/settings`),
+          302
+        )
       }
     }
+
 
     return authResponse
   }

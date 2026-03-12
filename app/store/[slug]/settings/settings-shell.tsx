@@ -54,7 +54,7 @@ export default function SettingsShell({
                 })
 
                 // ✅ No x-user-sub header — API gets identity from session cookie
-                const storeRes = await fetch(`/api/stores/${slug}`)
+                const storeRes = await fetch(`/api/store/${slug}`)
 
                 if (storeRes.status === 401) {
                     window.location.href = `/auth/login`
