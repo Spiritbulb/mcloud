@@ -61,7 +61,8 @@ export default function SettingsShell({
                     return
                 }
                 if (storeRes.status === 403 || storeRes.status === 404) {
-                    window.location.href = '/'
+                    setStore(null)
+                    setLoading(false)
                     return
                 }
                 if (storeRes.ok) {
@@ -83,7 +84,13 @@ export default function SettingsShell({
         </div>
     )
 
-    if (!store) return null
+    if (!store) return (
+        <div className="h-screen flex items-center justify-center flex-col gap-4">
+            <p className="text-muted-foreground">Store not found or access denied.</p>
+            <a href="/auth/logout" className="text-sm underline">Sign out and try again</a>
+        </div>
+    )
+
 
     const handleSignOut = () => { window.location.href = '/auth/logout' }
 
