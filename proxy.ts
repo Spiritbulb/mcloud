@@ -181,7 +181,7 @@ export async function proxy(request: NextRequest) {
 
       if (!session?.user) {
         const returnTo = `${proto}://${tenantSlug}.menengai.cloud${pathname}`
-        const handoffUrl = new URL(`${proto}://www.menengai.cloud/auth/login-handoff`)
+        const handoffUrl = new URL(`${proto}://www.menengai.cloud/auth/callback`)
         handoffUrl.searchParams.set('returnTo', returnTo)
         return NextResponse.redirect(handoffUrl, 302)
       }
