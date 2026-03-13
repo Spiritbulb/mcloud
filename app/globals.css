@@ -31,7 +31,7 @@
   --color-outline-strong: 175 184 194;
 
   /* ── Dark section panels (hero / stats / CTA) ───────────── */
-  --color-section-dark: 8 11 16;
+  --color-section-dark: 11 12 11;
   --color-on-dark: 228 232 237;
   --color-on-dark-secondary: 160 170 182;
   --color-on-dark-dim: 110 120 132;
@@ -57,7 +57,7 @@
     --color-background: 11 12 11;
     --color-surface: 3 3 3;
     --color-surface-variant: 110 110 110;
-    --color-foreground: 220 226 234;
+    --color-foreground: 222 222 222;
     /* near-white heading text */
     --color-on-surface: 180 180 180;
     /* neutral light — body text */
@@ -105,20 +105,20 @@
 
 .dark {
   --background: 3 3 3;
-  --foreground: 220 226 234;
+  --foreground: 222 222 222;
   --card: 22 28 36;
-  --card-foreground: 220 226 234;
+  --card-foreground: 222 222 222;
   --popover: 22 28 36;
-  --popover-foreground: 220 226 234;
+  --popover-foreground: 222 222 222;
   --primary: 110 145 185;
   --primary-foreground: 10 15 22;
   --secondary: 30 38 48;
-  --secondary-foreground: 220 226 234;
+  --secondary-foreground: 222 222 222;
   --muted: 30 38 48;
   --muted-foreground: 255 255 255;
   /* neutral — NOT brand */
   --accent: 30 38 48;
-  --accent-foreground: 220 226 234;
+  --accent-foreground: 222 222 222;
   --destructive: 239 68 68;
   --destructive-foreground: 255 255 255;
   --border: 40 50 63;

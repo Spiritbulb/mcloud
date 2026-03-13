@@ -11,43 +11,39 @@ import {
 } from "@/components/ui/dialog"
 import AuthPopup from "@/lib/auth"
 
-export function Header() {
+interface HeaderProps {
+    isLoggedIn?: boolean
+}
+
+export function Header({ isLoggedIn = false }: HeaderProps) {
     const [isAuthOpen, setIsAuthOpen] = useState(false)
 
     return (
         <>
-            <header className="sticky top-0 z-50 w-full bg-background backdrop-blur supports-[backdrop-filter]:bg-background">
-                <div className="container mx-auto px-6 md:px-12">
+            <header className="sticky top-5 z-50 w-[85%] mx-auto rounded-full bg-[#fff]/80 dark:bg-[#000]/80 backdrop-blur">
+                <div className="container mx-auto px-2 md:px-4">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo */}
                         <Link href="/" className="flex items-center">
-                            <img
-                                src="/logo.png"
-                                alt="Menengai Cloud"
-                                className="w-20 h-auto"
-                            />
+                            <img src="/favicon.ico" alt="Menengai Cloud" className="w-10 h-auto" />
                         </Link>
 
-                        {/* CTA */}
-                        <Button
-                            className="google-button-primary px-6 h-10 text-sm cursor-pointer"
-                            onClick={() => setIsAuthOpen(true)}
-                        >
-                            Get started
-                        </Button>
+                        {/* CTA — conditional */}
+                        {isLoggedIn ? (
+                            <Button asChild className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full">
+                                <Link href="/settings">Go to dashboard →</Link>
+                            </Button>
+                        ) : (
+                            <Button
+                                className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full"
+                                onClick={() => setIsAuthOpen(true)}
+                            >
+                                Get started
+                            </Button>
+                        )}
                     </div>
                 </div>
             </header>
-
-            {/* Auth Dialog */}
-            <Dialog open={isAuthOpen} onOpenChange={setIsAuthOpen}>
-                <DialogContent className="sm:max-w-md">
-                    <DialogHeader>
-                        <DialogTitle className="text-center">We've been expecting you</DialogTitle>
-                    </DialogHeader>
-                    <AuthPopup />
-                </DialogContent>
-            </Dialog>
         </>
     )
 }

@@ -1,6 +1,7 @@
 'use client'
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import StoreCarousel from "@/components/store-carousel"
 import { Check, ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
@@ -18,7 +19,8 @@ import {
 type Sticker = { src: string; x: string; y: string; delay: number; duration: number }
 
 // ─── Data ────────────────────────────────────────────────────────────────────
-const exampleSlugs = ["locdessence", "reeeaach", "josemaua", "dressedbyjuliet", "miketech"]
+const exampleSlugs = ["locd26"]
+const sampleSlugs = ["sneakercity", "joy-bakery", "mwanikimania", "hope-foundation", "the-art-of-living-kenya", "purity-hair-care", "photos-by-sam"]
 
 // Only used in the final CTA section
 const stickers: Sticker[] = [
@@ -29,11 +31,11 @@ const stickers: Sticker[] = [
 
 // Social proof avatars — replace with real user photos
 const avatars = [
-    "https://i.pravatar.cc/40?img=1",
-    "https://i.pravatar.cc/40?img=5",
-    "https://i.pravatar.cc/40?img=9",
-    "https://i.pravatar.cc/40?img=12",
-    "https://i.pravatar.cc/40?img=17",
+    "https://i.pravatar.cc/40?img=27",
+    "https://i.pravatar.cc/40?img=56",
+    "https://i.pravatar.cc/40?img=70",
+    "https://i.pravatar.cc/40?img=16",
+    "https://i.pravatar.cc/40?img=18",
 ]
 
 const marqueeItems = [
@@ -55,21 +57,21 @@ const features = [
     {
         title: "Built for creators who mean business.",
         body: "Whether you're selling merch, running a blog, or building a subscriber base — your store is ready before your competition even opens a browser tab.",
-        image: "https://images.unsplash.com/photo-1635830625698-3b9bd74671ca?q=80&w=1332&auto=format&fit=crop",
+        image: "/undraw_project-completed_ug9i.svg",
         alt: "Creator filming content",
         reverse: false,
     },
     {
         title: "No agency. No waiting. No nonsense.",
         body: "Agencies take weeks, charge thousands, and hand you something you can't touch. We hand you the keys in two seconds and you drive from day one.",
-        image: "https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&q=80",
+        image: "/phone.svg",
         alt: "E-commerce on mobile",
         reverse: true,
     },
     {
         title: "Your brand. Your link. Your rules.",
         body: "Start on your free subdomain. When you're ready to go full brand mode, upgrade to Pro and bring your own domain. We connect it in minutes via Cloudflare.",
-        image: "https://images.unsplash.com/photo-1499951360447-b19be8fe80f5?w=800&q=80",
+        image: "/undraw_website-builder_4go7.svg",
         alt: "Person working on laptop",
         reverse: false,
     },
@@ -163,59 +165,7 @@ function FloatingStickerImage({ s, size = 48 }: { s: Sticker; size?: number }) {
     )
 }
 
-// ─── Phone mockup — replace src with a real screenshot of a live store ────────
-function PhoneMockup() {
-    return (
-        <div className="relative w-[260px] md:w-[300px] mx-auto">
-            {/* Outer phone shell */}
-            <div className="relative bg-foreground rounded-[2.5rem] p-[10px] shadow-2xl">
-                {/* Notch */}
-                <div className="absolute top-[18px] left-1/2 -translate-x-1/2 w-[80px] h-[22px] bg-foreground rounded-full z-10" />
-                {/* Screen */}
-                <div className="relative rounded-[2rem] overflow-hidden bg-background aspect-[9/19]">
-                    <Image
-                        src="https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=400&q=80"
-                        alt="Store preview"
-                        fill
-                        className="object-cover"
-                    />
-                    {/* Store URL overlay badge */}
-                    <div className="absolute bottom-4 left-0 right-0 flex justify-center">
-                        <span className="bg-background/90 backdrop-blur-sm text-foreground text-[10px] font-mono px-3 py-1 rounded-full shadow">
-                            dressedbyjuliet.menengai.cloud
-                        </span>
-                    </div>
-                </div>
-            </div>
-            {/* Floating stat chip — top right */}
-            <motion.div
-                className="absolute -right-8 top-10 bg-background border border-outline shadow-lg rounded-xl px-3 py-2 flex items-center gap-2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.8, duration: 0.5 }}
-            >
-                <span className="text-lg">🛍️</span>
-                <div>
-                    <p className="text-[11px] font-semibold text-foreground leading-none">New order</p>
-                    <p className="text-[10px] text-on-surface-muted">Ksh 4,200</p>
-                </div>
-            </motion.div>
-            {/* Floating stat chip — bottom left */}
-            <motion.div
-                className="absolute -left-8 bottom-14 bg-background border border-outline shadow-lg rounded-xl px-3 py-2 flex items-center gap-2"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 1.0, duration: 0.5 }}
-            >
-                <span className="text-lg">⚡</span>
-                <div>
-                    <p className="text-[11px] font-semibold text-foreground leading-none">Live in</p>
-                    <p className="text-[10px] text-on-surface-muted">2 seconds</p>
-                </div>
-            </motion.div>
-        </div>
-    )
-}
+
 
 // ─── FAQ accordion item ───────────────────────────────────────────────────────
 function FaqItem({ q, a }: { q: string; a: string }) {
@@ -262,7 +212,7 @@ export default function HomeClient() {
     // Typewriter effect only while user hasn't typed
     useEffect(() => {
         if (slug) return
-        const current = exampleSlugs[slugIndex]
+        const current = sampleSlugs[slugIndex]
         let i = 0
         let timeout: NodeJS.Timeout
 
@@ -284,7 +234,7 @@ export default function HomeClient() {
                     i--
                     timeout = setTimeout(erase, 40)
                 } else {
-                    setSlugIndex((prev) => (prev + 1) % exampleSlugs.length)
+                    setSlugIndex((prev) => (prev + 1) % sampleSlugs.length)
                     setIsTyping(true)
                 }
             }
@@ -314,7 +264,7 @@ export default function HomeClient() {
                     }}
                 />
 
-                <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-6xl py-24">
+                <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
 
                         {/* LEFT — text + CTA */}
@@ -324,12 +274,6 @@ export default function HomeClient() {
                             animate="visible"
                             className="space-y-8"
                         >
-                            {/* Eyebrow badge */}
-                            <motion.div variants={fadeUp}>
-                                <Badge className="px-3 py-1 text-xs font-medium rounded-full">
-                                    Free website builder for Kenyan creators
-                                </Badge>
-                            </motion.div>
 
                             {/* Headline */}
                             <motion.h1
@@ -348,10 +292,10 @@ export default function HomeClient() {
 
                             {/* Slug input */}
                             <motion.div variants={fadeUp}>
-                                <div className="flex flex-col sm:flex-row gap-3 border border-outline bg-background p-2">
+                                <div className="flex flex-col sm:flex-row gap-3 border border-light bg-background p-2 py-4">
                                     <div className="flex-1 flex items-center gap-2 px-3">
-                                        <span className="text-on-surface-muted text-sm whitespace-nowrap font-mono">
-                                            menengai.cloud/
+                                        <span className="text-on-surface-muted text-sm whitespace-nowrap">
+                                            menengai.cloud/store/
                                         </span>
                                         <input
                                             type="text"
@@ -359,7 +303,7 @@ export default function HomeClient() {
                                             onChange={(e) =>
                                                 setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
                                             }
-                                            placeholder={displaySlug || "yourname"}
+                                            placeholder={displaySlug || ""}
                                             className="bg-transparent text-foreground placeholder:text-on-surface-muted/50 outline-none text-sm font-mono w-full"
                                             onKeyDown={(e) => e.key === "Enter" && handleClaim()}
                                             aria-label="Choose your store slug"
@@ -367,7 +311,7 @@ export default function HomeClient() {
                                     </div>
                                     <Button
                                         onClick={handleClaim}
-                                        className="btn-primary px-6 h-10 rounded-none cursor-pointer"
+                                        className="text-white px-6 h-10 rounded-none cursor-pointer bg-[#425e7b]"
                                     >
                                         Claim it free
                                         <ArrowRight className="ml-2 w-4 h-4" />
@@ -403,7 +347,7 @@ export default function HomeClient() {
                                     ))}
                                 </div>
                                 <p className="text-body-small text-on-surface-muted">
-                                    Join <span className="font-semibold text-foreground">200+ creators</span> already live on Menengai Cloud
+                                    Join <span className="font-semibold text-foreground">the creators</span> already live on Menengai Cloud
                                 </p>
                             </motion.div>
                         </motion.div>
@@ -415,14 +359,20 @@ export default function HomeClient() {
                             transition={{ duration: 0.7, delay: 0.3, ease: [0.25, 0.1, 0.25, 1] }}
                             className="hidden md:flex justify-center items-center"
                         >
-                            <PhoneMockup />
+                            <Image
+                                src="/settings-mockup.png"
+                                alt="Store preview"
+                                width={600}
+                                height={600}
+                                className="object-contain"
+                            />
                         </motion.div>
                     </div>
                 </div>
             </section>
 
             {/* ── MARQUEE ──────────────────────────────────────────────────────── */}
-            <div className="border-y border-outline bg-surface py-4 overflow-hidden">
+            <div className="border-y border-light bg-surface py-4 overflow-hidden">
                 <div className="flex animate-marquee whitespace-nowrap">
                     {[...marqueeItems, ...marqueeItems].map((item, i) => (
                         <span
@@ -436,7 +386,7 @@ export default function HomeClient() {
                 </div>
             </div>
 
-            {/* ── LIVE STORE TILES ─────────────────────────────────────────────── */}
+            {/* ── LIVE STORE BANNER ─────────────────────────────────────────────── */}
             <section className="bg-background py-20">
                 <div className="container mx-auto px-6 md:px-12 max-w-6xl">
                     <FadeIn className="text-center mb-12">
@@ -445,26 +395,8 @@ export default function HomeClient() {
                             Real stores. Real creators.
                         </h2>
                     </FadeIn>
-                    <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
-                        {exampleSlugs.map((s, i) => (
-                            <FadeIn key={i} delay={i * 0.08}>
-                                <a
-                                    href={`https://${s}.menengai.cloud`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="group block border border-outline bg-surface hover:border-foreground transition-colors duration-200 p-4 space-y-2"
-                                >
-                                    <div className="w-8 h-8 rounded-full bg-foreground/10 flex items-center justify-center text-sm font-bold text-foreground uppercase">
-                                        {s[0]}
-                                    </div>
-                                    <p className="text-body-small font-mono text-foreground truncate">{s}</p>
-                                    <p className="text-[11px] text-on-surface-muted group-hover:text-foreground transition-colors">
-                                        .menengai.cloud →
-                                    </p>
-                                </a>
-                            </FadeIn>
-                        ))}
-                    </div>
+
+                    <StoreCarousel slugs={exampleSlugs} />
                 </div>
             </section>
 
@@ -476,12 +408,10 @@ export default function HomeClient() {
                             } gap-16 items-center`}
                     >
                         <FadeIn className="flex-1">
-                            <Image
+                            <img
                                 src={f.image}
                                 alt={f.alt}
-                                width={600}
-                                height={400}
-                                className="w-full object-cover grayscale hover:grayscale-0 transition-all duration-700"
+                                className="w-full h-120 object-contain transition-all duration-700"
                             />
                         </FadeIn>
                         <FadeIn className="flex-1 space-y-6" delay={0.2}>
@@ -490,7 +420,7 @@ export default function HomeClient() {
                             </h2>
                             <p className="text-body-large text-on-surface-muted leading-relaxed">{f.body}</p>
                             <Button
-                                className="btn-secondary px-0 font-medium cursor-pointer group border-0 border-b rounded-none"
+                                className="text-white bg-[#425e7b] hover:bg-[#425e7b]/90 px-0 font-medium cursor-pointer group rounded-full"
                                 onClick={handleClaim}
                             >
                                 Get started free
@@ -520,87 +450,6 @@ export default function HomeClient() {
                 </div>
             </section>
 
-            {/* ── PRICING ──────────────────────────────────────────────────────── */}
-            <section id="pricing" className="bg-background">
-                <div className="container mx-auto px-6 md:px-12 py-24">
-                    <FadeIn className="max-w-2xl mx-auto text-center mb-16">
-                        <h2 className="text-display-small font-montserrat mb-4 text-foreground">
-                            Start free. Own it when you're ready.
-                        </h2>
-                        <p className="text-body-large text-on-surface-muted">
-                            Your free store stays free. Upgrade only when your brand outgrows a subdomain.
-                        </p>
-                    </FadeIn>
-
-                    <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-8 items-start">
-                        {/* Free tier */}
-                        <FadeIn delay={0}>
-                            <div className="relative border border-outline bg-background p-8 space-y-6 hover:shadow-md transition-shadow">
-                                <CornerPlus className="text-on-surface size-6 absolute -top-3 -left-3" />
-                                <CornerPlus className="text-on-surface size-6 absolute -top-3 -right-3" />
-                                <CornerPlus className="text-on-surface size-6 absolute -bottom-9 -left-3" />
-                                <CornerPlus className="text-on-surface size-6 absolute -bottom-9 -right-3" />
-                                <div>
-                                    <p className="text-headline-small font-montserrat mb-1 text-foreground">Free</p>
-                                    <p className="text-on-surface-muted text-body-medium">For creators just getting started.</p>
-                                </div>
-                                <div>
-                                    <span className="text-[48px] font-montserrat font-normal text-foreground">Ksh 0</span>
-                                    <span className="text-on-surface-muted font-montserrat">/month</span>
-                                </div>
-                                <ul className="space-y-3">
-                                    {freeFeatures.map((feat, i) => (
-                                        <li key={i} className="flex items-start gap-3">
-                                            <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-on-surface" />
-                                            <span className="text-body-medium text-on-surface">{feat}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Button className="btn-secondary w-full h-11 cursor-pointer" onClick={handleClaim}>
-                                    Get your free store
-                                </Button>
-                            </div>
-                        </FadeIn>
-
-                        {/* Pro tier */}
-                        <FadeIn delay={0.15}>
-                            <motion.div
-                                whileHover={{ scale: 1.02 }}
-                                transition={{ type: "spring", stiffness: 300 }}
-                                className="relative bg-primary p-8 space-y-6 cursor-pointer"
-                            >
-                                <CornerPlus className="text-on-dark/40 size-6 absolute -top-3 -left-3" />
-                                <CornerPlus className="text-on-dark/40 size-6 absolute -top-3 -right-3" />
-                                <CornerPlus className="text-on-dark/40 size-6 absolute -bottom-9 -left-3" />
-                                <CornerPlus className="text-on-dark/40 size-6 absolute -bottom-9 -right-3" />
-                                <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                                    <Badge className="badge-inverted px-3 py-1 text-xs">Own your brand</Badge>
-                                </div>
-                                <div>
-                                    <p className="text-headline-small font-montserrat mb-1 text-on-dark">Pro</p>
-                                    <p className="text-primary-foreground/80 text-body-medium">For serious creators and businesses.</p>
-                                </div>
-                                <div>
-                                    <span className="text-[48px] font-montserrat font-normal text-on-dark">Ksh 3,500</span>
-                                    <span className="text-primary-foreground/80 font-montserrat">/month</span>
-                                </div>
-                                <ul className="space-y-3">
-                                    {proFeatures.map((feat, i) => (
-                                        <li key={i} className="flex items-start gap-3">
-                                            <Check className="w-5 h-5 mt-0.5 flex-shrink-0 text-on-dark" />
-                                            <span className="text-body-medium text-primary-foreground/90">{feat}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                                <Button className="btn-inverted w-full h-11 rounded-none cursor-pointer" onClick={handleClaim}>
-                                    Go Pro
-                                    <ArrowRight className="ml-2 w-4 h-4" />
-                                </Button>
-                            </motion.div>
-                        </FadeIn>
-                    </div>
-                </div>
-            </section>
 
             {/* ── WHY MENENGAI ─────────────────────────────────────────────────── */}
             <section className="bg-surface">
@@ -645,7 +494,7 @@ export default function HomeClient() {
 
             {/* ── FAQ ──────────────────────────────────────────────────────────── */}
             <section className="bg-background py-24">
-                <div className="container mx-auto px-6 md:px-12 max-w-3xl">
+                <div className="container mx-auto px-6 md:px-12 max-w-5xl">
                     <FadeIn className="text-center mb-14">
                         <h2 className="text-display-small font-montserrat text-foreground">
                             Questions, answered.
@@ -660,22 +509,13 @@ export default function HomeClient() {
             </section>
 
             {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-            <section className="dark-section relative min-h-[80vh] flex items-center justify-center overflow-hidden">
-                <div className="absolute inset-0 z-0">
-                    <Image
-                        src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&q=80"
-                        alt="Creative team"
-                        fill
-                        className="object-cover opacity-10"
-                    />
-                    <div className="overlay-section-dark absolute inset-0" />
-                </div>
+            <section className="dark-section relative min-h-[100vh] flex items-center justify-center overflow-hidden">
 
                 {stickers.map((s, i) => (
                     <FloatingStickerImage key={i} s={s} size={48} />
                 ))}
 
-                <div className="relative z-20 container mx-auto px-6 md:px-12 text-center">
+                <div className="relative z-20 container mx-auto px-6 md:px-12 py-10 text-center">
                     <FadeIn>
                         <h2 className="text-5xl md:text-7xl font-montserrat font-bold text-on-dark mb-6">
                             Your audience<br />is waiting.
@@ -686,7 +526,7 @@ export default function HomeClient() {
                         </p>
                         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                             <Button
-                                className="btn-inverted px-10 py-6 text-base h-auto rounded-none cursor-pointer"
+                                className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 py-3 text-base h-auto rounded-full cursor-pointer"
                                 onClick={handleClaim}
                             >
                                 Claim your free store now
