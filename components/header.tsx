@@ -10,13 +10,14 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import AuthPopup from "@/lib/auth"
+import { useRouter } from "next/navigation"
 
 interface HeaderProps {
     isLoggedIn?: boolean
 }
 
 export function Header({ isLoggedIn = false }: HeaderProps) {
-    const [isAuthOpen, setIsAuthOpen] = useState(false)
+    const router = useRouter()
 
     return (
         <>
@@ -36,7 +37,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
                         ) : (
                             <Button
                                 className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full"
-                                onClick={() => setIsAuthOpen(true)}
+                                onClick={() => router.push('/auth/sign-up')}
                             >
                                 Get started
                             </Button>
