@@ -2,17 +2,9 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/client'
+import type { Tables } from '@/app/types/database.types'
 
-// ─── Types ────────────────────────────────────────────────────────────────────
-interface Store {
-    id: string
-    name: string
-    slug: string
-    description?: string | null
-    currency: string
-    timezone: any
-    is_active: boolean
-}
+type Store = Tables<'stores'>
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 const CURRENCIES = [
@@ -317,7 +309,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     <div>
                         <FieldLabel>Timezone</FieldLabel>
                         <Select
-                            value={timezone}
+                            value={timezone ?? ''}
                             onChange={(e) => setTimezone(e.target.value)}
                         >
                             {TIMEZONES.map((tz) => (
@@ -349,7 +341,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     </div>
                     {/* flex-shrink-0 ensures toggle never gets squished */}
                     <div className="flex-shrink-0">
-                        <Toggle on={isActive} onChange={setIsActive} />
+                        <Toggle on={isActive ?? false} onChange={setIsActive} />
                     </div>
                 </div>
 
