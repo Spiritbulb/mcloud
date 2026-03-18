@@ -20,7 +20,7 @@ export function SettingsSection({
     noPadding?: boolean
 }) {
     return (
-        <section className="border border-light bg-surface">
+        <section className="">
             {(title || description) && (
                 <div className="px-6 py-4 border-b border-light flex items-start justify-between gap-4">
                     <div>

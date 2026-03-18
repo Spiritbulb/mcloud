@@ -3,6 +3,8 @@
 import { ShoppingBag, X, Search } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
+import { useCart } from '@/contexts/CartContext'
+
 
 interface Store {
     id: string
@@ -38,9 +40,12 @@ interface StoreNavProps {
     themeId?: string
 }
 
+
+
 // ─── Classic Nav ───────────────────────────────────────────────────────────────
 // Colours come entirely from storefront.css sf-* custom properties.
 function ClassicNav({ store }: { store: Store }) {
+    const { cartItems } = useCart()
     return (
         <nav className="sf-nav sticky top-0 z-40">
             <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
@@ -77,6 +82,9 @@ function ClassicNav({ store }: { store: Store }) {
                     aria-label="Cart"
                 >
                     <ShoppingBag className="w-4 h-4" />
+                    {cartItems.length > 0 && (
+                        <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full" />
+                    )}
                 </Link>
             </div>
         </nav>

@@ -3,19 +3,21 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag } from 'lucide-react'
-import { SettingsHeader } from './settings-header'
+import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag, FileText } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
+import { SettingsHeader } from './settings-header'
+import { useSidebar } from '@/components/ui/sidebar'
 
 export const TABS = [
     { id: 'general', label: 'General', icon: <Store className="w-[15px] h-[15px]" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-[15px] h-[15px]" /> },
     { id: 'products', label: 'Products', icon: <Package className="w-[15px] h-[15px]" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-[15px] h-[15px]" /> },
-    { id: 'domain', label: 'Domain', icon: <Globe className="w-[15px] h-[15px]" />, pro: true },
+    { id: 'blog', label: 'Blog', icon: <FileText className="w-[15px] h-[15px]" /> },
+    { id: 'domain', label: 'Domain', icon: <Globe className="w-[15px] h-[15px]" />, beta: true },
     { id: 'social', label: 'Social', icon: <Link2 className="w-[15px] h-[15px]" /> },
-    { id: 'payments', label: 'Payments', icon: <CreditCard className="w-[15px] h-[15px]" />, pro: true },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-[15px] h-[15px]" />, pro: true },
+    { id: 'payments', label: 'Payments', icon: <CreditCard className="w-[15px] h-[15px]" />, beta: true },
+    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-[15px] h-[15px]" />, beta: true },
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
@@ -43,17 +45,17 @@ export default function SettingsShell({
     useEffect(() => {
         async function load() {
             try {
-                const storeRes = await fetch(`/api/store/${slug}`)
-                if (storeRes.status === 401) { setError('unauthenticated'); return }
-                if (storeRes.status === 403 || storeRes.status === 404) { setError('forbidden'); return }
-                if (!storeRes.ok) { setError('unknown'); return }
+                const res = await fetch(`/api/store/${slug}`)
+                if (res.status === 401) { setError('unauthenticated'); return }
+                if (res.status === 403 || res.status === 404) { setError('forbidden'); return }
+                if (!res.ok) { setError('unknown'); return }
 
-                const data = await storeRes.json()
+                const data = await res.json()
                 setStore(data)
                 setUser({
-                    name: data.owner_name ?? data.name ?? 'Account',
-                    email: data.owner_email ?? '',
-                    avatarUrl: data.owner_avatar ?? undefined,
+                    name: data.user?.name ?? 'Account',
+                    email: data.user?.email ?? '',
+                    avatarUrl: data.user?.avatar_url ?? undefined,
                 })
             } catch (e) {
                 console.error('[SettingsShell]', e)
@@ -65,17 +67,19 @@ export default function SettingsShell({
         load()
     }, [slug])
 
+    // ── Loading ───────────────────────────────────────────────────────────────
     if (loading) return (
         <div className="h-screen flex items-center justify-center bg-background">
-            <div className="w-6 h-6 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
+            <div className="w-5 h-5 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
         </div>
     )
 
+    // ── Error ─────────────────────────────────────────────────────────────────
     if (error || !store) return (
-        <div className="h-screen flex items-center justify-center flex-col gap-3">
-            <p className="text-foreground font-medium">
-                {error === 'unauthenticated' && 'You need to be signed in to view this page.'}
-                {error === 'forbidden' && 'You don\'t have access to this store.'}
+        <div className="h-screen flex flex-col items-center justify-center gap-2 text-center px-6">
+            <p className="text-[15px] font-medium text-foreground">
+                {error === 'unauthenticated' && 'You need to be signed in.'}
+                {error === 'forbidden' && "You don't have access to this store."}
                 {error === 'unknown' && 'Something went wrong loading your store.'}
                 {!error && 'Store not found.'}
             </p>
@@ -88,37 +92,68 @@ export default function SettingsShell({
         </div>
     )
 
-    const handleSignOut = () => { window.location.href = '/auth/logout' }
-    const navUser = user
-        ? { ...user, accountHref: '/account', onSignOut: handleSignOut }
-        : { name: '…', email: '', accountHref: '/account', onSignOut: handleSignOut }
+    // ── Derived props ─────────────────────────────────────────────────────────
+    const navUser = {
+        name: user?.name ?? '…',
+        email: user?.email ?? '',
+        avatarUrl: user?.avatarUrl,
+        accountHref: '/account',
+        onSignOut: () => { window.location.href = '/auth/logout' },
+    }
+
+    const navStore = {
+        name: store.name,
+        slug: store.slug,
+        logoUrl: store.logo_url ?? undefined,
+    }
+
     const navigate = (id: TabId) => router.push(`/settings/${id}`)
 
+
+    // ── Shell ─────────────────────────────────────────────────────────────────
     return (
         <SidebarProvider
             defaultOpen={false}
             style={{
                 display: 'contents',
-                '--sidebar-background': 'var(--background)',
-                '--sidebar-foreground': 'var(--foreground)',
-                '--sidebar-border': 'var(--border)',
-                '--sidebar-width': '16rem',
+                '--sidebar-width': '15rem',
+                '--sidebar-background': 'hsl(var(--background))',
+                '--sidebar-foreground': 'hsl(var(--foreground))',
+                '--sidebar-border': 'hsl(var(--border))',
+                '--sidebar-accent': 'hsl(var(--accent))',
+                '--sidebar-accent-foreground': 'hsl(var(--accent-foreground))',
             } as React.CSSProperties}
         >
-            <div data-settings-shell className="h-screen overflow-hidden flex flex-col bg-background">
-                <SettingsHeader store={store} activeLabel={activeLabel} />
-                <div className="flex flex-1 min-h-0">
-                    <SettingsNav activeTab={activeId} onSelect={navigate} TABS={TABS} user={navUser} />
-                    <MobileSettingsNav activeTab={activeId} onSelect={navigate} TABS={TABS} user={navUser} />
-                    <main className="flex-1 min-w-0 min-h-0 overflow-y-auto">
-                        <div className="flex items-center px-4 md:px-12 py-4 sticky top-0 bg-background/80 backdrop-blur-sm z-10 border-b border-light mb-8">
-                            <h1 className="text-[22px] font-semibold text-foreground tracking-tight">
-                                {activeLabel}
-                            </h1>
-                        </div>
-                        <div className="px-4 md:px-12 pb-16 space-y-4">
-                            {children}
-                        </div>
+            <div data-settings-shell className="h-screen overflow-hidden flex bg-background">
+
+
+
+                {/* Desktop sidebar */}
+                <SettingsNav
+                    activeTab={activeId}
+                    onSelect={navigate}
+                    TABS={TABS}
+                    user={navUser}
+                    store={navStore}
+                    allStores={store.allStores}
+                />
+
+                {/* Mobile drawer */}
+                <MobileSettingsNav
+                    activeTab={activeId}
+                    onSelect={navigate}
+                    TABS={TABS}
+                    user={navUser}
+                    store={navStore}
+                    allStores={store.allStores}
+                />
+
+                {/* Main content */}
+                <div className="flex flex-col flex-1 min-w-0 min-h-0">
+                    <SettingsHeader store={navStore} activeLabel={activeLabel} />
+                    {/* Scrollable content */}
+                    <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">
+                        {children}
                     </main>
                 </div>
             </div>

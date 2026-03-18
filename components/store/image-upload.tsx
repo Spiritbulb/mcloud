@@ -11,7 +11,7 @@ interface ImageUploadProps {
     pathInDb?: string
     onChange: (url: string, path: string) => void
     bucket?: 'store-assets' | 'product-images'
-    pathPrefix: string   // e.g. `${store.id}/logo` — NO timestamp, hook stores as `pathPrefix/filename`
+    pathPrefix: string   // e.g. `${store.id}/logo` — no trailing slash
     label?: string
     aspectRatio?: 'square' | 'wide'
 }
@@ -27,28 +27,40 @@ export default function ImageUpload({
 }: ImageUploadProps) {
     const supabase = createClient()
     const previousPathRef = useRef(pathInDb ?? '')
-    const handledRef = useRef(false) // prevent double-fire
+
+    // Normalise pathPrefix — strip any trailing slash so we never produce
+    // double-slash paths like "storeId/logo//photo.webp", which Supabase
+    // rejects with a 400.
+    const normalizedPrefix = pathPrefix.replace(/\/+$/, '')
 
     const uploadProps = useSupabaseUpload({
         bucketName: bucket,
-        path: pathPrefix,           // hook uploads to: `${pathPrefix}/${file.name}`
+        // The hook uploads to: `${path}/${file.name}`.
+        // Pass the normalised prefix so the final path is clean.
+        path: normalizedPrefix,
         allowedMimeTypes: ['image/*'],
         maxFiles: 1,
         maxFileSize: 5 * 1024 * 1024,
-        upsert: true,               // overwrite same filename safely
+        upsert: true,
     })
 
-    useEffect(() => {
-        // isSuccess flips to true once — guard against re-running
-        if (!uploadProps.isSuccess || uploadProps.successes.length === 0 || handledRef.current) return
-        handledRef.current = true
+    // Track the previous isSuccess value so we only fire once per upload
+    // session, but correctly reset when the dropzone resets between uploads.
+    const prevIsSuccessRef = useRef(false)
 
-        const fileName = uploadProps.successes[0]           // e.g. "photo.webp"
-        const fullPath = `${pathPrefix}/${fileName}`        // e.g. "storeId/logo/photo.webp"
+    useEffect(() => {
+        const justSucceeded = uploadProps.isSuccess && !prevIsSuccessRef.current
+        prevIsSuccessRef.current = uploadProps.isSuccess
+
+        if (!justSucceeded || uploadProps.successes.length === 0) return
+
+        // successes[0] is the plain file name (e.g. "photo.webp")
+        const fileName = uploadProps.successes[0]
+        const fullPath = `${normalizedPrefix}/${fileName}`
 
         const run = async () => {
             try {
-                // Delete previous file if path changed (different filename)
+                // Clean up the old file if it was stored at a different path
                 const prevPath = previousPathRef.current
                 if (prevPath && prevPath !== fullPath) {
                     await supabase.storage.from(bucket).remove([prevPath])
@@ -60,14 +72,13 @@ export default function ImageUpload({
                     onChange(data.publicUrl, fullPath)
                 }
             } catch (e) {
-                console.error('Image upload post-process error', e)
+                console.error('ImageUpload post-process error', e)
             }
         }
 
         run()
-    }, [uploadProps.isSuccess]) // only dep needed — successes is stable once isSuccess is true
+    }, [uploadProps.isSuccess, uploadProps.successes])
 
-    // Show existing image only when no active dropzone session
     const showExisting = !!value && !uploadProps.loading && uploadProps.files.length === 0
 
     return (
@@ -77,7 +88,6 @@ export default function ImageUpload({
             {showExisting ? (
                 <div className={`relative border ${aspectRatio === 'wide' ? 'aspect-video w-full' : 'aspect-square w-32'
                     }`}>
-                    {/* Plain img — avoids next/image private IP issue with Supabase storage */}
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={value}

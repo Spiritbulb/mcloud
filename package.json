@@ -6,10 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typedate": "npx supabase gen types typescript --project-id cuptlifacdkeagrrofni > app/types/database.types.ts"
   },
   "dependencies": {
     "@auth0/nextjs-auth0": "^4.16.0",
+    "@codemirror/lang-markdown": "^6.5.0",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.11",
     "@radix-ui/react-collapsible": "^1.1.12",
@@ -23,6 +25,7 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/ssr": "^0.8.0",
     "@supabase/supabase-js": "^2.98.0",
+    "@uiw/react-codemirror": "^4.25.8",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "firebase": "^12.7.0",
@@ -36,6 +39,9 @@
     "react-dom": "19.2.3",
     "react-dropzone": "^15.0.0",
     "react-markdown": "^10.1.0",
+    "remark": "^15.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-html": "^16.0.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
     "ua-parser-js": "^2.0.8"

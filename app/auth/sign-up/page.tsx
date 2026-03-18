@@ -3,11 +3,11 @@ import { SignUpForm } from '@/components/sign-up-form'
 import { Suspense } from 'react'
 
 export default async function Page({
-  searchParams, // should be awaited
+  searchParams,
 }: {
-  searchParams: { slug?: string }
+  searchParams: Promise<{ slug?: string }>
 }) {
-  const slug = await searchParams.slug
+  const slug = (await searchParams).slug
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">

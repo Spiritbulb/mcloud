@@ -1,19 +1,11 @@
 'use client'
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import StoreCarousel from "@/components/store-carousel"
-import { Check, ArrowRight } from "lucide-react"
+import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 import { useState, useEffect, useRef } from "react"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import type { Variants } from "framer-motion"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogDescription,
-} from "@/components/ui/dialog"
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 type Sticker = { src: string; x: string; y: string; delay: number; duration: number }
@@ -22,14 +14,12 @@ type Sticker = { src: string; x: string; y: string; delay: number; duration: num
 const exampleSlugs = ["locd26"]
 const sampleSlugs = ["sneakercity", "joy-bakery", "mwanikimania", "hope-foundation", "the-art-of-living-kenya", "purity-hair-care", "photos-by-sam"]
 
-// Only used in the final CTA section
 const stickers: Sticker[] = [
     { src: "https://img.icons8.com/3d-fluency/94/movie-video-camera.png", x: "6%", y: "20%", delay: 0, duration: 6 },
     { src: "https://img.icons8.com/3d-fluency/94/bank-card-back-side.png", x: "88%", y: "15%", delay: 0.5, duration: 7 },
     { src: "https://img.icons8.com/3d-fluency/94/sparkling-1.png", x: "78%", y: "65%", delay: 1, duration: 5 },
 ]
 
-// Social proof avatars — replace with real user photos
 const avatars = [
     "https://i.pravatar.cc/40?img=27",
     "https://i.pravatar.cc/40?img=56",
@@ -75,25 +65,6 @@ const features = [
         alt: "Person working on laptop",
         reverse: false,
     },
-]
-
-const freeFeatures = [
-    "Your store at slug.menengai.cloud",
-    "Blog, e-commerce, or streaming — you pick",
-    "SSL certificate included",
-    "Mobile-optimized out of the box",
-    "Basic analytics dashboard",
-    "Community support",
-]
-
-const proFeatures = [
-    "Everything in Free",
-    "Custom domain (yourstore.com)",
-    "Priority support",
-    "Advanced analytics",
-    "Custom email (you@yourstore.com)",
-    "Remove Menengai branding",
-    "Early access to new features",
 ]
 
 const faqs = [
@@ -143,15 +114,6 @@ function FadeIn({ children, className, delay = 0 }: { children: React.ReactNode;
     )
 }
 
-function CornerPlus({ className }: { className: string }) {
-    return (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-            width={24} height={24} strokeWidth="1" stroke="currentColor" className={className}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
-        </svg>
-    )
-}
-
 function FloatingStickerImage({ s, size = 48 }: { s: Sticker; size?: number }) {
     return (
         <motion.div
@@ -165,14 +127,11 @@ function FloatingStickerImage({ s, size = 48 }: { s: Sticker; size?: number }) {
     )
 }
 
-
-
-// ─── FAQ accordion item ───────────────────────────────────────────────────────
 function FaqItem({ q, a }: { q: string; a: string }) {
     const [open, setOpen] = useState(false)
     return (
         <div
-            className="border-b border-outline py-5 cursor-pointer"
+            className="border-b border-border py-5 cursor-pointer"
             onClick={() => setOpen(!open)}
         >
             <div className="flex items-center justify-between gap-4">
@@ -180,7 +139,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
                 <motion.span
                     animate={{ rotate: open ? 45 : 0 }}
                     transition={{ duration: 0.2 }}
-                    className="text-2xl text-on-surface-muted flex-shrink-0 leading-none"
+                    className="text-2xl text-muted-foreground flex-shrink-0 leading-none"
                 >
                     +
                 </motion.span>
@@ -192,7 +151,7 @@ function FaqItem({ q, a }: { q: string; a: string }) {
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.25 }}
-                        className="text-body-medium text-on-surface-muted mt-3 overflow-hidden"
+                        className="text-body-medium text-muted-foreground mt-3 overflow-hidden"
                     >
                         {a}
                     </motion.p>
@@ -209,7 +168,6 @@ export default function HomeClient() {
     const [slugIndex, setSlugIndex] = useState(0)
     const [isTyping, setIsTyping] = useState(true)
 
-    // Typewriter effect only while user hasn't typed
     useEffect(() => {
         if (slug) return
         const current = sampleSlugs[slugIndex]
@@ -253,9 +211,8 @@ export default function HomeClient() {
     return (
         <div className="min-h-screen bg-background overflow-x-hidden">
 
-            {/* ── HERO — split layout ───────────────────────────────────────────── */}
+            {/* ── HERO ─────────────────────────────────────────────────────────── */}
             <section className="relative min-h-screen flex items-center bg-background overflow-hidden">
-                {/* Subtle dot grid background */}
                 <div
                     className="absolute inset-0 opacity-[0.03]"
                     style={{
@@ -267,34 +224,29 @@ export default function HomeClient() {
                 <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
 
-                        {/* LEFT — text + CTA */}
                         <motion.div
                             variants={staggerContainer}
                             initial="hidden"
                             animate="visible"
                             className="space-y-8"
                         >
-
-                            {/* Headline */}
                             <motion.h1
                                 variants={fadeUp}
                                 className="text-5xl md:text-4xl lg:text-5xl font-montserrat font-bold text-foreground leading-[1.05]"
                             >
                                 Everything your<br />
                                 audience needs.<br />
-                                <span className="text-on-surface-muted font-normal">One link.</span>
+                                <span className="text-muted-foreground font-normal">One link.</span>
                             </motion.h1>
 
-                            {/* Subtext */}
-                            <motion.p variants={fadeUp} className="text-body-large text-on-surface-muted max-w-md">
+                            <motion.p variants={fadeUp} className="text-body-large text-muted-foreground max-w-md">
                                 Stop waiting on agencies. Type your name, verify your email — and you're live with a full store, blog, or streaming page.
                             </motion.p>
 
-                            {/* Slug input */}
                             <motion.div variants={fadeUp}>
-                                <div className="flex flex-col sm:flex-row gap-3 border border-light bg-background p-2 py-4">
+                                <div className="flex flex-col sm:flex-row gap-3 border border-border bg-background p-2 py-4">
                                     <div className="flex-1 flex items-center gap-2 px-3">
-                                        <span className="text-on-surface-muted text-sm whitespace-nowrap">
+                                        <span className="text-muted-foreground text-sm whitespace-nowrap">
                                             menengai.cloud/store/
                                         </span>
                                         <input
@@ -304,14 +256,14 @@ export default function HomeClient() {
                                                 setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
                                             }
                                             placeholder={displaySlug || ""}
-                                            className="bg-transparent text-foreground placeholder:text-on-surface-muted/50 outline-none text-sm font-mono w-full"
+                                            className="bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none text-sm font-mono w-full"
                                             onKeyDown={(e) => e.key === "Enter" && handleClaim()}
                                             aria-label="Choose your store slug"
                                         />
                                     </div>
                                     <Button
                                         onClick={handleClaim}
-                                        className="text-white px-6 h-10 rounded-none cursor-pointer bg-[#425e7b]"
+                                        className="text-white px-6 h-10 rounded-none cursor-pointer bg-primary hover:bg-primary/90"
                                     >
                                         Claim it free
                                         <ArrowRight className="ml-2 w-4 h-4" />
@@ -323,18 +275,17 @@ export default function HomeClient() {
                                             initial={{ opacity: 0, y: -4 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             exit={{ opacity: 0 }}
-                                            className="text-on-surface-muted text-xs mt-2 font-mono px-2"
+                                            className="text-muted-foreground text-xs mt-2 font-mono px-2"
                                         >
                                             ✓ {slug}.menengai.cloud will be yours
                                         </motion.p>
                                     )}
                                 </AnimatePresence>
-                                <p className="text-xs text-on-surface-muted/60 mt-2 px-2">
+                                <p className="text-xs text-muted-foreground/60 mt-2 px-2">
                                     Only letters, numbers, and hyphens · No credit card required
                                 </p>
                             </motion.div>
 
-                            {/* Social proof */}
                             <motion.div variants={fadeUp} className="flex items-center gap-3">
                                 <div className="flex -space-x-2">
                                     {avatars.map((src, i) => (
@@ -346,13 +297,12 @@ export default function HomeClient() {
                                         </div>
                                     ))}
                                 </div>
-                                <p className="text-body-small text-on-surface-muted">
+                                <p className="text-body-small text-muted-foreground">
                                     Join <span className="font-semibold text-foreground">the creators</span> already live on Menengai Cloud
                                 </p>
                             </motion.div>
                         </motion.div>
 
-                        {/* RIGHT — phone mockup */}
                         <motion.div
                             initial={{ opacity: 0, x: 40 }}
                             animate={{ opacity: 1, x: 0 }}
@@ -372,12 +322,12 @@ export default function HomeClient() {
             </section>
 
             {/* ── MARQUEE ──────────────────────────────────────────────────────── */}
-            <div className="border-y border-light bg-surface py-4 overflow-hidden">
+            <div className="border-y border-border bg-card py-4 overflow-hidden">
                 <div className="flex animate-marquee whitespace-nowrap">
                     {[...marqueeItems, ...marqueeItems].map((item, i) => (
                         <span
                             key={i}
-                            className="inline-flex items-center gap-2 mx-8 text-body-small font-medium text-on-surface-muted"
+                            className="inline-flex items-center gap-2 mx-8 text-body-small font-medium text-muted-foreground"
                         >
                             <Image src={item.icon} alt={item.label} width={22} height={22} unoptimized />
                             {item.label}
@@ -386,23 +336,22 @@ export default function HomeClient() {
                 </div>
             </div>
 
-            {/* ── LIVE STORE BANNER ─────────────────────────────────────────────── */}
+            {/* ── LIVE STORE BANNER ────────────────────────────────────────────── */}
             <section className="bg-background py-20">
                 <div className="container mx-auto px-6 md:px-12 max-w-6xl">
                     <FadeIn className="text-center mb-12">
-                        <p className="text-body-small text-on-surface-muted uppercase tracking-widest mb-2">Live on Menengai Cloud</p>
+                        <p className="text-body-small text-muted-foreground uppercase tracking-widest mb-2">Live on Menengai Cloud</p>
                         <h2 className="text-3xl md:text-4xl font-montserrat font-bold text-foreground">
                             Real stores. Real creators.
                         </h2>
                     </FadeIn>
-
                     <StoreCarousel slugs={exampleSlugs} />
                 </div>
             </section>
 
             {/* ── FEATURES ─────────────────────────────────────────────────────── */}
             {features.map((f, i) => (
-                <section key={i} className={i % 2 !== 0 ? "bg-surface py-24" : "bg-background py-24"}>
+                <section key={i} className={i % 2 !== 0 ? "bg-secondary py-24" : "bg-background py-24"}>
                     <div
                         className={`container mx-auto px-6 md:px-12 max-w-6xl flex flex-col ${f.reverse ? "md:flex-row-reverse" : "md:flex-row"
                             } gap-16 items-center`}
@@ -418,9 +367,9 @@ export default function HomeClient() {
                             <h2 className="text-4xl md:text-5xl font-montserrat font-bold leading-tight text-foreground">
                                 {f.title}
                             </h2>
-                            <p className="text-body-large text-on-surface-muted leading-relaxed">{f.body}</p>
+                            <p className="text-body-large text-muted-foreground leading-relaxed">{f.body}</p>
                             <Button
-                                className="text-white bg-[#425e7b] hover:bg-[#425e7b]/90 px-0 font-medium cursor-pointer group rounded-full"
+                                className="text-primary-foreground bg-primary hover:bg-primary/90 px-5 font-medium cursor-pointer group rounded-full"
                                 onClick={handleClaim}
                             >
                                 Get started free
@@ -450,9 +399,8 @@ export default function HomeClient() {
                 </div>
             </section>
 
-
             {/* ── WHY MENENGAI ─────────────────────────────────────────────────── */}
-            <section className="bg-surface">
+            <section className="bg-secondary">
                 <div className="container mx-auto px-6 md:px-12 py-24">
                     <FadeIn className="max-w-6xl mx-auto">
                         <h2 className="text-display-small font-montserrat mb-16 max-w-2xl text-foreground">
@@ -483,7 +431,7 @@ export default function HomeClient() {
                                             <Image src={item.icon} alt={item.title} width={56} height={56} className="drop-shadow-md" unoptimized />
                                         </motion.div>
                                         <h3 className="text-headline-small font-montserrat text-foreground">{item.title}</h3>
-                                        <p className="text-body-medium text-on-surface-muted">{item.body}</p>
+                                        <p className="text-body-medium text-muted-foreground">{item.body}</p>
                                     </div>
                                 </FadeIn>
                             ))}
@@ -510,7 +458,6 @@ export default function HomeClient() {
 
             {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
             <section className="dark-section relative min-h-[100vh] flex items-center justify-center overflow-hidden">
-
                 {stickers.map((s, i) => (
                     <FloatingStickerImage key={i} s={s} size={48} />
                 ))}
@@ -526,7 +473,7 @@ export default function HomeClient() {
                         </p>
                         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                             <Button
-                                className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 py-3 text-base h-auto rounded-full cursor-pointer"
+                                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-base h-auto rounded-full cursor-pointer"
                                 onClick={handleClaim}
                             >
                                 Claim your free store now

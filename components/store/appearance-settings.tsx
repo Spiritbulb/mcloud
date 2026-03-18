@@ -1,11 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SettingsSection, SettingsField } from '../../app/store/[slug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
 import { THEMES } from '../../src/themes'
+
+// shadcn primitives
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -66,11 +77,30 @@ export interface AppearanceSettingsProps {
     borderRadius: string; setBorderRadius: (v: string) => void
 }
 
-// ─── Constants ────────────────────────────────────────────────────────────────
+// ─── Font catalogues (separated by role) ─────────────────────────────────────
+// Heading fonts: display/serif/characterful — meant for short, prominent text
+// Body fonts: high-legibility at small sizes — never a display font here
 
-const FONTS = [
-    'Inter', 'Playfair Display', 'Lato', 'Montserrat',
-    'Merriweather', 'Nunito', 'Raleway', 'Roboto',
+const HEADING_FONTS = [
+    { value: 'Playfair Display', category: 'Serif' },
+    { value: 'Cormorant Garamond', category: 'Serif' },
+    { value: 'DM Serif Display', category: 'Serif' },
+    { value: 'Libre Baskerville', category: 'Serif' },
+    { value: 'Lora', category: 'Serif' },
+    { value: 'Montserrat', category: 'Sans-serif' },
+    { value: 'Raleway', category: 'Sans-serif' },
+    { value: 'Josefin Sans', category: 'Sans-serif' },
+]
+
+const BODY_FONTS = [
+    { value: 'Inter', category: 'Sans-serif' },
+    { value: 'DM Sans', category: 'Sans-serif' },
+    { value: 'Lato', category: 'Sans-serif' },
+    { value: 'Nunito', category: 'Sans-serif' },
+    { value: 'Source Sans 3', category: 'Sans-serif' },
+    { value: 'Mulish', category: 'Sans-serif' },
+    { value: 'Merriweather', category: 'Serif' },
+    { value: 'Lora', category: 'Serif' },
 ]
 
 const BORDER_RADII = [
@@ -79,6 +109,23 @@ const BORDER_RADII = [
     { label: 'Rounded', value: '8px' },
     { label: 'Pill', value: '999px' },
 ]
+
+// ─── Google Fonts loader ──────────────────────────────────────────────────────
+// Dynamically injects a <link> for any Google Font not yet loaded.
+// Deduplicates by element id — safe to call on every render.
+
+function useGoogleFont(fontName: string) {
+    useEffect(() => {
+        if (!fontName) return
+        const id = `gfont-${fontName.replace(/\s+/g, '-').toLowerCase()}`
+        if (document.getElementById(id)) return
+        const link = document.createElement('link')
+        link.id = id
+        link.rel = 'stylesheet'
+        link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontName).replace(/%20/g, '+')}:wght@400;600;700&display=swap`
+        document.head.appendChild(link)
+    }, [fontName])
+}
 
 // ─── ColorRow ─────────────────────────────────────────────────────────────────
 
@@ -91,7 +138,7 @@ function ColorRow({ label, value, onChange }: {
         <div className="flex items-center gap-3">
             <span className="text-[12px] text-on-surface-muted w-24 shrink-0">{label}</span>
             <div className="flex items-center gap-2 flex-1">
-                <label className="relative w-7 h-7 shrink-0 border border-light cursor-pointer overflow-hidden">
+                <label className="relative w-8 h-8 sm:w-7 sm:h-7 shrink-0 border border-light cursor-pointer overflow-hidden rounded-none">
                     <div className="absolute inset-0" style={{ backgroundColor: value }} />
                     <input
                         type="color"
@@ -100,13 +147,11 @@ function ColorRow({ label, value, onChange }: {
                         className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
                     />
                 </label>
-                <input
-                    type="text"
+                <Input
                     value={value}
                     onChange={(e) => onChange(e.target.value)}
                     spellCheck={false}
-                    className="settings-input font-mono text-[12px] flex-1"
-                    style={{ height: 28 }}
+                    className="font-mono text-[12px] h-8 flex-1 rounded-none"
                 />
             </div>
         </div>
@@ -129,13 +174,13 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                     href={`/store/${slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors py-1"
                 >
                     View store <ExternalLink className="w-3 h-3" />
                 </a>
             }
         >
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
                 {THEMES.map((theme) => {
                     const isActive = themeId === theme.id
                     return (
@@ -143,21 +188,25 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                             key={theme.id}
                             onClick={() => setThemeId(theme.id)}
                             className={cn(
-                                'text-left border p-3 transition-colors',
+                                'text-left border p-2.5 sm:p-3 transition-colors',
                                 isActive
                                     ? 'border-foreground bg-surface-variant'
                                     : 'border-outline hover:border-outline-strong hover:bg-surface-variant/40'
                             )}
                         >
-                            <div className="flex overflow-hidden border border-light mb-3 h-7">
+                            <div className="flex overflow-hidden border border-light mb-2 sm:mb-3 h-6 sm:h-7">
                                 <div className="flex-1" style={{ backgroundColor: theme.preview.background }} />
                                 <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
-                                <div className="w-4" style={{ backgroundColor: theme.preview.accent }} />
+                                <div className="w-3 sm:w-4" style={{ backgroundColor: theme.preview.accent }} />
                             </div>
-                            <div className="flex items-start justify-between gap-2">
-                                <div>
-                                    <p className="text-[13px] font-medium text-foreground leading-none">{theme.name}</p>
-                                    <p className="text-[11px] text-on-surface-muted mt-1 leading-snug">{theme.description}</p>
+                            <div className="flex items-start justify-between gap-1">
+                                <div className="min-w-0">
+                                    <p className="text-[12px] sm:text-[13px] font-medium text-foreground leading-none truncate">
+                                        {theme.name}
+                                    </p>
+                                    <p className="hidden sm:block text-[11px] text-on-surface-muted mt-1 leading-snug">
+                                        {theme.description}
+                                    </p>
                                 </div>
                                 {isActive && (
                                     <div className="shrink-0 w-4 h-4 bg-foreground flex items-center justify-center">
@@ -168,6 +217,236 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                         </button>
                     )
                 })}
+            </div>
+        </SettingsSection>
+    )
+}
+
+// ─── HeroSection ──────────────────────────────────────────────────────────────
+
+function HeroSection(props: Pick<AppearanceSettingsProps,
+    | 'store'
+    | 'heroTitle' | 'setHeroTitle'
+    | 'heroSubtitle' | 'setHeroSubtitle'
+    | 'heroImage' | 'setHeroImage'
+    | 'heroImagePath' | 'setHeroImagePath'
+    | 'logoUrl' | 'setLogoUrl'
+    | 'logoPath' | 'setLogoPath'
+>) {
+    const { store } = props
+    return (
+        <SettingsSection title="Hero & Logo" description="The first thing customers see on your storefront">
+            <div className="mb-5 sm:mb-6">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Logo</p>
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                    <div className="w-full sm:w-20 h-16 sm:h-16 flex items-center justify-center border border-outline bg-surface shrink-0">
+                        {props.logoUrl
+                            ? <img src={props.logoUrl} alt="Logo" className="max-h-12 max-w-full object-contain" />
+                            : <span className="text-[11px] text-on-surface-muted uppercase tracking-widest opacity-40">
+                                {store.name.slice(0, 2)}
+                            </span>
+                        }
+                    </div>
+                    <div className="flex-1">
+                        <ImageUpload
+                            label="Upload logo"
+                            value={props.logoUrl}
+                            pathInDb={props.logoPath}
+                            onChange={(url, path) => { props.setLogoUrl(url); props.setLogoPath(path) }}
+                            bucket="store-assets"
+                            pathPrefix={`${store.id}/logo`}
+                            aspectRatio="square"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-px bg-outline mb-5 sm:mb-6" />
+
+            <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Banner</p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-4">
+                <div className="space-y-1.5">
+                    <Label className="text-[12px] text-on-surface-muted">Title</Label>
+                    <Input value={props.heroTitle} onChange={(e) => props.setHeroTitle(e.target.value)} placeholder={store.name} className="rounded-none" />
+                </div>
+                <div className="space-y-1.5">
+                    <Label className="text-[12px] text-on-surface-muted">Subtitle</Label>
+                    <Input value={props.heroSubtitle} onChange={(e) => props.setHeroSubtitle(e.target.value)} placeholder="Free shipping on all orders" className="rounded-none" />
+                </div>
+                <div className="sm:col-span-2">
+                    <SettingsField label="Hero image" hint="Used as the hero background">
+                        <ImageUpload
+                            label="Upload image"
+                            value={props.heroImage}
+                            pathInDb={props.heroImagePath}
+                            onChange={(url, path) => { props.setHeroImage(url); props.setHeroImagePath(path) }}
+                            bucket="store-assets"
+                            pathPrefix={`${store.id}/hero`}
+                            aspectRatio="wide"
+                        />
+                    </SettingsField>
+                </div>
+            </div>
+        </SettingsSection>
+    )
+}
+
+// ─── TypographySection ────────────────────────────────────────────────────────
+
+function TypographySection(props: Pick<AppearanceSettingsProps,
+    | 'headingFont' | 'setHeadingFont'
+    | 'bodyFont' | 'setBodyFont'
+    | 'borderRadius' | 'setBorderRadius'
+>) {
+    // Inject both fonts into the document so the preview actually renders them
+    useGoogleFont(props.headingFont)
+    useGoogleFont(props.bodyFont)
+
+    return (
+        <SettingsSection title="Typography & Shape">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-x-8">
+
+                {/* ── Heading font picker ── */}
+                <div className="space-y-1.5">
+                    <Label className="text-[12px] text-on-surface-muted">Heading font</Label>
+                    <Select value={props.headingFont} onValueChange={props.setHeadingFont}>
+                        <SelectTrigger className="rounded-none text-base sm:text-[13px]">
+                            <SelectValue placeholder="Pick a heading font" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {HEADING_FONTS.map((f) => (
+                                <SelectItem key={f.value} value={f.value}>
+                                    <div className="flex items-center justify-between gap-8 w-full">
+                                        <span>{f.value}</span>
+                                        <span className="text-[11px] text-muted-foreground">{f.category}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {/* Inline preview — renders in the chosen font */}
+                    <div className="px-3 py-2 bg-surface border border-outline">
+                        <p
+                            className="text-[18px] leading-snug text-foreground"
+                            style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
+                        >
+                            The quick brown fox
+                        </p>
+                        <p className="text-[10px] text-on-surface-muted mt-1 uppercase tracking-widest">
+                            {props.headingFont}
+                        </p>
+                    </div>
+                </div>
+
+                {/* ── Body font picker ── */}
+                <div className="space-y-1.5">
+                    <Label className="text-[12px] text-on-surface-muted">Body font</Label>
+                    <Select value={props.bodyFont} onValueChange={props.setBodyFont}>
+                        <SelectTrigger className="rounded-none text-base sm:text-[13px]">
+                            <SelectValue placeholder="Pick a body font" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {BODY_FONTS.map((f) => (
+                                <SelectItem key={f.value} value={f.value}>
+                                    <div className="flex items-center justify-between gap-8 w-full">
+                                        <span>{f.value}</span>
+                                        <span className="text-[11px] text-muted-foreground">{f.category}</span>
+                                    </div>
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    {/* Inline preview */}
+                    <div className="px-3 py-2 bg-surface border border-outline">
+                        <p
+                            className="text-[13px] leading-relaxed text-foreground"
+                            style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
+                        >
+                            Handpicked styles for every occasion. Free shipping on orders over KES 2,000.
+                        </p>
+                        <p className="text-[10px] text-on-surface-muted mt-1 uppercase tracking-widest">
+                            {props.bodyFont}
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {/* ── Combined pairing preview ─────────────────────────────────── */}
+            {/* Shows both fonts in context together — product card mockup */}
+            <div className="mt-5 border border-outline overflow-hidden">
+                {/* Header strip */}
+                <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-outline">
+                    <p
+                        className="text-[14px] font-semibold leading-none"
+                        style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
+                    >
+                        Your Store
+                    </p>
+                    <p
+                        className="text-[11px] text-on-surface-muted"
+                        style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
+                    >
+                        Cart (2)
+                    </p>
+                </div>
+
+                {/* Hero strip */}
+                <div className="px-4 pt-4 pb-3 bg-background border-b border-outline">
+                    <p
+                        className="text-[20px] sm:text-[24px] leading-tight"
+                        style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
+                    >
+                        Fresh Arrivals
+                    </p>
+                    <p
+                        className="text-[12px] sm:text-[13px] mt-1 text-on-surface-muted"
+                        style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
+                    >
+                        Handpicked styles for the season.
+                    </p>
+                </div>
+
+                {/* Product row */}
+                <div className="flex gap-3 px-4 py-3 bg-background">
+                    {['Linen Tote', 'Canvas Cap', 'Woven Wrap'].map((name) => (
+                        <div key={name} className="flex-1 min-w-0">
+                            <div className="w-full aspect-square bg-surface mb-1.5" />
+                            <p
+                                className="text-[12px] font-semibold leading-tight truncate"
+                                style={{ fontFamily: `'${props.headingFont}', serif` }}
+                            >
+                                {name}
+                            </p>
+                            <p
+                                className="text-[11px] text-on-surface-muted mt-0.5"
+                                style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
+                            >
+                                KES 1,800
+                            </p>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
+            {/* ── Border radius ── */}
+            <div className="mt-5 sm:mt-6">
+                <Label className="text-[12px] text-on-surface-muted mb-2 block">Button & card radius</Label>
+                <div className="flex gap-2 flex-wrap">
+                    {BORDER_RADII.map((r) => (
+                        <button
+                            key={r.value}
+                            onClick={() => props.setBorderRadius(r.value)}
+                            className={cn(
+                                'h-9 sm:h-8 px-4 text-[12px] border transition-colors',
+                                props.borderRadius === r.value
+                                    ? 'bg-foreground text-surface border-foreground'
+                                    : 'bg-background text-on-surface-muted border-light hover:border-outline-strong hover:text-foreground'
+                            )}
+                        >
+                            {r.label}
+                        </button>
+                    ))}
+                </div>
             </div>
         </SettingsSection>
     )
@@ -192,13 +471,13 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
     return (
         <SettingsSection
             title="Colors"
-            description="Your storefront's color palette"
+            description="Fine-tune the palette — overrides the preset theme"
             aside={
                 <div className="flex items-center border border-outline">
                     <button
                         onClick={() => setMode('light')}
                         className={cn(
-                            'flex items-center gap-1.5 px-2.5 h-7 text-[12px] transition-colors',
+                            'flex items-center gap-1.5 px-2.5 h-8 sm:h-7 text-[12px] transition-colors',
                             mode === 'light'
                                 ? 'bg-surface-variant text-foreground'
                                 : 'text-on-surface-muted hover:text-foreground'
@@ -210,7 +489,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
                     <button
                         onClick={() => setMode('dark')}
                         className={cn(
-                            'flex items-center gap-1.5 px-2.5 h-7 text-[12px] transition-colors',
+                            'flex items-center gap-1.5 px-2.5 h-8 sm:h-7 text-[12px] transition-colors',
                             mode === 'dark'
                                 ? 'bg-surface-variant text-foreground'
                                 : 'text-on-surface-muted hover:text-foreground'
@@ -222,7 +501,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
             }
         >
             {mode === 'light' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-3">
                     <ColorRow label="Primary" value={props.primaryColor} onChange={props.setPrimaryColor} />
                     <ColorRow label="Secondary" value={props.secondaryColor} onChange={props.setSecondaryColor} />
                     <ColorRow label="Accent" value={props.accentColor} onChange={props.setAccentColor} />
@@ -231,132 +510,13 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
                     <ColorRow label="Muted" value={props.mutedColor} onChange={props.setMutedColor} />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-3">
                     <ColorRow label="Primary" value={props.darkPrimaryColor} onChange={props.setDarkPrimaryColor} />
                     <ColorRow label="Background" value={props.darkBgColor} onChange={props.setDarkBgColor} />
                     <ColorRow label="Foreground" value={props.darkFgColor} onChange={props.setDarkFgColor} />
                     <ColorRow label="Muted" value={props.darkMutedColor} onChange={props.setDarkMutedColor} />
                 </div>
             )}
-        </SettingsSection>
-    )
-}
-
-// ─── TypographySection ────────────────────────────────────────────────────────
-
-function TypographySection(props: Pick<AppearanceSettingsProps,
-    | 'headingFont' | 'setHeadingFont'
-    | 'bodyFont' | 'setBodyFont'
-    | 'borderRadius' | 'setBorderRadius'
->) {
-    return (
-        <SettingsSection title="Typography & Shape">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                <SettingsField label="Heading font">
-                    <select value={props.headingFont} onChange={(e) => props.setHeadingFont(e.target.value)} className="settings-input">
-                        {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                </SettingsField>
-                <SettingsField label="Body font">
-                    <select value={props.bodyFont} onChange={(e) => props.setBodyFont(e.target.value)} className="settings-input">
-                        {FONTS.map((f) => <option key={f} value={f}>{f}</option>)}
-                    </select>
-                </SettingsField>
-            </div>
-
-            {/* Live font preview */}
-            <div className="mt-5 p-4 border border-light bg-surface-variant/30 space-y-1.5">
-                <p style={{ fontFamily: props.headingFont, fontWeight: 600, fontSize: 14, lineHeight: 1.3 }}>
-                    Heading — {props.headingFont}
-                </p>
-                <p style={{ fontFamily: props.bodyFont, fontSize: 13, opacity: 0.6, lineHeight: 1.5 }}>
-                    Body text — the quick brown fox jumps over the lazy dog.
-                </p>
-            </div>
-
-            <div className="mt-5">
-                <SettingsField label="Button & card radius">
-                    <div className="flex gap-2 flex-wrap mt-1">
-                        {BORDER_RADII.map((r) => (
-                            <button
-                                key={r.value}
-                                onClick={() => props.setBorderRadius(r.value)}
-                                className={cn(
-                                    'h-8 px-4 text-[12px] border transition-colors',
-                                    props.borderRadius === r.value
-                                        ? 'bg-foreground text-surface border-foreground'
-                                        : 'bg-background text-on-surface-muted border-light hover:border-outline-strong hover:text-foreground'
-                                )}
-                            >
-                                {r.label}
-                            </button>
-                        ))}
-                    </div>
-                </SettingsField>
-            </div>
-        </SettingsSection>
-    )
-}
-
-// ─── HeroSection ──────────────────────────────────────────────────────────────
-
-function HeroSection(props: Pick<AppearanceSettingsProps,
-    | 'store'
-    | 'heroTitle' | 'setHeroTitle'
-    | 'heroSubtitle' | 'setHeroSubtitle'
-    | 'heroImage' | 'setHeroImage'
-    | 'heroImagePath' | 'setHeroImagePath'
-    | 'logoUrl' | 'setLogoUrl'
-    | 'logoPath' | 'setLogoPath'
->) {
-    const { store } = props
-    return (
-        <SettingsSection title="Hero" description="Shown at the top of your storefront">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
-                <SettingsField label="Title">
-                    <input
-                        value={props.heroTitle}
-                        onChange={(e) => props.setHeroTitle(e.target.value)}
-                        placeholder={store.name}
-                        className="settings-input"
-                    />
-                </SettingsField>
-                <SettingsField label="Subtitle">
-                    <input
-                        value={props.heroSubtitle}
-                        onChange={(e) => props.setHeroSubtitle(e.target.value)}
-                        placeholder="Free shipping on all orders"
-                        className="settings-input"
-                    />
-                </SettingsField>
-                <SettingsField label="Hero image" hint="Used as the hero background">
-                    <ImageUpload
-                        label="Upload image"
-                        value={props.heroImage}
-                        pathInDb={props.heroImagePath}
-                        onChange={(url, path) => { props.setHeroImage(url); props.setHeroImagePath(path) }}
-                        bucket="store-assets"
-                        pathPrefix={`${store.id}/hero`}
-                        aspectRatio="wide"
-                    />
-                </SettingsField>
-                <SettingsField label="Logo">
-                    <div className="flex items-center gap-3">
-                        {props.logoUrl && (
-                            <img src={props.logoUrl} alt="Logo" className="w-10 h-10 object-cover border border-outline shrink-0" />
-                        )}
-                        <ImageUpload
-                            label="Upload logo"
-                            value={props.logoUrl}
-                            pathInDb={props.logoPath}
-                            onChange={(url, path) => { props.setLogoUrl(url); props.setLogoPath(path) }}
-                            bucket="store-assets"
-                            pathPrefix={`${store.id}/logo`}
-                            aspectRatio="square"
-                        />
-                    </div>
-                </SettingsField>
-            </div>
         </SettingsSection>
     )
 }
@@ -376,48 +536,52 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
 
     return (
         <div className="border border-outline">
-            <div className="flex items-center justify-between px-4 py-2.5 border-b border-outline bg-surface-variant/30">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-outline bg-surface-variant/30">
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2 text-[12px] font-medium text-foreground"
+                    className="flex items-center gap-2 text-[12px] font-medium text-foreground min-w-0"
                 >
-                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform', open && 'rotate-180')} />
-                    Slide {idx + 1}
+                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform shrink-0', open && 'rotate-180')} />
+                    <span className="shrink-0">Slide {idx + 1}</span>
                     {slide.title && (
-                        <span className="text-on-surface-muted font-normal truncate max-w-[140px]">— {slide.title}</span>
+                        <span className="text-on-surface-muted font-normal truncate">— {slide.title}</span>
                     )}
                 </button>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1 shrink-0 ml-2">
                     {(['up', 'down'] as const).map((dir) => (
                         <button
                             key={dir}
                             disabled={dir === 'up' ? idx === 0 : idx === total - 1}
                             onClick={() => onMove(dir)}
-                            className="w-6 h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
+                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
                         >{dir === 'up' ? '↑' : '↓'}</button>
                     ))}
                     <button
                         onClick={onRemove}
-                        className="w-6 h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-red-500 transition-colors"
+                        className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-red-500 transition-colors"
                     >×</button>
                 </div>
             </div>
 
             {open && (
-                <div className="p-4 space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-4">
-                        <SettingsField label="Title">
-                            <input value={slide.title} onChange={(e) => onChange({ ...slide, title: e.target.value })} placeholder="Your statement" className="settings-input" />
-                        </SettingsField>
-                        <SettingsField label="Subtitle">
-                            <input value={slide.subtitle ?? ''} onChange={(e) => onChange({ ...slide, subtitle: e.target.value })} placeholder="Discover our bestsellers…" className="settings-input" />
-                        </SettingsField>
-                        <SettingsField label="Accent badge">
-                            <input value={slide.accent ?? ''} onChange={(e) => onChange({ ...slide, accent: e.target.value })} placeholder="New Arrivals" className="settings-input" />
-                        </SettingsField>
-                        <SettingsField label="Button text">
-                            <input value={slide.buttonText ?? ''} onChange={(e) => onChange({ ...slide, buttonText: e.target.value })} placeholder="Shop now" className="settings-input" />
-                        </SettingsField>
+                <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-6 sm:gap-y-4">
+                        {([
+                            { label: 'Title', field: 'title', placeholder: 'Your statement' },
+                            { label: 'Subtitle', field: 'subtitle', placeholder: 'Discover our bestsellers…' },
+                            { label: 'Accent badge', field: 'accent', placeholder: 'New Arrivals' },
+                            { label: 'Button text', field: 'buttonText', placeholder: 'Shop now' },
+                        ] as const).map(({ label, field, placeholder }) => (
+                            <div key={field} className="space-y-1.5">
+                                <Label className="text-[12px] text-on-surface-muted">{label}</Label>
+                                <Input
+                                    value={(slide as any)[field] ?? ''}
+                                    onChange={(e) => onChange({ ...slide, [field]: e.target.value })}
+                                    placeholder={placeholder}
+                                    className="rounded-none"
+                                />
+                            </div>
+                        ))}
                     </div>
                     <SettingsField label="Slide image">
                         <ImageUpload
@@ -437,7 +601,6 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
 
 function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlides' | 'setHeroSlides'>) {
     const { store, heroSlides, setHeroSlides } = props
-
     return (
         <SettingsSection
             title="Hero slides"
@@ -445,7 +608,7 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
             aside={
                 <button
                     onClick={() => setHeroSlides([...heroSlides, { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' }])}
-                    className="btn-secondary h-7 px-3 text-[12px]"
+                    className="btn-secondary h-8 sm:h-7 px-3 text-[12px]"
                 >
                     + Add slide
                 </button>
@@ -490,6 +653,20 @@ export default function AppearanceSettings(props: AppearanceSettingsProps) {
     return (
         <div className="space-y-4">
             <ThemeSection themeId={props.themeId} setThemeId={props.setThemeId} slug={props.store.slug} />
+            <HeroSection
+                store={props.store}
+                heroTitle={props.heroTitle} setHeroTitle={props.setHeroTitle}
+                heroSubtitle={props.heroSubtitle} setHeroSubtitle={props.setHeroSubtitle}
+                heroImage={props.heroImage} setHeroImage={props.setHeroImage}
+                heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
+                logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
+                logoPath={props.logoPath} setLogoPath={props.setLogoPath}
+            />
+            <TypographySection
+                headingFont={props.headingFont} setHeadingFont={props.setHeadingFont}
+                bodyFont={props.bodyFont} setBodyFont={props.setBodyFont}
+                borderRadius={props.borderRadius} setBorderRadius={props.setBorderRadius}
+            />
             <ColorsSection
                 primaryColor={props.primaryColor} setPrimaryColor={props.setPrimaryColor}
                 secondaryColor={props.secondaryColor} setSecondaryColor={props.setSecondaryColor}
@@ -501,20 +678,6 @@ export default function AppearanceSettings(props: AppearanceSettingsProps) {
                 darkBgColor={props.darkBgColor} setDarkBgColor={props.setDarkBgColor}
                 darkFgColor={props.darkFgColor} setDarkFgColor={props.setDarkFgColor}
                 darkMutedColor={props.darkMutedColor} setDarkMutedColor={props.setDarkMutedColor}
-            />
-            <TypographySection
-                headingFont={props.headingFont} setHeadingFont={props.setHeadingFont}
-                bodyFont={props.bodyFont} setBodyFont={props.setBodyFont}
-                borderRadius={props.borderRadius} setBorderRadius={props.setBorderRadius}
-            />
-            <HeroSection
-                store={props.store}
-                heroTitle={props.heroTitle} setHeroTitle={props.setHeroTitle}
-                heroSubtitle={props.heroSubtitle} setHeroSubtitle={props.setHeroSubtitle}
-                heroImage={props.heroImage} setHeroImage={props.setHeroImage}
-                heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
-                logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
-                logoPath={props.logoPath} setLogoPath={props.setLogoPath}
             />
             <SlidesSection store={props.store} heroSlides={props.heroSlides} setHeroSlides={props.setHeroSlides} />
         </div>

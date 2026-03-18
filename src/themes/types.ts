@@ -166,3 +166,61 @@ export interface GuestDetails {
     whatsapp: string
     email: string
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Blog types  ·  append these to your existing themes/types.ts
+// ─────────────────────────────────────────────────────────────────────────────
+
+export interface BlogAuthor {
+    id: string
+    store_id: string
+    name: string
+    bio: string | null
+    avatar_url: string | null
+    user_id: string | null
+    created_at: string
+    updated_at: string
+}
+
+export interface BlogPost {
+    id: string
+    store_id: string
+    author_id: string | null
+    // Joined — present when you query with `author:blog_authors(*)`
+    author: BlogAuthor | null
+    title: string
+    slug: string
+    excerpt: string | null
+    content: string
+    cover_image: string | null
+    tags: string[]
+    is_published: boolean
+    published_at: string | null
+    reading_time_minutes: number | null
+    metadata: {
+        seo_title?: string
+        seo_description?: string
+        featured?: boolean
+    }
+    created_at: string
+    updated_at: string
+}
+
+// ── Blog list page ────────────────────────────────────────────────────────────
+export interface BlogListPageProps {
+    storeSlug: string
+    posts: BlogPost[]
+    loading?: boolean
+    error?: string | null
+    onRetry?: () => void
+}
+
+// ── Blog post detail page ─────────────────────────────────────────────────────
+export interface BlogPostPageProps {
+    storeSlug: string
+    post: BlogPost
+    relatedPosts: BlogPost[]
+    // Pre-rendered HTML from the server — theme components use this directly
+    // with dangerouslySetInnerHTML instead of running react-markdown client-side.
+    contentHtml: string
+}

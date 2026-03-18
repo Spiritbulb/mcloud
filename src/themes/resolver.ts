@@ -1,5 +1,5 @@
-// Theme resolver — maps a themeId to the set of page components for that theme.
-// Add new themes here when they are created.
+// themes/resolver.ts
+// Maps a themeId to the full set of page components for that theme.
 
 import type { ComponentType } from 'react'
 import type {
@@ -7,6 +7,8 @@ import type {
     ProductsPageProps,
     CartPageProps,
     ProductDetailPageProps,
+    BlogListPageProps,
+    BlogPostPageProps,
 } from './types'
 
 export interface ThemeComponents {
@@ -14,10 +16,10 @@ export interface ThemeComponents {
     ProductsPage: ComponentType<ProductsPageProps>
     CartPage: ComponentType<CartPageProps>
     ProductDetailPage: ComponentType<ProductDetailPageProps>
+    BlogListPage: ComponentType<BlogListPageProps>
+    BlogPostPage: ComponentType<BlogPostPageProps>
 }
 
-// Lazy-loaded theme bundles. Using dynamic imports keeps each theme's code
-// out of the initial bundle if you ever code-split at the route level.
 const themes: Record<string, () => Promise<ThemeComponents>> = {
     classic: () =>
         Promise.all([
@@ -25,11 +27,15 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             import('./classic/ProductsPage'),
             import('./classic/CartPage'),
             import('./classic/ProductDetailPage'),
-        ]).then(([sf, pp, cp, pdp]) => ({
+            import('./classic/BlogListPage'),
+            import('./classic/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
             StoreFront: sf.default,
             ProductsPage: pp.default,
             CartPage: cp.default,
             ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
         })),
 
     noir: () =>
@@ -38,11 +44,15 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             import('./noir/ProductsPage'),
             import('./noir/CartPage'),
             import('./noir/ProductDetailPage'),
-        ]).then(([sf, pp, cp, pdp]) => ({
+            import('./noir/BlogListPage'),
+            import('./noir/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
             StoreFront: sf.default,
             ProductsPage: pp.default,
             CartPage: cp.default,
             ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
         })),
 
     minimal: () =>
@@ -51,11 +61,15 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             import('./minimal/ProductsPage'),
             import('./minimal/CartPage'),
             import('./minimal/ProductDetailPage'),
-        ]).then(([sf, pp, cp, pdp]) => ({
+            import('./minimal/BlogListPage'),
+            import('./minimal/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
             StoreFront: sf.default,
             ProductsPage: pp.default,
             CartPage: cp.default,
             ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
         })),
 }
 
@@ -64,4 +78,7 @@ export async function resolveTheme(themeId: string): Promise<ThemeComponents> {
     return loader()
 }
 
-export type { StoreFrontProps, ProductsPageProps, CartPageProps, ProductDetailPageProps }
+export type {
+    StoreFrontProps, ProductsPageProps, CartPageProps,
+    ProductDetailPageProps, BlogListPageProps, BlogPostPageProps,
+}

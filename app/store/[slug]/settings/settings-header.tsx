@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useEffect } from 'react'
 import { Menu } from 'lucide-react'
 import { useSidebar } from '@/components/ui/sidebar'
 
@@ -12,10 +13,15 @@ export function SettingsHeader({
     activeLabel: string
 }) {
     const { toggleSidebar } = useSidebar()
+    const { openMobile } = useSidebar()
+
+    if (openMobile) {
+        return null
+    }
 
     return (
         <header className="shrink-0 border-b border-light bg-background z-40">
-            <div className="px-4 md:px-2 h-[52px] flex items-center justify-between gap-6">
+            <div className="px-4 md:px-6 h-[72px] flex items-center justify-between gap-6">
 
                 <div className="flex items-center gap-0 min-w-0">
                     <button

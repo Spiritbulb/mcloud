@@ -1,7 +1,10 @@
+// app/store/[slug]/page.tsx
+
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import StoreFront from '@/components/store/Storefront'
+import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 
 export const revalidate = 60
 
@@ -22,11 +25,11 @@ export async function generateMetadata({ params }: Props) {
 
     if (!store) return { title: 'Store not found' }
 
-    // Prefer logo, fall back to hero image for OG
-    const ogImage =
-        store.logo_url ??
-        (store.settings as any)?.heroImage ??
-        null
+    const settings = (store.settings && typeof store.settings === 'object' && !Array.isArray(store.settings))
+        ? store.settings as Record<string, unknown>
+        : {}
+
+    const ogImage = store.logo_url ?? (settings.heroImage as string | undefined) ?? null
 
     return {
         title: store.name,
@@ -43,38 +46,35 @@ export default async function StorePage({ params }: Props) {
     const { slug } = await params
     const supabase = await createClient()
 
-    const { data: store } = await supabase
+    const { data: rawStore } = await supabase
         .from('stores')
         .select('*')
         .eq('slug', slug)
         .eq('is_active', true)
         .single()
 
-    if (!store) notFound()
+    if (!rawStore) notFound()
 
     const [
-        { data: products },
-        { data: collections },
-        { data: featuredProducts },
+        { data: rawProducts },
+        { data: rawCollections },
+        { data: featuredRows },
     ] = await Promise.all([
-        // All active products
         supabase
             .from('products')
             .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, track_inventory')
-            .eq('store_id', store.id)
+            .eq('store_id', rawStore.id)
             .eq('is_active', true)
             .order('created_at', { ascending: false }),
 
-        // All active collections (excluding 'featured' — it's a special slug)
         supabase
             .from('collections')
             .select('id, name, slug, description, image_url, position')
-            .eq('store_id', store.id)
+            .eq('store_id', rawStore.id)
             .eq('is_active', true)
             .neq('slug', 'featured')
             .order('position', { ascending: true }),
 
-        // Featured products via collection_products join
         supabase
             .from('collection_products')
             .select(`
@@ -85,22 +85,27 @@ export default async function StorePage({ params }: Props) {
                 )
             `)
             .eq('collections.slug', 'featured')
-            .eq('collections.store_id', store.id)
+            .eq('collections.store_id', rawStore.id)
             .order('position', { ascending: true })
             .limit(8),
     ])
 
-    // Flatten the featured join result
-    const featured = (featuredProducts ?? [])
-        .map((row: any) => row.products)
-        .filter(Boolean)
+    const store = castStore(rawStore)
+    const products = castProducts(rawProducts ?? [])
+    const collections = castCollections(rawCollections ?? [])
+
+    const featured = castProducts(
+        (featuredRows ?? [])
+            .map((row: any) => row.products)
+            .filter(Boolean)
+    )
 
     return (
         <StoreFront
             store={store}
-            products={products ?? []}
-            collections={collections ?? []}
-            featuredProducts={featured.length > 0 ? featured : (products ?? []).slice(0, 8)}
+            products={products}
+            collections={collections}
+            featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
         />
     )
 }
