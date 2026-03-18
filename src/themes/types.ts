@@ -16,12 +16,22 @@ export interface Store {
     description: string | null
     logo_url: string | null
     currency: string
+    // Nullable in Supabase generated types — settings pages pass the raw row
+    // directly so these need to match what the DB actually returns.
+    is_active?: boolean | null
+    is_pro?: boolean
+    custom_domain?: string | null
+    timezone?: string | null
+    owner_id?: string
+    created_at?: string | null
+    updated_at?: string | null
     settings: {
         heroTitle?: string
         heroSubtitle?: string
         heroImage?: string
         heroImagePath?: string
         logoPath?: string
+        themeId?: string
         heroSlides?: HeroSlide[]
         socialLinks?: {
             instagram?: string
@@ -29,6 +39,7 @@ export interface Store {
             tiktok?: string
             whatsapp?: string
         }
+        [key: string]: unknown  // allows other settings without casting
     }
 }
 
@@ -168,7 +179,7 @@ export interface GuestDetails {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Blog types  ·  append these to your existing themes/types.ts
+// Blog types
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface BlogAuthor {
@@ -186,7 +197,6 @@ export interface BlogPost {
     id: string
     store_id: string
     author_id: string | null
-    // Joined — present when you query with `author:blog_authors(*)`
     author: BlogAuthor | null
     title: string
     slug: string
@@ -206,7 +216,6 @@ export interface BlogPost {
     updated_at: string
 }
 
-// ── Blog list page ────────────────────────────────────────────────────────────
 export interface BlogListPageProps {
     storeSlug: string
     posts: BlogPost[]
@@ -215,12 +224,9 @@ export interface BlogListPageProps {
     onRetry?: () => void
 }
 
-// ── Blog post detail page ─────────────────────────────────────────────────────
 export interface BlogPostPageProps {
     storeSlug: string
     post: BlogPost
     relatedPosts: BlogPost[]
-    // Pre-rendered HTML from the server — theme components use this directly
-    // with dangerouslySetInnerHTML instead of running react-markdown client-side.
     contentHtml: string
 }
