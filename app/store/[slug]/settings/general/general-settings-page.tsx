@@ -10,7 +10,7 @@ interface Store {
     slug: string
     description?: string | null
     currency: string
-    timezone: string
+    timezone: any
     is_active: boolean
 }
 
