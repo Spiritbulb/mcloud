@@ -29,6 +29,19 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
                             <img src="/favicon.ico" alt="Menengai Cloud" className="w-10 h-auto" />
                         </Link>
 
+                        {/* Nav links */}
+                        <nav className="hidden md:flex items-center gap-6">
+                            <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                Docs
+                            </Link>
+                            <Link href="/changelog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                Changelog
+                            </Link>
+                            <Link href="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
+                                Support
+                            </Link>
+                        </nav>
+
                         {/* CTA — conditional */}
                         {isLoggedIn ? (
                             <Button asChild className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full">
