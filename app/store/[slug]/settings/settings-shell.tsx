@@ -1,12 +1,15 @@
 'use client'
 
+// components/settings-shell.tsx
+// Added: wizardOpen state, GettingStartedDrawer, passes onOpenWizard to SettingsHeader
+
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag, FileText } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
-import { useSidebar } from '@/components/ui/sidebar'
+import { GettingStartedDrawer } from './getting-started-drawer'
 
 export const TABS = [
     { id: 'general', label: 'General', icon: <Store className="w-[15px] h-[15px]" /> },
@@ -41,6 +44,12 @@ export default function SettingsShell({
     const [store, setStore] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<ErrorType>(null)
+
+    // ── Wizard state ──────────────────────────────────────────────────────────
+    const [wizardOpen, setWizardOpen] = useState(false)
+
+    // ── Mobile nav state ──────────────────────────────────────────────────────
+    const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
     useEffect(() => {
         async function load() {
@@ -109,7 +118,6 @@ export default function SettingsShell({
 
     const navigate = (id: TabId) => router.push(`/settings/${id}`)
 
-
     // ── Shell ─────────────────────────────────────────────────────────────────
     return (
         <SidebarProvider
@@ -126,8 +134,6 @@ export default function SettingsShell({
         >
             <div data-settings-shell className="h-screen overflow-hidden flex bg-background">
 
-
-
                 {/* Desktop sidebar */}
                 <SettingsNav
                     activeTab={activeId}
@@ -138,7 +144,7 @@ export default function SettingsShell({
                     allStores={store.allStores}
                 />
 
-                {/* Mobile drawer */}
+                {/* Mobile drawer — open/onClose owned here, triggered by hamburger in SettingsHeader */}
                 <MobileSettingsNav
                     activeTab={activeId}
                     onSelect={navigate}
@@ -146,17 +152,31 @@ export default function SettingsShell({
                     user={navUser}
                     store={navStore}
                     allStores={store.allStores}
+                    open={mobileNavOpen}
+                    onClose={() => setMobileNavOpen(false)}
                 />
 
                 {/* Main content */}
                 <div className="flex flex-col flex-1 min-w-0 min-h-0">
-                    <SettingsHeader store={navStore} activeLabel={activeLabel} />
-                    {/* Scrollable content */}
+                    <SettingsHeader
+                        store={navStore}
+                        activeLabel={activeLabel}
+                        wizardStore={store}
+                        onOpenWizard={() => setWizardOpen(true)}
+                        onOpenMobileNav={() => setMobileNavOpen(true)}
+                    />
                     <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">
                         {children}
                     </main>
                 </div>
             </div>
+
+            <GettingStartedDrawer
+                open={wizardOpen}
+                onClose={() => setWizardOpen(false)}
+                store={store}
+                onNavigate={navigate}
+            />
         </SidebarProvider>
     )
 }

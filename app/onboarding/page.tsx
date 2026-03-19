@@ -1,14 +1,37 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { motion, AnimatePresence } from 'framer-motion'
+
 import { completeOnboarding } from './actions'
 
-const STEPS = ['Your name', 'Your store', 'Preferences']
+// ─── Data ─────────────────────────────────────────────────────────────────────
+
+const STEPS = [
+    {
+        key: 'name',
+        label: 'Identity',
+        headline: 'Who are you?',
+        sub: 'The name your audience will know you by.',
+    },
+    {
+        key: 'store',
+        label: 'Your link',
+        headline: 'Claim your corner of the internet.',
+        sub: 'This is your permanent address. Choose something you\'ll be proud of.',
+    },
+    {
+        key: 'prefs',
+        label: 'Launch',
+        headline: 'Almost live.',
+        sub: 'A few quick settings. You can change these any time.',
+    },
+]
 
 const CURRENCIES = [
     { code: 'KES', label: 'KES — Kenyan Shilling' },
@@ -35,9 +58,30 @@ const TIMEZONES = [
     { value: 'Asia/Dubai', label: 'Dubai (GST, UTC+4)' },
 ]
 
+// ─── Animation variants ────────────────────────────────────────────────────────
+
+const slideVariants = {
+    enter: (dir: number) => ({
+        x: dir > 0 ? 40 : -40,
+        opacity: 0,
+    }),
+    center: {
+        x: 0,
+        opacity: 1,
+        transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
+    },
+    exit: (dir: number) => ({
+        x: dir > 0 ? -40 : 40,
+        opacity: 0,
+        transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const },
+    }),
+}
+
+// ─── Component ─────────────────────────────────────────────────────────────────
+
 export default function OnboardingPage() {
-    const router = useRouter()
     const [step, setStep] = useState(0)
+    const [direction, setDirection] = useState(1)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
@@ -57,12 +101,15 @@ export default function OnboardingPage() {
         return true
     }
 
-    const handleNext = () => {
-        if (step < STEPS.length - 1) setStep(step + 1)
+    const advance = () => {
+        if (!canAdvance()) return
+        setDirection(1)
+        setStep((s) => s + 1)
     }
 
-    const handleBack = () => {
-        if (step > 0) setStep(step - 1)
+    const back = () => {
+        setDirection(-1)
+        setStep((s) => s - 1)
     }
 
     const handleSubmit = async () => {
@@ -82,206 +129,274 @@ export default function OnboardingPage() {
                 setError(result.error)
                 setIsLoading(false)
             }
-            // on success, action redirects — no need to handle here
         } catch (e) {
+            // Next.js redirect() throws internally — let it propagate
+            if (e instanceof Error && (e as any).digest?.startsWith('NEXT_REDIRECT')) throw e
             setError('Something went wrong. Please try again.')
             setIsLoading(false)
         }
     }
 
-    return (
-        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4">
+    const progress = ((step + 1) / STEPS.length) * 100
 
-            {/* Logo / wordmark */}
-            <div className="mb-10 text-center">
-                <span className="font-mono text-xs tracking-widest text-muted-foreground uppercase">
-                    menengai
+    return (
+        <div className="min-h-screen bg-background flex flex-col items-center justify-center px-4 overflow-hidden">
+
+            {/* Dot grid background */}
+            <div
+                className="fixed inset-0 opacity-[0.03] pointer-events-none"
+                style={{
+                    backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
+                    backgroundSize: '28px 28px',
+                }}
+            />
+
+            {/* Wordmark */}
+            <motion.div
+                initial={{ opacity: 0, y: -12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                className="mb-10 text-center relative z-10"
+            >
+                <span className="font-mono text-xs tracking-[0.3em] text-muted-foreground uppercase">
+                    mcloud
                 </span>
-            </div>
+            </motion.div>
 
             {/* Card */}
-            <div className="w-full max-w-md border border-border bg-card">
-
-                {/* Step indicator */}
-                <div className="flex border-b border-border">
-                    {STEPS.map((label, i) => (
+            <motion.div
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.55, delay: 0.1, ease: [0.25, 0.1, 0.25, 1] }}
+                className="w-full max-w-lg relative z-10"
+            >
+                {/* Step tabs */}
+                <div className="flex">
+                    {STEPS.map((s, i) => (
                         <div
                             key={i}
                             className={cn(
-                                'flex-1 px-4 py-3 text-xs font-mono border-r last:border-r-0 border-border transition-colors',
+                                'flex-1 px-4 py-3 font-mono text-[11px] tracking-wider uppercase transition-all duration-300 select-none',
                                 i === step
-                                    ? 'bg-foreground text-background'
+                                    ? 'bg-[#425e7b] text-white'
                                     : i < step
-                                        ? 'text-muted-foreground bg-muted'
-                                        : 'text-muted-foreground/40'
+                                        ? 'bg-[#425e7b] text-white'
+                                        : 'text-muted-foreground/30 bg-background'
                             )}
                         >
-                            <span className="mr-1.5 opacity-50">{i + 1}.</span>
-                            {label}
+                            <span className="opacity-40 mr-1.5">{i + 1}.</span>
+                            {s.label}
                         </div>
                     ))}
                 </div>
 
-                {/* Step content */}
-                <div className="p-6 flex flex-col gap-5 min-h-[260px]">
-
-                    {/* Step 0 — Full name */}
-                    {step === 0 && (
-                        <div className="flex flex-col gap-5 flex-1">
-                            <div>
-                                <h2 className="text-base font-semibold tracking-tight">What's your name?</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    This is how you'll appear to your team.
-                                </p>
-                            </div>
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="full-name" className="text-sm">Full name</Label>
-                                <Input
-                                    id="full-name"
-                                    type="text"
-                                    placeholder="Amina Wanjiru"
-                                    autoFocus
-                                    value={fullName}
-                                    onChange={(e) => setFullName(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && canAdvance() && handleNext()}
-                                    className="h-10 rounded-none"
-                                />
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 1 — Store name */}
-                    {step === 1 && (
-                        <div className="flex flex-col gap-5 flex-1">
-                            <div>
-                                <h2 className="text-base font-semibold tracking-tight">Name your store</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    This becomes your store's URL and public identity.
-                                </p>
-                            </div>
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="store-name" className="text-sm">Store name</Label>
-                                <div className="flex items-center border border-input focus-within:ring-1 focus-within:ring-ring">
-                                    <span className="pl-3 text-xs text-muted-foreground font-mono whitespace-nowrap">
-                                        menengai.cloud/
-                                    </span>
-                                    <input
-                                        id="store-name"
-                                        type="text"
-                                        placeholder="kikoskincare"
-                                        autoFocus
-                                        required
-                                        value={storeName}
-                                        onChange={(e) =>
-                                            setStoreName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-                                        }
-                                        onKeyDown={(e) => e.key === 'Enter' && canAdvance() && handleNext()}
-                                        className="flex-1 h-10 bg-transparent px-2 text-sm font-mono outline-none"
-                                    />
-                                </div>
-                                {storeName && (
-                                    <p className="text-xs text-muted-foreground font-mono">
-                                        → {derivedSlug}.menengai.cloud
-                                    </p>
-                                )}
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Step 2 — Currency & timezone */}
-                    {step === 2 && (
-                        <div className="flex flex-col gap-4 flex-1">
-                            <div>
-                                <h2 className="text-base font-semibold tracking-tight">Store preferences</h2>
-                                <p className="text-sm text-muted-foreground mt-1">
-                                    You can change these later in settings.
-                                </p>
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="currency" className="text-sm">Currency</Label>
-                                <select
-                                    id="currency"
-                                    value={currency}
-                                    onChange={(e) => setCurrency(e.target.value)}
-                                    className="h-10 rounded-none border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                >
-                                    {CURRENCIES.map((c) => (
-                                        <option key={c.code} value={c.code}>{c.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-
-                            <div className="grid gap-1.5">
-                                <Label htmlFor="timezone" className="text-sm">Timezone</Label>
-                                <select
-                                    id="timezone"
-                                    value={timezone}
-                                    onChange={(e) => setTimezone(e.target.value)}
-                                    className="h-10 rounded-none border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                                >
-                                    {TIMEZONES.map((t) => (
-                                        <option key={t.value} value={t.value}>{t.label}</option>
-                                    ))}
-                                </select>
-                            </div>
-                        </div>
-                    )}
-
-                    {error && (
-                        <p className="text-xs text-destructive bg-destructive/10 px-3 py-2">{error}</p>
-                    )}
-                </div>
-
-                {/* Navigation */}
-                <div className="flex items-center justify-between border-t border-border px-6 py-4">
-                    <button
-                        onClick={handleBack}
-                        disabled={step === 0}
-                        className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-0 disabled:pointer-events-none"
-                    >
-                        ← Back
-                    </button>
-
-                    {step < STEPS.length - 1 ? (
-                        <Button
-                            onClick={handleNext}
-                            disabled={!canAdvance()}
-                            className="rounded-none h-9 px-6 google-button-primary"
-                        >
-                            Continue →
-                        </Button>
-                    ) : (
-                        <Button
-                            onClick={handleSubmit}
-                            disabled={isLoading || !canAdvance()}
-                            className="rounded-none h-9 px-6 google-button-primary"
-                        >
-                            {isLoading ? (
-                                <span className="flex items-center gap-2">
-                                    <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                    Setting up...
-                                </span>
-                            ) : (
-                                'Launch my store →'
-                            )}
-                        </Button>
-                    )}
-                </div>
-            </div>
-
-            {/* Progress dots */}
-            <div className="flex gap-2 mt-6">
-                {STEPS.map((_, i) => (
-                    <div
-                        key={i}
-                        className={cn(
-                            'w-1.5 h-1.5 rounded-full transition-colors',
-                            i === step ? 'bg-foreground' : i < step ? 'bg-muted-foreground' : 'bg-border'
-                        )}
+                {/* Progress bar */}
+                <div className="h-[2px] bg-[#425e7b] w-full overflow-hidden">
+                    <motion.div
+                        className="h-full bg-[#425e7b]"
+                        animate={{ width: `${progress}%` }}
+                        transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
                     />
-                ))}
-            </div>
+                </div>
+
+                {/* Main content */}
+                <div className="bg-card overflow-hidden">
+
+                    {/* Animated step content */}
+                    <div className="relative overflow-hidden" style={{ minHeight: 280 }}>
+                        <AnimatePresence custom={direction} mode="wait">
+                            <motion.div
+                                key={step}
+                                custom={direction}
+                                variants={slideVariants}
+                                initial="enter"
+                                animate="center"
+                                exit="exit"
+                                className="p-8 flex flex-col gap-6"
+                            >
+                                {/* Headline */}
+                                <div className="space-y-1">
+                                    <h1 className="text-2xl font-montserrat font-bold text-foreground leading-tight">
+                                        {STEPS[step].headline}
+                                    </h1>
+                                    <p className="text-sm text-muted-foreground">
+                                        {STEPS[step].sub}
+                                    </p>
+                                </div>
+
+                                {/* Step 0 — Full name */}
+                                {step === 0 && (
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="full-name" className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                                            Full name
+                                        </Label>
+                                        <Input
+                                            id="full-name"
+                                            type="text"
+                                            placeholder="Amina Wanjiru"
+                                            autoFocus
+                                            value={fullName}
+                                            onChange={(e) => setFullName(e.target.value)}
+                                            onKeyDown={(e) => e.key === 'Enter' && canAdvance() && advance()}
+                                            className="h-12 rounded-none text-base border-border focus-visible:ring-0 focus-visible:border-foreground transition-colors"
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Step 1 — Store name */}
+                                {step === 1 && (
+                                    <div className="grid gap-1.5">
+                                        <Label htmlFor="store-name" className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                                            Store handle
+                                        </Label>
+                                        <div className="flex items-center border border-border focus-within:border-foreground transition-colors h-12">
+                                            <span className="pl-3 text-xs text-muted-foreground font-mono whitespace-nowrap select-none">
+                                                menengai.cloud/store/
+                                            </span>
+                                            <input
+                                                id="store-name"
+                                                type="text"
+                                                placeholder="kikoskincare"
+                                                autoFocus
+                                                required
+                                                value={storeName}
+                                                onChange={(e) =>
+                                                    setStoreName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
+                                                }
+                                                onKeyDown={(e) => e.key === 'Enter' && canAdvance() && advance()}
+                                                className="flex-1 h-full bg-transparent px-2 text-sm font-mono outline-none"
+                                            />
+                                        </div>
+                                        <AnimatePresence>
+                                            {storeName && (
+                                                <motion.p
+                                                    initial={{ opacity: 0, y: -4 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    exit={{ opacity: 0 }}
+                                                    className="text-xs font-mono text-muted-foreground"
+                                                >
+                                                    ✓ {derivedSlug}.menengai.cloud will be yours
+                                                </motion.p>
+                                            )}
+                                        </AnimatePresence>
+                                    </div>
+                                )}
+
+                                {/* Step 2 — Preferences */}
+                                {step === 2 && (
+                                    <div className="grid gap-4">
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="currency" className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                                                Currency
+                                            </Label>
+                                            <select
+                                                id="currency"
+                                                value={currency}
+                                                onChange={(e) => setCurrency(e.target.value)}
+                                                className="h-10 rounded-none border border-border bg-background px-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                                            >
+                                                {CURRENCIES.map((c) => (
+                                                    <option key={c.code} value={c.code}>{c.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div className="grid gap-1.5">
+                                            <Label htmlFor="timezone" className="text-xs font-mono text-muted-foreground uppercase tracking-wider">
+                                                Timezone
+                                            </Label>
+                                            <select
+                                                id="timezone"
+                                                value={timezone}
+                                                onChange={(e) => setTimezone(e.target.value)}
+                                                className="h-10 rounded-none border border-border bg-background px-3 text-sm focus:outline-none focus:border-foreground transition-colors"
+                                            >
+                                                {TIMEZONES.map((t) => (
+                                                    <option key={t.value} value={t.value}>{t.label}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {/* Store summary */}
+                                        <div className="border border-border bg-muted/30 p-4 space-y-2 mt-1">
+                                            <p className="text-[11px] font-mono text-muted-foreground uppercase tracking-wider">
+                                                Your store
+                                            </p>
+                                            <div className="space-y-1">
+                                                <p className="text-sm font-semibold text-foreground">{storeName || '—'}</p>
+                                                <p className="text-xs font-mono text-muted-foreground">
+                                                    {derivedSlug}.menengai.cloud
+                                                </p>
+                                            </div>
+                                            <div className="flex gap-4 pt-1">
+                                                <span className="text-xs text-muted-foreground">
+                                                    Owner: <span className="text-foreground font-medium">{fullName || '—'}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </motion.div>
+                        </AnimatePresence>
+                    </div>
+
+                    {/* Error */}
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className="px-8 pb-2"
+                            >
+                                <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 font-mono">
+                                    ✗ {error}
+                                </p>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
+
+                    {/* Navigation */}
+                    <div className="flex items-center justify-between border-t border-border px-8 py-5">
+                        <button
+                            onClick={back}
+                            disabled={step === 0}
+                            className="text-sm font-mono text-muted-foreground hover:text-foreground transition-colors disabled:opacity-0 disabled:pointer-events-none"
+                        >
+                            ← back
+                        </button>
+
+                        {step < STEPS.length - 1 ? (
+                            <Button
+                                onClick={advance}
+                                disabled={!canAdvance()}
+                                className="rounded-none h-10 px-8 bg-foreground text-background hover:bg-foreground/90 font-mono text-sm tracking-wide disabled:opacity-30 transition-opacity"
+                            >
+                                continue →
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={handleSubmit}
+                                disabled={isLoading}
+                                className="rounded-none h-10 px-8 bg-foreground text-background hover:bg-foreground/90 font-mono text-sm tracking-wide disabled:opacity-50 transition-opacity"
+                            >
+                                {isLoading ? (
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-3 h-3 border border-current border-t-transparent rounded-full animate-spin" />
+                                        launching...
+                                    </span>
+                                ) : (
+                                    'launch my store →'
+                                )}
+                            </Button>
+                        )}
+                    </div>
+                </div>
+
+                {/* Footer note */}
+                <p className="text-center text-xs text-muted-foreground/50 mt-5">
+                    free forever · no credit card · live in seconds
+                </p>
+            </motion.div>
         </div>
     )
 }

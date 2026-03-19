@@ -3,15 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { motion, useInView } from "framer-motion"
 import {
-    Store,
-    Palette,
-    Package,
-    ShoppingBag,
-    FileText,
-    Globe,
-    Link2,
-    CreditCard,
-    Bell,
+    ExternalLink,
     Search,
     ChevronRight,
     Info,
@@ -20,44 +12,7 @@ import {
     X,
     Menu,
 } from "lucide-react"
-
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export type DocStep = {
-    label: string
-    detail?: string
-}
-
-export type DocField = {
-    name: string
-    description: string
-    required?: "required" | "optional" | "readonly"
-}
-
-export type DocNote = {
-    type: "info" | "warning" | "tip"
-    text: string
-}
-
-export type DocSection = {
-    id: string
-    title: string
-    summary: string
-    body?: string[]
-    steps?: DocStep[]
-    fields?: DocField[]
-    notes?: DocNote[]
-}
-
-export type DocPage = {
-    id: string
-    title: string
-    description: string
-    icon: React.ReactNode
-    beta?: boolean
-    sections: DocSection[]
-}
+import type { DocNote, DocSection, DocPage, DocStep, DocField } from "@/lib/docs"
 
 interface DocsClientProps {
     page: string | undefined
@@ -335,31 +290,41 @@ export default function DocsClient({ page, docs }: DocsClientProps) {
                             <p className="text-xs sm:text-sm font-medium text-primary uppercase tracking-widest">Documentation</p>
                         </div>
 
-                        <h1 className="text-3xl sm:text-4xl md:text-5xl font-montserrat font-bold text-foreground leading-[1.1]">
-                            Store Settings Guide
-                        </h1>
-                        <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
-                            Everything you need to configure and manage your Menengai Cloud store from general info to payments and beyond.
-                        </p>
+                        <div className="flex flex-col md:flex-row items-center gap-2">
+                            <div className="md:w-1/2 w-full">
+                                <h1 className="text-3xl sm:text-4xl md:text-5xl font-montserrat font-bold text-foreground leading-[1.1]">
+                                    Store Settings Guide
+                                </h1>
+                                <p className="text-sm sm:text-base text-muted-foreground max-w-2xl">
+                                    Everything you need to configure and manage your Menengai Cloud store from general info to payments and beyond.
+                                </p>
 
-                        {/* Search — full width on mobile */}
-                        <div className="relative w-full sm:max-w-lg pt-1 sm:pt-2">
-                            <input
-                                type="text"
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                placeholder="Search the docs…"
-                                className="block w-full pl-10 pr-10 py-2.5 sm:py-3 border border-border bg-card text-foreground rounded-full outline-none focus:ring-2 focus:ring-primary text-sm transition-all"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery("")}
-                                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors"
-                                >
-                                    <X className="w-4 h-4" />
-                                </button>
-                            )}
+                                {/* Search — full width on mobile */}
+                                <div className="relative w-full sm:max-w-lg pt-1 sm:pt-2 mt-6">
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        placeholder="Search the docs…"
+                                        className="block w-full pl-10 pr-10 py-2.5 sm:py-3 border border-border bg-card text-foreground rounded-full outline-none focus:ring-2 focus:ring-primary text-sm transition-all"
+                                    />
+                                    {searchQuery && (
+                                        <button
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute inset-y-0 right-0 pr-4 flex items-center text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex items-end gap-2 w-full md:w-1/2 justify-end">
+
+                            </div>
                         </div>
+
+
                     </motion.div>
                 </div>
             </section>

@@ -1,6 +1,4 @@
-
-import { SignUpForm } from '@/components/sign-up-form'
-import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 
 export default async function Page({
   searchParams,
@@ -8,13 +6,13 @@ export default async function Page({
   searchParams: Promise<{ slug?: string }>
 }) {
   const slug = (await searchParams).slug
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <Suspense fallback={<div>Loading...</div>}>
-          <SignUpForm slug={slug} />
-        </Suspense>
-      </div>
-    </div>
-  )
+  const state = slug
+    ? btoa(JSON.stringify({ storeName: slug, slug }))
+    : undefined
+
+  const url = state
+    ? `/auth/login?screen_hint=signup&state=${state}`
+    : `/auth/login?screen_hint=signup`
+
+  redirect(url)
 }
