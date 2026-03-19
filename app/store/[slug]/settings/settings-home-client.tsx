@@ -168,10 +168,8 @@ const QUICK_LINKS: QuickLink[] = [
     { tab: 'products', label: 'Products', description: 'Catalog and inventory', icon: <Package className="w-4 h-4" /> },
     { tab: 'orders', label: 'Orders', description: 'Fulfillment and history', icon: <ShoppingBag className="w-4 h-4" /> },
     { tab: 'blog', label: 'Blog', description: 'Articles and content', icon: <FileText className="w-4 h-4" /> },
-    { tab: 'social', label: 'Social', description: 'Instagram, WhatsApp, TikTok', icon: <Link2 className="w-4 h-4" /> },
-    { tab: 'payments', label: 'Payments', description: 'M-Pesa, PayPal, Stripe', icon: <CreditCard className="w-4 h-4" />, beta: true, upsell: true },
+    { tab: 'integrations', label: 'Integrations', description: 'M-Pesa, PayPal, Stripe', icon: <CreditCard className="w-4 h-4" />, beta: true, upsell: true },
     { tab: 'domain', label: 'Custom Domain', description: 'Bring your own domain', icon: <Globe className="w-4 h-4" />, beta: true, upsell: true },
-    { tab: 'notifications', label: 'Notifications', description: 'Email alerts and webhooks', icon: <Bell className="w-4 h-4" />, beta: true, upsell: true },
 ]
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -378,7 +376,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                             </p>
                         </div>
                         <button
-                            onClick={() => navigate('payments')}
+                            onClick={() => navigate('integrations')}
                             className="flex-shrink-0 text-xs font-medium text-[#425e7b] hover:underline flex items-center gap-1 mt-0.5"
                         >
                             Set up <ArrowRight className="w-3 h-3" />

@@ -45,7 +45,7 @@ export const WIZARD_STEPS: WizardStep[] = [
         id: 'payments',
         title: 'Set up payments',
         description: 'Connect M-Pesa, PayPal or another payment method.',
-        tab: 'payments',
+        tab: 'integrations',
         isDone: (s) => !!(s?.payments_enabled || s?.mpesa_enabled || s?.paypal_enabled),
     },
     {
