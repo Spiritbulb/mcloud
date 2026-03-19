@@ -473,7 +473,7 @@ export default function HomeClient() {
                         </p>
                         <motion.div whileHover={{ scale: 1.04 }} whileTap={{ scale: 0.97 }}>
                             <Button
-                                className="bg-primary hover:bg-primary/90 text-primary-foreground px-6 py-3 text-base h-auto rounded-full cursor-pointer"
+                                className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-8 py-4 text-base h-auto rounded-full cursor-pointer"
                                 onClick={handleClaim}
                             >
                                 Claim your free store now

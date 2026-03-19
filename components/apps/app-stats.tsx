@@ -68,7 +68,7 @@ export function AppStats({ totalEvents, uniqueUsers, appId }: AppStatsProps) {
             {stats.map((stat) => {
                 const Icon = stat.icon
                 return (
-                    <Card key={stat.title} className="google-card border-outline bg-surface">
+                    <Card key={stat.title} className="google-card border-light bg-surface">
                         <CardContent className="p-6">
                             <div className="flex items-center justify-between mb-2">
                                 <p className="text-sm text-on-surface-variant">{stat.title}</p>

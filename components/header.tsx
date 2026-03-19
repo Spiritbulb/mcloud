@@ -32,7 +32,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
                         {/* CTA — conditional */}
                         {isLoggedIn ? (
                             <Button asChild className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full">
-                                <Link href="/settings">Go to dashboard →</Link>
+                                <Link href="/settings">Go to dashboard</Link>
                             </Button>
                         ) : (
                             <Button

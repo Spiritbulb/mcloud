@@ -63,7 +63,7 @@ function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
         <input
             {...props}
             className={[
-                'w-full h-10 px-3 bg-background border border-outline text-foreground',
+                'w-full h-10 px-3 bg-background border border-light text-foreground',
                 'text-[13px] font-[Montserrat,sans-serif] outline-none',
                 'transition-colors duration-150',
                 'focus:border-[#425e7b]',
@@ -82,7 +82,7 @@ function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
             <select
                 {...props}
                 className={[
-                    'w-full h-10 pl-3 pr-8 bg-background border border-outline text-foreground',
+                    'w-full h-10 pl-3 pr-8 bg-background border border-light text-foreground',
                     'text-base sm:text-[13px] font-[Montserrat,sans-serif] outline-none appearance-none cursor-pointer',
                     'transition-colors duration-150 focus:border-[#425e7b]',
                     props.className ?? '',
@@ -151,7 +151,7 @@ function StickyBar({
 
     return (
         // On mobile: full-width stacked; on sm+: side-by-side
-        <div className="sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[#fff] dark:bg-[#000] border-t border-outline flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 z-10">
+        <div className="sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 bg-[#fff]/80 dark:bg-[#000]/80 border-t border-light flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3 z-10">
             <span
                 className={[
                     'text-[12px] transition-colors duration-300 text-center sm:text-left',
@@ -272,7 +272,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         placeholder="Tell customers what you sell…"
                         rows={3}
                         className={[
-                            'w-full px-3 py-2.5 bg-background border border-outline text-foreground',
+                            'w-full px-3 py-2.5 bg-background border border-light text-foreground',
                             'text-base sm:text-[13px] leading-relaxed outline-none resize-y',
                             'transition-colors duration-150 focus:border-[#425e7b]',
                         ].join(' ')}
@@ -332,7 +332,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     description="Control whether your store is open for business"
                 />
 
-                <div className="flex items-center justify-between gap-4 p-4 bg-surface border border-outline">
+                <div className="flex items-center justify-between gap-4 p-4 bg-surface border border-light">
                     <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground">Store active</p>
                         <p className="text-[12px] text-on-surface-muted mt-0.5 leading-snug">

@@ -191,7 +191,7 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                                 'text-left border p-2.5 sm:p-3 transition-colors',
                                 isActive
                                     ? 'border-foreground bg-surface-variant'
-                                    : 'border-outline hover:border-outline-strong hover:bg-surface-variant/40'
+                                    : 'border-light hover:border-light-strong hover:bg-surface-variant/40'
                             )}
                         >
                             <div className="flex overflow-hidden border border-light mb-2 sm:mb-3 h-6 sm:h-7">
@@ -239,7 +239,7 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
             <div className="mb-5 sm:mb-6">
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Logo</p>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <div className="w-full sm:w-20 h-16 sm:h-16 flex items-center justify-center border border-outline bg-surface shrink-0">
+                    <div className="w-full sm:w-20 h-16 sm:h-16 flex items-center justify-center border border-light bg-surface shrink-0">
                         {props.logoUrl
                             ? <img src={props.logoUrl} alt="Logo" className="max-h-12 max-w-full object-contain" />
                             : <span className="text-[11px] text-on-surface-muted uppercase tracking-widest opacity-40">
@@ -325,7 +325,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                         </SelectContent>
                     </Select>
                     {/* Inline preview — renders in the chosen font */}
-                    <div className="px-3 py-2 bg-surface border border-outline">
+                    <div className="px-3 py-2 bg-surface border border-light">
                         <p
                             className="text-[18px] leading-snug text-foreground"
                             style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
@@ -357,7 +357,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                         </SelectContent>
                     </Select>
                     {/* Inline preview */}
-                    <div className="px-3 py-2 bg-surface border border-outline">
+                    <div className="px-3 py-2 bg-surface border border-light">
                         <p
                             className="text-[13px] leading-relaxed text-foreground"
                             style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
@@ -373,9 +373,9 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
 
             {/* ── Combined pairing preview ─────────────────────────────────── */}
             {/* Shows both fonts in context together — product card mockup */}
-            <div className="mt-5 border border-outline overflow-hidden">
+            <div className="mt-5 border border-light overflow-hidden">
                 {/* Header strip */}
-                <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-outline">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-light">
                     <p
                         className="text-[14px] font-semibold leading-none"
                         style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
@@ -391,7 +391,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                 </div>
 
                 {/* Hero strip */}
-                <div className="px-4 pt-4 pb-3 bg-background border-b border-outline">
+                <div className="px-4 pt-4 pb-3 bg-background border-b border-light">
                     <p
                         className="text-[20px] sm:text-[24px] leading-tight"
                         style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
@@ -440,7 +440,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                                 'h-9 sm:h-8 px-4 text-[12px] border transition-colors',
                                 props.borderRadius === r.value
                                     ? 'bg-foreground text-surface border-foreground'
-                                    : 'bg-background text-on-surface-muted border-light hover:border-outline-strong hover:text-foreground'
+                                    : 'bg-background text-on-surface-muted border-light hover:border-light-strong hover:text-foreground'
                             )}
                         >
                             {r.label}
@@ -473,7 +473,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
             title="Colors"
             description="Fine-tune the palette — overrides the preset theme"
             aside={
-                <div className="flex items-center border border-outline">
+                <div className="flex items-center border border-light">
                     <button
                         onClick={() => setMode('light')}
                         className={cn(
@@ -535,8 +535,8 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
     const [open, setOpen] = useState(true)
 
     return (
-        <div className="border border-outline">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-outline bg-surface-variant/30">
+        <div className="border border-light">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-light bg-surface-variant/30">
                 <button
                     onClick={() => setOpen(!open)}
                     className="flex items-center gap-2 text-[12px] font-medium text-foreground min-w-0"
@@ -553,12 +553,12 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                             key={dir}
                             disabled={dir === 'up' ? idx === 0 : idx === total - 1}
                             onClick={() => onMove(dir)}
-                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
+                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
                         >{dir === 'up' ? '↑' : '↓'}</button>
                     ))}
                     <button
                         onClick={onRemove}
-                        className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-outline text-on-surface-muted hover:text-red-500 transition-colors"
+                        className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-red-500 transition-colors"
                     >×</button>
                 </div>
             </div>

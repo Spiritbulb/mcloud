@@ -182,7 +182,7 @@ function AuthorDialog({
 
     return (
         <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
-            <DialogContent className="max-w-sm">
+            <DialogContent className="max-w-sm bg-[#fff] dark:bg-[#111]">
                 <DialogHeader>
                     <DialogTitle>New author</DialogTitle>
                 </DialogHeader>
@@ -202,8 +202,8 @@ function AuthorDialog({
                     {error && <p className="text-xs text-destructive">{error}</p>}
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
-                    <Button onClick={handleSave} disabled={saving}>
+                    <Button variant="outline" onClick={onClose} disabled={saving} className='cursor-pointer'>Cancel</Button>
+                    <Button onClick={handleSave} disabled={saving} className='cursor-pointer'>
                         {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
                         Create author
                     </Button>
@@ -469,7 +469,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="h-full flex flex-col -mx-6 md:-mx-10 -my-8">
+        <div className="h-[90.2vh] flex flex-col -mx-6 md:-mx-10 -my-8">
 
             {/* ── View: Post list ── */}
             {view === 'list' && (
@@ -487,12 +487,12 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                 variant="outline"
                                 size="sm"
                                 onClick={() => setAuthorDialog(true)}
-                                className="gap-1.5 text-xs"
+                                className="gap-1.5 text-xs cursor-pointer"
                             >
                                 <Users className="w-3.5 h-3.5" />
                                 Authors
                             </Button>
-                            <Button size="sm" onClick={newPost} className="gap-1.5 text-xs">
+                            <Button size="sm" onClick={newPost} className="gap-1.5 text-xs cursor-pointer bg-[#425E7B] text-white hover:bg-[#425e7b]/80">
                                 <Plus className="w-3.5 h-3.5" />
                                 New post
                             </Button>
@@ -503,12 +503,11 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                     <div className="flex-1 overflow-y-auto px-3 md:px-6 py-3">
                         {posts.length === 0 ? (
                             <div className="flex flex-col items-center justify-center h-48 text-center space-y-3">
-                                <BookOpen className="w-10 h-10 text-muted-foreground/30" />
                                 <div>
                                     <p className="text-sm font-medium">No posts yet</p>
                                     <p className="text-xs text-muted-foreground mt-0.5">Create your first blog post</p>
                                 </div>
-                                <Button size="sm" onClick={newPost} className="gap-1.5 text-xs">
+                                <Button size="sm" onClick={newPost} className="gap-1.5 text-xs cursor-pointer bg-[#425e7b] text-white">
                                     <Plus className="w-3.5 h-3.5" />
                                     New post
                                 </Button>
@@ -525,7 +524,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                         {/* Delete button — appears on hover */}
                                         <button
                                             onClick={() => setDeleteTarget(post)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-all"
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                                         >
                                             <Trash2 className="w-3.5 h-3.5" />
                                         </button>
@@ -558,14 +557,14 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                         </div>
 
                         {/* Write / Preview tabs */}
-                        <div className="flex items-center bg-muted rounded-md p-0.5 shrink-0">
+                        <div className="flex items-center bg-muted rounded-md p-0.5 shrink-0 gap-4">
                             <button
                                 onClick={() => setEditorTab('write')}
                                 className={cn(
-                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors',
+                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
                                     editorTab === 'write'
-                                        ? 'bg-background text-foreground shadow-sm'
-                                        : 'text-muted-foreground hover:text-foreground'
+                                        ? 'bg-[#425E7B] text-white shadow-sm'
+                                        : 'bg-[#425E7B]/40 text-white hover:bg-[#425E7B]/80 hover:text-white'
                                 )}
                             >
                                 <Edit3 className="w-3 h-3" />
@@ -574,10 +573,10 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                             <button
                                 onClick={() => setEditorTab('preview')}
                                 className={cn(
-                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors',
+                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
                                     editorTab === 'preview'
-                                        ? 'bg-background text-foreground shadow-sm'
-                                        : 'text-muted-foreground hover:text-foreground'
+                                        ? 'bg-[#425E7B] text-white shadow-sm'
+                                        : 'bg-[#425E7B]/40 text-white hover:bg-[#425E7B]/80 hover:text-white'
                                 )}
                             >
                                 <Eye className="w-3 h-3" />
@@ -592,7 +591,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-xs h-7 gap-1"
+                                        className="text-xs h-7 gap-1 cursor-pointer"
                                         onClick={() => handleSave(false)}
                                         disabled={saving}
                                     >
@@ -601,7 +600,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     </Button>
                                     <Button
                                         size="sm"
-                                        className="text-xs h-7 gap-1"
+                                        className="text-xs h-7 gap-1 cursor-pointer"
                                         onClick={() => handleSave()}
                                         disabled={saving}
                                     >
@@ -614,7 +613,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     <Button
                                         variant="outline"
                                         size="sm"
-                                        className="text-xs h-7 gap-1"
+                                        className="text-xs h-7 gap-1 cursor-pointer"
                                         onClick={() => handleSave(false)}
                                         disabled={saving}
                                     >
@@ -623,7 +622,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     </Button>
                                     <Button
                                         size="sm"
-                                        className="text-xs h-7 gap-1 bg-green-600 hover:bg-green-700 text-white"
+                                        className="text-xs h-7 gap-1 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
                                         onClick={() => handleSave(true)}
                                         disabled={saving}
                                     >
@@ -649,13 +648,13 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     placeholder="Post title…"
                                     className="w-full text-2xl font-semibold bg-transparent outline-none placeholder:text-muted-foreground/40 text-foreground"
                                 />
-                                <div className="flex items-center gap-2 mt-2">
-                                    <span className="text-xs text-muted-foreground">slug:</span>
+                                <div className="flex items-center mt-2">
+                                    <span className="text-xs text-muted-foreground">{`https://${storeSlug}.menengai.cloud/blog/`}</span>
                                     <input
                                         type="text"
                                         value={form.slug}
                                         onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                                        className="text-xs text-muted-foreground bg-transparent outline-none border-b border-dashed border-muted-foreground/30 focus:border-muted-foreground px-0 flex-1 max-w-xs font-mono"
+                                        className="text-xs text-muted-foreground"
                                         placeholder="post-slug"
                                     />
                                     <Clock className="w-3 h-3 text-muted-foreground/50" />
@@ -841,7 +840,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
 
             {/* ── Delete confirm ── */}
             <AlertDialog open={!!deleteTarget} onOpenChange={v => { if (!v) setDeleteTarget(null) }}>
-                <AlertDialogContent>
+                <AlertDialogContent className='z-[10000] bg-[#fff] dark:bg-[#111]'>
                     <AlertDialogHeader>
                         <AlertDialogTitle>Delete post?</AlertDialogTitle>
                         <AlertDialogDescription>
@@ -849,10 +848,10 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogCancel className='cursor-pointer'>Cancel</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleDelete}
-                            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            className="bg-red-500 text-white hover:bg-red-500/90 cursor-pointer"
                         >
                             Delete
                         </AlertDialogAction>
@@ -870,4 +869,4 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
             )}
         </div>
     )
-}
+}      

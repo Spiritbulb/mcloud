@@ -54,7 +54,7 @@ export async function GET(
     if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
 
     const allStores = memberships.map(m => {
-        const store = m.store as { id: string; name: string; slug: string; logo_url: string | null }
+        const store = m.store as { id: string; name: string; slug: string; logo_url: string }
         return {
             id: store.id,
             name: store.name,

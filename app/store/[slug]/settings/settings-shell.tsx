@@ -104,7 +104,7 @@ export default function SettingsShell({
     const navStore = {
         name: store.name,
         slug: store.slug,
-        logoUrl: store.logo_url ?? undefined,
+        logoUrl: store.logo_url,
     }
 
     const navigate = (id: TabId) => router.push(`/settings/${id}`)

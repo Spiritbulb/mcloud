@@ -46,26 +46,26 @@ export function SupportTicketList({ tickets, slug }: TicketListProps) {
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'open':
-                return 'bg-surface-variant text-on-surface border border-outline'
+                return 'bg-surface-variant text-on-surface border border-light'
             case 'closed':
-                return 'bg-surface-variant text-on-surface border border-outline'
+                return 'bg-surface-variant text-on-surface border border-light'
             case 'pending':
-                return 'bg-surface-variant text-on-surface-variant border border-outline'
+                return 'bg-surface-variant text-on-surface-variant border border-light'
             default:
-                return 'bg-surface-variant text-on-surface-variant border border-outline'
+                return 'bg-surface-variant text-on-surface-variant border border-light'
         }
     }
 
     const getPriorityBadge = (priority: string) => {
         switch (priority) {
             case 'high':
-                return 'bg-surface-variant text-on-surface border border-outline'
+                return 'bg-surface-variant text-on-surface border border-light'
             case 'medium':
-                return 'bg-surface-variant text-on-surface-variant border border-outline'
+                return 'bg-surface-variant text-on-surface-variant border border-light'
             case 'low':
-                return 'bg-surface-variant text-on-surface-variant border border-outline'
+                return 'bg-surface-variant text-on-surface-variant border border-light'
             default:
-                return 'bg-surface-variant text-on-surface-variant border border-outline'
+                return 'bg-surface-variant text-on-surface-variant border border-light'
         }
     }
 
@@ -92,7 +92,7 @@ export function SupportTicketList({ tickets, slug }: TicketListProps) {
         <div className="space-y-3">
             {tickets.map((ticket) => (
                 <Link key={ticket.id} href={`/${slug}/support/tickets/${ticket.id}`}>
-                    <div className="flex items-center justify-between p-4 rounded-lg border border-outline hover:bg-surface-variant transition-colors duration-200 cursor-pointer">
+                    <div className="flex items-center justify-between p-4 rounded-lg border border-light hover:bg-surface-variant transition-colors duration-200 cursor-pointer">
                         <div className="flex items-center gap-4 flex-1">
                             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-surface-variant">
                                 {getStatusIcon(ticket.status)}

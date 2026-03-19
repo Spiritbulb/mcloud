@@ -346,7 +346,7 @@ export function AdminSidebar({ slug, orgName, userId, orgLogo, orgRole }: AdminS
                 </SidebarGroup>
             </SidebarContent>
 
-            <SidebarFooter className="border-t border-outline p-4 bg-background">
+            <SidebarFooter className="border-t border-light p-4 bg-background">
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <div className="flex items-center gap-3 rounded-lg p-2 hover:bg-surface-variant transition-colors duration-200 cursor-pointer">
@@ -367,7 +367,7 @@ export function AdminSidebar({ slug, orgName, userId, orgLogo, orgRole }: AdminS
                             <ChevronDown className="h-4 w-4 text-on-surface-variant" />
                         </div>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-56 bg-surface border-outline">
+                    <DropdownMenuContent align="end" className="w-56 bg-surface border-light">
                         <DropdownMenuItem asChild>
                             <Link href={`/${slug}/account/profile`} className="cursor-pointer">
                                 <UserCircle className="mr-2 h-4 w-4" />

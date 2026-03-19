@@ -62,7 +62,7 @@ export default function StoreCarousel({ slugs }: { slugs: string[] }) {
                     <button
                         onClick={() => setCurrent((c) => Math.max(c - 1, 0))}
                         disabled={!hasPrev}
-                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-outline hover:border-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                        className="absolute left-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-light hover:border-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
                         aria-label="Previous store"
                     >
                         ←
@@ -72,7 +72,7 @@ export default function StoreCarousel({ slugs }: { slugs: string[] }) {
                     <button
                         onClick={() => setCurrent((c) => Math.min(c + 1, total - 1))}
                         disabled={!hasNext}
-                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-outline hover:border-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
+                        className="absolute right-4 top-1/2 -translate-y-1/2 z-20 w-10 h-10 flex items-center justify-center bg-background/80 backdrop-blur-sm border border-light hover:border-foreground disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200"
                         aria-label="Next store"
                     >
                         →

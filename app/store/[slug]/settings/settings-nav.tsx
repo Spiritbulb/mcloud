@@ -60,13 +60,14 @@ function getInitials(name: string) {
 
 function StoreSwitcher({ store, allStores }: { store: NavStore; allStores: NavStore[] }) {
     const hasMultiple = allStores.length > 1
+    console.log('store.logo_url:', store.logo_url)
 
     const trigger = (
         <SidebarMenuButton
             size="lg"
             className="rounded-md hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
         >
-            <div className="flex aspect-square w-8 h-8 items-center justify-center rounded-md bg-[#f5f5f5] text-[#000] text-[11px] font-bold shrink-0">
+            <div className="flex aspect-square w-8 h-8 items-center justify-center rounded-md bg-[#f5f5f5] text-[#000] text-[11px] font-bold shrink-0 overflow-hidden">
                 {store.logo_url ? (
                     <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-md" />
                 ) : (
@@ -160,7 +161,7 @@ function NavList({
                             className={cn(
                                 'rounded-md h-9 text-[13px] font-medium transition-colors',
                                 isActive
-                                    ? 'bg-[#425E7B] text-primary-foreground hover:bg-[#425E7B]/80 hover:text-primary-foreground'
+                                    ? 'bg-[#425E7B] text-white hover:bg-[#425E7B]/80 hover:text-white'
                                     : 'text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-[#425E7B]/80 cursor-pointer'
                             )}
                         >

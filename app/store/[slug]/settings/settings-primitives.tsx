@@ -104,7 +104,7 @@ export function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }
                     transition={{ duration: 0.12, ease: 'easeOut' }}
                     className="fixed bottom-6 right-6 z-50 pointer-events-none"
                 >
-                    <div className="flex items-center gap-2.5 border border-outline bg-surface shadow-lg px-4 py-2.5 text-[13px]">
+                    <div className="flex items-center gap-2.5 border border-light bg-surface shadow-lg px-4 py-2.5 text-[13px]">
                         {saving ? (
                             <>
                                 <Loader2 className="w-3.5 h-3.5 animate-spin text-on-surface-muted" />
