@@ -341,6 +341,27 @@ export type Database = {
           },
         ]
       }
+      docs_pages: {
+        Row: {
+          data: Json
+          id: string
+          position: number
+          updated_at: string
+        }
+        Insert: {
+          data: Json
+          id: string
+          position?: number
+          updated_at?: string
+        }
+        Update: {
+          data?: Json
+          id?: string
+          position?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       order_items: {
         Row: {
           created_at: string | null
@@ -989,6 +1010,7 @@ export type Database = {
           email: string | null
           id: string
           name: string | null
+          role: string
           updated_at: string | null
         }
         Insert: {
@@ -997,6 +1019,7 @@ export type Database = {
           email?: string | null
           id: string
           name?: string | null
+          role?: string
           updated_at?: string | null
         }
         Update: {
@@ -1005,6 +1028,7 @@ export type Database = {
           email?: string | null
           id?: string
           name?: string | null
+          role?: string
           updated_at?: string | null
         }
         Relationships: []

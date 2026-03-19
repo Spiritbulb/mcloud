@@ -21,7 +21,6 @@ import {
     Menu,
 } from "lucide-react"
 
-import { DOCS } from "@/lib/docs"
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -62,6 +61,7 @@ export type DocPage = {
 
 interface DocsClientProps {
     page: string | undefined
+    docs: DocPage[]
 }
 
 // ─── Helper Components ────────────────────────────────────────────────────────
@@ -194,7 +194,9 @@ function MobileDrawer({
     onClose,
     activePageId,
     onSelect,
+    docs,
 }: {
+    docs: DocPage[]
     open: boolean
     onClose: () => void
     activePageId: string
@@ -239,7 +241,7 @@ function MobileDrawer({
 
                 {/* Nav items */}
                 <nav className="flex-1 overflow-y-auto p-3 space-y-1">
-                    {DOCS.map((page) => (
+                    {docs.map((page) => (
                         <button
                             key={page.id}
                             onClick={() => onSelect(page.id)}
@@ -265,18 +267,18 @@ function MobileDrawer({
 
 // ─── Main Client Component ────────────────────────────────────────────────────
 
-export default function DocsClient({ page }: DocsClientProps) {
-    const [activePageId, setActivePageId] = useState<string>(page ?? DOCS[0].id)
+export default function DocsClient({ page, docs }: DocsClientProps) {
+    const [activePageId, setActivePageId] = useState<string>(page ?? docs[0].id)
     const [searchQuery, setSearchQuery] = useState("")
     const [drawerOpen, setDrawerOpen] = useState(false)
     const contentRef = useRef<HTMLDivElement>(null)
 
-    const activePage = DOCS.find((p) => p.id === activePageId) ?? DOCS[0]
+    const activePage = docs.find((p) => p.id === activePageId) ?? docs[0]
 
     const filteredResults: Array<{ page: DocPage; section: DocSection }> = []
     if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase()
-        for (const page of DOCS) {
+        for (const page of docs) {
             for (const section of page.sections) {
                 const matches =
                     section.title.toLowerCase().includes(q) ||
@@ -309,6 +311,7 @@ export default function DocsClient({ page }: DocsClientProps) {
                 onClose={() => setDrawerOpen(false)}
                 activePageId={activePageId}
                 onSelect={selectPage}
+                docs={docs}
             />
 
             {/* ── HERO ────────────────────────────────────────────────────── */}
@@ -369,7 +372,7 @@ export default function DocsClient({ page }: DocsClientProps) {
                     <aside className="hidden lg:block w-56 flex-shrink-0">
                         <div className="sticky top-24 space-y-1">
                             <p className="text-xs font-semibold text-muted-foreground uppercase tracking-widest mb-3 px-3">Settings</p>
-                            {DOCS.map((page) => (
+                            {docs.map((page) => (
                                 <button
                                     key={page.id}
                                     onClick={() => selectPage(page.id)}
@@ -488,9 +491,9 @@ export default function DocsClient({ page }: DocsClientProps) {
                                 <FadeIn>
                                     <div className="mt-12 sm:mt-14 pt-6 sm:pt-8 border-t border-border flex items-center justify-between gap-4">
                                         {(() => {
-                                            const idx = DOCS.findIndex((p) => p.id === activePage.id)
-                                            const prev = DOCS[idx - 1]
-                                            const next = DOCS[idx + 1]
+                                            const idx = docs.findIndex((p) => p.id === activePage.id)
+                                            const prev = docs[idx - 1]
+                                            const next = docs[idx + 1]
                                             return (
                                                 <>
                                                     <div className="flex-1">

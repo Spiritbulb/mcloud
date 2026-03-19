@@ -1,17 +1,21 @@
 'use client'
 
-import { useState, useEffect, useCallback } from "react"
+// components/docs-editor-client.tsx
+// Auth is handled entirely by the server (page.tsx).
+// This component receives pre-fetched docs and focuses purely on editing.
+
+import { useState } from "react"
 import {
-    Lock, Save, Plus, Trash2, ChevronDown, ChevronRight,
-    Eye, LogOut, AlertCircle, CheckCircle2, Loader2,
+    Save, Plus, Trash2, ChevronDown, ChevronRight,
+    Eye, AlertCircle, CheckCircle2, Loader2,
 } from "lucide-react"
 
 // ─── Types (serializable — no React.ReactNode icons) ─────────────────────────
 
-type EditableNote = { type: "info" | "warning" | "tip"; text: string }
-type EditableField = { name: string; description: string; required?: "required" | "optional" | "readonly" }
-type EditableStep = { label: string; detail?: string }
-type EditableSection = {
+export type EditableNote = { type: "info" | "warning" | "tip"; text: string }
+export type EditableField = { name: string; description: string; required?: "required" | "optional" | "readonly" }
+export type EditableStep = { label: string; detail?: string }
+export type EditableSection = {
     id: string
     title: string
     summary: string
@@ -20,7 +24,7 @@ type EditableSection = {
     fields?: EditableField[]
     notes?: EditableNote[]
 }
-type EditablePage = {
+export type EditablePage = {
     id: string
     title: string
     description: string
@@ -140,7 +144,7 @@ function FieldsEditor({ fields, onChange }: { fields: EditableField[]; onChange:
                         <select
                             className="border border-border bg-background text-foreground text-xs rounded-lg px-2 py-1.5 outline-none focus:ring-2 focus:ring-primary/40"
                             value={f.required ?? ""}
-                            onChange={e => { const n = [...fields]; n[i] = { ...n[i], required: (e.target.value as any) || undefined }; onChange(n) }}
+                            onChange={e => { const n = [...fields]; n[i] = { ...n[i], required: (e.target.value as EditableField["required"]) || undefined }; onChange(n) }}
                         >
                             <option value="">—</option>
                             {REQUIRED_OPTS.map(o => <option key={o} value={o}>{o}</option>)}
@@ -182,7 +186,7 @@ function NotesEditor({ notes, onChange }: { notes: EditableNote[]; onChange: (n:
                         <select
                             className="border border-border bg-background text-foreground text-xs rounded-lg px-2 py-1 outline-none focus:ring-2 focus:ring-primary/40"
                             value={note.type}
-                            onChange={e => { const n = [...notes]; n[i] = { ...n[i], type: e.target.value as any }; onChange(n) }}
+                            onChange={e => { const n = [...notes]; n[i] = { ...n[i], type: e.target.value as EditableNote["type"] }; onChange(n) }}
                         >
                             {NOTE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
                         </select>
@@ -267,55 +271,15 @@ function SectionEditor({
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-export default function DocsEditorClient() {
-    const [authed, setAuthed] = useState<boolean | null>(null)
-    const [passphrase, setPassphrase] = useState("")
-    const [authError, setAuthError] = useState("")
-    const [authLoading, setAuthLoading] = useState(false)
-
-    const [docs, setDocs] = useState<EditablePage[]>([])
-    const [activeId, setActiveId] = useState("")
+export default function DocsEditorClient({ initialDocs }: { initialDocs: EditablePage[] }) {
+    const [docs, setDocs] = useState<EditablePage[]>(initialDocs)
+    const [activeId, setActiveId] = useState(initialDocs[0]?.id ?? "")
     const [saveState, setSaveState] = useState<"idle" | "saving" | "saved" | "error">("idle")
-    const [loading, setLoading] = useState(true)
-
-    const load = useCallback(async () => {
-        setLoading(true)
-        const res = await fetch("/api/docs-admin/docs")
-        if (res.status === 401) { setAuthed(false); setLoading(false); return }
-        const data = await res.json()
-        setDocs(data)
-        setActiveId((prev) => data.find((p: EditablePage) => p.id === prev) ? prev : data[0]?.id ?? "")
-        setAuthed(true)
-        setLoading(false)
-    }, [])
-
-    useEffect(() => { load() }, [load])
-
-    async function handleAuth(e: React.FormEvent) {
-        e.preventDefault()
-        setAuthLoading(true)
-        setAuthError("")
-        const res = await fetch("/api/docs-admin/auth", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ passphrase }),
-        })
-        if (!res.ok) { setAuthError("Incorrect passphrase."); setAuthLoading(false); return }
-        setPassphrase("")
-        await load()
-        setAuthLoading(false)
-    }
-
-    async function handleLogout() {
-        await fetch("/api/docs-admin/auth", { method: "DELETE" })
-        setAuthed(false)
-        setDocs([])
-    }
 
     async function handleSave() {
         setSaveState("saving")
-        const res = await fetch("/api/docs-admin/docs", {
-            method: "PUT",
+        const res = await fetch("/api/docs", {
+            method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(docs),
         })
@@ -362,57 +326,6 @@ export default function DocsEditorClient() {
 
     const activePage = docs.find(p => p.id === activeId)
 
-    // ── Loading ──────────────────────────────────────────────────────────────
-    if (authed === null || loading) {
-        return (
-            <div className="h-screen flex items-center justify-center bg-background">
-                <div className="w-5 h-5 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
-            </div>
-        )
-    }
-
-    // ── Passphrase gate ──────────────────────────────────────────────────────
-    if (!authed) {
-        return (
-            <div className="min-h-screen bg-background flex items-center justify-center px-4">
-                <div className="w-full max-w-sm">
-                    <div className="text-center mb-8">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                            <Lock className="w-6 h-6 text-primary" />
-                        </div>
-                        <h1 className="text-2xl font-montserrat font-bold text-foreground">Docs Editor</h1>
-                        <p className="text-muted-foreground text-sm mt-1">Enter the passphrase to continue</p>
-                    </div>
-                    <form onSubmit={handleAuth} className="space-y-4">
-                        <input
-                            type="password"
-                            value={passphrase}
-                            onChange={e => setPassphrase(e.target.value)}
-                            placeholder="Passphrase"
-                            autoFocus
-                            className="w-full border border-border bg-card text-foreground rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-primary text-sm"
-                        />
-                        {authError && (
-                            <div className="flex items-center gap-2 text-destructive text-sm">
-                                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                                {authError}
-                            </div>
-                        )}
-                        <button
-                            type="submit"
-                            disabled={authLoading || !passphrase}
-                            className="w-full bg-[#425e7b] hover:bg-[#425e7b]/90 text-white rounded-xl py-3 text-sm font-medium transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {authLoading && <Loader2 className="w-4 h-4 animate-spin" />}
-                            {authLoading ? "Verifying…" : "Unlock"}
-                        </button>
-                    </form>
-                </div>
-            </div>
-        )
-    }
-
-    // ── Editor ───────────────────────────────────────────────────────────────
     return (
         <div className="h-screen flex flex-col bg-background overflow-hidden">
             {/* Header */}
@@ -427,13 +340,13 @@ export default function DocsEditorClient() {
                     <Eye className="w-4 h-4" />
                     <span className="hidden sm:inline">Preview</span>
                 </a>
-                <button
-                    onClick={handleLogout}
+                {/* Auth0 logout — goes to Auth0 then redirects home */}
+                <a
+                    href="/api/auth/logout"
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
-                    <LogOut className="w-4 h-4" />
-                    <span className="hidden sm:inline">Lock</span>
-                </button>
+                    <span className="hidden sm:inline">Sign out</span>
+                </a>
                 <button
                     onClick={handleSave}
                     disabled={saveState === "saving"}
@@ -442,7 +355,14 @@ export default function DocsEditorClient() {
                     {saveState === "saving" && <Loader2 className="w-4 h-4 animate-spin" />}
                     {saveState === "saved" && <CheckCircle2 className="w-4 h-4" />}
                     {saveState === "error" && <AlertCircle className="w-4 h-4" />}
-                    {saveState === "saving" ? "Saving…" : saveState === "saved" ? "Saved!" : saveState === "error" ? "Error" : <><Save className="w-4 h-4" /><span>Save</span></>}
+                    {saveState === "saving"
+                        ? "Saving…"
+                        : saveState === "saved"
+                            ? "Saved!"
+                            : saveState === "error"
+                                ? "Error"
+                                : <><Save className="w-4 h-4" /><span>Save</span></>
+                    }
                 </button>
             </header>
 
