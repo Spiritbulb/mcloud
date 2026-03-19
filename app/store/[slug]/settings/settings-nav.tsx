@@ -64,7 +64,7 @@ function StoreSwitcher({ store, allStores }: { store: NavStore; allStores: NavSt
             size="lg"
             className="rounded-md hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
         >
-            <div className="flex aspect-square w-8 h-8 items-center justify-center rounded-md bg-[#f5f5f5] text-[#000] text-[11px] font-bold shrink-0 overflow-hidden">
+            <div className="flex aspect-square w-6 h-6 items-center justify-center rounded-md bg-[#f5f5f5] text-[#000] text-[11px] font-bold shrink-0 overflow-hidden">
                 {allStores[0].logo_url ? (
                     <img src={allStores[0].logo_url} alt={allStores[0].name} className="w-full h-full object-cover rounded-md" />
                 ) : (
@@ -111,7 +111,7 @@ function StoreSwitcher({ store, allStores }: { store: NavStore; allStores: NavSt
                                         s.slug === store.slug && 'bg-accent'
                                     )}
                                 >
-                                    <div className="flex w-6 h-6 items-center justify-center rounded bg-[#f5f5f5] text-[#000] text-[10px] font-bold shrink-0">
+                                    <div className="flex w-5 h-5 items-center justify-center rounded bg-[#f5f5f5] text-[#000] text-[10px] font-bold shrink-0">
                                         {s.logo_url ? (
                                             <img src={s.logo_url} alt={s.name} className="w-full h-full object-cover rounded" />
                                         ) : (

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { headers } from "next/headers";
+import { ThemeProvider } from "@/components/theme-provider";
 
 
 const geistSans = Geist({
@@ -89,38 +90,22 @@ export default async function RootLayout({
 
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-      (function() {
-        try {
-          const theme = localStorage.getItem('theme') || 'system';
-          const html = document.documentElement;
-          
-          if (theme === 'dark') {
-            html.classList.add('dark');
-          } else if (theme === 'system') {
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-              html.classList.add('dark');
-            }
-          }
-        } catch (e) {}
-      })();
-    `,
-          }}
-        />
-
-      </head>
+      <head />
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
       >
-        {bannerScript && (
-          <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
-        )}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {bannerScript && (
+            <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+          )}
 
-        {children}
-
+          {children}
+        </ThemeProvider>
       </body>
     </html>
   );

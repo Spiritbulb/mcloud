@@ -183,7 +183,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
     const [error, setError] = useState(false)
 
     useEffect(() => {
-        fetch(`/api/store/${slug}`)
+        fetch(`/api/store/${slug}/overview`)
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(setData)
             .catch(() => setError(true))

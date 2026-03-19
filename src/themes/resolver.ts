@@ -71,6 +71,74 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             BlogListPage: blp.default,
             BlogPostPage: bpp.default,
         })),
+
+    photography: () =>
+        Promise.all([
+            import('./photography/StoreFront'),
+            import('./photography/ProductsPage'),
+            import('./photography/CartPage'),
+            import('./photography/ProductDetailPage'),
+            import('./photography/BlogListPage'),
+            import('./photography/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
+            StoreFront: sf.default,
+            ProductsPage: pp.default,
+            CartPage: cp.default,
+            ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
+        })),
+
+    portfolio: () =>
+        Promise.all([
+            import('./portfolio/StoreFront'),
+            import('./portfolio/ProductsPage'),
+            import('./portfolio/CartPage'),
+            import('./portfolio/ProductDetailPage'),
+            import('./portfolio/BlogListPage'),
+            import('./portfolio/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
+            StoreFront: sf.default,
+            ProductsPage: pp.default,
+            CartPage: cp.default,
+            ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
+        })),
+
+    services: () =>
+        Promise.all([
+            import('./services/StoreFront'),
+            import('./services/ProductsPage'),
+            import('./services/CartPage'),
+            import('./services/ProductDetailPage'),
+            import('./services/BlogListPage'),
+            import('./services/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
+            StoreFront: sf.default,
+            ProductsPage: pp.default,
+            CartPage: cp.default,
+            ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
+        })),
+
+    restaurant: () =>
+        Promise.all([
+            import('./restaurant/StoreFront'),
+            import('./restaurant/ProductsPage'),
+            import('./restaurant/CartPage'),
+            import('./restaurant/ProductDetailPage'),
+            import('./restaurant/BlogListPage'),
+            import('./restaurant/BlogPostPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
+            StoreFront: sf.default,
+            ProductsPage: pp.default,
+            CartPage: cp.default,
+            ProductDetailPage: pdp.default,
+            BlogListPage: blp.default,
+            BlogPostPage: bpp.default,
+        })),
 }
 
 export async function resolveTheme(themeId: string): Promise<ThemeComponents> {
