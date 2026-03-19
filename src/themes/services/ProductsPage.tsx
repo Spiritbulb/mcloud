@@ -20,7 +20,7 @@ function ServiceCard({ product, storeSlug }: { product: ProductItem; storeSlug: 
     const [added, setAdded] = useState(false)
 
     const image = Array.isArray(product.images) && product.images.length > 0 ? product.images[0] : null
-    const inStock = !product.track_inventory || product.inventory_quantity > 0
+    const inStock = product.inventory_quantity > 0
 
     const handleBook = async (e: React.MouseEvent) => {
         e.preventDefault()
@@ -224,7 +224,7 @@ export default function ServicesProductsPage({
                         <p className="text-sm text-[#64748b] mb-6">
                             {debounced
                                 ? `Nothing matched "${debounced}". Try a different keyword.`
-                                : 'Check back soon — we're building something great.'}
+                                : 'Check back soon — we\'re building something great.'}
                         </p>
                         {debounced && (
                             <button

@@ -20,7 +20,7 @@ function PhotoProductCard({
 }) {
     const [hovered, setHovered] = useState(false)
     const image = product.images?.[0] ?? null
-    const inStock = !product.track_inventory || product.inventory_quantity > 0
+    const inStock = product.inventory_quantity > 0
 
     return (
         <Link

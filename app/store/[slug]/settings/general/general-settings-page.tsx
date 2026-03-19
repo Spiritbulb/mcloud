@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/client'
 import type { Tables } from '@/app/types/database.types'
+import { Toggle } from '@/components/ui/toggle'
+import { Switch } from '@/components/ui/switch'
 
 type Store = Tables<'stores'>
 
@@ -99,32 +101,7 @@ function Select(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
     )
 }
 
-function Toggle({ on, onChange }: { on: boolean; onChange: (v: boolean) => void }) {
-    return (
-        <button
-            type="button"
-            role="switch"
-            aria-checked={on}
-            onClick={() => onChange(!on)}
-            style={{ borderRadius: 0 }}
-            // Slightly larger hit target on mobile
-            className={[
-                'relative inline-flex w-11 sm:w-10 h-6 sm:h-[22px] flex-shrink-0 cursor-pointer border-none',
-                'transition-colors duration-200 outline-none',
-                on ? 'bg-[#425e7b]' : 'bg-outline',
-            ].join(' ')}
-        >
-            <span
-                style={{ borderRadius: 0 }}
-                className={[
-                    'absolute top-[3px] w-[18px] sm:w-4 h-[18px] sm:h-4 bg-white shadow-sm',
-                    'transition-[left] duration-150',
-                    on ? 'left-[22px] sm:left-[20px]' : 'left-[3px]',
-                ].join(' ')}
-            />
-        </button>
-    )
-}
+
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
@@ -189,7 +166,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
     const [description, setDescription] = useState(store.description ?? '')
     const [currency, setCurrency] = useState(store.currency)
     const [timezone, setTimezone] = useState(store.timezone)
-    const [isActive, setIsActive] = useState(store.is_active)
+    const [isActive, setIsActive] = useState(store.is_active as boolean | undefined)
     const [saveState, setSaveState] = useState<SaveState>('idle')
 
     const handleSave = async () => {
@@ -249,13 +226,14 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             placeholder="My Store"
+                            className="rounded-md"
                         />
                     </div>
 
                     <div>
                         <FieldLabel hint="contact support to change">Slug</FieldLabel>
                         <div className="relative">
-                            <Input value={store.slug} disabled />
+                            <Input value={store.slug} disabled className="rounded-md" />
                             <div className="absolute right-0 top-0 h-full w-[3px] bg-[#425e7b] opacity-40" />
                         </div>
                         <p className="text-[11px] text-on-surface-muted mt-1.5 opacity-70">
@@ -272,7 +250,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         placeholder="Tell customers what you sell…"
                         rows={3}
                         className={[
-                            'w-full px-3 py-2.5 bg-background border border-light text-foreground',
+                            'w-full px-3 py-2.5 rounded-md bg-background border border-light text-foreground',
                             'text-base sm:text-[13px] leading-relaxed outline-none resize-y',
                             'transition-colors duration-150 focus:border-[#425e7b]',
                         ].join(' ')}
@@ -297,6 +275,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         <Select
                             value={currency}
                             onChange={(e) => setCurrency(e.target.value)}
+                            className="rounded-md"
                         >
                             {CURRENCIES.map((c) => (
                                 <option key={c.value} value={c.value}>
@@ -311,6 +290,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         <Select
                             value={timezone ?? ''}
                             onChange={(e) => setTimezone(e.target.value)}
+                            className="rounded-md"
                         >
                             {TIMEZONES.map((tz) => (
                                 <option key={tz.value} value={tz.value}>
@@ -332,7 +312,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     description="Control whether your store is open for business"
                 />
 
-                <div className="flex items-center justify-between gap-4 p-4 bg-surface border border-light">
+                <div className="flex items-center justify-between gap-4 p-4 bg-surface border border-light rounded-md">
                     <div className="min-w-0">
                         <p className="text-[13px] font-medium text-foreground">Store active</p>
                         <p className="text-[12px] text-on-surface-muted mt-0.5 leading-snug">
@@ -341,7 +321,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     </div>
                     {/* flex-shrink-0 ensures toggle never gets squished */}
                     <div className="flex-shrink-0">
-                        <Toggle on={isActive ?? false} onChange={setIsActive} />
+                        <Switch defaultChecked={isActive ?? false} checked={isActive ?? false} onCheckedChange={setIsActive} className='bg-white' />
                     </div>
                 </div>
 

@@ -33,7 +33,7 @@ function ProjectCard({ product, storeSlug }: { product: ProductItem; storeSlug: 
             ? product.description.slice(0, 100).trimEnd() + '…'
             : product.description
         : null
-    const inStock = !product.track_inventory || product.inventory_quantity > 0
+    const inStock = product.inventory_quantity > 0
 
     return (
         <Link

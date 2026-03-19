@@ -21,8 +21,8 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
 
     return (
         <>
-            <header className="sticky top-5 z-50 w-[85%] mx-auto rounded-full bg-[#fff]/80 dark:bg-[#000]/80 backdrop-blur">
-                <div className="container mx-auto px-2 md:px-2">
+            <header className="sticky top-5 z-50 w-[90%] mx-auto rounded-full bg-[#fff]/80 dark:bg-[#000]/80 backdrop-blur">
+                <div className="mx-auto px-4">
                     <div className="flex h-16 items-center justify-between">
                         {/* Logo */}
                         <Link href="/" className="flex items-center">

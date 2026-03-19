@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/client'
-import { SettingsSection, SettingsField, SaveBar, SaveToast } from '../settings-primitives'
+import { SettingsSection, SettingsField, SaveBar, SaveToast } from '@/app/store/[slug]/settings/settings-primitives'
 
 export default function SocialSettingsPage({ store }: { store: any }) {
     const links = store.settings?.socialLinks ?? {}
@@ -45,7 +45,7 @@ export default function SocialSettingsPage({ store }: { store: any }) {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                     {fields.map((f) => (
                         <SettingsField key={f.label} label={f.label}>
-                            <input value={f.value} onChange={(e) => f.set(e.target.value)} placeholder={f.placeholder} className="settings-input" />
+                            <input value={f.value} onChange={(e) => f.set(e.target.value)} placeholder={f.placeholder} className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50" />
                         </SettingsField>
                     ))}
                 </div>

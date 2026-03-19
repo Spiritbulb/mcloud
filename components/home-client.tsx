@@ -45,22 +45,22 @@ const marqueeItems = [
 
 const features = [
     {
-        title: "Built for creators who mean business.",
-        body: "Whether you're selling merch, running a blog, or building a subscriber base — your store is ready before your competition even opens a browser tab.",
+        title: "For creators who mean business",
+        body: "Whether you're selling merch, running a blog, or building a subscriber base, your store is ready before you can say 'cheese'",
         image: "/undraw_project-completed_ug9i.svg",
         alt: "Creator filming content",
         reverse: false,
     },
     {
-        title: "No agency. No waiting. No nonsense.",
+        title: "No patience? We get it.",
         body: "Agencies take weeks, charge thousands, and hand you something you can't touch. We hand you the keys in two seconds and you drive from day one.",
         image: "/phone.svg",
         alt: "E-commerce on mobile",
         reverse: true,
     },
     {
-        title: "Your brand. Your link. Your rules.",
-        body: "Start on your free subdomain. When you're ready to go full brand mode, upgrade to Pro and bring your own domain. We connect it in minutes via Cloudflare.",
+        title: "Your brand. Your rules.",
+        body: "Start on your free subdomain. When you're ready to go full brand mode, upgrade to Pro and bring your own domain.",
         image: "/undraw_website-builder_4go7.svg",
         alt: "Person working on laptop",
         reverse: false,
@@ -234,9 +234,9 @@ export default function HomeClient() {
                                 variants={fadeUp}
                                 className="text-5xl md:text-4xl lg:text-5xl font-montserrat font-bold text-foreground leading-[1.05]"
                             >
-                                Everything your<br />
-                                audience needs.<br />
-                                <span className="text-muted-foreground font-normal">One link.</span>
+                                Make things<br />
+                                happen<br />
+                                <span className="text-muted-foreground font-normal">with one link.</span>
                             </motion.h1>
 
                             <motion.p variants={fadeUp} className="text-body-large text-muted-foreground max-w-md">
@@ -244,7 +244,7 @@ export default function HomeClient() {
                             </motion.p>
 
                             <motion.div variants={fadeUp}>
-                                <div className="flex flex-col sm:flex-row gap-3 border border-border bg-background p-2 py-4">
+                                <div className="flex flex-col sm:flex-row gap-3 border border-border bg-background p-2 py-4 rounded-full">
                                     <div className="flex-1 flex items-center gap-2 px-3">
                                         <span className="text-muted-foreground text-sm whitespace-nowrap">
                                             menengai.cloud/store/
@@ -385,8 +385,8 @@ export default function HomeClient() {
                 <div className="container mx-auto px-6 md:px-12">
                     <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
                         {[
-                            { stat: "200+", label: "Stores live today" },
-                            { stat: "2 sec", label: "Average setup time" },
+                            { stat: "99.9%", label: "Uptime" },
+                            { stat: "2 min", label: "Average setup time" },
                             { stat: "Ksh 0", label: "To get started" },
                             { stat: "100%", label: "Managed infrastructure" },
                         ].map((item, i) => (
@@ -405,7 +405,7 @@ export default function HomeClient() {
                     <FadeIn className="max-w-6xl mx-auto">
                         <h2 className="text-display-small font-montserrat mb-16 max-w-2xl text-foreground">
                             Built for people who create,{" "}
-                            <span className="font-bold">not IT departments</span>
+                            <span className="font-bold">and businesses that want to grow</span>
                         </h2>
                         <div className="grid md:grid-cols-3 gap-16">
                             {[

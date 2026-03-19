@@ -24,7 +24,7 @@ export default function PhotographyProductDetailPage({
     const displayPrice = selectedVariant?.price ?? product.price
     const isInStock = selectedVariant
         ? selectedVariant.inventory_quantity > 0
-        : (!product.track_inventory || product.inventory_quantity > 0)
+        : (product.inventory_quantity > 0)
     const maxQty = selectedVariant?.inventory_quantity ?? product.inventory_quantity
     const hasDiscount = product.compare_at_price && product.compare_at_price > displayPrice
 
@@ -138,7 +138,7 @@ export default function PhotographyProductDetailPage({
                             />
                             <span className="text-[9px] tracking-[0.25em] uppercase text-[#666]">
                                 {isInStock
-                                    ? (!product.track_inventory ? 'Available' : `${maxQty} available`)
+                                    ? `${maxQty} available`
                                     : 'Sold out'}
                             </span>
                         </div>
@@ -189,7 +189,7 @@ export default function PhotographyProductDetailPage({
                                     </span>
                                     <button
                                         onClick={() => onQuantityChange(Math.min(maxQty || 999, quantity + 1))}
-                                        disabled={product.track_inventory && quantity >= maxQty}
+                                        disabled={quantity >= maxQty}
                                         className="w-9 h-9 flex items-center justify-center text-[#666] hover:text-[#f2f2f2] disabled:opacity-30 transition-colors"
                                     >
                                         <Plus className="w-3 h-3" />

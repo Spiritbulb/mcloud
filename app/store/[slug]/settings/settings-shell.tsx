@@ -18,9 +18,7 @@ export const TABS = [
     { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-[15px] h-[15px]" /> },
     { id: 'blog', label: 'Blog', icon: <FileText className="w-[15px] h-[15px]" /> },
     { id: 'domain', label: 'Domain', icon: <Globe className="w-[15px] h-[15px]" />, beta: true },
-    { id: 'social', label: 'Social', icon: <Link2 className="w-[15px] h-[15px]" /> },
-    { id: 'payments', label: 'Payments', icon: <CreditCard className="w-[15px] h-[15px]" />, beta: true },
-    { id: 'notifications', label: 'Notifications', icon: <Bell className="w-[15px] h-[15px]" />, beta: true },
+    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-[15px] h-[15px]" />, beta: true },
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
@@ -37,7 +35,7 @@ export default function SettingsShell({
     const pathname = usePathname()
     const router = useRouter()
 
-    const activeId = (TABS.find((t) => pathname.endsWith(`/settings/${t.id}`))?.id ?? 'general') as TabId
+    const activeId = (TABS.find((t) => pathname.match(new RegExp(`/settings/${t.id}(/|$)`)))?.id ?? 'general') as TabId
     const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'General'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)

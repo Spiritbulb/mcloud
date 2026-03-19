@@ -34,7 +34,7 @@ function MenuItemRow({
             ? product.images[0]
             : null
 
-    const inStock = !product.track_inventory || product.inventory_quantity > 0
+    const inStock = product.inventory_quantity > 0
     const hasDiscount =
         product.compare_at_price && product.compare_at_price > product.price
 
@@ -113,11 +113,10 @@ function MenuItemRow({
                             <button
                                 onClick={handleAdd}
                                 disabled={adding}
-                                className={`flex items-center gap-1.5 text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 ${
-                                    added
+                                className={`flex items-center gap-1.5 text-sm font-medium px-3.5 py-1.5 rounded-full transition-all duration-200 ${added
                                         ? 'bg-green-600 text-white'
                                         : 'bg-[#c8622a] hover:bg-[#b05520] text-white'
-                                }`}
+                                    }`}
                             >
                                 {adding ? (
                                     <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -221,11 +220,10 @@ export default function RestaurantProductsPage({
                             <button
                                 key={cat}
                                 onClick={() => setActiveCategory(cat)}
-                                className={`capitalize text-sm font-medium px-4 py-2 rounded-full border transition-all duration-200 ${
-                                    activeCategory === cat
+                                className={`capitalize text-sm font-medium px-4 py-2 rounded-full border transition-all duration-200 ${activeCategory === cat
                                         ? 'bg-[#c8622a] border-[#c8622a] text-white shadow-sm'
                                         : 'bg-white border-[#e8ddd4] text-[#2c1810] hover:border-[#c8622a] hover:text-[#c8622a]'
-                                }`}
+                                    }`}
                             >
                                 {cat === 'all' ? 'All Items' : cat}
                             </button>
