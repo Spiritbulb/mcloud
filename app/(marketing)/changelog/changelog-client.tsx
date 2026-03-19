@@ -20,8 +20,8 @@ function getSectionMeta(type: ChangeSection["type"]): SectionMeta {
       return {
         icon: <Sparkles size={12} />,
         className:
-          "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
-        dotClass: "bg-violet-400",
+          "bg-[#425e7b] text-white dark:bg-[#425e7b] dark:text-white",
+        dotClass: "bg-[#425e7b]",
       };
     case "fix":
       return {
@@ -97,7 +97,7 @@ function EntryCard({
       {/* Timeline spine */}
       <div className="hidden md:flex flex-col items-center">
         <div
-          className={`w-3 h-3 rounded-full mt-1.5 ring-2 ring-background z-10 ${isLatest ? "bg-violet-500" : "bg-border"
+          className={`w-3 h-3 rounded-full mt-1.5 z-10 ${isLatest ? "bg-[#425e7b]" : "bg-black dark:bg-white"
             }`}
         />
         <div className="w-px flex-1 bg-border mt-1" />
@@ -112,8 +112,7 @@ function EntryCard({
           </span>
 
           {isLatest && (
-            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
-              <Sparkles size={10} />
+            <span className="inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-[#425e7b] text-white dark:bg-[#425e7b] dark:text-white">
               Latest
             </span>
           )}
@@ -144,7 +143,6 @@ function EntryCard({
                   <span
                     className={`inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full mb-3 ${meta.className}`}
                   >
-                    {meta.icon}
                     {section.label}
                   </span>
 
@@ -212,8 +210,7 @@ export function ChangelogClient({ entries }: { entries: ChangelogEntry[] }) {
             Changelog
           </h1>
           <p className="text-muted-foreground text-base">
-            New features, bug fixes, and improvements — auto-generated from git
-            history.
+            New features, bug fixes, and improvements.
           </p>
         </motion.div>
 
