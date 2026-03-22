@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.0.0-beta.0](https://github.com/Spiritbulb/mcloud/compare/v0.1.1...v1.0.0-beta.0) (2026-03-22)
+
+### Features
+
+* add theme support to all storefront pages
+* fix theme routing and add theme-specific nav/footer
+* added new themes for store type support - Fixed dark mode/light mode switch - Added a new route to support home client
+* getting started drawer and tracking
+* new docs editor with basic authentication
+
+### Bug Fixes
+
+* destructured and awaited search params for direct access
+
+### Refactoring
+
+* switched authentication and admin access routes
+
+### Maintenance
+
+* moved integrations
+* written docs and added nav links
+* installed claude code and initialized
+
+All notable changes to this project will be documented in this file.
+
 ## [0.1.1](https://github.com/Spiritbulb/mcloud/compare/v0.1.0...v0.1.1) (2026-03-19)
 
 ### Features
