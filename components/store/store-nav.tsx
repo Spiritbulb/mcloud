@@ -217,11 +217,152 @@ function MinimalNav({ store }: { store: Store }) {
     )
 }
 
+// ─── Photography Nav ──────────────────────────────────────────────────────────
+// #0c0c0c bg, #c8965a accent, elegant serif feel
+function PhotographyNav({ store }: { store: Store }) {
+    return (
+        <nav
+            className="fixed top-0 left-0 right-0 z-40 bg-[#0c0c0c]/90 backdrop-blur-sm border-b border-[#1c1c1c]"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+            <div className="px-6 md:px-12 lg:px-20 h-14 flex items-center justify-between gap-4">
+                <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                    {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} width={28} height={28} className="object-cover" />
+                    ) : (
+                        <div className="w-6 h-6 flex items-center justify-center text-[10px] font-light text-[#c8965a] border border-[#c8965a]/50">
+                            {store.name[0].toUpperCase()}
+                        </div>
+                    )}
+                    <span className="text-[11px] tracking-[0.25em] uppercase text-[#888] font-light hidden sm:block">
+                        {store.name}
+                    </span>
+                </Link>
+
+                <div className="flex items-center gap-4">
+                    <Link href={`/store/${store.slug}/cart`} className="text-[#555] hover:text-[#c8965a] transition-colors" aria-label="Cart">
+                        <ShoppingBag className="w-4 h-4" />
+                    </Link>
+                </div>
+            </div>
+        </nav>
+    )
+}
+
+// ─── Portfolio Nav ────────────────────────────────────────────────────────────
+// #ffffff bg, #6366f1 accent, bold creative
+function PortfolioNav({ store }: { store: Store }) {
+    return (
+        <nav
+            className="sticky top-0 z-40 bg-white/90 backdrop-blur-sm border-b border-gray-100"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+            <div className="px-6 md:px-12 lg:px-16 h-16 flex items-center justify-between gap-4">
+                <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                    {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} width={36} height={36} className="object-cover" />
+                    ) : (
+                        <div className="w-8 h-8 flex items-center justify-center text-xs font-semibold text-white bg-[#6366f1]">
+                            {store.name[0].toUpperCase()}
+                        </div>
+                    )}
+                    <span className="text-sm font-semibold text-gray-900 hidden sm:block">
+                        {store.name}
+                    </span>
+                </Link>
+
+                <div className="flex items-center gap-6">
+                    <Link href={`/store/${store.slug}/products`} className="text-sm text-gray-600 hover:text-gray-900 transition-colors">
+                        Work
+                    </Link>
+                    <Link href={`/store/${store.slug}/cart`} className="text-gray-600 hover:text-gray-900 transition-colors" aria-label="Cart">
+                        <ShoppingBag className="w-4 h-4" />
+                    </Link>
+                </div>
+            </div>
+        </nav>
+    )
+}
+
+// ─── Services Nav ────────────────────────────────────────────────────────────
+// #f8fafc bg, #2563eb accent, professional trustworthy
+function ServicesNav({ store }: { store: Store }) {
+    return (
+        <nav
+            className="sticky top-0 z-40 bg-slate-50/90 backdrop-blur-sm border-b border-slate-200"
+            style={{ fontFamily: "'Inter', sans-serif" }}
+        >
+            <div className="px-6 md:px-12 lg:px-20 h-14 flex items-center justify-between gap-4">
+                <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                    {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} width={32} height={32} className="object-cover" />
+                    ) : (
+                        <div className="w-7 h-7 flex items-center justify-center text-xs font-semibold text-white bg-[#2563eb]">
+                            {store.name[0].toUpperCase()}
+                        </div>
+                    )}
+                    <span className="text-sm font-medium text-slate-900 hidden sm:block">
+                        {store.name}
+                    </span>
+                </Link>
+
+                <div className="flex items-center gap-6">
+                    <Link href={`/store/${store.slug}/products`} className="text-sm text-slate-600 hover:text-slate-900 transition-colors">
+                        Services
+                    </Link>
+                    <Link href={`/store/${store.slug}/cart`} className="text-slate-600 hover:text-slate-900 transition-colors" aria-label="Cart">
+                        <ShoppingBag className="w-4 h-4" />
+                    </Link>
+                </div>
+            </div>
+        </nav>
+    )
+}
+
+// ─── Restaurant Nav ──────────────────────────────────────────────────────────
+// #faf7f2 bg, #c8622a accent, warm inviting
+function RestaurantNav({ store }: { store: Store }) {
+    return (
+        <nav
+            className="sticky top-0 z-40 bg-[#faf7f2]/95 backdrop-blur-sm border-b border-[#e8e0d8]"
+            style={{ fontFamily: "'Georgia', serif" }}
+        >
+            <div className="px-6 md:px-12 lg:px-16 h-14 flex items-center justify-between gap-4">
+                <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                    {store.logo_url ? (
+                        <img src={store.logo_url} alt={store.name} width={32} height={32} className="object-cover" />
+                    ) : (
+                        <div className="w-7 h-7 flex items-center justify-center text-xs font-light text-[#c8622a] border border-[#c8622a]/50">
+                            {store.name[0].toUpperCase()}
+                        </div>
+                    )}
+                    <span className="text-sm font-light text-[#2c1810] hidden sm:block italic">
+                        {store.name}
+                    </span>
+                </Link>
+
+                <div className="flex items-center gap-6">
+                    <Link href={`/store/${store.slug}/products`} className="text-sm text-[#8b6f5c] hover:text-[#2c1810] transition-colors">
+                        Menu
+                    </Link>
+                    <Link href={`/store/${store.slug}/cart`} className="text-[#8b6f5c] hover:text-[#2c1810] transition-colors" aria-label="Cart">
+                        <ShoppingBag className="w-4 h-4" />
+                    </Link>
+                </div>
+            </div>
+        </nav>
+    )
+}
+
 // ─── Theme dispatcher ─────────────────────────────────────────────────────────
 export default function StoreNav({ store, themeId = 'classic' }: StoreNavProps) {
     switch (themeId) {
         case 'noir': return <NoirNav store={store} />
         case 'minimal': return <MinimalNav store={store} />
+        case 'photography': return <PhotographyNav store={store} />
+        case 'portfolio': return <PortfolioNav store={store} />
+        case 'services': return <ServicesNav store={store} />
+        case 'restaurant': return <RestaurantNav store={store} />
         default: return <ClassicNav store={store} />
     }
 }

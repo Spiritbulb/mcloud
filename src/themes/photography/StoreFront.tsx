@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import type { StoreFrontProps } from '../types'
+import { ShoppingBag } from 'lucide-react'
+import type { StoreFrontProps, GalleryPhoto } from '../types'
 
 function fmt(amount: number, currency: string) {
     return new Intl.NumberFormat('en-KE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount)
@@ -42,7 +42,6 @@ function PhotoProductCard({
                     </div>
                 )}
 
-                {/* Dark overlay on hover */}
                 <div
                     className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center transition-opacity duration-300"
                     style={{ opacity: hovered ? 1 : 0 }}
@@ -70,16 +69,119 @@ function PhotoProductCard({
     )
 }
 
+function GalleryPhotoCard({
+    photo,
+    index,
+    storeSlug,
+}: {
+    photo: GalleryPhoto
+    index: number
+    storeSlug: string
+}) {
+    const [hovered, setHovered] = useState(false)
+    const [lightboxOpen, setLightboxOpen] = useState(false)
+
+    return (
+        <>
+            <div
+                className="relative aspect-square overflow-hidden bg-[#181818] cursor-pointer group"
+                onMouseEnter={() => setHovered(true)}
+                onMouseLeave={() => setHovered(false)}
+                onClick={() => setLightboxOpen(true)}
+            >
+                {photo.url ? (
+                    <img
+                        src={photo.url}
+                        alt={photo.caption ?? `Gallery photo ${index + 1}`}
+                        className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <span className="text-[#333] text-xs tracking-widest uppercase">No image</span>
+                    </div>
+                )}
+
+                {photo.caption && (
+                    <div
+                        className="absolute inset-x-0 bottom-0 p-4 bg-gradient-to-t from-black/80 to-transparent transition-opacity duration-300"
+                        style={{ opacity: hovered ? 1 : 0 }}
+                    >
+                        <p
+                            className="text-[#f2f2f2] text-xs font-serif tracking-wide"
+                            style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                        >
+                            {photo.caption}
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {lightboxOpen && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/95 flex items-center justify-center p-8"
+                    onClick={() => setLightboxOpen(false)}
+                >
+                    <button
+                        className="absolute top-6 right-6 text-[#666] hover:text-[#f2f2f2] transition-colors"
+                        onClick={() => setLightboxOpen(false)}
+                    >
+                        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                    </button>
+                    <div className="max-w-5xl max-h-[80vh]" onClick={e => e.stopPropagation()}>
+                        <img
+                            src={photo.url}
+                            alt={photo.caption ?? `Gallery photo ${index + 1}`}
+                            className="max-w-full max-h-[80vh] object-contain"
+                        />
+                        {photo.caption && (
+                            <p
+                                className="text-[#888] text-sm text-center mt-4 font-serif"
+                                style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
+                            >
+                                {photo.caption}
+                            </p>
+                        )}
+                    </div>
+                </div>
+            )}
+        </>
+    )
+}
+
 export default function PhotographyStoreFront({ store, products, collections, featuredProducts }: StoreFrontProps) {
-    const router = useRouter()
     const settings = store.settings ?? {}
     const heroImage = settings.heroImage ?? null
     const socialLinks = settings.socialLinks ?? {}
+    const galleryPhotos: GalleryPhoto[] = settings.galleryPhotos ?? []
 
     return (
         <div className="min-h-screen bg-[#0c0c0c] text-[#f2f2f2]" style={{ fontFamily: "'Inter', 'Helvetica Neue', sans-serif" }}>
 
-            {/* ── HERO ── */}
+            <nav className="fixed top-0 left-0 right-0 z-40 bg-[#0c0c0c]/90 backdrop-blur-sm border-b border-[#1c1c1c]">
+                <div className="px-6 md:px-12 lg:px-20 h-14 flex items-center justify-between gap-4">
+                    <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                        {store.logo_url ? (
+                            <img src={store.logo_url} alt={store.name} width={28} height={28} className="object-cover" />
+                        ) : (
+                            <div className="w-6 h-6 flex items-center justify-center text-[10px] font-light text-[#c8965a] border border-[#c8965a]/50">
+                                {store.name[0].toUpperCase()}
+                            </div>
+                        )}
+                        <span className="text-[11px] tracking-[0.25em] uppercase text-[#888] font-light hidden sm:block">
+                            {store.name}
+                        </span>
+                    </Link>
+
+                    <div className="flex items-center gap-4">
+                        <Link href={`/store/${store.slug}/cart`} className="text-[#555] hover:text-[#c8965a] transition-colors" aria-label="Cart">
+                            <ShoppingBag className="w-4 h-4" />
+                        </Link>
+                    </div>
+                </div>
+            </nav>
+
             <section className="relative w-full h-screen flex items-center justify-center overflow-hidden">
                 {heroImage && (
                     <img
@@ -89,7 +191,6 @@ export default function PhotographyStoreFront({ store, products, collections, fe
                         style={{ opacity: 0.45 }}
                     />
                 )}
-                {/* Gradient overlay */}
                 <div className="absolute inset-0 bg-gradient-to-b from-black/30 via-transparent to-black/70" />
 
                 <div className="relative z-10 text-center px-6">
@@ -112,30 +213,48 @@ export default function PhotographyStoreFront({ store, products, collections, fe
                     </button>
                 </div>
 
-                {/* Scroll indicator */}
                 <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
                     <div className="w-px h-12 bg-gradient-to-b from-transparent to-[#c8965a]/60" />
                 </div>
             </section>
 
-            {/* ── WORKS SECTION ── */}
             <section id="photo-works" className="py-20 px-6 md:px-12 lg:px-20">
                 <div className="flex items-end justify-between mb-12">
                     <h2
                         className="text-4xl md:text-5xl font-normal text-[#f2f2f2] leading-none"
                         style={{ fontFamily: "'Playfair Display', Georgia, serif" }}
                     >
-                        Works
+                        {galleryPhotos.length > 0 ? 'Gallery' : 'Works'}
                     </h2>
-                    <Link
-                        href={`/store/${store.slug}/products`}
-                        className="text-[10px] tracking-[0.35em] uppercase text-[#c8965a] hover:text-[#f2f2f2] transition-colors duration-200"
-                    >
-                        All Works →
-                    </Link>
+                    {galleryPhotos.length > 0 ? (
+                        <Link
+                            href={`/store/${store.slug}/products`}
+                            className="text-[10px] tracking-[0.35em] uppercase text-[#c8965a] hover:text-[#f2f2f2] transition-colors duration-200"
+                        >
+                            View Products →
+                        </Link>
+                    ) : (
+                        <Link
+                            href={`/store/${store.slug}/products`}
+                            className="text-[10px] tracking-[0.35em] uppercase text-[#c8965a] hover:text-[#f2f2f2] transition-colors duration-200"
+                        >
+                            All Works →
+                        </Link>
+                    )}
                 </div>
 
-                {products.length === 0 ? (
+                {galleryPhotos.length > 0 ? (
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-3">
+                        {galleryPhotos.map((photo, index) => (
+                            <GalleryPhotoCard
+                                key={photo.id ?? index}
+                                photo={photo}
+                                index={index}
+                                storeSlug={store.slug}
+                            />
+                        ))}
+                    </div>
+                ) : products.length === 0 ? (
                     <div className="py-24 text-center">
                         <p className="text-[11px] tracking-[0.3em] uppercase text-[#444]">No works yet</p>
                     </div>
@@ -153,7 +272,6 @@ export default function PhotographyStoreFront({ store, products, collections, fe
                 )}
             </section>
 
-            {/* ── FOOTER ── */}
             <footer className="border-t border-[#1c1c1c] px-6 md:px-12 lg:px-20 py-12">
                 <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
                     <p

@@ -6,6 +6,10 @@ import { usePathname } from 'next/navigation'
 
 const isSettingsPath = (pathname: string) => pathname.includes('/settings')
 
+// Themes that include their own nav & footer inside StoreFront.
+// The shared StoreNav / StoreFooter are only used by other themes.
+const SELF_CONTAINED_THEMES = new Set(['photography', 'portfolio', 'services', 'restaurant'])
+
 export default function LayoutWrapper({
     children,
     store,
@@ -25,11 +29,24 @@ export default function LayoutWrapper({
         return <>{children}</>
     }
 
+    const themeId: string = store?.settings?.themeId ?? 'classic'
+    const isSelfContained = SELF_CONTAINED_THEMES.has(themeId)
+
     return (
-        <div className="storefront-root" style={cssVars}>
-            <StoreNav store={store} themeId={store.settings?.themeId ?? 'classic'} />
+        <div
+            className="storefront-root"
+            style={cssVars}
+            // Only CSS-variable themes get the data-sf-css marker so
+            // storefront.css overrides don't leak into self-contained themes
+            {...(!isSelfContained ? { 'data-sf-css': '' } : {})}
+        >
+            {!isSelfContained && (
+                <StoreNav store={store} themeId={themeId} />
+            )}
             {children}
-            <StoreFooter store={store} settings={store.settings} themeId={store.settings?.themeId ?? 'classic'} />
+            {!isSelfContained && (
+                <StoreFooter store={store} settings={store?.settings} themeId={themeId} />
+            )}
         </div>
     )
 }

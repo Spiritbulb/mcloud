@@ -39,8 +39,16 @@ export interface Store {
             tiktok?: string
             whatsapp?: string
         }
+        galleryPhotos?: GalleryPhoto[]
         [key: string]: unknown  // allows other settings without casting
     }
+}
+
+export interface GalleryPhoto {
+    id: string
+    url: string
+    path?: string
+    caption?: string
 }
 
 export interface Product {

@@ -31,6 +31,7 @@ export function castStore(raw: RawStore): Store {
         logo_url: raw.logo_url,
         currency: raw.currency,
         settings: {
+            themeId: settings.themeId as string | undefined,
             heroTitle: settings.heroTitle as string | undefined,
             heroSubtitle: settings.heroSubtitle as string | undefined,
             heroImage: settings.heroImage as string | undefined,
@@ -38,6 +39,7 @@ export function castStore(raw: RawStore): Store {
             logoPath: settings.logoPath as string | undefined,
             heroSlides: settings.heroSlides as Store['settings']['heroSlides'],
             socialLinks: settings.socialLinks as Store['settings']['socialLinks'],
+            galleryPhotos: settings.galleryPhotos as Store['settings']['galleryPhotos'],
         },
     }
 }

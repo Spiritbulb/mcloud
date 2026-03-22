@@ -29,6 +29,13 @@ interface HeroSlide {
     buttonText?: string
 }
 
+interface GalleryPhoto {
+    id: string
+    url: string
+    path?: string
+    caption?: string
+}
+
 interface StoreData {
     id: string
     name: string
@@ -48,6 +55,7 @@ interface StoreData {
         heroSlides?: HeroSlide[]
         heroImagePath?: string
         socialLinks?: Record<string, string>
+        galleryPhotos?: GalleryPhoto[]
     }
     theme?: Record<string, string>
 }
@@ -75,6 +83,7 @@ export interface AppearanceSettingsProps {
     headingFont: string; setHeadingFont: (v: string) => void
     bodyFont: string; setBodyFont: (v: string) => void
     borderRadius: string; setBorderRadius: (v: string) => void
+    galleryPhotos: GalleryPhoto[]; setGalleryPhotos: (v: GalleryPhoto[]) => void
 }
 
 // ─── Font catalogues (separated by role) ─────────────────────────────────────
@@ -647,6 +656,122 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
     )
 }
 
+// ─── GallerySection ─────────────────────────────────────────────────────────────
+
+function GalleryPhotoCard({ photo, idx, onChange, onRemove }: {
+    photo: GalleryPhoto
+    idx: number
+    onChange: (photo: GalleryPhoto) => void
+    onRemove: () => void
+}) {
+    const [open, setOpen] = useState(true)
+
+    return (
+        <div className="border border-light">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-light bg-surface-variant/30">
+                <button
+                    onClick={() => setOpen(!open)}
+                    className="flex items-center gap-2 text-[12px] font-medium text-foreground min-w-0"
+                >
+                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform shrink-0', open && 'rotate-180')} />
+                    <span className="shrink-0">Photo {idx + 1}</span>
+                    {photo.caption && (
+                        <span className="text-on-surface-muted font-normal truncate">— {photo.caption}</span>
+                    )}
+                </button>
+                <button
+                    onClick={onRemove}
+                    className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-red-500 transition-colors"
+                >×</button>
+            </div>
+
+            {open && (
+                <div className="p-3 sm:p-4 space-y-3">
+                    <SettingsField label="Photo">
+                        <ImageUpload
+                            value={photo.url ?? ''}
+                            pathInDb={photo.path ?? ''}
+                            onChange={(url, path) => onChange({ ...photo, url, path })}
+                            bucket="store-assets"
+                            pathPrefix={`${'__storeId__'}/gallery/${idx}`}
+                            aspectRatio="square"
+                        />
+                    </SettingsField>
+                    <div className="space-y-1.5">
+                        <Label className="text-[12px] text-on-surface-muted">Caption</Label>
+                        <Input
+                            value={photo.caption ?? ''}
+                            onChange={(e) => onChange({ ...photo, caption: e.target.value })}
+                            placeholder="Optional photo caption"
+                            className="rounded-none"
+                        />
+                    </div>
+                </div>
+            )}
+        </div>
+    )
+}
+
+function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryPhotos' | 'setGalleryPhotos'>) {
+    const { store, galleryPhotos, setGalleryPhotos } = props
+
+    return (
+        <SettingsSection
+            title="Photography Gallery"
+            description="Upload photos to display in the Photography theme homepage gallery. Leave empty to show all products instead."
+            aside={
+                <button
+                    onClick={() => setGalleryPhotos([...galleryPhotos, { id: crypto.randomUUID(), url: '', caption: '' }])}
+                    className="btn-secondary h-8 sm:h-7 px-3 text-[12px]"
+                >
+                    + Add photo
+                </button>
+            }
+        >
+            {galleryPhotos.length === 0 ? (
+                <p className="text-[12px] text-on-surface-muted py-1">
+                    No gallery photos — your products will be displayed instead.
+                </p>
+            ) : (
+                <div className="space-y-3">
+                    {galleryPhotos.map((photo, idx) => (
+                        <GalleryPhotoCard
+                            key={photo.id}
+                            photo={photo}
+                            idx={idx}
+                            onChange={(updated) => {
+                                const next = [...galleryPhotos]
+                                next[idx] = { ...updated, id: photo.id }
+                                setGalleryPhotos(next)
+                            }}
+                            onRemove={() => setGalleryPhotos(galleryPhotos.filter((_, i) => i !== idx))}
+                        />
+                    ))}
+                </div>
+            )}
+
+            {galleryPhotos.length > 0 && (
+                <div className="mt-4">
+                    <p className="text-[11px] text-on-surface-muted mb-3">Preview</p>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                        {galleryPhotos.slice(0, 8).map((photo) => (
+                            <div key={photo.id} className="aspect-square bg-surface border border-light overflow-hidden">
+                                {photo.url ? (
+                                    <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-on-surface-muted">
+                                        No image
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            )}
+        </SettingsSection>
+    )
+}
+
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function AppearanceSettings(props: AppearanceSettingsProps) {
@@ -680,6 +805,7 @@ export default function AppearanceSettings(props: AppearanceSettingsProps) {
                 darkMutedColor={props.darkMutedColor} setDarkMutedColor={props.setDarkMutedColor}
             />
             <SlidesSection store={props.store} heroSlides={props.heroSlides} setHeroSlides={props.setHeroSlides} />
+            <GallerySection store={props.store} galleryPhotos={props.galleryPhotos} setGalleryPhotos={props.setGalleryPhotos} />
         </div>
     )
 }

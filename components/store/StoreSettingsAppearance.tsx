@@ -31,6 +31,7 @@ const DEFAULTS = {
     logoUrl: '',
     logoPath: '',
     heroSlides: [] as any[],
+    galleryPhotos: [] as { id: string; url: string; path?: string; caption?: string }[],
     primaryColor: '#1c2228',
     secondaryColor: '#f5f0eb',
     accentColor: '#c9a96e',
@@ -67,6 +68,7 @@ export default function StoreSettingsAppearance({
     const [logoUrl, setLogoUrl] = useState(DEFAULTS.logoUrl)
     const [logoPath, setLogoPath] = useState(DEFAULTS.logoPath)
     const [heroSlides, setHeroSlides] = useState<any[]>(DEFAULTS.heroSlides)
+    const [galleryPhotos, setGalleryPhotos] = useState<{ id: string; url: string; path?: string; caption?: string }[]>(DEFAULTS.galleryPhotos)
     const [primaryColor, setPrimaryColor] = useState(DEFAULTS.primaryColor)
     const [secondaryColor, setSecondaryColor] = useState(DEFAULTS.secondaryColor)
     const [accentColor, setAccentColor] = useState(DEFAULTS.accentColor)
@@ -101,6 +103,7 @@ export default function StoreSettingsAppearance({
         setHeroImage(s.heroImage ?? DEFAULTS.heroImage)
         setHeroImagePath(s.heroImagePath ?? DEFAULTS.heroImagePath)
         setHeroSlides(s.heroSlides ?? DEFAULTS.heroSlides)
+        setGalleryPhotos(s.galleryPhotos ?? DEFAULTS.galleryPhotos)
 
         // Logo (lives at top level + settings)
         setLogoUrl(store.logo_url ?? DEFAULTS.logoUrl)
@@ -143,6 +146,7 @@ export default function StoreSettingsAppearance({
                         heroImagePath,
                         heroSlides,
                         logoPath,
+                        galleryPhotos,
                     },
                 })
                 .eq('id', store.id)
@@ -186,7 +190,7 @@ export default function StoreSettingsAppearance({
     }, [
         store.id, store.settings,
         themeId, heroTitle, heroSubtitle, heroImage, heroImagePath,
-        heroSlides, logoUrl, logoPath,
+        heroSlides, logoUrl, logoPath, galleryPhotos,
         primaryColor, secondaryColor, accentColor, bgColor, fgColor, mutedColor,
         darkPrimaryColor, darkBgColor, darkFgColor, darkMutedColor,
         headingFont, bodyFont, borderRadius,
@@ -205,6 +209,7 @@ export default function StoreSettingsAppearance({
                 logoUrl={logoUrl} setLogoUrl={setLogoUrl}
                 logoPath={logoPath} setLogoPath={setLogoPath}
                 heroSlides={heroSlides} setHeroSlides={setHeroSlides}
+                galleryPhotos={galleryPhotos} setGalleryPhotos={setGalleryPhotos}
                 primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}
                 secondaryColor={secondaryColor} setSecondaryColor={setSecondaryColor}
                 accentColor={accentColor} setAccentColor={setAccentColor}

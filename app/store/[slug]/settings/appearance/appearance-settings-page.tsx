@@ -5,6 +5,13 @@ import { createClient } from '@/lib/client'
 import { SaveBar, SaveToast } from '../settings-primitives'
 import AppearanceSettings from '@/components/store/appearance-settings'
 
+interface GalleryPhoto {
+    id: string
+    url: string
+    path?: string
+    caption?: string
+}
+
 export default function AppearanceSettingsPage({ store }: { store: any }) {
     const s = store.settings ?? {}
     const t = store.theme ?? {}
@@ -15,6 +22,7 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
     const [heroImage, setHeroImage] = useState(s.heroImage ?? '')
     const [heroImagePath, setHeroImagePath] = useState(s.heroImagePath ?? '')
     const [heroSlides, setHeroSlides] = useState(s.heroSlides ?? [])
+    const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(s.galleryPhotos ?? [])
     const [logoUrl, setLogoUrl] = useState(store.logo_url ?? '')
     const [logoPath, setLogoPath] = useState(s.logoPath ?? '')
     const [primaryColor, setPrimaryColor] = useState(t.primary_color ?? '#1c2228')
@@ -47,6 +55,7 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
                 logoPath: logoPath || undefined,
                 heroSlides: heroSlides.length > 0 ? heroSlides : undefined,
                 heroImagePath: heroImagePath || undefined,
+                galleryPhotos: galleryPhotos.length > 0 ? galleryPhotos : undefined,
             },
         }).eq('id', store.id)
 
@@ -76,7 +85,6 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
 
     return (
         <>
-            {/* AppearanceSettings root div must be `space-y-4`, NOT `h-screen` */}
             <AppearanceSettings
                 store={store}
                 themeId={themeId} setThemeId={setThemeId}
@@ -87,6 +95,7 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
                 logoPath={logoPath} setLogoPath={setLogoPath}
                 heroSlides={heroSlides} setHeroSlides={setHeroSlides}
                 heroImagePath={heroImagePath} setHeroImagePath={setHeroImagePath}
+                galleryPhotos={galleryPhotos} setGalleryPhotos={setGalleryPhotos}
                 primaryColor={primaryColor} setPrimaryColor={setPrimaryColor}
                 secondaryColor={secondaryColor} setSecondaryColor={setSecondaryColor}
                 accentColor={accentColor} setAccentColor={setAccentColor}
