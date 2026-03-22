@@ -50,7 +50,7 @@ async function getOwnerSession(request: NextRequest): Promise<{ sub: string } | 
   }
 }
 
-export async function proxy(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'

@@ -1,9 +1,9 @@
 // middleware.ts ✅
-import { proxy } from '@/proxy'
+import { middleware as proxy } from '@/middleware'
 import { type NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
   return proxy(request)
 }
 
-export { config } from '@/proxy'
+export { config } from '@/middleware'
