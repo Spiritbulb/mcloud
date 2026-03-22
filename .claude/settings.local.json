@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /home/bentley/mcloud/app/store/[slug]/settings -name \"page.tsx\")",
+      "Bash(find /home/bentley/mcloud/app/store/[slug]/settings -type f -name \"*settings*.tsx\")",
+      "Bash(xargs -I {} basename {})",
+      "Bash(ls:*)"
+    ]
+  }
+}

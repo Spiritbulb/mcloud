@@ -9,11 +9,19 @@ import ClassicProductsPage from '../../../../src/themes/classic/ProductsPage'
 import type { ProductItem } from '../../../../src/themes/types'
 import NoirProductsPage from '../../../../src/themes/noir/ProductsPage'
 import MinimalProductsPage from '../../../../src/themes/minimal/ProductsPage'
+import PhotographyProductsPage from '../../../../src/themes/photography/ProductsPage'
+import PortfolioProductsPage from '../../../../src/themes/portfolio/ProductsPage'
+import ServicesProductsPage from '../../../../src/themes/services/ProductsPage'
+import RestaurantProductsPage from '../../../../src/themes/restaurant/ProductsPage'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicProductsPage,
     noir: NoirProductsPage,
     minimal: MinimalProductsPage,
+    photography: PhotographyProductsPage,
+    portfolio: PortfolioProductsPage,
+    services: ServicesProductsPage,
+    restaurant: RestaurantProductsPage,
 }
 
 

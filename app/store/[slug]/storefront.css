@@ -42,25 +42,26 @@
 }
 
 /* ── Force all text within storefront to use sf tokens, not shadcn defaults ── */
+/* Only applies when the data-sf-css marker is present (CSS-variable themes)    */
 
 /* shadcn CardTitle defaults to the app foreground which may be blue-tinted */
-.storefront-root [class*="CardTitle"],
-.storefront-root .card-title {
+.storefront-root[data-sf-css] [class*="CardTitle"],
+.storefront-root[data-sf-css] .card-title {
     color: var(--sf-foreground);
     font-family: var(--sf-font-heading);
 }
 
 /* CardDescription is the main offender — shadcn renders it as text-muted-foreground
    which in many themes is a blue-gray. Force it to sf-foreground-subtle. */
-.storefront-root [class*="CardDescription"],
-.storefront-root .card-description {
+.storefront-root[data-sf-css] [class*="CardDescription"],
+.storefront-root[data-sf-css] .card-description {
     color: var(--sf-foreground-subtle) !important;
     font-family: var(--sf-font-body);
 }
 
 /* shadcn Badge — all variants get sf-token colors */
-.storefront-root [class*="Badge"],
-.storefront-root .badge {
+.storefront-root[data-sf-css] [class*="Badge"],
+.storefront-root[data-sf-css] .badge {
     color: var(--sf-foreground);
     background-color: transparent;
     border-color: var(--sf-border-strong);
@@ -68,76 +69,76 @@
 }
 
 /* Badge secondary variant — should be muted, not blue */
-.storefront-root [class*="Badge"][data-variant="secondary"],
-.storefront-root .badge-secondary {
+.storefront-root[data-sf-css] [class*="Badge"][data-variant="secondary"],
+.storefront-root[data-sf-css] .badge-secondary {
     background-color: var(--sf-muted);
     color: var(--sf-foreground);
     border-color: transparent;
 }
 
 /* Buttons: default variant should use sf-primary, not global primary */
-.storefront-root button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
-.storefront-root [class*="Button"][data-variant="default"] {
+.storefront-root[data-sf-css] button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
+.storefront-root[data-sf-css] [class*="Button"][data-variant="default"] {
     background-color: var(--sf-primary);
     color: var(--sf-background);
 }
 
-.storefront-root button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
-.storefront-root [class*="Button"][data-variant="default"]:hover {
+.storefront-root[data-sf-css] button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
+.storefront-root[data-sf-css] [class*="Button"][data-variant="default"]:hover {
     background-color: var(--sf-primary);
     opacity: 0.9;
 }
 
 /* Buttons: ghost variant should use foreground, not brand blue */
-.storefront-root button[class*="ghost"],
-.storefront-root [class*="Button"][data-variant="ghost"] {
+.storefront-root[data-sf-css] button[class*="ghost"],
+.storefront-root[data-sf-css] [class*="Button"][data-variant="ghost"] {
     color: var(--sf-foreground);
     background-color: transparent;
 }
 
-.storefront-root button[class*="ghost"]:hover,
-.storefront-root [class*="Button"][data-variant="ghost"]:hover {
+.storefront-root[data-sf-css] button[class*="ghost"]:hover,
+.storefront-root[data-sf-css] [class*="Button"][data-variant="ghost"]:hover {
     background-color: color-mix(in srgb, var(--sf-foreground) 8%, transparent);
     color: var(--sf-foreground);
 }
 
 /* Outline button variant */
-.storefront-root button[class*="outline"],
-.storefront-root [class*="Button"][data-variant="outline"] {
+.storefront-root[data-sf-css] button[class*="outline"],
+.storefront-root[data-sf-css] [class*="Button"][data-variant="outline"] {
     color: var(--sf-foreground);
     background-color: transparent;
     border-color: var(--sf-border-strong);
 }
 
-.storefront-root button[class*="outline"]:hover,
-.storefront-root [class*="Button"][data-variant="outline"]:hover {
+.storefront-root[data-sf-css] button[class*="outline"]:hover,
+.storefront-root[data-sf-css] [class*="Button"][data-variant="outline"]:hover {
     background-color: color-mix(in srgb, var(--sf-foreground) 6%, transparent);
     border-color: var(--sf-foreground);
 }
 
 /* Inputs */
-.storefront-root input,
-.storefront-root [class*="Input"] {
+.storefront-root[data-sf-css] input,
+.storefront-root[data-sf-css] [class*="Input"] {
     background-color: var(--sf-background);
     color: var(--sf-foreground);
     border-color: var(--sf-border-strong);
     font-family: var(--sf-font-body);
 }
 
-.storefront-root input::placeholder {
+.storefront-root[data-sf-css] input::placeholder {
     color: var(--sf-foreground-subtle);
 }
 
-.storefront-root input:focus,
-.storefront-root [class*="Input"]:focus {
+.storefront-root[data-sf-css] input:focus,
+.storefront-root[data-sf-css] [class*="Input"]:focus {
     border-color: var(--sf-foreground);
     outline: none;
     box-shadow: 0 0 0 1px var(--sf-foreground);
 }
 
 /* Separator */
-.storefront-root [class*="Separator"],
-.storefront-root hr {
+.storefront-root[data-sf-css] [class*="Separator"],
+.storefront-root[data-sf-css] hr {
     background-color: var(--sf-border);
     border-color: var(--sf-border);
 }

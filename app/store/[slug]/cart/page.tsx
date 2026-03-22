@@ -9,11 +9,19 @@ import ClassicCartPage from '../../../../src/themes/classic/CartPage'
 import type { MpesaConfig, GuestDetails } from '../../../../src/themes/types'
 import NoirCartPage from '../../../../src/themes/noir/CartPage'
 import MinimalCartPage from '../../../../src/themes/minimal/CartPage'
+import PhotographyCartPage from '../../../../src/themes/photography/CartPage'
+import PortfolioCartPage from '../../../../src/themes/portfolio/CartPage'
+import ServicesCartPage from '../../../../src/themes/services/CartPage'
+import RestaurantCartPage from '../../../../src/themes/restaurant/CartPage'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicCartPage,
     noir: NoirCartPage,
     minimal: MinimalCartPage,
+    photography: PhotographyCartPage,
+    portfolio: PortfolioCartPage,
+    services: ServicesCartPage,
+    restaurant: RestaurantCartPage,
 }
 
 export default function CartPageContainer() {

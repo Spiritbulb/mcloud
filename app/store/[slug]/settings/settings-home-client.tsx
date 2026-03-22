@@ -206,7 +206,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
     })
 
     return (
-        <div className="max-w-3xl mx-auto space-y-10">
+        <div className="max-w-7xl mx-auto space-y-10">
 
             {/* ── Welcome ────────────────────────────────────────────────── */}
             <motion.div {...item(0)}>

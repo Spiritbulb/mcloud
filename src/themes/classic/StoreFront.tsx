@@ -168,8 +168,8 @@ export default function ClassicStoreFront({
                         <div
                             key={index}
                             className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide
-                                    ? 'opacity-100'
-                                    : 'opacity-0 pointer-events-none'
+                                ? 'opacity-100'
+                                : 'opacity-0 pointer-events-none'
                                 }`}
                         >
                             {slide.image ? (
@@ -237,8 +237,8 @@ export default function ClassicStoreFront({
                                     key={index}
                                     onClick={() => setCurrentSlide(index)}
                                     className={`h-0.5 transition-all duration-300 ${index === currentSlide
-                                            ? 'w-12 bg-white'
-                                            : 'w-6 bg-white/30'
+                                        ? 'w-12 bg-white'
+                                        : 'w-6 bg-white/30'
                                         }`}
                                     aria-label={`Go to slide ${index + 1}`}
                                 />
@@ -253,7 +253,7 @@ export default function ClassicStoreFront({
                 <>
                     <Separator />
                     <section className="sf-section-muted py-12 md:py-20">
-                        <div className="container mx-auto px-4 md:px-6">
+                        <div className="container mx-auto">
                             <div className="mb-10 md:mb-14">
                                 <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
                                     Collections
@@ -272,8 +272,8 @@ export default function ClassicStoreFront({
                                 <button
                                     onClick={() => setActiveCollection(null)}
                                     className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null
-                                            ? 'sf-pill-active'
-                                            : 'sf-pill-inactive'
+                                        ? 'sf-pill-active'
+                                        : 'sf-pill-inactive'
                                         }`}
                                 >
                                     All
@@ -283,8 +283,8 @@ export default function ClassicStoreFront({
                                         key={c.id}
                                         onClick={() => setActiveCollection(c.id)}
                                         className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id
-                                                ? 'sf-pill-active'
-                                                : 'sf-pill-inactive'
+                                            ? 'sf-pill-active'
+                                            : 'sf-pill-inactive'
                                             }`}
                                     >
                                         {c.name}
@@ -347,7 +347,7 @@ export default function ClassicStoreFront({
             {!query && featuredProducts.length > 0 && (
                 <>
                     <section className="py-12 md:py-20">
-                        <div className="container mx-auto px-4 md:px-6">
+                        <div className="container mx-auto">
                             <div className="mb-10 md:mb-14">
                                 <div className="flex items-center gap-4 mb-3">
                                     <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
@@ -378,7 +378,7 @@ export default function ClassicStoreFront({
 
             {/* ── ALL PRODUCTS ── */}
             <section id="products" className="py-12 md:py-20">
-                <div className="container mx-auto px-4 md:px-6">
+                <div className="container mx-auto">
                     <div className="mb-10 md:mb-14">
                         {query ? (
                             <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
