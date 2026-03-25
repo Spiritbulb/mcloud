@@ -28,10 +28,12 @@ export default function ClassicCartPage({
     onRemoveItem,
     onMpesaCheckout,
     onPaypalCheckout,
+    onPesapalCheckout,
+    onIntasendCheckout,
     isProcessing,
 }: CartPageProps) {
     const router = useRouter()
-    const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'mpesa'>('mpesa')
+    const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'mpesa' | 'pesapal' | 'intasend'>('mpesa')
     const [guest, setGuest] = useState<GuestDetails>(EMPTY_GUEST)
     const [error, setError] = useState('')
 
@@ -64,8 +66,12 @@ export default function ClassicCartPage({
         try {
             if (paymentMethod === 'mpesa') {
                 await onMpesaCheckout({ ...guest, mpesaCode: guest.mpesaCode.toUpperCase() })
-            } else {
+            } else if (paymentMethod === 'paypal') {
                 await onPaypalCheckout()
+            } else if (paymentMethod === 'pesapal' && onPesapalCheckout) {
+                await onPesapalCheckout()
+            } else if (paymentMethod === 'intasend' && onIntasendCheckout) {
+                await onIntasendCheckout()
             }
         } catch (e: any) {
             setError(e.message || 'Checkout failed')
@@ -262,6 +268,28 @@ export default function ClassicCartPage({
                                                 </button>
                                             )}
                                         </div>
+                                        <div className="flex gap-2">
+                                            {mpesaConfig?.pesapalEnabled && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('pesapal')}
+                                                    disabled={isProcessing}
+                                                    className={`flex-1 py-2 text-sm border transition-colors sf-pill ${paymentMethod === 'pesapal' ? 'sf-pill-active' : 'sf-pill-inactive'}`}
+                                                >
+                                                    Pesapal
+                                                </button>
+                                            )}
+                                            {mpesaConfig?.intasendEnabled && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('intasend')}
+                                                    disabled={isProcessing}
+                                                    className={`flex-1 py-2 text-sm border transition-colors sf-pill ${paymentMethod === 'intasend' ? 'sf-pill-active' : 'sf-pill-inactive'}`}
+                                                >
+                                                    Intasend
+                                                </button>
+                                            )}
+                                        </div>
                                         {!mpesaConfig?.enabled && (
                                             <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                                 Payments are not yet configured for this store.
@@ -379,17 +407,21 @@ export default function ClassicCartPage({
 
                                     <Button size="lg" className="w-full sf-btn-primary" disabled={isProcessing} onClick={handleCheckout}>
                                         {isProcessing ? (
-                                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{paymentMethod === 'mpesa' ? 'Submitting…' : 'Redirecting to PayPal…'}</>
+                                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
                                         ) : paymentMethod === 'mpesa' ? (
                                             <><Shield className="mr-2 h-4 w-4" />Confirm M-PESA Payment</>
-                                        ) : (
+                                        ) : paymentMethod === 'paypal' ? (
                                             <><Shield className="mr-2 h-4 w-4" />Pay with PayPal · {formatUSD(totalUSD)}</>
+                                        ) : paymentMethod === 'pesapal' ? (
+                                            <><Shield className="mr-2 h-4 w-4" />Pay Securely via Pesapal</>
+                                        ) : (
+                                            <><Shield className="mr-2 h-4 w-4" />Pay Securely via Intasend</>
                                         )}
                                     </Button>
 
                                     <div className="sf-security-badge flex items-center justify-center gap-1.5 text-xs py-2">
                                         <Shield className="w-3.5 h-3.5 flex-shrink-0" />
-                                        <span>{paymentMethod === 'mpesa' ? 'Your transaction code verifies this payment' : 'Secured by PayPal'}</span>
+                                        <span>{paymentMethod === 'mpesa' ? 'Your transaction code verifies this payment' : 'Secured connection'}</span>
                                     </div>
 
                                     <p className="text-xs text-center leading-relaxed" style={{ color: 'var(--sf-foreground-subtle)' }}>

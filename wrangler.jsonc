@@ -1,26 +1,33 @@
 {
-    "$schema": "node_modules/wrangler/config-schema.json",
-    "name": "mcloud",
-    "main": ".open-next/worker.js",
-    "compatibility_date": "2025-04-01",
-    "compatibility_flags": [
-        "nodejs_compat",
-        "global_fetch_strictly_public"
-    ],
-    "assets": {
-        "directory": ".open-next/assets",
-        "binding": "ASSETS"
-    },
-    "services": [
-        {
-            "binding": "WORKER_SELF_REFERENCE",
-            "service": "mcloud"
-        }
-    ],
-    "observability": {
-        "logs": {
-            "enabled": true,
-            "invocation_logs": true
-        }
-    }
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mcloud",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2025-04-01",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "mcloud"
+		}
+	],
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
+		}
+	},
+	"kv_namespaces": [
+		{
+			"binding": "STORE_INTEGRATIONS",
+			"id": "4336f9938ccb4eff8f4f9b9a964c8d51",
+			"remote": true
+		}
+	]
 }

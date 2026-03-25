@@ -164,6 +164,8 @@ export interface MpesaConfig {
     account?: string
     enabled: boolean
     paypalEnabled: boolean
+    pesapalEnabled?: boolean
+    intasendEnabled?: boolean
 }
 
 export interface CartPageProps {
@@ -176,6 +178,8 @@ export interface CartPageProps {
     onRemoveItem: (variantId: string) => void
     onMpesaCheckout: (guest: GuestDetails) => Promise<void>
     onPaypalCheckout: () => Promise<void>
+    onPesapalCheckout?: () => Promise<void>
+    onIntasendCheckout?: () => Promise<void>
     isProcessing: boolean
 }
 

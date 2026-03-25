@@ -16,5 +16,5 @@ export default async function PaymentsPage({
         .single()
     if (!store) notFound()
 
-    return <PaymentSettings storeId={store.id} />
+    return <PaymentSettings storeId={store.id} slug={slug} />
 }
