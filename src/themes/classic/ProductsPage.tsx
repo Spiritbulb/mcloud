@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { Search, Loader2, ShoppingBag, X, Star, BadgeCheck, Package, Zap } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
@@ -9,10 +9,13 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { ProductsPageProps, ProductItem } from '../types'
+import { WishlistButton } from '@/components/store/WishlistButton'
+import { createClient } from '@/lib/client'
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({ product }: { product: ProductItem }) {
     const { addToCart, storeSlug } = useCart()
+    const supabase = createClient()
     const [isLoading, setIsLoading] = useState(false)
 
     const imageUrl =
@@ -45,9 +48,45 @@ function ProductCard({ product }: { product: ProductItem }) {
         }
     }
 
+    // Named as a function, not a value
+    const getStoreId = async (storeSlug: string): Promise<string | null> => {
+        const { data, error } = await supabase
+            .from('stores')
+            .select('id')
+            .eq('slug', storeSlug)
+            .single()
+
+        if (error) {
+            // PGRST116 = no rows found — not necessarily a hard error
+            if (error.code === 'PGRST116') return null
+            console.error('Error fetching store ID:', error)
+            return null
+        }
+
+        return data?.id ?? null
+    }
+
+    const [storeId, setStoreId] = useState<string | null>(null)
+
+    useEffect(() => {
+        const fetchStoreId = async () => {
+            if (storeSlug) {
+                const id = await getStoreId(storeSlug)
+                setStoreId(id)
+            }
+        }
+        fetchStoreId()
+    }, [storeSlug])
+
+
     return (
         <Card className="sf-card group hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col py-0">
             <div className="relative overflow-hidden aspect-[4/5] sf-bg-muted">
+                {storeId && (
+                    <div className="absolute top-2 right-2 z-10">
+                        <WishlistButton productId={product.id} storeId={storeId} />
+                    </div>
+                )}
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -67,6 +106,7 @@ function ProductCard({ product }: { product: ProductItem }) {
             </div>
 
             <CardContent className="pt-4 pb-6 flex-1 flex flex-col">
+
                 <div className="space-y-2 mb-4">
                     <div
                         className="flex items-center gap-1 text-sm mb-1"

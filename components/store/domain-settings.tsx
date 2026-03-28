@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent } from '@/components/ui/card'
-import { Loader2 } from 'lucide-react'
+import { Check, CheckCircle, Loader2 } from 'lucide-react'
 
 export default function DomainSettings({
     storeId,
@@ -73,18 +73,18 @@ export default function DomainSettings({
 
                 <Button
                     onClick={handleSave}
-                    disabled={saving || !domain.trim()}
-                    className="w-full h-9 text-sm"
+                    disabled={saving || !domain.trim() || status?.verified}
+                    className={`w-full h-9 text-sm ${status?.verified ? 'bg-green-100' : 'bg-primary hover:bg-primary/90'}`}
                 >
                     {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                    {saving ? 'Connecting...' : 'Connect domain'}
+                    {saving ? 'Connecting...' : status?.verified ? <span className="flex items-center gap-1.5"><CheckCircle className="w-3.5 h-3.5" /> Connected</span> : 'Connect domain'}
                 </Button>
             </div>
 
-            {domain && (
-                <Card className="max-w-sm">
+            {domain && !status?.verified && (
+                <Card className="max-w-vw">
                     <CardContent className="pt-4 pb-4 space-y-4">
-                        <p className="text-sm font-medium text-foreground">DNS Configuration</p>
+                        <p className="text-sm font-medium text-foreground">DNS Configuration for <span className="text-foreground">{domain}</span></p>
                         <p className="text-xs text-muted-foreground">
                             Add this CNAME record at your domain registrar:
                         </p>
@@ -95,9 +95,14 @@ export default function DomainSettings({
                                 { k: 'Name', v: domain.split('.')[0] },
                                 { k: 'Value', v: 'cname.vercel-dns.com' },
                             ].map(({ k, v }) => (
-                                <div key={k} className="flex justify-between gap-4">
-                                    <span className="text-muted-foreground">{k}</span>
+                                <div key={k} className="flex flex-row justify-between">
                                     <span className="text-foreground">{v}</span>
+                                    <Button
+                                        onClick={() => navigator.clipboard.writeText(v)}
+                                        className="w-12 h-6 text-sm"
+                                    >
+                                        Copy
+                                    </Button>
                                 </div>
                             ))}
                         </div>

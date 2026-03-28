@@ -30,7 +30,7 @@ export function SettingsHeader({
     if (openMobile) return null
 
     return (
-        <header className="shrink-0 border-b border-light bg-background z-40">
+        <header className="shrink-0 border-b-2 border-light bg-background z-40">
             <div className="px-4 md:px-6 h-[72px] flex items-center justify-between gap-6">
 
                 {/* Left: breadcrumb */}

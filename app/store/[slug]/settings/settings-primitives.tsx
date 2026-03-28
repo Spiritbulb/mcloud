@@ -27,7 +27,7 @@ export function SettingsSection({
             className=""
         >
             {(title || description) && (
-                <div className="px-6 py-4 border-b border-light flex items-start justify-between gap-4 rounded-full">
+                <div className="px-6 py-4 border-b border-light flex items-start justify-between gap-4">
                     <div>
                         {title && (
                             <h3 className="text-[14px] font-montserrat font-bold text-foreground leading-snug tracking-tight">{title}</h3>

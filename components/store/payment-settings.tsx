@@ -60,7 +60,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                 if (res.ok) {
                     const data = await res.json()
                     const { mpesa, paypal, pesapal, intasend } = data
-                    
+
                     if (mpesa) {
                         setMpesaEnabled(mpesa.enabled ?? false)
                         setMpesaType(mpesa.mpesa_type ?? 'till')
@@ -154,9 +154,9 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
     return (
         <div className="space-y-8">
             <div>
-                <h2 className="text-base font-semibold text-foreground">Payment Integrations</h2>
+                <h2 className="text-lg font-semibold text-foreground">Payment Integrations</h2>
                 <p className="text-sm text-muted-foreground mt-0.5">Configure how customers pay in your store</p>
-                {error && <p className="text-sm text-destructive mt-2">{error}</p>}
+                {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
             </div>
 
             {/* M-PESA */}
@@ -187,8 +187,8 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                                         key={t}
                                         onClick={() => setMpesaType(t)}
                                         className={`flex-1 h-9 text-xs transition-colors ${mpesaType === t
-                                            ? 'bg-foreground text-background font-medium'
-                                            : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                                            ? 'bg-[#425e7b] text-white font-medium'
+                                            : 'text-muted-foreground hover:text-white hover:bg-[#425e7b]/60 cursor-pointer'
                                             }`}
                                     >
                                         {t === 'till' ? 'Till Number' : 'Paybill'}
@@ -217,7 +217,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                                 />
                             </div>
                         )}
-                        <Button onClick={saveMpesa} disabled={saving === 'mpesa'} className="w-full h-9 text-sm">
+                        <Button onClick={saveMpesa} disabled={saving === 'mpesa'} className="w-full h-9 text-sm cursor-pointer bg-[#425e7b] hover:bg-[#425e7b]/60 text-white">
                             {saving === 'mpesa' ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : saved === 'mpesa' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : 'Save Manual M-PESA settings'}
                         </Button>
                     </div>

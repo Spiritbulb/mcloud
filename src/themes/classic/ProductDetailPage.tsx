@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { ProductDetailPageProps } from '../types'
+import { WishlistButton } from '@/components/store/WishlistButton'
 
 export default function ClassicProductDetailPage({
     product,

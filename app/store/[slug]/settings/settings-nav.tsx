@@ -170,7 +170,7 @@ function NavList({
                                         ? 'bg-white/15 text-white/60'
                                         : 'bg-muted text-muted-foreground'
                                 )}>
-                                    BETA
+                                    NEW
                                 </span>
                             )}
                         </SidebarMenuButton>

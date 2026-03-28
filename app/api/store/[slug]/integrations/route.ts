@@ -25,35 +25,41 @@ export async function GET(
             return NextResponse.json({ error: 'Store not found' }, { status: 404 })
         }
 
-        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace
-        if (!kv) {
-            console.error('STORE_INTEGRATIONS KV not bound')
-            return NextResponse.json({ error: 'System configuration error' }, { status: 500 })
+        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace | undefined
+
+        // Always fetch Postgres data as the baseline (covers existing stores + dev where KV is unbound)
+        const { data: pgIntegrations } = await supabase
+            .from('store_integrations')
+            .select('provider, config, is_active')
+            .eq('store_id', store.id)
+
+        const pgMap: Record<string, any> = {}
+        if (pgIntegrations) {
+            pgIntegrations.forEach(intg => {
+                pgMap[intg.provider] = {
+                    ...(typeof intg.config === 'object' && intg.config ? intg.config : {}),
+                    enabled: intg.is_active
+                }
+            })
         }
 
-        let mpesaData = await kv.get(`store:${store.id}:integration:mpesa`, 'json')
-        let paypalData = await kv.get(`store:${store.id}:integration:paypal`, 'json')
-        let pesapalData = await kv.get(`store:${store.id}:integration:pesapal`, 'json')
-        let intasendData = await kv.get(`store:${store.id}:integration:intasend`, 'json')
-
-        // Fallback to Postgres for existing stores
-        if (!mpesaData || !paypalData || !pesapalData || !intasendData) {
-            const { data: pgIntegrations } = await supabase
-                .from('store_integrations')
-                .select('provider, config, is_active')
-                .eq('store_id', store.id)
-
-            if (pgIntegrations) {
-                pgIntegrations.forEach(intg => {
-                    // Using structural typing logic here
-                    const fallbackData = { ...(typeof intg.config === 'object' && intg.config ? intg.config : {}), enabled: intg.is_active }
-                    if (intg.provider === 'mpesa' && !mpesaData) mpesaData = fallbackData
-                    if (intg.provider === 'paypal' && !paypalData) paypalData = fallbackData
-                    if (intg.provider === 'pesapal' && !pesapalData) pesapalData = fallbackData
-                    if (intg.provider === 'intasend' && !intasendData) intasendData = fallbackData
-                })
+        // Overlay KV data on top of PG data (KV is source of truth in prod)
+        const getProviderData = async (provider: string) => {
+            if (kv) {
+                try {
+                    const kvData = await kv.get(`store:${store.id}:integration:${provider}`, 'json')
+                    if (kvData) return kvData
+                } catch (e) {
+                    console.warn(`KV read failed for ${provider}, falling back to PG:`, e)
+                }
             }
+            return pgMap[provider] ?? null
         }
+
+        const mpesaData = await getProviderData('mpesa')
+        const paypalData = await getProviderData('paypal')
+        const pesapalData = await getProviderData('pesapal')
+        const intasendData = await getProviderData('intasend')
 
         // Filter out secrets before returning to frontend
         const sanitize = (data: any) => {
@@ -79,7 +85,7 @@ export async function GET(
         })
 
     } catch (error) {
-        console.error('Error fetching integrations from KV:', error)
+        console.error('Error fetching integrations:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }
@@ -113,11 +119,6 @@ export async function POST(
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
 
-        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace
-        if (!kv) {
-            return NextResponse.json({ error: 'System configuration error' }, { status: 500 })
-        }
-
         const body = await request.json()
         const { provider, data } = body
 
@@ -125,14 +126,20 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
         }
 
-        // If credentials are partially provided, fetch existing to merge
-        const existingData = await kv.get(`store:${store.id}:integration:${provider}`, 'json') || {}
-        const mergedData = { ...(existingData as object), ...data }
+        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace | undefined
 
-        await kv.put(`store:${store.id}:integration:${provider}`, JSON.stringify(mergedData))
+        if (kv) {
+            try {
+                // If credentials are partially provided, fetch existing to merge
+                const existingData = await kv.get(`store:${store.id}:integration:${provider}`, 'json') || {}
+                const mergedData = { ...(existingData as object), ...data }
+                await kv.put(`store:${store.id}:integration:${provider}`, JSON.stringify(mergedData))
+            } catch (e) {
+                console.warn(`KV write failed for ${provider}, saving to PG only:`, e)
+            }
+        }
 
-        // Ensure store_integrations table understands it is active 
-        // We will keep a small reference in PG even though actual keys are in KV
+        // Upsert into store_integrations — in dev this is the only storage; in prod it tracks active state
         const { data: existingPgRecord } = await supabase
             .from('store_integrations')
             .select('id')
@@ -159,7 +166,7 @@ export async function POST(
         return NextResponse.json({ success: true })
 
     } catch (error) {
-        console.error('Error saving integration to KV:', error)
+        console.error('Error saving integration:', error)
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
     }
 }

@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import { SettingsSection } from '../settings-primitives' // Import from parent settings dir
 
 const INTEGRATION_TABS = [
     { id: 'social', label: 'Social' },
@@ -28,7 +27,7 @@ export default function IntegrationsLayout({
             </div>
 
             <div>
-                <nav className="flex flex-wrap gap-2" aria-label="Tabs">
+                <nav className="flex flex-wrap gap-2 border-b border-light pb-8" aria-label="Tabs">
                     {INTEGRATION_TABS.map((tab) => {
                         const isActive = pathname.includes(`/settings/integrations/${tab.id}`)
                         return (
@@ -37,9 +36,9 @@ export default function IntegrationsLayout({
                                 href={`/settings/integrations/${tab.id}`}
                                 className={cn(
                                     isActive
-                                        ? 'bg-foreground text-background shadow-sm'
-                                        : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
-                                    'px-4 py-2 rounded-full text-[13.5px] font-medium transition-all'
+                                        ? 'bg-[#425e7b] text-white shadow-sm'
+                                        : 'text-muted-foreground hover:bg-[#425e7b]/60 hover:text-white',
+                                    'px-2 py-1 rounded-md text-[13.5px] font-medium transition-all'
                                 )}
                             >
                                 {tab.label}
@@ -49,7 +48,7 @@ export default function IntegrationsLayout({
                 </nav>
             </div>
 
-            <div className="pt-2">
+            <div className="pt-1">
                 {children}
             </div>
         </div>

@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag, FileText } from 'lucide-react'
+import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './getting-started-drawer'
@@ -16,6 +16,7 @@ export const TABS = [
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-[15px] h-[15px]" /> },
     { id: 'products', label: 'Products', icon: <Package className="w-[15px] h-[15px]" /> },
     { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-[15px] h-[15px]" /> },
+    { id: 'customers', label: 'Customers', icon: <User className="w-[15px] h-[15px]" />, beta: true },
     { id: 'blog', label: 'Blog', icon: <FileText className="w-[15px] h-[15px]" /> },
     { id: 'domain', label: 'Domain', icon: <Globe className="w-[15px] h-[15px]" />, beta: true },
     { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-[15px] h-[15px]" />, beta: true },
@@ -114,7 +115,7 @@ export default function SettingsShell({
         logoUrl: store.logo_url,
     }
 
-    const navigate = (id: TabId) => router.push(`/settings/${id}`)
+    const navigate = (id: TabId) => router.push(`${process.env.NODE_ENV === 'development' ? `http://localhost:3000/store/${slug}` : `https://${slug}.menengai.cloud`}/settings/${id}`)
 
     // ── Shell ─────────────────────────────────────────────────────────────────
     return (

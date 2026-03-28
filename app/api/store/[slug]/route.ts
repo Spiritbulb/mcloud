@@ -2,8 +2,6 @@ import { auth0 } from '@/lib/auth0'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
-// /api/store/[slug]/route.ts
-
 export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ slug: string }> }
@@ -14,6 +12,13 @@ export async function GET(
     const { slug } = await params
     const userId = session.user.sub
     const supabase = await createClient()
+
+    // Fetch the logged-in user's own profile
+    const { data: sessionUser } = await supabase
+        .from('users')
+        .select('id, name, email, avatar_url')
+        .eq('id', userId)
+        .single()
 
     // Fetch ALL stores this user belongs to
     const { data: memberships } = await supabase
@@ -30,41 +35,50 @@ export async function GET(
         `)
         .eq('user_id', userId)
 
-    if (!memberships?.length) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (!memberships?.length)
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const currentMembership = memberships.find(m => m.store?.slug === slug)
-    if (!currentMembership) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+    const currentMembership = memberships.find((m) => {
+        const s = Array.isArray(m.store) ? m.store[0] : m.store
+        return s?.slug === slug
+    })
 
-    const { data: store, error } = await supabase
+    if (!currentMembership?.store_id)
+        return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+
+    // Fetch full store details
+    const { data: storeData, error } = await supabase
         .from('stores')
         .select(`
             *,
-            theme:store_themes(*),
-            user:users!stores_owner_id_fkey(
-                id,
-                name,
-                email,
-                avatar_url
-            )
+            theme:store_themes(*)
         `)
         .eq('id', currentMembership.store_id)
         .single()
 
     if (error) console.error('[store fetch]', error.code, error.message)
-    if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+    if (!storeData) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
 
-    const allStores = memberships.map(m => {
-        const store = m.store as { id: string; name: string; slug: string; logo_url: string }
+    const allStores = memberships.map((m) => {
+        const memberStore = Array.isArray(m.store) ? m.store[0] : m.store
         return {
-            id: store.id,
-            name: store.name,
-            slug: store.slug,
-            logo_url: store.logo_url,
+            id: memberStore?.id ?? '',
+            name: memberStore?.name ?? '',
+            slug: memberStore?.slug ?? '',
+            logo_url: memberStore?.logo_url ?? null,
             role: m.role,
         }
     })
+
     return NextResponse.json({
-        ...store,
+        ...storeData,
+        // `user` is always the logged-in user, never the store owner
+        user: sessionUser ?? {
+            id: userId,
+            name: session.user.name ?? 'Account',
+            email: session.user.email ?? '',
+            avatar_url: session.user.picture ?? null,
+        },
         role: currentMembership.role,
         allStores,
     })
