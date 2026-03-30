@@ -1,0 +1,136 @@
+<section class="sf-section-muted py-12 md:py-20">
+  <div class="container mx-auto">
+    {{- - HEADER - -}}
+    <div class="mb-10 md:mb-14">
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
+        Collections
+      </span>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">Shop by Category</h2>
+      <p class="font-light text-sm mt-2" style="color: var(--sf-foreground-subtle)">
+        Curated selections for every need
+      </p>
+    </div>
+
+    {{- - FILTER PILLS - -}}
+    <div
+      class="sf-collections__pills flex gap-2 overflow-x-auto pb-4 mb-8"
+      style="-webkit-overflow-scrolling: touch; scrollbar-width: none"
+    >
+      <button
+        class="sf-pill sf-pill-active sf-collections__pill shrink-0 px-4 py-1.5 text-sm border transition-colors"
+        data-collection="all"
+        onclick="sfFilterCollection(this, 'all')"
+      >
+        All
+      </button>
+      {%- for collection in collections -%}
+        <button
+          class="sf-pill sf-pill-inactive sf-collections__pill shrink-0 px-4 py-1.5 text-sm border transition-colors"
+          data-collection="{{ collection.id }}"
+          onclick="sfFilterCollection(this, '{{ collection.id }}')"
+        >
+          {{ collection.name }}
+        </button>
+      {%- endfor -%}
+    </div>
+
+    {{- - GRID - -}}
+    <div
+      class="grid gap-6 md:gap-8"
+      style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))"
+    >
+      {%- for collection in collections -%}
+        <article
+          class="sf-card sf-collection-card group cursor-pointer overflow-hidden sf-animate-fadein"
+          data-collection-id="{{ collection.id }}"
+          onclick="window.location.href='/store/{{ store.slug }}/collections/{{ collection.slug }}'"
+        >
+          {{- - IMAGE - -}}
+          <div class="relative overflow-hidden sf-bg-muted sf-collection-card__image-wrap">
+            {%- if collection.image_url -%}
+              <img
+                src="{{ collection.image_url }}"
+                alt="{{ collection.name }}"
+                loading="lazy"
+                class="sf-collection-card__image absolute inset-0 w-full h-full object-cover"
+              >
+            {%- else -%}
+              <div class="sf-collection-placeholder w-full h-full"></div>
+            {%- endif -%}
+
+            {{- - HOVER OVERLAY - -}}
+            <div class="sf-collection-card__overlay absolute inset-0 flex items-end p-4">
+              <span
+                class="sf-collection-card__cta text-xs uppercase tracking-widest font-medium"
+                style="color: #fff; border-bottom: 1px solid rgba(255,255,255,0.5); padding-bottom: 2px"
+              >
+                Explore collection →
+              </span>
+            </div>
+          </div>
+
+          {{- - CONTENT - -}}
+          <div class="px-4 pt-4 pb-4 space-y-1">
+            <h3 class="sf-heading text-xl font-light sf-collection-card__name">
+              {{ collection.name }}
+            </h3>
+            {%- if collection.description -%}
+              <p class="line-clamp-2 text-sm" style="color: var(--sf-foreground-subtle)">
+                {{ collection.description }}
+              </p>
+            {%- endif -%}
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+    {{- - VIEW ALL - -}}
+    <div class="mt-10 flex justify-center">
+      <a
+        href="/store/{{ store.slug }}/products"
+        class="sf-pill sf-pill-inactive border px-8 py-2.5 text-sm inline-flex items-center gap-2 transition-all"
+      >
+        Browse all products
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          {% raw %}<path d="M5 12h14M12 5l7 7-7 7"/>{% endraw %}
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function () {
+    function sfFilterCollection(btn, collectionId) {
+      // update pill states
+      var pills = document.querySelectorAll('.sf-collections__pill');
+      pills.forEach(function (p) {
+        p.classList.remove('sf-pill-active');
+        p.classList.add('sf-pill-inactive');
+      });
+      btn.classList.remove('sf-pill-inactive');
+      btn.classList.add('sf-pill-active');
+
+      // show/hide cards
+      var cards = document.querySelectorAll('.sf-collection-card');
+      cards.forEach(function (card) {
+        if (collectionId === 'all' || card.dataset.collectionId === collectionId) {
+          card.style.display = '';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    }
+
+    // expose to onclick handlers
+    window.sfFilterCollection = sfFilterCollection;
+  })();
+</script>

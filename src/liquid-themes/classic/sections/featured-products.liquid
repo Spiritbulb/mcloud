@@ -1,0 +1,47 @@
+<section class="py-12 md:py-20">
+  <div class="container mx-auto">
+    {{- - HEADER - -}}
+    <div class="mb-10 md:mb-14">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
+        <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+          Featured Collection
+        </span>
+        <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
+      </div>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Top Picks</h2>
+    </div>
+
+    {{- - GRID - -}}
+    <div
+      class="grid gap-4 md:gap-6"
+      style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"
+    >
+      {%- for product in products -%}
+        {%- render 'classic/sections/product-card', store: store, product: product -%}
+      {%- endfor -%}
+    </div>
+
+    {{- - VIEW ALL - -}}
+    <div class="mt-10 flex justify-center">
+      <a
+        href="/store/{{ store.slug }}/products"
+        class="sf-pill sf-pill-inactive border px-8 py-2.5 text-sm inline-flex items-center gap-2 transition-all"
+      >
+        View all products
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          {% raw %}<path d="M5 12h14M12 5l7 7-7 7"/>{% endraw %}
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>

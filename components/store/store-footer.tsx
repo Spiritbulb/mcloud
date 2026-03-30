@@ -1,7 +1,10 @@
+import { Icon, Instagram, LucideIcon, Twitter } from "lucide-react"
+
 interface Store {
     id: string
     name: string
     slug: string
+    is_pro: boolean
     description: string | null
     logo_url: string | null
     currency: string
@@ -36,14 +39,14 @@ interface StoreFooterProps {
 // ─── Shared: build social link list ───────────────────────────────────────────
 function buildSocialLinks(settings: Store['settings']) {
     return [
-        settings.socialLinks?.instagram && { href: settings.socialLinks.instagram, label: 'Instagram' },
+        settings.socialLinks?.instagram && { href: settings.socialLinks.instagram, label: 'Instagram', icon: Instagram },
         settings.socialLinks?.tiktok && { href: settings.socialLinks.tiktok, label: 'TikTok' },
-        settings.socialLinks?.twitter && { href: settings.socialLinks.twitter, label: 'Twitter / X' },
+        settings.socialLinks?.twitter && { href: settings.socialLinks.twitter, label: 'Twitter / X', icon: Twitter },
         settings.socialLinks?.whatsapp && {
             href: `https://wa.me/${settings.socialLinks.whatsapp}`,
-            label: 'WhatsApp',
+            label: 'WhatsApp'
         },
-    ].filter(Boolean) as { href: string; label: string }[]
+    ].filter(Boolean) as { href: string; label: string, icon: LucideIcon }[]
 }
 
 // ─── Classic Footer ────────────────────────────────────────────────────────────
@@ -60,7 +63,7 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
 
                 {links.length > 0 && (
                     <div className="flex items-center gap-5">
-                        {links.map(({ href, label }) => (
+                        {links.map(({ href, label, icon }) => (
                             <a
                                 key={label}
                                 href={href}
@@ -71,23 +74,25 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
                                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
                                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
                             >
-                                {label}
+
                             </a>
                         ))}
                     </div>
                 )}
 
-                <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                    Powered by{' '}
-                    <a
-                        href="https://menengai.cloud"
-                        style={{ color: 'var(--sf-foreground-subtle)' }}
-                        onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
-                        onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
-                    >
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.is_pro && (
+                    <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        Made for free on{' '}
+                        <a
+                            href="https://menengai.cloud"
+                            style={{ color: 'var(--sf-foreground-subtle)' }}
+                            onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
+                            onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
+                        >
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )

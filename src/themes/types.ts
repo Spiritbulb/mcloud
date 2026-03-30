@@ -88,6 +88,8 @@ export interface ProductItem {
     compare_at_price: number | null
     images: string[]
     inventory_quantity: number
+    track_inventory: boolean
+
     is_active: boolean
     sku: string | null
     metadata: any
@@ -123,6 +125,8 @@ export interface ProductDetailData {
     inventory_quantity: number
     is_active: boolean
     sku: string | null
+    reviewCount?: number
+    avgRating?: number | null
     metadata: {
         tags?: string[]
         productType?: string
@@ -136,6 +140,7 @@ export interface ProductDetailData {
 
 export interface ProductDetailPageProps {
     storeSlug: string
+    storeId: string
     product: ProductDetailData
     selectedVariant: ProductVariant | null
     selectedOptions: Record<string, string>
@@ -146,6 +151,7 @@ export interface ProductDetailPageProps {
     onImageChange: (index: number) => void
     onAddToCart: () => void
     isAddingToCart: boolean
+    onReviewSubmitted: () => void
 }
 
 // ── Cart page ─────────────────────────────────────────────────────────────────

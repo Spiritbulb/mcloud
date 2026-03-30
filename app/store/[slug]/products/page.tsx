@@ -1,90 +1,62 @@
-'use client'
-
 import '@/app/store/[slug]/storefront.css'
-import { useEffect, useState, useCallback } from 'react'
-import { useCart } from '@/contexts/CartContext'
-import { createClient } from '@/lib/client'
-import ClassicProductsPage from '../../../../src/themes/classic/ProductsPage'
+import { createClient } from '@/lib/server'
+import { notFound } from 'next/navigation'
+import { castStore, castProducts } from '@/lib/db-cast'
+import { engine } from '@/lib/liquid'
 
-import type { ProductItem } from '../../../../src/themes/types'
-import NoirProductsPage from '../../../../src/themes/noir/ProductsPage'
-import MinimalProductsPage from '../../../../src/themes/minimal/ProductsPage'
-import PhotographyProductsPage from '../../../../src/themes/photography/ProductsPage'
-import PortfolioProductsPage from '../../../../src/themes/portfolio/ProductsPage'
-import ServicesProductsPage from '../../../../src/themes/services/ProductsPage'
-import RestaurantProductsPage from '../../../../src/themes/restaurant/ProductsPage'
+export const revalidate = 60
 
-const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
-    classic: ClassicProductsPage,
-    noir: NoirProductsPage,
-    minimal: MinimalProductsPage,
-    photography: PhotographyProductsPage,
-    portfolio: PortfolioProductsPage,
-    services: ServicesProductsPage,
-    restaurant: RestaurantProductsPage,
+interface Props {
+    params: Promise<{ slug: string }>
 }
 
+export async function generateMetadata({ params }: Props) {
+    const { slug } = await params
+    const supabase = await createClient()
 
-export default function ProductsPage() {
-    const { storeSlug } = useCart()
-    const supabase = createClient()
+    const { data: store } = await supabase
+        .from('stores')
+        .select('name, description')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single()
 
-    const [products, setProducts] = useState<ProductItem[]>([])
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [themeId, setThemeId] = useState<string>('classic')
+    if (!store) return { title: 'Products' }
 
-    const fetchData = useCallback(async () => {
-        try {
-            setError(null)
-            setLoading(true)
-            if (!storeSlug) throw new Error('Store slug not available')
+    return {
+        title: `Products — ${store.name}`,
+        description: store.description ?? `Browse all products at ${store.name}`,
+    }
+}
 
-            const { data: store, error: storeError } = await supabase
-                .from('stores')
-                .select('id, settings, theme:store_themes(theme_id)')
-                .eq('slug', storeSlug)
-                .eq('is_active', true)
-                .single()
+export default async function ProductsPage({ params }: Props) {
+    const { slug } = await params
+    const supabase = await createClient()
 
-            if (storeError || !store) throw new Error('Store not found')
+    const { data: rawStore } = await supabase
+        .from('stores')
+        .select('*')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single()
 
-            // Resolve theme
-            const resolvedTheme = (store as any).theme?.theme_id ?? (store.settings as any)?.themeId ?? 'classic'
-            setThemeId(resolvedTheme)
+    if (!rawStore) notFound()
 
-            const { data: productsData, error: productsError } = await supabase
-                .from('products')
-                .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, is_active, sku, metadata')
-                .eq('store_id', store.id)
-                .eq('is_active', true)
-                .order('created_at', { ascending: false })
-                .limit(100)
+    const { data: rawProducts } = await supabase
+        .from('products')
+        .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, track_inventory, sku, metadata')
+        .eq('store_id', rawStore.id)
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(100)
 
-            if (productsError) throw productsError
+    const store = castStore(rawStore)
+    const products = castProducts(rawProducts ?? [])
 
-            const fetched = productsData || []
-            if (fetched.length === 0) setError('No products available at the moment')
-            setProducts(fetched)
-        } catch (err: any) {
-            console.error('Error fetching products:', err)
-            setError(err.message || 'Failed to load products. Please try again.')
-        } finally {
-            setLoading(false)
-        }
-    }, [storeSlug, supabase])
+    const html = await engine.renderFile('classic/templates/products', {
+        store,
+        products,
+    })
 
-    useEffect(() => { fetchData() }, [fetchData])
-
-    const PageComponent = THEME_COMPONENTS[themeId] ?? ClassicProductsPage
-
-    return (
-        <PageComponent
-            storeSlug={storeSlug ?? ''}
-            products={products}
-            loading={loading}
-            error={error}
-            onRetry={fetchData}
-        />
-    )
+    return <div data-liquid dangerouslySetInnerHTML={{ __html: html }} />
 }

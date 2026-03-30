@@ -1,10 +1,8 @@
-// app/store/[slug]/page.tsx
-
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
-import StoreFront from '@/components/store/Storefront'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import { engine } from '@/lib/liquid'
 
 export const revalidate = 60
 
@@ -100,12 +98,12 @@ export default async function StorePage({ params }: Props) {
             .filter(Boolean)
     )
 
-    return (
-        <StoreFront
-            store={store}
-            products={products}
-            collections={collections}
-            featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
-        />
-    )
+    const html = await engine.renderFile('classic/templates/index', {
+        store,
+        products,
+        collections,
+        featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+    })
+
+    return <div data-liquid dangerouslySetInnerHTML={{ __html: html }} />
 }

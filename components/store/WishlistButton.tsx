@@ -5,12 +5,14 @@ import { Heart } from 'lucide-react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { useParams, useRouter } from 'next/navigation'
+import { useIsMobile } from '@/hooks/use-mobile'
 
-export function WishlistButton({ productId, storeId }: { productId: string; storeId: string | null }) {
+export function WishlistButton({ productId, storeId, size }: { productId: string; storeId: string | null, size?: string }) {
     const { user } = useCustomerAuth()
     const { isWishlisted, toggle } = useWishlist()
     const params = useParams<{ slug: string }>()
     const router = useRouter()
+    const isMobile = useIsMobile()
 
     const wishlisted = isWishlisted(productId)
 
@@ -26,14 +28,21 @@ export function WishlistButton({ productId, storeId }: { productId: string; stor
         }
     }
 
+    const sizeClass = size === 'lg' ? 'w-full h-10 rounded-lg' : 'w-8 h-8 rounded-full'
+
     return (
+
         <button
             onClick={handleClick}
-            className={`w-8 h-8 flex items-center justify-center border transition-colors ${wishlisted ? 'bg-black border-black' : 'bg-white border-gray-200 hover:border-black'
+            className={`flex ${sizeClass} items-center justify-center transition-colors cursor-pointer ${wishlisted ? 'bg-black' : 'bg-white'
                 }`}
             aria-label={wishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
         >
-            <Heart className={`w-4 h-4 transition-colors ${wishlisted ? 'fill-white text-white' : 'text-gray-400'}`} />
+            <Heart className={`transition-colors ${wishlisted ? 'fill-red-500 text-red-500' : 'text-white fill-white cursor-pointer'} ${size === 'lg' ? 'w-4 h-4' : 'w-4 h-4'}`} />
+            {size === 'lg' && !isMobile && (
+                <span className="ml-2">{wishlisted ? 'Saved' : 'Save'}</span>
+            )}
         </button>
+
     )
 }

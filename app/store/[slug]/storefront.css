@@ -466,3 +466,200 @@
     text-decoration: underline;
     text-underline-offset: 3px;
 }
+
+/* ── Product Card Animations ─────────────────────────── */
+
+/* Fade-in on mount via scroll observer */
+.sf-animate-fadein {
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.4s ease, transform 0.4s ease;
+}
+
+.sf-animate-fadein.sf-visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* Image zoom on hover */
+.sf-product-card__image {
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.sf-product-card-link:hover .sf-product-card__image {
+    transform: scale(1.06);
+}
+
+/* Image zone height */
+.sf-product-card__image-wrap {
+    height: 16rem;
+}
+
+/* Quick view overlay */
+.sf-product-card__overlay {
+    background: rgba(0, 0, 0, 0);
+    transition: background 0.3s ease;
+    pointer-events: none;
+}
+
+.sf-product-card-link:hover .sf-product-card__overlay {
+    background: rgba(0, 0, 0, 0.18);
+}
+
+.sf-product-card__quick-view {
+    color: #fff;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    border: 1px solid rgba(255, 255, 255, 0.6);
+    padding: 0.4rem 1rem;
+    opacity: 0;
+    transform: translateY(6px);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.sf-product-card-link:hover .sf-product-card__quick-view {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+/* OOS overlay */
+.sf-product-card__oos-overlay {
+    background: rgba(0, 0, 0, 0.45);
+}
+
+/* Placeholder icon */
+.sf-product-card__placeholder {
+    background: var(--sf-muted);
+}
+
+.sf-product-card__bag-icon {
+    width: 2rem;
+    height: 2rem;
+    color: var(--sf-foreground);
+    opacity: 0.2;
+}
+
+/* View button arrow nudge on hover */
+.sf-product-card__view-btn {
+    transition: transform 0.2s ease, background 0.2s ease;
+}
+
+.sf-product-card-link:hover .sf-product-card__view-btn {
+    transform: translateX(2px);
+}
+
+/* Low stock badge */
+.sf-badge-low-stock {
+    background: var(--sf-accent);
+    color: var(--sf-background);
+}
+
+/* ── Hero ─────────────────────────────────────────────── */
+
+.sf-hero__card-animate {
+    opacity: 0;
+    transform: translateY(32px);
+    transition: none;
+}
+
+.sf-hero__card-animate--in {
+    opacity: 1;
+    transform: translateY(0);
+    transition: opacity 0.55s ease, transform 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.sf-hero__btn svg {
+    transition: transform 0.2s ease;
+}
+
+.sf-hero__btn:hover svg {
+    transform: translateX(4px);
+}
+
+.sf-hero__dot {
+    cursor: pointer;
+    transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* Single-slide hero — animate in on load, no JS dependency */
+@keyframes sf-hero-fadein {
+    from {
+        opacity: 0;
+        transform: translateY(32px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.sf-hero__card-animate--load {
+    animation: sf-hero-fadein 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    animation-delay: 0.1s;
+    opacity: 0;
+    /* hidden until animation starts */
+}
+
+/* ── Collections Grid ─────────────────────────────────── */
+
+.sf-collections__pills {
+    scrollbar-width: none;
+}
+
+.sf-collections__pills::-webkit-scrollbar {
+    display: none;
+}
+
+.sf-collection-card {
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    cursor: pointer;
+}
+
+.sf-collection-card:hover {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.sf-collection-card__image-wrap {
+    aspect-ratio: 4 / 3;
+    position: relative;
+}
+
+.sf-collection-card__image {
+    transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.sf-collection-card:hover .sf-collection-card__image {
+    transform: scale(1.05);
+}
+
+.sf-collection-card__overlay {
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.45) 0%, transparent 60%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.sf-collection-card:hover .sf-collection-card__overlay {
+    opacity: 1;
+}
+
+.sf-collection-card__cta {
+    transform: translateY(6px);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+    opacity: 0;
+}
+
+.sf-collection-card:hover .sf-collection-card__cta {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+.sf-collection-card__name {
+    transition: color 0.2s ease;
+}
+
+.sf-collection-card:hover .sf-collection-card__name {
+    color: var(--sf-primary);
+}

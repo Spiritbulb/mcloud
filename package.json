@@ -39,6 +39,7 @@
     "clsx": "^2.1.1",
     "firebase": "^12.7.0",
     "framer-motion": "^12.34.3",
+    "liquidjs": "^10.25.2",
     "lucide-react": "^0.562.0",
     "motion": "^12.34.3",
     "next": "^16.1.5",
