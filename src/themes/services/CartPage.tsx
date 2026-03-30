@@ -138,7 +138,7 @@ export default function ServicesCartPage({
                                     {/* Image */}
                                     <div className="w-18 h-18 flex-shrink-0 rounded-lg overflow-hidden bg-[#f1f5f9] w-[72px] h-[72px]">
                                         <img
-                                            src={item.image || '/api/placeholder/200/200'}
+                                            src={item.image || `${process.env.NEXT_PUBLIC_API_BASE_URL}/placeholder/200/200`}
                                             alt={item.name}
                                             className="w-full h-full object-cover"
                                         />

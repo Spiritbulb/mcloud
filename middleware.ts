@@ -7,11 +7,12 @@ const BANNER_EXCLUDED_PREFIXES = [
   '/settings', '/dashboard', '/orders', '/products/new',
   '/auth/', '/api/', '/onboarding',
 ]
+const SYSTEM_SUBDOMAINS = new Set(['www', 'status', 'api', 'admin', 'mail'])
 
 function getTenantSlug(host: string): string | null {
   if (host.endsWith('.menengai.cloud')) {
     const sub = host.replace('.menengai.cloud', '')
-    if (!sub || sub === 'www') return null
+    if (!sub || SYSTEM_SUBDOMAINS.has(sub)) return null
     return sub
   }
   return null
@@ -54,6 +55,29 @@ export async function middleware(request: NextRequest) {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+
+  // ── System subdomains: bypass all tenant logic ──────────────────────────
+  const subdomain = host.endsWith('.menengai.cloud')
+    ? host.replace('.menengai.cloud', '')
+    : null
+  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
+    return NextResponse.next()
+  }
+
+  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
+    const response = NextResponse.next()
+    response.headers.set('x-middleware-skip', '1')
+    return response
+  }
+
+  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
+    if (subdomain === 'api') {
+      return auth0.middleware(request)
+    }
+    return NextResponse.next()
+  }
+
+
 
   // Always let auth/api/_next through first
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {

@@ -153,7 +153,7 @@ function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel }:
         setSubmitting(true)
         setError(null)
         try {
-            const res = await fetch(`/api/store/${storeSlug}/reviews`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/reviews`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -264,7 +264,7 @@ export function ReviewsSection({ productId, storeSlug, onReviewSubmitted }: { pr
     }
 
     useEffect(() => {
-        fetch(`/api/store/${storeSlug}/reviews?product_id=${productId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/reviews?product_id=${productId}`)
             .then((r) => r.json())
             .then((d) => { setReviews(d.reviews || []); setLoading(false) })
     }, [productId, storeSlug])

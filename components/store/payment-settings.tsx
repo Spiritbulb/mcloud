@@ -56,7 +56,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch(`/api/store/${slug}/integrations`)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/integrations`)
                 if (res.ok) {
                     const data = await res.json()
                     const { mpesa, paypal, pesapal, intasend } = data
@@ -93,7 +93,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
         setError(null)
         setSaved(null)
         try {
-            const res = await fetch(`/api/store/${slug}/integrations`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/integrations`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ provider, data })

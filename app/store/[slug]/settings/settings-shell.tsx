@@ -12,6 +12,7 @@ import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './getting-started-drawer'
 
 export const TABS = [
+    { id: 'home', label: 'Home', icon: <Store className="w-[15px] h-[15px]" /> },
     { id: 'general', label: 'General', icon: <Store className="w-[15px] h-[15px]" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-[15px] h-[15px]" /> },
     { id: 'products', label: 'Products', icon: <Package className="w-[15px] h-[15px]" /> },
@@ -36,8 +37,14 @@ export default function SettingsShell({
     const pathname = usePathname()
     const router = useRouter()
 
-    const activeId = (TABS.find((t) => pathname.match(new RegExp(`/settings/${t.id}(/|$)`)))?.id ?? 'general') as TabId
-    const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'General'
+    const activeId = (
+        TABS.find((t) => {
+            if (t.id === 'home') return false
+            return pathname.match(new RegExp(`/settings/${t.id}(/|$)`))
+        })?.id
+        ?? 'home'
+    ) as TabId
+    const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'Home'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
     const [store, setStore] = useState<any>(null)
@@ -53,7 +60,7 @@ export default function SettingsShell({
     useEffect(() => {
         async function load() {
             try {
-                const res = await fetch(`/api/store/${slug}`)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}`)
                 if (res.status === 401) { setError('unauthenticated'); return }
                 if (res.status === 403 || res.status === 404) { setError('forbidden'); return }
                 if (!res.ok) { setError('unknown'); return }

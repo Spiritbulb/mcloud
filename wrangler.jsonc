@@ -29,5 +29,8 @@
 			"id": "4336f9938ccb4eff8f4f9b9a964c8d51",
 			"remote": true
 		}
-	]
+	],
+	"vars": {
+		"NEXT_PUBLIC_API_BASE_URL": "https://api.menengai.cloud"
+	}
 }

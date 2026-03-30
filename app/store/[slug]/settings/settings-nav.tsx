@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { TabId } from './settings-shell'
+import { usePathname, useRouter } from 'next/navigation'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -141,19 +142,37 @@ function NavList({
     activeTab,
     onSelect,
     TABS,
+    slug
 }: {
     activeTab: string
     onSelect: (id: TabId) => void
     TABS: readonly Tab[]
+    slug: string
 }) {
+    const router = useRouter()
+    const pathname = usePathname()
+    const basePath = process.env.NODE_ENV === 'development'
+        ? `/store/${slug}/settings`
+        : `/settings`
+
+    const handleSelect = (id: TabId) => {
+        if (id === 'home') {
+            router.push(basePath)
+        } else {
+            onSelect(id)
+        }
+    }
+
     return (
         <SidebarMenu>
             {TABS.map((tab) => {
-                const isActive = activeTab === tab.id
+                const isActive = tab.id === 'home'
+                    ? pathname === basePath
+                    : activeTab === tab.id
                 return (
                     <SidebarMenuItem key={tab.id}>
                         <SidebarMenuButton
-                            onClick={() => onSelect(tab.id as TabId)}
+                            onClick={() => handleSelect(tab.id as TabId)}
                             isActive={isActive}
                             className={cn(
                                 'rounded-md h-9 text-[13px] font-medium transition-colors',
@@ -356,7 +375,7 @@ export function SettingsNav({
                 <SidebarContent className="px-3 py-3">
                     <SidebarGroup className="p-0">
                         <SidebarGroupContent>
-                            <NavList activeTab={activeTab} onSelect={onSelect} TABS={TABS} />
+                            <NavList activeTab={activeTab} onSelect={onSelect} TABS={TABS} slug={store.slug} />
                         </SidebarGroupContent>
                     </SidebarGroup>
                 </SidebarContent>
@@ -440,7 +459,7 @@ export function MobileSettingsNav({
 
                     {/* Nav */}
                     <div className="flex-1 overflow-y-auto px-3 py-3">
-                        <NavList activeTab={activeTab} onSelect={handleSelect} TABS={TABS} />
+                        <NavList activeTab={activeTab} onSelect={handleSelect} TABS={TABS} slug={store.slug} />
                     </div>
 
                     {/* Footer */}

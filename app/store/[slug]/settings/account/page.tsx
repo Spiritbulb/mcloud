@@ -186,7 +186,7 @@ function AvatarUploader({
         try {
             const form = new FormData()
             form.append('file', file)
-            const res = await fetch('/api/account/avatar', { method: 'POST', body: form })
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account/avatar`, { method: 'POST', body: form })
             if (!res.ok) throw new Error()
             const { url } = await res.json()
             onUpload(url)
@@ -264,7 +264,7 @@ function ProfileSection({ user, onUpdate }: { user: SessionUser; onUpdate: (u: P
         setFeedback(null)
 
         try {
-            const res = await fetch('/api/account/profile', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account/profile`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name: name.trim() }),
@@ -329,7 +329,7 @@ function PasswordSection() {
         setLoading(true)
         setFeedback(null)
         try {
-            const res = await fetch('/api/account/password', { method: 'POST' })
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account/password`, { method: 'POST' })
             if (!res.ok) throw new Error()
             setSent(true)
             setFeedback({ type: 'success', message: 'Check your inbox — we sent you a password reset link.' })
@@ -383,7 +383,7 @@ function SessionsSection() {
     const revoke = async (id: string) => {
         setRevoking(id)
         try {
-            await fetch(`/api/account/sessions/${id}`, { method: 'DELETE' })
+            await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account/sessions/${id}`, { method: 'DELETE' })
             setSessions((prev) => prev.filter((s) => s.id !== id))
         } finally {
             setRevoking(null)
@@ -444,7 +444,7 @@ function DangerSection() {
         if (input !== 'delete my account') return
         setLoading(true)
         try {
-            await fetch('/api/account', { method: 'DELETE' })
+            await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account`, { method: 'DELETE' })
             window.location.href = '/auth/logout'
         } finally {
             setLoading(false)
@@ -510,7 +510,7 @@ export default function AccountPage() {
     const [loading, setLoading] = useState(true)
 
     useEffect(() => {
-        fetch('/api/account')
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/account`)
             .then((r) => r.json())
             .then((data) => setUser(data))
             .finally(() => setLoading(false))

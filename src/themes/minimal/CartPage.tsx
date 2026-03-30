@@ -91,7 +91,7 @@ export default function MinimalCartPage({
                         {cartItems.map(item => (
                             <div key={item.variantId} className="py-5 flex gap-4">
                                 <div className="relative flex-shrink-0 w-16 h-20 bg-[#ede9e3] overflow-hidden">
-                                    <img src={item.image || '/api/placeholder/64/80'} alt={item.name} className="object-cover w-full h-full" />
+                                    <img src={item.image || `${process.env.NEXT_PUBLIC_API_BASE_URL}/placeholder/64/80`} alt={item.name} className="object-cover w-full h-full" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-2 mb-2">

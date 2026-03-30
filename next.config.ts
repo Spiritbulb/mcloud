@@ -19,10 +19,21 @@ const nextConfig: NextConfig = {
       {
         protocol: 'https',
         hostname: '**',
-      }
-
-
+      },
     ],
+  },
+  async rewrites() {
+    return {
+      beforeFiles: [
+        {
+          source: '/:path*',
+          has: [{ type: 'host', value: 'api\\.menengai\\.cloud' }],
+          destination: '/api/:path*',
+        },
+      ],
+      afterFiles: [],
+      fallback: [],
+    }
   },
 };
 

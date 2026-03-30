@@ -138,7 +138,7 @@ export default function ClassicCartPage({
                                             style={{ backgroundColor: 'var(--sf-muted)' }}
                                         >
                                             <img
-                                                src={item.image || '/api/placeholder/200/200'}
+                                                src={item.image || `${process.env.NEXT_PUBLIC_API_BASE_URL}/placeholder/200/200`}
                                                 alt={item.name}
                                                 className="object-cover w-full h-full"
                                             />

@@ -23,7 +23,7 @@ export default function DomainSettings({
     const handleSave = async () => {
         setSaving(true)
         setError(null)
-        const res = await fetch('/api/store/domain', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/domain`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ storeId, domain }),
@@ -36,7 +36,7 @@ export default function DomainSettings({
 
     const checkVerification = async () => {
         setChecking(true)
-        const res = await fetch(`/api/store/domain?storeId=${storeId}`)
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/domain?storeId=${storeId}`)
         const json = await res.json()
         setStatus(json)
         setChecking(false)
