@@ -27,10 +27,12 @@ export default function LayoutWrapper({
     children,
     store,
     cssVars,
+    settings
 }: {
     children: React.ReactNode
     store: any
     cssVars: React.CSSProperties
+    settings: any
 }) {
     const pathname = usePathname()
 
@@ -46,7 +48,7 @@ export default function LayoutWrapper({
         >
             <StoreNav store={store} />
             {children}
-            <StoreFooter store={store} settings={store?.settings} />
+            <StoreFooter store={store} settings={settings} />
             <CartIsland />
             <WishlistIsland />
             <LiquidScriptRunner />
