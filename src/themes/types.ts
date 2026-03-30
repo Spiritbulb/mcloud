@@ -100,6 +100,8 @@ export interface ProductsPageProps {
     products: ProductItem[]
     loading?: boolean
     error?: string | null
+    storeId: string       // ← add these
+    currency: string      // ←
     onRetry?: () => void
 }
 
