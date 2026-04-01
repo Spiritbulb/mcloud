@@ -51,7 +51,9 @@ export default function CartPageContainer() {
                 const resolvedTheme = (store as any).theme?.theme_id ?? (store.settings as any)?.themeId ?? 'classic'
                 setThemeId(resolvedTheme)
 
-                fetch(`${process.env.API_BASE_URL}/store/${storeSlug}/integrations`)
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/integrations`, {
+                    credentials: 'include',
+                })
                     .then(res => res.json())
                     .then(data => {
                         const m = data.mpesa
@@ -216,8 +218,9 @@ export default function CartPageContainer() {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'paypal')
 
-            const res = await fetch(`${process.env.API_BASE_URL}/payments/paypal/create-order`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/paypal/create-order`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, items: validItems, totalKES: Number(totalKES.toFixed(2)) }),
             })
@@ -235,8 +238,9 @@ export default function CartPageContainer() {
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'mpesa') // generalized
-            const res = await fetch(`${process.env.API_BASE_URL}/payments/pesapal/create-order?store=${storeSlug}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/pesapal/create-order?store=${storeSlug}`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
             })
@@ -253,8 +257,9 @@ export default function CartPageContainer() {
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'mpesa')
-            const res = await fetch(`${process.env.API_BASE_URL}/payments/intasend/create-order?store=${storeSlug}`, {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/intasend/create-order?store=${storeSlug}`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
             })

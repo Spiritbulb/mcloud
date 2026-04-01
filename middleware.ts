@@ -7,7 +7,13 @@ const BANNER_EXCLUDED_PREFIXES = [
   '/settings', '/dashboard', '/orders', '/products/new',
   '/auth/', '/api/', '/onboarding',
 ]
-const SYSTEM_SUBDOMAINS = new Set(['www', 'status', 'api', 'admin', 'mail'])
+const SYSTEM_SUBDOMAINS = new Set(['status', 'api', 'admin', 'mail'])
+const PUBLIC_API_PREFIXES = [
+  '/store/',     // ← your existing store route
+  '/api/health',
+  '/api/store/',
+  '/api/categories',
+]
 
 function getTenantSlug(host: string): string | null {
   if (host.endsWith('.menengai.cloud')) {
@@ -56,25 +62,48 @@ export async function middleware(request: NextRequest) {
   const host = request.headers.get('host') ?? ''
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
 
-  // ── System subdomains: bypass all tenant logic ──────────────────────────
   const subdomain = host.endsWith('.menengai.cloud')
     ? host.replace('.menengai.cloud', '')
     : null
-  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
-    return NextResponse.next()
-  }
-
-  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
-    const response = NextResponse.next()
-    response.headers.set('x-middleware-skip', '1')
-    return response
-  }
 
   if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
     if (subdomain === 'api') {
-      return auth0.middleware(request)
+      const origin = request.headers.get('origin') ?? ''
+      const isAllowedOrigin =
+        origin.endsWith('.menengai.cloud') || origin === 'https://menengai.cloud'
+
+      // Handle preflight once for all routes
+      if (request.method === 'OPTIONS') {
+        return new NextResponse(null, {
+          status: 204,
+          headers: {
+            'Access-Control-Allow-Origin': isAllowedOrigin ? origin : '',
+            'Access-Control-Allow-Credentials': 'true',
+            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+          },
+        })
+      }
+
+      // Inject CORS headers on all api subdomain responses
+      const response = PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))
+        ? NextResponse.next()
+        : await (async () => {
+          const session = await auth0.getSession(request)
+          if (!session?.user) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+          }
+          return NextResponse.next()
+        })()
+
+      if (isAllowedOrigin) {
+        response.headers.set('Access-Control-Allow-Origin', origin)
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
+      }
+
+      return response
     }
-    return NextResponse.next()
+    return NextResponse.next() // status, etc.
   }
 
 

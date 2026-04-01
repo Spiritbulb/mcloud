@@ -1,18 +1,42 @@
 // lib/liquid.ts
 import { Liquid } from 'liquidjs'
-import path from 'path'
-
-const themesRoot = path.resolve(process.cwd(), 'src/liquid-themes')
+import { themeFiles } from '@/src/lib/theme-manifest'
 
 export const engine = new Liquid({
-    root: [
-        themesRoot,
-        path.join(themesRoot, 'classic/sections'),
-        path.join(themesRoot, 'classic/snippets'),
-    ],
     extname: '.liquid',
     cache: process.env.NODE_ENV === 'production',
+    globals: {
+        ga_tracking_id: process.env.GA_TRACKING_ID || 'G-P7RJ7JW0BM',
+    },
 })
+
+// In-memory filesystem — no disk access at runtime
+engine.options.fs = {
+    sep: '/',
+    readFileSync: (file: string) => {
+        const key = file.replace(/\.liquid$/, '')
+        if (themeFiles[key] !== undefined) return themeFiles[key]
+        throw new Error(`ENOENT: ${file}`)
+    },
+    existsSync: (file: string) => {
+        const key = file.replace(/\.liquid$/, '')
+        return key in themeFiles
+    },
+    resolve: (_root: string, file: string, _ext: string) => {
+        // strip leading slash if any, normalize to forward slashes
+        return file.replace(/\\/g, '/').replace(/^\//, '')
+    },
+    // async counterparts required by LiquidJS FS interface
+    readFile: async (file: string) => {
+        const key = file.replace(/\.liquid$/, '')
+        if (themeFiles[key] !== undefined) return themeFiles[key]
+        throw new Error(`ENOENT: ${file}`)
+    },
+    exists: async (file: string) => {
+        const key = file.replace(/\.liquid$/, '')
+        return key in themeFiles
+    },
+}
 
 // {{ product.price | money: store.currency }}
 engine.registerFilter('money', (amount: number, currency = 'KES') => {

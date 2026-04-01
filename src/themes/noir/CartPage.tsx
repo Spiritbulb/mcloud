@@ -105,7 +105,7 @@ export default function NoirCartPage({
                         {cartItems.map(item => (
                             <div key={item.variantId} className="py-6 flex gap-5">
                                 <div className="relative flex-shrink-0 w-20 h-24 bg-[#0d0d0d] overflow-hidden">
-                                    <img src={item.image || `${process.env.NEXT_PUBLIC_API_BASE_URL}/placeholder/80/96`} alt={item.name} className="object-cover opacity-85 w-full h-full" />
+                                    <img src={item.image || `/api/placeholder/80/96`} alt={item.name} className="object-cover opacity-85 w-full h-full" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-start justify-between gap-3 mb-3">

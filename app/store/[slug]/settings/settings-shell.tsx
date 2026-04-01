@@ -60,7 +60,9 @@ export default function SettingsShell({
     useEffect(() => {
         async function load() {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}`)
+                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}`, {
+                    credentials: 'include',
+                })
                 if (res.status === 401) { setError('unauthenticated'); return }
                 if (res.status === 403 || res.status === 404) { setError('forbidden'); return }
                 if (!res.ok) { setError('unknown'); return }

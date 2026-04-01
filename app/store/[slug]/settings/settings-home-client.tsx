@@ -181,7 +181,9 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
     const [error, setError] = useState(false)
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/overview`)
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/overview`, {
+            credentials: 'include',
+        })
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(setData)
             .catch(() => setError(true))

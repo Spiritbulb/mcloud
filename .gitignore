@@ -20,9 +20,11 @@
 # cloudflare
 /.open-next/
 /.wrangler/
+/dist-check
 
 # production
 /build
+/src/lib/theme-manifest
 
 # misc
 .DS_Store
