@@ -9,21 +9,9 @@ import { createClient } from '@/lib/client'
 import { useCart } from '@/contexts/CartContext'
 import ClassicProductDetailPage from '../../../../src/themes/classic/ProductDetailPage'
 import type { ProductDetailData, ProductVariant } from '../../../../src/themes/types'
-import NoirProductDetailPage from '../../../../src/themes/noir/ProductDetailPage'
-import MinimalProductDetailPage from '../../../../src/themes/minimal/ProductDetailPage'
-import PhotographyProductDetailPage from '../../../../src/themes/photography/ProductDetailPage'
-import PortfolioProductDetailPage from '../../../../src/themes/portfolio/ProductDetailPage'
-import ServicesProductDetailPage from '../../../../src/themes/services/ProductDetailPage'
-import RestaurantProductDetailPage from '../../../../src/themes/restaurant/ProductDetailPage'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicProductDetailPage,
-    noir: NoirProductDetailPage,
-    minimal: MinimalProductDetailPage,
-    photography: PhotographyProductDetailPage,
-    portfolio: PortfolioProductDetailPage,
-    services: ServicesProductDetailPage,
-    restaurant: RestaurantProductDetailPage,
 }
 
 export default function ProductDetailContainer() {
