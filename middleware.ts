@@ -36,9 +36,7 @@ const SYSTEM_SUBDOMAINS = new Set(['status', 'api', 'admin', 'mail'])
  */
 const PUBLIC_API_PREFIXES = [
   '/store/',
-  '/api/health',
-  '/api/store/',
-  '/api/categories',
+  '/health'
 ] as const
 
 // ─── CORS Headers ─────────────────────────────────────────────────────────────

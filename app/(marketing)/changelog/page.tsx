@@ -2,9 +2,9 @@
 // Reads CHANGELOG.md at build time (or on-demand in dev).
 // Run `npm run release` to regenerate CHANGELOG.md from git history.
 
-import fs from "fs";
-import path from "path";
+
 import { ChangelogClient } from "./changelog-client";
+import changelogContent from "@/CHANGELOG.md";
 
 export const metadata = {
     title: "Changelog",
@@ -106,11 +106,10 @@ function parseChangelog(content: string): ChangelogEntry[] {
 }
 
 export default function ChangelogPage() {
-    const mdPath = path.join(process.cwd(), "CHANGELOG.md");
     let entries: ChangelogEntry[] = [];
 
-    if (fs.existsSync(mdPath)) {
-        entries = parseChangelog(fs.readFileSync(mdPath, "utf-8"));
+    if (changelogContent) {
+        entries = parseChangelog(changelogContent);
     }
 
     return <ChangelogClient entries={entries} />;
