@@ -66,10 +66,10 @@ function StoreSwitcher({ store, allStores }: { store: NavStore; allStores: NavSt
             className="rounded-md hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
         >
             <div className="flex aspect-square w-6 h-6 items-center justify-center rounded-md bg-[#f5f5f5] text-[#000] text-[11px] font-bold shrink-0 overflow-hidden">
-                {allStores[0].logo_url ? (
-                    <img src={allStores[0].logo_url} alt={allStores[0].name} className="w-full h-full object-cover rounded-md" />
+                {store.logo_url ? (
+                    <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-md" />
                 ) : (
-                    getInitials(allStores[0].name)
+                    getInitials(store.name)
                 )}
             </div>
             <div className="flex flex-col min-w-0 flex-1">

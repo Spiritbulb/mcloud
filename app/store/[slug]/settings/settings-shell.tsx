@@ -9,7 +9,7 @@ import { SidebarProvider } from '@/components/ui/sidebar'
 import { Store, Palette, Globe, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
-import { GettingStartedDrawer } from './getting-started-drawer'
+import { GettingStartedDrawer } from './notifications-drawer'
 
 export const TABS = [
     { id: 'home', label: 'Home', icon: <Store className="w-[15px] h-[15px]" /> },
@@ -121,7 +121,7 @@ export default function SettingsShell({
     const navStore = {
         name: store.name,
         slug: store.slug,
-        logoUrl: store.logo_url,
+        logo_url: store.logo_url,
     }
 
     const navigate = (id: TabId) => router.push(`${process.env.NODE_ENV === 'development' ? `http://localhost:3000/store/${slug}` : `https://${slug}.menengai.cloud`}/settings/${id}`)

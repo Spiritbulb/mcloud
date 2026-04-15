@@ -10,7 +10,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { GettingStartedButton } from './getting-started-drawer'
+import { GettingStartedButton } from './notifications-drawer'
 
 export function SettingsHeader({
     store,
