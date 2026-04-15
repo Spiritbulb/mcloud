@@ -225,7 +225,7 @@ async function handleApiSubdomain(request: NextRequest): Promise<NextResponse> {
  *  4. Subdomain tenant   → owner route gate or storefront rewrite (+ optional banner).
  *  5. Main platform      → /store/slug redirects; homepage falls through.
  */
-export async function proxy(request: NextRequest): Promise<NextResponse> {
+export async function middleware(request: NextRequest): Promise<NextResponse> {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
