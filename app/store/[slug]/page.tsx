@@ -1,9 +1,7 @@
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
-import StoreFront from '@/components/store/Storefront'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
-import { ServiceItem } from '@/src/themes/types'
 
 export const revalidate = 60
 
@@ -114,7 +112,6 @@ export default async function StorePage({ params }: Props) {
             products={products}
             collections={collections}
             featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
-            services={services}
         />
     )
 }

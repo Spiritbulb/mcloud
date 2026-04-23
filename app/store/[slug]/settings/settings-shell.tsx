@@ -6,20 +6,21 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText } from 'lucide-react'
+import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
 export const TABS = [
-    { id: 'general', label: 'General', icon: <Store className="w-3.75 h-3.75" /> },
-    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-3.75 h-3.75" /> },
-    { id: 'products', label: 'Products', icon: <Package className="w-3.75 h-3.75" /> },
-    { id: 'services', label: 'Services', icon: <Briefcase className="w-3.75 h-3.75" /> },
-    { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-3.75 h-3.75" /> },
-    { id: 'blog', label: 'Blog', icon: <FileText className="w-3.75 h-3.75" /> },
-    { id: 'domain', label: 'Domain', icon: <Globe className="w-3.75 h-3.75" />, beta: true },
-    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-3.75 h-3.75" />, beta: true },
+    { id: 'general', label: 'General', icon: <Store className="w-4 h-4" /> },
+    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
+    { id: 'products', label: 'Products', icon: <Package className="w-4 h-4" /> },
+    { id: 'services', label: 'Services', icon: <Briefcase className="w-4 h-4" /> },
+    { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-4 h-4" /> },
+    { id: 'customers', label: 'Customers', icon: <User className="w-4 h-4" />, beta: true },
+    { id: 'blog', label: 'Blog', icon: <FileText className="w-4 h-4" /> },
+    { id: 'domain', label: 'Domain', icon: <Globe className="w-4 h-4" />, beta: true },
+    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-4 h-4" />, beta: true },
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
