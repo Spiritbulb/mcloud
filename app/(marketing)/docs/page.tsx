@@ -28,7 +28,7 @@ async function getDocs(): Promise<DocPage[]> {
     return (data ?? []).map((row) => row.data as DocPage)
 }
 
-export default async function DocsPage({ searchParams }: { searchParams: { page?: string } }) {
+export default async function DocsPage({ searchParams }: { searchParams: Promise<{ page?: string }> }) {
     const docs = await getDocs()
     const { page } = await searchParams
     return <DocsClient docs={docs} page={page} />

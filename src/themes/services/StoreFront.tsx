@@ -1,291 +1,404 @@
 'use client'
 
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2, Star, Users, Award } from 'lucide-react'
-import type { StoreFrontProps } from '../types'
+import { useRouter } from 'next/navigation'
+import { ShoppingBag, ArrowRight, CalendarCheck, Clock, MapPin, Star } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import type { StoreFrontProps, ServiceItem } from '../types'
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function fmt(amount: number, currency: string) {
-    return new Intl.NumberFormat('en-KE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount)
+function formatPrice(amount: number, currency: string) {
+    return new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+    }).format(amount)
 }
 
-// ─── Services StoreFront ───────────────────────────────────────────────────────
+function isInStock(product: StoreFrontProps['products'][0]) {
+    if (!product.track_inventory) return true
+    return product.inventory_quantity > 0
+}
 
-export default function ServicesStoreFront({
-    store,
-    products,
-    featuredProducts,
-}: StoreFrontProps) {
-    const settings = store.settings ?? {}
-    const heroImage = settings.heroImage ?? settings.heroImagePath ?? null
-    const displayProducts = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 6)
-
-    const benefits = [
-        {
-            icon: Star,
-            title: 'Expert Professionals',
-            body: 'Our team brings years of proven experience and deep domain expertise to every engagement.',
-        },
-        {
-            icon: Users,
-            title: 'Client-Centred Approach',
-            body: 'We listen first, then craft solutions tailored exactly to your goals and context.',
-        },
-        {
-            icon: Award,
-            title: 'Results You Can Measure',
-            body: 'Every service we deliver is tied to clear outcomes and tangible value for your business.',
-        },
-    ]
+// ─── Product Card ─────────────────────────────────────────────────────────────
+function ProductCard({
+    product, currency, storeSlug,
+}: {
+    product: StoreFrontProps['products'][0]
+    currency: string
+    storeSlug: string
+}) {
+    const inStock = isInStock(product)
+    const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
+    const image = product.images?.[0] || null
 
     return (
-        <div className="min-h-screen bg-[#f8fafc] text-[#0f172a]" style={{ fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif' }}>
-
-            {/* ── HERO ── */}
-            <section className="relative w-full overflow-hidden">
-                {heroImage ? (
-                    <>
-                        <div className="relative h-[65vh] min-h-[460px]">
-                            <img
-                                src={heroImage}
-                                alt={store.name}
-                                className="absolute inset-0 w-full h-full object-cover"
-                            />
-                            <div className="absolute inset-0 bg-[#0f172a]/55" />
-                            <div className="relative z-10 h-full flex items-center">
-                                <div className="max-w-5xl mx-auto px-6 md:px-10 w-full">
-                                    <p className="text-sm font-semibold tracking-widest uppercase text-[#93c5fd] mb-4">
-                                        {store.name}
-                                    </p>
-                                    <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight tracking-tight max-w-2xl">
-                                        What we offer
-                                    </h1>
-                                    {store.description && (
-                                        <p className="mt-5 text-lg text-white/75 max-w-xl leading-relaxed font-light">
-                                            {store.description}
-                                        </p>
-                                    )}
-                                    <div className="mt-8 flex flex-wrap gap-4">
-                                        <Link
-                                            href={`/store/${store.slug}/products`}
-                                            className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm shadow-lg"
-                                        >
-                                            View Our Services
-                                            <ArrowRight className="w-4 h-4" />
-                                        </Link>
-                                        <Link
-                                            href={`/store/${store.slug}/blog`}
-                                            className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-medium px-6 py-3 rounded-lg transition-colors text-sm border border-white/30 backdrop-blur-sm"
-                                        >
-                                            Read Our Insights
-                                        </Link>
-                                    </div>
-                                </div>
-                            </div>
+        <Link href={`/store/${storeSlug}/products/${product.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {image ? (
+                        <img src={image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
                         </div>
-                    </>
-                ) : (
-                    <div
-                        className="relative overflow-hidden"
-                        style={{
-                            background: 'linear-gradient(135deg, #0f172a 0%, #1e3a5f 50%, #1d4ed8 100%)',
-                            minHeight: '520px',
-                        }}
-                    >
-                        {/* Decorative blobs */}
-                        <div className="absolute top-0 right-0 w-[480px] h-[480px] rounded-full opacity-10"
-                            style={{ background: 'radial-gradient(circle, #60a5fa, transparent 70%)', transform: 'translate(30%, -30%)' }} />
-                        <div className="absolute bottom-0 left-0 w-[320px] h-[320px] rounded-full opacity-10"
-                            style={{ background: 'radial-gradient(circle, #3b82f6, transparent 70%)', transform: 'translate(-30%, 30%)' }} />
-
-                        <div className="relative z-10 max-w-5xl mx-auto px-6 md:px-10 py-24 md:py-32">
-                            <p className="text-sm font-semibold tracking-widest uppercase text-[#93c5fd] mb-4">
-                                {store.name}
-                            </p>
-                            <h1 className="text-4xl md:text-6xl font-bold text-white leading-tight tracking-tight max-w-2xl">
-                                What we offer
-                            </h1>
-                            {store.description && (
-                                <p className="mt-5 text-lg text-white/75 max-w-xl leading-relaxed font-light">
-                                    {store.description}
-                                </p>
-                            )}
-                            <div className="mt-8 flex flex-wrap gap-4">
-                                <Link
-                                    href={`/store/${store.slug}/products`}
-                                    className="inline-flex items-center gap-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm shadow-lg"
-                                >
-                                    View Our Services
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                                <Link
-                                    href={`/store/${store.slug}/blog`}
-                                    className="inline-flex items-center gap-2 bg-white/15 hover:bg-white/25 text-white font-medium px-6 py-3 rounded-lg transition-colors text-sm border border-white/25"
-                                >
-                                    Read Our Insights
-                                </Link>
-                            </div>
+                    )}
+                    {!inStock && (
+                        <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
+                            <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
                         </div>
-                    </div>
-                )}
-            </section>
-
-            {/* ── SERVICES SECTION ── */}
-            {displayProducts.length > 0 && (
-                <section className="py-20 md:py-28">
-                    <div className="max-w-6xl mx-auto px-6 md:px-10">
-                        <div className="text-center mb-14">
-                            <span className="inline-block text-xs font-semibold tracking-widest uppercase text-[#2563eb] mb-3">
-                                Services
-                            </span>
-                            <h2 className="text-3xl md:text-4xl font-bold text-[#0f172a] tracking-tight">
-                                What We Do Best
-                            </h2>
-                            <p className="mt-3 text-base text-[#64748b] max-w-xl mx-auto">
-                                Explore our range of professional services crafted to deliver real results.
-                            </p>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {displayProducts.map((product) => (
-                                <Link
-                                    key={product.id}
-                                    href={`/store/${store.slug}/${product.slug}`}
-                                    className="group block bg-white rounded-xl border border-[#e2e8f0] shadow-sm hover:shadow-md hover:border-[#2563eb]/30 transition-all duration-200"
-                                >
-                                    {/* Accent bar */}
-                                    <div className="h-1 rounded-t-xl bg-[#2563eb] group-hover:bg-[#1d4ed8] transition-colors" />
-
-                                    <div className="p-6">
-                                        <h3 className="text-lg font-semibold text-[#0f172a] leading-snug mb-2 group-hover:text-[#2563eb] transition-colors">
-                                            {product.name}
-                                        </h3>
-                                        {product.description && (
-                                            <p className="text-sm text-[#64748b] leading-relaxed line-clamp-3 mb-4">
-                                                {product.description}
-                                            </p>
-                                        )}
-                                        <div className="flex items-center justify-between pt-4 border-t border-[#f1f5f9]">
-                                            <span className="text-lg font-bold text-[#0f172a]">
-                                                {fmt(product.price, store.currency)}
-                                            </span>
-                                            <span className="inline-flex items-center gap-1 text-xs font-semibold text-[#2563eb] group-hover:gap-2 transition-all">
-                                                Learn more <ArrowRight className="w-3.5 h-3.5" />
-                                            </span>
-                                        </div>
-                                    </div>
-                                </Link>
-                            ))}
-                        </div>
-
-                        {products.length > 6 && (
-                            <div className="text-center mt-10">
-                                <Link
-                                    href={`/store/${store.slug}/products`}
-                                    className="inline-flex items-center gap-2 border border-[#2563eb] text-[#2563eb] hover:bg-[#2563eb] hover:text-white font-semibold px-6 py-3 rounded-lg transition-colors text-sm"
-                                >
-                                    View All Services
-                                    <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
+                    )}
+                    {hasDiscount && inStock && (
+                        <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">Sale</span>
+                    )}
+                </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{product.name}</CardTitle>
+                    {product.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{product.description}</span>
+                        </CardDescription>
+                    )}
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(product.price, currency)}</span>
+                        {hasDiscount && (
+                            <span className="text-xs line-through" style={{ color: 'var(--sf-foreground-subtle)' }}>{formatPrice(product.compare_at_price!, currency)}</span>
                         )}
                     </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        View <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
+        </Link>
+    )
+}
+
+// ─── Service Card ─────────────────────────────────────────────────────────────
+function ServiceCard({
+    service, currency, storeSlug,
+}: {
+    service: ServiceItem
+    currency: string
+    storeSlug: string
+}) {
+    const thumb = service.media?.find((m) => m.type === 'image')?.url
+        ?? service.metadata?.media?.find((m) => m.type === 'image')?.url
+    const availability = service.availability ?? service.metadata?.availability ?? 'available'
+    const packages = service.packages ?? service.metadata?.packages ?? []
+    const prices = packages.map((p) => parseFloat(String(p.price)) || 0).filter(Boolean)
+    const minPrice = prices.length > 0 ? Math.min(...prices) : service.price
+
+    const availDot = { available: 'sf-dot-instock', busy: 'sf-dot-busy', unavailable: 'sf-dot-outofstock' }[availability]
+    const availLabel = { available: 'Available', busy: 'Busy', unavailable: 'Unavailable' }[availability]
+
+    return (
+        <Link href={`/store/${storeSlug}/services/${service.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {thumb ? (
+                        <img src={thumb} alt={service.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <CalendarCheck className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                        </div>
+                    )}
+                    {/* Availability badge */}
+                    <span className="absolute top-2 left-2 sf-card inline-flex items-center gap-1.5 px-2 py-0.5 text-xs shadow">
+                        <span className={cn('h-1.5 w-1.5 rounded-full', availDot)} />
+                        {availLabel}
+                    </span>
+                </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    {service.metadata?.serviceType && (
+                        <p className="text-xs uppercase tracking-widest sf-text-accent font-medium">{service.metadata.serviceType}</p>
+                    )}
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{service.name}</CardTitle>
+                    {service.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{service.description}</span>
+                        </CardDescription>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-xs pt-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        {service.metadata?.deliveryDays && (
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.metadata.deliveryDays}d delivery</span>
+                        )}
+                        {service.metadata?.location && (
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.metadata.location}</span>
+                        )}
+                        {service.metadata?.rating != null && (
+                            <span className="flex items-center gap-1"><Star className="w-3 h-3 sf-star-filled" />{service.metadata.rating.toFixed(1)}</span>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
+                    <div>
+                        <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>{packages.length > 0 ? 'From' : 'Price'}</p>
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(minPrice, currency)}</span>
+                    </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        Book <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
+        </Link>
+    )
+}
+
+// ─── Classic StoreFront ────────────────────────────────────────────────────────
+export default function ClassicStoreFront({
+    store,
+    products,
+    collections,
+    featuredProducts,
+    services = [],      
+}: StoreFrontProps) {
+    console.log('🔥 StoreFront received:', {
+        products: products.length,
+        services: services.length, 
+    })
+    const router = useRouter()
+    const [query, setQuery] = useState('')
+    const [activeCollection, setActiveCollection] = useState<string | null>(null)
+    const [currentSlide, setCurrentSlide] = useState(0)
+    const [activeTab, setActiveTab] = useState<'products' | 'services'>(
+        products.length === 0 && services.length > 0 ? 'services' : 'products'
+    )
+
+    const settings = store.settings ?? {}
+    const heroSlides =
+        settings.heroSlides && settings.heroSlides.length > 0
+            ? settings.heroSlides
+            : [{
+                title: settings.heroTitle ?? store.name,
+                subtitle: settings.heroSubtitle ?? store.description ?? '',
+                image: settings.heroImage ?? undefined,
+                accent: 'New Arrivals',
+                buttonText: 'Shop now',
+            }]
+
+    useEffect(() => {
+        if (heroSlides.length <= 1) return
+        const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length), 5000)
+        return () => clearInterval(timer)
+    }, [heroSlides.length])
+
+    const filtered = useMemo(() => products.filter((p) =>
+        query ? p.name.toLowerCase().includes(query.toLowerCase()) || p.description?.toLowerCase().includes(query.toLowerCase()) : true
+    ), [products, query])
+
+    const filteredServices = useMemo(() => services.filter((s) =>
+        query ? s.name.toLowerCase().includes(query.toLowerCase()) || s.description?.toLowerCase().includes(query.toLowerCase()) : true
+    ), [services, query])
+
+    const hasProducts = products.length > 0
+    const hasServices = services.length > 0
+    const showTabs = hasProducts && hasServices
+
+    return (
+        <div className="min-h-screen">
+            {/* ── HERO ── */}
+            {!query && (
+                <section className="relative w-full h-[70vh] sm:h-[90vh] overflow-hidden">
+                    {heroSlides.map((slide, index) => (
+                        <div key={index} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            {slide.image ? (
+                                <>
+                                    <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
+                                </>
+                            ) : (
+                                <div className="sf-hero-fallback absolute inset-0">
+                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_50%,white,transparent_60%)]" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 flex items-end md:items-center">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 40 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="w-full px-4 sm:px-6 md:px-8 pb-16 md:pb-0"
+                                >
+                                    <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
+                                        {slide.accent && (
+                                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{slide.accent}</span>
+                                        )}
+                                        <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">{slide.title}</h1>
+                                        {slide.subtitle && (
+                                            <p className="text-base md:text-lg font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>{slide.subtitle}</p>
+                                        )}
+                                        <Button
+                                            size="lg"
+                                            className="sf-btn-primary mt-2 group rounded-none"
+                                            onClick={() => document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })}
+                                        >
+                                            {slide.buttonText ?? 'Shop now'}
+                                            <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                        </Button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </div>
+                    ))}
+                    {heroSlides.length > 1 && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+                            {heroSlides.map((_, index) => (
+                                <button key={index} onClick={() => setCurrentSlide(index)}
+                                    className={`h-0.5 transition-all duration-300 ${index === currentSlide ? 'w-12 bg-white' : 'w-6 bg-white/30'}`}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </section>
             )}
 
-            {/* ── WHY CHOOSE US ── */}
-            <section className="py-20 md:py-28 bg-white border-t border-[#e2e8f0]">
-                <div className="max-w-6xl mx-auto px-6 md:px-10">
-                    <div className="text-center mb-14">
-                        <span className="inline-block text-xs font-semibold tracking-widest uppercase text-[#2563eb] mb-3">
-                            Why Choose Us
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-bold text-[#0f172a] tracking-tight">
-                            The difference is in the details
+            {/* ── COLLECTIONS ── */}
+            {!query && collections.length > 0 && (
+                <>
+                    <Separator />
+                    <section className="sf-section-muted py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">Collections</span>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">Shop by Category</h2>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
+                                <button onClick={() => setActiveCollection(null)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null ? 'sf-pill-active' : 'sf-pill-inactive'}`}>All</button>
+                                {collections.map((c) => (
+                                    <button key={c.id} onClick={() => setActiveCollection(c.id)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id ? 'sf-pill-active' : 'sf-pill-inactive'}`}>{c.name}</button>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                                {collections.map((collection) => (
+                                    <Card key={collection.id} className="sf-card group cursor-pointer overflow-hidden hover:shadow-lg transition-shadow pt-0" onClick={() => router.push(`/store/${store.slug}/collections/${collection.slug}`)}>
+                                        <div className="relative aspect-[4/3] overflow-hidden sf-bg-muted">
+                                            {collection.image_url ? (
+                                                <img src={collection.image_url} alt={collection.name} className="absolute inset-0 w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="sf-collection-placeholder w-full h-full" />
+                                            )}
+                                        </div>
+                                        <CardHeader className="px-4 pt-4 pb-2">
+                                            <CardTitle className="sf-heading text-xl font-light">{collection.name}</CardTitle>
+                                            {collection.description && (
+                                                <CardDescription><span className="line-clamp-2 text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>{collection.description}</span></CardDescription>
+                                            )}
+                                        </CardHeader>
+                                        <CardFooter className="px-4 pb-4">
+                                            <button className="sf-pill sf-pill-inactive border px-3 py-1.5 text-sm">Explore</button>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </>
+            )}
+
+            <Separator />
+
+            {/* ── FEATURED PRODUCTS ── */}
+            {!query && featuredProducts.length > 0 && (
+                <>
+                    <section className="py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">Featured</span>
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                </div>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Top Picks</h2>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {featuredProducts.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                    <Separator />
+                </>
+            )}
+
+            {/* ── CATALOGUE (products + services) ── */}
+            <section id="catalogue" className="py-12 md:py-20">
+                <div className="container mx-auto">
+                    <div className="mb-10 md:mb-14">
+                        <div className="flex items-center gap-4 mb-3">
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+                                {showTabs ? 'Catalogue' : hasServices ? 'Services' : 'All Products'}
+                            </span>
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                        </div>
+                        <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
+                            {showTabs ? 'Browse Everything' : hasServices ? 'Our Services' : 'Browse Everything'}
                         </h2>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                        {benefits.map(({ icon: Icon, title, body }) => (
-                            <div
-                                key={title}
-                                className="bg-[#f8fafc] rounded-xl border border-[#e2e8f0] p-7 flex flex-col gap-4"
-                            >
-                                <div className="w-11 h-11 rounded-lg bg-[#eff6ff] flex items-center justify-center flex-shrink-0">
-                                    <Icon className="w-5 h-5 text-[#2563eb]" />
-                                </div>
-                                <div>
-                                    <h3 className="text-base font-semibold text-[#0f172a] mb-2">{title}</h3>
-                                    <p className="text-sm text-[#64748b] leading-relaxed">{body}</p>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-
-                    {/* Bullet-list extras */}
-                    <div className="mt-12 grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
-                        {[
-                            'Transparent pricing with no hidden fees',
-                            'Dedicated point of contact throughout the project',
-                            'Fast turnaround and clear communication',
-                            'Satisfaction guarantee on every engagement',
-                        ].map((point) => (
-                            <div key={point} className="flex items-start gap-3">
-                                <CheckCircle2 className="w-5 h-5 text-[#2563eb] flex-shrink-0 mt-0.5" />
-                                <span className="text-sm text-[#475569]">{point}</span>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
-            {/* ── CTA SECTION ── */}
-            <section className="py-20 md:py-28 bg-[#2563eb]">
-                <div className="max-w-3xl mx-auto px-6 md:px-10 text-center">
-                    <h2 className="text-3xl md:text-4xl font-bold text-white tracking-tight mb-4">
-                        Ready to get started?
-                    </h2>
-                    <p className="text-lg text-white/80 mb-8 font-light leading-relaxed">
-                        Browse our services and take the first step towards the results you've been looking for.
-                    </p>
-                    <Link
-                        href={`/store/${store.slug}/products`}
-                        className="inline-flex items-center gap-2 bg-white text-[#2563eb] hover:bg-[#f1f5f9] font-bold px-8 py-4 rounded-lg transition-colors text-base shadow-lg"
-                    >
-                        Explore Our Services
-                        <ArrowRight className="w-5 h-5" />
-                    </Link>
-                </div>
-            </section>
-
-            {/* ── FOOTER ── */}
-            <footer className="bg-[#0f172a] text-white/60 py-12">
-                <div className="max-w-6xl mx-auto px-6 md:px-10">
-                    <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-                        <div>
-                            <p className="text-white font-semibold text-base mb-1">{store.name}</p>
-                            {store.description && (
-                                <p className="text-sm text-white/50 max-w-xs line-clamp-2">{store.description}</p>
-                            )}
+                    {/* Tabs — only when both exist */}
+                    {showTabs && (
+                        <div className="flex gap-1 mb-8 border-b" style={{ borderColor: 'var(--sf-border)' }}>
+                            {(['products', 'services'] as const).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className="px-6 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px"
+                                    style={{
+                                        borderColor: activeTab === tab ? 'var(--sf-accent)' : 'transparent',
+                                        color: activeTab === tab ? 'var(--sf-accent)' : 'var(--sf-foreground-subtle)',
+                                    }}
+                                >
+                                    {tab} ({tab === 'products' ? products.length : services.length})
+                                </button>
+                            ))}
                         </div>
-                        <nav className="flex flex-wrap gap-6 text-sm">
-                            <Link href={`/store/${store.slug}/products`} className="hover:text-white transition-colors">
-                                Services
-                            </Link>
-                            <Link href={`/store/${store.slug}/blog`} className="hover:text-white transition-colors">
-                                Insights
-                            </Link>
-                            <Link href={`/store/${store.slug}/cart`} className="hover:text-white transition-colors">
-                                Cart
-                            </Link>
-                        </nav>
-                    </div>
-                    <div className="mt-8 pt-6 border-t border-white/10 text-center text-xs text-white/30">
-                        &copy; {new Date().getFullYear()} {store.name}. All rights reserved.
-                    </div>
+                    )}
+
+                    {/* Products grid */}
+                    {(!showTabs || activeTab === 'products') && hasProducts && (
+                        filtered.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <ShoppingBag className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No products match your search' : 'No products yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filtered.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* Services grid */}
+                    {(!showTabs || activeTab === 'services') && hasServices && (
+                        filteredServices.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <CalendarCheck className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No services match your search' : 'No services yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filteredServices.map((service) => (
+                                    <ServiceCard key={service.id} service={service} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
                 </div>
-            </footer>
+            </section>
         </div>
     )
 }

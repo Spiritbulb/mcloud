@@ -3,6 +3,10 @@ import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
+import Script from "next/script";
+import { Suspense } from "react";
+import Analytics from "@/components/analytics";
+import { Auth0Provider } from "@auth0/nextjs-auth0/client";
 
 
 const geistSans = Geist({
@@ -94,17 +98,38 @@ export default async function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
       >
+        {/* GA Scripts */}
+        <Script
+          strategy="afterInteractive"
+          src="https://www.googletagmanager.com/gtag/js?id=G-P7RJ7JW0BM"
+        />
+        <Script
+          id="ga-init"
+          strategy="afterInteractive"
+          dangerouslySetInnerHTML={{
+            __html: `
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', 'G-P7RJ7JW0BM');
+        `,
+          }}
+        />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          {bannerScript && (
-            <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
-          )}
-
-          {children}
+          <Suspense fallback={null}>
+            <Analytics />   {/* ← GA route tracking goes here */}
+          </Suspense>
+          <Auth0Provider>
+            {bannerScript && (
+              <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+            )}
+            {children}
+          </Auth0Provider>
         </ThemeProvider>
       </body>
     </html>

@@ -15,17 +15,13 @@ const Spinner = () => (
 )
 
 const THEMES: Record<string, React.ComponentType<StoreFrontProps>> = {
-    classic: dynamic(() => import('@/src/themes/classic/StoreFront'), { ssr: false, loading: Spinner }),
-    noir: dynamic(() => import('@/src/themes/noir/StoreFront'), { ssr: false, loading: Spinner }),
-    minimal: dynamic(() => import('@/src/themes/minimal/StoreFront'), { ssr: false, loading: Spinner }),
-    photography: dynamic(() => import('@/src/themes/photography/StoreFront'), { ssr: false, loading: Spinner }),
-    portfolio: dynamic(() => import('@/src/themes/portfolio/StoreFront'), { ssr: false, loading: Spinner }),
-    services: dynamic(() => import('@/src/themes/services/StoreFront'), { ssr: false, loading: Spinner }),
-    restaurant: dynamic(() => import('@/src/themes/restaurant/StoreFront'), { ssr: false, loading: Spinner }),
+    classic: dynamic(() => import('@/src/themes/classic/StoreFront'), { ssr: false, loading: Spinner })
 }
 
 export default function StoreFront(props: StoreFrontProps) {
     const themeId = (props.store.settings as any)?.themeId ?? 'classic'
+    console.log('🎭 Storefront.tsx — themeId:', themeId, 'services:', (props as any).services?.length)
+
     const Component = THEMES[themeId] ?? THEMES.classic
     return <Component {...props} />
 }

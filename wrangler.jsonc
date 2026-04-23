@@ -1,0 +1,45 @@
+{
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"name": "mcloud",
+	"main": ".open-next/worker.js",
+	"compatibility_date": "2025-05-05",
+	"compatibility_flags": [
+		"nodejs_compat",
+		"global_fetch_strictly_public"
+	],
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS"
+	},
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "mcloud"
+		}
+	],
+	"observability": {
+		"logs": {
+			"enabled": true,
+			"invocation_logs": true
+		}
+	},
+	"kv_namespaces": [
+		{
+			"binding": "STORE_INTEGRATIONS",
+			"id": "4336f9938ccb4eff8f4f9b9a964c8d51",
+			"remote": true
+		}
+	],
+	"vars": {
+		"NEXT_PUBLIC_API_BASE_URL": "https://api.menengai.cloud",
+		"NEXT_PUBLIC_GA_ID": "G-P7RJ7JW0BM"
+	},
+	"rules": [
+		{
+			"type": "Text",
+			"globs": [
+				"src/liquid-themes/**/*.liquid"
+			]
+		}
+	]
+}

@@ -14,10 +14,9 @@ export interface Store {
     name: string
     slug: string
     description: string | null
+    item_type: string
     logo_url: string | null
     currency: string
-    // Nullable in Supabase generated types — settings pages pass the raw row
-    // directly so these need to match what the DB actually returns.
     is_active?: boolean | null
     is_pro?: boolean
     custom_domain?: string | null
@@ -44,6 +43,19 @@ export interface Store {
     }
 }
 
+export interface StoreNavProps {
+    store: Store
+    themeId?: string
+}
+
+export interface StoreFrontProps {
+    store: Store
+    products: Product[]
+    collections: Collection[]
+    featuredProducts: Product[]
+    services: ServiceItem[] 
+}
+
 export interface GalleryPhoto {
     id: string
     url: string
@@ -61,6 +73,9 @@ export interface Product {
     images: string[]
     inventory_quantity: number
     track_inventory: boolean
+    item_type: string
+    is_active: boolean
+    sku: string | null
 }
 
 export interface Collection {
@@ -71,12 +86,7 @@ export interface Collection {
     image_url: string | null
 }
 
-export interface StoreFrontProps {
-    store: Store
-    products: Product[]
-    collections: Collection[]
-    featuredProducts: Product[]
-}
+
 
 // ── Products page ──────────────────────────────────────────────────────────────
 export interface ProductItem {
@@ -88,6 +98,8 @@ export interface ProductItem {
     compare_at_price: number | null
     images: string[]
     inventory_quantity: number
+    track_inventory: boolean
+
     is_active: boolean
     sku: string | null
     metadata: any
@@ -98,18 +110,22 @@ export interface ProductsPageProps {
     products: ProductItem[]
     loading?: boolean
     error?: string | null
+    storeId: string       // ← add these
+    currency: string      // ←
     onRetry?: () => void
 }
 
 // ── Product detail page ────────────────────────────────────────────────────────
-export interface ProductVariant {
+export interface Variant {
     id: string
     name: string
-    price: number
-    inventory_quantity: number
+    price: string
+    inventory_quantity: string
     options: Record<string, string>
+    compare_at_price: string
+    is_active: boolean
     sku: string | null
-    image_url: string | null
+    image_url: string
 }
 
 export interface ProductDetailData {
@@ -123,6 +139,8 @@ export interface ProductDetailData {
     inventory_quantity: number
     is_active: boolean
     sku: string | null
+    reviewCount?: number
+    avgRating?: number | null
     metadata: {
         tags?: string[]
         productType?: string
@@ -131,13 +149,14 @@ export interface ProductDetailData {
         features?: string[]
         descriptionHtml?: string
     }
-    variants?: ProductVariant[]
+    variants?: Variant[]
 }
 
 export interface ProductDetailPageProps {
     storeSlug: string
+    storeId: string
     product: ProductDetailData
-    selectedVariant: ProductVariant | null
+    selectedVariant: Variant | null
     selectedOptions: Record<string, string>
     quantity: number
     currentImageIndex: number
@@ -146,7 +165,100 @@ export interface ProductDetailPageProps {
     onImageChange: (index: number) => void
     onAddToCart: () => void
     isAddingToCart: boolean
+    onReviewSubmitted: () => void
 }
+
+// ── Service detail page ────────────────────────────────────────────────────────
+export interface ServiceMediaItem {
+    id: string
+    url: string
+    path?: string
+    alt?: string
+    type: 'image' | 'video'
+}
+
+export interface ServicePackage {
+    id: string
+    name: string
+    price: string
+    description: string | null
+    deliverables: string
+    delivery_days: string
+    revisions: string | null
+    is_featured?: boolean
+}
+
+export interface ServiceItem {
+    id: string
+    name: string
+    slug: string
+    description: string | null
+    item_type: string
+    price: number
+    images: string[]                        
+    compare_at_price: number | null
+    is_active: boolean
+    sku: string | null
+    media: ServiceMediaItem[]
+    availability: 'available' | 'busy' | 'unavailable'
+    packages?: ServicePackage[]
+    metadata: {
+        // ── Media ──────────────────────────────
+        media?: ServiceMediaItem[]           
+
+        // ── Availability & Booking ─────────────
+        availability?: 'available' | 'busy' | 'unavailable'  // ✅ moved from root
+        booking?: 'instant' | 'scheduled' | 'quote_only'     // ✅ was bookingType
+
+        // ── Packages ───────────────────────────
+        packages?: ServicePackage[]          // ✅ moved from root
+
+        // ── Discovery ──────────────────────────
+        tags?: string[]
+        serviceType?: string
+        rating?: number
+        reviews?: number
+        features?: string[]
+        descriptionHtml?: string | null
+
+        // ── Quantity ───────────────────────────
+        quantityUnit?: string               // ✅ was required
+        minQuantity?: number | null
+        maxQuantity?: number | null
+        quantityStep?: number | null
+
+        // ── Duration ───────────────────────────
+        durationMinutes?: number | null
+        durationHours?: number | null
+        durationDay?: number | null
+
+        // ── Delivery & Location ────────────────
+        deliveryDays?: number | null
+        location?: string | null
+
+        // ── Deposit ────────────────────────────
+        requiresDeposit?: boolean
+        depositPercent?: number | null
+    }
+}
+
+
+
+export interface ServiceDetailsPageProps {
+    storeSlug: string
+    service: ServiceItem
+    selectedPackage: ServicePackage | null
+    quantity: number
+    currentMediaIndex: number
+    onPackageChange: (packageId: string) => void
+    onQuantityChange: (qty: number) => void
+    onMediaChange: (index: number) => void
+    onBookService: () => void
+    isBooking: boolean
+    metadata: { quantityUnit: string }
+}
+
+
 
 // ── Cart page ─────────────────────────────────────────────────────────────────
 export interface CartItem {
@@ -164,6 +276,8 @@ export interface MpesaConfig {
     account?: string
     enabled: boolean
     paypalEnabled: boolean
+    pesapalEnabled?: boolean
+    intasendEnabled?: boolean
 }
 
 export interface CartPageProps {
@@ -176,6 +290,8 @@ export interface CartPageProps {
     onRemoveItem: (variantId: string) => void
     onMpesaCheckout: (guest: GuestDetails) => Promise<void>
     onPaypalCheckout: () => Promise<void>
+    onPesapalCheckout?: () => Promise<void>
+    onIntasendCheckout?: () => Promise<void>
     isProcessing: boolean
 }
 

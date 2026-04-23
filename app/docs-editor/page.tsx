@@ -39,7 +39,7 @@ export default async function DocsEditorPage() {
 
     // Not logged in → send to Auth0 login, return here after
     if (!session?.user) {
-        redirect("/api/auth/login?returnTo=/docs-editor")
+        redirect(`/auth/login?returnTo=/docs-editor`)
     }
 
     const role = await getRole(session.user.sub)
@@ -56,7 +56,7 @@ export default async function DocsEditorPage() {
                         You&apos;re signed in as <span className="font-mono text-xs">{session.user.email}</span>.
                     </p>
                     <a
-                        href="/api/auth/logout"
+                        href={`/auth/logout`}
                         className="inline-block text-sm text-primary hover:underline mt-2"
                     >
                         Sign in with a different account

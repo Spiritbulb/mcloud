@@ -3,20 +3,31 @@
 import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { ShoppingBag, ArrowRight, Search, X } from 'lucide-react'
+import { ShoppingBag, ArrowRight, CalendarCheck, Clock, MapPin, Star } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
 import { motion } from 'framer-motion'
-import type { StoreFrontProps } from '../types'
+import { cn } from '@/lib/utils'
+import type { StoreFrontProps, ServiceItem } from '../types'
 
 function formatPrice(amount: number, currency: string) {
-    return new Intl.NumberFormat('en-KE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount)
-}
-function isInStock(p: StoreFrontProps['products'][0]) {
-    if (!p.track_inventory) return true
-    return p.inventory_quantity > 0
+    return new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+    }).format(amount)
 }
 
-// ─── Minimal Product Card ──────────────────────────────────────────────────────
-function MinimalProductCard({ product, currency, storeSlug }: {
+function isInStock(product: StoreFrontProps['products'][0]) {
+    if (!product.track_inventory) return true
+    return product.inventory_quantity > 0
+}
+
+// ─── Product Card ─────────────────────────────────────────────────────────────
+function ProductCard({
+    product, currency, storeSlug,
+}: {
     product: StoreFrontProps['products'][0]
     currency: string
     storeSlug: string
@@ -26,136 +37,220 @@ function MinimalProductCard({ product, currency, storeSlug }: {
     const image = product.images?.[0] || null
 
     return (
-        <Link href={`/store/${storeSlug}/${product.slug}`} className="group block">
-            {/* Image — pure rectangle, no border-radius */}
-            <div className="relative overflow-hidden aspect-[3/4] bg-[#ede9e3]">
-                {image ? (
-                    <img
-                        src={image}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-6 h-6 text-[#b8b0a6]" />
-                    </div>
-                )}
-                {!inStock && (
-                    <div className="absolute inset-0 bg-[#f7f4f0]/80 flex items-center justify-center">
-                        <span className="text-[10px] tracking-[0.2em] uppercase text-[#9a9189]">Sold out</span>
-                    </div>
-                )}
-                {hasDiscount && inStock && (
-                    <span className="absolute top-3 left-3 text-[9px] tracking-[0.15em] uppercase bg-[#111] text-[#f7f4f0] px-2 py-0.5">
-                        Sale
-                    </span>
-                )}
-            </div>
-
-            {/* Text — two lines only, flush */}
-            <div className="pt-3 space-y-0.5">
-                <h3 className="text-sm font-normal text-[#1a1714] leading-snug group-hover:text-[#5c5650] transition-colors" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                    {product.name}
-                </h3>
-                <div className="flex items-center gap-2">
-                    <span className="text-sm text-[#5c5650]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
-                        {formatPrice(product.price, currency)}
-                    </span>
-                    {hasDiscount && (
-                        <span className="text-xs text-[#b8b0a6] line-through">
-                            {formatPrice(product.compare_at_price!, currency)}
-                        </span>
+        <Link href={`/store/${storeSlug}/products/${product.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {image ? (
+                        <img src={image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                        </div>
+                    )}
+                    {!inStock && (
+                        <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
+                            <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
+                        </div>
+                    )}
+                    {hasDiscount && inStock && (
+                        <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">Sale</span>
                     )}
                 </div>
-            </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{product.name}</CardTitle>
+                    {product.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{product.description}</span>
+                        </CardDescription>
+                    )}
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(product.price, currency)}</span>
+                        {hasDiscount && (
+                            <span className="text-xs line-through" style={{ color: 'var(--sf-foreground-subtle)' }}>{formatPrice(product.compare_at_price!, currency)}</span>
+                        )}
+                    </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        View <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
         </Link>
     )
 }
 
-// ─── Minimal StoreFront ────────────────────────────────────────────────────────
-export default function MinimalStoreFront({ store, products, collections, featuredProducts }: StoreFrontProps) {
+// ─── Service Card ─────────────────────────────────────────────────────────────
+function ServiceCard({
+    service, currency, storeSlug,
+}: {
+    service: ServiceItem
+    currency: string
+    storeSlug: string
+}) {
+    const thumb = service.media?.find((m) => m.type === 'image')?.url
+        ?? service.metadata?.media?.find((m) => m.type === 'image')?.url
+    const availability = service.availability ?? service.metadata?.availability ?? 'available'
+    const packages = service.packages ?? service.metadata?.packages ?? []
+    const prices = packages.map((p) => parseFloat(String(p.price)) || 0).filter(Boolean)
+    const minPrice = prices.length > 0 ? Math.min(...prices) : service.price
+
+    const availDot = { available: 'sf-dot-instock', busy: 'sf-dot-busy', unavailable: 'sf-dot-outofstock' }[availability]
+    const availLabel = { available: 'Available', busy: 'Busy', unavailable: 'Unavailable' }[availability]
+
+    return (
+        <Link href={`/store/${storeSlug}/services/${service.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {thumb ? (
+                        <img src={thumb} alt={service.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <CalendarCheck className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                        </div>
+                    )}
+                    {/* Availability badge */}
+                    <span className="absolute top-2 left-2 sf-card inline-flex items-center gap-1.5 px-2 py-0.5 text-xs shadow">
+                        <span className={cn('h-1.5 w-1.5 rounded-full', availDot)} />
+                        {availLabel}
+                    </span>
+                </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    {service.metadata?.serviceType && (
+                        <p className="text-xs uppercase tracking-widest sf-text-accent font-medium">{service.metadata.serviceType}</p>
+                    )}
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{service.name}</CardTitle>
+                    {service.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{service.description}</span>
+                        </CardDescription>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-xs pt-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        {service.metadata?.deliveryDays && (
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.metadata.deliveryDays}d delivery</span>
+                        )}
+                        {service.metadata?.location && (
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.metadata.location}</span>
+                        )}
+                        {service.metadata?.rating != null && (
+                            <span className="flex items-center gap-1"><Star className="w-3 h-3 sf-star-filled" />{service.metadata.rating.toFixed(1)}</span>
+                        )}
+                    </div>
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
+                    <div>
+                        <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>{packages.length > 0 ? 'From' : 'Price'}</p>
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(minPrice, currency)}</span>
+                    </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        Book <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
+        </Link>
+    )
+}
+
+// ─── Classic StoreFront ────────────────────────────────────────────────────────
+export default function ClassicStoreFront({
+    store,
+    products,
+    collections,
+    featuredProducts,
+    services = [],
+}: StoreFrontProps) {
+    console.log('🔥 StoreFront received:', {
+        products: products.length,
+        services: services.length,
+    })
     const router = useRouter()
     const [query, setQuery] = useState('')
+    const [activeCollection, setActiveCollection] = useState<string | null>(null)
     const [currentSlide, setCurrentSlide] = useState(0)
+    const [activeTab, setActiveTab] = useState<'products' | 'services'>(
+        products.length === 0 && services.length > 0 ? 'services' : 'products'
+    )
 
     const settings = store.settings ?? {}
-    const heroSlides = settings.heroSlides?.length
-        ? settings.heroSlides
-        : [{ title: settings.heroTitle ?? store.name, subtitle: settings.heroSubtitle ?? '', image: settings.heroImage }]
+    const heroSlides =
+        settings.heroSlides && settings.heroSlides.length > 0
+            ? settings.heroSlides
+            : [{
+                title: settings.heroTitle ?? store.name,
+                subtitle: settings.heroSubtitle ?? store.description ?? '',
+                image: settings.heroImage ?? undefined,
+                accent: 'New Arrivals',
+                buttonText: 'Shop now',
+            }]
 
     useEffect(() => {
         if (heroSlides.length <= 1) return
-        const t = setInterval(() => setCurrentSlide(p => (p + 1) % heroSlides.length), 5000)
-        return () => clearInterval(t)
+        const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length), 5000)
+        return () => clearInterval(timer)
     }, [heroSlides.length])
 
-    const filtered = useMemo(() => products.filter(p =>
-        query ? p.name.toLowerCase().includes(query.toLowerCase()) : true
+    const filtered = useMemo(() => products.filter((p) =>
+        query ? p.name.toLowerCase().includes(query.toLowerCase()) || p.description?.toLowerCase().includes(query.toLowerCase()) : true
     ), [products, query])
 
-    return (
-        <div className="min-h-screen bg-[#f7f4f0] text-[#1a1714]" style={{ fontFamily: "'DM Sans', sans-serif" }}>
+    const filteredServices = useMemo(() => services.filter((s) =>
+        query ? s.name.toLowerCase().includes(query.toLowerCase()) || s.description?.toLowerCase().includes(query.toLowerCase()) : true
+    ), [services, query])
 
+    const hasProducts = products.length > 0
+    const hasServices = services.length > 0
+    const showTabs = hasProducts && hasServices
+
+    return (
+        <div className="min-h-screen">
             {/* ── HERO ── */}
             {!query && (
-                <section className="relative w-full h-[85vh] overflow-hidden bg-[#ede9e3]">
-                    {heroSlides.map((slide, i) => (
-                        <div key={i} className={`absolute inset-0 transition-opacity duration-700 ${i === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                            {slide.image
-                                ? <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
-                                : (
-                                    <div className="w-full h-full bg-[#ede9e3] flex items-center justify-center">
-                                        {/* Decorative typographic fill */}
-                                        <p
-                                            className="text-[20vw] font-normal leading-none text-[#e5e0d9] select-none pointer-events-none uppercase tracking-tighter"
-                                            style={{ fontFamily: "'DM Serif Display', serif" }}
-                                            aria-hidden
+                <section className="relative w-full h-[70vh] sm:h-[90vh] overflow-hidden">
+                    {heroSlides.map((slide, index) => (
+                        <div key={index} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            {slide.image ? (
+                                <>
+                                    <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
+                                </>
+                            ) : (
+                                <div className="sf-hero-fallback absolute inset-0">
+                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_50%,white,transparent_60%)]" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 flex items-end md:items-center">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 40 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="w-full px-4 sm:px-6 md:px-8 pb-16 md:pb-0"
+                                >
+                                    <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
+                                        {slide.accent && (
+                                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{slide.accent}</span>
+                                        )}
+                                        <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">{slide.title}</h1>
+                                        {slide.subtitle && (
+                                            <p className="text-base md:text-lg font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>{slide.subtitle}</p>
+                                        )}
+                                        <Button
+                                            size="lg"
+                                            className="sf-btn-primary mt-2 group rounded-none"
+                                            onClick={() => document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })}
                                         >
-                                            {(slide.title ?? store.name).slice(0, 4)}
-                                        </p>
+                                            {slide.buttonText ?? 'Shop now'}
+                                            <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                        </Button>
                                     </div>
-                                )
-                            }
-                            {slide.image && <div className="absolute inset-0 bg-[#f7f4f0]/30" />}
+                                </motion.div>
+                            </div>
                         </div>
                     ))}
-
-                    {/* Text — centered, simple */}
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
-                        <motion.div
-                            key={currentSlide}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-                            className="space-y-4 max-w-2xl"
-                        >
-                            <h1
-                                className="text-5xl md:text-7xl lg:text-8xl font-normal text-[#1a1714] leading-[0.95] tracking-tight"
-                                style={{ fontFamily: "'DM Serif Display', serif" }}
-                            >
-                                {heroSlides[currentSlide]?.title ?? store.name}
-                            </h1>
-                            {heroSlides[currentSlide]?.subtitle && (
-                                <p className="text-base md:text-lg text-[#7a7169] font-light max-w-md mx-auto leading-relaxed">
-                                    {heroSlides[currentSlide].subtitle}
-                                </p>
-                            )}
-                            <button
-                                onClick={() => document.getElementById('minimal-products')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="inline-flex items-center gap-2 text-xs tracking-[0.15em] uppercase text-[#5c5650] hover:text-[#1a1714] transition-colors mt-2 group"
-                            >
-                                {heroSlides[currentSlide]?.buttonText ?? 'Shop now'}
-                                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                            </button>
-                        </motion.div>
-                    </div>
-
-                    {/* Slide dots */}
                     {heroSlides.length > 1 && (
-                        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
-                            {heroSlides.map((_, i) => (
-                                <button key={i} onClick={() => setCurrentSlide(i)}
-                                    className={`rounded-full transition-all duration-300 ${i === currentSlide ? 'w-5 h-1.5 bg-[#5c5650]' : 'w-1.5 h-1.5 bg-[#c8c0b6]'}`}
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+                            {heroSlides.map((_, index) => (
+                                <button key={index} onClick={() => setCurrentSlide(index)}
+                                    className={`h-0.5 transition-all duration-300 ${index === currentSlide ? 'w-12 bg-white' : 'w-6 bg-white/30'}`}
                                 />
                             ))}
                         </div>
@@ -165,117 +260,144 @@ export default function MinimalStoreFront({ store, products, collections, featur
 
             {/* ── COLLECTIONS ── */}
             {!query && collections.length > 0 && (
-                <section className="py-16 md:py-24 px-6 md:px-12 lg:px-20 border-t border-[#e5e0d9]">
-                    <div className="mb-10">
-                        <h2 className="text-3xl md:text-4xl font-normal text-[#1a1714]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                            Collections
-                        </h2>
-                        <div className="h-px bg-[#e5e0d9] mt-4" />
-                    </div>
-
-                    {/* Horizontal scroll on mobile, grid on desktop */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
-                        {collections.map((col, i) => (
-                            <motion.div
-                                key={col.id}
-                                initial={{ opacity: 0 }}
-                                whileInView={{ opacity: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.07, duration: 0.5 }}
-                                className="group cursor-pointer"
-                                onClick={() => router.push(`/store/${store.slug}/collections/${col.slug}`)}
-                            >
-                                <div className="relative aspect-square overflow-hidden bg-[#ede9e3] mb-3">
-                                    {col.image_url
-                                        ? <img src={col.image_url} alt={col.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.04]" />
-                                        : <div className="w-full h-full" />
-                                    }
-                                </div>
-                                <p className="text-sm text-[#1a1714] group-hover:text-[#5c5650] transition-colors">{col.name}</p>
-                            </motion.div>
-                        ))}
-                    </div>
-                </section>
+                <>
+                    <Separator />
+                    <section className="sf-section-muted py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">Collections</span>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">Shop by Category</h2>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
+                                <button onClick={() => setActiveCollection(null)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null ? 'sf-pill-active' : 'sf-pill-inactive'}`}>All</button>
+                                {collections.map((c) => (
+                                    <button key={c.id} onClick={() => setActiveCollection(c.id)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id ? 'sf-pill-active' : 'sf-pill-inactive'}`}>{c.name}</button>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                                {collections.map((collection) => (
+                                    <Card key={collection.id} className="sf-card group cursor-pointer overflow-hidden hover:shadow-lg transition-shadow pt-0" onClick={() => router.push(`/store/${store.slug}/collections/${collection.slug}`)}>
+                                        <div className="relative aspect-[4/3] overflow-hidden sf-bg-muted">
+                                            {collection.image_url ? (
+                                                <img src={collection.image_url} alt={collection.name} className="absolute inset-0 w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="sf-collection-placeholder w-full h-full" />
+                                            )}
+                                        </div>
+                                        <CardHeader className="px-4 pt-4 pb-2">
+                                            <CardTitle className="sf-heading text-xl font-light">{collection.name}</CardTitle>
+                                            {collection.description && (
+                                                <CardDescription><span className="line-clamp-2 text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>{collection.description}</span></CardDescription>
+                                            )}
+                                        </CardHeader>
+                                        <CardFooter className="px-4 pb-4">
+                                            <button className="sf-pill sf-pill-inactive border px-3 py-1.5 text-sm">Explore</button>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </>
             )}
 
-            {/* ── FEATURED ── */}
+            <Separator />
+
+            {/* ── FEATURED PRODUCTS ── */}
             {!query && featuredProducts.length > 0 && (
-                <section className="py-16 md:py-24 px-6 md:px-12 lg:px-20 border-t border-[#e5e0d9]">
-                    <div className="flex items-baseline justify-between mb-10">
-                        <h2 className="text-3xl md:text-4xl font-normal text-[#1a1714]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                            Featured
-                        </h2>
-                        <button
-                            onClick={() => document.getElementById('minimal-products')?.scrollIntoView({ behavior: 'smooth' })}
-                            className="text-xs tracking-[0.1em] text-[#9a9189] hover:text-[#5c5650] transition-colors uppercase"
-                        >
-                            View all →
-                        </button>
-                    </div>
-                    <div className="h-px bg-[#e5e0d9] mb-10" />
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                        {featuredProducts.map((p, i) => (
-                            <motion.div key={p.id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: i * 0.06, duration: 0.5 }}>
-                                <MinimalProductCard product={p} currency={store.currency} storeSlug={store.slug} />
-                            </motion.div>
-                        ))}
-                    </div>
-                </section>
+                <>
+                    <section className="py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">Featured</span>
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                </div>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Top Picks</h2>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {featuredProducts.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                    <Separator />
+                </>
             )}
 
-            {/* ── ALL PRODUCTS ── */}
-            <section id="minimal-products" className="py-16 md:py-24 px-6 md:px-12 lg:px-20 border-t border-[#e5e0d9]">
-                <div className="flex items-baseline justify-between mb-10 gap-4 flex-wrap">
-                    <h2 className="text-3xl md:text-4xl font-normal text-[#1a1714]" style={{ fontFamily: "'DM Serif Display', serif" }}>
-                        {query ? 'Search' : 'All products'}
-                    </h2>
-
-                    {/* Search */}
-                    <div className="flex items-center gap-2 border-b border-[#c8c0b6] pb-1 focus-within:border-[#5c5650] transition-colors">
-                        <Search className="w-3.5 h-3.5 text-[#b8b0a6]" />
-                        <input
-                            type="text"
-                            value={query}
-                            onChange={e => setQuery(e.target.value)}
-                            placeholder="Search…"
-                            className="bg-transparent text-sm text-[#1a1714] placeholder:text-[#c8c0b6] outline-none w-40"
-                        />
-                        {query && (
-                            <button onClick={() => setQuery('')}>
-                                <X className="w-3.5 h-3.5 text-[#b8b0a6] hover:text-[#5c5650] transition-colors" />
-                            </button>
-                        )}
+            {/* ── CATALOGUE (products + services) ── */}
+            <section id="catalogue" className="py-12 md:py-20">
+                <div className="container mx-auto">
+                    <div className="mb-10 md:mb-14">
+                        <div className="flex items-center gap-4 mb-3">
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+                                {showTabs ? 'Catalogue' : hasServices ? 'Services' : 'All Products'}
+                            </span>
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                        </div>
+                        <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
+                            {showTabs ? 'Browse Everything' : hasServices ? 'Our Services' : 'Browse Everything'}
+                        </h2>
                     </div>
+
+                    {/* Tabs — only when both exist */}
+                    {showTabs && (
+                        <div className="flex gap-1 mb-8 border-b" style={{ borderColor: 'var(--sf-border)' }}>
+                            {(['products', 'services'] as const).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className="px-6 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px"
+                                    style={{
+                                        borderColor: activeTab === tab ? 'var(--sf-accent)' : 'transparent',
+                                        color: activeTab === tab ? 'var(--sf-accent)' : 'var(--sf-foreground-subtle)',
+                                    }}
+                                >
+                                    {tab} ({tab === 'products' ? products.length : services.length})
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Products grid */}
+                    {(!showTabs || activeTab === 'products') && hasProducts && (
+                        filtered.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <ShoppingBag className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No products match your search' : 'No products yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filtered.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
+
+                    {/* Services grid */}
+                    {(!showTabs || activeTab === 'services') && hasServices && (
+                        filteredServices.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <CalendarCheck className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No services match your search' : 'No services yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filteredServices.map((service) => (
+                                    <ServiceCard key={service.id} service={service} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
                 </div>
-
-                <div className="h-px bg-[#e5e0d9] mb-10" />
-
-                {query && (
-                    <p className="text-xs text-[#9a9189] mb-8 uppercase tracking-wider">
-                        {filtered.length} result{filtered.length !== 1 ? 's' : ''}
-                    </p>
-                )}
-
-                {filtered.length === 0 ? (
-                    <div className="py-24 text-center space-y-3">
-                        <p className="text-sm text-[#9a9189]">Nothing found</p>
-                        {query && <button onClick={() => setQuery('')} className="text-xs uppercase tracking-wider text-[#5c5650] underline underline-offset-4">Clear</button>}
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
-                        {filtered.map((p, i) => (
-                            <motion.div key={p.id} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true, margin: '-40px' }} transition={{ delay: (i % 4) * 0.06, duration: 0.4 }}>
-                                <MinimalProductCard product={p} currency={store.currency} storeSlug={store.slug} />
-                            </motion.div>
-                        ))}
-                    </div>
-                )}
-
-                {filtered.length > 0 && (
-                    <p className="text-xs text-[#c8c0b6] text-center mt-16 tracking-wider uppercase">
-                        {filtered.length} item{filtered.length !== 1 ? 's' : ''}
-                    </p>
-                )}
             </section>
         </div>
     )

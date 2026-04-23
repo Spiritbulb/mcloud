@@ -9,21 +9,9 @@ import { createClient } from '@/lib/client'
 import { useCart } from '@/contexts/CartContext'
 import ClassicProductDetailPage from '../../../../src/themes/classic/ProductDetailPage'
 import type { ProductDetailData, ProductVariant } from '../../../../src/themes/types'
-import NoirProductDetailPage from '../../../../src/themes/noir/ProductDetailPage'
-import MinimalProductDetailPage from '../../../../src/themes/minimal/ProductDetailPage'
-import PhotographyProductDetailPage from '../../../../src/themes/photography/ProductDetailPage'
-import PortfolioProductDetailPage from '../../../../src/themes/portfolio/ProductDetailPage'
-import ServicesProductDetailPage from '../../../../src/themes/services/ProductDetailPage'
-import RestaurantProductDetailPage from '../../../../src/themes/restaurant/ProductDetailPage'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicProductDetailPage,
-    noir: NoirProductDetailPage,
-    minimal: MinimalProductDetailPage,
-    photography: PhotographyProductDetailPage,
-    portfolio: PortfolioProductDetailPage,
-    services: ServicesProductDetailPage,
-    restaurant: RestaurantProductDetailPage,
 }
 
 export default function ProductDetailContainer() {
@@ -31,6 +19,7 @@ export default function ProductDetailContainer() {
     const productSlug = params?.['product-slug'] as string
     const { storeSlug, addToCart, itemLoadingStates } = useCart()
     const supabase = createClient()
+    const [storeId, setStoreId] = useState<string>('')
 
     const [product, setProduct] = useState<ProductDetailData | null>(null)
     const [loading, setLoading] = useState(true)
@@ -58,6 +47,7 @@ export default function ProductDetailContainer() {
 
             const resolvedTheme = (store as any).theme?.theme_id ?? (store.settings as any)?.themeId ?? 'classic'
             setThemeId(resolvedTheme)
+            setStoreId(store.id)
 
             const { data: productData, error: productError } = await supabase
                 .from('products')
@@ -80,8 +70,25 @@ export default function ProductDetailContainer() {
                 .order('position', { ascending: true })
 
             const variants = variantsData || []
-            setProduct({ ...productData, variants })
 
+            const { data: reviewStats } = await supabase
+                .from('product_reviews')
+                .select('rating')
+                .eq('product_id', productData.id)
+                .eq('store_id', store.id)
+                .eq('is_published', true)
+
+            const reviewCount = reviewStats?.length ?? 0
+            const avgRating = reviewCount
+                ? reviewStats!.reduce((s, r) => s + r.rating, 0) / reviewCount
+                : null
+
+            setProduct({
+                ...productData,
+                variants,
+                reviewCount,
+                avgRating,
+            })
             if (variants.length > 0) {
                 setSelectedVariant(variants[0])
                 setSelectedOptions(variants[0].options || {})
@@ -168,6 +175,7 @@ export default function ProductDetailContainer() {
     return (
         <PageComponent
             storeSlug={storeSlug ?? ''}
+            storeId={storeId}
             product={product}
             selectedVariant={selectedVariant}
             selectedOptions={selectedOptions}
@@ -180,6 +188,7 @@ export default function ProductDetailContainer() {
             onImageChange={setCurrentImageIndex}
             onAddToCart={handleAddToCart}
             isAddingToCart={variantLoading ?? false}
+            onReviewSubmitted={fetchProduct}
         />
     )
 }

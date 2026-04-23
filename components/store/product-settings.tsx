@@ -1,5 +1,5 @@
 'use client'
-
+//admin product setting
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/client'
 import { Button } from '@/components/ui/button'
@@ -13,39 +13,19 @@ import { Separator } from '@/components/ui/separator'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, Package } from 'lucide-react'
 import ImageUpload from './image-upload'
+import { Product, Variant } from '@/src/themes/types'
 
-interface Variant {
-    id?: string
-    name: string
-    sku: string
-    price: string
-    compare_at_price: string
-    inventory_quantity: string
-    is_active: boolean
-    options: Record<string, string>
-}
 
-interface Product {
-    id: string
-    name: string
-    slug: string
-    description: string | null
-    price: number
-    compare_at_price: number | null
-    inventory_quantity: number
-    is_active: boolean
-    images: string[]
-    sku: string | null
-    track_inventory: boolean
-}
 
 const EMPTY_VARIANT: Variant = {
+    id: '',
     name: '',
     sku: '',
     price: '',
     compare_at_price: '',
     inventory_quantity: '0',
     is_active: true,
+    image_url: '',
     options: {},
 }
 
@@ -102,6 +82,7 @@ function ProductForm({
                         name: v.name,
                         sku: v.sku ?? '',
                         price: String(v.price),
+                        image_url: String(v.image_url ?? ''),
                         compare_at_price: String(v.compare_at_price ?? ''),
                         inventory_quantity: String(v.inventory_quantity),
                         is_active: v.is_active,
@@ -320,12 +301,12 @@ function ProductForm({
                         <div className="space-y-2">
                             {images.map((img, i) => (
                                 <div key={i} className="flex items-center gap-3 rounded border bg-muted/30 p-2">
-                                    <img src={img} alt="" className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                                    <img src={img} alt="" className="w-12 h-12 object-cover rounded shrink-0" />
                                     <p className="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">{img}</p>
                                     <Button
                                         variant="ghost"
                                         size="sm"
-                                        className="h-7 w-7 p-0 flex-shrink-0 text-muted-foreground hover:text-destructive"
+                                        className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
                                         onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
                                     >
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -561,7 +542,7 @@ export default function ProductSettings({
                                 className="flex items-center gap-3 px-3 py-3 sm:px-4 bg-background hover:bg-muted/30 transition-colors"
                             >
                                 {/* Thumbnail */}
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded border bg-muted flex-shrink-0 overflow-hidden">
+                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded border bg-muted shrink-0 overflow-hidden">
                                     {thumb
                                         ? <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
                                         : <div className="w-full h-full" />}

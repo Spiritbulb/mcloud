@@ -1,4 +1,7 @@
+// app/store/[slug]/layout.tsx
 import { CartProvider } from '@/contexts/CartContext'
+import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
+import { WishlistProvider } from '@/contexts/WishlistContext'
 import { createClient } from '@/lib/server'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
@@ -93,14 +96,25 @@ export default async function StoreLayout({
         } as React.CSSProperties)
         : {}
 
+    // Pass store.id down to WishlistProvider so it never has to
+    // re-fetch it on the client. Falls back to empty string if store
+    // is somehow null (notFound will have fired upstream anyway).
+    const storeId = store?.id ?? ''
+
     return (
-        <CartProvider storeSlug={slug}>
-            <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
-                {bannerScript && (
-                    <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
-                )}
-                {children}
-            </LayoutWrapper>
-        </CartProvider>
+        // CustomerAuthProvider has no server deps — sits at the top
+        <CustomerAuthProvider>
+            {/* WishlistProvider needs storeId, which we have server-side */}
+            <WishlistProvider storeId={storeId}>
+                <CartProvider storeSlug={slug}>
+                    <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
+                        {bannerScript && (
+                            <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+                        )}
+                        {children}
+                    </LayoutWrapper>
+                </CartProvider>
+            </WishlistProvider>
+        </CustomerAuthProvider>
     )
 }

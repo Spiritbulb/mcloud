@@ -1,281 +1,404 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, ShoppingBag, ExternalLink } from 'lucide-react'
-import type { StoreFrontProps } from '../types'
+import { useRouter } from 'next/navigation'
+import { ShoppingBag, ArrowRight, CalendarCheck, Clock, MapPin, Star } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Card, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
+import { Separator } from '@/components/ui/separator'
+import { motion } from 'framer-motion'
+import { cn } from '@/lib/utils'
+import type { StoreFrontProps, ServiceItem } from '../types'
 
-function fmt(amount: number, currency: string) {
-    return new Intl.NumberFormat('en-KE', { style: 'currency', currency, minimumFractionDigits: 0 }).format(amount)
+function formatPrice(amount: number, currency: string) {
+    return new Intl.NumberFormat('en-KE', {
+        style: 'currency',
+        currency,
+        minimumFractionDigits: 0,
+    }).format(amount)
 }
 
-// ─── Case Study Card ───────────────────────────────────────────────────────────
-function CaseStudyCard({ product, currency, storeSlug }: {
+function isInStock(product: StoreFrontProps['products'][0]) {
+    if (!product.track_inventory) return true
+    return product.inventory_quantity > 0
+}
+
+// ─── Product Card ─────────────────────────────────────────────────────────────
+function ProductCard({
+    product, currency, storeSlug,
+}: {
     product: StoreFrontProps['products'][0]
     currency: string
     storeSlug: string
 }) {
-    const image = product.images?.[0] ?? null
-    const excerpt = product.description
-        ? product.description.length > 120
-            ? product.description.slice(0, 120).trimEnd() + '…'
-            : product.description
-        : null
+    const inStock = isInStock(product)
+    const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
+    const image = product.images?.[0] || null
 
     return (
-        <Link
-            href={`/store/${storeSlug}/${product.slug}`}
-            className="group block border border-gray-100 hover:border-[#6366f1]/30 transition-all duration-300 hover:shadow-xl hover:-translate-y-1 bg-white"
-        >
-            {/* Image */}
-            <div className="relative overflow-hidden aspect-video bg-gray-50">
-                {image ? (
-                    <img
-                        src={image}
-                        alt={product.name}
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
-                    />
-                ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                        <ShoppingBag className="w-8 h-8 text-gray-200" />
+        <Link href={`/store/${storeSlug}/products/${product.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {image ? (
+                        <img src={image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                        </div>
+                    )}
+                    {!inStock && (
+                        <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
+                            <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
+                        </div>
+                    )}
+                    {hasDiscount && inStock && (
+                        <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">Sale</span>
+                    )}
+                </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{product.name}</CardTitle>
+                    {product.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{product.description}</span>
+                        </CardDescription>
+                    )}
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
+                    <div className="flex items-center gap-2">
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(product.price, currency)}</span>
+                        {hasDiscount && (
+                            <span className="text-xs line-through" style={{ color: 'var(--sf-foreground-subtle)' }}>{formatPrice(product.compare_at_price!, currency)}</span>
+                        )}
                     </div>
-                )}
-                <div className="absolute inset-0 bg-[#6366f1]/0 group-hover:bg-[#6366f1]/5 transition-colors duration-300" />
-            </div>
-
-            {/* Content */}
-            <div className="p-6 md:p-8">
-                <div className="flex items-start justify-between gap-4 mb-3">
-                    <h3 className="text-xl font-black text-[#111111] leading-tight group-hover:text-[#6366f1] transition-colors">
-                        {product.name}
-                    </h3>
-                    <ExternalLink className="w-4 h-4 text-gray-300 group-hover:text-[#6366f1] flex-shrink-0 mt-1 transition-colors" />
-                </div>
-                {excerpt && (
-                    <p className="text-sm text-gray-500 leading-relaxed mb-4">{excerpt}</p>
-                )}
-                <div className="flex items-center justify-between">
-                    <span className="text-sm font-bold text-[#111111]">{fmt(product.price, currency)}</span>
-                    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#6366f1] group-hover:gap-3 transition-all duration-200">
-                        View project <ArrowRight className="w-3 h-3" />
-                    </span>
-                </div>
-            </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        View <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
         </Link>
     )
 }
 
-// ─── Portfolio StoreFront ──────────────────────────────────────────────────────
-export default function PortfolioStoreFront({ store, products, collections, featuredProducts }: StoreFrontProps) {
-    const settings = store.settings ?? {}
-    const heroTitle = settings.heroTitle ?? store.name
-    const heroSubtitle = settings.heroSubtitle ?? store.description ?? ''
-    const heroImage = settings.heroImage ?? null
-    const social = settings.socialLinks ?? {}
+// ─── Service Card ─────────────────────────────────────────────────────────────
+function ServiceCard({
+    service, currency, storeSlug,
+}: {
+    service: ServiceItem
+    currency: string
+    storeSlug: string
+}) {
+    const thumb = service.media?.find((m) => m.type === 'image')?.url
+        ?? service.metadata?.media?.find((m) => m.type === 'image')?.url
+    const availability = service.availability ?? service.metadata?.availability ?? 'available'
+    const packages = service.packages ?? service.metadata?.packages ?? []
+    const prices = packages.map((p) => parseFloat(String(p.price)) || 0).filter(Boolean)
+    const minPrice = prices.length > 0 ? Math.min(...prices) : service.price
 
-    const displayProducts = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 6)
+    const availDot = { available: 'sf-dot-instock', busy: 'sf-dot-busy', unavailable: 'sf-dot-outofstock' }[availability]
+    const availLabel = { available: 'Available', busy: 'Busy', unavailable: 'Unavailable' }[availability]
 
     return (
-        <div className="min-h-screen bg-white text-[#111111] font-sans">
-
-            {/* ── NAV ── */}
-            <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-6 md:px-12 h-16 flex items-center justify-between">
-                    <Link href={`/store/${store.slug}`} className="text-lg font-black tracking-tight text-[#111111] hover:text-[#6366f1] transition-colors">
-                        {store.name}
-                    </Link>
-                    <div className="flex items-center gap-6">
-                        <Link href={`/store/${store.slug}/products`} className="text-sm font-semibold text-gray-500 hover:text-[#111111] transition-colors hidden sm:block">
-                            Work
-                        </Link>
-                        <Link href={`/store/${store.slug}/blog`} className="text-sm font-semibold text-gray-500 hover:text-[#111111] transition-colors hidden sm:block">
-                            Insights
-                        </Link>
-                        <Link
-                            href={`/store/${store.slug}/cart`}
-                            className="flex items-center gap-2 bg-[#6366f1] text-white text-xs font-bold uppercase tracking-widest px-4 py-2 hover:bg-[#4f46e5] transition-colors"
-                        >
-                            <ShoppingBag className="w-3.5 h-3.5" />
-                            Cart
-                        </Link>
-                    </div>
-                </div>
-            </nav>
-
-            {/* ── HERO ── */}
-            <section className="relative min-h-screen flex items-center pt-16">
-                {/* Background image */}
-                {heroImage && (
-                    <>
-                        <img src={heroImage} alt={heroTitle} className="absolute inset-0 w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-[#111111]/70" />
-                    </>
-                )}
-
-                {/* Background pattern when no image */}
-                {!heroImage && (
-                    <div className="absolute inset-0 bg-gradient-to-br from-white via-gray-50 to-indigo-50/40" />
-                )}
-
-                <div className={`relative z-10 max-w-7xl mx-auto px-6 md:px-12 py-24 ${heroImage ? 'text-white' : 'text-[#111111]'}`}>
-                    <div className="max-w-4xl">
-                        {/* Eyebrow */}
-                        <div className="flex items-center gap-3 mb-8">
-                            <div className="w-8 h-0.5 bg-[#6366f1]" />
-                            <span className="text-xs font-bold uppercase tracking-[0.3em] text-[#6366f1]">
-                                Creative Professional
-                            </span>
+        <Link href={`/store/${storeSlug}/services/${service.slug}`} className="group block">
+            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
+                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                    {thumb ? (
+                        <img src={thumb} alt={service.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                    ) : (
+                        <div className="w-full h-full flex items-center justify-center">
+                            <CalendarCheck className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
                         </div>
-
-                        {/* Main heading */}
-                        <h1 className="text-6xl md:text-8xl lg:text-[clamp(4rem,10vw,8rem)] font-black leading-[0.92] tracking-tight mb-8">
-                            {heroTitle}
-                        </h1>
-
-                        {heroSubtitle && (
-                            <p className={`text-lg md:text-xl font-light leading-relaxed max-w-2xl mb-12 ${heroImage ? 'text-white/80' : 'text-gray-500'}`}>
-                                {heroSubtitle}
-                            </p>
+                    )}
+                    {/* Availability badge */}
+                    <span className="absolute top-2 left-2 sf-card inline-flex items-center gap-1.5 px-2 py-0.5 text-xs shadow">
+                        <span className={cn('h-1.5 w-1.5 rounded-full', availDot)} />
+                        {availLabel}
+                    </span>
+                </div>
+                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
+                    {service.metadata?.serviceType && (
+                        <p className="text-xs uppercase tracking-widest sf-text-accent font-medium">{service.metadata.serviceType}</p>
+                    )}
+                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{service.name}</CardTitle>
+                    {service.description && (
+                        <CardDescription>
+                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{service.description}</span>
+                        </CardDescription>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-xs pt-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        {service.metadata?.deliveryDays && (
+                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.metadata.deliveryDays}d delivery</span>
                         )}
-
-                        <div className="flex flex-wrap items-center gap-4">
-                            <button
-                                onClick={() => document.getElementById('portfolio-work')?.scrollIntoView({ behavior: 'smooth' })}
-                                className="inline-flex items-center gap-3 bg-[#6366f1] text-white font-bold text-sm uppercase tracking-widest px-8 py-4 hover:bg-[#4f46e5] transition-colors"
-                            >
-                                View Work <ArrowRight className="w-4 h-4" />
-                            </button>
-                            <Link
-                                href={`/store/${store.slug}/products`}
-                                className={`inline-flex items-center gap-2 font-bold text-sm uppercase tracking-widest px-8 py-4 border-2 transition-colors ${heroImage ? 'border-white/40 text-white hover:border-white' : 'border-gray-200 text-[#111111] hover:border-[#6366f1] hover:text-[#6366f1]'}`}
-                            >
-                                All Projects
-                            </Link>
-                        </div>
+                        {service.metadata?.location && (
+                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.metadata.location}</span>
+                        )}
+                        {service.metadata?.rating != null && (
+                            <span className="flex items-center gap-1"><Star className="w-3 h-3 sf-star-filled" />{service.metadata.rating.toFixed(1)}</span>
+                        )}
                     </div>
-                </div>
-
-                {/* Scroll indicator */}
-                <div className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-                    <div className="w-px h-12 bg-gradient-to-b from-transparent to-[#6366f1]/60" />
-                </div>
-            </section>
-
-            {/* ── SELECTED WORK ── */}
-            <section id="portfolio-work" className="py-24 md:py-32 px-6 md:px-12 max-w-7xl mx-auto">
-                <div className="flex items-end justify-between mb-16 gap-6 flex-wrap">
+                </CardHeader>
+                <CardFooter className="flex justify-between items-center px-4 pb-4">
                     <div>
-                        <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#6366f1] mb-3">Portfolio</p>
-                        <h2 className="text-4xl md:text-6xl font-black text-[#111111] leading-tight">
-                            Selected<br />Work
+                        <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>{packages.length > 0 ? 'From' : 'Price'}</p>
+                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(minPrice, currency)}</span>
+                    </div>
+                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
+                        Book <ArrowRight className="h-3 w-3" />
+                    </button>
+                </CardFooter>
+            </Card>
+        </Link>
+    )
+}
+
+// ─── Classic StoreFront ────────────────────────────────────────────────────────
+export default function ClassicStoreFront({
+    store,
+    products,
+    collections,
+    featuredProducts,
+    services = [],
+}: StoreFrontProps) {
+    console.log('🔥 StoreFront received:', {
+        products: products.length,
+        services: services.length,
+    })
+    const router = useRouter()
+    const [query, setQuery] = useState('')
+    const [activeCollection, setActiveCollection] = useState<string | null>(null)
+    const [currentSlide, setCurrentSlide] = useState(0)
+    const [activeTab, setActiveTab] = useState<'products' | 'services'>(
+        products.length === 0 && services.length > 0 ? 'services' : 'products'
+    )
+
+    const settings = store.settings ?? {}
+    const heroSlides =
+        settings.heroSlides && settings.heroSlides.length > 0
+            ? settings.heroSlides
+            : [{
+                title: settings.heroTitle ?? store.name,
+                subtitle: settings.heroSubtitle ?? store.description ?? '',
+                image: settings.heroImage ?? undefined,
+                accent: 'New Arrivals',
+                buttonText: 'Shop now',
+            }]
+
+    useEffect(() => {
+        if (heroSlides.length <= 1) return
+        const timer = setInterval(() => setCurrentSlide((prev) => (prev + 1) % heroSlides.length), 5000)
+        return () => clearInterval(timer)
+    }, [heroSlides.length])
+
+    const filtered = useMemo(() => products.filter((p) =>
+        query ? p.name.toLowerCase().includes(query.toLowerCase()) || p.description?.toLowerCase().includes(query.toLowerCase()) : true
+    ), [products, query])
+
+    const filteredServices = useMemo(() => services.filter((s) =>
+        query ? s.name.toLowerCase().includes(query.toLowerCase()) || s.description?.toLowerCase().includes(query.toLowerCase()) : true
+    ), [services, query])
+
+    const hasProducts = products.length > 0
+    const hasServices = services.length > 0
+    const showTabs = hasProducts && hasServices
+
+    return (
+        <div className="min-h-screen">
+            {/* ── HERO ── */}
+            {!query && (
+                <section className="relative w-full h-[70vh] sm:h-[90vh] overflow-hidden">
+                    {heroSlides.map((slide, index) => (
+                        <div key={index} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                            {slide.image ? (
+                                <>
+                                    <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
+                                    <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
+                                </>
+                            ) : (
+                                <div className="sf-hero-fallback absolute inset-0">
+                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_50%,white,transparent_60%)]" />
+                                </div>
+                            )}
+                            <div className="absolute inset-0 flex items-end md:items-center">
+                                <motion.div
+                                    initial={{ opacity: 0, y: 40 }}
+                                    animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 40 }}
+                                    transition={{ duration: 0.5 }}
+                                    className="w-full px-4 sm:px-6 md:px-8 pb-16 md:pb-0"
+                                >
+                                    <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
+                                        {slide.accent && (
+                                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{slide.accent}</span>
+                                        )}
+                                        <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">{slide.title}</h1>
+                                        {slide.subtitle && (
+                                            <p className="text-base md:text-lg font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>{slide.subtitle}</p>
+                                        )}
+                                        <Button
+                                            size="lg"
+                                            className="sf-btn-primary mt-2 group rounded-none"
+                                            onClick={() => document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })}
+                                        >
+                                            {slide.buttonText ?? 'Shop now'}
+                                            <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                        </Button>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </div>
+                    ))}
+                    {heroSlides.length > 1 && (
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+                            {heroSlides.map((_, index) => (
+                                <button key={index} onClick={() => setCurrentSlide(index)}
+                                    className={`h-0.5 transition-all duration-300 ${index === currentSlide ? 'w-12 bg-white' : 'w-6 bg-white/30'}`}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </section>
+            )}
+
+            {/* ── COLLECTIONS ── */}
+            {!query && collections.length > 0 && (
+                <>
+                    <Separator />
+                    <section className="sf-section-muted py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">Collections</span>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">Shop by Category</h2>
+                            </div>
+                            <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
+                                <button onClick={() => setActiveCollection(null)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null ? 'sf-pill-active' : 'sf-pill-inactive'}`}>All</button>
+                                {collections.map((c) => (
+                                    <button key={c.id} onClick={() => setActiveCollection(c.id)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === c.id ? 'sf-pill-active' : 'sf-pill-inactive'}`}>{c.name}</button>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 md:gap-8">
+                                {collections.map((collection) => (
+                                    <Card key={collection.id} className="sf-card group cursor-pointer overflow-hidden hover:shadow-lg transition-shadow pt-0" onClick={() => router.push(`/store/${store.slug}/collections/${collection.slug}`)}>
+                                        <div className="relative aspect-[4/3] overflow-hidden sf-bg-muted">
+                                            {collection.image_url ? (
+                                                <img src={collection.image_url} alt={collection.name} className="absolute inset-0 w-full h-full object-cover" />
+                                            ) : (
+                                                <div className="sf-collection-placeholder w-full h-full" />
+                                            )}
+                                        </div>
+                                        <CardHeader className="px-4 pt-4 pb-2">
+                                            <CardTitle className="sf-heading text-xl font-light">{collection.name}</CardTitle>
+                                            {collection.description && (
+                                                <CardDescription><span className="line-clamp-2 text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>{collection.description}</span></CardDescription>
+                                            )}
+                                        </CardHeader>
+                                        <CardFooter className="px-4 pb-4">
+                                            <button className="sf-pill sf-pill-inactive border px-3 py-1.5 text-sm">Explore</button>
+                                        </CardFooter>
+                                    </Card>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                </>
+            )}
+
+            <Separator />
+
+            {/* ── FEATURED PRODUCTS ── */}
+            {!query && featuredProducts.length > 0 && (
+                <>
+                    <section className="py-12 md:py-20">
+                        <div className="container mx-auto">
+                            <div className="mb-10 md:mb-14">
+                                <div className="flex items-center gap-4 mb-3">
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">Featured</span>
+                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                                </div>
+                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Top Picks</h2>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {featuredProducts.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+                    <Separator />
+                </>
+            )}
+
+            {/* ── CATALOGUE (products + services) ── */}
+            <section id="catalogue" className="py-12 md:py-20">
+                <div className="container mx-auto">
+                    <div className="mb-10 md:mb-14">
+                        <div className="flex items-center gap-4 mb-3">
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+                                {showTabs ? 'Catalogue' : hasServices ? 'Services' : 'All Products'}
+                            </span>
+                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                        </div>
+                        <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
+                            {showTabs ? 'Browse Everything' : hasServices ? 'Our Services' : 'Browse Everything'}
                         </h2>
                     </div>
-                    <Link
-                        href={`/store/${store.slug}/products`}
-                        className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-widest text-gray-400 hover:text-[#6366f1] transition-colors group"
-                    >
-                        View all <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </Link>
-                </div>
 
-                {displayProducts.length === 0 ? (
-                    <div className="py-20 text-center border border-dashed border-gray-200">
-                        <ShoppingBag className="w-10 h-10 text-gray-200 mx-auto mb-4" />
-                        <p className="text-gray-400 text-sm">No projects yet</p>
-                    </div>
-                ) : (
-                    <div className="grid md:grid-cols-2 gap-6 md:gap-8">
-                        {displayProducts.map((p, i) => (
-                            <div
-                                key={p.id}
-                                style={{ animationDelay: `${i * 0.08}s` }}
-                                className="animate-fade-in"
-                            >
-                                <CaseStudyCard product={p} currency={store.currency} storeSlug={store.slug} />
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </section>
-
-            {/* ── ABOUT ── */}
-            {store.description && (
-                <section className="py-24 md:py-32 bg-[#111111] text-white">
-                    <div className="max-w-7xl mx-auto px-6 md:px-12">
-                        <div className="grid md:grid-cols-2 gap-16 items-center">
-                            <div>
-                                <p className="text-xs font-bold uppercase tracking-[0.3em] text-[#6366f1] mb-4">About</p>
-                                <h2 className="text-4xl md:text-5xl font-black text-white leading-tight mb-8">
-                                    Who we are
-                                </h2>
-                                <div className="w-12 h-1 bg-[#6366f1] mb-8" />
-                            </div>
-                            <div>
-                                <p className="text-lg text-white/70 leading-relaxed mb-8">
-                                    {store.description}
-                                </p>
-                                <Link
-                                    href={`/store/${store.slug}/products`}
-                                    className="inline-flex items-center gap-3 text-sm font-bold uppercase tracking-widest text-[#6366f1] hover:gap-5 transition-all duration-200 group"
+                    {/* Tabs — only when both exist */}
+                    {showTabs && (
+                        <div className="flex gap-1 mb-8 border-b" style={{ borderColor: 'var(--sf-border)' }}>
+                            {(['products', 'services'] as const).map((tab) => (
+                                <button
+                                    key={tab}
+                                    onClick={() => setActiveTab(tab)}
+                                    className="px-6 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px"
+                                    style={{
+                                        borderColor: activeTab === tab ? 'var(--sf-accent)' : 'transparent',
+                                        color: activeTab === tab ? 'var(--sf-accent)' : 'var(--sf-foreground-subtle)',
+                                    }}
                                 >
-                                    See our work <ArrowRight className="w-4 h-4" />
-                                </Link>
-                            </div>
+                                    {tab} ({tab === 'products' ? products.length : services.length})
+                                </button>
+                            ))}
                         </div>
-                    </div>
-                </section>
-            )}
+                    )}
 
-            {/* ── SOCIAL LINKS ── */}
-            {Object.values(social).some(Boolean) && (
-                <section className="py-16 px-6 md:px-12 max-w-7xl mx-auto border-t border-gray-100">
-                    <div className="flex flex-wrap items-center gap-6">
-                        <span className="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Find us on</span>
-                        {social.instagram && (
-                            <a href={social.instagram} target="_blank" rel="noopener noreferrer"
-                                className="text-sm font-bold text-gray-400 hover:text-[#6366f1] transition-colors uppercase tracking-wider">
-                                Instagram
-                            </a>
-                        )}
-                        {social.twitter && (
-                            <a href={social.twitter} target="_blank" rel="noopener noreferrer"
-                                className="text-sm font-bold text-gray-400 hover:text-[#6366f1] transition-colors uppercase tracking-wider">
-                                Twitter
-                            </a>
-                        )}
-                        {social.tiktok && (
-                            <a href={social.tiktok} target="_blank" rel="noopener noreferrer"
-                                className="text-sm font-bold text-gray-400 hover:text-[#6366f1] transition-colors uppercase tracking-wider">
-                                TikTok
-                            </a>
-                        )}
-                        {social.whatsapp && (
-                            <a href={`https://wa.me/${social.whatsapp.replace(/\D/g, '')}`} target="_blank" rel="noopener noreferrer"
-                                className="text-sm font-bold text-gray-400 hover:text-[#6366f1] transition-colors uppercase tracking-wider">
-                                WhatsApp
-                            </a>
-                        )}
-                    </div>
-                </section>
-            )}
+                    {/* Products grid */}
+                    {(!showTabs || activeTab === 'products') && hasProducts && (
+                        filtered.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <ShoppingBag className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No products match your search' : 'No products yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filtered.map((product) => (
+                                    <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
 
-            {/* ── FOOTER ── */}
-            <footer className="border-t border-gray-100 py-12 px-6 md:px-12">
-                <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6">
-                    <div>
-                        <p className="text-lg font-black text-[#111111] mb-1">{store.name}</p>
-                        <p className="text-xs text-gray-400 uppercase tracking-widest">Creative Studio</p>
-                    </div>
-                    <nav className="flex flex-wrap items-center gap-6">
-                        <Link href={`/store/${store.slug}/products`} className="text-sm font-semibold text-gray-400 hover:text-[#6366f1] transition-colors">Work</Link>
-                        <Link href={`/store/${store.slug}/blog`} className="text-sm font-semibold text-gray-400 hover:text-[#6366f1] transition-colors">Insights</Link>
-                        <Link href={`/store/${store.slug}/cart`} className="text-sm font-semibold text-gray-400 hover:text-[#6366f1] transition-colors">Cart</Link>
-                    </nav>
-                    <p className="text-xs text-gray-300">
-                        &copy; {new Date().getFullYear()} {store.name}
-                    </p>
+                    {/* Services grid */}
+                    {(!showTabs || activeTab === 'services') && hasServices && (
+                        filteredServices.length === 0 ? (
+                            <div className="text-center py-24 space-y-3">
+                                <CalendarCheck className="w-10 h-10 mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.2 }} />
+                                <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {query ? 'No services match your search' : 'No services yet'}
+                                </p>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                                {filteredServices.map((service) => (
+                                    <ServiceCard key={service.id} service={service} currency={store.currency} storeSlug={store.slug} />
+                                ))}
+                            </div>
+                        )
+                    )}
                 </div>
-            </footer>
+            </section>
         </div>
     )
 }

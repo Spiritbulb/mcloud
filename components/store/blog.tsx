@@ -23,8 +23,6 @@ const Spinner = () => (
 
 const LIST_THEMES = {
     classic: dynamic(() => import('@/src/themes/classic/BlogListPage'), { ssr: false, loading: Spinner }),
-    noir: dynamic(() => import('@/src/themes/noir/BlogListPage'), { ssr: false, loading: Spinner }),
-    minimal: dynamic(() => import('@/src/themes/minimal/BlogListPage'), { ssr: false, loading: Spinner }),
 } satisfies Record<string, React.ComponentType<BlogListPageProps>>
 
 export function BlogListPage({ themeId, ...props }: BlogListPageProps & { themeId?: string }) {
@@ -36,8 +34,6 @@ export function BlogListPage({ themeId, ...props }: BlogListPageProps & { themeI
 
 const POST_THEMES = {
     classic: dynamic(() => import('@/src/themes/classic/BlogPostPage'), { ssr: false, loading: Spinner }),
-    noir: dynamic(() => import('@/src/themes/noir/BlogPostPage'), { ssr: false, loading: Spinner }),
-    minimal: dynamic(() => import('@/src/themes/minimal/BlogPostPage'), { ssr: false, loading: Spinner }),
 } satisfies Record<string, React.ComponentType<BlogPostPageProps>>
 
 export function BlogPostPage({ themeId, ...props }: BlogPostPageProps & { themeId?: string }) {

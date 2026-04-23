@@ -11,9 +11,13 @@ import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
 import type { ProductDetailPageProps } from '../types'
+import { WishlistButton } from '@/components/store/WishlistButton'
+import { ReviewsSection } from './ReviewsSection'
 
 export default function ClassicProductDetailPage({
     product,
+    storeId,
+    storeSlug,
     selectedVariant,
     selectedOptions,
     quantity,
@@ -23,6 +27,7 @@ export default function ClassicProductDetailPage({
     onImageChange,
     onAddToCart,
     isAddingToCart,
+    onReviewSubmitted
 }: ProductDetailPageProps) {
     const formatPrice = (price: number) =>
         new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(price)
@@ -31,8 +36,6 @@ export default function ClassicProductDetailPage({
     const isInStock = (selectedVariant?.inventory_quantity ?? 0) > 0
     const maxQuantity = selectedVariant?.inventory_quantity || 0
     const tags = product.metadata?.tags || []
-    const rating = product.metadata?.rating || 4
-    const reviews = product.metadata?.reviews || 24
     const hasDiscount =
         product.compare_at_price &&
         product.compare_at_price > (selectedVariant?.price || product.price)
@@ -160,19 +163,24 @@ export default function ClassicProductDetailPage({
                             </h1>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                            <div className="flex items-center gap-0.5">
-                                {[...Array(5)].map((_, i) => (
-                                    <Star
-                                        key={i}
-                                        className={cn('h-4 w-4', i < Math.floor(rating) ? 'sf-star-filled' : 'sf-star-empty')}
-                                    />
-                                ))}
+                        {(product.avgRating ?? 0) > 0 && (
+                            <div className="flex items-center gap-3">
+                                <div className="flex items-center gap-0.5">
+                                    {[...Array(5)].map((_, i) => (
+                                        <Star
+                                            key={i}
+                                            className={cn(
+                                                'h-4 w-4',
+                                                i < Math.floor(product.avgRating!) ? 'sf-star-filled' : 'sf-star-empty'
+                                            )}
+                                        />
+                                    ))}
+                                </div>
+                                <span className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    {product.avgRating!.toFixed(1)} &middot; {product.reviewCount} review{product.reviewCount !== 1 ? 's' : ''}
+                                </span>
                             </div>
-                            <span className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                {rating.toFixed(1)} &middot; {reviews} reviews
-                            </span>
-                        </div>
+                        )}
 
                         <div className="flex items-baseline gap-3">
                             <span className="text-3xl font-light" style={{ color: 'var(--sf-foreground)' }}>
@@ -275,18 +283,26 @@ export default function ClassicProductDetailPage({
                             </div>
                         )}
 
-                        <Button
-                            onClick={onAddToCart}
-                            disabled={!isInStock || isAddingToCart}
-                            className="w-full sf-btn-primary justify-center"
-                            size="lg"
-                        >
-                            {isAddingToCart ? (
-                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding...</>
-                            ) : (
-                                <><ShoppingCart className="mr-2 h-4 w-4" />{isInStock ? 'Add to Cart' : 'Out of Stock'}</>
-                            )}
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button
+                                onClick={onAddToCart}
+                                disabled={!isInStock || isAddingToCart}
+                                className="w-3/4 sf-btn-primary justify-center"
+                                size="lg"
+                            >
+                                {isAddingToCart ? (
+                                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Adding...</>
+                                ) : (
+                                    <><ShoppingCart className="mr-2 h-4 w-4" />{isInStock ? 'Add to Cart' : 'Out of Stock'}</>
+                                )}
+                            </Button>
+
+                            <WishlistButton
+                                productId={product.id}
+                                storeId={storeId}
+                                size="lg"
+                            />
+                        </div>
 
                         <div className="grid grid-cols-3 gap-3 pt-2" style={{ borderTop: '1px solid var(--sf-border)' }}>
                             {[
@@ -320,6 +336,8 @@ export default function ClassicProductDetailPage({
                     </div>
                 </div>
             </div>
+
+            <ReviewsSection productId={product.id} storeSlug={storeSlug} onReviewSubmitted={onReviewSubmitted} />
         </div>
     )
 }

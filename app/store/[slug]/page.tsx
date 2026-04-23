@@ -1,10 +1,9 @@
-// app/store/[slug]/page.tsx
-
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import StoreFront from '@/components/store/Storefront'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import { ServiceItem } from '@/src/themes/types'
 
 export const revalidate = 60
 
@@ -59,6 +58,7 @@ export default async function StorePage({ params }: Props) {
         { data: rawProducts },
         { data: rawCollections },
         { data: featuredRows },
+        { data: rawServices },
     ] = await Promise.all([
         supabase
             .from('products')
@@ -88,11 +88,19 @@ export default async function StorePage({ params }: Props) {
             .eq('collections.store_id', rawStore.id)
             .order('position', { ascending: true })
             .limit(8),
+
+        (supabase as any)
+            .from('services')
+            .select('id, name, slug, description, price, is_active, sku, metadata')
+            .eq('store_id', rawStore.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false }),
     ])
 
     const store = castStore(rawStore)
     const products = castProducts(rawProducts ?? [])
     const collections = castCollections(rawCollections ?? [])
+    const services = (rawServices ?? []) as ServiceItem[]
 
     const featured = castProducts(
         (featuredRows ?? [])
@@ -106,6 +114,7 @@ export default async function StorePage({ params }: Props) {
             products={products}
             collections={collections}
             featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
+            services={services}
         />
     )
 }

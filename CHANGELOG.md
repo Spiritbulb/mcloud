@@ -2,6 +2,45 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0](https://github.com/Spiritbulb/mcloud/compare/v1.0.0-beta.0...v1.1.0) (2026-03-30)
+
+### Features
+
+* add theme support to all storefront pages
+* fix theme routing and add theme-specific nav/footer
+* added new themes for store type support - Fixed dark mode/light mode switch - Added a new route to support home client
+* getting started drawer and tracking
+* new docs editor with basic authentication
+* Introduce support and changelog pages, update settings header UI, and refactor appearance settings styling.
+* Add Next.js middleware for request proxying.
+* Add API endpoint to fetch a store by slug, including user authentication and membership verification.
+* Implement full user authentication, onboarding, and initial store management infrastructure.
+* Implement a modular theming system for stores, add new store pages and components, and introduce authentication features.
+* Establish core storefront layout, global theme styling, and store settings components.
+* Implement multi-tenant e-commerce store with product details, cart management, and various payment integrations.
+* Add login form component with Supabase authentication and organization-based redirection.
+
+### Bug Fixes
+
+* destructured and awaited search params for direct access
+* Redirect subdomain protected routes to the main domain for Auth0 login and update the banner dashboard URL.
+
+### Refactoring
+
+* switched authentication and admin access routes
+
+### Maintenance
+
+* **release:** 1.0.0-beta.0
+* moved integrations
+* written docs and added nav links
+* installed claude code and initialized
+* **release:** 0.1.1
+
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
 ## [1.0.0-beta.0](https://github.com/Spiritbulb/mcloud/compare/v0.1.1...v1.0.0-beta.0) (2026-03-22)
 
 ### Features

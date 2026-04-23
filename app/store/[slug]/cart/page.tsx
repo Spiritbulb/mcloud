@@ -7,21 +7,9 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 import ClassicCartPage from '../../../../src/themes/classic/CartPage'
 import type { MpesaConfig, GuestDetails } from '../../../../src/themes/types'
-import NoirCartPage from '../../../../src/themes/noir/CartPage'
-import MinimalCartPage from '../../../../src/themes/minimal/CartPage'
-import PhotographyCartPage from '../../../../src/themes/photography/CartPage'
-import PortfolioCartPage from '../../../../src/themes/portfolio/CartPage'
-import ServicesCartPage from '../../../../src/themes/services/CartPage'
-import RestaurantCartPage from '../../../../src/themes/restaurant/CartPage'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicCartPage,
-    noir: NoirCartPage,
-    minimal: MinimalCartPage,
-    photography: PhotographyCartPage,
-    portfolio: PortfolioCartPage,
-    services: ServicesCartPage,
-    restaurant: RestaurantCartPage,
 }
 
 export default function CartPageContainer() {
@@ -51,22 +39,26 @@ export default function CartPageContainer() {
                 const resolvedTheme = (store as any).theme?.theme_id ?? (store.settings as any)?.themeId ?? 'classic'
                 setThemeId(resolvedTheme)
 
-                supabase
-                    .from('store_integrations')
-                    .select('provider, is_active, config')
-                    .eq('store_id', store.id)
-                    .in('provider', ['mpesa', 'paypal'])
-                    .then(({ data }) => {
-                        const m = data?.find((i) => i.provider === 'mpesa')
-                        const p = data?.find((i) => i.provider === 'paypal')
+                fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/integrations`, {
+                    credentials: 'include',
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        const m = data.mpesa
+                        const p = data.paypal
+                        const psa = data.pesapal
+                        const isend = data.intasend
                         setMpesaConfig({
-                            type: m?.config?.mpesa_type ?? 'till',
-                            number: m?.config?.mpesa_till ?? m?.config?.mpesa_paybill ?? '',
-                            account: m?.config?.mpesa_account,
-                            enabled: m?.is_active ?? false,
-                            paypalEnabled: p?.is_active ?? false,
+                            type: m?.mpesa_type ?? 'till',
+                            number: m?.mpesa_till ?? m?.mpesa_paybill ?? '',
+                            account: m?.mpesa_account,
+                            enabled: m?.enabled ?? false,
+                            paypalEnabled: p?.enabled ?? false,
+                            pesapalEnabled: psa?.enabled ?? false,
+                            intasendEnabled: isend?.enabled ?? false,
                         })
                     })
+                    .catch(err => console.error('Failed to load integrations', err))
             })
     }, [storeSlug])
 
@@ -214,8 +206,9 @@ export default function CartPageContainer() {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'paypal')
 
-            const res = await fetch('/api/payments/paypal/create-order', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/paypal/create-order`, {
                 method: 'POST',
+                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, items: validItems, totalKES: Number(totalKES.toFixed(2)) }),
             })
@@ -223,6 +216,44 @@ export default function CartPageContainer() {
             const data = await res.json()
             if (!data.success) throw new Error(data.error || 'PayPal setup failed')
             window.location.href = data.approvalUrl
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handlePesapalCheckout = async () => {
+        setIsProcessing(true)
+        try {
+            const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
+            const orderNumber = await createOrder(guest, 'mpesa') // generalized
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/pesapal/create-order?store=${storeSlug}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
+            })
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error || 'Pesapal setup failed')
+            window.location.href = data.redirectUrl
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
+    const handleIntasendCheckout = async () => {
+        setIsProcessing(true)
+        try {
+            const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
+            const orderNumber = await createOrder(guest, 'mpesa')
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/intasend/create-order?store=${storeSlug}`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
+            })
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error || 'Intasend setup failed')
+            window.location.href = data.redirectUrl
         } finally {
             setIsProcessing(false)
         }
@@ -241,6 +272,8 @@ export default function CartPageContainer() {
             onRemoveItem={removeFromCart}
             onMpesaCheckout={handleMpesaCheckout}
             onPaypalCheckout={handlePaypalCheckout}
+            onPesapalCheckout={handlePesapalCheckout}
+            onIntasendCheckout={handleIntasendCheckout}
             isProcessing={isProcessing}
         />
     )

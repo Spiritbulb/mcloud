@@ -1,0 +1,319 @@
+<div class="min-h-screen">
+  <div class="max-w-6xl mx-auto px-8 py-12">
+    {{- - HEADER - -}}
+    <div class="text-center mb-12">
+      <h1 class="sf-heading text-4xl md:text-5xl font-light tracking-tight mb-8">All Products</h1>
+
+      {{- - SEARCH - -}}
+      <div class="max-w-xl mx-auto relative">
+        <svg
+          class="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="color: var(--sf-foreground); opacity: 0.38"
+        >
+          {% raw %}<circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>{% endraw %}
+        </svg>
+        <input
+          id="sf-search"
+          type="text"
+          placeholder="Search products..."
+          autocomplete="off"
+          class="sf-input w-full pl-11 pr-10 h-11 text-sm border"
+          style="
+            background: var(--sf-background); color: var(--sf-foreground);
+            border-color: var(--sf-border); border-radius: var(--sf-border-radius)
+          "
+        >
+        <button
+          id="sf-search-clear"
+          class="absolute right-3 top-1/2 -translate-y-1/2 hidden"
+          style="color: var(--sf-foreground); opacity: 0.5"
+          aria-label="Clear search"
+        >
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            {% raw %}<path d="M18 6 6 18M6 6l12 12"/>{% endraw %}
+          </svg>
+        </button>
+      </div>
+      <p
+        id="sf-search-count"
+        class="text-sm mt-3 hidden"
+        style="color: var(--sf-foreground-subtle)"
+      ></p>
+    </div>
+
+    {{- - EMPTY STATE - -}}
+    {%- if products == empty or products.size == 0 -%}
+      <div class="text-center py-20 space-y-3">
+        <svg
+          class="mx-auto"
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          style="color: var(--sf-foreground); opacity: 0.2"
+        >
+          {% raw %}
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+          <path d="M3 6h18"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+          {% endraw %}
+        </svg>
+        <p class="sf-heading text-xl font-light">No products yet</p>
+        <p class="text-sm" style="color: var(--sf-foreground-subtle)">Check back soon for new arrivals</p>
+      </div>
+
+    {%- else -%}
+      {{- - GRID - -}}
+      <div
+        id="sf-products-grid"
+        class="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+      >
+        {%- for product in products -%}
+          {%- assign image = product.images[0] -%}
+          {%- assign in_stock = true -%}
+          {%- if product.track_inventory == true and product.inventory_quantity <= 0 -%}
+            {%- assign in_stock = false -%}
+          {%- endif -%}
+          {%- assign has_discount = false -%}
+          {%- if product.compare_at_price and product.compare_at_price > product.price -%}
+            {%- assign has_discount = true -%}
+          {%- endif -%}
+
+          <article
+            class="sf-card sf-product-card group overflow-hidden h-full flex flex-col py-0 sf-animate-fadein"
+            data-name="{{ product.name | downcase }}"
+            data-description="{{ product.description | strip_html | downcase | truncate: 200 }}"
+          >
+            {{- - IMAGE - -}}
+            <div class="relative overflow-hidden aspect-[4/5] sf-bg-muted">
+              {{- - WISHLIST ISLAND - -}}
+              <div
+                class="absolute top-2 right-2 z-10"
+                data-wishlist-island
+                data-product-id="{{ product.id }}"
+                data-store-id="{{ store.id }}"
+              ></div>
+
+              <a href="/store/{{ store.slug }}/{{ product.slug }}" class="block w-full h-full">
+                {%- if image -%}
+                  <img
+                    src="{{ image }}"
+                    alt="{{ product.name }}"
+                    loading="lazy"
+                    class="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
+                  >
+                {%- else -%}
+                  <div class="w-full h-full flex items-center justify-center">
+                    <svg
+                      width="32"
+                      height="32"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      style="color: var(--sf-foreground); opacity: 0.2"
+                    >
+                      {% raw %}
+                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+                      <path d="M3 6h18"/>
+                      <path d="M16 10a4 4 0 0 1-8 0"/>
+                      {% endraw %}
+                    </svg>
+                  </div>
+                {%- endif -%}
+              </a>
+
+              {%- if has_discount and in_stock -%}
+                {%- assign price_diff = product.compare_at_price | minus: product.price -%}
+                {%- assign discount_pct = price_diff | times: 100 | divided_by: product.compare_at_price | round -%}
+                <span class="sf-badge-sale absolute top-3 left-3 z-10 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">
+                  -{{ discount_pct }}%
+                </span>
+              {%- endif -%}
+
+              {%- if in_stock == false -%}
+                <div class="absolute inset-0 sf-bg-sold-out flex items-center justify-center z-10">
+                  <span class="text-white font-medium text-sm">Sold Out</span>
+                </div>
+              {%- endif -%}
+            </div>
+
+            {{- - CONTENT - -}}
+            <div class="pt-4 pb-6 px-4 flex-1 flex flex-col">
+              <div class="space-y-1 mb-4 flex-1">
+                <a href="/store/{{ store.slug }}/{{ product.slug }}" class="block">
+                  <h3
+                    class="sf-heading text-base font-normal leading-tight line-clamp-2 group-hover:underline"
+                    style="color: var(--sf-foreground)"
+                  >
+                    {{ product.name }}
+                  </h3>
+                </a>
+                {%- if product.description -%}
+                  <p
+                    class="text-xs line-clamp-2"
+                    style="color: var(--sf-foreground-subtle)"
+                  >
+                    {{ product.description | strip_html | truncate: 120 }}
+                  </p>
+                {%- endif -%}
+              </div>
+
+              <div
+                class="flex flex-col gap-3"
+                style="border-top: 1px solid var(--sf-border); padding-top: 1rem"
+              >
+                <div class="flex items-end justify-between">
+                  <div class="space-y-0.5">
+                    <div class="text-base font-light" style="color: var(--sf-foreground)">
+                      {{ product.price | money: store.currency }}
+                    </div>
+                    {%- if has_discount -%}
+                      <div class="text-xs line-through" style="color: var(--sf-foreground-subtle)">
+                        {{ product.compare_at_price | money: store.currency }}
+                      </div>
+                    {%- endif -%}
+                  </div>
+
+                  {{- - CART ISLAND - -}}
+                  <div
+                    data-cart-island
+                    data-product-id="{{ product.id }}"
+                    data-product-name="{{ product.name }}"
+                    data-product-price="{{ product.price }}"
+                    data-product-image="{{ image }}"
+                    data-in-stock="{{ in_stock }}"
+                  ></div>
+                </div>
+
+                <div
+                  class="flex items-center justify-between text-xs"
+                  style="color: var(--sf-foreground-subtle)"
+                >
+                  {%- if in_stock and product.track_inventory and product.inventory_quantity -%}
+                    <span class="flex items-center gap-1">
+                      <svg
+                        width="10"
+                        height="10"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                      >
+                        {% raw %}<path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>{% endraw %}
+                      </svg>
+                      {{ product.inventory_quantity }} in stock
+                    </span>
+                  {%- endif -%}
+                </div>
+              </div>
+            </div>
+          </article>
+        {%- endfor -%}
+      </div>
+
+      {{- - COUNT - -}}
+      <p
+        id="sf-products-count"
+        class="text-sm text-center mt-10"
+        style="color: var(--sf-foreground-subtle)"
+      >
+        Showing <span style="color: var(--sf-foreground)">{{ products.size }}</span> products
+      </p>
+    {%- endif -%}
+  </div>
+
+  <script>
+    (function () {
+      var input = document.getElementById('sf-search');
+      var clear = document.getElementById('sf-search-clear');
+      var count = document.getElementById('sf-search-count');
+      var totalCount = document.getElementById('sf-products-count');
+      var cards = document.querySelectorAll('#sf-products-grid article');
+      var total = cards.length;
+      var t;
+
+      if (input) {
+        input.addEventListener('input', function () {
+          clearTimeout(t);
+          t = setTimeout(function () {
+            filter(input.value);
+          }, 300);
+          clear.classList.toggle('hidden', !input.value);
+        });
+      }
+
+      if (clear) {
+        clear.addEventListener('click', function () {
+          input.value = '';
+          clear.classList.add('hidden');
+          filter('');
+        });
+      }
+
+      function filter(q) {
+        q = q.toLowerCase().trim();
+        var visible = 0;
+        cards.forEach(function (card) {
+          var name = card.dataset.name || '';
+          var desc = card.dataset.description || '';
+          var match = !q || name.includes(q) || desc.includes(q);
+          card.style.display = match ? '' : 'none';
+          if (match) visible++;
+        });
+        if (count) {
+          if (q) {
+            count.textContent = visible + ' ' + (visible === 1 ? 'result' : 'results') + ' for "' + q + '"';
+            count.classList.remove('hidden');
+          } else {
+            count.classList.add('hidden');
+          }
+        }
+        if (totalCount) {
+          totalCount.innerHTML =
+            'Showing <span style="color:var(--sf-foreground)">' +
+            visible +
+            '</span> of <span style="color:var(--sf-foreground)">' +
+            total +
+            '</span> products';
+        }
+      }
+
+      // fade-in observer
+      var els = document.querySelectorAll('.sf-animate-fadein');
+      if (els.length) {
+        var io = new IntersectionObserver(
+          function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.classList.add('sf-visible');
+                io.unobserve(e.target);
+              }
+            });
+          },
+          { threshold: 0.08 }
+        );
+        els.forEach(function (el) {
+          io.observe(el);
+        });
+      }
+    })();
+  </script>
+</div>

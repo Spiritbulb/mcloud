@@ -9,6 +9,8 @@ import type {
     ProductDetailPageProps,
     BlogListPageProps,
     BlogPostPageProps,
+    ServicesPageProps,
+    ServiceDetailsPageProps,
 } from './types'
 
 export interface ThemeComponents {
@@ -18,6 +20,8 @@ export interface ThemeComponents {
     ProductDetailPage: ComponentType<ProductDetailPageProps>
     BlogListPage: ComponentType<BlogListPageProps>
     BlogPostPage: ComponentType<BlogPostPageProps>
+    ServicesPage: ComponentType<ServicesPageProps>
+    ServiceDetailPage: ComponentType<ServiceDetailsPageProps>
 }
 
 const themes: Record<string, () => Promise<ThemeComponents>> = {
@@ -29,7 +33,9 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             import('./classic/ProductDetailPage'),
             import('./classic/BlogListPage'),
             import('./classic/BlogPostPage'),
-        ]).then(([sf, pp, cp, pdp, blp, bpp]) => ({
+            import('./classic/ServicesPage'),
+            import('./classic/ServiceDetailPage'),
+        ]).then(([sf, pp, cp, pdp, blp, bpp, svp, sdp]) => ({
             StoreFront: sf.default,
             ProductsPage: pp.default,
             CartPage: cp.default,
@@ -149,4 +155,5 @@ export async function resolveTheme(themeId: string): Promise<ThemeComponents> {
 export type {
     StoreFrontProps, ProductsPageProps, CartPageProps,
     ProductDetailPageProps, BlogListPageProps, BlogPostPageProps,
+    ServicesPageProps, ServiceDetailsPageProps,
 }

@@ -1,0 +1,137 @@
+{%- assign in_stock = true -%}
+{%- if product.track_inventory == true and product.inventory_quantity <= 0 -%}
+  {%- assign in_stock = false -%}
+{%- endif -%}
+
+{%- assign has_discount = false -%}
+{%- if product.compare_at_price and product.compare_at_price > product.price -%}
+  {%- assign has_discount = true -%}
+{%- endif -%}
+
+{%- assign image = product.images[0] -%}
+
+<a
+  href="/store/{{ store.slug }}/{{ product.slug }}"
+  class="sf-product-card-link group block sf-animate-fadein"
+>
+  <article class="sf-card sf-product-card overflow-hidden cursor-pointer h-full flex flex-col">
+    {{- - IMAGE ZONE - -}}
+    <div class="relative overflow-hidden sf-bg-muted sf-product-card__image-wrap">
+      {%- if image -%}
+        <img
+          src="{{ image }}"
+          alt="{{ product.name }}"
+          loading="lazy"
+          class="sf-product-card__image w-full h-full object-cover"
+        >
+      {%- else -%}
+        <div class="sf-product-card__placeholder w-full h-full flex items-center justify-center">
+          <svg
+            class="sf-product-card__bag-icon"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            {% raw %}
+            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+            <path d="M3 6h18"/>
+            <path d="M16 10a4 4 0 0 1-8 0"/>
+            {% endraw %}
+          </svg>
+        </div>
+      {%- endif -%}
+
+      {{- - QUICK VIEW OVERLAY - -}}
+      <div class="sf-product-card__overlay absolute inset-0 flex items-center justify-center">
+        <span class="sf-product-card__quick-view">View product</span>
+      </div>
+
+      {{- - OUT OF STOCK - -}}
+      {%- if in_stock == false -%}
+        <div class="sf-product-card__oos-overlay absolute inset-0 flex items-center justify-center">
+          <span class="sf-badge-oos px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
+        </div>
+      {%- endif -%}
+
+      {{- - BADGES - -}}
+      <div class="absolute top-2 left-2 flex flex-col gap-1">
+        {%- if has_discount and in_stock -%}
+          <span class="sf-badge-sale sf-border-radius px-2.5 py-0.5 text-xs font-medium">Sale</span>
+        {%- endif -%}
+        {%- if in_stock and product.track_inventory -%}
+          {%- if product.inventory_quantity >= 1 and product.inventory_quantity < 6 -%}
+            <span class="sf-badge-low-stock sf-border-radius px-2.5 py-0.5 text-xs font-medium">
+              Only {{ product.inventory_quantity }} left
+            </span>
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+    </div>
+
+    {{- - CONTENT - -}}
+    <div class="flex flex-col flex-1 px-4 pt-4 pb-4 gap-3">
+      <div class="flex-1 space-y-1">
+        <h3 class="sf-heading sf-product-card__name text-base font-normal line-clamp-2">
+          {{ product.name }}
+        </h3>
+        {%- if product.description -%}
+          <p
+            class="sf-product-card__desc text-xs line-clamp-2"
+            style="color: var(--sf-foreground-subtle)"
+          >
+            {{ product.description }}
+          </p>
+        {%- endif -%}
+      </div>
+
+      {{- - PRICE ROW - -}}
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span
+            class="sf-product-card__price text-base font-light"
+            style="color: var(--sf-foreground)"
+          >
+            {{ product.price | money: store.currency }}
+          </span>
+          {%- if has_discount -%}
+            <span
+              class="sf-product-card__compare text-xs line-through"
+              style="color: var(--sf-foreground-subtle)"
+            >
+              {{ product.compare_at_price | money: store.currency }}
+            </span>
+            {%- assign price_diff = product.compare_at_price | minus: product.price -%}
+            {%- assign discount_pct = price_diff | times: 100 | divided_by: product.compare_at_price | round -%}
+            <span
+              class="sf-product-card__discount-pct text-xs"
+              style="color: var(--sf-primary)"
+            >
+              -{{ discount_pct }}%
+            </span>
+          {%- endif -%}
+        </div>
+        <span
+          class="sf-pill sf-pill-inactive sf-product-card__view-btn inline-flex items-center gap-1 px-3 py-1 text-xs border"
+          aria-hidden="true"
+        >
+          View
+          <svg
+            width="10"
+            height="10"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          >
+            {% raw %}<path d="M5 12h14M12 5l7 7-7 7"/>{% endraw %}
+          </svg>
+        </span>
+      </div>
+    </div>
+  </article>
+</a>

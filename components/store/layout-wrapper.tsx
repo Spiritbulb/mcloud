@@ -1,52 +1,57 @@
 'use client'
 
+import { useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import StoreNav from './store-nav'
 import StoreFooter from './store-footer'
-import { usePathname } from 'next/navigation'
+import CartIsland from './CartIsland'
+import WishlistIsland from './WishlistIsland'
 
-const isSettingsPath = (pathname: string) => pathname.includes('/settings')
+function LiquidScriptRunner() {
+    const pathname = usePathname()
 
-// Themes that include their own nav & footer inside StoreFront.
-// The shared StoreNav / StoreFooter are only used by other themes.
-const SELF_CONTAINED_THEMES = new Set(['photography', 'portfolio', 'services', 'restaurant'])
+    useEffect(() => {
+        const container = document.querySelector('[data-liquid]')
+        if (!container) return
+        container.querySelectorAll('script').forEach((oldScript) => {
+            const newScript = document.createElement('script')
+            newScript.textContent = oldScript.textContent
+            oldScript.parentNode?.replaceChild(newScript, oldScript)
+        })
+    }, [pathname])
+
+    return null
+}
 
 export default function LayoutWrapper({
     children,
     store,
-    settings,
     cssVars,
+    settings
 }: {
     children: React.ReactNode
     store: any
-    settings: any
     cssVars: React.CSSProperties
+    settings: any
 }) {
     const pathname = usePathname()
 
-    // Settings has its own layout.tsx which handles SidebarProvider,
-    // the shell, sidebar, header — everything. Just render children.
-    if (isSettingsPath(pathname)) {
+    if (pathname.includes('/settings')) {
         return <>{children}</>
     }
-
-    const themeId: string = store?.settings?.themeId ?? 'classic'
-    const isSelfContained = SELF_CONTAINED_THEMES.has(themeId)
 
     return (
         <div
             className="storefront-root"
+            data-sf-css
             style={cssVars}
-            // Only CSS-variable themes get the data-sf-css marker so
-            // storefront.css overrides don't leak into self-contained themes
-            {...(!isSelfContained ? { 'data-sf-css': '' } : {})}
         >
-            {!isSelfContained && (
-                <StoreNav store={store} themeId={themeId} />
-            )}
+            <StoreNav store={store} />
             {children}
-            {!isSelfContained && (
-                <StoreFooter store={store} settings={store?.settings} themeId={themeId} />
-            )}
+            <StoreFooter store={store} settings={settings} />
+            <CartIsland />
+            <WishlistIsland />
+            <LiquidScriptRunner />
         </div>
     )
 }

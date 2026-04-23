@@ -1,5 +1,7 @@
-import { redirect } from 'next/navigation'
+'use client'
+import { redirect, usePathname } from 'next/navigation'
 
 export default function IntegrationsPage() {
-    redirect('/settings/integrations/social')
+    const pathname = usePathname()
+    redirect(`${pathname}/social`)
 }
