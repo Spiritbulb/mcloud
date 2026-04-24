@@ -173,10 +173,6 @@ export interface ProductDetailData {
 }
 
 
-
-
-
-
 export interface ProductDetailPageProps {
     storeSlug: string
     storeId: string
