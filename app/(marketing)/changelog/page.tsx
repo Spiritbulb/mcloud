@@ -4,8 +4,14 @@
 
 
 import { ChangelogClient } from "./changelog-client";
-import changelogContent from "@/CHANGELOG.md";
+import fs from 'fs'
+import path from 'path'
 
+const changelog = fs.readFileSync(
+    path.join(process.cwd(), 'CHANGELOG.md'),
+    'utf-8'
+)
+const changelogContent = changelog || "";
 export const metadata = {
     title: "Changelog",
     description: "A history of updates, fixes, and new features.",
