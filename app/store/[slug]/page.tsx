@@ -2,6 +2,8 @@ import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import StoreFront from '@/components/store/Storefront'
+
 
 export const revalidate = 60
 
