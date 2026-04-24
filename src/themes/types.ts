@@ -53,7 +53,7 @@ export interface StoreFrontProps {
     products: Product[]
     collections: Collection[]
     featuredProducts: Product[]
-    services: ServiceItem[] 
+    services: ServiceItem[]
 }
 
 export interface GalleryPhoto {
@@ -103,7 +103,12 @@ export interface ProductItem {
     is_active: boolean
     sku: string | null
     metadata: any
+    position?: number
 }
+
+
+
+
 
 export interface ProductsPageProps {
     storeSlug: string
@@ -128,6 +133,19 @@ export interface Variant {
     image_url: string
 }
 
+export interface ProductVariant {
+  id: string
+  name: string
+  price: number
+  compare_at_price?: number | null
+  inventory_quantity: number
+  options?: Record<string, string>
+  sku?: string | null
+  image_url?: string | null
+  is_active?: boolean
+  position?: number
+}
+
 export interface ProductDetailData {
     id: string
     name: string
@@ -141,22 +159,29 @@ export interface ProductDetailData {
     sku: string | null
     reviewCount?: number
     avgRating?: number | null
+    position?: number
     metadata: {
         tags?: string[]
         productType?: string
+        compare_at_price?: number
         rating?: number
         reviews?: number
         features?: string[]
         descriptionHtml?: string
     }
-    variants?: Variant[]
+    variants?: ProductVariant[]
 }
+
+
+
+
+
 
 export interface ProductDetailPageProps {
     storeSlug: string
     storeId: string
     product: ProductDetailData
-    selectedVariant: Variant | null
+    selectedVariant: ProductVariant | null
     selectedOptions: Record<string, string>
     quantity: number
     currentImageIndex: number
@@ -195,7 +220,7 @@ export interface ServiceItem {
     description: string | null
     item_type: string
     price: number
-    images: string[]                        
+    images: string[]
     compare_at_price: number | null
     is_active: boolean
     sku: string | null
@@ -204,7 +229,7 @@ export interface ServiceItem {
     packages?: ServicePackage[]
     metadata: {
         // ── Media ──────────────────────────────
-        media?: ServiceMediaItem[]           
+        media?: ServiceMediaItem[]
 
         // ── Availability & Booking ─────────────
         availability?: 'available' | 'busy' | 'unavailable'  // ✅ moved from root
