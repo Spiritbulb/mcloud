@@ -11,7 +11,7 @@ import type { Variants } from "framer-motion"
 type Sticker = { src: string; x: string; y: string; delay: number; duration: number }
 
 // ─── Data ────────────────────────────────────────────────────────────────────
-const exampleSlugs = ["locd26"]
+
 const sampleSlugs = ["sneakercity", "joy-bakery", "mwanikimania", "hope-foundation", "the-art-of-living-kenya", "purity-hair-care", "photos-by-sam"]
 
 const stickers: Sticker[] = [
@@ -212,16 +212,9 @@ export default function HomeClient() {
         <div className="min-h-screen bg-background overflow-x-hidden">
 
             {/* ── HERO ─────────────────────────────────────────────────────────── */}
-            <section className="relative min-h-screen flex items-center bg-background overflow-hidden">
-                <div
-                    className="absolute inset-0 opacity-[0.03]"
-                    style={{
-                        backgroundImage: "radial-gradient(circle, currentColor 1px, transparent 1px)",
-                        backgroundSize: "28px 28px",
-                    }}
-                />
+            <section className="relative max-h-screen flex bg-background overflow-hidden">
 
-                <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-6xl">
+                <div className="relative z-10 md:py-10 py-20 container mx-auto px-6 md:px-12 max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
 
                         <motion.div
@@ -240,50 +233,17 @@ export default function HomeClient() {
                             </motion.h1>
 
                             <motion.p variants={fadeUp} className="text-body-large text-muted-foreground max-w-md">
-                                Stop waiting on agencies. Type your name, verify your email — and you're live with a full store, blog, or streaming page.
+                                Your corner of the internet, without the slop. Sell, share and curate on your couch. Start for free.
                             </motion.p>
 
                             <motion.div variants={fadeUp}>
-                                <div className="flex flex-col sm:flex-row gap-3 border border-border bg-background p-2 py-4 rounded-full">
-                                    <div className="flex-1 flex items-center gap-2 px-3">
-                                        <span className="text-muted-foreground text-sm whitespace-nowrap">
-                                            menengai.cloud/store/
-                                        </span>
-                                        <input
-                                            type="text"
-                                            value={slug}
-                                            onChange={(e) =>
-                                                setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ""))
-                                            }
-                                            placeholder={displaySlug || ""}
-                                            className="bg-transparent text-foreground placeholder:text-muted-foreground/50 outline-none text-sm font-mono w-full"
-                                            onKeyDown={(e) => e.key === "Enter" && handleClaim()}
-                                            aria-label="Choose your store slug"
-                                        />
-                                    </div>
-                                    <Button
-                                        onClick={handleClaim}
-                                        className="text-white px-6 h-10 rounded-none cursor-pointer bg-primary hover:bg-primary/90"
-                                    >
-                                        Claim it free
-                                        <ArrowRight className="ml-2 w-4 h-4" />
-                                    </Button>
-                                </div>
-                                <AnimatePresence>
-                                    {slug && (
-                                        <motion.p
-                                            initial={{ opacity: 0, y: -4 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            exit={{ opacity: 0 }}
-                                            className="text-muted-foreground text-xs mt-2 font-mono px-2"
-                                        >
-                                            ✓ {slug}.menengai.cloud will be yours
-                                        </motion.p>
-                                    )}
-                                </AnimatePresence>
-                                <p className="text-xs text-muted-foreground/60 mt-2 px-2">
-                                    Only letters, numbers, and hyphens · No credit card required
-                                </p>
+                                <Button
+                                    onClick={handleClaim}
+                                    className="text-white px-6 h-10 w-full rounded-none cursor-pointer bg-primary hover:bg-primary/90"
+                                >
+                                    Claim it free
+                                    <ArrowRight className="ml-2 w-4 h-4" />
+                                </Button>
                             </motion.div>
 
                             <motion.div variants={fadeUp} className="flex items-center gap-3">
@@ -335,19 +295,6 @@ export default function HomeClient() {
                     ))}
                 </div>
             </div>
-
-            {/* ── LIVE STORE BANNER ────────────────────────────────────────────── */}
-            <section className="bg-background py-20">
-                <div className="container mx-auto px-6 md:px-12 max-w-6xl">
-                    <FadeIn className="text-center mb-12">
-                        <p className="text-body-small text-muted-foreground uppercase tracking-widest mb-2">Live on Menengai Cloud</p>
-                        <h2 className="text-3xl md:text-4xl font-montserrat font-bold text-foreground">
-                            Real stores. Real creators.
-                        </h2>
-                    </FadeIn>
-                    <StoreCarousel slugs={exampleSlugs} />
-                </div>
-            </section>
 
             {/* ── FEATURES ─────────────────────────────────────────────────────── */}
             {features.map((f, i) => (
