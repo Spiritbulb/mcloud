@@ -6,12 +6,13 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User } from 'lucide-react'
+import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
 export const TABS = [
+{id: 'home', label: 'General', icon: <House class name="w-4 h-4"/>},
     { id: 'general', label: 'General', icon: <Store className="w-4 h-4" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'products', label: 'Products', icon: <Package className="w-4 h-4" /> },
