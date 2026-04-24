@@ -100,7 +100,7 @@ export default async function StorePage({ params }: Props) {
     const store = castStore(rawStore)
     const products = castProducts(rawProducts ?? [])
     const collections = castCollections(rawCollections ?? [])
-    const services = (rawServices ?? []) as ServiceItem[]
+    const services = (rawServices ?? []) as any[]
 
     const featured = castProducts(
         (featuredRows ?? [])
@@ -114,6 +114,7 @@ export default async function StorePage({ params }: Props) {
             products={products}
             collections={collections}
             featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
+            services={services}
         />
     )
 }
