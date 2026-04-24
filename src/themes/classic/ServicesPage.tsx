@@ -11,11 +11,16 @@ import {
     CalendarCheck,
     Loader2,
     Package,
+    ArrowLeft,
     Zap,
+    Minus,
+    Plus,
+
     RefreshCw,
     ShieldCheck,
     BadgePercent,
     Play,
+    Shield,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -213,7 +218,7 @@ function PackageCard({
     )
 }
 
-export default function ClassicServiceDetailsPage({
+export default function ClassicServicesPage({
     storeSlug,
     service,
     selectedPackage,
@@ -267,7 +272,7 @@ export default function ClassicServiceDetailsPage({
     return (
         <div className="min-h-screen pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
-
+            <a
                 href="/services"
                 className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-3 py-1.5 text-sm mb-8"
                 >
@@ -594,7 +599,7 @@ export default function ClassicServiceDetailsPage({
                     <div className="grid grid-cols-3 gap-3 pt-2" style={{ borderTop: '1px solid var(--sf-border)' }}>
                         {[
                             { icon: Clock, label: deliveryDays ? `${deliveryDays}-Day Delivery` : 'Fast Delivery' },
-                            { icon: Shield, label: 'Secure Payment' },
+                            { icon: ShieldCheck, label: 'Secure Payment' },
                             { icon: RefreshCw, label: 'Satisfaction Guarantee' },
                         ].map(({ icon: Icon, label }) => (
                             <div key={label} className="flex flex-col items-center gap-1.5 text-center">

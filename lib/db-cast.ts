@@ -30,6 +30,7 @@ export function castStore(raw: RawStore): Store {
         description: raw.description,
         logo_url: raw.logo_url,
         currency: raw.currency,
+        item_type: 'store',
         settings: {
             themeId: settings.themeId as string | undefined,
             heroTitle: settings.heroTitle as string | undefined,
@@ -69,6 +70,9 @@ export function castProduct(raw: RawProduct): Product {
         images: Array.isArray(raw.images) ? (raw.images as string[]) : [],
         inventory_quantity: raw.inventory_quantity ?? 0,
         track_inventory: raw.track_inventory ?? true,
+        item_type: 'product',
+        is_active: true,
+        sku: null,
     }
 }
 

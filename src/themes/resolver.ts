@@ -34,7 +34,7 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             import('./classic/BlogListPage'),
             import('./classic/BlogPostPage'),
             import('./classic/ServicesPage'),
-            import('./classic/ServiceDetailPage'),
+            import('./classic/ServiceDetailsPage'),
         ]).then(([sf, pp, cp, pdp, blp, bpp, svp, sdp]) => ({
             StoreFront: sf.default,
             ProductsPage: pp.default,
@@ -42,9 +42,10 @@ const themes: Record<string, () => Promise<ThemeComponents>> = {
             ProductDetailPage: pdp.default,
             BlogListPage: blp.default,
             BlogPostPage: bpp.default,
-        }))
+            ServicesPage: svp.default,
+            ServiceDetailPage: sdp.default,
+        })),
 }
-
 export async function resolveTheme(themeId: string): Promise<ThemeComponents> {
     const loader = themes[themeId] ?? themes.classic
     return loader()

@@ -56,6 +56,16 @@ export interface StoreFrontProps {
     services: ServiceItem[]
 }
 
+export interface ServicesPageProps {
+    storeSlug: string
+    storeId: string
+    services: ServiceItem[]
+    loading?: boolean
+    error?: string | null
+    currency: string
+    onRetry?: () => void
+}
+
 export interface GalleryPhoto {
     id: string
     url: string
@@ -201,12 +211,22 @@ export interface ServiceMediaItem {
 export interface ServicePackage {
     id: string
     name: string
-    price: string
+    price: string         
     description: string | null
-    deliverables: string
-    delivery_days: string
-    revisions: string | null
+    deliverables: string[] 
+    delivery_days: number  
+    revisions: number | null 
     is_featured?: boolean
+}
+
+export interface ServicesPageProps {
+    storeSlug: string
+    storeId: string
+    services: ServiceItem[]
+    loading?: boolean
+    error?: string | null
+    currency: string
+    onRetry?: () => void
 }
 
 export interface ServiceItem {
@@ -278,6 +298,7 @@ export interface ServiceDetailsPageProps {
     isBooking: boolean
     metadata: { quantityUnit: string }
 }
+
 
 
 
