@@ -35,6 +35,8 @@ const SYSTEM_SUBDOMAINS = new Set(['status', 'api', 'admin', 'mail'])
  * without requiring an Auth0 session.
  */
 const PUBLIC_API_PREFIXES = [
+  '/api/store',
+  '/api/health',
   '/store/',
   '/health'
 ] as const
