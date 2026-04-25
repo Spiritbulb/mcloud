@@ -106,11 +106,27 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   // /api/ routes pass through directly to Next.js API handlers.
   // auth0.middleware handles session refresh and callback routing.
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
-    // Only run auth0.middleware for /auth/ routes, not /api/ or /_next/
     if (pathname.startsWith('/auth/')) {
       return auth0.middleware(request)
     }
-    return NextResponse.next()
+
+    let response = NextResponse.next()
+
+    if (pathname.startsWith('/api/')) {
+      const origin = request.headers.get('origin')
+      if (request.method === 'OPTIONS') {
+        response = new NextResponse(null, { status: 200 })
+      }
+      
+      if (origin) {
+        response.headers.set('Access-Control-Allow-Origin', origin)
+        response.headers.set('Access-Control-Allow-Credentials', 'true')
+        response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
+        response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
+      }
+    }
+
+    return response
   }
 
   // ── 2. Custom Domain ──────────────────────────────────────────────────────
