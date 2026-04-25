@@ -6,12 +6,6 @@ import { useCart } from '@/contexts/CartContext'
 import { createClient } from '@/lib/client'
 
 import ClassicServiceDetailPage from '../../../../src/themes/classic/ServiceDetailsPage'
-import NoirServiceDetailPage from '../../../../src/themes/noir/ServiceDetailsPage'
-import MinimalServiceDetailPage from '../../../../src/themes/minimal/ServiceDetailsPage'
-import PhotographyServiceDetailPage from '../../../../src/themes/photography/ServiceDetailsPage'
-import PortfolioServiceDetailPage from '../../../../src/themes/portfolio/ServiceDetailsPage'
-import ServicesServiceDetailPage from '../../../../src/themes/services/ServiceDetailsPage'
-import RestaurantServiceDetailPage from '../../../../src/themes/restaurant/ServiceDetailsPage'
 
 import type {
     ServiceItem,
@@ -21,12 +15,6 @@ import type {
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<ServiceDetailsPageProps>> = {
     classic: ClassicServiceDetailPage,
-    noir: NoirServiceDetailPage,
-    minimal: MinimalServiceDetailPage,
-    photography: PhotographyServiceDetailPage,
-    portfolio: PortfolioServiceDetailPage,
-    services: ServicesServiceDetailPage,
-    restaurant: RestaurantServiceDetailPage,
 }
 
 export default function ServiceDetailContainer() {
@@ -95,7 +83,7 @@ export default function ServiceDetailContainer() {
                 item_type: 'service',
                 media: raw.metadata?.media ?? [],
                 availability: raw.metadata?.availability ?? 'available',
-                packages: raw.metadata?.packages ?? [], 
+                packages: raw.metadata?.packages ?? [],
                 metadata: {
                     serviceType: raw.metadata?.serviceType ?? null,
                     quantityUnit: raw.metadata?.quantityUnit ?? '',

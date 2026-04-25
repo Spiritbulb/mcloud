@@ -123,10 +123,11 @@ export interface ProductItem {
 export interface ProductsPageProps {
     storeSlug: string
     products: ProductItem[]
+    services?: ServiceItem[]
     loading?: boolean
     error?: string | null
-    storeId: string       // ← add these
-    currency: string      // ←
+    storeId: string
+    currency: string
     onRetry?: () => void
 }
 

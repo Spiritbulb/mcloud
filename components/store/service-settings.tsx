@@ -20,13 +20,24 @@ import {
 import ImageUpload from './image-upload'
 import { ServiceItem, ServicePackage, ServiceMediaItem } from '@/src/themes/types'
 
-
+// Local draft type — all fields are strings so HTML inputs bind freely.
+// On save, fields are parsed to their ServicePackage types.
+type DraftPackage = {
+    id: string
+    name: string
+    price: string
+    description: string | null
+    deliverables: string
+    delivery_days: string
+    revisions: string
+    is_featured?: boolean
+}
 
 function slugify(str: string) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
 }
 
-const EMPTY_PACKAGE: ServicePackage = {
+const EMPTY_PACKAGE: DraftPackage = {
     id: '',
     name: '',
     price: '',
@@ -116,7 +127,7 @@ function ServiceForm({
     const [videoUrl, setVideoUrl] = useState('')
 
     // ── Packages ───────────────────────────────────────────────────────────────
-    const [packages, setPackages] = useState<ServicePackage[]>(
+    const [packages, setPackages] = useState<DraftPackage[]>(
         (service?.metadata?.packages ?? []).map((p: any) => ({
             ...p,
             price: String(p.price ?? ''),
@@ -157,7 +168,7 @@ function ServiceForm({
                 description: p.description || null,
                 deliverables: p.deliverables
                     .split('\n')
-                    .map((d) => d.trim())
+                    .map((d: string) => d.trim())
                     .filter(Boolean),
                 delivery_days: parseInt(p.delivery_days) || 3,
                 revisions: p.revisions ? parseInt(p.revisions) : null,
@@ -173,7 +184,7 @@ function ServiceForm({
                 name: name.trim(),
                 slug: slug.trim() || slugify(name),
                 description: description || null,
-                item_type: 'service', 
+                item_type: 'service',
                 price: derivedBasePrice,
                 compare_at_price: null,
                 sku: sku || null,

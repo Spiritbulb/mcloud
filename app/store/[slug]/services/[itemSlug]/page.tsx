@@ -8,28 +8,17 @@ import Link from 'next/link'
 import { createClient } from '@/lib/client'
 import { useCart } from '@/contexts/CartContext'
 import ClassicServiceDetailPage from '@/src/themes/classic/ServiceDetailsPage'
-import MinimalServiceDetailPage from '@/src/themes/minimal/ServiceDetailsPage'
-import NoirServiceDetailPage from '@/src/themes/noir/ServiceDetailsPage'
-import PhotographyServiceDetailPage from '@/src/themes/photography/ServiceDetailsPage'
-import PortfolioServiceDetailPage from '@/src/themes/portfolio/ServiceDetailsPage'
-import ServicesServiceDetailPage from '@/src/themes/services/ServiceDetailsPage'
-import RestaurantServiceDetailPage from '@/src/themes/restaurant/ServiceDetailsPage'
+
 import type { ServiceItem, ServicePackage, ServiceDetailsPageProps } from '@/src/themes/types'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<ServiceDetailsPageProps>> = {
     classic: ClassicServiceDetailPage,
-    minimal: MinimalServiceDetailPage,
-    noir: NoirServiceDetailPage,
-    photography: PhotographyServiceDetailPage,
-    portfolio: PortfolioServiceDetailPage,
-    services: ServicesServiceDetailPage,
-    restaurant: RestaurantServiceDetailPage,
 }
 
 export default function ServiceSlugPage() {
     const params = useParams()
     const itemSlug = params?.['itemSlug'] as string
-    const { storeSlug, addToCart, itemLoadingStates } = useCart() 
+    const { storeSlug, addToCart, itemLoadingStates } = useCart()
     const supabase = createClient()
 
     const [service, setService] = useState<ServiceItem | null>(null)
@@ -146,7 +135,7 @@ export default function ServiceSlugPage() {
         if (!service || !storeSlug) return
         setIsBooking(true)
         try {
-            
+
             const price = selectedPackage
                 ? parseFloat(String(selectedPackage.price))
                 : service.price
@@ -226,7 +215,7 @@ export default function ServiceSlugPage() {
             onQuantityChange={setQuantity}
             onMediaChange={setCurrentMediaIndex}
             onBookService={handleBookService}
-            isBooking={isBooking || (bookingLoading ?? false)}  
+            isBooking={isBooking || (bookingLoading ?? false)}
             metadata={{ quantityUnit: service.metadata?.quantityUnit ?? '' }}
         />
     )
