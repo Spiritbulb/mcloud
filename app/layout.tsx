@@ -93,10 +93,10 @@ export default async function RootLayout({
     : null
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable}`}>
       <head />
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable} antialiased`}
+        className={`antialiased`}
       >
         {/* GA Scripts */}
         <Script

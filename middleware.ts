@@ -28,16 +28,14 @@ const BANNER_EXCLUDED_PREFIXES = [
  * Reserved subdomains that are NOT tenant slugs.
  * Requests to these are handled by their own logic (CORS, pass-through, etc.).
  */
-const SYSTEM_SUBDOMAINS = new Set(['status', 'api', 'admin', 'mail'])
+const SYSTEM_SUBDOMAINS = new Set(['status', 'api', 'admin', 'mail', 'www'])
 
 /**
  * API paths that are publicly accessible on the `api` subdomain
  * without requiring an Auth0 session.
  */
 const PUBLIC_API_PREFIXES = [
-  '/api/store',
-  '/api/health',
-  '/store/',
+  '/store',
   '/health'
 ] as const
 
@@ -176,7 +174,6 @@ async function handleApiSubdomain(request: NextRequest): Promise<NextResponse> {
   const origin = request.headers.get('origin') ?? ''
   const allowed = isAllowedCorsOrigin(origin)
 
-  // Shared CORS headers builder — only set when origin is first-party
   const addCors = (res: NextResponse): NextResponse => {
     if (allowed) {
       res.headers.set('Access-Control-Allow-Origin', origin)
@@ -185,7 +182,6 @@ async function handleApiSubdomain(request: NextRequest): Promise<NextResponse> {
     return res
   }
 
-  // Handle preflight in one place for all routes on this subdomain
   if (request.method === 'OPTIONS') {
     return addCors(
       new NextResponse(null, {
@@ -202,16 +198,19 @@ async function handleApiSubdomain(request: NextRequest): Promise<NextResponse> {
   const isPublic = PUBLIC_API_PREFIXES.some((p) => pathname.startsWith(p))
 
   if (!isPublic) {
-    // Protected API route — require a valid session
     const session = await auth0.getSession(request)
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
   }
 
-  return addCors(NextResponse.next())
-}
+  // ✅ Rewrite to /api/:path* instead of NextResponse.next()
+  const url = request.nextUrl.clone()
+  url.pathname = `/api${pathname}`
+  url.host = 'menengai.cloud' // normalize host so Next.js resolves the route correctly
 
+  return addCors(NextResponse.rewrite(url))
+}
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
 /**

@@ -12,7 +12,7 @@ import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
 export const TABS = [
-{id: 'home', label: 'General', icon: <House className="w-4 h-4"/>},
+    { id: 'home', label: 'Overview', icon: <House className="w-4 h-4" /> },
     { id: 'general', label: 'General', icon: <Store className="w-4 h-4" /> },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
     { id: 'products', label: 'Products', icon: <Package className="w-4 h-4" /> },
