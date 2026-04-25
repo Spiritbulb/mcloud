@@ -31,10 +31,7 @@
 		}
 	],
 	"vars": {
-<<<<<<< HEAD
-=======
 		"NEXT_PUBLIC_API_BASE_URL": "https://menengai.cloud/api",
->>>>>>> 30cb1c3c462e3123ae0f5fe6b89ec00e66705e79
 		"NEXT_PUBLIC_GA_ID": "G-P7RJ7JW0BM"
 	},
 	"rules": [
