@@ -12,16 +12,16 @@ import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
 export const TABS = [
-    { id: 'home', label: 'Overview', icon: <House className="w-4 h-4" /> },
-    { id: 'general', label: 'General', icon: <Store className="w-4 h-4" /> },
-    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-4 h-4" /> },
-    { id: 'products', label: 'Products', icon: <Package className="w-4 h-4" /> },
-    { id: 'services', label: 'Services', icon: <Briefcase className="w-4 h-4" /> },
-    { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-4 h-4" /> },
-    { id: 'customers', label: 'Customers', icon: <User className="w-4 h-4" />, beta: true },
-    { id: 'blog', label: 'Blog', icon: <FileText className="w-4 h-4" /> },
-    { id: 'domain', label: 'Domain', icon: <Globe className="w-4 h-4" />, beta: true },
-    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-4 h-4" />, beta: true },
+    { id: 'home', label: 'Overview', icon: <House className="w-3 h-3" />, subTabs: [] },
+    { id: 'general', label: 'General', icon: <Store className="w-3 h-3" />, subTabs: [] },
+    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-3 h-3" />, subTabs: [] },
+    { id: 'products', label: 'Products', icon: <Package className="w-3 h-3" />, subTabs: [] },
+    { id: 'services', label: 'Services', icon: <Briefcase className="w-3 h-3" />, subTabs: [] },
+    { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-3 h-3" />, subTabs: [] },
+    { id: 'customers', label: 'Customers', icon: <User className="w-3 h-3" />, beta: true, subTabs: [] },
+    { id: 'blog', label: 'Blog', icon: <FileText className="w-3 h-3" />, subTabs: [] },
+    { id: 'domain', label: 'Domain', icon: <Globe className="w-3 h-3" />, beta: true, subTabs: [] },
+    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-3 h-3" />, beta: true, subTabs: [{ id: 'payments', label: 'Payments' }, { id: 'notifications', label: 'Notifications' }, { id: 'social', label: 'Socials' },] },
 ] as const
 
 export type TabId = (typeof TABS)[number]['id']
@@ -51,6 +51,7 @@ export default function SettingsShell({
     const [store, setStore] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<ErrorType>(null)
+    const [activeSubTab, setActiveSubTab] = useState<string>('')
 
     // ── Wizard state ──────────────────────────────────────────────────────────
     const [wizardOpen, setWizardOpen] = useState(false)
@@ -147,6 +148,8 @@ export default function SettingsShell({
                 {/* Desktop sidebar */}
                 <SettingsNav
                     activeTab={activeId}
+                    activeSubTab={activeSubTab}
+                    onSelectSubTab={setActiveSubTab}
                     onSelect={navigate}
                     TABS={TABS}
                     user={navUser}
@@ -157,6 +160,8 @@ export default function SettingsShell({
                 {/* Mobile drawer — open/onClose owned here, triggered by hamburger in SettingsHeader */}
                 <MobileSettingsNav
                     activeTab={activeId}
+                    activeSubTab={activeSubTab}
+                    onSelectSubTab={setActiveSubTab}
                     onSelect={navigate}
                     TABS={TABS}
                     user={navUser}

@@ -62,5 +62,5 @@ export async function completeOnboarding(formData: FormData) {
     })
     if (memberError) return { error: memberError.message }
 
-    redirect(`/store/${finalSlug}/settings/general`)
+    redirect(`/store/${finalSlug}/settings`)
 }

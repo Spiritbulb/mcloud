@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Montserrat } from "next/font/google";
 import "./globals.css";
 import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -7,22 +6,11 @@ import Script from "next/script";
 import { Suspense } from "react";
 import Analytics from "@/components/analytics";
 import { Auth0Provider } from "@auth0/nextjs-auth0/client";
+import { Geist, Geist_Mono, Lora } from "next/font/google";
 
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-});
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const lora = Lora({ variable: "--font-lora", subsets: ["latin"], style: ["normal", "italic"] });
 
 export const metadata: Metadata = {
   title: "Menengai Cloud | Fast, Managed Websites for Kenyan Businesses",
@@ -93,7 +81,7 @@ export default async function RootLayout({
     : null
 
   return (
-    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${montserrat.variable}`}>
+    <html lang="en" suppressHydrationWarning className={`${geistSans.variable} ${geistMono.variable} ${lora.variable}`}>
       <head />
       <body
         className={`antialiased`}
