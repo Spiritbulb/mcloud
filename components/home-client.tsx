@@ -212,7 +212,7 @@ export default function HomeClient() {
         <div className="min-h-screen bg-background overflow-x-hidden">
 
             {/* ── HERO ─────────────────────────────────────────────────────────── */}
-            <section className="relative max-h-screen flex bg-background overflow-hidden">
+            <section className="relative h-screen flex bg-background overflow-hidden">
 
                 <div className="relative z-10 md:py-10 py-20 container mx-auto px-6 md:px-12 max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -239,7 +239,7 @@ export default function HomeClient() {
                             <motion.div variants={fadeUp}>
                                 <Button
                                     onClick={handleClaim}
-                                    className="text-white px-6 h-10 w-full rounded-none cursor-pointer bg-primary hover:bg-primary/90"
+                                    className="px-6 h-10 w-full rounded-none cursor-pointer bg-primary hover:bg-primary/90"
                                 >
                                     Claim it free
                                     <ArrowRight className="ml-2 w-4 h-4" />
@@ -253,7 +253,7 @@ export default function HomeClient() {
                                             key={i}
                                             className="w-8 h-8 rounded-full border-2 border-background overflow-hidden"
                                         >
-                                            <Image src={src} alt="" width={32} height={32} className="object-cover" />
+                                            <Image src={src} alt="" width={32} height={32} className="object-cover" loading="eager" />
                                         </div>
                                     ))}
                                 </div>
@@ -275,6 +275,7 @@ export default function HomeClient() {
                                 width={600}
                                 height={600}
                                 className="object-contain"
+                                loading="eager"
                             />
                         </motion.div>
                     </div>

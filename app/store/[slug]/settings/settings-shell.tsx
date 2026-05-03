@@ -6,7 +6,7 @@
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
-import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House } from 'lucide-react'
+import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
@@ -14,6 +14,7 @@ import { GettingStartedDrawer } from './notifications-drawer'
 export const TABS = [
     { id: 'home', label: 'Overview', icon: <House className="w-3 h-3" />, subTabs: [] },
     { id: 'general', label: 'General', icon: <Store className="w-3 h-3" />, subTabs: [] },
+    { id: 'members', label: 'Members', icon: <Users className="w-3 h-3" />, subTabs: [] },
     { id: 'appearance', label: 'Appearance', icon: <Palette className="w-3 h-3" />, subTabs: [] },
     { id: 'products', label: 'Products', icon: <Package className="w-3 h-3" />, subTabs: [] },
     { id: 'services', label: 'Services', icon: <Briefcase className="w-3 h-3" />, subTabs: [] },
@@ -117,7 +118,7 @@ export default function SettingsShell({
         name: user?.name ?? '…',
         email: user?.email ?? '',
         avatarUrl: user?.avatarUrl,
-        accountHref: '/account',
+        accountHref: `${process.env.NODE_ENV === 'development' ? `http://localhost:3000/store/${slug}/settings/account` : `https://${slug}.menengai.cloud/settings/account`}`,
         onSignOut: () => { window.location.href = '/auth/logout' },
     }
 

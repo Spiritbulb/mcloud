@@ -66,13 +66,10 @@ export const auth0 = new Auth0Client({
                 }
             }
 
-            const returnTo = context.returnTo
-                ? `&returnTo=${encodeURIComponent(context.returnTo)}`
-                : '';
-            return NextResponse.redirect(toURL(`/onboarding?${returnTo}`));
+            return NextResponse.redirect(toURL(`/onboarding`));
         }
 
         // Fallback
-        return NextResponse.redirect(toURL(context.returnTo || '/'));
+        return NextResponse.redirect(toURL('/'));
     }
 });

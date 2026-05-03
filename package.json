@@ -19,9 +19,9 @@
     "docs": "npx typedoc --entryPointStrategy expand --skipErrorChecking ./app ./components ./lib ./contexts ./hooks ./scripts ./src && start ./docs/index.html"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^4.16.0",
+    "@auth0/nextjs-auth0": "^4.19.0",
     "@codemirror/lang-markdown": "^6.5.0",
-    "@opennextjs/cloudflare": "^1.18.0",
+    "@opennextjs/cloudflare": "^1.14.1",
     "@playwright/test": "^1.59.1",
     "@radix-ui/react-accordion": "^1.2.12",
     "@radix-ui/react-avatar": "^1.1.11",
@@ -55,8 +55,9 @@
     "remark": "^15.0.1",
     "remark-gfm": "^4.0.1",
     "remark-html": "^16.0.1",
+    "resend": "^6.12.2",
     "sonner": "^2.0.7",
-    "supabase": "^2.81.3",
+    "supabase": "^2.95.5",
     "tailwind-merge": "^3.4.0",
     "ua-parser-js": "^2.0.8"
   },

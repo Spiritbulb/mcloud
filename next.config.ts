@@ -12,6 +12,18 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
     ],
   },
+  webpack: (config, { isServer }) => {
+    if (isServer) {
+      config.ignoreWarnings = [
+        ...(config.ignoreWarnings ?? []),
+        {
+          module: /dpopUtils/,
+          message: /Critical dependency/,
+        },
+      ]
+    }
+    return config
+  },
 
 };
 

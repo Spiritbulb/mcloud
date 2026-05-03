@@ -429,7 +429,7 @@ export function MobileSettingsNav({
                 <div className="md:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={onClose} />
             )}
             <div className={cn(
-                'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col w-72',
+                'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col w-72 h-screen',
                 'bg-sidebar border-r border-border shadow-xl',
                 'transition-transform duration-200 ease-out',
                 open ? 'translate-x-0' : '-translate-x-full'
