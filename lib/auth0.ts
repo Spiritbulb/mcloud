@@ -29,7 +29,7 @@ export const auth0 = new Auth0Client({
     async onCallback(error, context, session) {
         if (error) {
             return NextResponse.redirect(
-                toURL(`/auth/login?error=${encodeURIComponent(error.message)}`)
+                toURL(`${BASE_URL}/auth/login?error=${encodeURIComponent(error.message)}`)
             );
         }
 

@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   // ✅ Explicitly enable Turbopack
   turbopack: {},
+  allowedDevOrigins: ['http://localhost:3000'],
 
   images: {
     remotePatterns: [

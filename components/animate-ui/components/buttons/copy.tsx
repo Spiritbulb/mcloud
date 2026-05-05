@@ -69,7 +69,7 @@ function CopyButton({
   });
 
   const handleCopy = React.useCallback(
-    (e: React.MouseEvent<HTMLButtonElement>) => {
+    (e: React.MouseEvent<HTMLDivElement>) => {
       onClick?.(e);
       if (copied) return;
       if (content) {

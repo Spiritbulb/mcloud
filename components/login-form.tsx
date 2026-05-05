@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 function Form({ className, onSwitch }: { className?: string; onSwitch?: () => void }) {
   return (
     <div className={cn('flex flex-col gap-5', className)}>
-      <a href="/auth/login">
+      <a href={`${process.env.APP_BASE_URL}/auth/login`}>
         <Button className="w-full h-10 rounded-none google-button-primary">
           Get back in
         </Button>

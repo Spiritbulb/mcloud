@@ -6,7 +6,7 @@ import { motion, type HTMLMotionProps } from 'motion/react';
 import { Slot, type WithAsChild } from '@/components/animate-ui/primitives/animate/slot';
 
 type ButtonProps = WithAsChild<
-  HTMLMotionProps<'button'> & {
+  HTMLMotionProps<'div'> & {
     hoverScale?: number;
     tapScale?: number;
   }
@@ -21,6 +21,8 @@ function Button({
   const Component = asChild ? Slot : motion.button;
 
   return (
+
+    //@ts-ignore
     <Component
       whileTap={{ scale: tapScale }}
       whileHover={{ scale: hoverScale }}

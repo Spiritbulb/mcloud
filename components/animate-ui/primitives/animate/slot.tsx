@@ -7,7 +7,8 @@ import { cn } from '@/lib/utils';
 type AnyProps = Record<string, unknown>;
 
 type DOMMotionProps<T extends HTMLElement = HTMLElement> = Omit<
-  HTMLMotionProps<keyof HTMLElementTagNameMap>,
+
+  HTMLMotionProps<'div'>,
   'ref'
 > & { ref?: React.Ref<T> };
 
@@ -42,8 +43,10 @@ function mergeProps<T extends HTMLElement>(
   const merged: AnyProps = { ...childProps, ...slotProps };
 
   if (childProps.className || slotProps.className) {
+
     merged.className = cn(
       childProps.className as string,
+
       slotProps.className as string,
     );
   }

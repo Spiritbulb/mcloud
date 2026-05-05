@@ -221,7 +221,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       const session = await auth0.getSession(request)
       if (!session?.user) {
         return NextResponse.redirect(
-          new URL(`${proto}://www.menengai.cloud/auth/login`, request.url),
+          new URL(`${proto}://menengai.cloud/auth/login`, request.url),
           302,
         )
       }

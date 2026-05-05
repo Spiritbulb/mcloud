@@ -53,10 +53,12 @@ function ThemeToggle() {
 export function SettingsHeader({
     store,
     activeLabel,
+    mobileOpen,
     onOpenMobileNav,
 }: {
     store: any
     activeLabel: string
+    mobileOpen: boolean
     onOpenMobileNav?: () => void
 }) {
     return (
@@ -68,7 +70,7 @@ export function SettingsHeader({
                 className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors shrink-0"
                 aria-label="Open navigation"
             >
-                <MSO icon="menu" className="text-[20px]" />
+                <MSO icon={mobileOpen ? 'close' : 'menu'} className="text-[20px]" />
             </button>
 
             {/* Page label — breadcrumb */}

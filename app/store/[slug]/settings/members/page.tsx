@@ -10,7 +10,7 @@ export default async function Page({
 }) {
     const { slug } = await params
     const session = await auth0.getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(`${process.env.APP_BASE_URL}/auth/login`)
 
     const data = await getMembers(slug)
     if (data.error === 'Store not found') notFound()

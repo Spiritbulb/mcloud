@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import '@material/web/menu/menu.js'
 import '@material/web/menu/menu-item.js'
@@ -741,30 +741,137 @@ export function MobileSettingsNav({
 }) {
     const handleSelect = (id: TabId) => { onSelect(id); onClose() }
     const handleSubSelect = (id: string) => { onSelectSubTab(id); onClose() }
+    const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+
+    // Gesture state
+    const touchStartX = useRef<number | null>(null)
+    const touchStartY = useRef<number | null>(null)
+    const dragging = useRef(false)
+    const [dragX, setDragX] = useState(0)
+
+    useEffect(() => setMounted(true), [])
+
+    // ── Swipe-to-open: listen on document when closed ──────────────────────────
+    useEffect(() => {
+        if (open) return // panel handles swipe-to-close internally
+
+        const EDGE_THRESHOLD = 20   // px from left edge to start listening
+        const OPEN_THRESHOLD = 60  // px of horizontal drag to trigger open
+
+        const onTouchStart = (e: TouchEvent) => {
+            const t = e.touches[0]
+            if (t.clientX > EDGE_THRESHOLD) return
+            touchStartX.current = t.clientX
+            touchStartY.current = t.clientY
+            dragging.current = true
+            setDragX(0)
+        }
+
+        const onTouchMove = (e: TouchEvent) => {
+            if (!dragging.current || touchStartX.current === null) return
+            const t = e.touches[0]
+            const dx = t.clientX - touchStartX.current
+            const dy = Math.abs(t.clientY - (touchStartY.current ?? 0))
+            // Abort if more vertical than horizontal
+            if (dy > Math.abs(dx)) { dragging.current = false; setDragX(0); return }
+            if (dx < 0) return
+            setDragX(Math.min(dx, 240)) // cap at panel width
+        }
+
+        const onTouchEnd = (e: TouchEvent) => {
+            if (!dragging.current) return
+            const t = e.changedTouches[0]
+            const dx = t.clientX - (touchStartX.current ?? 0)
+            dragging.current = false
+            setDragX(0)
+            touchStartX.current = null
+            touchStartY.current = null
+            if (dx >= OPEN_THRESHOLD) {
+                // Trigger open via parent — we call the same onSelect approach
+                // but here we just signal open. Parent should expose an onOpen prop,
+                // so we fire a custom event the parent can listen to, OR you pass
+                // an `onOpen` prop (see note below).
+                window.dispatchEvent(new CustomEvent('mobile-nav-open'))
+            }
+        }
+
+        document.addEventListener('touchstart', onTouchStart, { passive: true })
+        document.addEventListener('touchmove', onTouchMove, { passive: true })
+        document.addEventListener('touchend', onTouchEnd, { passive: true })
+        return () => {
+            document.removeEventListener('touchstart', onTouchStart)
+            document.removeEventListener('touchmove', onTouchMove)
+            document.removeEventListener('touchend', onTouchEnd)
+        }
+    }, [open])
+
+    // ── Swipe-to-close: track drag while open ─────────────────────────────────
+    const CLOSE_THRESHOLD = 60
+
+    const handlePanelTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX
+        touchStartY.current = e.touches[0].clientY
+        dragging.current = true
+    }
+
+    const handlePanelTouchMove = (e: React.TouchEvent) => {
+        if (!dragging.current || touchStartX.current === null) return
+        const dx = e.touches[0].clientX - touchStartX.current
+        const dy = Math.abs(e.touches[0].clientY - (touchStartY.current ?? 0))
+        if (dy > Math.abs(dx)) { dragging.current = false; setDragX(0); return }
+        setDragX(Math.min(0, dx)) // only track leftward drag when open
+    }
+
+    const handlePanelTouchEnd = (e: React.TouchEvent) => {
+        if (!dragging.current) return
+        const dx = e.changedTouches[0].clientX - (touchStartX.current ?? 0)
+        dragging.current = false
+        setDragX(0)
+        touchStartX.current = null
+        touchStartY.current = null
+        if (dx <= -CLOSE_THRESHOLD) onClose()
+    }
+
+    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
+
+    // Panel translate: normal open/close + live drag offset
+    const panelTranslate = open
+        ? `translateX(${dragX}px)`           // open + possible swipe-to-close drag
+        : dragX > 0
+            ? `translateX(calc(-100% + ${dragX}px))`  // closed + swipe-to-open drag preview
+            : undefined
 
     return (
         <>
+            {/* Backdrop — only in DOM when open, pointer-events off so it takes no space when absent */}
             {open && (
                 <div
-                    className="md:hidden inset-0 z-40 nav-backdrop"
+                    className="md:hidden fixed inset-0 z-40"
                     onClick={onClose}
                 />
             )}
-            <div className={cn(
-                'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[90vh] w-[240px] my-auto ml-2 rounded-lg',
-                'bg-[hsl(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
-                'transition-transform duration-200 ease-out',
-                open ? 'translate-x-0' : '-translate-x-full'
-            )}>
+
+            <div
+                className={cn(
+                    // Key change: `fixed` + fully off-screen when closed — zero layout impact
+                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[80vh] w-[240px] my-auto ml-2 rounded-lg',
+                    'bg-[hsl(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
+                    // Disable CSS transition while user is actively dragging for immediate feedback
+                    dragging.current ? '' : 'transition-transform duration-200 ease-out',
+                    open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]', // +ml-2 so it fully exits
+                )}
+                style={panelTranslate ? { transform: panelTranslate } : undefined}
+                onTouchStart={handlePanelTouchStart}
+                onTouchMove={handlePanelTouchMove}
+                onTouchEnd={handlePanelTouchEnd}
+            >
                 {/* Header with close */}
-                <div className="flex items-center justify-between px-4 py-3 border-b border-[--md-sys-color-outline-variant]">
+                <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center gap-2">
-                        <div className="store-avatar-fallback flex w-6 h-6 rounded items-center justify-center text-[11px] font-black shrink-0">
-                            M
-                        </div>
-                        <span className="text-[14px] font-semibold text-[--md-sys-color-on-surface]">
-                            Menengai Cloud
-                        </span>
+                        <Link href="/" className="flex items-center shrink-0">
+                            <img src={src} alt="Logo" className="w-auto h-5" />
+                        </Link>
                     </div>
                     <button
                         onClick={onClose}

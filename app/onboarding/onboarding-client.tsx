@@ -1,13 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
 import { completeOnboarding } from './actions'
-import { Store, Plus, ArrowRight, CheckCircle2 } from 'lucide-react'
+
+// ─── MSO ─────────────────────────────────────────────────────────────────────
+
+function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
+  return (
+    <span
+      className={cn('material-symbols-outlined select-none leading-none', className)}
+      style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
+    >
+      {icon}
+    </span>
+  )
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,48 +24,28 @@ interface ExistingStore {
   id: string
   name: string
   slug: string
+  last_visited_at?: string   // ISO string — for "recent" sort
+  logo_url?: string
+  order_count?: number
 }
 
 interface OnboardingPageProps {
   existingStores?: ExistingStore[]
+  userName?: string          // pre-filled if we know them
 }
 
 // ─── Data ─────────────────────────────────────────────────────────────────────
 
-const STEPS = [
-  {
-    key: 'name',
-    emoji: '👋',
-    label: 'Your name',
-    headline: "What should we call you?",
-    sub: 'This is how your customers and team will know you.',
-  },
-  {
-    key: 'store',
-    emoji: '🏪',
-    label: 'Your shop',
-    headline: 'Name your shop',
-    sub: 'This becomes your shop link. Keep it short and memorable!',
-  },
-  {
-    key: 'prefs',
-    emoji: '⚙️',
-    label: 'Settings',
-    headline: "Almost ready!",
-    sub: 'Set your currency and timezone. You can change these later.',
-  },
-]
-
 const CURRENCIES = [
-  { code: 'KES', label: 'KES — Kenyan Shilling' },
-  { code: 'USD', label: 'USD — US Dollar' },
-  { code: 'EUR', label: 'EUR — Euro' },
-  { code: 'GBP', label: 'GBP — British Pound' },
-  { code: 'NGN', label: 'NGN — Nigerian Naira' },
-  { code: 'GHS', label: 'GHS — Ghanaian Cedi' },
-  { code: 'ZAR', label: 'ZAR — South African Rand' },
-  { code: 'UGX', label: 'UGX — Ugandan Shilling' },
-  { code: 'TZS', label: 'TZS — Tanzanian Shilling' },
+  { code: 'KES', label: 'Kenyan Shilling (KES)', flag: '🇰🇪' },
+  { code: 'UGX', label: 'Ugandan Shilling (UGX)', flag: '🇺🇬' },
+  { code: 'TZS', label: 'Tanzanian Shilling (TZS)', flag: '🇹🇿' },
+  { code: 'NGN', label: 'Nigerian Naira (NGN)', flag: '🇳🇬' },
+  { code: 'GHS', label: 'Ghanaian Cedi (GHS)', flag: '🇬🇭' },
+  { code: 'ZAR', label: 'South African Rand (ZAR)', flag: '🇿🇦' },
+  { code: 'USD', label: 'US Dollar (USD)', flag: '🇺🇸' },
+  { code: 'EUR', label: 'Euro (EUR)', flag: '🇪🇺' },
+  { code: 'GBP', label: 'British Pound (GBP)', flag: '🇬🇧' },
 ]
 
 const TIMEZONES = [
@@ -72,185 +61,188 @@ const TIMEZONES = [
   { value: 'Asia/Dubai', label: 'Dubai (GST, UTC+4)' },
 ]
 
-// ─── Animation variants ────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const slideVariants = {
-  enter: (dir: number) => ({ x: dir > 0 ? 40 : -40, opacity: 0 }),
-  center: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: 0.3, ease: [0.25, 0.1, 0.25, 1] as const },
-  },
-  exit: (dir: number) => ({
-    x: dir > 0 ? -40 : 40,
-    opacity: 0,
-    transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const },
-  }),
+function getInitials(name: string) {
+  return name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
 }
 
-// ─── Store Avatar ──────────────────────────────────────────────────────────────
-
-function StoreAvatar({ name }: { name: string }) {
-  const initials = name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2)
-
-  return (
-    <div className="w-10 h-10 rounded-xl bg-primary/10 text-primary font-semibold text-sm flex items-center justify-center flex-shrink-0">
-      {initials || <Store className="w-4 h-4" />}
-    </div>
-  )
+function timeAgo(iso?: string) {
+  if (!iso) return null
+  const diff = Date.now() - new Date(iso).getTime()
+  const m = Math.floor(diff / 60000)
+  if (m < 1) return 'just now'
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  if (d === 1) return 'yesterday'
+  if (d < 7) return `${d} days ago`
+  return new Date(iso).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
 }
 
-// ─── Store Picker ──────────────────────────────────────────────────────────────
+// Sort stores by last_visited_at descending — most recent first
+function sortByRecent(stores: ExistingStore[]) {
+  return [...stores].sort((a, b) => {
+    if (!a.last_visited_at) return 1
+    if (!b.last_visited_at) return -1
+    return new Date(b.last_visited_at).getTime() - new Date(a.last_visited_at).getTime()
+  })
+}
 
-function StorePicker({
-  stores,
-  onPickStore,
-  onCreateNew,
+// ─── Greeting ─────────────────────────────────────────────────────────────────
+
+function getGreeting() {
+  const h = new Date().getHours()
+  if (h < 12) return 'Good morning'
+  if (h < 17) return 'Good afternoon'
+  return 'Good evening'
+}
+
+// ─── StoreCard ────────────────────────────────────────────────────────────────
+
+function StoreCard({
+  store,
+  index,
+  picking,
+  onPick,
 }: {
-  stores: ExistingStore[]
-  onPickStore: (slug: string) => void
-  onCreateNew: () => void
+  store: ExistingStore
+  index: number
+  picking: string | null
+  onPick: (slug: string) => void
 }) {
-  const [picking, setPicking] = useState<string | null>(null)
-
-  const handlePick = (slug: string) => {
-    setPicking(slug)
-    onPickStore(slug)
-  }
+  const isFirst = index === 0
+  const isPicking = picking === store.slug
+  const isDisabled = picking !== null && !isPicking
+  const ago = timeAgo(store.last_visited_at)
 
   return (
-    <div className="w-full max-w-md space-y-5">
-      {/* Header */}
-      <div className="text-center space-y-1.5">
-        <div className="text-3xl">👋</div>
-        <h1 className="text-2xl font-display font-bold text-foreground">
-          Welcome back!
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Pick a shop to jump back in, or start a fresh one.
-        </p>
-      </div>
+    <motion.button
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.3, delay: 0.05 + index * 0.06, ease: [0.25, 0.1, 0.25, 1] }}
+      onClick={() => !isDisabled && onPick(store.slug)}
+      disabled={isDisabled}
+      className={cn(
+        'group relative text-left rounded-2xl border transition-all duration-200 overflow-hidden',
+        'w-fit min-w-[180px] max-w-[240px]',
+        isFirst
+          // Most recent — featured style
+          ? 'bg-[--md-sys-color-primary-container] border-[--md-sys-color-primary]/20 p-5'
+          : 'bg-[--md-sys-color-surface] border-[--md-sys-color-outline-variant] p-4',
+        !isDisabled && 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
+        isPicking && 'scale-[0.99]',
+        isDisabled && 'opacity-40 cursor-not-allowed'
+      )}
+    >
+      {/* "Continue" label on first card */}
+      {isFirst && (
+        <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-[--md-sys-color-primary] mb-3">
+          <MSO icon="history" className="text-[13px]" />
+        </div>
+      )}
 
-      {/* Store cards */}
-      <div className="space-y-2">
-        {stores.map((store) => (
-          <button
-            key={store.id}
-            onClick={() => handlePick(store.slug)}
-            disabled={picking !== null}
-            className={cn(
-              'w-full flex items-center gap-3 p-4 rounded-xl border border-border bg-card text-left',
-              'hover:border-primary/50 hover:bg-accent/40 transition-all duration-150',
-              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-              picking === store.slug && 'border-primary bg-primary/5'
-            )}
-          >
-            <StoreAvatar name={store.name} />
-            <div className="flex-1 min-w-0">
-              <p className="font-medium text-foreground text-sm truncate">
-                {store.name}
-              </p>
-              <p className="text-xs text-muted-foreground truncate">
-                {store.slug}.menengai.cloud
-              </p>
-            </div>
-            {picking === store.slug ? (
-              <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin flex-shrink-0" />
-            ) : (
-              <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0" />
-            )}
-          </button>
-        ))}
-      </div>
+      <div className="flex flex-col gap-3">
+        {/* Logo */}
+        <div className={cn(
+          'shrink-0 flex items-center justify-center rounded-xl font-semibold text-sm overflow-hidden',
+          isFirst ? 'w-11 h-11' : 'w-9 h-9',
+          !store.logo_url && 'bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]'
+        )}>
+          {store.logo_url
+            ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+            : getInitials(store.name)
+          }
+        </div>
 
-      {/* Create new */}
-      <button
-        onClick={onCreateNew}
-        disabled={picking !== null}
-        className={cn(
-          'w-full flex items-center justify-center gap-2 p-3.5 rounded-xl border border-dashed border-border',
-          'text-sm text-muted-foreground hover:text-foreground hover:border-foreground/30 hover:bg-accent/20',
-          'transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring'
-        )}
-      >
-        <Plus className="w-4 h-4" />
-        Create a new shop
-      </button>
-    </div>
+        {/* Info */}
+        <div className="space-y-0.5">
+          <p className={cn(
+            'font-semibold truncate',
+            isFirst
+              ? 'text-[15px] text-[--md-sys-color-on-primary-container]'
+              : 'text-[13px] text-[--md-sys-color-on-surface]'
+          )}>
+            {store.name}
+          </p>
+          <p className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate">
+            {store.slug}.menengai.cloud
+          </p>
+          {ago && (
+            <p className="text-[11px] text-[--md-sys-color-on-surface-variant] opacity-60">{ago}</p>
+          )}
+        </div>
+
+        {/* Arrow */}
+        <div className={cn('transition-all duration-150', !isDisabled && 'group-hover:translate-x-0.5')}>
+          {isPicking
+            ? <div className="w-4 h-4 border-2 border-[--md-sys-color-primary] border-t-transparent rounded-full animate-spin" />
+            : <MSO icon="arrow_forward" className={cn('text-[18px]', isFirst ? 'text-[--md-sys-color-primary]' : 'text-[--md-sys-color-on-surface-variant]')} />
+          }
+        </div>
+      </div>
+    </motion.button>
   )
 }
 
-// ─── Main Component ────────────────────────────────────────────────────────────
+// ─── CREATE FORM ──────────────────────────────────────────────────────────────
 
-export default function OnboardingPage({ existingStores = [] }: OnboardingPageProps) {
-  // If the user has stores, start in picker mode
-  const [mode, setMode] = useState<'pick' | 'create'>(
-    existingStores.length > 0 ? 'pick' : 'create'
-  )
+type CreateStep = 'name' | 'store' | 'prefs'
 
-  const [step, setStep] = useState(0)
-  const [direction, setDirection] = useState(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const [fullName, setFullName] = useState('')
+function CreateForm({
+  initialName,
+  onBack,
+  hasExisting,
+}: {
+  initialName?: string
+  onBack: () => void
+  hasExisting: boolean
+}) {
+  const [step, setStep] = useState<CreateStep>('name')
+  const [dir, setDir] = useState(1)
+  const [fullName, setFullName] = useState(initialName ?? '')
   const [storeName, setStoreName] = useState('')
   const [currency, setCurrency] = useState('KES')
   const [timezone, setTimezone] = useState('Africa/Nairobi')
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const derivedSlug = storeName
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
+  const slug = storeName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 
-  const canAdvance = () => {
-    if (step === 0) return fullName.trim().length > 0
-    if (step === 1) return storeName.trim().length > 0
-    return true
+  const STEPS: CreateStep[] = ['name', 'store', 'prefs']
+  const stepIdx = STEPS.indexOf(step)
+
+  const canContinue =
+    step === 'name' ? fullName.trim().length > 1
+      : step === 'store' ? storeName.trim().length > 1
+        : true
+
+  const next = () => {
+    if (!canContinue) return
+    setDir(1)
+    if (step === 'name') setStep('store')
+    else if (step === 'store') setStep('prefs')
   }
 
-  const advance = () => {
-    if (!canAdvance()) return
-    setDirection(1)
-    setStep((s) => s + 1)
+  const prev = () => {
+    setDir(-1)
+    if (step === 'store') setStep('name')
+    else if (step === 'prefs') setStep('store')
+    else onBack()
   }
 
-  const back = () => {
-    if (step === 0 && existingStores.length > 0) {
-      // Go back to store picker
-      setMode('pick')
-      return
-    }
-    setDirection(-1)
-    setStep((s) => s - 1)
-  }
-
-  const handlePickStore = async (slug: string) => {
-    window.location.href = `/store/${slug}/settings`
-  }
-
-  const handleSubmit = async () => {
-    setIsLoading(true)
-    setError(null)
-
-    const formData = new FormData()
-    formData.append('fullName', fullName)
-    formData.append('storeName', storeName)
-    formData.append('slug', derivedSlug)
-    formData.append('currency', currency)
-    formData.append('timezone', timezone)
-
+  const submit = async () => {
+    setIsLoading(true); setError(null)
+    const fd = new FormData()
+    fd.append('fullName', fullName)
+    fd.append('storeName', storeName)
+    fd.append('slug', slug)
+    fd.append('currency', currency)
+    fd.append('timezone', timezone)
     try {
-      const result = await completeOnboarding(formData)
-      if (result?.error) {
-        setError(result.error)
-        setIsLoading(false)
-      }
+      const result = await completeOnboarding(fd)
+      if (result?.error) { setError(result.error); setIsLoading(false) }
     } catch (e) {
       if (e instanceof Error && (e as any).digest?.startsWith('NEXT_REDIRECT')) throw e
       setError('Something went wrong. Please try again.')
@@ -258,299 +250,368 @@ export default function OnboardingPage({ existingStores = [] }: OnboardingPagePr
     }
   }
 
-  const progress = ((step + 1) / STEPS.length) * 100
+  const slide = {
+    enter: (d: number) => ({ x: d > 0 ? 32 : -32, opacity: 0 }),
+    center: { x: 0, opacity: 1, transition: { duration: 0.26, ease: [0.25, 0.1, 0.25, 1] as const } },
+    exit: (d: number) => ({ x: d > 0 ? -32 : 32, opacity: 0, transition: { duration: 0.2, ease: [0.25, 0.1, 0.25, 1] as const } }),
+  }
+
+  const inputCls = cn(
+    'w-full h-12 rounded-xl border border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface]',
+    'px-4 text-[14px] text-[--md-sys-color-on-surface] placeholder:text-[--md-sys-color-on-surface-variant]/40',
+    'focus:outline-none focus:border-[--md-sys-color-primary] focus:ring-2 focus:ring-[--md-sys-color-primary]/15',
+    'transition-all duration-150'
+  )
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-4 overflow-hidden relative">
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -16 }}
+      transition={{ duration: 0.28 }}
+      className="w-full max-w-md"
+    >
+      {/* Step dots */}
+      <div className="flex items-center justify-center gap-2 mb-8">
+        {STEPS.map((s, i) => (
+          <div key={s} className={cn(
+            'rounded-full transition-all duration-300',
+            i === stepIdx
+              ? 'w-6 h-2 bg-[--md-sys-color-primary]'
+              : i < stepIdx
+                ? 'w-2 h-2 bg-[--md-sys-color-primary]/60'
+                : 'w-2 h-2 bg-[--md-sys-color-outline-variant]'
+          )} />
+        ))}
+      </div>
 
-      {/* Warm gradient background */}
-      <div className="fixed inset-0 -z-10 bg-gradient-to-br from-background via-background to-accent/20 pointer-events-none" />
+      {/* Card */}
+      <div className="rounded-2xl border border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface] overflow-hidden shadow-sm">
 
-      {/* Subtle dot grid */}
-      <div
-        className="fixed inset-0 -z-10 opacity-[0.025] pointer-events-none"
-        style={{
-          backgroundImage: 'radial-gradient(circle, currentColor 1px, transparent 1px)',
-          backgroundSize: '32px 32px',
-        }}
-      />
-
-      {/* ── Store Picker Mode ── */}
-      <AnimatePresence mode="wait">
-        {mode === 'pick' ? (
-          <motion.div
-            key="picker"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="relative z-10 w-full flex flex-col items-center"
-          >
-            <StorePicker
-              stores={existingStores}
-              onPickStore={handlePickStore}
-              onCreateNew={() => {
-                setMode('create')
-                setStep(0)
-              }}
-            />
-
-            <p className="text-center text-xs text-muted-foreground/40 mt-6">
-              free forever · no credit card · live in seconds
-            </p>
-          </motion.div>
-
-        ) : (
-
-          /* ── Create Mode ── */
-          <motion.div
-            key="create"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            transition={{ duration: 0.35 }}
-            className="w-full max-w-md relative z-10"
-          >
-            {/* Step progress pills */}
-            <div className="flex items-center gap-2 mb-6 px-1">
-              {STEPS.map((s, i) => (
-                <div key={i} className="flex items-center gap-2 flex-1">
-                  <div
-                    className={cn(
-                      'flex items-center gap-1.5 text-xs font-medium transition-all duration-300',
-                      i < step
-                        ? 'text-primary'
-                        : i === step
-                          ? 'text-foreground'
-                          : 'text-muted-foreground/40'
-                    )}
-                  >
-                    {i < step ? (
-                      <CheckCircle2 className="w-4 h-4 text-primary flex-shrink-0" />
-                    ) : (
-                      <span className={cn(
-                        'w-5 h-5 rounded-full border text-[10px] flex items-center justify-center flex-shrink-0 font-semibold',
-                        i === step
-                          ? 'border-foreground bg-foreground text-background'
-                          : 'border-border text-muted-foreground/40'
-                      )}>
-                        {i + 1}
-                      </span>
-                    )}
-                    <span className="hidden sm:inline">{s.label}</span>
+        <div className="relative overflow-hidden" style={{ minHeight: 340 }}>
+          <AnimatePresence custom={dir} mode="wait">
+            <motion.div
+              key={step}
+              custom={dir}
+              variants={slide}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              className="p-8 space-y-6"
+            >
+              {/* Step: name */}
+              {step === 'name' && (
+                <>
+                  <div className="space-y-1.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[--md-sys-color-primary-container] flex items-center justify-center mb-4">
+                      <MSO icon="waving_hand" className="text-[22px] text-[--md-sys-color-primary]" fill={1} />
+                    </div>
+                    <h2 className="text-[20px] font-semibold text-[--md-sys-color-on-surface] tracking-tight">
+                      What's your name?
+                    </h2>
+                    <p className="text-[13px] text-[--md-sys-color-on-surface-variant] leading-relaxed">
+                      We'll use this to personalise your experience and sign off your store communications.
+                    </p>
                   </div>
-                  {i < STEPS.length - 1 && (
-                    <div className={cn(
-                      'flex-1 h-px transition-all duration-300',
-                      i < step ? 'bg-primary' : 'bg-border'
-                    )} />
-                  )}
-                </div>
-              ))}
-            </div>
+                  <input
+                    type="text"
+                    placeholder="e.g. Amina Wanjiru"
+                    autoFocus
+                    value={fullName}
+                    onChange={e => setFullName(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && canContinue && next()}
+                    className={inputCls}
+                  />
+                </>
+              )}
 
-            {/* Card */}
-            <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+              {/* Step: store */}
+              {step === 'store' && (
+                <>
+                  <div className="space-y-1.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[--md-sys-color-primary-container] flex items-center justify-center mb-4">
+                      <MSO icon="storefront" className="text-[22px] text-[--md-sys-color-primary]" fill={1} />
+                    </div>
+                    <h2 className="text-[20px] font-semibold text-[--md-sys-color-on-surface] tracking-tight">
+                      Name your shop{fullName ? `, ${fullName.split(' ')[0]}` : ''}
+                    </h2>
+                    <p className="text-[13px] text-[--md-sys-color-on-surface-variant] leading-relaxed">
+                      Pick a name your customers will recognise. This also sets your store's web address.
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <input
+                      type="text"
+                      placeholder="Kiko Skincare"
+                      autoFocus
+                      value={storeName}
+                      onChange={e => setStoreName(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && canContinue && next()}
+                      className={inputCls}
+                    />
+                    <AnimatePresence>
+                      {slug && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                          className="flex items-center gap-1.5 px-1"
+                        >
+                          <MSO icon="link" className="text-[14px] text-[--md-sys-color-primary]" />
+                          <span className="text-[12px] text-[--md-sys-color-on-surface-variant]">
+                            Your store will be at{' '}
+                            <span className="font-medium text-[--md-sys-color-primary]">
+                              {slug}.menengai.cloud
+                            </span>
+                          </span>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </>
+              )}
 
-              {/* Step content */}
-              <div className="relative overflow-hidden" style={{ minHeight: 300 }}>
-                <AnimatePresence custom={direction} mode="wait">
-                  <motion.div
-                    key={step}
-                    custom={direction}
-                    variants={slideVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    className="p-7 flex flex-col gap-6"
-                  >
-                    {/* Headline */}
-                    <div className="space-y-1">
-                      <div className="text-3xl mb-3">{STEPS[step].emoji}</div>
-                      <h1 className="text-xl font-display font-bold text-foreground leading-tight">
-                        {STEPS[step].headline}
-                      </h1>
-                      <p className="text-sm text-muted-foreground">
-                        {STEPS[step].sub}
-                      </p>
+              {/* Step: prefs */}
+              {step === 'prefs' && (
+                <>
+                  <div className="space-y-1.5">
+                    <div className="w-11 h-11 rounded-2xl bg-[--md-sys-color-primary-container] flex items-center justify-center mb-4">
+                      <MSO icon="tune" className="text-[22px] text-[--md-sys-color-primary]" fill={1} />
+                    </div>
+                    <h2 className="text-[20px] font-semibold text-[--md-sys-color-on-surface] tracking-tight">
+                      One last thing
+                    </h2>
+                    <p className="text-[13px] text-[--md-sys-color-on-surface-variant] leading-relaxed">
+                      Set your currency and location. You can always change these later in settings.
+                    </p>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-[--md-sys-color-on-surface-variant] mb-2">
+                        Currency
+                      </label>
+                      <select value={currency} onChange={e => setCurrency(e.target.value)} className={cn(inputCls, 'cursor-pointer')}>
+                        {CURRENCIES.map(c => (
+                          <option key={c.code} value={c.code}>{c.flag} {c.label}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-semibold uppercase tracking-widest text-[--md-sys-color-on-surface-variant] mb-2">
+                        Timezone
+                      </label>
+                      <select value={timezone} onChange={e => setTimezone(e.target.value)} className={cn(inputCls, 'cursor-pointer')}>
+                        {TIMEZONES.map(t => (
+                          <option key={t.value} value={t.value}>{t.label}</option>
+                        ))}
+                      </select>
                     </div>
 
-                    {/* Step 0 — Full name */}
-                    {step === 0 && (
-                      <div className="grid gap-2">
-                        <Label htmlFor="full-name" className="text-xs font-medium text-muted-foreground">
-                          Full name
-                        </Label>
-                        <Input
-                          id="full-name"
-                          type="text"
-                          placeholder="e.g. Amina Wanjiru"
-                          autoFocus
-                          value={fullName}
-                          onChange={(e) => setFullName(e.target.value)}
-                          onKeyDown={(e) => e.key === 'Enter' && canAdvance() && advance()}
-                          className="h-11 text-base rounded-xl focus-visible:ring-1 focus-visible:ring-ring"
-                        />
+                    {/* Summary pill */}
+                    <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-[--md-sys-color-surface-variant]/50 border border-[--md-sys-color-outline-variant]">
+                      <div className="w-8 h-8 rounded-lg bg-[--md-sys-color-primary] flex items-center justify-center text-[--md-sys-color-on-primary] text-[11px] font-bold shrink-0">
+                        {getInitials(storeName)}
                       </div>
-                    )}
-
-                    {/* Step 1 — Store name */}
-                    {step === 1 && (
-                      <div className="grid gap-2">
-                        <Label htmlFor="store-name" className="text-xs font-medium text-muted-foreground">
-                          Shop name
-                        </Label>
-                        <div className="flex items-center h-11 border border-input rounded-xl bg-background px-3 focus-within:ring-1 focus-within:ring-ring transition-all">
-                          <span className="text-xs text-muted-foreground font-medium whitespace-nowrap select-none pr-1">
-                            menengai.cloud/store/
-                          </span>
-                          <input
-                            id="store-name"
-                            type="text"
-                            placeholder="kikoskincare"
-                            autoFocus
-                            value={storeName}
-                            onChange={(e) =>
-                              setStoreName(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))
-                            }
-                            onKeyDown={(e) => e.key === 'Enter' && canAdvance() && advance()}
-                            className="flex-1 h-full bg-transparent text-sm outline-none"
-                          />
-                        </div>
-                        <AnimatePresence>
-                          {storeName && (
-                            <motion.p
-                              initial={{ opacity: 0, y: -4 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0 }}
-                              className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1"
-                            >
-                              <CheckCircle2 className="w-3 h-3" />
-                              {derivedSlug}.menengai.cloud will be yours
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
+                      <div className="min-w-0">
+                        <p className="text-[12px] font-semibold text-[--md-sys-color-on-surface] truncate">{storeName}</p>
+                        <p className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate">{slug}.menengai.cloud</p>
                       </div>
-                    )}
+                      <MSO icon="check_circle" className="text-[18px] text-[--md-sys-color-primary] ml-auto shrink-0" fill={1} />
+                    </div>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </div>
 
-                    {/* Step 2 — Preferences */}
-                    {step === 2 && (
-                      <div className="grid gap-4">
-                        <div className="grid gap-2">
-                          <Label htmlFor="currency" className="text-xs font-medium text-muted-foreground">
-                            What currency do you sell in?
-                          </Label>
-                          <select
-                            id="currency"
-                            value={currency}
-                            onChange={(e) => setCurrency(e.target.value)}
-                            className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all"
-                          >
-                            {CURRENCIES.map((c) => (
-                              <option key={c.code} value={c.code}>{c.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        <div className="grid gap-2">
-                          <Label htmlFor="timezone" className="text-xs font-medium text-muted-foreground">
-                            Where are you based?
-                          </Label>
-                          <select
-                            id="timezone"
-                            value={timezone}
-                            onChange={(e) => setTimezone(e.target.value)}
-                            className="h-11 rounded-xl border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring transition-all"
-                          >
-                            {TIMEZONES.map((t) => (
-                              <option key={t.value} value={t.value}>{t.label}</option>
-                            ))}
-                          </select>
-                        </div>
-
-                        {/* Store summary */}
-                        <div className="rounded-xl border border-border bg-muted/30 p-4 space-y-3">
-                          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide">
-                            Your shop summary
-                          </p>
-                          <div className="flex items-center gap-3">
-                            <StoreAvatar name={storeName} />
-                            <div>
-                              <p className="text-sm font-semibold text-foreground">{storeName || '—'}</p>
-                              <p className="text-xs text-muted-foreground">
-                                {derivedSlug}.menengai.cloud
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-xs text-muted-foreground pt-1 border-t border-border">
-                            Owner: <span className="text-foreground font-medium">{fullName || '—'}</span>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+        {/* Error */}
+        <AnimatePresence>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              className="px-8 pb-2"
+            >
+              <div className="flex items-center gap-2 text-[12px] text-[--md-sys-color-error] bg-[--md-sys-color-error]/8 px-3 py-2.5 rounded-xl">
+                <MSO icon="error" className="text-[15px] shrink-0" fill={1} />
+                {error}
               </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-              {/* Error */}
-              <AnimatePresence>
-                {error && (
-                  <motion.div
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="px-7 pb-2"
-                  >
-                    <p className="text-xs text-destructive bg-destructive/10 px-3 py-2 rounded-lg">
-                      {error}
-                    </p>
-                  </motion.div>
+        {/* Footer */}
+        <div className="flex items-center justify-between border-t border-[--md-sys-color-outline-variant] px-8 py-4">
+          <button
+            onClick={prev}
+            className="flex items-center gap-1.5 text-[13px] text-[--md-sys-color-on-surface-variant] hover:text-[--md-sys-color-on-surface] transition-colors"
+          >
+            <MSO icon="arrow_back" className="text-[16px]" />
+            {step === 'name' && hasExisting ? 'My stores' : 'Back'}
+          </button>
+
+          {step !== 'prefs' ? (
+            <button
+              onClick={next}
+              disabled={!canContinue}
+              className={cn(
+                'flex items-center gap-1.5 h-10 px-6 rounded-full text-[13px] font-medium',
+                'bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]',
+                'hover:opacity-90 active:scale-[0.98] transition-all duration-150',
+                'disabled:opacity-30 disabled:cursor-not-allowed'
+              )}
+            >
+              Continue
+              <MSO icon="arrow_forward" className="text-[16px]" />
+            </button>
+          ) : (
+            <button
+              onClick={submit}
+              disabled={isLoading}
+              className={cn(
+                'flex items-center gap-2 h-10 px-6 rounded-full text-[13px] font-medium',
+                'bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]',
+                'hover:opacity-90 active:scale-[0.98] transition-all duration-150',
+                'disabled:opacity-50 disabled:cursor-not-allowed'
+              )}
+            >
+              {isLoading ? (
+                <>
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                  Launching…
+                </>
+              ) : (
+                <>
+                  <MSO icon="rocket_launch" className="text-[16px]" fill={1} />
+                  Launch my shop
+                </>
+              )}
+            </button>
+          )}
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
+
+export default function OnboardingPage({ existingStores = [], userName }: OnboardingPageProps) {
+  const sorted = sortByRecent(existingStores)
+  const hasExisting = sorted.length > 0
+
+  const [view, setView] = useState<'home' | 'create'>(hasExisting ? 'home' : 'create')
+  const [picking, setPicking] = useState<string | null>(null)
+
+  const handlePick = (slug: string) => {
+    setPicking(slug)
+    window.location.href = `/store/${slug}/settings`
+  }
+
+  const greeting = getGreeting()
+  const firstName = userName?.split(' ')[0]
+
+  return (
+    <div className="max-h-[90vh] flex flex-col items-center justify-center px-4 py-12 relative bg-[--md-sys-color-surface]">
+
+      {/* Ambient background */}
+      <div className="fixed inset-0 -z-10 pointer-events-none overflow-hidden">
+        <div className="absolute -top-32 left-1/2 -translate-x-1/2 w-[700px] h-[400px] rounded-full bg-[--md-sys-color-primary-container] opacity-60 blur-3xl" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[300px] rounded-full bg-[--md-sys-color-primary-container] opacity-30 blur-3xl" />
+      </div>
+
+      <AnimatePresence mode="wait">
+
+        {/* ── HOME: returning user ── */}
+        {view === 'home' && (
+          <motion.div
+            key="home"
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -16 }}
+            transition={{ duration: 0.28 }}
+            className="w-full max-w-3xl space-y-3"
+          >
+            {/* Greeting */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.02 }}
+              className="mt-12 mb-6 space-y-1"
+            >
+              <h1 className="text-[24px] font-semibold text-[--md-sys-color-on-surface] tracking-tight">
+                {greeting}{firstName ? `, ${firstName}` : ''} 👋
+              </h1>
+              <p className="text-[14px] text-[--md-sys-color-on-surface-variant]">
+                {sorted.length === 1
+                  ? 'Jump back into your store, or create a new one.'
+                  : `You have ${sorted.length} stores. Pick one to continue.`
+                }
+              </p>
+            </motion.div>
+
+            {/* Store cards — side by side, wrap on overflow */}
+            <motion.div
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3, delay: 0.04 }}
+              className="flex flex-wrap gap-3"
+            >
+              {sorted.map((store, i) => (
+                <StoreCard
+                  key={store.id}
+                  store={store}
+                  index={i}
+                  picking={picking}
+                  onPick={handlePick}
+                />
+              ))}
+
+              {/* Create new — same size as cards */}
+              <motion.button
+                initial={{ opacity: 0, y: 12 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3, delay: 0.05 + sorted.length * 0.06 }}
+                onClick={() => setView('create')}
+                disabled={picking !== null}
+                className={cn(
+                  'flex flex-col items-center justify-center gap-2 p-5 rounded-2xl text-center',
+                  'border border-dashed border-[--md-sys-color-outline-variant]',
+                  'hover:border-[--md-sys-color-primary]/40 hover:bg-[--md-sys-color-primary-container]/20',
+                  'transition-all duration-150 group w-fit min-w-[160px]',
+                  picking !== null && 'opacity-40 cursor-not-allowed'
                 )}
-              </AnimatePresence>
-
-              {/* Navigation */}
-              <div className="flex items-center justify-between border-t border-border px-7 py-4">
-                <button
-                  onClick={back}
-                  disabled={step === 0 && existingStores.length === 0}
-                  className="text-sm text-muted-foreground hover:text-foreground transition-colors disabled:opacity-0 disabled:pointer-events-none"
-                >
-                  ← Back
-                </button>
-
-                {step < STEPS.length - 1 ? (
-                  <Button
-                    onClick={advance}
-                    disabled={!canAdvance()}
-                    className="rounded-xl h-10 px-6 font-medium disabled:opacity-30 transition-opacity"
-                  >
-                    Continue →
-                  </Button>
-                ) : (
-                  <Button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="rounded-xl h-10 px-6 font-medium disabled:opacity-50 transition-opacity"
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <span className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Launching…
-                      </span>
-                    ) : (
-                      '🚀 Launch my shop'
-                    )}
-                  </Button>
-                )}
-              </div>
-            </div>
-
-            <p className="text-center text-xs text-muted-foreground/40 mt-5">
-              free forever · no credit card · live in seconds
-            </p>
+              >
+                <div className="w-9 h-9 rounded-xl bg-[--md-sys-color-surface-variant] flex items-center justify-center group-hover:bg-[--md-sys-color-primary-container] transition-colors">
+                  <MSO icon="add" className="text-[20px] text-[--md-sys-color-on-surface-variant] group-hover:text-[--md-sys-color-primary] transition-colors" />
+                </div>
+                <div>
+                  <p className="text-[13px] font-medium text-[--md-sys-color-on-surface]">New shop</p>
+                  <p className="text-[11px] text-[--md-sys-color-on-surface-variant]">Free forever</p>
+                </div>
+              </motion.button>
+            </motion.div>
           </motion.div>
         )}
+
+        {/* ── CREATE: new store wizard ── */}
+        {view === 'create' && (
+          <CreateForm
+            key="create"
+            initialName={userName}
+            onBack={() => hasExisting ? setView('home') : undefined}
+            hasExisting={hasExisting}
+          />
+        )}
       </AnimatePresence>
+
+      {/* Footer */}
+      <motion.p
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.4, delay: 0.5 }}
+        className="mt-10 text-[11px] text-[--md-sys-color-on-surface-variant] opacity-40 text-center"
+      >
+        Menengai Cloud © {new Date().getFullYear()}
+      </motion.p>
     </div>
   )
 }

@@ -6,7 +6,7 @@ import OnboardingPage from './onboarding-client'
 
 export default async function Page() {
     const session = await auth0.getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(`${process.env.APP_BASE_URL}/auth/login`)
 
     const supabase = await createClient()
     const { data: memberships } = await supabase

@@ -13,11 +13,11 @@ export default function AuthPopup({ slug }: AuthPopupProps) {
 
     const handleSignUp = () => {
         const params = slug ? `?slug=${slug}` : ''
-        router.push(`/auth/sign-up${params}`)
+        router.push(`${process.env.APP_BASE_URL}/auth/sign-up${params}`)
     }
 
     const handleLogin = () => {
-        router.push('/auth/login')
+        router.push(`${process.env.APP_BASE_URL}/auth/login`)
     }
 
     return (

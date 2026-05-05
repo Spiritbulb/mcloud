@@ -11,8 +11,8 @@ export default async function Page({
     : undefined
 
   const url = state
-    ? `/auth/login?screen_hint=signup&state=${state}`
-    : `/auth/login?screen_hint=signup`
+    ? `${process.env.APP_BASE_URL}/auth/login?screen_hint=signup&state=${state}`
+    : `${process.env.APP_BASE_URL}/auth/login?screen_hint=signup`
 
   redirect(url)
 }

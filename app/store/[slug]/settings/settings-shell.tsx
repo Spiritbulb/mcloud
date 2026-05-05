@@ -98,7 +98,6 @@ export default function SettingsShell({
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<ErrorType>(null)
     const [activeSubTab, setActiveSubTab] = useState<string>('')
-    const [wizardOpen, setWizardOpen] = useState(false)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
     useEffect(() => {
@@ -129,6 +128,12 @@ export default function SettingsShell({
         load()
     }, [slug])
 
+    useEffect(() => {
+        const handler = () => setMobileNavOpen(true)
+        window.addEventListener('mobile-nav-open', handler)
+        return () => window.removeEventListener('mobile-nav-open', handler)
+    }, [])
+
     // ── Loading ───────────────────────────────────────────────────────────────
     if (loading) return (
         <div className="h-screen flex items-center justify-center bg-background">
@@ -147,8 +152,8 @@ export default function SettingsShell({
             </p>
             <p className="text-sm text-muted-foreground">
                 {error === 'unauthenticated'
-                    ? <a href="/auth/login" className="underline underline-offset-4">Sign in</a>
-                    : <a href="/auth/logout" className="underline underline-offset-4">Sign out and try again</a>
+                    ? <a href={`${process.env.APP_BASE_URL}/auth/login`} className="underline underline-offset-4">Sign in</a>
+                    : <a href={`${process.env.APP_BASE_URL}/auth/logout`} className="underline underline-offset-4">Sign out and try again</a>
                 }
             </p>
         </div>
@@ -162,7 +167,7 @@ export default function SettingsShell({
         accountHref: process.env.NODE_ENV === 'development'
             ? `http://localhost:3000/store/${slug}/settings/account`
             : `https://${slug}.menengai.cloud/settings/account`,
-        onSignOut: () => { window.location.href = '/auth/logout' },
+        onSignOut: () => { window.location.href = `${process.env.APP_BASE_URL}/auth/logout` },
     }
 
     const navStore = {
@@ -227,6 +232,7 @@ export default function SettingsShell({
                             store={navStore}
                             activeLabel={activeLabel}
                             onOpenMobileNav={() => setMobileNavOpen(true)}
+                            mobileOpen={mobileNavOpen}
                         />
                     </div>
                     <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">

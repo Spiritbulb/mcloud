@@ -39,7 +39,7 @@ export default async function DocsEditorPage() {
 
     // Not logged in → send to Auth0 login, return here after
     if (!session?.user) {
-        redirect(`/auth/login?returnTo=/docs-editor`)
+        redirect(`${process.env.APP_BASE_URL}/auth/login?returnTo=/docs-editor`)
     }
 
     const role = await getRole(session.user.sub)
