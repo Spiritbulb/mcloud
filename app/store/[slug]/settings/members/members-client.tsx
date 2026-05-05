@@ -411,7 +411,7 @@ export default function MembersPage({
     const [invites, setInvites] = useState<Invite[]>(initialInvites)
 
     return (
-        <div className="max-w-2xl mx-auto px-4 py-8 space-y-10">
+        <div className="max-w-5xl mx-auto px-4 py-8 space-y-10">
 
             {/* Header */}
             <div>

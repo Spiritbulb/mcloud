@@ -1,29 +1,36 @@
 'use client'
 
-import { useState } from 'react'
-import { X, LogOut, Settings2, ChevronsUpDown, CreditCard, SlidersHorizontal, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { useTheme } from 'next-themes'
+import '@material/web/menu/menu.js'
+import '@material/web/menu/menu-item.js'
+import '@material/web/divider/divider.js'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
-import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-} from '@/components/ui/sidebar'
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import type { TabId } from './settings-shell'
 import { usePathname, useRouter } from 'next/navigation'
+import { Store } from '@/src/themes/types'
+
+// ─── Material Web JSX declarations ───────────────────────────────────────────
+
+declare global {
+    namespace JSX {
+        interface IntrinsicElements {
+            'md-menu': React.HTMLAttributes<HTMLElement> & {
+                anchor?: string
+                open?: boolean
+                positioning?: string
+                'anchor-corner'?: string
+                'menu-corner'?: string
+            }
+            'md-menu-item': React.HTMLAttributes<HTMLElement> & {
+                href?: string
+                target?: string
+            }
+            'md-divider': React.HTMLAttributes<HTMLElement>
+        }
+    }
+}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -32,11 +39,16 @@ type SubTab = { readonly id: string; readonly label: string }
 type Tab = {
     readonly id: string
     readonly label: string
-    readonly icon?: React.ReactNode
+    readonly icon: string           // Material Symbols name e.g. "home"
     readonly beta?: boolean
     readonly subTabs?: readonly SubTab[]
 }
 
+type NavSection = {
+    readonly id: string
+    readonly label: string          // e.g. "STORE", "ACCOUNTING", "SYSTEM"
+    readonly tabs: readonly Tab[]
+}
 
 type NavUser = {
     name: string
@@ -51,6 +63,7 @@ type NavStore = {
     slug: string
     logo_url?: string
     role?: string
+    custom_domain?: string
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -59,90 +72,53 @@ function getInitials(name: string) {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
-// ─── StoreSwitcher ────────────────────────────────────────────────────────────
+// ─── CollapseToggle ───────────────────────────────────────────────────────────
 
-function StoreSwitcher({ store, allStores }: { store: NavStore; allStores: NavStore[] }) {
-    const hasMultiple = allStores.length > 1
-
-    const trigger = (
-        <SidebarMenuButton
-            size="lg"
-            className="rounded-md hover:bg-sidebar-accent data-[state=open]:bg-sidebar-accent"
-        >
-            <div className="flex aspect-square w-6 h-6 items-center justify-center rounded-md bg-secondary text-secondary-foreground text-[11px] font-bold shrink-0 overflow-hidden">
-                {store.logo_url ? (
-                    <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-md" />
-                ) : (
-                    getInitials(store.name)
-                )}
-            </div>
-            <div className="flex flex-col min-w-0 flex-1">
-                <span className="text-[13px] font-semibold text-sidebar-foreground truncate leading-tight">
-                    {store.name}
-                </span>
-                <span className="text-[11px] text-muted-foreground truncate leading-tight">
-                    {store.slug}.menengai.cloud
-                </span>
-            </div>
-            {hasMultiple && <ChevronsUpDown className="w-3.5 h-3.5 text-muted-foreground shrink-0" />}
-        </SidebarMenuButton>
-    )
-
-    if (!hasMultiple) {
-        return <SidebarMenu><SidebarMenuItem>{trigger}</SidebarMenuItem></SidebarMenu>
+function CollapseToggle({
+    label,
+    collapsed,
+    onToggle,
+    railMode,
+}: {
+    label: string
+    collapsed: boolean
+    onToggle: () => void
+    railMode: boolean
+}) {
+    if (railMode) {
+        // In rail mode just render a divider between sections
+        return <div className="mx-2 my-1 h-px bg-[--md-sys-color-outline-variant]" />
     }
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>{trigger}</DropdownMenuTrigger>
-                    <DropdownMenuContent side="bottom" align="start" sideOffset={8} className="w-64">
-                        <div className="px-2 py-1.5 mb-1">
-                            <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                                Your stores
-                            </p>
-                        </div>
-                        {allStores.map((s) => (
-                            <DropdownMenuItem key={s.slug} asChild>
-                                <Link
-                                    href={`https://${s.slug}.menengai.cloud/settings`}
-                                    className={cn('flex items-center gap-2.5 cursor-pointer', s.slug === store.slug && 'bg-accent')}
-                                >
-                                    <div className="flex w-5 h-5 items-center justify-center rounded bg-secondary text-secondary-foreground text-[10px] font-bold shrink-0">
-                                        {s.logo_url ? (
-                                            <img src={s.logo_url} alt={s.name} className="w-full h-full object-cover rounded" />
-                                        ) : getInitials(s.name)}
-                                    </div>
-                                    <div className="flex flex-col min-w-0 flex-1">
-                                        <span className="text-[13px] font-medium truncate">{s.name}</span>
-                                        <span className="text-[11px] text-muted-foreground truncate capitalize">{s.role}</span>
-                                    </div>
-                                    {s.slug === store.slug && (
-                                        <div className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                    )}
-                                </Link>
-                            </DropdownMenuItem>
-                        ))}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu>
+        <button
+            onClick={onToggle}
+            className="flex items-center justify-between w-full px-3 py-1.5 group"
+        >
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-[--md-sys-color-on-surface-variant] opacity-60">
+                {label}
+            </span>
+            <span className={cn(
+                'material-symbols-outlined text-[14px] text-[--md-sys-color-on-surface-variant] opacity-40',
+                'transition-transform duration-150',
+                collapsed && '-rotate-90'
+            )}>
+                remove
+            </span>
+        </button>
     )
 }
 
-// ─── NavRow ───────────────────────────────────────────────────────────────────
-// Handles a single tab — with or without subtabs.
-// If subtabs exist: clicking the row toggles expand, subtabs render below.
-// Active parent stays expanded automatically.
+// ─── NavItem ──────────────────────────────────────────────────────────────────
 
-function NavRow({
+function NavItem({
     tab,
     activeTab,
     activeSubTab,
     onSelect,
     onSelectSubTab,
-    slug
+    slug,
+    railMode,
 }: {
     tab: Tab
     activeTab: string
@@ -150,201 +126,545 @@ function NavRow({
     onSelect: (id: TabId) => void
     onSelectSubTab: (id: string) => void
     slug: string
+    railMode: boolean
 }) {
     const router = useRouter()
     const basePath = process.env.NODE_ENV === 'development'
         ? `/store/${slug}/settings`
         : `/settings`
+
     const hasSubTabs = !!tab.subTabs?.filter(s => s.id && s.label).length
     const isActive = activeTab === tab.id
-
-    // Auto-expand the active parent; user can also manually toggle
     const [open, setOpen] = useState(isActive && hasSubTabs)
 
-    const handleRowClick = () => {
-        if (hasSubTabs) {
-            setOpen((v) => !v)
+    const handleClick = () => {
+        if (tab.id === 'home') {
+            router.push(
+                process.env.NODE_ENV === 'development'
+                    ? `/store/${slug}/settings`
+                    : `/settings`
+            )
+        } else if (hasSubTabs) {
+            setOpen(v => !v)
         } else {
             onSelect(tab.id as TabId)
         }
     }
 
     return (
-        <SidebarMenuItem>
-            {/* Parent row */}
-            <SidebarMenuButton
-                onClick={handleRowClick}
-                isActive={isActive && !hasSubTabs}
+        <li className="list-none">
+            <button
+                onClick={handleClick}
+                title={railMode ? tab.label : undefined}
                 className={cn(
-                    'rounded-md h-8 text-[13px] transition-colors',
-                    isActive
-                        ? hasSubTabs
-                            ? 'text-foreground font-medium hover:bg-secondary/60'  // active parent: no fill, just bold
-                            : 'bg-secondary text-foreground font-medium hover:bg-secondary/80' // active leaf: filled
-                        : 'font-normal text-muted-foreground hover:text-foreground hover:bg-secondary/60 cursor-pointer'
+                    'flex items-center gap-2.5 w-full transition-colors duration-100 rounded-md',
+                    // Sizing — full row in expanded, icon-only in rail
+                    railMode
+                        ? 'justify-center w-10 h-10 mx-auto'
+                        : 'h-8 px-3',
+                    // Active state — filled green pill
+                    isActive && !hasSubTabs
+                        ? 'bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-medium'
+                        : isActive && hasSubTabs
+                            ? 'text-[hsl(var(--brand))] font-medium hover:bg-[hsl(var(--muted-foreground))]'
+                            : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--background))] hover:text-[--md-sys-color-on-surface]'
                 )}
             >
-                {tab.icon && <span className="shrink-0 text-muted-foreground">{tab.icon}</span>}
-                <span className="flex-1 truncate">{tab.label}</span>
-                {tab.beta && (
-                    <span className={cn(
-                        'text-[9px] font-bold tracking-widest uppercase px-1.5 py-[3px] rounded-sm',
-                        isActive ? 'bg-foreground/10 text-foreground/50' : 'bg-muted text-muted-foreground'
-                    )}>
-                        NEW
-                    </span>
-                )}
-                {hasSubTabs && (
-                    <ChevronDown className={cn(
-                        'w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform duration-150',
-                        open && 'rotate-180'
-                    )} />
-                )}
-            </SidebarMenuButton>
+                <span className={cn(
+                    'material-symbols-outlined shrink-0',
+                    railMode ? 'text-[20px]' : 'text-[18px]',
+                    isActive
+                        ? 'text-[hsl(var(--brand))]'
+                        : 'text-[hsl(var(--foreground))]'
+                )}>
+                    {tab.icon}
+                </span>
 
-            {/* Subtabs — only rendered when expanded */}
-            {hasSubTabs && open && (
-                <div className="mt-0.5 ml-3 pl-2.5 border-l border-border space-y-0.5">
+                {!railMode && (
+                    <>
+                        <span className="flex-1 text-left text-[13px] truncate">{tab.label}</span>
+                        {tab.beta && (
+                            <span className={cn(
+                                'nav-badge',
+                                isActive ? 'nav-badge-active' : 'nav-badge-default'
+                            )}>
+                                NEW
+                            </span>
+                        )}
+                        {hasSubTabs && (
+                            <span className={cn(
+                                'material-symbols-outlined text-[16px] shrink-0 transition-transform duration-150',
+                                isActive ? 'text-[--md-sys-color-primary]' : 'text-[--md-sys-color-on-surface-variant]',
+                                open && 'rotate-180'
+                            )}>
+                                expand_more
+                            </span>
+                        )}
+                    </>
+                )}
+            </button>
+
+            {/* Subtabs — only in expanded mode */}
+            {hasSubTabs && open && !railMode && (
+                <ul className="mt-0.5 ml-3 pl-2.5 space-y-0.5 list-none">
                     {tab.subTabs!.filter(s => s.id && s.label).map((sub) => {
                         const isSubActive = activeSubTab === sub.id
                         return (
-                            <button
-                                key={sub.id}
-                                onClick={() => {
-                                    router.push(`${basePath}/${tab.id}/${sub.id}`)
-                                    onSelectSubTab(sub.id)
-                                }}
-                                className={cn(
-                                    'w-full text-left px-2 h-7 rounded-md text-[12px] transition-colors',
-                                    isSubActive
-                                        ? 'bg-secondary text-foreground font-medium'
-                                        : 'text-muted-foreground hover:text-foreground hover:bg-secondary/60 cursor-pointer'
-                                )}
-                            >
-                                {sub.label}
-                            </button>
+                            <li key={sub.id}>
+                                <button
+                                    onClick={() => {
+                                        router.push(`${basePath}/${tab.id}/${sub.id}`)
+                                        onSelectSubTab(sub.id)
+                                    }}
+                                    className={cn(
+                                        'flex items-center w-full h-7 px-2 rounded-md text-[12px] transition-colors duration-100',
+                                        isSubActive
+                                            ? 'bg-[--md-sys-color-primary-container] text-[--md-sys-color-on-primary-container] font-medium'
+                                            : 'text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] hover:text-[--md-sys-color-on-surface]'
+                                    )}
+                                >
+                                    {sub.label}
+                                </button>
+                            </li>
                         )
                     })}
-                </div>
+                </ul>
             )}
-        </SidebarMenuItem>
+        </li>
     )
 }
 
-// ─── NavList ──────────────────────────────────────────────────────────────────
+// ─── NavSection ───────────────────────────────────────────────────────────────
 
-function NavList({
+function NavSectionGroup({
+    section,
     activeTab,
     activeSubTab,
     onSelect,
     onSelectSubTab,
-    TABS,
     slug,
+    railMode,
 }: {
+    section: NavSection
     activeTab: string
     activeSubTab: string
     onSelect: (id: TabId) => void
     onSelectSubTab: (id: string) => void
-    TABS: readonly Tab[]
     slug: string
+    railMode: boolean
 }) {
-    const router = useRouter()
-    const pathname = usePathname()
-    const basePath = process.env.NODE_ENV === 'development'
-        ? `/store/${slug}/settings`
-        : `/settings`
+    const [collapsed, setCollapsed] = useState(false)
 
-    const handleSelect = (id: TabId) => {
-        if (id === 'home') {
-            router.push(basePath)
-        } else {
-            onSelect(id)
-        }
+    return (
+        <div className="mb-1">
+            <CollapseToggle
+                label={section.label}
+                collapsed={collapsed}
+                onToggle={() => setCollapsed(v => !v)}
+                railMode={railMode}
+            />
+            {!collapsed && (
+                <ul className={cn('space-y-0.5 list-none p-0', !railMode && 'px-1')}>
+                    {section.tabs.map((tab) => (
+                        <NavItem
+                            key={tab.id}
+                            tab={tab}
+                            activeTab={activeTab}
+                            activeSubTab={activeSubTab}
+                            onSelect={onSelect}
+                            onSelectSubTab={onSelectSubTab}
+                            slug={slug}
+                            railMode={railMode}
+                        />
+                    ))}
+                </ul>
+            )}
+        </div>
+    )
+}
+
+// ─── StoreSwitcher ────────────────────────────────────────────────────────────
+
+function StoreSwitcher({
+    store,
+    allStores,
+    railMode,
+}: {
+    store: NavStore
+    allStores: NavStore[]
+    railMode: boolean
+}) {
+    const anchorId = 'store-switcher-anchor'
+    const [open, setOpen] = useState(false)
+    const hasMultiple = allStores.length > 1
+
+    if (railMode) {
+        return (
+            <div className="flex justify-center py-2">
+                <button
+                    id={anchorId}
+                    onClick={() => hasMultiple && setOpen(v => !v)}
+                    title={store.name}
+                    className="store-avatar-fallback flex w-8 h-8 items-center justify-center rounded-md text-[11px] font-bold overflow-hidden"
+                >
+                    {store.logo_url
+                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+                        : getInitials(store.name)
+                    }
+                </button>
+                {hasMultiple && renderMenu()}
+            </div>
+        )
+    }
+
+    function renderMenu() {
+        return (
+            // @ts-ignore
+            <md-menu
+                anchor={anchorId}
+                open={open || undefined}
+                positioning="popover"
+                anchor-corner="end-start"
+                menu-corner="start-start"
+                onClosed={() => setOpen(false)}
+                style={{ '--md-menu-container-color': 'var(--md-sys-color-surface)', minWidth: '240px' }}
+            >
+                <div className="px-3 py-2">
+                    <p className="text-[11px] font-semibold text-[--md-sys-color-on-surface-variant] uppercase tracking-wider">
+                        Your stores
+                    </p>
+                </div>
+                {/* @ts-ignore */}
+                <md-divider />
+                {allStores.map((s) => (
+                    // @ts-ignore
+                    <md-menu-item
+                        key={s.slug}
+                        href={`https://${s.slug}.menengai.cloud/settings`}
+                        onClick={() => setOpen(false)}
+                    >
+                        <div slot="start" className="store-avatar-fallback flex w-5 h-5 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
+                            {s.logo_url
+                                ? <img src={s.logo_url} alt={s.name} className="w-full h-full object-cover rounded" />
+                                : getInitials(s.name)
+                            }
+                        </div>
+                        <div slot="headline" className="flex items-center gap-2">
+                            <span className="text-[13px] font-medium">{s.name}</span>
+                            {s.slug === store.slug && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-[--md-sys-color-primary]" />
+                            )}
+                        </div>
+                        <span slot="supporting-text" className="capitalize text-[11px]">{s.role}</span>
+                        {/* @ts-ignore */}
+                    </md-menu-item>
+                ))}
+                {/* @ts-ignore */}
+            </md-menu>
+        )
     }
 
     return (
-        <SidebarMenu className="space-y-0.5">
-            {TABS.map((tab) => {
-                const resolvedActive = tab.id === 'home'
-                    ? pathname === basePath ? 'home' : activeTab
-                    : activeTab
-                return (
-                    <NavRow
-                        key={tab.id}
-                        tab={tab}
-                        activeTab={tab.id === 'home' && pathname === basePath ? 'home' : resolvedActive}
-                        activeSubTab={activeSubTab}
-                        onSelect={handleSelect}
-                        onSelectSubTab={onSelectSubTab}
-                        slug={slug}
-                    />
-                )
-            })}
-        </SidebarMenu>
+        <div className="relative px-1 py-2.5">
+            <button
+                id={anchorId}
+                onClick={() => hasMultiple && setOpen(v => !v)}
+                className={cn(
+                    'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100 bg-[hsl(var(--background))]',
+                    hasMultiple && 'hover:bg-[--md-sys-color-surface-variant] cursor-pointer'
+                )}
+            >
+                <div className="flex w-8 h-8 shrink-0 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
+                    {store.logo_url
+                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+                        : getInitials(store.name)
+                    }
+                </div>
+                <div className="flex flex-col min-w-0 flex-1 text-left">
+                    <span className="text-[12px] font-semibold text-[--md-sys-color-on-surface] truncate leading-tight">
+                        {store.name}
+                    </span>
+                    <span className="text-[10px] text-[--md-sys-color-on-surface-variant] truncate leading-tight">
+                        {store.custom_domain ? `www.${store.custom_domain}` : `${store.slug}.menengai.cloud`}
+                    </span>
+                </div>
+                {hasMultiple && (
+                    <span className="material-symbols-outlined text-[16px] text-[--md-sys-color-on-surface-variant]">
+                        unfold_more
+                    </span>
+                )}
+            </button>
+            {hasMultiple && renderMenu()}
+        </div>
+    )
+}
+
+// ─── UtilityItems ─────────────────────────────────────────────────────────────
+// Notifications + Support — pinned above user footer
+
+function UtilityItems({
+    railMode,
+    notificationCount = 0,
+    store
+}: {
+    railMode: boolean
+    notificationCount?: number
+    store: NavStore
+}) {
+    const items = [
+        { icon: 'notifications', label: 'Notifications', badge: notificationCount, href: `/store/${store.slug}/settings/notifications` },
+        { icon: 'help_outline', label: 'Support', href: `/support` },
+    ]
+    const router = useRouter();
+
+    return (
+        <ul className={cn('space-y-0.5 list-none p-0 mb-2', !railMode && 'px-1')}>
+            {items.map((item) => (
+                <li key={item.label}>
+                    <button
+                        onClick={() => router.push(item.href)}
+                        title={railMode ? item.label : undefined}
+                        className={cn(
+                            'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
+                            'text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] hover:text-[--md-sys-color-on-surface]',
+                            railMode
+                                ? 'justify-center w-10 h-10 mx-auto relative'
+                                : 'h-8 px-3'
+                        )}
+                    >
+                        <span className="material-symbols-outlined text-[18px] shrink-0 relative">
+                            {item.icon}
+                            {item.badge != null && item.badge > 0 && (
+                                <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[--md-sys-color-error] text-[--md-sys-color-on-error] text-[9px] font-bold leading-none">
+                                    {item.badge > 9 ? '9+' : item.badge}
+                                </span>
+                            )}
+                        </span>
+                        {!railMode && (
+                            <>
+                                <span className="flex-1 text-left text-[13px]">{item.label}</span>
+                                {item.badge != null && item.badge > 0 && (
+                                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[--md-sys-color-error] text-[--md-sys-color-on-error] text-[10px] font-bold">
+                                        {item.badge > 9 ? '9+' : item.badge}
+                                    </span>
+                                )}
+                            </>
+                        )}
+                    </button>
+                </li>
+            ))}
+        </ul>
     )
 }
 
 // ─── AccountFooter ────────────────────────────────────────────────────────────
 
-function AccountFooter({ user }: { user: NavUser }) {
+function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean }) {
+    const anchorId = 'account-footer-anchor'
+    const [open, setOpen] = useState(false)
+
     const menuItems = [
-        ...(user.accountHref ? [{ href: user.accountHref, icon: Settings2, label: 'Account settings' }] : []),
-        { href: '#billing', icon: CreditCard, label: 'Billing' },
-        { href: '#misc', icon: SlidersHorizontal, label: 'Misc' },
+        ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
+        { href: '#billing', icon: 'credit_card', label: 'Billing' },
+        { href: '#misc', icon: 'tune', label: 'Misc' },
     ]
 
     return (
-        <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-                <button className="flex items-center gap-2.5 w-full px-2 py-2 rounded-md hover:bg-sidebar-accent transition-colors group outline-none">
-                    <Avatar className="w-7 h-7 rounded-md shrink-0">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback className="rounded-md bg-primary text-primary-foreground text-[10px] font-bold">
-                            {getInitials(user.name)}
-                        </AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col min-w-0 flex-1 text-left">
-                        <span className="text-[12px] font-medium text-sidebar-foreground truncate leading-tight">{user.name}</span>
-                        <span className="text-[11px] text-muted-foreground truncate leading-tight">{user.email}</span>
+        <div className="relative px-2 py-2.5">
+            <button
+                id={anchorId}
+                onClick={() => setOpen(v => !v)}
+                title={railMode ? user.name : undefined}
+                className={cn(
+                    'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none',
+                    'hover:bg-[--md-sys-color-surface-variant]',
+                    railMode
+                        ? 'justify-center w-10 h-10 mx-auto'
+                        : 'w-full px-2 py-1.5'
+                )}
+            >
+                <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                    {user.avatarUrl
+                        ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
+                        : getInitials(user.name)
+                    }
+                </div>
+                {!railMode && (
+                    <>
+                        <div className="flex flex-col min-w-0 flex-1 text-left">
+                            <span className="text-[12px] font-medium text-[--md-sys-color-on-surface] truncate leading-tight">
+                                {user.name}
+                            </span>
+                            <span className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate leading-tight">
+                                {user.email}
+                            </span>
+                        </div>
+                        <span className={cn(
+                            'material-symbols-outlined text-[18px] text-[--md-sys-color-on-surface-variant] transition-transform duration-150',
+                            open && 'rotate-180'
+                        )}>
+                            expand_more
+                        </span>
+                    </>
+                )}
+            </button>
+
+            {/* @ts-ignore */}
+            <md-menu
+                anchor={anchorId}
+                open={open || undefined}
+                positioning="popover"
+                anchor-corner="start-start"
+                menu-corner="end-start"
+                onClosed={() => setOpen(false)}
+                style={{ '--md-menu-container-color': 'var(--md-sys-color-surface)', minWidth: '216px' }}
+            >
+                <div className="flex items-center gap-2.5 px-3 py-2">
+                    <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                        {user.avatarUrl
+                            ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-md" />
+                            : getInitials(user.name)
+                        }
                     </div>
-                    <ChevronDown className="w-3.5 h-3.5 text-muted-foreground shrink-0 transition-transform group-data-[state=open]:rotate-180" />
-                </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent side="top" align="start" sideOffset={8} className="w-56 p-1">
-                <div className="flex items-center gap-2.5 px-2 py-2 mb-1 border-b border-border">
-                    <Avatar className="w-7 h-7 rounded-md shrink-0">
-                        <AvatarImage src={user.avatarUrl} alt={user.name} />
-                        <AvatarFallback className="rounded-md bg-primary text-primary-foreground text-[10px] font-bold">
-                            {getInitials(user.name)}
-                        </AvatarFallback>
-                    </Avatar>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-[12px] font-medium text-foreground truncate leading-tight">{user.name}</span>
-                        <span className="text-[11px] text-muted-foreground truncate leading-tight">{user.email}</span>
+                        <span className="text-[12px] font-medium text-[--md-sys-color-on-surface] truncate">{user.name}</span>
+                        <span className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate">{user.email}</span>
                     </div>
                 </div>
+                {/* @ts-ignore */}
+                <md-divider />
                 {menuItems.map((item) => (
-                    <DropdownMenuItem key={item.label} asChild>
-                        <Link href={item.href} className="flex items-center gap-2 cursor-pointer text-[13px]">
-                            <item.icon className="w-3.5 h-3.5 shrink-0 text-muted-foreground" />
-                            {item.label}
-                        </Link>
-                    </DropdownMenuItem>
+                    // @ts-ignore
+                    <md-menu-item key={item.label} href={item.href} onClick={() => setOpen(false)}>
+                        <span slot="start" className="material-symbols-outlined text-[18px] text-[--md-sys-color-on-surface-variant]">
+                            {item.icon}
+                        </span>
+                        <span slot="headline">{item.label}</span>
+                        {/* @ts-ignore */}
+                    </md-menu-item>
                 ))}
                 {user.onSignOut && (
                     <>
-                        <div className="my-1 border-t border-border" />
-                        <DropdownMenuItem
-                            onClick={user.onSignOut}
-                            className="flex items-center gap-2 text-[13px] text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
+                        {/* @ts-ignore */}
+                        <md-divider />
+                        {/* @ts-ignore */}
+                        <md-menu-item
+                            onClick={() => { setOpen(false); user.onSignOut?.() }}
+                            style={{ '--md-menu-item-label-text-color': 'var(--md-sys-color-error)' }}
                         >
-                            <LogOut className="w-3.5 h-3.5 shrink-0" />
-                            Sign out
-                        </DropdownMenuItem>
+                            <span slot="start" className="material-symbols-outlined text-[18px] text-[--md-sys-color-error]">
+                                logout
+                            </span>
+                            <span slot="headline">Sign out</span>
+                            {/* @ts-ignore */}
+                        </md-menu-item>
                     </>
                 )}
-            </DropdownMenuContent>
-        </DropdownMenu>
+                {/* @ts-ignore */}
+            </md-menu>
+        </div>
+    )
+}
+
+// ─── RailToggle ───────────────────────────────────────────────────────────────
+
+function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () => void }) {
+    return (
+        <button
+            onClick={onToggle}
+            title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="p-1.5 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+        >
+            <span className="material-symbols-outlined text-[18px]">
+                {railMode ? 'menu_open' : 'menu'}
+            </span>
+        </button>
+    )
+}
+
+// ─── SidebarShell ─────────────────────────────────────────────────────────────
+
+function SidebarShell({
+    railMode,
+    onToggleRail,
+    store,
+    allStores,
+    user,
+    activeTab,
+    activeSubTab,
+    onSelect,
+    onSelectSubTab,
+    SECTIONS,
+    notificationCount,
+}: {
+    railMode: boolean
+    onToggleRail: () => void
+    store: NavStore
+    allStores: NavStore[]
+    user: NavUser
+    activeTab: string
+    activeSubTab: string
+    onSelect: (id: TabId) => void
+    onSelectSubTab: (id: string) => void
+    SECTIONS: readonly NavSection[]
+    notificationCount?: number
+}) {
+    const { resolvedTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+    useEffect(() => setMounted(true), [])
+
+    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
+
+    return (
+        <aside className={cn(
+            'flex flex-col h-[90vh] md:h-[98vh] my-auto ml-2 rounded-md',
+            'bg-brand-container dark:bg-brand-container/1',
+            'transition-all duration-200 ease-out',
+            railMode ? 'w-[56px]' : 'w-[220px]'
+        )}>
+            {/* Logo + rail toggle */}
+            <div className={cn(
+                'flex items-center',
+                railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
+            )}>
+                {!railMode && (
+                    <div className="flex items-center gap-2 min-w-0">
+                        {/* Menengai Cloud logo mark */}
+                        <Link href="/" className="flex items-center shrink-0">
+                            <img src={src} alt="Logo" className="w-auto h-5" />
+                        </Link>
+                    </div>
+                )}
+                <div className='flex items-center'>
+                    <RailToggle railMode={railMode} onToggle={onToggleRail} />
+                </div>
+            </div>
+
+            {/* Store switcher */}
+            <StoreSwitcher store={store} allStores={allStores} railMode={railMode} />
+
+            {/* Nav sections — scrollable */}
+            <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2">
+                {SECTIONS.map((section) => (
+                    <NavSectionGroup
+                        key={section.id}
+                        section={section}
+                        activeTab={activeTab}
+                        activeSubTab={activeSubTab}
+                        onSelect={onSelect}
+                        onSelectSubTab={onSelectSubTab}
+                        slug={store.slug}
+                        railMode={railMode}
+                    />
+                ))}
+            </nav>
+
+            {/* Utility items */}
+            <UtilityItems railMode={railMode} notificationCount={notificationCount} store={store} />
+
+            {/* User footer */}
+            <AccountFooter user={user} railMode={railMode} />
+        </aside>
     )
 }
 
@@ -355,43 +675,40 @@ export function SettingsNav({
     activeSubTab,
     onSelect,
     onSelectSubTab,
-    TABS,
+    SECTIONS,
     user,
     store,
     allStores,
+    notificationCount,
 }: {
     activeTab: string
     activeSubTab: string
     onSelect: (id: TabId) => void
     onSelectSubTab: (id: string) => void
-    TABS: readonly Tab[]
+    SECTIONS: readonly NavSection[]
     user: NavUser
     store: NavStore
     allStores: NavStore[]
+    notificationCount?: number
 }) {
+    const [railMode, setRailMode] = useState(false)
+
     return (
-        <Sidebar collapsible="none" className="hidden md:flex border-r border-border">
-            <SidebarHeader className="border-b border-border px-3 py-3">
-                <StoreSwitcher store={store} allStores={allStores} />
-            </SidebarHeader>
-            <SidebarContent className="px-3 py-3">
-                <SidebarGroup className="p-0">
-                    <SidebarGroupContent>
-                        <NavList
-                            activeTab={activeTab}
-                            activeSubTab={activeSubTab}
-                            onSelect={onSelect}
-                            onSelectSubTab={onSelectSubTab}
-                            TABS={TABS}
-                            slug={store.slug}
-                        />
-                    </SidebarGroupContent>
-                </SidebarGroup>
-            </SidebarContent>
-            <SidebarFooter className="border-t border-border px-3 py-3">
-                <AccountFooter user={user} />
-            </SidebarFooter>
-        </Sidebar>
+        <div className="hidden md:flex">
+            <SidebarShell
+                railMode={railMode}
+                onToggleRail={() => setRailMode(v => !v)}
+                store={store}
+                allStores={allStores}
+                user={user}
+                activeTab={activeTab}
+                activeSubTab={activeSubTab}
+                onSelect={onSelect}
+                onSelectSubTab={onSelectSubTab}
+                SECTIONS={SECTIONS}
+                notificationCount={notificationCount}
+            />
+        </div>
     )
 }
 
@@ -402,23 +719,25 @@ export function MobileSettingsNav({
     activeSubTab,
     onSelect,
     onSelectSubTab,
-    TABS,
+    SECTIONS,
     user,
     store,
     allStores,
     open,
     onClose,
+    notificationCount,
 }: {
     activeTab: string
     activeSubTab: string
     onSelect: (id: TabId) => void
     onSelectSubTab: (id: string) => void
-    TABS: readonly Tab[]
+    SECTIONS: readonly NavSection[]
     user: NavUser
     store: NavStore
     allStores: NavStore[]
     open: boolean
     onClose: () => void
+    notificationCount?: number
 }) {
     const handleSelect = (id: TabId) => { onSelect(id); onClose() }
     const handleSubSelect = (id: string) => { onSelectSubTab(id); onClose() }
@@ -426,38 +745,59 @@ export function MobileSettingsNav({
     return (
         <>
             {open && (
-                <div className="md:hidden fixed inset-0 z-40 bg-background/80 backdrop-blur-sm" onClick={onClose} />
+                <div
+                    className="md:hidden inset-0 z-40 nav-backdrop"
+                    onClick={onClose}
+                />
             )}
             <div className={cn(
-                'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col w-72 h-screen',
-                'bg-sidebar border-r border-border shadow-xl',
+                'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[90vh] w-[240px] my-auto ml-2 rounded-lg',
+                'bg-[hsl(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
                 'transition-transform duration-200 ease-out',
                 open ? 'translate-x-0' : '-translate-x-full'
             )}>
-                <div className="flex items-center justify-between px-3 h-[57px] border-b border-border shrink-0">
-                    <StoreSwitcher store={store} allStores={allStores} />
+                {/* Header with close */}
+                <div className="flex items-center justify-between px-4 py-3 border-b border-[--md-sys-color-outline-variant]">
+                    <div className="flex items-center gap-2">
+                        <div className="store-avatar-fallback flex w-6 h-6 rounded items-center justify-center text-[11px] font-black shrink-0">
+                            M
+                        </div>
+                        <span className="text-[14px] font-semibold text-[--md-sys-color-on-surface]">
+                            Menengai Cloud
+                        </span>
+                    </div>
                     <button
                         onClick={onClose}
-                        className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors"
-                        aria-label="Close"
+                        aria-label="Close navigation"
+                        className="p-1.5 rounded-full hover:bg-[--md-sys-color-surface-variant] transition-colors text-[--md-sys-color-on-surface-variant]"
                     >
-                        <X className="w-4 h-4" />
+                        <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
                 </div>
-                <div className="flex-1 overflow-y-auto px-3 py-3">
-                    <NavList
-                        activeTab={activeTab}
-                        activeSubTab={activeSubTab}
-                        onSelect={handleSelect}
-                        onSelectSubTab={handleSubSelect}
-                        TABS={TABS}
-                        slug={store.slug}
-                    />
-                </div>
-                <div className="border-t border-border px-3 py-3 shrink-0">
-                    <AccountFooter user={user} />
-                </div>
+
+                <StoreSwitcher store={store} allStores={allStores} railMode={false} />
+
+                <nav className="flex-1 overflow-y-auto py-2">
+                    {SECTIONS.map((section) => (
+                        <NavSectionGroup
+                            key={section.id}
+                            section={section}
+                            activeTab={activeTab}
+                            activeSubTab={activeSubTab}
+                            onSelect={handleSelect}
+                            onSelectSubTab={handleSubSelect}
+                            slug={store.slug}
+                            railMode={false}
+                        />
+                    ))}
+                </nav>
+
+                <UtilityItems railMode={false} notificationCount={notificationCount} store={store} />
+                <AccountFooter user={user} railMode={false} />
             </div>
         </>
     )
 }
+
+// ─── Re-export NavSection type for use in settings-shell ─────────────────────
+export type { NavSection, NavStore, NavUser, Tab, SubTab }

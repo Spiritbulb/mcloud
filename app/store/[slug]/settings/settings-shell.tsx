@@ -1,33 +1,72 @@
 'use client'
 
-// components/settings-shell.tsx
-// Added: wizardOpen state, GettingStartedDrawer, passes onOpenWizard to SettingsHeader
-
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
+import type { NavSection } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
-export const TABS = [
-    { id: 'home', label: 'Overview', icon: <House className="w-3 h-3" />, subTabs: [] },
-    { id: 'general', label: 'General', icon: <Store className="w-3 h-3" />, subTabs: [] },
-    { id: 'members', label: 'Members', icon: <Users className="w-3 h-3" />, subTabs: [] },
-    { id: 'appearance', label: 'Appearance', icon: <Palette className="w-3 h-3" />, subTabs: [] },
-    { id: 'products', label: 'Products', icon: <Package className="w-3 h-3" />, subTabs: [] },
-    { id: 'services', label: 'Services', icon: <Briefcase className="w-3 h-3" />, subTabs: [] },
-    { id: 'orders', label: 'Orders', icon: <ShoppingBag className="w-3 h-3" />, subTabs: [] },
-    { id: 'customers', label: 'Customers', icon: <User className="w-3 h-3" />, beta: true, subTabs: [] },
-    { id: 'blog', label: 'Blog', icon: <FileText className="w-3 h-3" />, subTabs: [] },
-    { id: 'domain', label: 'Domain', icon: <Globe className="w-3 h-3" />, beta: true, subTabs: [] },
-    { id: 'integrations', label: 'Integrations', icon: <Link2 className="w-3 h-3" />, beta: true, subTabs: [{ id: 'payments', label: 'Payments' }, { id: 'notifications', label: 'Notifications' }, { id: 'social', label: 'Socials' },] },
+// ─── Sections ────────────────────────────────────────────────────────────────
+
+export const SECTIONS: readonly NavSection[] = [
+    {
+        id: 'store',
+        label: 'Store',
+        tabs: [
+            { id: 'home', label: 'Overview', icon: 'home' },
+            { id: 'general', label: 'General', icon: 'storefront' },
+            { id: 'members', label: 'Members', icon: 'group' },
+            { id: 'appearance', label: 'Appearance', icon: 'palette' },
+        ],
+    },
+    {
+        id: 'catalog',
+        label: 'Catalog',
+        tabs: [
+            { id: 'products', label: 'Products', icon: 'inventory_2' },
+            { id: 'services', label: 'Services', icon: 'home_repair_service' },
+        ],
+    },
+    {
+        id: 'commerce',
+        label: 'Commerce',
+        tabs: [
+            { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+            { id: 'customers', label: 'Customers', icon: 'person', beta: true },
+            { id: 'blog', label: 'Blog', icon: 'article' },
+        ],
+    },
+    {
+        id: 'advanced',
+        label: 'Advanced',
+        tabs: [
+            { id: 'domain', label: 'Domain', icon: 'language', beta: true },
+            {
+                id: 'integrations',
+                label: 'Integrations',
+                icon: 'link',
+                beta: true,
+                subTabs: [
+                    { id: 'payments', label: 'Payments' },
+                    { id: 'notifications', label: 'Notifications' },
+                    { id: 'social', label: 'Socials' },
+                ],
+            },
+        ],
+    },
 ] as const
 
-export type TabId = (typeof TABS)[number]['id']
+// Flat list of all tab ids — derived from SECTIONS
+const ALL_TABS = SECTIONS.flatMap((s) => s.tabs)
+
+export type TabId = (typeof ALL_TABS)[number]['id']
 
 type ErrorType = 'unauthenticated' | 'forbidden' | 'unknown' | null
+
+// ─── Shell ────────────────────────────────────────────────────────────────────
 
 export default function SettingsShell({
     children,
@@ -39,25 +78,27 @@ export default function SettingsShell({
     const pathname = usePathname()
     const router = useRouter()
 
-    const activeId = (
-        TABS.find((t) => {
+    const activeId = (() => {
+        // Check for exact settings root → home/overview
+        const isRoot = pathname === `/store/${slug}/settings` || pathname === `/settings`
+        if (isRoot) return 'home' as TabId
+
+        // Match a specific tab by its id segment
+        const matched = ALL_TABS.find((t) => {
             if (t.id === 'home') return false
-            return pathname.match(new RegExp(`/settings/${t.id}(/|$)`))
-        })?.id
-        ?? 'home'
-    ) as TabId
-    const activeLabel = TABS.find((t) => t.id === activeId)?.label ?? 'Home'
+            return pathname.includes(`/settings/${t.id}`)
+        })
+        return (matched?.id ?? 'home') as TabId
+    })()
+
+    const activeLabel = ALL_TABS.find((t) => t.id === activeId)?.label ?? 'Overview'
 
     const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
     const [store, setStore] = useState<any>(null)
     const [loading, setLoading] = useState(true)
     const [error, setError] = useState<ErrorType>(null)
     const [activeSubTab, setActiveSubTab] = useState<string>('')
-
-    // ── Wizard state ──────────────────────────────────────────────────────────
     const [wizardOpen, setWizardOpen] = useState(false)
-
-    // ── Mobile nav state ──────────────────────────────────────────────────────
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
     useEffect(() => {
@@ -118,7 +159,9 @@ export default function SettingsShell({
         name: user?.name ?? '…',
         email: user?.email ?? '',
         avatarUrl: user?.avatarUrl,
-        accountHref: `${process.env.NODE_ENV === 'development' ? `http://localhost:3000/store/${slug}/settings/account` : `https://${slug}.menengai.cloud/settings/account`}`,
+        accountHref: process.env.NODE_ENV === 'development'
+            ? `http://localhost:3000/store/${slug}/settings/account`
+            : `https://${slug}.menengai.cloud/settings/account`,
         onSignOut: () => { window.location.href = '/auth/logout' },
     }
 
@@ -126,9 +169,14 @@ export default function SettingsShell({
         name: store.name,
         slug: store.slug,
         logo_url: store.logo_url,
+        custom_domain: store.custom_domain,
     }
 
-    const navigate = (id: TabId) => router.push(`${process.env.NODE_ENV === 'development' ? `http://localhost:3000/store/${slug}` : `https://${slug}.menengai.cloud`}/settings/${id}`)
+    const navigate = (id: TabId) => router.push(
+        process.env.NODE_ENV === 'development'
+            ? `/store/${slug}/settings/${id}`
+            : `/settings/${id}`
+    )
 
     // ── Shell ─────────────────────────────────────────────────────────────────
     return (
@@ -152,47 +200,40 @@ export default function SettingsShell({
                     activeSubTab={activeSubTab}
                     onSelectSubTab={setActiveSubTab}
                     onSelect={navigate}
-                    TABS={TABS}
+                    SECTIONS={SECTIONS}
                     user={navUser}
                     store={navStore}
-                    allStores={store.allStores}
+                    allStores={store.allStores ?? [navStore]}
                 />
 
-                {/* Mobile drawer — open/onClose owned here, triggered by hamburger in SettingsHeader */}
+                {/* Mobile drawer */}
                 <MobileSettingsNav
                     activeTab={activeId}
                     activeSubTab={activeSubTab}
                     onSelectSubTab={setActiveSubTab}
                     onSelect={navigate}
-                    TABS={TABS}
+                    SECTIONS={SECTIONS}
                     user={navUser}
                     store={navStore}
-                    allStores={store.allStores}
+                    allStores={store.allStores ?? [navStore]}
                     open={mobileNavOpen}
                     onClose={() => setMobileNavOpen(false)}
                 />
 
                 {/* Main content */}
                 <div className="flex flex-col flex-1 min-w-0 min-h-0">
-                    <SettingsHeader
-                        store={navStore}
-                        activeLabel={activeLabel}
-                        wizardStore={store}
-                        onOpenWizard={() => setWizardOpen(true)}
-                        onOpenMobileNav={() => setMobileNavOpen(true)}
-                    />
+                    <div className=''>
+                        <SettingsHeader
+                            store={navStore}
+                            activeLabel={activeLabel}
+                            onOpenMobileNav={() => setMobileNavOpen(true)}
+                        />
+                    </div>
                     <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">
                         {children}
                     </main>
                 </div>
             </div>
-
-            <GettingStartedDrawer
-                open={wizardOpen}
-                onClose={() => setWizardOpen(false)}
-                store={store}
-                onNavigate={navigate}
-            />
         </SidebarProvider>
     )
 }

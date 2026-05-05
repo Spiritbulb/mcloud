@@ -419,7 +419,7 @@ export default function AccountPage({ user }: { user: User }) {
     const [avatarUrl, setAvatarUrl] = useState(user.avatar_url)
 
     return (
-        <div className="max-w-3xl mx-auto px-4 py-8">
+        <div className="max-w-5xl mx-auto px-4 py-8">
             {/* Header */}
             <div className="mb-8">
                 <h1 className="text-lg font-semibold text-foreground">Account</h1>

@@ -1,16 +1,202 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:where(.dark, .dark *));
 
 /* ============================================================
-   TAILWIND v4 PREFLIGHT FIX — must be outside any @layer
-   Prevents border-color defaulting to currentColor
+   TAILWIND v4 PREFLIGHT FIX
    ============================================================ */
 *,
 ::before,
 ::after {
   border-color: hsl(var(--border));
   box-sizing: border-box;
+}
+
+/* ============================================================
+   DESIGN TOKENS
+   Direction: Menengai Cloud — nature-rooted green, cool grey backbone
+   Primary #2d7a3a · Container #e8f5ec · Dark #1f5429
+   ============================================================ */
+
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222 14% 17%;
+  /* #1f2937 neutral strong */
+
+  --card: 0 0% 100%;
+  --card-foreground: 222 14% 17%;
+
+  --popover: 0 0% 100%;
+  --popover-foreground: 222 14% 17%;
+
+  --primary: 133 46% 32%;
+  /* #2d7a3a */
+  --primary-foreground: 0 0% 98%;
+
+  --secondary: 210 17% 98%;
+  /* #f8f9fa surface */
+  --secondary-foreground: 222 14% 17%;
+
+  --muted: 210 17% 95%;
+  /* #f1f3f5 surface variant */
+  --muted-foreground: 220 9% 46%;
+  /* #6b7280 neutral */
+
+  --accent: 133 46% 96%;
+  /* #e8f5ec primary container */
+  --accent-foreground: 133 46% 24%;
+  /* #1f5429 primary dark */
+
+  --destructive: 0 84% 60%;
+  /* #dc2626 */
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 220 13% 91%;
+  --input: 220 13% 91%;
+  --ring: 133 46% 32%;
+  /* focus ring matches primary */
+
+  --radius: 0.5rem;
+  /* M3-style — slightly more rounded */
+
+  --sidebar: 0 0% 100%;
+  --sidebar-foreground: 222 14% 17%;
+  --sidebar-border: 220 13% 91%;
+  --sidebar-accent: 133 46% 96%;
+  /* primary container — active bg */
+
+  /* Menengai brand tokens */
+  --brand: 133 46% 32%;
+  /* #2d7a3a */
+  --brand-foreground: 0 0% 98%;
+  --brand-container: 133 46% 96%;
+  /* #e8f5ec */
+  --brand-container-foreground: 133 46% 24%;
+  /* #1f5429 */
+  --brand-dark: 133 46% 24%;
+  /* #1f5429 */
+
+  /* Nav semantic tokens */
+  --store-avatar-bg: 133 46% 32%;
+  /* green instead of grey */
+  --store-avatar-fg: 0 0% 98%;
+
+  --nav-active-bar: 133 46% 32%;
+  /* green indicator bar */
+  --nav-active-fg: 133 46% 24%;
+  /* dark green text when active */
+  --nav-hover-bg: 133 46% 96%;
+  /* container green on hover */
+  --nav-hover-fg: 222 14% 17%;
+
+  --nav-backdrop: 222 14% 17%;
+  /* near-black overlay */
+}
+
+.dark {
+  --background: 222 14% 10%;
+  --foreground: 0 0% 95%;
+
+  --card: 222 14% 13%;
+  --card-foreground: 0 0% 95%;
+
+  --popover: 222 14% 13%;
+  --popover-foreground: 0 0% 95%;
+
+  --primary: 133 40% 52%;
+  /* lighter green for dark bg */
+  --primary-foreground: 0 0% 5%;
+
+  --secondary: 222 14% 16%;
+  --secondary-foreground: 0 0% 95%;
+
+  --muted: 222 14% 16%;
+  --muted-foreground: 220 9% 55%;
+
+  --accent: 133 30% 18%;
+  /* dark green container */
+  --accent-foreground: 133 40% 72%;
+  /* light green text */
+
+  --destructive: 0 62% 50%;
+  --destructive-foreground: 0 0% 98%;
+
+  --border: 222 14% 20%;
+  --input: 222 14% 20%;
+  --ring: 133 40% 52%;
+
+  --sidebar: 222 14% 10%;
+  --sidebar-foreground: 0 0% 95%;
+  --sidebar-border: 222 14% 18%;
+  --sidebar-accent: 133 30% 18%;
+  /* dark green container */
+
+  /* Menengai brand tokens — dark mode */
+  --brand: 133 40% 52%;
+  --brand-foreground: 0 0% 5%;
+  --brand-container: 198 100% 83%;
+  --brand-container-foreground: 133 40% 72%;
+  --brand-dark: 133 40% 72%;
+
+  /* Nav semantic tokens — dark mode */
+  --store-avatar-bg: 133 30% 22%;
+  --store-avatar-fg: 133 40% 72%;
+
+  --nav-active-bar: 133 40% 52%;
+  --nav-active-fg: 133 40% 72%;
+  --nav-hover-bg: 133 30% 15%;
+  --nav-hover-fg: 0 0% 95%;
+
+  --nav-backdrop: 0 0% 0%;
+}
+
+:root {
+  /* M3 sys color → Menengai green */
+  --md-sys-color-primary: hsl(var(--brand));
+  --md-sys-color-on-primary: hsl(var(--brand-foreground));
+  --md-sys-color-primary-container: hsl(var(--brand-container));
+  --md-sys-color-on-primary-container: hsl(var(--brand-container-foreground));
+
+  --md-sys-color-surface: hsl(var(--background));
+  --md-sys-color-on-surface: hsl(var(--foreground));
+  --md-sys-color-surface-variant: hsl(var(--muted));
+  --md-sys-color-on-surface-variant: hsl(var(--muted-foreground));
+
+  --md-sys-color-outline: hsl(var(--border));
+  --md-sys-color-outline-variant: hsl(var(--border));
+
+  --md-sys-color-error: hsl(var(--destructive));
+  --md-sys-color-on-error: hsl(var(--destructive-foreground));
+
+  /* M3 sys typescale → your fonts */
+  --md-sys-typescale-display-font: var(--font-lato);
+  --md-sys-typescale-headline-font: var(--font-lato);
+  --md-sys-typescale-body-font: var(--font-geist-sans);
+  --md-sys-typescale-label-font: var(--font-geist-sans);
+  --md-sys-typescale-title-font: var(--font-lato);
+
+  /* M3 shape */
+  --md-sys-shape-corner-extra-small: 4px;
+  --md-sys-shape-corner-small: 8px;
+  --md-sys-shape-corner-medium: 12px;
+  --md-sys-shape-corner-large: 16px;
+  --md-sys-shape-corner-extra-large: 28px;
+  --md-sys-shape-corner-full: 9999px;
+}
+
+.dark {
+  --md-sys-color-primary: hsl(var(--brand));
+  --md-sys-color-on-primary: hsl(var(--brand-foreground));
+  --md-sys-color-primary-container: hsl(var(--brand-container));
+  --md-sys-color-on-primary-container: hsl(var(--brand-container-foreground));
+  --md-sys-color-surface: hsl(var(--background));
+  --md-sys-color-on-surface: hsl(var(--foreground));
+  --md-sys-color-surface-variant: hsl(var(--muted));
+  --md-sys-color-on-surface-variant: hsl(var(--muted-foreground));
+  --md-sys-color-outline: hsl(var(--border));
+  --md-sys-color-outline-variant: hsl(var(--border));
+  --md-sys-color-error: hsl(var(--destructive));
+  --md-sys-color-on-error: hsl(var(--destructive-foreground));
 }
 
 @theme {
@@ -43,106 +229,19 @@
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-accent: hsl(var(--sidebar-accent));
 
-  /* Font variables — matched to layout.tsx injection names */
+  /* Menengai brand tokens — usable as bg-brand-*, text-brand-*, etc. */
+  --color-brand: hsl(var(--brand));
+  --color-brand-foreground: hsl(var(--brand-foreground));
+  --color-brand-container: hsl(var(--brand-container));
+  --color-brand-container-foreground: hsl(var(--brand-container-foreground));
+  --color-brand-dark: hsl(var(--brand-dark));
+
+  /* Font variables */
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
   --font-display: var(--font-lora), Georgia, serif;
 }
 
-/* ============================================================
-   DESIGN TOKENS
-   Direction: Vercel dark — neutral zinc grays, near-black base
-   ============================================================ */
-
-:root {
-  --background: 0 0% 100%;
-  --foreground: 240 10% 3.9%;
-
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
-
-  --radius: 0.375rem;
-
-  --sidebar: 0 0% 100%;
-  --sidebar-foreground: 240 10% 3.9%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-accent: 240 4.8% 95.9%;
-
-  --store-avatar-bg: 240 4.8% 95.9%;
-  --store-avatar-fg: 240 5.9% 10%;
-
-  --nav-active-bar: 240 5.9% 10%;
-  --nav-active-fg: 240 5.9% 10%;
-  --nav-hover-bg: 240 4.8% 95.9%;
-  --nav-hover-fg: 240 5.9% 10%;
-
-  --nav-backdrop: 240 10% 3.9%;
-}
-
-.dark {
-  --background: 0 0% 3.9%;
-  --foreground: 0 0% 98%;
-
-  --card: 0 0% 7%;
-  --card-foreground: 0 0% 98%;
-
-  --popover: 0 0% 7%;
-  --popover-foreground: 0 0% 98%;
-
-  --primary: 0 0% 98%;
-  --primary-foreground: 0 0% 3.9%;
-
-  --secondary: 0 0% 14.9%;
-  --secondary-foreground: 0 0% 98%;
-
-  --muted: 0 0% 14.9%;
-  --muted-foreground: 0 0% 63.9%;
-
-  --accent: 0 0% 14.9%;
-  --accent-foreground: 0 0% 98%;
-
-  --destructive: 0 62.8% 50%;
-  --destructive-foreground: 0 0% 98%;
-
-  --border: 0 0% 14.9%;
-  --input: 0 0% 14.9%;
-  --ring: 0 0% 83.1%;
-
-  --sidebar: 0 0% 3.9%;
-  --sidebar-foreground: 0 0% 98%;
-  --sidebar-border: 0 0% 12%;
-  --sidebar-accent: 0 0% 14.9%;
-
-  --store-avatar-bg: 0 0% 14.9%;
-  --store-avatar-fg: 0 0% 83.1%;
-
-  --nav-active-bar: 0 0% 98%;
-  --nav-active-fg: 0 0% 98%;
-  --nav-hover-bg: 0 0% 11%;
-  --nav-hover-fg: 0 0% 98%;
-}
 
 /* ============================================================
    BASE
@@ -159,7 +258,7 @@
     -moz-osx-font-smoothing: grayscale;
   }
 
-  /* Display font only on large headings */
+  /* Lato on display headings only */
   h1,
   h2 {
     font-family: var(--font-lora), Georgia, serif;
@@ -178,7 +277,6 @@
     font-family: inherit;
   }
 
-  /* Vercel-style scrollbar */
   ::-webkit-scrollbar {
     width: 6px;
     height: 6px;
@@ -277,6 +375,7 @@
     font-weight: 500;
   }
 
+  /* Green indicator bar on active item */
   .nav-item.active::before,
   .nav-item[data-active="true"]::before {
     content: '';
@@ -326,9 +425,9 @@
   }
 
   .nav-badge-active {
-    background-color: hsl(var(--primary) / 0.1);
+    background-color: hsl(var(--brand) / 0.1);
     color: hsl(var(--nav-active-fg));
-    border: 1px solid hsl(var(--border));
+    border: 1px solid hsl(var(--brand) / 0.2);
   }
 }
 
@@ -364,11 +463,12 @@
     border-top: 1px solid hsl(var(--border));
   }
 
+  /* Crater active — green pulse dot for live store status */
   .status-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background-color: hsl(142 76% 36%);
+    background-color: hsl(var(--brand));
   }
 }
 
@@ -428,6 +528,33 @@
 
 .animate-fade-in {
   animation: fade-in 200ms ease forwards;
+}
+
+/* Crater eruption — used on the onboarding launch moment */
+@keyframes erupt {
+  0% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+
+  40% {
+    transform: translateY(-8px) scale(1.04);
+    opacity: 1;
+  }
+
+  70% {
+    transform: translateY(-4px) scale(1.02);
+    opacity: 0.9;
+  }
+
+  100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.animate-erupt {
+  animation: erupt 600ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 /* ============================================================

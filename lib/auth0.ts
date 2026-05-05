@@ -61,7 +61,7 @@ export const auth0 = new Auth0Client({
 
                 if (store?.slug) {
                     return NextResponse.redirect(
-                        toURL(`https://${store.slug}.menengai.cloud/settings`)
+                        toURL(`${process.env.NODE_ENV === 'development' ? `http:localhost:3000/store/${store.slug}` : `https://${store.slug}.menengai.cloud`}/settings`)
                     );
                 }
             }

@@ -1,8 +1,8 @@
 'use client'
 
 import Link from 'next/link'
-import { Menu, HelpCircle, ExternalLink, Bell, ChevronDown } from 'lucide-react'
-import { useSidebar } from '@/components/ui/sidebar'
+import { useTheme } from 'next-themes'
+import { useEffect, useState } from 'react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,102 +10,143 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
-import { GettingStartedButton } from './notifications-drawer'
+
+// ─── MSO ─────────────────────────────────────────────────────────────────────
+
+function MSO({ icon, className }: { icon: string; className?: string }) {
+    return (
+        <span
+            className={`material-symbols-outlined select-none leading-none ${className ?? ''}`}
+            style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}
+        >
+            {icon}
+        </span>
+    )
+}
+
+// ─── ThemeToggle ──────────────────────────────────────────────────────────────
+
+function ThemeToggle() {
+    const { theme, setTheme } = useTheme()
+    const [mounted, setMounted] = useState(false)
+
+    // Avoid hydration mismatch — don't render until mounted
+    useEffect(() => setMounted(true), [])
+    if (!mounted) return <div className="w-8 h-8" />
+
+    const isDark = theme === 'dark'
+
+    return (
+        <button
+            onClick={() => setTheme(isDark ? 'light' : 'dark')}
+            title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+            aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+            <MSO icon={isDark ? 'light_mode' : 'dark_mode'} className="text-[18px]" />
+        </button>
+    )
+}
+
+// ─── SettingsHeader ───────────────────────────────────────────────────────────
 
 export function SettingsHeader({
     store,
     activeLabel,
-    wizardStore,
-    onOpenWizard,
     onOpenMobileNav,
 }: {
     store: any
     activeLabel: string
-    wizardStore?: any
-    onOpenWizard?: () => void
     onOpenMobileNav?: () => void
 }) {
-    const { toggleSidebar, openMobile } = useSidebar()
-
-    if (openMobile) return null
-
     return (
-        <header className="shrink-0 border-b border-light bg-background z-40">
-            <div className="px-4 md:px-6 h-[72px] flex items-center justify-between gap-6">
+        <header className="shrink-0 h-[57px] border-b border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface] z-40 flex items-center px-4 md:px-5 gap-3">
 
-                {/* Left: breadcrumb */}
-                <div className="flex items-center gap-0 min-w-0">
-                    <button
-                        onClick={onOpenMobileNav}
-                        className="md:hidden p-1 mr-3 text-on-surface-muted hover:text-foreground transition-colors shrink-0"
-                        aria-label="Open navigation"
-                    >
-                        <Menu className="w-[18px] h-[18px]" />
-                    </button>
+            {/* Mobile menu button */}
+            <button
+                onClick={onOpenMobileNav}
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors shrink-0"
+                aria-label="Open navigation"
+            >
+                <MSO icon="menu" className="text-[20px]" />
+            </button>
 
-                    <Link href="/" className="flex items-center shrink-0">
-                        <img src="/favicon.ico" alt="Logo" width={20} height={20} />
-                    </Link>
+            {/* Page label — breadcrumb */}
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+                <span className="text-[13px] text-[--md-sys-color-on-surface-variant]">Settings</span>
+                <MSO icon="chevron_right" className="text-[16px] text-[--md-sys-color-on-surface-variant] opacity-40 shrink-0" />
+                <span className="text-[13px] font-medium text-[--md-sys-color-on-surface] truncate">
+                    {activeLabel}
+                </span>
+            </div>
 
+            {/* Right actions */}
+            <div className="flex items-center gap-1 shrink-0">
+
+                {/* Theme toggle */}
+                <ThemeToggle />
+
+                {/* Support — desktop only */}
+                <Link
+                    href="https://menengai.cloud/support"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    title="Support"
+                    className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+                >
+                    <MSO icon="help_outline" className="text-[18px]" />
+                </Link>
+
+                {/* More dropdown — desktop only */}
+                <div className="hidden md:block">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors">
+                                <MSO icon="more_horiz" className="text-[18px]" />
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent
+                            align="end"
+                            className="w-48 bg-[--md-sys-color-surface] border border-[--md-sys-color-outline-variant] shadow-lg rounded-xl p-1"
+                        >
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
+                                <Link
+                                    href="https://menengai.cloud/docs"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2.5"
+                                >
+                                    <MSO icon="menu_book" className="text-[16px] text-[--md-sys-color-on-surface-variant]" />
+                                    Documentation
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
+                                <Link
+                                    href="https://menengai.cloud/changelog"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2.5"
+                                >
+                                    <MSO icon="new_releases" className="text-[16px] text-[--md-sys-color-on-surface-variant]" />
+                                    Changelog
+                                </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator className="my-1 bg-[--md-sys-color-outline-variant]" />
+                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
+                                <Link
+                                    href="https://status.menengai.cloud"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-2.5"
+                                >
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[--md-sys-color-primary] shrink-0" />
+                                    System Status
+                                </Link>
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
-                {/* Right: actions */}
-                <div className="flex items-center gap-1 shrink-0">
-
-                    {/* Getting Started — desktop + mobile, auto-hides when all done */}
-                    {wizardStore && onOpenWizard && (
-                        <GettingStartedButton
-                            store={wizardStore}
-                            onClick={onOpenWizard}
-                        />
-                    )}
-
-
-                    {/* Support — desktop only */}
-                    <Link
-                        href="https://menengai.cloud/support"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden md:flex items-center gap-1.5 px-3 py-1.5 text-[13px] text-on-surface-muted hover:text-foreground hover:bg-surface-muted rounded-md transition-colors"
-                    >
-                        <HelpCircle className="w-[15px] h-[15px]" />
-                        <span>Support</span>
-                    </Link>
-
-                    {/* More dropdown — desktop only */}
-                    <div className="hidden md:block">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button className="flex items-center gap-1 px-2.5 py-1.5 text-[13px] text-on-surface-muted hover:text-foreground hover:bg-surface-muted rounded-md transition-colors">
-                                    <span>More</span>
-                                    <ChevronDown className="w-[13px] h-[13px]" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 bg-[#425e7b]/80 backdrop-blur-sm text-white">
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="https://menengai.cloud/docs" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                                        <ExternalLink className="w-[14px] h-[14px]" />
-                                        Documentation
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="https://menengai.cloud/changelog" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                                        <ExternalLink className="w-[14px] h-[14px]" />
-                                        Changelog
-                                    </Link>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem asChild className="cursor-pointer">
-                                    <Link href="https://status.menengai.cloud" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2">
-                                        <span className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                                        System Status
-                                    </Link>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-
-                </div>
             </div>
         </header>
     )

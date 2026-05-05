@@ -21,7 +21,7 @@ const BANNER_EXCLUDED_PREFIXES = [
  * Reserved subdomains that are NOT tenant slugs.
  * 'api' removed — API routes are now served at menengai.cloud/api/
  */
-const SYSTEM_SUBDOMAINS = new Set(['status', 'admin', 'mail', 'www'])
+const SYSTEM_SUBDOMAINS = new Set(['status', 'admin', 'mail', 'www', 'auth'])
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -117,7 +117,7 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
       if (request.method === 'OPTIONS') {
         response = new NextResponse(null, { status: 200 })
       }
-      
+
       if (origin) {
         response.headers.set('Access-Control-Allow-Origin', origin)
         response.headers.set('Access-Control-Allow-Credentials', 'true')
