@@ -1,5 +1,4 @@
-import { createClient } from '@/lib/server'
-import { notFound } from 'next/navigation'
+import { cookies } from 'next/headers'
 import SettingsShell from './settings-shell'
 
 export default async function SettingsLayout({
@@ -10,6 +9,33 @@ export default async function SettingsLayout({
     params: Promise<{ slug: string }>
 }) {
     const { slug } = await params
+    const cookieStore = await cookies()
 
-    return <SettingsShell slug={slug}>{children}</SettingsShell>
+    let initialStore: any = null
+    let initialError: 'unauthenticated' | 'forbidden' | 'unknown' | null = null
+
+    try {
+        const res = await fetch(
+            `${process.env.API_BASE_URL}/store/${slug}`,
+            {
+                headers: {
+                    Cookie: cookieStore.toString(),
+                },
+                next: { revalidate: 0 }, // always fresh — user-specific data
+            }
+        )
+
+        if (res.status === 401) initialError = 'unauthenticated'
+        else if (res.status === 403 || res.status === 404) initialError = 'forbidden'
+        else if (!res.ok) initialError = 'unknown'
+        else initialStore = await res.json()
+    } catch {
+        initialError = 'unknown'
+    }
+
+    return (
+        <SettingsShell slug={slug} initialStore={initialStore} initialError={initialError}>
+            {children}
+        </SettingsShell>
+    )
 }

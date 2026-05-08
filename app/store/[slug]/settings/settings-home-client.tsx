@@ -42,12 +42,12 @@ type OverviewData = {
 
 const STATUS: Record<Order['status'], { icon: string; color: string; label: string }> = {
     pending: { icon: 'schedule', color: 'text-amber-500', label: 'Pending' },
-    paid: { icon: 'payments', color: 'text-[--md-sys-color-primary]', label: 'Paid' },
+    paid: { icon: 'payments', color: 'text-[var(--md-sys-color-primary)]', label: 'Paid' },
     processing: { icon: 'autorenew', color: 'text-violet-500', label: 'Processing' },
     shipped: { icon: 'local_shipping', color: 'text-sky-500', label: 'Shipped' },
-    delivered: { icon: 'check_circle', color: 'text-[--md-sys-color-primary]', label: 'Delivered' },
-    cancelled: { icon: 'cancel', color: 'text-[--md-sys-color-error]', label: 'Cancelled' },
-    refunded: { icon: 'currency_exchange', color: 'text-[--md-sys-color-on-surface-variant]', label: 'Refunded' },
+    delivered: { icon: 'check_circle', color: 'text-[var(--md-sys-color-primary)]', label: 'Delivered' },
+    cancelled: { icon: 'cancel', color: 'text-[var(--md-sys-color-error)]', label: 'Cancelled' },
+    refunded: { icon: 'currency_exchange', color: 'text-[var(--md-sys-color-on-surface-variant)]', label: 'Refunded' },
 }
 
 function fmt(n: number, currency: string) {
@@ -72,7 +72,7 @@ function timeAgo(iso: string) {
 function Sk({ className }: { className?: string }) {
     return (
         <span className={cn(
-            'animate-pulse rounded-md bg-[--md-sys-color-surface-variant]',
+            'animate-pulse rounded-md bg-[var(--md-sys-color-surface-variant)]',
             className
         )} />
     )
@@ -105,24 +105,24 @@ function StatCard({
         <div className={cn(
             'rounded-2xl p-4 flex flex-col gap-3',
             accent
-                ? 'bg-[--md-sys-color-primary-container]'
-                : 'bg-[--md-sys-color-surface] border border-[--md-sys-color-outline-variant]'
+                ? 'bg-[var(--md-sys-color-primary-container)]'
+                : 'bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)]'
         )}>
             <div className={cn(
                 'flex items-center justify-center w-8 h-8 rounded-xl',
                 accent
-                    ? 'bg-[--md-sys-color-primary]/15'
-                    : 'bg-[--md-sys-color-surface-variant]'
+                    ? 'bg-[var(--md-sys-color-primary)]/15'
+                    : 'bg-[var(--md-sys-color-surface-variant)]'
             )}>
                 <MSO icon={icon} className={cn(
                     'text-[18px]',
-                    accent ? 'text-[--md-sys-color-primary]' : 'text-[--md-sys-color-on-surface-variant]'
+                    accent ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
                 )} />
             </div>
             <div>
                 <p className={cn(
                     'text-[11px] font-medium uppercase tracking-wider mb-1',
-                    accent ? 'text-[--md-sys-color-primary]' : 'text-[--md-sys-color-on-surface-variant]'
+                    accent ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
                 )}>
                     {label}
                 </p>
@@ -130,7 +130,7 @@ function StatCard({
                     ? <Sk className="h-6 w-20" />
                     : <p className={cn(
                         'text-[22px] font-semibold tabular-nums leading-none',
-                        accent ? 'text-[--md-sys-color-on-primary-container]' : 'text-[--md-sys-color-on-surface]'
+                        accent ? 'text-[var(--md-sys-color-on-primary-container)]' : 'text-[var(--md-sys-color-on-surface)]'
                     )}>
                         {value}
                     </p>
@@ -138,7 +138,7 @@ function StatCard({
                 {sub && !loading && (
                     <p className={cn(
                         'text-[11px] mt-1',
-                        accent ? 'text-[--md-sys-color-primary]/70' : 'text-[--md-sys-color-on-surface-variant]'
+                        accent ? 'text-[var(--md-sys-color-primary)]/70' : 'text-[var(--md-sys-color-on-surface-variant)]'
                     )}>
                         {sub}
                     </p>
@@ -210,7 +210,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
             <motion.div {...item(0)}>
                 <div className={cn(
                     'relative overflow-hidden rounded-2xl px-6 py-6',
-                    'bg-[--md-sys-color-primary-container]',
+                    'bg-[var(--md-sys-color-primary-container)]',
                 )}>
                     {/* Subtle topographic texture — pure CSS, no image */}
                     <div className="pointer-events-none absolute inset-0 opacity-[0.07]"
@@ -224,11 +224,11 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                         <div className="space-y-1">
                             {loading
                                 ? <Sk className="h-7 w-44 mb-1" />
-                                : <h1 className="text-[20px] font-semibold text-[--md-sys-color-on-primary-container] tracking-tight">
+                                : <h1 className="text-[20px] font-semibold text-[var(--md-sys-color-on-primary-container)] tracking-tight">
                                     {store?.name ?? 'Your store'}
                                 </h1>
                             }
-                            <p className="text-[13px] text-[--md-sys-color-primary]/80">
+                            <p className="text-[13px] text-[var(--md-sys-color-primary)]/80">
                                 {loading
                                     ? <Sk className="h-4 w-52 inline-block" />
                                     : store?.active
@@ -242,8 +242,8 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                             <span className={cn(
                                 'inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full',
                                 store.active
-                                    ? 'bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]'
-                                    : 'bg-[--md-sys-color-error-container] text-[--md-sys-color-on-error-container]'
+                                    ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
+                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)]'
                             )}>
                                 <MSO
                                     icon={store.active ? 'wifi' : 'wifi_off'}
@@ -262,7 +262,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                             rel="noopener noreferrer"
                             className={cn(
                                 'relative mt-4 inline-flex items-center gap-1.5',
-                                'text-[12px] font-medium text-[--md-sys-color-primary]',
+                                'text-[12px] font-medium text-[var(--md-sys-color-primary)]',
                             )}
                         >
                             <MSO icon="open_in_new" className="text-[14px]" />
@@ -274,7 +274,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
 
             {/* ── Stats ──────────────────────────────────────────────────── */}
             <motion.div {...item(1)}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[--md-sys-color-on-surface-variant] mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-3">
                     Overview
                 </p>
                 <div className="grid grid-cols-3 gap-3">
@@ -308,25 +308,25 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                         onClick={() => navigate('integrations')}
                         className={cn(
                             'w-full flex items-center gap-4 text-left',
-                            'rounded-2xl border border-dashed border-[--md-sys-color-primary]/40',
-                            'bg-[--md-sys-color-primary]/[0.04] px-5 py-4',
-                            'hover:bg-[--md-sys-color-primary]/[0.08] transition-colors duration-150 group'
+                            'rounded-2xl border border-dashed border-[var(--md-sys-color-primary)]/40',
+                            'bg-[var(--md-sys-color-primary)]/[0.04] px-5 py-4',
+                            'hover:bg-[var(--md-sys-color-primary)]/[0.08] transition-colors duration-150 group'
                         )}
                     >
-                        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[--md-sys-color-primary-container] shrink-0">
-                            <MSO icon="payments" className="text-[20px] text-[--md-sys-color-primary]" />
+                        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
+                            <MSO icon="payments" className="text-[20px] text-[var(--md-sys-color-primary)]" />
                         </div>
                         <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-[--md-sys-color-on-surface]">
+                            <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
                                 Accept payments
                             </p>
-                            <p className="text-[12px] text-[--md-sys-color-on-surface-variant] mt-0.5">
+                            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
                                 Connect M-Pesa or PayPal so customers can checkout on your store.
                             </p>
                         </div>
                         <MSO
                             icon="arrow_forward"
-                            className="text-[18px] text-[--md-sys-color-primary] opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0"
+                            className="text-[18px] text-[var(--md-sys-color-primary)] opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0"
                         />
                     </button>
                 </motion.div>
@@ -335,39 +335,39 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
             {/* ── Recent orders ───────────────────────────────────────────── */}
             <motion.div {...item(3)}>
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[--md-sys-color-on-surface-variant]">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)]">
                         Recent activity
                     </p>
                     <button
                         onClick={() => navigate('orders')}
-                        className="flex items-center gap-1 text-[12px] text-[--md-sys-color-primary] hover:underline underline-offset-2"
+                        className="flex items-center gap-1 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
                     >
                         View all
                         <MSO icon="arrow_forward" className="text-[14px]" />
                     </button>
                 </div>
 
-                <div className="rounded-2xl border border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface] overflow-hidden">
+                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
                     {loading ? (
                         Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 px-5 py-3.5 border-b border-[--md-sys-color-outline-variant] last:border-0">
+                            <div key={i} className="flex items-center gap-4 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0">
                                 <Sk className="h-4 w-28" />
                                 <Sk className="h-4 w-16 ml-auto" />
                                 <Sk className="h-5 w-20 rounded-full" />
                             </div>
                         ))
                     ) : error ? (
-                        <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[--md-sys-color-on-surface-variant]">
-                            <MSO icon="error_outline" className="text-[18px] text-[--md-sys-color-error]" />
+                        <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+                            <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
                             Could not load recent orders.
                         </div>
                     ) : orders.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
-                            <MSO icon="receipt_long" className="text-[32px] text-[--md-sys-color-on-surface-variant] opacity-30" />
-                            <p className="text-[13px] text-[--md-sys-color-on-surface-variant]">No orders yet.</p>
+                            <MSO icon="receipt_long" className="text-[32px] text-[var(--md-sys-color-on-surface-variant)] opacity-30" />
+                            <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">No orders yet.</p>
                             <button
                                 onClick={() => navigate('products')}
-                                className="text-[12px] text-[--md-sys-color-primary] hover:underline underline-offset-2 mt-1"
+                                className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2 mt-1"
                             >
                                 Add your first product →
                             </button>
@@ -379,22 +379,22 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                                 <button
                                     key={order.id}
                                     onClick={() => navigate('orders')}
-                                    className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-[--md-sys-color-outline-variant] last:border-0 hover:bg-[--md-sys-color-surface-variant]/50 transition-colors text-left group"
+                                    className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0 hover:bg-[var(--md-sys-color-surface-variant)]/50 transition-colors text-left group"
                                 >
                                     <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-medium text-[--md-sys-color-on-surface] truncate">
+                                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
                                             {order.customer_name}
                                         </p>
-                                        <p className="text-[11px] text-[--md-sys-color-on-surface-variant] mt-0.5">
+                                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
                                             {timeAgo(order.created_at)}
                                         </p>
                                     </div>
-                                    <span className="text-[13px] font-semibold text-[--md-sys-color-on-surface] tabular-nums shrink-0">
+                                    <span className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] tabular-nums shrink-0">
                                         {fmt(order.total, store?.currency ?? 'KES')}
                                     </span>
                                     <span className={cn(
                                         'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full shrink-0',
-                                        'bg-[--md-sys-color-surface-variant]',
+                                        'bg-[var(--md-sys-color-surface-variant)]',
                                         s.color
                                     )}>
                                         <MSO icon={s.icon} className="text-[12px]" />
@@ -409,7 +409,7 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
 
             {/* ── Settings quick links ────────────────────────────────────── */}
             <motion.div {...item(4)}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[--md-sys-color-on-surface-variant] mb-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-3">
                     Settings
                 </p>
                 <div className="grid sm:grid-cols-2 gap-2">
@@ -419,31 +419,31 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                             onClick={() => navigate(link.tab)}
                             className={cn(
                                 'flex items-center gap-3 px-4 py-3 rounded-2xl text-left group',
-                                'border border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface]',
-                                'hover:bg-[--md-sys-color-surface-variant]/60 hover:border-[--md-sys-color-outline] transition-all duration-150'
+                                'border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]',
+                                'hover:bg-[var(--md-sys-color-surface-variant)]/60 hover:border-[var(--md-sys-color-outline)] transition-all duration-150'
                             )}
                         >
-                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[--md-sys-color-surface-variant] shrink-0 group-hover:bg-[--md-sys-color-primary-container] transition-colors">
-                                <MSO icon={link.icon} className="text-[18px] text-[--md-sys-color-on-surface-variant] group-hover:text-[--md-sys-color-primary] transition-colors" />
+                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[var(--md-sys-color-surface-variant)] shrink-0 group-hover:bg-[var(--md-sys-color-primary-container)] transition-colors">
+                                <MSO icon={link.icon} className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <span className="text-[13px] font-medium text-[--md-sys-color-on-surface] truncate">
+                                    <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
                                         {link.label}
                                     </span>
                                     {link.beta && (
-                                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[--md-sys-color-secondary-container] text-[--md-sys-color-on-secondary-container]">
+                                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]">
                                             beta
                                         </span>
                                     )}
                                 </div>
-                                <p className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate mt-0.5">
+                                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate mt-0.5">
                                     {link.description}
                                 </p>
                             </div>
                             <MSO
                                 icon="chevron_right"
-                                className="text-[18px] text-[--md-sys-color-on-surface-variant] opacity-0 group-hover:opacity-60 transition-opacity shrink-0"
+                                className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] opacity-0 group-hover:opacity-60 transition-opacity shrink-0"
                             />
                         </button>
                     ))}

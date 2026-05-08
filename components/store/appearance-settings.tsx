@@ -136,6 +136,17 @@ function useGoogleFont(fontName: string) {
     }, [fontName])
 }
 
+function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
+    return (
+        <span
+            className={cn('material-symbols-outlined select-none leading-none', className)}
+            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
+        >
+            {icon}
+        </span>
+    )
+}
+
 // ─── ColorRow ─────────────────────────────────────────────────────────────────
 
 function ColorRow({ label, value, onChange }: {
@@ -144,25 +155,32 @@ function ColorRow({ label, value, onChange }: {
     onChange: (v: string) => void
 }) {
     return (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 group">
             <span className="text-[12px] text-on-surface-muted w-24 shrink-0">{label}</span>
-            <div className="flex items-center gap-2 flex-1">
-                <label className="relative w-8 h-8 sm:w-7 sm:h-7 shrink-0 border border-light cursor-pointer overflow-hidden rounded-none">
-                    <div className="absolute inset-0" style={{ backgroundColor: value }} />
-                    <input
-                        type="color"
-                        value={value}
-                        onChange={(e) => onChange(e.target.value)}
-                        className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
-                    />
-                </label>
-                <Input
-                    value={value}
-                    onChange={(e) => onChange(e.target.value)}
-                    spellCheck={false}
-                    className="font-mono text-[12px] h-8 flex-1 rounded-none"
+            <label className="relative shrink-0 cursor-pointer">
+                <div
+                    className="w-8 h-8 rounded-lg border border-light shadow-sm transition-transform group-hover:scale-105"
+                    style={{ backgroundColor: value }}
                 />
-            </div>
+                <input
+                    type="color"
+                    value={value}
+                    onChange={e => onChange(e.target.value)}
+                    className="absolute inset-0 opacity-0 w-full h-full cursor-pointer"
+                />
+            </label>
+            <input
+                type="text"
+                value={value}
+                onChange={e => onChange(e.target.value)}
+                spellCheck={false}
+                className={cn(
+                    'flex-1 h-8 px-2.5 font-mono text-[12px] rounded-lg',
+                    'border border-light bg-surface text-foreground',
+                    'focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10',
+                    'transition-all duration-150'
+                )}
+            />
         </div>
     )
 }
@@ -183,13 +201,14 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                     href={`/store/${slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors py-1"
+                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors"
                 >
-                    View store <ExternalLink className="w-3 h-3" />
+                    <MSO icon="open_in_new" className="text-[14px]" />
+                    Preview store
                 </a>
             }
         >
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 {THEMES.map((theme) => {
                     const isActive = themeId === theme.id
                     return (
@@ -197,32 +216,32 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                             key={theme.id}
                             onClick={() => setThemeId(theme.id)}
                             className={cn(
-                                'text-left border p-2.5 sm:p-3 transition-colors',
+                                'group relative text-left rounded-xl border-2 p-3 transition-all duration-150 overflow-hidden',
                                 isActive
-                                    ? 'border-foreground bg-surface-variant'
-                                    : 'border-light hover:border-light-strong hover:bg-surface-variant/40'
+                                    ? 'border-foreground shadow-md'
+                                    : 'border-light hover:border-light-strong hover:shadow-sm'
                             )}
                         >
-                            <div className="flex overflow-hidden border border-light mb-2 sm:mb-3 h-6 sm:h-7">
-                                <div className="flex-1" style={{ backgroundColor: theme.preview.background }} />
+                            {/* Color swatch */}
+                            <div className="flex gap-1 mb-3 rounded-md overflow-hidden h-8">
+                                <div className="flex-1 rounded-l-md" style={{ backgroundColor: theme.preview.background }} />
                                 <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
-                                <div className="w-3 sm:w-4" style={{ backgroundColor: theme.preview.accent }} />
+                                <div className="w-5 rounded-r-md" style={{ backgroundColor: theme.preview.accent }} />
                             </div>
-                            <div className="flex items-start justify-between gap-1">
-                                <div className="min-w-0">
-                                    <p className="text-[12px] sm:text-[13px] font-medium text-foreground leading-none truncate">
-                                        {theme.name}
-                                    </p>
-                                    <p className="hidden sm:block text-[11px] text-on-surface-muted mt-1 leading-snug">
-                                        {theme.description}
-                                    </p>
+
+                            <p className="text-[12px] font-semibold text-foreground leading-none truncate">
+                                {theme.name}
+                            </p>
+                            <p className="hidden sm:block text-[11px] text-on-surface-muted mt-1 leading-snug">
+                                {theme.description}
+                            </p>
+
+                            {/* Active checkmark */}
+                            {isActive && (
+                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
+                                    <MSO icon="check" className="text-[13px] text-surface" fill={1} />
                                 </div>
-                                {isActive && (
-                                    <div className="shrink-0 w-4 h-4 bg-foreground flex items-center justify-center">
-                                        <Check className="w-2.5 h-2.5 text-surface" />
-                                    </div>
-                                )}
-                            </div>
+                            )}
                         </button>
                     )
                 })}
@@ -244,14 +263,16 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
 >) {
     const { store } = props
     return (
-        <SettingsSection title="Hero & Logo" description="The first thing customers see on your storefront">
-            <div className="mb-5 sm:mb-6">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Logo</p>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
-                    <div className="w-full sm:w-20 h-16 sm:h-16 flex items-center justify-center border border-light bg-surface shrink-0">
+        <SettingsSection title="Brand" description="Your logo and storefront banner">
+
+            {/* Logo */}
+            <div className="space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Logo</p>
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl border border-light bg-surface flex items-center justify-center overflow-hidden shrink-0">
                         {props.logoUrl
                             ? <img src={props.logoUrl} alt="Logo" className="max-h-12 max-w-full object-contain" />
-                            : <span className="text-[11px] text-on-surface-muted uppercase tracking-widest opacity-40">
+                            : <span className="text-[13px] font-bold text-on-surface-muted uppercase tracking-widest">
                                 {store.name.slice(0, 2)}
                             </span>
                         }
@@ -266,34 +287,52 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                             pathPrefix={`${store.id}/logo`}
                             aspectRatio="square"
                         />
+                        <p className="text-[11px] text-on-surface-muted mt-1.5">
+                            Recommended: square PNG with transparent background
+                        </p>
                     </div>
                 </div>
             </div>
 
-            <div className="h-px bg-outline mb-5 sm:mb-6" />
+            <div className="h-px bg-light my-5" />
 
-            <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Banner</p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-4">
-                <div className="space-y-1.5">
-                    <Label className="text-[12px] text-on-surface-muted">Title</Label>
-                    <Input value={props.heroTitle} onChange={(e) => props.setHeroTitle(e.target.value)} placeholder={store.name} className="rounded-none" />
-                </div>
-                <div className="space-y-1.5">
-                    <Label className="text-[12px] text-on-surface-muted">Subtitle</Label>
-                    <Input value={props.heroSubtitle} onChange={(e) => props.setHeroSubtitle(e.target.value)} placeholder="Free shipping on all orders" className="rounded-none" />
-                </div>
-                <div className="sm:col-span-2">
-                    <SettingsField label="Hero image" hint="Used as the hero background">
-                        <ImageUpload
-                            label="Upload image"
-                            value={props.heroImage}
-                            pathInDb={props.heroImagePath}
-                            onChange={(url, path) => { props.setHeroImage(url); props.setHeroImagePath(path) }}
-                            bucket="store-assets"
-                            pathPrefix={`${store.id}/hero`}
-                            aspectRatio="wide"
+            {/* Banner */}
+            <div className="space-y-4">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Banner</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1.5">
+                        <label className="block text-[12px] text-on-surface-muted">Title</label>
+                        <Input
+                            value={props.heroTitle}
+                            onChange={e => props.setHeroTitle(e.target.value)}
+                            placeholder={store.name}
+                            className="rounded-lg"
                         />
-                    </SettingsField>
+                    </div>
+                    <div className="space-y-1.5">
+                        <label className="block text-[12px] text-on-surface-muted">Subtitle</label>
+                        <Input
+                            value={props.heroSubtitle}
+                            onChange={e => props.setHeroSubtitle(e.target.value)}
+                            placeholder="Free shipping on all orders"
+                            className="rounded-lg"
+                        />
+                    </div>
+                </div>
+                <div className="space-y-1.5">
+                    <label className="block text-[12px] text-on-surface-muted">
+                        Hero image
+                        <span className="ml-1.5 text-[11px] text-on-surface-muted/60">— used as the banner background</span>
+                    </label>
+                    <ImageUpload
+                        label="Upload image"
+                        value={props.heroImage}
+                        pathInDb={props.heroImagePath}
+                        onChange={(url, path) => { props.setHeroImage(url); props.setHeroImagePath(path) }}
+                        bucket="store-assets"
+                        pathPrefix={`${store.id}/hero`}
+                        aspectRatio="wide"
+                    />
                 </div>
             </div>
         </SettingsSection>
@@ -307,129 +346,102 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
     | 'bodyFont' | 'setBodyFont'
     | 'borderRadius' | 'setBorderRadius'
 >) {
-    // Inject both fonts into the document so the preview actually renders them
     useGoogleFont(props.headingFont)
     useGoogleFont(props.bodyFont)
 
     return (
         <SettingsSection title="Typography & Shape">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-x-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
 
-                {/* ── Heading font picker ── */}
-                <div className="space-y-1.5">
-                    <Label className="text-[12px] text-on-surface-muted">Heading font</Label>
+                {/* Heading font */}
+                <div className="space-y-2">
+                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">
+                        Heading font
+                    </label>
                     <Select value={props.headingFont} onValueChange={props.setHeadingFont}>
-                        <SelectTrigger className="rounded-none text-base sm:text-[13px]">
+                        <SelectTrigger className="rounded-lg text-[13px]">
                             <SelectValue placeholder="Pick a heading font" />
                         </SelectTrigger>
                         <SelectContent>
-                            {HEADING_FONTS.map((f) => (
+                            {HEADING_FONTS.map(f => (
                                 <SelectItem key={f.value} value={f.value}>
-                                    <div className="flex items-center justify-between gap-8 w-full">
-                                        <span>{f.value}</span>
-                                        <span className="text-[11px] text-muted-foreground">{f.category}</span>
-                                    </div>
+                                    <span>{f.value}</span>
+                                    <span className="ml-2 text-[11px] text-muted-foreground">{f.category}</span>
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    {/* Inline preview — renders in the chosen font */}
-                    <div className="px-3 py-2 bg-surface border border-light">
+                    <div className="px-3.5 py-3 bg-surface rounded-xl border border-light">
                         <p
-                            className="text-[18px] leading-snug text-foreground"
+                            className="text-[20px] leading-snug text-foreground"
                             style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
                         >
                             The quick brown fox
                         </p>
-                        <p className="text-[10px] text-on-surface-muted mt-1 uppercase tracking-widest">
+                        <p className="text-[10px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
                             {props.headingFont}
                         </p>
                     </div>
                 </div>
 
-                {/* ── Body font picker ── */}
-                <div className="space-y-1.5">
-                    <Label className="text-[12px] text-on-surface-muted">Body font</Label>
+                {/* Body font */}
+                <div className="space-y-2">
+                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">
+                        Body font
+                    </label>
                     <Select value={props.bodyFont} onValueChange={props.setBodyFont}>
-                        <SelectTrigger className="rounded-none text-base sm:text-[13px]">
+                        <SelectTrigger className="rounded-lg text-[13px]">
                             <SelectValue placeholder="Pick a body font" />
                         </SelectTrigger>
                         <SelectContent>
-                            {BODY_FONTS.map((f) => (
+                            {BODY_FONTS.map(f => (
                                 <SelectItem key={f.value} value={f.value}>
-                                    <div className="flex items-center justify-between gap-8 w-full">
-                                        <span>{f.value}</span>
-                                        <span className="text-[11px] text-muted-foreground">{f.category}</span>
-                                    </div>
+                                    <span>{f.value}</span>
+                                    <span className="ml-2 text-[11px] text-muted-foreground">{f.category}</span>
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
-                    {/* Inline preview */}
-                    <div className="px-3 py-2 bg-surface border border-light">
+                    <div className="px-3.5 py-3 bg-surface rounded-xl border border-light">
                         <p
                             className="text-[13px] leading-relaxed text-foreground"
                             style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
                         >
                             Handpicked styles for every occasion. Free shipping on orders over KES 2,000.
                         </p>
-                        <p className="text-[10px] text-on-surface-muted mt-1 uppercase tracking-widest">
+                        <p className="text-[10px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
                             {props.bodyFont}
                         </p>
                     </div>
                 </div>
             </div>
 
-            {/* ── Combined pairing preview ─────────────────────────────────── */}
-            {/* Shows both fonts in context together — product card mockup */}
-            <div className="mt-5 border border-light overflow-hidden">
-                {/* Header strip */}
+            {/* Pairing preview */}
+            <div className="mt-5 rounded-xl border border-light overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-light">
-                    <p
-                        className="text-[14px] font-semibold leading-none"
-                        style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
-                    >
+                    <p className="text-[14px] font-semibold" style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}>
                         Your Store
                     </p>
-                    <p
-                        className="text-[11px] text-on-surface-muted"
-                        style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
-                    >
+                    <p className="text-[11px] text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                         Cart (2)
                     </p>
                 </div>
-
-                {/* Hero strip */}
-                <div className="px-4 pt-4 pb-3 bg-background border-b border-light">
-                    <p
-                        className="text-[20px] sm:text-[24px] leading-tight"
-                        style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}
-                    >
+                <div className="px-4 pt-4 pb-3 border-b border-light bg-background">
+                    <p className="text-[22px] leading-tight" style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}>
                         Fresh Arrivals
                     </p>
-                    <p
-                        className="text-[12px] sm:text-[13px] mt-1 text-on-surface-muted"
-                        style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
-                    >
+                    <p className="text-[12px] mt-1 text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                         Handpicked styles for the season.
                     </p>
                 </div>
-
-                {/* Product row */}
                 <div className="flex gap-3 px-4 py-3 bg-background">
-                    {['Linen Tote', 'Canvas Cap', 'Woven Wrap'].map((name) => (
+                    {['Linen Tote', 'Canvas Cap', 'Woven Wrap'].map(name => (
                         <div key={name} className="flex-1 min-w-0">
-                            <div className="w-full aspect-square bg-surface mb-1.5" />
-                            <p
-                                className="text-[12px] font-semibold leading-tight truncate"
-                                style={{ fontFamily: `'${props.headingFont}', serif` }}
-                            >
+                            <div className="w-full aspect-square bg-surface rounded-lg mb-1.5" />
+                            <p className="text-[12px] font-semibold leading-tight truncate" style={{ fontFamily: `'${props.headingFont}', serif` }}>
                                 {name}
                             </p>
-                            <p
-                                className="text-[11px] text-on-surface-muted mt-0.5"
-                                style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
-                            >
+                            <p className="text-[11px] text-on-surface-muted mt-0.5" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                                 KES 1,800
                             </p>
                         </div>
@@ -437,20 +449,24 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                 </div>
             </div>
 
-            {/* ── Border radius ── */}
-            <div className="mt-5 sm:mt-6">
-                <Label className="text-[12px] text-on-surface-muted mb-2 block">Button & card radius</Label>
+            {/* Border radius */}
+            <div className="mt-5">
+                <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">
+                    Button & card radius
+                </label>
                 <div className="flex gap-2 flex-wrap">
-                    {BORDER_RADII.map((r) => (
+                    {BORDER_RADII.map(r => (
                         <button
                             key={r.value}
                             onClick={() => props.setBorderRadius(r.value)}
                             className={cn(
-                                'h-9 sm:h-8 px-4 text-[12px] border transition-colors',
+                                'h-9 px-4 text-[12px] font-medium border transition-all duration-150',
+                                'rounded-lg',          // the tab itself is always rounded
                                 props.borderRadius === r.value
                                     ? 'bg-foreground text-surface border-foreground'
                                     : 'bg-background text-on-surface-muted border-light hover:border-light-strong hover:text-foreground'
                             )}
+                            style={{ borderRadius: r.value === '0px' ? '4px' : r.value }}  // preview the radius on the button itself
                         >
                             {r.label}
                         </button>
@@ -482,44 +498,47 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
             title="Colors"
             description="Fine-tune the palette — overrides the preset theme"
             aside={
-                <div className="flex items-center border border-light">
-                    <button
-                        onClick={() => setMode('light')}
-                        className={cn(
-                            'flex items-center gap-1.5 px-2.5 h-8 sm:h-7 text-[12px] transition-colors',
-                            mode === 'light'
-                                ? 'bg-surface-variant text-foreground'
-                                : 'text-on-surface-muted hover:text-foreground'
-                        )}
-                    >
-                        <Sun className="w-3 h-3" /> Light
-                    </button>
-                    <div className="w-px h-4 bg-outline" />
-                    <button
-                        onClick={() => setMode('dark')}
-                        className={cn(
-                            'flex items-center gap-1.5 px-2.5 h-8 sm:h-7 text-[12px] transition-colors',
-                            mode === 'dark'
-                                ? 'bg-surface-variant text-foreground'
-                                : 'text-on-surface-muted hover:text-foreground'
-                        )}
-                    >
-                        <Moon className="w-3 h-3" /> Dark
-                    </button>
+                <div className="flex items-center rounded-lg border border-light overflow-hidden text-[12px]">
+                    {(['light', 'dark'] as const).map((m) => (
+                        <button
+                            key={m}
+                            onClick={() => setMode(m)}
+                            className={cn(
+                                'flex items-center gap-1.5 px-3 h-7 transition-colors capitalize',
+                                mode === m
+                                    ? 'bg-foreground text-surface font-medium'
+                                    : 'text-on-surface-muted hover:text-foreground'
+                            )}
+                        >
+                            <MSO icon={m === 'light' ? 'light_mode' : 'dark_mode'} className="text-[14px]" fill={mode === m ? 1 : 0} />
+                            {m}
+                        </button>
+                    ))}
                 </div>
             }
         >
             {mode === 'light' ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-3">
-                    <ColorRow label="Primary" value={props.primaryColor} onChange={props.setPrimaryColor} />
-                    <ColorRow label="Secondary" value={props.secondaryColor} onChange={props.setSecondaryColor} />
-                    <ColorRow label="Accent" value={props.accentColor} onChange={props.setAccentColor} />
-                    <ColorRow label="Background" value={props.bgColor} onChange={props.setBgColor} />
-                    <ColorRow label="Foreground" value={props.fgColor} onChange={props.setFgColor} />
-                    <ColorRow label="Muted" value={props.mutedColor} onChange={props.setMutedColor} />
+                <div className="space-y-4">
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Brand</p>
+                        <div className="space-y-2.5">
+                            <ColorRow label="Primary" value={props.primaryColor} onChange={props.setPrimaryColor} />
+                            <ColorRow label="Secondary" value={props.secondaryColor} onChange={props.setSecondaryColor} />
+                            <ColorRow label="Accent" value={props.accentColor} onChange={props.setAccentColor} />
+                        </div>
+                    </div>
+                    <div className="h-px bg-light" />
+                    <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Surface</p>
+                        <div className="space-y-2.5">
+                            <ColorRow label="Background" value={props.bgColor} onChange={props.setBgColor} />
+                            <ColorRow label="Foreground" value={props.fgColor} onChange={props.setFgColor} />
+                            <ColorRow label="Muted" value={props.mutedColor} onChange={props.setMutedColor} />
+                        </div>
+                    </div>
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-8 sm:gap-y-3">
+                <div className="space-y-2.5">
                     <ColorRow label="Primary" value={props.darkPrimaryColor} onChange={props.setDarkPrimaryColor} />
                     <ColorRow label="Background" value={props.darkBgColor} onChange={props.setDarkBgColor} />
                     <ColorRow label="Foreground" value={props.darkFgColor} onChange={props.setDarkFgColor} />
@@ -541,40 +560,53 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
     onMove: (dir: 'up' | 'down') => void
     onRemove: () => void
 }) {
-    const [open, setOpen] = useState(true)
+    const [open, setOpen] = useState(idx === 0)
 
     return (
-        <div className="border border-light">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-light bg-surface-variant/30">
+        <div className="rounded-xl border border-light overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 bg-surface-variant/40">
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2 text-[12px] font-medium text-foreground min-w-0"
+                    className="flex items-center gap-2.5 text-[13px] font-medium text-foreground min-w-0"
                 >
-                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform shrink-0', open && 'rotate-180')} />
-                    <span className="shrink-0">Slide {idx + 1}</span>
-                    {slide.title && (
-                        <span className="text-on-surface-muted font-normal truncate">— {slide.title}</span>
-                    )}
+                    <MSO icon={open ? 'expand_less' : 'expand_more'} className="text-[18px] text-on-surface-muted shrink-0" />
+                    <span className="shrink-0 text-on-surface-muted text-[12px]">#{idx + 1}</span>
+                    <span className="truncate">
+                        {slide.title || <span className="text-on-surface-muted font-normal italic">Untitled slide</span>}
+                    </span>
                 </button>
                 <div className="flex items-center gap-1 shrink-0 ml-2">
-                    {(['up', 'down'] as const).map((dir) => (
-                        <button
-                            key={dir}
-                            disabled={dir === 'up' ? idx === 0 : idx === total - 1}
-                            onClick={() => onMove(dir)}
-                            className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-foreground disabled:opacity-30 transition-colors"
-                        >{dir === 'up' ? '↑' : '↓'}</button>
-                    ))}
+                    <button
+                        disabled={idx === 0}
+                        onClick={() => onMove('up')}
+                        title="Move up"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-colors"
+                    >
+                        <MSO icon="arrow_upward" className="text-[15px]" />
+                    </button>
+                    <button
+                        disabled={idx === total - 1}
+                        onClick={() => onMove('down')}
+                        title="Move down"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-colors"
+                    >
+                        <MSO icon="arrow_downward" className="text-[15px]" />
+                    </button>
                     <button
                         onClick={onRemove}
-                        className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-red-500 transition-colors"
-                    >×</button>
+                        title="Remove slide"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    >
+                        <MSO icon="delete" className="text-[15px]" />
+                    </button>
                 </div>
             </div>
 
+            {/* Body */}
             {open && (
-                <div className="p-3 sm:p-4 space-y-3 sm:space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-x-6 sm:gap-y-4">
+                <div className="p-4 space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         {([
                             { label: 'Title', field: 'title', placeholder: 'Your statement' },
                             { label: 'Subtitle', field: 'subtitle', placeholder: 'Discover our bestsellers…' },
@@ -582,17 +614,18 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                             { label: 'Button text', field: 'buttonText', placeholder: 'Shop now' },
                         ] as const).map(({ label, field, placeholder }) => (
                             <div key={field} className="space-y-1.5">
-                                <Label className="text-[12px] text-on-surface-muted">{label}</Label>
+                                <label className="block text-[12px] text-on-surface-muted">{label}</label>
                                 <Input
                                     value={(slide as any)[field] ?? ''}
-                                    onChange={(e) => onChange({ ...slide, [field]: e.target.value })}
+                                    onChange={e => onChange({ ...slide, [field]: e.target.value })}
                                     placeholder={placeholder}
-                                    className="rounded-none"
+                                    className="rounded-lg"
                                 />
                             </div>
                         ))}
                     </div>
-                    <SettingsField label="Slide image">
+                    <div className="space-y-1.5">
+                        <label className="block text-[12px] text-on-surface-muted">Slide image</label>
                         <ImageUpload
                             value={slide.image ?? ''}
                             pathInDb={slide.imagePath ?? ''}
@@ -601,7 +634,7 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                             pathPrefix={`${storeId}/slides/${idx}`}
                             aspectRatio="wide"
                         />
-                    </SettingsField>
+                    </div>
                 </div>
             )}
         </div>
@@ -610,25 +643,35 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
 
 function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlides' | 'setHeroSlides'>) {
     const { store, heroSlides, setHeroSlides } = props
+
     return (
         <SettingsSection
-            title="Hero slides"
-            description="Multiple slides replace the single hero. Leave empty to use the image above."
+            title="Hero Slides"
+            description="Multiple slides replace the single banner image. Leave empty to use the hero image above."
             aside={
                 <button
                     onClick={() => setHeroSlides([...heroSlides, { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' }])}
-                    className="btn-secondary h-8 sm:h-7 px-3 text-[12px]"
+                    className={cn(
+                        'flex items-center gap-1.5 h-8 px-3 rounded-lg border border-light',
+                        'text-[12px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
+                        'transition-colors'
+                    )}
                 >
-                    + Add slide
+                    <MSO icon="add" className="text-[16px]" />
+                    Add slide
                 </button>
             }
         >
             {heroSlides.length === 0 ? (
-                <p className="text-[12px] text-on-surface-muted py-1">
-                    No slides — using hero image and title above.
-                </p>
+                <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-light text-center">
+                    <MSO icon="view_carousel" className="text-[32px] text-on-surface-muted/30" />
+                    <p className="text-[13px] font-medium text-on-surface-muted">No slides yet</p>
+                    <p className="text-[12px] text-on-surface-muted/60 max-w-[220px]">
+                        Add slides to create a rotating hero carousel on your storefront.
+                    </p>
+                </div>
             ) : (
-                <div className="space-y-3">
+                <div className="space-y-2">
                     {heroSlides.map((slide, idx) => (
                         <SlideCard
                             key={idx}
@@ -636,12 +679,10 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
                             idx={idx}
                             total={heroSlides.length}
                             storeId={store.id}
-                            onChange={(updated) => {
-                                const next = [...heroSlides]
-                                next[idx] = updated
-                                setHeroSlides(next)
+                            onChange={updated => {
+                                const next = [...heroSlides]; next[idx] = updated; setHeroSlides(next)
                             }}
-                            onMove={(dir) => {
+                            onMove={dir => {
                                 const next = [...heroSlides]
                                 const swap = dir === 'up' ? idx - 1 : idx + 1
                                     ;[next[idx], next[swap]] = [next[swap], next[idx]]
@@ -664,46 +705,59 @@ function GalleryPhotoCard({ photo, idx, onChange, onRemove }: {
     onChange: (photo: GalleryPhoto) => void
     onRemove: () => void
 }) {
-    const [open, setOpen] = useState(true)
+    const [open, setOpen] = useState(false)
 
     return (
-        <div className="border border-light">
-            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-light bg-surface-variant/30">
+        <div className="rounded-xl border border-light overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 bg-surface-variant/40">
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2 text-[12px] font-medium text-foreground min-w-0"
+                    className="flex items-center gap-2.5 text-[13px] font-medium text-foreground min-w-0"
                 >
-                    <ChevronDown className={cn('w-3.5 h-3.5 text-on-surface-muted transition-transform shrink-0', open && 'rotate-180')} />
-                    <span className="shrink-0">Photo {idx + 1}</span>
-                    {photo.caption && (
-                        <span className="text-on-surface-muted font-normal truncate">— {photo.caption}</span>
-                    )}
+                    {photo.url
+                        ? <img src={photo.url} alt="" className="w-6 h-6 rounded object-cover shrink-0 border border-light" />
+                        : <div className="w-6 h-6 rounded bg-surface border border-light shrink-0 flex items-center justify-center">
+                            <MSO icon="image" className="text-[13px] text-on-surface-muted" />
+                        </div>
+                    }
+                    <span className="shrink-0 text-on-surface-muted text-[12px]">#{idx + 1}</span>
+                    <span className="truncate">
+                        {photo.caption || <span className="text-on-surface-muted font-normal italic">No caption</span>}
+                    </span>
                 </button>
-                <button
-                    onClick={onRemove}
-                    className="w-8 h-8 sm:w-6 sm:h-6 flex items-center justify-center text-[11px] border border-light text-on-surface-muted hover:text-red-500 transition-colors"
-                >×</button>
+                <div className="flex items-center gap-1 shrink-0 ml-2">
+                    <button
+                        onClick={() => setOpen(!open)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface transition-colors"
+                    >
+                        <MSO icon={open ? 'expand_less' : 'edit'} className="text-[15px]" />
+                    </button>
+                    <button
+                        onClick={onRemove}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    >
+                        <MSO icon="delete" className="text-[15px]" />
+                    </button>
+                </div>
             </div>
 
             {open && (
-                <div className="p-3 sm:p-4 space-y-3">
-                    <SettingsField label="Photo">
-                        <ImageUpload
-                            value={photo.url ?? ''}
-                            pathInDb={photo.path ?? ''}
-                            onChange={(url, path) => onChange({ ...photo, url, path })}
-                            bucket="store-assets"
-                            pathPrefix={`${'__storeId__'}/gallery/${idx}`}
-                            aspectRatio="square"
-                        />
-                    </SettingsField>
+                <div className="p-4 space-y-3">
+                    <ImageUpload
+                        value={photo.url ?? ''}
+                        pathInDb={photo.path ?? ''}
+                        onChange={(url, path) => onChange({ ...photo, url, path })}
+                        bucket="store-assets"
+                        pathPrefix={`__storeId__/gallery/${idx}`}
+                        aspectRatio="square"
+                    />
                     <div className="space-y-1.5">
-                        <Label className="text-[12px] text-on-surface-muted">Caption</Label>
+                        <label className="block text-[12px] text-on-surface-muted">Caption</label>
                         <Input
                             value={photo.caption ?? ''}
-                            onChange={(e) => onChange({ ...photo, caption: e.target.value })}
-                            placeholder="Optional photo caption"
-                            className="rounded-none"
+                            onChange={e => onChange({ ...photo, caption: e.target.value })}
+                            placeholder="Optional caption"
+                            className="rounded-lg"
                         />
                     </div>
                 </div>
@@ -717,95 +771,185 @@ function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryP
 
     return (
         <SettingsSection
-            title="Photography Gallery"
-            description="Upload photos to display in the Photography theme homepage gallery. Leave empty to show all products instead."
+            title="Photo Gallery"
+            description="Displayed on the Photography theme homepage. Leave empty to show all products instead."
             aside={
                 <button
                     onClick={() => setGalleryPhotos([...galleryPhotos, { id: crypto.randomUUID(), url: '', caption: '' }])}
-                    className="btn-secondary h-8 sm:h-7 px-3 text-[12px]"
+                    className={cn(
+                        'flex items-center gap-1.5 h-8 px-3 rounded-lg border border-light',
+                        'text-[12px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
+                        'transition-colors'
+                    )}
                 >
-                    + Add photo
+                    <MSO icon="add_photo_alternate" className="text-[16px]" />
+                    Add photo
                 </button>
             }
         >
             {galleryPhotos.length === 0 ? (
-                <p className="text-[12px] text-on-surface-muted py-1">
-                    No gallery photos — your products will be displayed instead.
-                </p>
-            ) : (
-                <div className="space-y-3">
-                    {galleryPhotos.map((photo, idx) => (
-                        <GalleryPhotoCard
-                            key={photo.id}
-                            photo={photo}
-                            idx={idx}
-                            onChange={(updated) => {
-                                const next = [...galleryPhotos]
-                                next[idx] = { ...updated, id: photo.id }
-                                setGalleryPhotos(next)
-                            }}
-                            onRemove={() => setGalleryPhotos(galleryPhotos.filter((_, i) => i !== idx))}
-                        />
-                    ))}
+                <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-light text-center">
+                    <MSO icon="photo_library" className="text-[32px] text-on-surface-muted/30" />
+                    <p className="text-[13px] font-medium text-on-surface-muted">No photos yet</p>
+                    <p className="text-[12px] text-on-surface-muted/60 max-w-[220px]">
+                        Photos appear in the gallery grid on your storefront homepage.
+                    </p>
                 </div>
-            )}
-
-            {galleryPhotos.length > 0 && (
-                <div className="mt-4">
-                    <p className="text-[11px] text-on-surface-muted mb-3">Preview</p>
-                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {galleryPhotos.slice(0, 8).map((photo) => (
-                            <div key={photo.id} className="aspect-square bg-surface border border-light overflow-hidden">
-                                {photo.url ? (
-                                    <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
-                                ) : (
-                                    <div className="w-full h-full flex items-center justify-center text-[10px] text-on-surface-muted">
-                                        No image
+            ) : (
+                <>
+                    {/* Live grid preview — always visible */}
+                    <div className="grid grid-cols-4 sm:grid-cols-6 gap-1.5 mb-4">
+                        {galleryPhotos.map((photo, i) => (
+                            <div key={photo.id} className="aspect-square rounded-lg bg-surface border border-light overflow-hidden">
+                                {photo.url
+                                    ? <img src={photo.url} alt={photo.caption ?? ''} className="w-full h-full object-cover" />
+                                    : <div className="w-full h-full flex items-center justify-center">
+                                        <MSO icon="image" className="text-[18px] text-on-surface-muted/30" />
                                     </div>
-                                )}
+                                }
                             </div>
                         ))}
                     </div>
-                </div>
+
+                    <div className="space-y-2">
+                        {galleryPhotos.map((photo, idx) => (
+                            <GalleryPhotoCard
+                                key={photo.id}
+                                photo={photo}
+                                idx={idx}
+                                onChange={updated => {
+                                    const next = [...galleryPhotos]; next[idx] = { ...updated, id: photo.id }; setGalleryPhotos(next)
+                                }}
+                                onRemove={() => setGalleryPhotos(galleryPhotos.filter((_, i) => i !== idx))}
+                            />
+                        ))}
+                    </div>
+                </>
             )}
         </SettingsSection>
+    )
+}
+
+// ─── Tab config ───────────────────────────────────────────────────────────────
+
+type TabId = 'theme' | 'brand' | 'styling' | 'components'
+
+const APPEARANCE_TABS: { id: TabId; label: string; icon: string; description: string }[] = [
+    { id: 'theme', label: 'Theme', icon: 'palette', description: 'Layout & visual style' },
+    { id: 'brand', label: 'Brand', icon: 'storefront', description: 'Logo & identity' },
+    { id: 'styling', label: 'Styling', icon: 'format_paint', description: 'Colors & typography' },
+    { id: 'components', label: 'Components', icon: 'view_quilt', description: 'Hero, slides & gallery' },
+]
+
+// ─── Tab bar ──────────────────────────────────────────────────────────────────
+
+function AppearanceTabBar({
+    active,
+    onChange,
+}: {
+    active: TabId
+    onChange: (id: TabId) => void
+}) {
+    return (
+        <div className="flex gap-0.5 border-b border-light mb-1 overflow-x-auto scrollbar-none">
+            {APPEARANCE_TABS.map((tab) => {
+                const isActive = active === tab.id
+                return (
+                    <button
+                        key={tab.id}
+                        onClick={() => onChange(tab.id)}
+                        className={cn(
+                            'flex items-center gap-2 px-3 sm:px-4 py-2.5 text-[13px] whitespace-nowrap border-b-2 -mb-px transition-all duration-150 shrink-0',
+                            isActive
+                                ? 'border-foreground text-foreground font-medium'
+                                : 'border-transparent text-on-surface-muted hover:text-foreground hover:border-light-strong'
+                        )}
+                    >
+                        <MSO
+                            icon={tab.icon}
+                            className="text-[16px] shrink-0"
+                            fill={isActive ? 1 : 0}
+                        />
+                        <span>{tab.label}</span>
+                    </button>
+                )
+            })}
+        </div>
     )
 }
 
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function AppearanceSettings(props: AppearanceSettingsProps) {
+    const [tab, setTab] = useState<TabId>('theme')
+
     return (
-        <div className="space-y-4">
-            <ThemeSection themeId={props.themeId} setThemeId={props.setThemeId} slug={props.store.slug} />
-            <HeroSection
-                store={props.store}
-                heroTitle={props.heroTitle} setHeroTitle={props.setHeroTitle}
-                heroSubtitle={props.heroSubtitle} setHeroSubtitle={props.setHeroSubtitle}
-                heroImage={props.heroImage} setHeroImage={props.setHeroImage}
-                heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
-                logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
-                logoPath={props.logoPath} setLogoPath={props.setLogoPath}
-            />
-            <TypographySection
-                headingFont={props.headingFont} setHeadingFont={props.setHeadingFont}
-                bodyFont={props.bodyFont} setBodyFont={props.setBodyFont}
-                borderRadius={props.borderRadius} setBorderRadius={props.setBorderRadius}
-            />
-            <ColorsSection
-                primaryColor={props.primaryColor} setPrimaryColor={props.setPrimaryColor}
-                secondaryColor={props.secondaryColor} setSecondaryColor={props.setSecondaryColor}
-                accentColor={props.accentColor} setAccentColor={props.setAccentColor}
-                bgColor={props.bgColor} setBgColor={props.setBgColor}
-                fgColor={props.fgColor} setFgColor={props.setFgColor}
-                mutedColor={props.mutedColor} setMutedColor={props.setMutedColor}
-                darkPrimaryColor={props.darkPrimaryColor} setDarkPrimaryColor={props.setDarkPrimaryColor}
-                darkBgColor={props.darkBgColor} setDarkBgColor={props.setDarkBgColor}
-                darkFgColor={props.darkFgColor} setDarkFgColor={props.setDarkFgColor}
-                darkMutedColor={props.darkMutedColor} setDarkMutedColor={props.setDarkMutedColor}
-            />
-            <SlidesSection store={props.store} heroSlides={props.heroSlides} setHeroSlides={props.setHeroSlides} />
-            <GallerySection store={props.store} galleryPhotos={props.galleryPhotos} setGalleryPhotos={props.setGalleryPhotos} />
+        <div className="space-y-0">
+            <AppearanceTabBar active={tab} onChange={setTab} />
+
+            <div className="pt-4 space-y-4">
+
+                {/* ── Theme ── */}
+                {tab === 'theme' && (
+                    <ThemeSection
+                        themeId={props.themeId}
+                        setThemeId={props.setThemeId}
+                        slug={props.store.slug}
+                    />
+                )}
+
+                {/* ── Brand ── */}
+                {tab === 'brand' && (
+                    <HeroSection
+                        store={props.store}
+                        heroTitle={props.heroTitle} setHeroTitle={props.setHeroTitle}
+                        heroSubtitle={props.heroSubtitle} setHeroSubtitle={props.setHeroSubtitle}
+                        heroImage={props.heroImage} setHeroImage={props.setHeroImage}
+                        heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
+                        logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
+                        logoPath={props.logoPath} setLogoPath={props.setLogoPath}
+                    />
+                )}
+
+                {/* ── Styling: Colors + Typography stacked ── */}
+                {tab === 'styling' && (
+                    <>
+                        <ColorsSection
+                            primaryColor={props.primaryColor} setPrimaryColor={props.setPrimaryColor}
+                            secondaryColor={props.secondaryColor} setSecondaryColor={props.setSecondaryColor}
+                            accentColor={props.accentColor} setAccentColor={props.setAccentColor}
+                            bgColor={props.bgColor} setBgColor={props.setBgColor}
+                            fgColor={props.fgColor} setFgColor={props.setFgColor}
+                            mutedColor={props.mutedColor} setMutedColor={props.setMutedColor}
+                            darkPrimaryColor={props.darkPrimaryColor} setDarkPrimaryColor={props.setDarkPrimaryColor}
+                            darkBgColor={props.darkBgColor} setDarkBgColor={props.setDarkBgColor}
+                            darkFgColor={props.darkFgColor} setDarkFgColor={props.setDarkFgColor}
+                            darkMutedColor={props.darkMutedColor} setDarkMutedColor={props.setDarkMutedColor}
+                        />
+                        <TypographySection
+                            headingFont={props.headingFont} setHeadingFont={props.setHeadingFont}
+                            bodyFont={props.bodyFont} setBodyFont={props.setBodyFont}
+                            borderRadius={props.borderRadius} setBorderRadius={props.setBorderRadius}
+                        />
+                    </>
+                )}
+
+                {/* ── Components: Hero image + Slides + Gallery ── */}
+                {tab === 'components' && (
+                    <>
+                        <SlidesSection
+                            store={props.store}
+                            heroSlides={props.heroSlides}
+                            setHeroSlides={props.setHeroSlides}
+                        />
+                        <GallerySection
+                            store={props.store}
+                            galleryPhotos={props.galleryPhotos}
+                            setGalleryPhotos={props.setGalleryPhotos}
+                        />
+                    </>
+                )}
+            </div>
         </div>
     )
 }

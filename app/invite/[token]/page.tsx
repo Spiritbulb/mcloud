@@ -27,7 +27,7 @@ export default async function AcceptInvitePage({
 
     if (!invite) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-[100dvh] flex items-center justify-center">
                 <div className="text-center space-y-2">
                     <p className="text-lg font-semibold">Invite not found</p>
                     <p className="text-sm text-muted-foreground">

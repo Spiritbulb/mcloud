@@ -18,7 +18,7 @@ export const SECTIONS: readonly NavSection[] = [
         tabs: [
             { id: 'home', label: 'Overview', icon: 'home' },
             { id: 'general', label: 'General', icon: 'storefront' },
-            { id: 'members', label: 'Members', icon: 'group' },
+
             { id: 'appearance', label: 'Appearance', icon: 'palette' },
         ],
     },
@@ -43,6 +43,7 @@ export const SECTIONS: readonly NavSection[] = [
         id: 'advanced',
         label: 'Advanced',
         tabs: [
+            { id: 'members', label: 'Members', icon: 'group' },
             { id: 'domain', label: 'Domain', icon: 'language', beta: true },
             {
                 id: 'integrations',
@@ -71,10 +72,22 @@ type ErrorType = 'unauthenticated' | 'forbidden' | 'unknown' | null
 export default function SettingsShell({
     children,
     slug,
+    initialStore,
+    initialError,
 }: {
     children: React.ReactNode
     slug: string
+    initialStore: any
+    initialError: 'unauthenticated' | 'forbidden' | 'unknown' | null
 }) {
+    const store = initialStore
+    const error = initialError
+
+    const user = store ? {
+        name: store.user?.name ?? 'Account',
+        email: store.user?.email ?? '',
+        avatarUrl: store.user?.avatar_url ?? undefined,
+    } : null
     const pathname = usePathname()
     const router = useRouter()
 
@@ -93,57 +106,17 @@ export default function SettingsShell({
 
     const activeLabel = ALL_TABS.find((t) => t.id === activeId)?.label ?? 'Overview'
 
-    const [user, setUser] = useState<{ name: string; email: string; avatarUrl?: string } | null>(null)
-    const [store, setStore] = useState<any>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<ErrorType>(null)
     const [activeSubTab, setActiveSubTab] = useState<string>('')
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
-
-    useEffect(() => {
-        async function load() {
-            try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}`, {
-                    credentials: 'include',
-                })
-                console.log('[SettingsShell] status:', res.status, 'url:', res.url)
-                if (res.status === 401) { setError('unauthenticated'); return }
-                if (res.status === 403 || res.status === 404) { setError('forbidden'); return }
-                if (!res.ok) { setError('unknown'); return }
-
-                const data = await res.json()
-                setStore(data)
-                setUser({
-                    name: data.user?.name ?? 'Account',
-                    email: data.user?.email ?? '',
-                    avatarUrl: data.user?.avatar_url ?? undefined,
-                })
-            } catch (e) {
-                console.error('[SettingsShell]', e)
-                setError('unknown')
-            } finally {
-                setLoading(false)
-            }
-        }
-        load()
-    }, [slug])
-
     useEffect(() => {
         const handler = () => setMobileNavOpen(true)
         window.addEventListener('mobile-nav-open', handler)
         return () => window.removeEventListener('mobile-nav-open', handler)
     }, [])
 
-    // ── Loading ───────────────────────────────────────────────────────────────
-    if (loading) return (
-        <div className="h-screen flex items-center justify-center bg-background">
-            <div className="w-5 h-5 rounded-full border-2 border-foreground/20 border-t-foreground animate-spin" />
-        </div>
-    )
-
     // ── Error ─────────────────────────────────────────────────────────────────
     if (error || !store) return (
-        <div className="h-screen flex flex-col items-center justify-center gap-2 text-center px-6">
+        <div className="h-[100dvh] flex flex-col items-center justify-center gap-2 text-center px-6">
             <p className="text-[15px] font-medium text-foreground">
                 {error === 'unauthenticated' && 'You need to be signed in.'}
                 {error === 'forbidden' && "You don't have access to this store."}
@@ -189,15 +162,10 @@ export default function SettingsShell({
             defaultOpen={false}
             style={{
                 display: 'contents',
-                '--sidebar-width': '15rem',
-                '--sidebar-background': 'hsl(var(--background))',
-                '--sidebar-foreground': 'hsl(var(--foreground))',
-                '--sidebar-border': 'hsl(var(--border))',
-                '--sidebar-accent': 'hsl(var(--accent))',
-                '--sidebar-accent-foreground': 'hsl(var(--accent-foreground))',
+                '--sidebar-width': '15rem'
             } as React.CSSProperties}
         >
-            <div data-settings-shell className="h-screen overflow-hidden flex bg-background">
+            <div data-settings-shell className="h-[100dvh] overflow-hidden flex bg-background">
 
                 {/* Desktop sidebar */}
                 <SettingsNav
@@ -222,6 +190,7 @@ export default function SettingsShell({
                     store={navStore}
                     allStores={store.allStores ?? [navStore]}
                     open={mobileNavOpen}
+                    onOpen={() => setMobileNavOpen(true)}
                     onClose={() => setMobileNavOpen(false)}
                 />
 

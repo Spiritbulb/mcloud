@@ -209,10 +209,10 @@ export default function HomeClient() {
     }
 
     return (
-        <div className="min-h-screen bg-background overflow-x-hidden">
+        <div className="min-h-[100dvh] bg-background overflow-x-hidden">
 
             {/* ── HERO ─────────────────────────────────────────────────────────── */}
-            <section className="relative h-screen flex bg-background overflow-hidden">
+            <section className="relative h-[100dvh] flex bg-background overflow-hidden">
 
                 <div className="relative z-10 md:py-10 py-20 container mx-auto px-6 md:px-12 max-w-6xl">
                     <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -405,7 +405,7 @@ export default function HomeClient() {
             </section>
 
             {/* ── FINAL CTA ────────────────────────────────────────────────────── */}
-            <section className="dark-section relative min-h-[100vh] flex items-center justify-center overflow-hidden">
+            <section className="dark-section relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
                 {stickers.map((s, i) => (
                     <FloatingStickerImage key={i} s={s} size={48} />
                 ))}

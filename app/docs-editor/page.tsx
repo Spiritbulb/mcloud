@@ -47,7 +47,7 @@ export default async function DocsEditorPage() {
     // Logged in but not an admin → show a clear rejection
     if (role !== "admin") {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center px-4">
+            <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4">
                 <div className="text-center space-y-3 max-w-sm">
                     <p className="text-4xl">🔒</p>
                     <h1 className="text-xl font-semibold text-foreground">Access denied</h1>

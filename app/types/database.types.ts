@@ -1350,6 +1350,39 @@ export type Database = {
           },
         ]
       }
+      store_visits: {
+        Row: {
+          store_id: string
+          user_id: string
+          visited_at: string
+        }
+        Insert: {
+          store_id: string
+          user_id: string
+          visited_at?: string
+        }
+        Update: {
+          store_id?: string
+          user_id?: string
+          visited_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_visits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_visits_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stores: {
         Row: {
           created_at: string | null

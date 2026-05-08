@@ -102,6 +102,28 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next()
   }
 
+  // ── 0b. TWA Mobile Subdomain (m.menengai.cloud) ───────────────────────────
+  // TWA does not support wildcard subdomains in assetlinks.json, so stores
+  // are served via /store/{slug} paths on this fixed subdomain instead.
+  // Skip all redirect logic and let Next.js handle routes directly.
+  if (host === 'm.menengai.cloud') {
+    if (pathname.startsWith('/auth/')) {
+      return auth0.middleware(request)
+    }
+
+    if (PROTECTED_SUBPATHS.some((sub) => pathname.startsWith('/store/') && pathname.includes(sub))) {
+      const session = await auth0.getSession(request)
+      if (!session?.user) {
+        return NextResponse.redirect(
+          new URL(`${proto}://menengai.cloud/auth/login`, request.url),
+          302,
+        )
+      }
+    }
+
+    return NextResponse.next()
+  }
+
   // ── 1. Auth / API / _next Bypass ─────────────────────────────────────────
   // /api/ routes pass through directly to Next.js API handlers.
   // auth0.middleware handles session refresh and callback routing.

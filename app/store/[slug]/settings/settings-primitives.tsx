@@ -37,19 +37,19 @@ export function SettingsSection({
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="rounded-xl border border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface] overflow-hidden"
+            className="rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden"
         >
             {(title || description) && (
-                <div className="px-6 py-4 border-b border-[--md-sys-color-outline-variant] flex items-start justify-between gap-4">
+                <div className="px-6 py-4 border-b border-[var(--md-sys-color-outline-variant)] flex items-start justify-between gap-4">
                     <div>
                         {title && (
-                            <h3 className="text-[14px] font-semibold text-[--md-sys-color-on-surface] leading-snug tracking-tight"
+                            <h3 className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)] leading-snug tracking-tight"
                                 style={{ fontFamily: 'var(--font-lato), system-ui, sans-serif' }}>
                                 {title}
                             </h3>
                         )}
                         {description && (
-                            <p className="text-[12.5px] text-[--md-sys-color-on-surface-variant] mt-1 leading-snug">
+                            <p className="text-[12.5px] text-[var(--md-sys-color-on-surface-variant)] mt-1 leading-snug">
                                 {description}
                             </p>
                         )}
@@ -77,12 +77,12 @@ export function SettingsField({
 }) {
     return (
         <div className="space-y-2">
-            <label className="block text-[11px] font-semibold text-[--md-sys-color-on-surface-variant] uppercase tracking-[0.06em]">
+            <label className="block text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)] uppercase tracking-[0.06em]">
                 {label}
             </label>
             {children}
             {hint && (
-                <p className="text-[11px] text-[--md-sys-color-on-surface-variant] opacity-60 leading-snug">
+                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] opacity-60 leading-snug">
                     {hint}
                 </p>
             )}
@@ -111,7 +111,7 @@ export function SaveBar({
                     disabled={saving}
                     className={cn(
                         'pointer-events-auto inline-flex items-center gap-2 h-10 px-6',
-                        'bg-[--md-sys-color-primary] text-[--md-sys-color-on-primary]',
+                        'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
                         'text-[13px] font-medium rounded-full shadow-lg',
                         'hover:opacity-90 hover:shadow-xl transition-all duration-150',
                         saving && 'opacity-60 cursor-not-allowed'
@@ -157,8 +157,8 @@ export function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }
                 >
                     <div className={cn(
                         'flex items-center gap-3 px-5 py-3 rounded-full text-[13px]',
-                        'border border-[--md-sys-color-outline-variant]',
-                        'bg-[--md-sys-color-surface]/95 backdrop-blur shadow-xl',
+                        'border border-[var(--md-sys-color-outline-variant)]',
+                        'bg-[var(--md-sys-color-surface)]/95 backdrop-blur shadow-xl',
                     )}>
                         {saving ? (
                             <>
@@ -171,18 +171,18 @@ export function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }
                                         '--md-circular-progress-active-indicator-width': '3',
                                     }}
                                 />
-                                <span className="text-[--md-sys-color-on-surface-variant] font-medium">
+                                <span className="text-[var(--md-sys-color-on-surface-variant)] font-medium">
                                     Saving…
                                 </span>
                             </>
                         ) : (
                             <>
-                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[--md-sys-color-primary-container]">
-                                    <span className="material-symbols-outlined text-[14px] text-[--md-sys-color-primary]">
+                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-[var(--md-sys-color-primary-container)]">
+                                    <span className="material-symbols-outlined text-[14px] text-[var(--md-sys-color-primary)]">
                                         check
                                     </span>
                                 </div>
-                                <span className="text-[--md-sys-color-on-surface] font-medium">
+                                <span className="text-[var(--md-sys-color-on-surface)] font-medium">
                                     Changes saved
                                 </span>
                             </>
@@ -200,16 +200,16 @@ export function ProGate({ feature }: { feature: string }) {
     return (
         <SettingsSection>
             <div className="py-16 flex flex-col items-center gap-4 text-center">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[--md-sys-color-primary-container]">
-                    <span className="material-symbols-outlined text-[22px] text-[--md-sys-color-primary]">
+                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-[var(--md-sys-color-primary-container)]">
+                    <span className="material-symbols-outlined text-[22px] text-[var(--md-sys-color-primary)]">
                         lock
                     </span>
                 </div>
                 <div className="space-y-1">
-                    <p className="text-[13px] font-medium text-[--md-sys-color-on-surface]">
+                    <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
                         {feature} is on its way
                     </p>
-                    <p className="text-[12px] text-[--md-sys-color-on-surface-variant] max-w-xs leading-relaxed">
+                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] max-w-xs leading-relaxed">
                         This feature isn't available yet — check back soon.
                     </p>
                 </div>

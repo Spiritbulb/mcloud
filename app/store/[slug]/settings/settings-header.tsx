@@ -40,7 +40,7 @@ function ThemeToggle() {
         <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+            className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
         >
             <MSO icon={isDark ? 'light_mode' : 'dark_mode'} className="text-[18px]" />
@@ -62,12 +62,12 @@ export function SettingsHeader({
     onOpenMobileNav?: () => void
 }) {
     return (
-        <header className="shrink-0 h-[57px] border-b border-[--md-sys-color-outline-variant] bg-[--md-sys-color-surface] z-40 flex items-center px-4 md:px-5 gap-3">
+        <header className="shrink-0 h-[57px] bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
 
             {/* Mobile menu button */}
             <button
                 onClick={onOpenMobileNav}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors shrink-0"
+                className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors shrink-0"
                 aria-label="Open navigation"
             >
                 <MSO icon={mobileOpen ? 'close' : 'menu'} className="text-[20px]" />
@@ -75,9 +75,9 @@ export function SettingsHeader({
 
             {/* Page label — breadcrumb */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
-                <span className="text-[13px] text-[--md-sys-color-on-surface-variant]">Settings</span>
-                <MSO icon="chevron_right" className="text-[16px] text-[--md-sys-color-on-surface-variant] opacity-40 shrink-0" />
-                <span className="text-[13px] font-medium text-[--md-sys-color-on-surface] truncate">
+                <span className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">Settings</span>
+                <MSO icon="chevron_right" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
+                <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
                     {activeLabel}
                 </span>
             </div>
@@ -94,7 +94,7 @@ export function SettingsHeader({
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Support"
-                    className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+                    className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
                 >
                     <MSO icon="help_outline" className="text-[18px]" />
                 </Link>
@@ -103,13 +103,13 @@ export function SettingsHeader({
                 <div className="hidden md:block">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center justify-center w-8 h-8 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors">
+                            <button className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">
                                 <MSO icon="more_horiz" className="text-[18px]" />
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent
                             align="end"
-                            className="w-48 bg-[--md-sys-color-surface] border border-[--md-sys-color-outline-variant] shadow-lg rounded-xl p-1"
+                            className="w-48 bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] shadow-lg rounded-xl p-1"
                         >
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
                                 <Link
@@ -118,7 +118,7 @@ export function SettingsHeader({
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"
                                 >
-                                    <MSO icon="menu_book" className="text-[16px] text-[--md-sys-color-on-surface-variant]" />
+                                    <MSO icon="menu_book" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
                                     Documentation
                                 </Link>
                             </DropdownMenuItem>
@@ -129,11 +129,11 @@ export function SettingsHeader({
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"
                                 >
-                                    <MSO icon="new_releases" className="text-[16px] text-[--md-sys-color-on-surface-variant]" />
+                                    <MSO icon="new_releases" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
                                     Changelog
                                 </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuSeparator className="my-1 bg-[--md-sys-color-outline-variant]" />
+                            <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
                                 <Link
                                     href="https://status.menengai.cloud"
@@ -141,7 +141,7 @@ export function SettingsHeader({
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"
                                 >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-[--md-sys-color-primary] shrink-0" />
+                                    <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-primary)] shrink-0" />
                                     System Status
                                 </Link>
                             </DropdownMenuItem>

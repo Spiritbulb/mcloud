@@ -1,3 +1,4 @@
 {
-    "tailwindCSS.suggestions": false
+    "tailwindCSS.suggestions": false,
+    "css.lint.unknownAtRules": "ignore"
 }

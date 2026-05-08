@@ -28,6 +28,7 @@ declare global {
                 target?: string
             }
             'md-divider': React.HTMLAttributes<HTMLElement>
+
         }
     }
 }
@@ -87,7 +88,7 @@ function CollapseToggle({
 }) {
     if (railMode) {
         // In rail mode just render a divider between sections
-        return <div className="mx-2 my-1 h-px bg-[--md-sys-color-outline-variant]" />
+        return <div className="mx-2 my-1 h-px bg-[var(--md-sys-color-outline-variant)]" />
     }
 
     return (
@@ -95,11 +96,11 @@ function CollapseToggle({
             onClick={onToggle}
             className="flex items-center justify-between w-full px-3 py-1.5 group"
         >
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-[--md-sys-color-on-surface-variant] opacity-60">
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-[var(--md-sys-color-on-surface-variant)] opacity-60">
                 {label}
             </span>
             <span className={cn(
-                'material-symbols-outlined text-[14px] text-[--md-sys-color-on-surface-variant] opacity-40',
+                'material-symbols-outlined text-[14px] text-[var(--md-sys-color-on-surface-variant)] opacity-40',
                 'transition-transform duration-150',
                 collapsed && '-rotate-90'
             )}>
@@ -164,18 +165,18 @@ function NavItem({
                         : 'h-8 px-3',
                     // Active state — filled green pill
                     isActive && !hasSubTabs
-                        ? 'bg-[hsl(var(--background))] text-[hsl(var(--foreground))] font-medium'
+                        ? 'bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-medium'
                         : isActive && hasSubTabs
-                            ? 'text-[hsl(var(--brand))] font-medium hover:bg-[hsl(var(--muted-foreground))]'
-                            : 'text-[hsl(var(--muted-foreground))] hover:bg-[hsl(var(--background))] hover:text-[--md-sys-color-on-surface]'
+                            ? 'text-[rgb(var(--brand))] font-medium hover:bg-[rgb(var(--muted-foreground))]'
+                            : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-[var(--md-sys-color-on-surface)]'
                 )}
             >
                 <span className={cn(
                     'material-symbols-outlined shrink-0',
                     railMode ? 'text-[20px]' : 'text-[18px]',
                     isActive
-                        ? 'text-[hsl(var(--brand))]'
-                        : 'text-[hsl(var(--foreground))]'
+                        ? 'text-[rgb(var(--brand))]'
+                        : 'text-[rgb(var(--foreground))]'
                 )}>
                     {tab.icon}
                 </span>
@@ -194,7 +195,7 @@ function NavItem({
                         {hasSubTabs && (
                             <span className={cn(
                                 'material-symbols-outlined text-[16px] shrink-0 transition-transform duration-150',
-                                isActive ? 'text-[--md-sys-color-primary]' : 'text-[--md-sys-color-on-surface-variant]',
+                                isActive ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]',
                                 open && 'rotate-180'
                             )}>
                                 expand_more
@@ -219,8 +220,8 @@ function NavItem({
                                     className={cn(
                                         'flex items-center w-full h-7 px-2 rounded-md text-[12px] transition-colors duration-100',
                                         isSubActive
-                                            ? 'bg-[--md-sys-color-primary-container] text-[--md-sys-color-on-primary-container] font-medium'
-                                            : 'text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] hover:text-[--md-sys-color-on-surface]'
+                                            ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] font-medium'
+                                            : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
                                     )}
                                 >
                                     {sub.label}
@@ -330,7 +331,7 @@ function StoreSwitcher({
                 style={{ '--md-menu-container-color': 'var(--md-sys-color-surface)', minWidth: '240px' }}
             >
                 <div className="px-3 py-2">
-                    <p className="text-[11px] font-semibold text-[--md-sys-color-on-surface-variant] uppercase tracking-wider">
+                    <p className="text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)] uppercase tracking-wider">
                         Your stores
                     </p>
                 </div>
@@ -352,7 +353,7 @@ function StoreSwitcher({
                         <div slot="headline" className="flex items-center gap-2">
                             <span className="text-[13px] font-medium">{s.name}</span>
                             {s.slug === store.slug && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[--md-sys-color-primary]" />
+                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-primary)]" />
                             )}
                         </div>
                         <span slot="supporting-text" className="capitalize text-[11px]">{s.role}</span>
@@ -370,8 +371,8 @@ function StoreSwitcher({
                 id={anchorId}
                 onClick={() => hasMultiple && setOpen(v => !v)}
                 className={cn(
-                    'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100 bg-[hsl(var(--background))]',
-                    hasMultiple && 'hover:bg-[--md-sys-color-surface-variant] cursor-pointer'
+                    'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100 bg-[rgb(var(--background))]',
+                    hasMultiple && 'hover:bg-[var(--md-sys-color-surface-variant)] cursor-pointer'
                 )}
             >
                 <div className="flex w-8 h-8 shrink-0 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
@@ -381,15 +382,15 @@ function StoreSwitcher({
                     }
                 </div>
                 <div className="flex flex-col min-w-0 flex-1 text-left">
-                    <span className="text-[12px] font-semibold text-[--md-sys-color-on-surface] truncate leading-tight">
+                    <span className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)] truncate leading-tight">
                         {store.name}
                     </span>
-                    <span className="text-[10px] text-[--md-sys-color-on-surface-variant] truncate leading-tight">
+                    <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
                         {store.custom_domain ? `www.${store.custom_domain}` : `${store.slug}.menengai.cloud`}
                     </span>
                 </div>
                 {hasMultiple && (
-                    <span className="material-symbols-outlined text-[16px] text-[--md-sys-color-on-surface-variant]">
+                    <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-surface-variant)]">
                         unfold_more
                     </span>
                 )}
@@ -426,7 +427,7 @@ function UtilityItems({
                         title={railMode ? item.label : undefined}
                         className={cn(
                             'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
-                            'text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] hover:text-[--md-sys-color-on-surface]',
+                            'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
                             railMode
                                 ? 'justify-center w-10 h-10 mx-auto relative'
                                 : 'h-8 px-3'
@@ -435,7 +436,7 @@ function UtilityItems({
                         <span className="material-symbols-outlined text-[18px] shrink-0 relative">
                             {item.icon}
                             {item.badge != null && item.badge > 0 && (
-                                <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[--md-sys-color-error] text-[--md-sys-color-on-error] text-[9px] font-bold leading-none">
+                                <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] text-[9px] font-bold leading-none">
                                     {item.badge > 9 ? '9+' : item.badge}
                                 </span>
                             )}
@@ -444,7 +445,7 @@ function UtilityItems({
                             <>
                                 <span className="flex-1 text-left text-[13px]">{item.label}</span>
                                 {item.badge != null && item.badge > 0 && (
-                                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[--md-sys-color-error] text-[--md-sys-color-on-error] text-[10px] font-bold">
+                                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] text-[10px] font-bold">
                                         {item.badge > 9 ? '9+' : item.badge}
                                     </span>
                                 )}
@@ -477,7 +478,7 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                 title={railMode ? user.name : undefined}
                 className={cn(
                     'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none',
-                    'hover:bg-[--md-sys-color-surface-variant]',
+                    'hover:bg-[var(--md-sys-color-surface-variant)]',
                     railMode
                         ? 'justify-center w-10 h-10 mx-auto'
                         : 'w-full px-2 py-1.5'
@@ -492,15 +493,15 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                 {!railMode && (
                     <>
                         <div className="flex flex-col min-w-0 flex-1 text-left">
-                            <span className="text-[12px] font-medium text-[--md-sys-color-on-surface] truncate leading-tight">
+                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate leading-tight">
                                 {user.name}
                             </span>
-                            <span className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate leading-tight">
+                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
                                 {user.email}
                             </span>
                         </div>
                         <span className={cn(
-                            'material-symbols-outlined text-[18px] text-[--md-sys-color-on-surface-variant] transition-transform duration-150',
+                            'material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] transition-transform duration-150',
                             open && 'rotate-180'
                         )}>
                             expand_more
@@ -527,8 +528,8 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                         }
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-[12px] font-medium text-[--md-sys-color-on-surface] truncate">{user.name}</span>
-                        <span className="text-[11px] text-[--md-sys-color-on-surface-variant] truncate">{user.email}</span>
+                        <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
+                        <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
                     </div>
                 </div>
                 {/* @ts-ignore */}
@@ -536,7 +537,7 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                 {menuItems.map((item) => (
                     // @ts-ignore
                     <md-menu-item key={item.label} href={item.href} onClick={() => setOpen(false)}>
-                        <span slot="start" className="material-symbols-outlined text-[18px] text-[--md-sys-color-on-surface-variant]">
+                        <span slot="start" className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)]">
                             {item.icon}
                         </span>
                         <span slot="headline">{item.label}</span>
@@ -552,7 +553,7 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                             onClick={() => { setOpen(false); user.onSignOut?.() }}
                             style={{ '--md-menu-item-label-text-color': 'var(--md-sys-color-error)' }}
                         >
-                            <span slot="start" className="material-symbols-outlined text-[18px] text-[--md-sys-color-error]">
+                            <span slot="start" className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-error)]">
                                 logout
                             </span>
                             <span slot="headline">Sign out</span>
@@ -573,9 +574,9 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-md text-[--md-sys-color-on-surface-variant] hover:bg-[--md-sys-color-surface-variant] transition-colors"
+            className="p-1.5 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
         >
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined">
                 {railMode ? 'menu_open' : 'menu'}
             </span>
         </button>
@@ -617,8 +618,8 @@ function SidebarShell({
 
     return (
         <aside className={cn(
-            'flex flex-col h-[90vh] md:h-[98vh] my-auto ml-2 rounded-md',
-            'bg-brand-container dark:bg-brand-container/1',
+            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md',
+            'bg-card',
             'transition-all duration-200 ease-out',
             railMode ? 'w-[56px]' : 'w-[220px]'
         )}>
@@ -712,6 +713,45 @@ export function SettingsNav({
     )
 }
 
+// ─── ChevronTab ───────────────────────────────────────────────────────────────
+// Persistent left-edge tab — tap or drag right to open nav
+
+function ChevronTab({
+    onOpen,
+    dragX,
+}: {
+    onOpen: () => void
+    dragX: number
+}) {
+    // Tab peeks out 28px, slides with drag
+    const translate = Math.min(dragX, 240)
+
+    return (
+        <div
+            className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-50"
+            style={{ transform: `translateY(-50%) translateX(${translate}px)` }}
+        >
+            <button
+                onTouchStart={e => e.stopPropagation()}
+                onClick={onOpen}
+                aria-label="Open navigation"
+                className={cn(
+                    'flex items-center justify-center',
+                    'w-6 h-14 rounded-r-xl',
+                    'bg-[var(--md-sys-color-primary-container)]',
+                    'shadow-md',
+                    'transition-colors duration-150',
+                    'active:bg-[var(--md-sys-color-primary)]',
+                )}
+            >
+                <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">
+                    chevron_right
+                </span>
+            </button>
+        </div>
+    )
+}
+
 // ─── MobileSettingsNav ────────────────────────────────────────────────────────
 
 export function MobileSettingsNav({
@@ -725,6 +765,7 @@ export function MobileSettingsNav({
     allStores,
     open,
     onClose,
+    onOpen,
     notificationCount,
 }: {
     activeTab: string
@@ -737,6 +778,7 @@ export function MobileSettingsNav({
     allStores: NavStore[]
     open: boolean
     onClose: () => void
+    onOpen: () => void
     notificationCount?: number
 }) {
     const handleSelect = (id: TabId) => { onSelect(id); onClose() }
@@ -752,85 +794,26 @@ export function MobileSettingsNav({
 
     useEffect(() => setMounted(true), [])
 
-    // ── Swipe-to-open: listen on document when closed ──────────────────────────
-    useEffect(() => {
-        if (open) return // panel handles swipe-to-close internally
+    // ── Drag state for chevron tab ─────────────────────────────────────────────
+    const tabTouchStartX = useRef<number | null>(null)
+    const [tabDragX, setTabDragX] = useState(0)
 
-        const EDGE_THRESHOLD = 20   // px from left edge to start listening
-        const OPEN_THRESHOLD = 60  // px of horizontal drag to trigger open
-
-        const onTouchStart = (e: TouchEvent) => {
-            const t = e.touches[0]
-            if (t.clientX > EDGE_THRESHOLD) return
-            touchStartX.current = t.clientX
-            touchStartY.current = t.clientY
-            dragging.current = true
-            setDragX(0)
-        }
-
-        const onTouchMove = (e: TouchEvent) => {
-            if (!dragging.current || touchStartX.current === null) return
-            const t = e.touches[0]
-            const dx = t.clientX - touchStartX.current
-            const dy = Math.abs(t.clientY - (touchStartY.current ?? 0))
-            // Abort if more vertical than horizontal
-            if (dy > Math.abs(dx)) { dragging.current = false; setDragX(0); return }
-            if (dx < 0) return
-            setDragX(Math.min(dx, 240)) // cap at panel width
-        }
-
-        const onTouchEnd = (e: TouchEvent) => {
-            if (!dragging.current) return
-            const t = e.changedTouches[0]
-            const dx = t.clientX - (touchStartX.current ?? 0)
-            dragging.current = false
-            setDragX(0)
-            touchStartX.current = null
-            touchStartY.current = null
-            if (dx >= OPEN_THRESHOLD) {
-                // Trigger open via parent — we call the same onSelect approach
-                // but here we just signal open. Parent should expose an onOpen prop,
-                // so we fire a custom event the parent can listen to, OR you pass
-                // an `onOpen` prop (see note below).
-                window.dispatchEvent(new CustomEvent('mobile-nav-open'))
-            }
-        }
-
-        document.addEventListener('touchstart', onTouchStart, { passive: true })
-        document.addEventListener('touchmove', onTouchMove, { passive: true })
-        document.addEventListener('touchend', onTouchEnd, { passive: true })
-        return () => {
-            document.removeEventListener('touchstart', onTouchStart)
-            document.removeEventListener('touchmove', onTouchMove)
-            document.removeEventListener('touchend', onTouchEnd)
-        }
-    }, [open])
-
-    // ── Swipe-to-close: track drag while open ─────────────────────────────────
-    const CLOSE_THRESHOLD = 60
-
-    const handlePanelTouchStart = (e: React.TouchEvent) => {
-        touchStartX.current = e.touches[0].clientX
-        touchStartY.current = e.touches[0].clientY
-        dragging.current = true
+    const handleTabTouchStart = (e: React.TouchEvent) => {
+        tabTouchStartX.current = e.touches[0].clientX
+        setTabDragX(0)
     }
 
-    const handlePanelTouchMove = (e: React.TouchEvent) => {
-        if (!dragging.current || touchStartX.current === null) return
-        const dx = e.touches[0].clientX - touchStartX.current
-        const dy = Math.abs(e.touches[0].clientY - (touchStartY.current ?? 0))
-        if (dy > Math.abs(dx)) { dragging.current = false; setDragX(0); return }
-        setDragX(Math.min(0, dx)) // only track leftward drag when open
+    const handleTabTouchMove = (e: React.TouchEvent) => {
+        if (tabTouchStartX.current === null) return
+        const dx = e.touches[0].clientX - tabTouchStartX.current
+        if (dx < 0) return
+        setTabDragX(Math.min(dx, 240))
     }
 
-    const handlePanelTouchEnd = (e: React.TouchEvent) => {
-        if (!dragging.current) return
-        const dx = e.changedTouches[0].clientX - (touchStartX.current ?? 0)
-        dragging.current = false
-        setDragX(0)
-        touchStartX.current = null
-        touchStartY.current = null
-        if (dx <= -CLOSE_THRESHOLD) onClose()
+    const handleTabTouchEnd = () => {
+        if (tabDragX >= 60) onOpen()
+        setTabDragX(0)
+        tabTouchStartX.current = null
     }
 
     const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
@@ -851,20 +834,38 @@ export function MobileSettingsNav({
                     onClick={onClose}
                 />
             )}
+            {/* Chevron tab — always visible when nav is closed */}
+            {!open && (
+                <div
+                    className="md:hidden fixed left-0 top-1/2 z-50"
+                    style={{ transform: `translateY(-50%) translateX(${Math.min(tabDragX, 240)}px)` }}
+                    onTouchStart={handleTabTouchStart}
+                    onTouchMove={handleTabTouchMove}
+                    onTouchEnd={handleTabTouchEnd}
+                >
+                    <button
+                        onClick={onOpen}
+                        aria-label="Open navigation"
+                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-[var(--md-sys-color-primary-container)] shadow-md active:bg-[var(--md-sys-color-primary)]"
+                    >
+                        <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">
+                            chevron_right
+                        </span>
+                    </button>
+                </div>
+            )}
 
             <div
                 className={cn(
                     // Key change: `fixed` + fully off-screen when closed — zero layout impact
-                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[80vh] w-[240px] my-auto ml-2 rounded-lg',
-                    'bg-[hsl(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
+                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[80dvh] w-[240px] my-auto ml-2 rounded-lg',
+                    'bg-[rgb(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
                     // Disable CSS transition while user is actively dragging for immediate feedback
                     dragging.current ? '' : 'transition-transform duration-200 ease-out',
                     open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]', // +ml-2 so it fully exits
                 )}
                 style={panelTranslate ? { transform: panelTranslate } : undefined}
-                onTouchStart={handlePanelTouchStart}
-                onTouchMove={handlePanelTouchMove}
-                onTouchEnd={handlePanelTouchEnd}
+
             >
                 {/* Header with close */}
                 <div className="flex items-center justify-between px-4 py-3">
@@ -876,7 +877,7 @@ export function MobileSettingsNav({
                     <button
                         onClick={onClose}
                         aria-label="Close navigation"
-                        className="p-1.5 rounded-full hover:bg-[--md-sys-color-surface-variant] transition-colors text-[--md-sys-color-on-surface-variant]"
+                        className="p-1.5 rounded-full hover:bg-[var(--md-sys-color-surface-variant)] transition-colors text-[var(--md-sys-color-on-surface-variant)]"
                     >
                         <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>

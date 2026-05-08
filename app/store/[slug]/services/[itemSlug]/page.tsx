@@ -172,7 +172,7 @@ export default function ServiceSlugPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-[100dvh] flex items-center justify-center">
                 <div className="text-center space-y-3">
                     <Loader2 className="w-10 h-10 animate-spin mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.5 }} />
                     <p className="text-sm font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
@@ -185,7 +185,7 @@ export default function ServiceSlugPage() {
 
     if (error || !service) {
         return (
-            <div className="min-h-screen flex items-center justify-center">
+            <div className="min-h-[100dvh] flex items-center justify-center">
                 <div className="sf-card max-w-md w-full p-6 border space-y-3" style={{ borderColor: 'var(--sf-border-strong)' }}>
                     <p className="sf-heading font-semibold" style={{ color: 'var(--sf-foreground)' }}>
                         Service Not Found
