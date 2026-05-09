@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/client'
 import type { Tables } from '@/app/types/database.types'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
+import { motion, AnimatePresence } from 'framer-motion'
 
 type Store = Tables<'stores'>
 
@@ -30,62 +31,102 @@ const CURRENCIES = [
     { value: 'GBP', label: 'GBP — British Pound', flag: '🇬🇧' },
     { value: 'UGX', label: 'UGX — Ugandan Shilling', flag: '🇺🇬' },
     { value: 'TZS', label: 'TZS — Tanzanian Shilling', flag: '🇹🇿' },
+    { value: 'NGN', label: 'NGN — Nigerian Naira', flag: '🇳🇬' },
+    { value: 'GHS', label: 'GHS — Ghanaian Cedi', flag: '🇬🇭' },
+    { value: 'ZAR', label: 'ZAR — South African Rand', flag: '🇿🇦' },
 ]
 
 const TIMEZONES = [
-    { value: 'Africa/Nairobi', label: 'Nairobi (EAT, UTC+3)' },
-    { value: 'Africa/Lagos', label: 'Lagos (WAT, UTC+1)' },
-    { value: 'Africa/Johannesburg', label: 'Johannesburg (SAST, UTC+2)' },
-    { value: 'Africa/Cairo', label: 'Cairo (EET, UTC+2)' },
+    { value: 'EAT', label: 'Nairobi (EAT, UTC+3)' },
+    { value: 'WAT', label: 'Lagos (WAT, UTC+1)' },
+    { value: 'GMT', label: 'Accra (GMT, UTC+0)' },
+    { value: 'SAST', label: 'Johannesburg (SAST, UTC+2)' },
+    { value: 'EET', label: 'Cairo (EET, UTC+2)' },
     { value: 'UTC', label: 'UTC' },
-    { value: 'Europe/London', label: 'London (GMT/BST)' },
-    { value: 'America/New_York', label: 'New York (ET)' },
+    { value: 'BST', label: 'London (GMT/BST)' },
+    { value: 'CET', label: 'Paris (CET, UTC+1)' },
+    { value: 'ET', label: 'New York (ET)' },
+    { value: 'PT', label: 'Los Angeles (PT)' },
+    { value: 'GST', label: 'Dubai (GST, UTC+4)' },
 ]
 
 // ─── Field primitives ─────────────────────────────────────────────────────────
 
-function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: string }) {
+function FieldLabel({ children }: { children: React.ReactNode }) {
     return (
-        <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-2">
+        <label className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface-variant)] mb-1.5">
             {children}
-            {hint && (
-                <span className="ml-2 normal-case tracking-normal font-normal opacity-60 text-[11px]">
-                    {hint}
-                </span>
-            )}
         </label>
     )
 }
 
 const inputCls = cn(
-    'w-full h-10 px-3 rounded-lg border border-light bg-background text-foreground',
-    'text-[13px] outline-none transition-all duration-150',
-    'focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10',
-    'disabled:bg-surface disabled:text-on-surface-muted disabled:cursor-not-allowed',
-    'placeholder:text-on-surface-muted/40',
-    // Prevent iOS zoom
-    'text-base sm:text-[13px]',
+    'w-full h-10 px-3 rounded-xl border border-[var(--md-sys-color-outline-variant)]',
+    'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]',
+    'text-base sm:text-[13px] outline-none transition-all duration-150',
+    'focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15',
+    'disabled:bg-[var(--md-sys-color-surface-variant)] disabled:text-[var(--md-sys-color-on-surface-variant)] disabled:cursor-not-allowed',
+    'placeholder:text-[var(--md-sys-color-on-surface-variant)]/40',
 )
 
 function FieldInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
     return <input {...props} className={cn(inputCls, props.className)} />
 }
 
-function FieldSelect(props: React.SelectHTMLAttributes<HTMLSelectElement>) {
+// Plain select — used for timezone (and anything non-geographic)
+function FieldSelect({ value, onChange, className, children }: {
+    value: string
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+    className?: string
+    children: React.ReactNode
+}) {
     return (
         <div className="relative">
             <select
-                {...props}
-                className={cn(
-                    inputCls,
-                    'appearance-none cursor-pointer pl-3 pr-9',
-                    'text-base sm:text-[13px]',
-                    props.className,
-                )}
-            />
+                value={value}
+                onChange={onChange}
+                className={cn(inputCls, 'appearance-none cursor-pointer pr-9', className)}
+            >
+                {children}
+            </select>
             <MSO
                 icon="expand_more"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-on-surface-muted pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--md-sys-color-on-surface-variant)] pointer-events-none"
+            />
+        </div>
+    )
+}
+
+// Flag select — used for currency
+const FLAG_OVERRIDES: Record<string, string> = {
+    EUR: 'eu',
+    GBP: 'gb',
+}
+
+function CurrencySelect({ value, onChange, children }: {
+    value: string
+    onChange: (e: React.ChangeEvent<HTMLSelectElement>) => void
+    children: React.ReactNode
+}) {
+    const countryCode = FLAG_OVERRIDES[value] ?? value.slice(0, 2).toLowerCase()
+
+    return (
+        <div className="relative">
+            <img
+                src={`https://flagcdn.com/24x18/${countryCode}.png`}
+                alt=""
+                className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-auto rounded-[2px] pointer-events-none"
+            />
+            <select
+                value={value}
+                onChange={onChange}
+                className={cn(inputCls, 'appearance-none cursor-pointer pl-10 pr-9')}
+            >
+                {children}
+            </select>
+            <MSO
+                icon="expand_more"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--md-sys-color-on-surface-variant)] pointer-events-none"
             />
         </div>
     )
@@ -96,18 +137,19 @@ function FieldTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>)
         <textarea
             {...props}
             className={cn(
-                'w-full px-3 py-2.5 rounded-lg border border-light bg-background text-foreground',
+                'w-full px-3 py-2.5 rounded-xl border border-[var(--md-sys-color-outline-variant)]',
+                'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]',
                 'text-base sm:text-[13px] leading-relaxed outline-none resize-y',
                 'transition-all duration-150',
-                'focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10',
-                'placeholder:text-on-surface-muted/40',
+                'focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15',
+                'placeholder:text-[var(--md-sys-color-on-surface-variant)]/40',
                 props.className,
             )}
         />
     )
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
+// ─── Section ─────────────────────────────────────────────────────────────────
 
 function Section({ title, description, children }: {
     title: string
@@ -117,10 +159,8 @@ function Section({ title, description, children }: {
     return (
         <section className="space-y-4">
             <div>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">
-                    {title}
-                </p>
-                <p className="text-[12px] text-on-surface-muted/70 mt-0.5">{description}</p>
+                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">{title}</p>
+                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">{description}</p>
             </div>
             {children}
         </section>
@@ -128,50 +168,85 @@ function Section({ title, description, children }: {
 }
 
 // ─── Save bar ─────────────────────────────────────────────────────────────────
+// Only visible when there are unsaved changes (isDirty=true) or after a save attempt.
 
 type SaveState = 'idle' | 'saving' | 'saved' | 'error'
 
-function SaveBar({ saveState, onSave }: { saveState: SaveState; onSave: () => void }) {
-    const label = { idle: 'Save changes', saving: 'Saving…', saved: 'Saved', error: 'Try again' }[saveState]
-    const hint = { idle: 'You have unsaved changes', saving: 'Saving…', saved: 'All changes saved', error: 'Something went wrong' }[saveState]
-    const isError = saveState === 'error'
-    const isSaved = saveState === 'saved'
+function SaveBar({
+    isDirty,
+    saveState,
+    onSave,
+}: {
+    isDirty: boolean
+    saveState: SaveState
+    onSave: () => void
+}) {
+    const visible = isDirty || saveState === 'saving' || saveState === 'saved' || saveState === 'error'
+
+    const hint = {
+        idle: 'You have unsaved changes',
+        saving: 'Saving…',
+        saved: 'All changes saved',
+        error: 'Something went wrong',
+    }[saveState]
+
+    const label = {
+        idle: 'Save changes',
+        saving: 'Saving…',
+        saved: 'Saved',
+        error: 'Try again',
+    }[saveState]
 
     return (
-        <div className={cn(
-            'sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 z-10',
-            'border-t border-light bg-background/90 backdrop-blur-sm',
-            'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between',
-        )}>
-            <span className={cn(
-                'text-[12px] transition-colors duration-300 text-center sm:text-left flex items-center gap-1.5',
-                isSaved ? 'text-emerald-600' : isError ? 'text-red-500' : 'text-on-surface-muted'
-            )}>
-                {isSaved && <MSO icon="check_circle" className="text-[14px]" fill={1} />}
-                {isError && <MSO icon="error" className="text-[14px]" fill={1} />}
-                {hint}
-            </span>
-
-            <button
-                onClick={onSave}
-                disabled={saveState === 'saving' || saveState === 'saved'}
-                className={cn(
-                    'w-full sm:w-auto h-10 sm:h-9 px-5 rounded-lg',
-                    'text-[13px] font-semibold text-background transition-all duration-150',
-                    'disabled:cursor-not-allowed disabled:opacity-60',
-                    isSaved ? 'bg-emerald-600' :
-                        isError ? 'bg-red-500' :
-                            'bg-foreground hover:opacity-90 active:scale-[0.98]'
-                )}
-            >
-                {saveState === 'saving' ? (
-                    <span className="flex items-center justify-center gap-2">
-                        <span className="w-3.5 h-3.5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
-                        Saving…
+        <AnimatePresence>
+            {visible && (
+                <motion.div
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 8 }}
+                    transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
+                    className={cn(
+                        'sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 z-10',
+                        'border-t border-[var(--md-sys-color-outline-variant)]',
+                        'bg-[var(--md-sys-color-surface)]/90 backdrop-blur-sm',
+                        'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between',
+                    )}
+                >
+                    <span className={cn(
+                        'text-[12px] flex items-center gap-1.5 text-center sm:text-left transition-colors duration-200',
+                        saveState === 'saved' && 'text-[var(--md-sys-color-primary)]',
+                        saveState === 'error' && 'text-[var(--md-sys-color-error)]',
+                        (saveState === 'idle' || saveState === 'saving') && 'text-[var(--md-sys-color-on-surface-variant)]',
+                    )}>
+                        {saveState === 'saved' && <MSO icon="check_circle" className="text-[14px]" fill={1} />}
+                        {saveState === 'error' && <MSO icon="error" className="text-[14px]" fill={1} />}
+                        {hint}
                     </span>
-                ) : label}
-            </button>
-        </div>
+
+                    <button
+                        onClick={onSave}
+                        disabled={saveState === 'saving' || saveState === 'saved'}
+                        className={cn(
+                            'w-full sm:w-auto h-10 sm:h-9 px-5 rounded-full',
+                            'text-[13px] font-semibold transition-all duration-150',
+                            'disabled:cursor-not-allowed disabled:opacity-50',
+                            saveState === 'error'
+                                ? 'bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]'
+                                : saveState === 'saved'
+                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
+                                    : 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:opacity-90 active:scale-[0.98]',
+                        )}
+                    >
+                        {saveState === 'saving' ? (
+                            <span className="flex items-center justify-center gap-2">
+                                <span className="w-3.5 h-3.5 border-2 border-current/30 border-t-current rounded-full animate-spin" />
+                                Saving…
+                            </span>
+                        ) : label}
+                    </button>
+                </motion.div>
+            )}
+        </AnimatePresence>
     )
 }
 
@@ -181,11 +256,21 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
     const [name, setName] = useState(store.name)
     const [description, setDescription] = useState(store.description ?? '')
     const [currency, setCurrency] = useState(store.currency)
-    const [timezone, setTimezone] = useState(store.timezone)
-    const [isActive, setIsActive] = useState(store.is_active as boolean | undefined)
+    const [timezone, setTimezone] = useState(store.timezone ?? 'Africa/Nairobi')
+    const [isActive, setIsActive] = useState<boolean>(store.is_active ?? false)
     const [saveState, setSaveState] = useState<SaveState>('idle')
 
+    // Dirty check — compare current state against original store values
+    const isDirty = useMemo(() => (
+        name !== store.name ||
+        description !== (store.description ?? '') ||
+        currency !== store.currency ||
+        timezone !== (store.timezone ?? 'Africa/Nairobi') ||
+        isActive !== (store.is_active ?? false)
+    ), [name, description, currency, timezone, isActive, store])
+
     const handleSave = async () => {
+        if (!isDirty && saveState === 'idle') return
         setSaveState('saving')
         try {
             const supabase = createClient()
@@ -203,11 +288,11 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
     }
 
     return (
-        <div className="w-full max-w-5xl space-y-8 mx-auto">
+        <div className="w-full max-w-2xl space-y-8 mx-auto">
 
-            {/* ── Identity ── */}
+            {/* ── Identity ─────────────────────────────────────────────────── */}
             <Section title="Store identity" description="Basic information shown to your customers">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <FieldLabel>Store name</FieldLabel>
                         <FieldInput
@@ -217,15 +302,11 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         />
                     </div>
                     <div>
-                        <FieldLabel hint="contact support to change">Slug</FieldLabel>
+                        <FieldLabel>Store URL</FieldLabel>
                         <div className="relative">
-                            <FieldInput value={store.slug} disabled />
-                            <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-on-surface-muted/40" />
+                            <FieldInput value={`${store.slug}.menengai.cloud`} disabled />
+                            <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--md-sys-color-on-surface-variant)]/40" />
                         </div>
-                        <p className="text-[11px] text-on-surface-muted/60 mt-1.5 flex items-center gap-1">
-                            <MSO icon="link" className="text-[13px]" />
-                            {store.slug}.menengai.cloud
-                        </p>
                     </div>
                 </div>
                 <div>
@@ -239,22 +320,22 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                 </div>
             </Section>
 
-            <div className="h-px bg-light" />
+            <div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
 
-            {/* ── Locale ── */}
-            <Section title="Locale" description="Currency and timezone for your storefront">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+            {/* ── Locale ───────────────────────────────────────────────────── */}
+            <Section title="Locale" description="Currency and timezone for your storefront and reports">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                         <FieldLabel>Currency</FieldLabel>
-                        <FieldSelect value={currency} onChange={e => setCurrency(e.target.value)}>
+                        <CurrencySelect value={currency} onChange={e => setCurrency(e.target.value)}>
                             {CURRENCIES.map(c => (
                                 <option key={c.value} value={c.value}>{c.flag} {c.label}</option>
                             ))}
-                        </FieldSelect>
+                        </CurrencySelect>
                     </div>
                     <div>
                         <FieldLabel>Timezone</FieldLabel>
-                        <FieldSelect value={timezone ?? ''} onChange={e => setTimezone(e.target.value)}>
+                        <FieldSelect value={timezone} onChange={e => setTimezone(e.target.value)}>
                             {TIMEZONES.map(tz => (
                                 <option key={tz.value} value={tz.value}>{tz.label}</option>
                             ))}
@@ -263,34 +344,35 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                 </div>
             </Section>
 
-            <div className="h-px bg-light" />
+            <div className="h-px bg-[var(--md-sys-color-outline-variant)]" />
 
-            {/* ── Visibility ── */}
+            {/* ── Visibility ───────────────────────────────────────────────── */}
             <Section title="Visibility" description="Control whether your store is open for business">
-                <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-light bg-surface">
+                <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
                     <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-foreground">Store active</p>
-                        <p className="text-[12px] text-on-surface-muted mt-0.5 leading-snug">
+                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">Store active</p>
+                        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-snug">
                             When off, visitors see a coming soon page
                         </p>
                     </div>
                     <Switch
-                        checked={isActive ?? false}
+                        checked={isActive}
                         onCheckedChange={setIsActive}
                         className="shrink-0"
                     />
                 </div>
 
-                {/* Status pill */}
                 <div className={cn(
-                    'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium border',
+                    'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
                     isActive
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-900'
-                        : 'bg-surface text-on-surface-muted border-light'
+                        ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
+                        : 'bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]'
                 )}>
                     <span className={cn(
                         'w-1.5 h-1.5 rounded-full shrink-0',
-                        isActive ? 'bg-emerald-500 animate-pulse' : 'bg-on-surface-muted/40'
+                        isActive
+                            ? 'bg-[var(--md-sys-color-primary)] animate-pulse'
+                            : 'bg-[var(--md-sys-color-on-surface-variant)]/40'
                     )} />
                     {isActive ? (
                         <>
@@ -311,8 +393,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                 </div>
             </Section>
 
-            {/* ── Save bar ── */}
-            <SaveBar saveState={saveState} onSave={handleSave} />
+            <SaveBar isDirty={isDirty} saveState={saveState} onSave={handleSave} />
         </div>
     )
 }

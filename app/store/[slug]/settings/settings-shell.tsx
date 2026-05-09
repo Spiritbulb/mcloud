@@ -8,6 +8,7 @@ import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import type { NavSection } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
+import { trackVisit } from '@/app/onboarding/actions'
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
@@ -113,6 +114,9 @@ export default function SettingsShell({
         window.addEventListener('mobile-nav-open', handler)
         return () => window.removeEventListener('mobile-nav-open', handler)
     }, [])
+    useEffect(() => {
+        if (store) trackVisit(store.id)
+    }, [store])
 
     // ── Error ─────────────────────────────────────────────────────────────────
     if (error || !store) return (
@@ -148,6 +152,7 @@ export default function SettingsShell({
         slug: store.slug,
         logo_url: store.logo_url,
         custom_domain: store.custom_domain,
+        is_pro: store.is_pro,
     }
 
     const navigate = (id: TabId) => router.push(
@@ -206,6 +211,7 @@ export default function SettingsShell({
                     </div>
                     <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">
                         {children}
+
                     </main>
                 </div>
             </div>

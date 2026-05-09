@@ -67,7 +67,15 @@ export async function getOnboardingData() {
     // All stores this user is a member of
     const { data: memberships } = await supabase
         .from('store_members')
-        .select(`role, store:stores ( id, name, slug, logo_url )`)
+        .select(`
+    role,
+    store:stores (
+      id,
+      name,
+      slug,
+      logo_url
+    )
+  `)
         .eq('user_id', userId)
 
     if (!memberships?.length) return { stores: [], userName: user?.name ?? null }

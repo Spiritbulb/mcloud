@@ -22,7 +22,7 @@ function toURL(path: string): URL {
 export const auth0 = new Auth0Client({
     session: {
         cookie: {
-            domain: process.env.NODE_ENV === 'production' ? '.menengai.cloud' : 'localhost',
+            domain: process.env.NODE_ENV === 'production' ? `.menengai.cloud` : 'localhost',
         }
     },
 
@@ -44,27 +44,6 @@ export const auth0 = new Auth0Client({
                 avatar_url: picture,
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'id' });
-
-            const { data: membership } = await supabase
-                .from('store_members')
-                .select('store_id, role')
-                .eq('user_id', userId)
-                .eq('role', 'owner')
-                .single();
-
-            if (membership) {
-                const { data: store } = await supabase
-                    .from('stores')
-                    .select('slug')
-                    .eq('id', membership.store_id)
-                    .single();
-
-                if (store?.slug) {
-                    return NextResponse.redirect(
-                        toURL(`${process.env.NODE_ENV === 'development' ? `http:localhost:3000/store/${store.slug}` : `https://${store.slug}.menengai.cloud`}/settings`)
-                    );
-                }
-            }
 
             return NextResponse.redirect(toURL(`/onboarding`));
         }

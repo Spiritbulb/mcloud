@@ -10,14 +10,16 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { ProBadge, useUpgrade, UpgradeModal } from '@/components/pro'
+import { cn } from '@/lib/utils'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 
-function MSO({ icon, className }: { icon: string; className?: string }) {
+function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (
         <span
-            className={`material-symbols-outlined select-none leading-none ${className ?? ''}`}
-            style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}
+            className={cn('material-symbols-outlined select-none leading-none', className)}
+            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
         >
             {icon}
         </span>
@@ -30,7 +32,6 @@ function ThemeToggle() {
     const { theme, setTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
-    // Avoid hydration mismatch — don't render until mounted
     useEffect(() => setMounted(true), [])
     if (!mounted) return <div className="w-8 h-8" />
 
@@ -40,11 +41,42 @@ function ThemeToggle() {
         <button
             onClick={() => setTheme(isDark ? 'light' : 'dark')}
             title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
-            className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
             aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            className="flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
         >
             <MSO icon={isDark ? 'light_mode' : 'dark_mode'} className="text-[18px]" />
         </button>
+    )
+}
+
+// ─── UpgradeChip (updated) ────────────────────────────────────────────────────
+
+function UpgradeChip({ slug }: { slug: string }) {
+    const [modalOpen, setModalOpen] = useState(false)
+
+    return (
+        <>
+            <button
+                onClick={() => setModalOpen(true)}
+                className={cn(
+                    'flex items-center gap-1.5 rounded-full transition-all duration-150',
+                    'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]',
+                    'hover:opacity-80 active:scale-[0.97]',
+                    'w-8 h-8 justify-center',
+                    'md:w-auto md:h-7 md:px-3',
+                )}
+                title="Upgrade to Pro"
+            >
+                <MSO icon="workspace_premium" className="text-[16px]" fill={1} />
+                <span className="hidden md:inline text-[12px] font-semibold">Upgrade</span>
+            </button>
+
+            <UpgradeModal
+                slug={slug}
+                open={modalOpen}
+                onClose={() => setModalOpen(false)}
+            />
+        </>
     )
 }
 
@@ -61,6 +93,9 @@ export function SettingsHeader({
     mobileOpen: boolean
     onOpenMobileNav?: () => void
 }) {
+    const isPro = store?.is_pro ?? false
+    const { upgrade: upgradeFromDropdown } = useUpgrade(store?.slug ?? '')
+
     return (
         <header className="shrink-0 h-[57px] bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
 
@@ -73,19 +108,33 @@ export function SettingsHeader({
                 <MSO icon={mobileOpen ? 'close' : 'menu'} className="text-[20px]" />
             </button>
 
-            {/* Page label — breadcrumb */}
+            {/* Breadcrumb */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
                 <span className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">Settings</span>
                 <MSO icon="chevron_right" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
                 <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
                     {activeLabel}
                 </span>
+                {/* Pro badge next to page title if this page is pro-gated */}
+                {isPro && (
+                    <ProBadge />
+                )}
             </div>
 
             {/* Right actions */}
             <div className="flex items-center gap-1 shrink-0">
 
-                {/* Theme toggle */}
+                {/* Upgrade chip — free users only */}
+                {!isPro && <UpgradeChip slug={store?.slug ?? ''} />}
+
+                {/* Pro indicator — pro users only */}
+                {isPro && (
+                    <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--md-sys-color-primary-container)]">
+                        <MSO icon="workspace_premium" className="text-[13px] text-[var(--md-sys-color-primary)]" fill={1} />
+                        <span className="text-[11px] font-semibold text-[var(--md-sys-color-primary)]">Pro</span>
+                    </div>
+                )}
+
                 <ThemeToggle />
 
                 {/* Support — desktop only */}
@@ -145,6 +194,20 @@ export function SettingsHeader({
                                     System Status
                                 </Link>
                             </DropdownMenuItem>
+
+                            {/* Upgrade option in dropdown for mobile — only for free users */}
+                            {!isPro && (
+                                <>
+                                    <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
+                                    <DropdownMenuItem
+                                        className="rounded-lg cursor-pointer text-[13px] md:hidden"
+                                        onSelect={upgradeFromDropdown}
+                                    >
+                                        <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)]" fill={1} />
+                                        <span className="text-[var(--md-sys-color-primary)] font-medium">Upgrade to Pro</span>
+                                    </DropdownMenuItem>
+                                </>
+                            )}
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>

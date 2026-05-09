@@ -1,17 +1,12 @@
-// app/docs-editor/page.tsx
-// Server component — checks Auth0 session + admin role before rendering.
-// Non-authed users get redirected to login.
-// Authed non-admins get a 403 page rather than the editor.
-
+// app/admin/subscriptions/page.tsx
 import { auth0 } from "@/lib/auth0"
 import { createClient } from "@/lib/client"
 import { redirect } from "next/navigation"
 import type { Metadata } from "next"
-import DocsEditorClient from "@/components/docs-editor-client"
-import type { EditablePage } from "@/components/docs-editor-client"
+import SubscriptionsClient from "@/components/subscriptions-client"
 
 export const metadata: Metadata = {
-    title: "Docs Editor — Menengai Cloud",
+    title: "Subscriptions — Menengai Cloud Admin",
     robots: { index: false, follow: false },
 }
 
@@ -25,26 +20,42 @@ async function getRole(auth0Sub: string): Promise<string | null> {
     return data?.role ?? null
 }
 
-async function getDocs(): Promise<EditablePage[]> {
+async function getSubscriptions() {
     const supabase = createClient()
     const { data } = await supabase
-        .from("docs_pages")
-        .select("data")
-        .order("position", { ascending: true })
-    return (data ?? []).map((row) => row.data as EditablePage)
+        .from("store_subscriptions")
+        .select(`
+            id,
+            status,
+            amount,
+            currency,
+            created_at,
+            intasend_invoice_id,
+            intasend_tracking_id,
+            stores (
+                id,
+                name,
+                slug,
+                is_pro
+            )
+        `)
+        .order("created_at", { ascending: false })
+
+    return (data ?? []).map(row => ({
+        ...row,
+        stores: Array.isArray(row.stores) ? row.stores[0] ?? null : row.stores,
+    }))
 }
 
-export default async function DocsEditorPage() {
+export default async function SubscriptionsPage() {
     const session = await auth0.getSession()
 
-    // Not logged in → send to Auth0 login, return here after
     if (!session?.user) {
-        redirect(`${process.env.APP_BASE_URL}/auth/login?returnTo=/docs-editor`)
+        redirect(`${process.env.APP_BASE_URL}/auth/login?returnTo=/admin/subs`)
     }
 
     const role = await getRole(session.user.sub)
 
-    // Logged in but not an admin → show a clear rejection
     if (role !== "admin") {
         return (
             <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4">
@@ -52,13 +63,10 @@ export default async function DocsEditorPage() {
                     <p className="text-4xl">🔒</p>
                     <h1 className="text-xl font-semibold text-foreground">Access denied</h1>
                     <p className="text-sm text-muted-foreground">
-                        You need admin access to use the Docs Editor.
+                        You need admin access to view subscriptions.
                         You&apos;re signed in as <span className="font-mono text-xs">{session.user.email}</span>.
                     </p>
-                    <a
-                        href={`/auth/logout`}
-                        className="inline-block text-sm text-primary hover:underline mt-2"
-                    >
+                    <a href="/auth/logout" className="inline-block text-sm text-primary hover:underline mt-2">
                         Sign in with a different account
                     </a>
                 </div>
@@ -66,7 +74,6 @@ export default async function DocsEditorPage() {
         )
     }
 
-    // Admin — fetch docs and render editor
-    const initialDocs = await getDocs()
-    return <DocsEditorClient initialDocs={initialDocs} />
+    const subscriptions = await getSubscriptions()
+    return <SubscriptionsClient subscriptions={subscriptions} />
 }

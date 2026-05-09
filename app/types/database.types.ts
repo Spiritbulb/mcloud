@@ -1269,6 +1269,60 @@ export type Database = {
           },
         ]
       }
+      store_subscriptions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string
+          id: string
+          intasend_invoice_id: string | null
+          intasend_tracking_id: string | null
+          period_end: string | null
+          period_start: string | null
+          status: string
+          store_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          intasend_invoice_id?: string | null
+          intasend_tracking_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          store_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string
+          id?: string
+          intasend_invoice_id?: string | null
+          intasend_tracking_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_subscriptions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_themes: {
         Row: {
           accent_color: string
@@ -1395,11 +1449,14 @@ export type Database = {
           logo_url: string | null
           name: string
           owner_id: string
+          pro_expires_at: string | null
+          pro_since: string | null
           settings: Json | null
           slug: string
           timezone: string | null
           type: string
           updated_at: string | null
+          views: number | null
         }
         Insert: {
           created_at?: string | null
@@ -1412,11 +1469,14 @@ export type Database = {
           logo_url?: string | null
           name: string
           owner_id: string
+          pro_expires_at?: string | null
+          pro_since?: string | null
           settings?: Json | null
           slug: string
           timezone?: string | null
           type?: string
           updated_at?: string | null
+          views?: number | null
         }
         Update: {
           created_at?: string | null
@@ -1429,11 +1489,14 @@ export type Database = {
           logo_url?: string | null
           name?: string
           owner_id?: string
+          pro_expires_at?: string | null
+          pro_since?: string | null
           settings?: Json | null
           slug?: string
           timezone?: string | null
           type?: string
           updated_at?: string | null
+          views?: number | null
         }
         Relationships: [
           {
@@ -1743,6 +1806,7 @@ export type Database = {
     Functions: {
       auth0_uid: { Args: never; Returns: string }
       generate_order_number: { Args: { store_uuid: string }; Returns: string }
+      increment_store_views: { Args: { store_id: string }; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

@@ -13,7 +13,6 @@ export async function GET(
     const userId = session.user.sub
     const supabase = await createClient()
 
-    // Verify membership
     const { data: memberships } = await supabase
         .from('store_members')
         .select('store_id, role, store:stores(id, name, slug, logo_url)')
@@ -21,22 +20,30 @@ export async function GET(
 
     if (!memberships?.length) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-    const currentMembership = memberships.find(m => m.store?.slug === slug)
+    const currentMembership = memberships.find(m => (m.store as any)?.slug === slug)
     if (!currentMembership) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
 
     const storeId = currentMembership.store_id
 
-    // Run everything in parallel
+    // 7 days ago ISO string — used for funnel window
+    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+
+    // Start of current calendar month
+    const now = new Date()
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
+
     const [
         { data: store },
         { count: productCount },
         { data: orderAgg },
         { data: recentOrders },
         { data: integrations },
+        { data: recentOrderCount },   // funnel: orders last 7d
+        { data: topProductRows },     // top product this month
     ] = await Promise.all([
         supabase
             .from('stores')
-            .select('id, name, slug, logo_url, is_active, currency, custom_domain, settings, is_pro')
+            .select('id, name, slug, logo_url, is_active, currency, custom_domain, settings, is_pro, views')
             .eq('id', storeId)
             .single(),
 
@@ -46,7 +53,6 @@ export async function GET(
             .eq('store_id', storeId)
             .eq('is_active', true),
 
-        // Sum total revenue and count orders
         supabase
             .from('orders')
             .select('total, status')
@@ -63,6 +69,24 @@ export async function GET(
             .from('store_integrations')
             .select('provider, is_active')
             .eq('store_id', storeId),
+
+        // Funnel: orders in last 7d
+        supabase
+            .from('orders')
+            .select('id', { count: 'exact', head: true })
+            .eq('store_id', storeId)
+            .gte('created_at', since),
+
+        // Top product this month: join order_items → products, sum revenue + units
+        supabase
+            .from('order_items')
+            .select(`
+        quantity,
+        price,
+        product:products ( id, name, images )
+      `)
+            .eq('store_id', storeId)
+            .gte('created_at', monthStart),
     ])
 
     if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
@@ -75,6 +99,43 @@ export async function GET(
     const mpesaEnabled = integrations?.some(i => i.provider === 'mpesa' && i.is_active) ?? false
     const paypalEnabled = integrations?.some(i => i.provider === 'paypal' && i.is_active) ?? false
     const stripeEnabled = integrations?.some(i => i.provider === 'stripe' && i.is_active) ?? false
+
+    // ── Top product ────────────────────────────────────────────────────────────
+    // Aggregate order_items client-side (avoids a raw SQL call)
+    type ProductAgg = { id: string; name: string; image_url?: string; revenue: number; units_sold: number }
+    const productMap = new Map<string, ProductAgg>()
+
+    for (const row of topProductRows ?? []) {
+        const p = row.product as any
+        if (!p?.id) continue
+        const existing = productMap.get(p.id)
+        const lineRevenue = (row.price ?? 0) * (row.quantity ?? 0)
+        if (existing) {
+            existing.revenue += lineRevenue
+            existing.units_sold += row.quantity ?? 0
+        } else {
+            productMap.set(p.id, {
+                id: p.id,
+                name: p.name,
+                image_url: Array.isArray(p.images) ? p.images[0] ?? undefined : undefined,
+                revenue: lineRevenue,
+                units_sold: row.quantity ?? 0,
+            })
+        }
+    }
+
+    const topProduct = productMap.size > 0
+        ? [...productMap.values()].sort((a, b) => b.revenue - a.revenue)[0]
+        : null
+
+    // ── Funnel ─────────────────────────────────────────────────────────────────
+    // views comes from stores.views (your new column — total all-time counter)
+    // For a 7d window approximation we just surface the raw total for now;
+    // swap for a time-series table later if needed.
+    const funnel = {
+        views: store.views ?? 0,
+        orders_7d: recentOrderCount?.length ?? 0,  // count from head query above
+    }
 
     return NextResponse.json({
         store: {
@@ -92,15 +153,16 @@ export async function GET(
             mpesa_enabled: mpesaEnabled,
             paypal_enabled: paypalEnabled,
             custom_domain_verified: !!store.custom_domain,
-            notifications_enabled: false, // no column yet
+            notifications_enabled: false,
         },
         recent_orders: (recentOrders ?? []).map(o => ({
             id: o.id,
-            // no customer_name column — use email, phone, or order number as fallback
             customer_name: o.customer_email ?? o.customer_phone ?? `Order ${o.order_number}`,
             total: o.total,
             status: o.status,
             created_at: o.created_at,
         })),
+        funnel,
+        top_product: topProduct,
     })
 }

@@ -41,6 +41,11 @@ export async function generateMetadata({ params }: Props) {
     }
 }
 
+async function incrementViews(storeId: string) {
+    const supabase = await createClient()
+    await supabase.rpc('increment_store_views', { store_id: storeId })
+}
+
 export default async function StorePage({ params }: Props) {
     const { slug } = await params
     const supabase = await createClient()
@@ -107,6 +112,10 @@ export default async function StorePage({ params }: Props) {
             .map((row: any) => row.products)
             .filter(Boolean)
     )
+
+    if (store?.id) {
+        incrementViews(store.id)
+    }
 
     return (
         <StoreFront

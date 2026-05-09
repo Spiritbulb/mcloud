@@ -29,7 +29,6 @@ interface ExistingStore {
   slug: string
   last_visited_at?: string
   logo_url?: string
-  order_count?: number
 }
 
 interface OnboardingPageProps {

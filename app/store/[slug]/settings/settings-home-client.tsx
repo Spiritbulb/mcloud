@@ -2,9 +2,9 @@
 
 // app/store/[slug]/settings/settings-home-client.tsx
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { TabId } from './settings-shell'
 
@@ -33,21 +33,41 @@ type StoreOverview = {
     custom_domain_verified?: boolean
 }
 
+// ─── Types (add to OverviewData) ──────────────────────────────────────────────
+
+type Funnel = {
+    views: number
+    add_to_carts: number
+    checkouts: number
+    orders: number
+}
+
+type TopProduct = {
+    id: string
+    name: string
+    image_url?: string
+    revenue: number
+    units_sold: number
+}
+
+// extend OverviewData:
 type OverviewData = {
     store: StoreOverview
     recent_orders: Order[]
+    funnel?: Funnel        // ← add
+    top_product?: TopProduct  // ← add
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const STATUS: Record<Order['status'], { icon: string; color: string; label: string }> = {
-    pending: { icon: 'schedule', color: 'text-amber-500', label: 'Pending' },
-    paid: { icon: 'payments', color: 'text-[var(--md-sys-color-primary)]', label: 'Paid' },
-    processing: { icon: 'autorenew', color: 'text-violet-500', label: 'Processing' },
-    shipped: { icon: 'local_shipping', color: 'text-sky-500', label: 'Shipped' },
-    delivered: { icon: 'check_circle', color: 'text-[var(--md-sys-color-primary)]', label: 'Delivered' },
-    cancelled: { icon: 'cancel', color: 'text-[var(--md-sys-color-error)]', label: 'Cancelled' },
-    refunded: { icon: 'currency_exchange', color: 'text-[var(--md-sys-color-on-surface-variant)]', label: 'Refunded' },
+const STATUS: Record<Order['status'], { icon: string; label: string; bg: string; fg: string }> = {
+    pending: { icon: 'schedule', label: 'Pending', bg: 'bg-amber-500/10', fg: 'text-amber-600 dark:text-amber-400' },
+    paid: { icon: 'check_circle', label: 'Paid', bg: 'bg-[var(--md-sys-color-primary-container)]', fg: 'text-[var(--md-sys-color-primary)]' },
+    processing: { icon: 'autorenew', label: 'Processing', bg: 'bg-violet-500/10', fg: 'text-violet-600 dark:text-violet-400' },
+    shipped: { icon: 'local_shipping', label: 'Shipped', bg: 'bg-sky-500/10', fg: 'text-sky-600 dark:text-sky-400' },
+    delivered: { icon: 'verified', label: 'Delivered', bg: 'bg-[var(--md-sys-color-primary-container)]', fg: 'text-[var(--md-sys-color-primary)]' },
+    cancelled: { icon: 'cancel', label: 'Cancelled', bg: 'bg-[var(--md-sys-color-error-container)]', fg: 'text-[var(--md-sys-color-error)]' },
+    refunded: { icon: 'currency_exchange', label: 'Refunded', bg: 'bg-[var(--md-sys-color-surface-variant)]', fg: 'text-[var(--md-sys-color-on-surface-variant)]' },
 }
 
 function fmt(n: number, currency: string) {
@@ -64,7 +84,10 @@ function timeAgo(iso: string) {
     if (m < 60) return `${m}m ago`
     const h = Math.floor(m / 60)
     if (h < 24) return `${h}h ago`
-    return `${Math.floor(h / 24)}d ago`
+    const d = Math.floor(h / 24)
+    if (d === 1) return 'yesterday'
+    if (d < 7) return `${d}d ago`
+    return new Date(iso).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
@@ -72,100 +95,274 @@ function timeAgo(iso: string) {
 function Sk({ className }: { className?: string }) {
     return (
         <span className={cn(
-            'animate-pulse rounded-md bg-[var(--md-sys-color-surface-variant)]',
+            'block animate-pulse rounded-lg bg-[var(--md-sys-color-surface-variant)]',
             className
         )} />
     )
 }
 
-// ─── MSO — Material Symbol shorthand ─────────────────────────────────────────
+// ─── MSO ─────────────────────────────────────────────────────────────────────
 
-function MSO({ icon, className }: { icon: string; className?: string }) {
+function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (
-        <span className={cn('material-symbols-outlined select-none', className)}
-            style={{ fontVariationSettings: "'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20" }}>
+        <span
+            className={cn('material-symbols-outlined select-none leading-none', className)}
+            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
+        >
             {icon}
         </span>
     )
 }
 
-// ─── StatCard ─────────────────────────────────────────────────────────────────
+// ─── KPI Card ─────────────────────────────────────────────────────────────────
+// Clean, no icon circles. Value-first, label second. Vercel/Linear style.
 
-function StatCard({
-    label, value, sub, icon, loading, accent,
+function KpiCard({
+    label, value, sub, loading, featured,
 }: {
     label: string
     value: string
     sub?: string
-    icon: string
     loading?: boolean
-    accent?: boolean
+    featured?: boolean
 }) {
     return (
         <div className={cn(
-            'rounded-2xl p-4 flex flex-col gap-3',
-            accent
-                ? 'bg-[var(--md-sys-color-primary-container)]'
-                : 'bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)]'
+            'rounded-2xl p-5 flex flex-col gap-1',
+            featured
+                ? 'bg-[var(--md-sys-color-primary-container)] col-span-2 sm:col-span-1'
+                : 'bg-[var(--md-sys-color-surface-container-low)] border border-[var(--md-sys-color-outline-variant)]'
         )}>
-            <div className={cn(
-                'flex items-center justify-center w-8 h-8 rounded-xl',
-                accent
-                    ? 'bg-[var(--md-sys-color-primary)]/15'
-                    : 'bg-[var(--md-sys-color-surface-variant)]'
-            )}>
-                <MSO icon={icon} className={cn(
-                    'text-[18px]',
-                    accent ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
-                )} />
-            </div>
-            <div>
-                <p className={cn(
-                    'text-[11px] font-medium uppercase tracking-wider mb-1',
-                    accent ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
+            {loading
+                ? <Sk className="h-8 w-24 mb-1" />
+                : <p className={cn(
+                    'text-[28px] font-semibold tabular-nums leading-none tracking-tight',
+                    featured
+                        ? 'text-[var(--md-sys-color-on-primary-container)]'
+                        : 'text-[var(--md-sys-color-on-surface)]'
                 )}>
-                    {label}
+                    {value}
                 </p>
-                {loading
-                    ? <Sk className="h-6 w-20" />
-                    : <p className={cn(
-                        'text-[22px] font-semibold tabular-nums leading-none',
-                        accent ? 'text-[var(--md-sys-color-on-primary-container)]' : 'text-[var(--md-sys-color-on-surface)]'
-                    )}>
-                        {value}
-                    </p>
-                }
-                {sub && !loading && (
-                    <p className={cn(
-                        'text-[11px] mt-1',
-                        accent ? 'text-[var(--md-sys-color-primary)]/70' : 'text-[var(--md-sys-color-on-surface-variant)]'
-                    )}>
-                        {sub}
-                    </p>
-                )}
+            }
+            <p className={cn(
+                'text-[12px] font-medium',
+                featured
+                    ? 'text-[var(--md-sys-color-primary)]'
+                    : 'text-[var(--md-sys-color-on-surface-variant)]'
+            )}>
+                {label}
+            </p>
+            {sub && !loading && (
+                <p className={cn(
+                    'text-[11px]',
+                    featured
+                        ? 'text-[var(--md-sys-color-primary)]/60'
+                        : 'text-[var(--md-sys-color-on-surface-variant)] opacity-60'
+                )}>
+                    {sub}
+                </p>
+            )}
+        </div>
+    )
+}
+
+// ─── Status badge ─────────────────────────────────────────────────────────────
+
+function StatusBadge({ status }: { status: Order['status'] }) {
+    const s = STATUS[status] ?? STATUS.pending
+    return (
+        <span className={cn(
+            'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full shrink-0',
+            s.bg, s.fg
+        )}>
+            <MSO icon={s.icon} className="text-[12px]" fill={status === 'delivered' || status === 'paid' ? 1 : 0} />
+            {s.label}
+        </span>
+    )
+}
+
+// ─── Payments callout ─────────────────────────────────────────────────────────
+// Tonal card, not dashed. Resembles Shopify's "action required" cards.
+
+function PaymentsCallout({ onNavigate }: { onNavigate: () => void }) {
+    return (
+        <button
+            onClick={onNavigate}
+            className={cn(
+                'w-full flex items-start gap-4 text-left',
+                'rounded-2xl bg-[var(--md-sys-color-secondary-container)]',
+                'px-5 py-4 group',
+                'hover:brightness-95 dark:hover:brightness-110 transition-all duration-150'
+            )}
+        >
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--md-sys-color-on-secondary-container)]/10 shrink-0 mt-0.5">
+                <MSO icon="payments" className="text-[20px] text-[var(--md-sys-color-on-secondary-container)]" fill={1} />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">
+                    Set up payments
+                </p>
+                <p className="text-[12px] text-[var(--md-sys-color-on-secondary-container)]/70 mt-0.5 leading-relaxed">
+                    Connect M-Pesa or PayPal so customers can checkout. Takes about 2 minutes.
+                </p>
+            </div>
+            <MSO
+                icon="arrow_forward"
+                className="text-[18px] text-[var(--md-sys-color-on-secondary-container)]/50 group-hover:text-[var(--md-sys-color-on-secondary-container)] group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5"
+            />
+        </button>
+    )
+}
+
+// ─── FunnelRow ────────────────────────────────────────────────────────────────
+
+function pct(a: number, b: number) {
+    if (!b) return null
+    return `${((a / b) * 100).toFixed(1)}%`
+}
+
+function FunnelRow({ funnel, loading }: { funnel?: Funnel; loading: boolean }) {
+    const steps = [
+        { label: 'Views', value: funnel?.views, rate: null },
+        { label: 'Add to cart', value: funnel?.add_to_carts, rate: pct(funnel?.add_to_carts ?? 0, funnel?.views ?? 0) },
+        { label: 'Checkouts', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, funnel?.add_to_carts ?? 0) },
+        { label: 'Orders', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, funnel?.checkouts ?? 0) },
+    ]
+
+    return (
+        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
+            <div className="grid grid-cols-4 divide-x divide-[var(--md-sys-color-outline-variant)]">
+                {steps.map((step, i) => (
+                    <div key={step.label} className="flex flex-col gap-1 px-4 py-4">
+                        {/* Bar fill — visual proportion */}
+                        <div className="h-1 rounded-full bg-[var(--md-sys-color-surface-variant)] mb-2 overflow-hidden">
+                            {!loading && funnel && (
+                                <div
+                                    className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
+                                    style={{
+                                        width: i === 0
+                                            ? '100%'
+                                            : `${((steps[i].value ?? 0) / (funnel.views || 1)) * 100}%`,
+                                        opacity: 1 - i * 0.15,
+                                    }}
+                                />
+                            )}
+                        </div>
+
+                        {loading
+                            ? <Sk className="h-5 w-14" />
+                            : <p className="text-[18px] font-semibold tabular-nums leading-none text-[var(--md-sys-color-on-surface)]">
+                                {(step.value ?? 0).toLocaleString()}
+                            </p>
+                        }
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                            {step.label}
+                        </p>
+                        {step.rate && (
+                            <p className="text-[11px] font-medium text-[var(--md-sys-color-primary)] mt-0.5">
+                                {step.rate} conv.
+                            </p>
+                        )}
+                    </div>
+                ))}
+            </div>
+
+            {/* Period label */}
+            <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                    Last 7 days · store visits → purchases
+                </p>
             </div>
         </div>
     )
 }
 
-// ─── Quick links ──────────────────────────────────────────────────────────────
+// ─── TopProductCard ───────────────────────────────────────────────────────────
 
-type QuickLink = {
-    tab: TabId
-    label: string
-    description: string
-    icon: string
-    beta?: boolean
+function TopProductCard({
+    product,
+    currency,
+    loading,
+    onNavigate,
+}: {
+    product?: TopProduct
+    currency: string
+    loading: boolean
+    onNavigate: () => void
+}) {
+    // Don't render if loaded and no product exists yet
+    if (!loading && !product) return null
+
+    return (
+        <button
+            onClick={onNavigate}
+            className={cn(
+                'w-full flex items-center gap-4 text-left group',
+                'rounded-2xl border border-[var(--md-sys-color-outline-variant)]',
+                'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
+                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
+            )}
+        >
+            {/* Thumbnail */}
+            <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
+                {loading
+                    ? <Sk className="w-full h-full rounded-none" />
+                    : product?.image_url
+                        ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
+                        : <MSO icon="inventory_2" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
+                }
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-1.5 mb-0.5">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
+                        Top product
+                    </span>
+                </div>
+                {loading
+                    ? <Sk className="h-4 w-32" />
+                    : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
+                        {product!.name}
+                    </p>
+                }
+                {!loading && product && (
+                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                        {product.units_sold} sold this month
+                    </p>
+                )}
+            </div>
+
+            {/* Revenue */}
+            <div className="shrink-0 text-right">
+                {loading
+                    ? <Sk className="h-5 w-16" />
+                    : <p className="text-[14px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)]">
+                        {fmt(product!.revenue, currency)}
+                    </p>
+                }
+                <MSO
+                    icon="chevron_right"
+                    className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors mt-0.5 ml-auto"
+                />
+            </div>
+        </button>
+    )
 }
 
+// ─── Quick links ──────────────────────────────────────────────────────────────
+// Flat, compact rows — not icon-in-circle cards. Resembles Linear's settings nav.
+
+type QuickLink = { tab: TabId; label: string; icon: string; beta?: boolean }
+
 const QUICK_LINKS: QuickLink[] = [
-    { tab: 'general', label: 'General', description: 'Name, currency, timezone', icon: 'storefront' },
-    { tab: 'appearance', label: 'Appearance', description: 'Theme, colours, logo', icon: 'palette' },
-    { tab: 'products', label: 'Products', description: 'Catalog and inventory', icon: 'inventory_2' },
-    { tab: 'orders', label: 'Orders', description: 'Fulfillment and history', icon: 'receipt_long' },
-    { tab: 'blog', label: 'Blog', description: 'Articles and content', icon: 'article' },
-    { tab: 'integrations', label: 'Integrations', description: 'M-Pesa, PayPal, notifications', icon: 'link', beta: true },
-    { tab: 'domain', label: 'Custom Domain', description: 'Bring your own domain', icon: 'language', beta: true },
+    { tab: 'general', label: 'General', icon: 'storefront' },
+    { tab: 'appearance', label: 'Appearance', icon: 'palette' },
+    { tab: 'products', label: 'Products', icon: 'inventory_2' },
+    { tab: 'orders', label: 'Orders', icon: 'receipt_long' },
+    { tab: 'blog', label: 'Blog', icon: 'article' },
+    { tab: 'integrations', label: 'Integrations', icon: 'link', beta: true },
+    { tab: 'domain', label: 'Custom domain', icon: 'language', beta: true },
 ]
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -186,264 +383,230 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
             .finally(() => setLoading(false))
     }, [slug])
 
+    const navigate = useCallback((tab: TabId) => {
+        const base = process.env.NODE_ENV === 'development'
+            ? `/store/${slug}/settings`
+            : '/settings'
+        router.push(`${base}/${tab}`)
+    }, [router, slug])
+
     const store = data?.store
     const orders = data?.recent_orders ?? []
-
-    const navigate = (tab: TabId) =>
-        router.push(
-            process.env.NODE_ENV === 'development'
-                ? `/store/${slug}/settings/${tab}`
-                : `/settings/${tab}`
-        )
+    const paymentsNeeded = !loading && store && !(store.payments_enabled || store.mpesa_enabled)
 
     const ease = [0.25, 0.1, 0.25, 1] as const
-    const item = (i: number) => ({
-        initial: { opacity: 0, y: 10 },
+    const stagger = (i: number) => ({
+        initial: { opacity: 0, y: 8 },
         animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.3, delay: i * 0.055, ease },
+        transition: { duration: 0.28, delay: i * 0.05, ease },
     })
 
     return (
-        <div className="max-w-5xl mx-auto space-y-8 pb-16">
+        <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
 
-            {/* ── Hero banner ────────────────────────────────────────────── */}
-            <motion.div {...item(0)}>
-                <div className={cn(
-                    'relative overflow-hidden rounded-2xl px-6 py-6',
-                    'bg-[var(--md-sys-color-primary-container)]',
-                )}>
-                    {/* Subtle topographic texture — pure CSS, no image */}
-                    <div className="pointer-events-none absolute inset-0 opacity-[0.07]"
-                        style={{
-                            backgroundImage: `radial-gradient(circle at 20% 50%, var(--md-sys-color-primary) 0%, transparent 60%),
-                                              radial-gradient(circle at 80% 20%, var(--md-sys-color-primary) 0%, transparent 50%)`,
-                        }}
-                    />
+            {/* ── Store header ─────────────────────────────────────────────── */}
+            <motion.div {...stagger(0)} className="flex items-center justify-between gap-4">
+                <div className="space-y-0.5">
+                    {loading
+                        ? <Sk className="h-6 w-36" />
+                        : <h1 className="text-[18px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight">
+                            {store?.name ?? 'Your store'}
+                        </h1>
+                    }
+                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+                        {loading
+                            ? <Sk className="h-3.5 w-44 inline-block" />
+                            : `${store?.slug ?? slug}.menengai.cloud`
+                        }
+                    </p>
+                </div>
 
-                    <div className="relative flex items-start justify-between gap-4 flex-wrap">
-                        <div className="space-y-1">
-                            {loading
-                                ? <Sk className="h-7 w-44 mb-1" />
-                                : <h1 className="text-[20px] font-semibold text-[var(--md-sys-color-on-primary-container)] tracking-tight">
-                                    {store?.name ?? 'Your store'}
-                                </h1>
-                            }
-                            <p className="text-[13px] text-[var(--md-sys-color-primary)]/80">
-                                {loading
-                                    ? <Sk className="h-4 w-52 inline-block" />
-                                    : store?.active
-                                        ? `${store.slug}.menengai.cloud · Live`
-                                        : `${store?.slug ?? slug}.menengai.cloud · Offline`
-                                }
-                            </p>
-                        </div>
-
-                        {!loading && store && (
+                <div className="flex items-center gap-2 shrink-0">
+                    {!loading && store && (
+                        <>
                             <span className={cn(
-                                'inline-flex items-center gap-1.5 text-[12px] font-medium px-3 py-1.5 rounded-full',
+                                'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full',
                                 store.active
-                                    ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)]'
+                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
+                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-error)]'
                             )}>
-                                <MSO
-                                    icon={store.active ? 'wifi' : 'wifi_off'}
-                                    className="text-[14px]"
-                                />
+                                <span className={cn(
+                                    'w-1.5 h-1.5 rounded-full',
+                                    store.active ? 'bg-[var(--md-sys-color-primary)]' : 'bg-[var(--md-sys-color-error)]'
+                                )} />
                                 {store.active ? 'Live' : 'Offline'}
                             </span>
-                        )}
-                    </div>
 
-                    {/* Visit store link */}
-                    {!loading && store && (
-                        <a
-                            href={`https://${store.slug}.menengai.cloud`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={cn(
-                                'relative mt-4 inline-flex items-center gap-1.5',
-                                'text-[12px] font-medium text-[var(--md-sys-color-primary)]',
-                            )}
-                        >
-                            <MSO icon="open_in_new" className="text-[14px]" />
-                            Visit store
-                        </a>
+                            <a
+                                href={`https://${store.slug}.menengai.cloud`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className={cn(
+                                    'flex items-center justify-center w-8 h-8 rounded-xl',
+                                    'bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]',
+                                    'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
+                                    'hover:border-[var(--md-sys-color-outline)] transition-all duration-150'
+                                )}
+                                title="Visit store"
+                            >
+                                <MSO icon="open_in_new" className="text-[15px]" />
+                            </a>
+                        </>
                     )}
                 </div>
             </motion.div>
 
-            {/* ── Stats ──────────────────────────────────────────────────── */}
-            <motion.div {...item(1)}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-3">
-                    Overview
-                </p>
-                <div className="grid grid-cols-3 gap-3">
-                    <StatCard
-                        label="Revenue"
-                        value={store ? fmt(store.revenue_total, store.currency) : '—'}
-                        sub="all time"
-                        icon="trending_up"
-                        loading={loading}
-                        accent
-                    />
-                    <StatCard
-                        label="Orders"
-                        value={store?.order_count?.toString() ?? '—'}
-                        icon="receipt_long"
-                        loading={loading}
-                    />
-                    <StatCard
-                        label="Products"
-                        value={store?.product_count?.toString() ?? '—'}
-                        icon="inventory_2"
-                        loading={loading}
-                    />
-                </div>
+            {/* ── KPIs ─────────────────────────────────────────────────────── */}
+            <motion.div {...stagger(1)} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                <KpiCard
+                    label="Revenue"
+                    value={store ? fmt(store.revenue_total, store.currency) : '—'}
+                    sub="all time"
+                    loading={loading}
+                    featured
+                />
+                <KpiCard
+                    label="Orders"
+                    value={store?.order_count?.toString() ?? '—'}
+                    loading={loading}
+                />
+                <KpiCard
+                    label="Products"
+                    value={store?.product_count?.toString() ?? '—'}
+                    loading={loading}
+                />
             </motion.div>
 
-            {/* ── Payments callout — only if not configured ──────────────── */}
-            {!loading && store && !(store.payments_enabled || store.mpesa_enabled) && (
-                <motion.div {...item(2)}>
-                    <button
-                        onClick={() => navigate('integrations')}
-                        className={cn(
-                            'w-full flex items-center gap-4 text-left',
-                            'rounded-2xl border border-dashed border-[var(--md-sys-color-primary)]/40',
-                            'bg-[var(--md-sys-color-primary)]/[0.04] px-5 py-4',
-                            'hover:bg-[var(--md-sys-color-primary)]/[0.08] transition-colors duration-150 group'
-                        )}
-                    >
-                        <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
-                            <MSO icon="payments" className="text-[20px] text-[var(--md-sys-color-primary)]" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
-                                Accept payments
-                            </p>
-                            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
-                                Connect M-Pesa or PayPal so customers can checkout on your store.
-                            </p>
-                        </div>
-                        <MSO
-                            icon="arrow_forward"
-                            className="text-[18px] text-[var(--md-sys-color-primary)] opacity-60 group-hover:opacity-100 group-hover:translate-x-0.5 transition-all shrink-0"
-                        />
-                    </button>
-                </motion.div>
-            )}
 
-            {/* ── Recent orders ───────────────────────────────────────────── */}
-            <motion.div {...item(3)}>
+            <motion.div {...stagger(2)}>
+                <FunnelRow funnel={data?.funnel} loading={loading} />
+            </motion.div>
+
+            <motion.div {...stagger(3)}>
+                <TopProductCard
+                    product={data?.top_product}
+                    currency={store?.currency ?? 'KES'}
+                    loading={loading}
+                    onNavigate={() => navigate('products')}
+                />
+            </motion.div>
+
+            {/* ── Payments callout ─────────────────────────────────────────── */}
+            <AnimatePresence>
+                {paymentsNeeded && (
+                    <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.25 }}
+                    >
+                        <PaymentsCallout onNavigate={() => navigate('integrations')} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ── Recent orders ─────────────────────────────────────────────── */}
+            <motion.div {...stagger(2)}>
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)]">
-                        Recent activity
+                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                        Recent orders
                     </p>
                     <button
                         onClick={() => navigate('orders')}
-                        className="flex items-center gap-1 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
+                        className="flex items-center gap-0.5 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
                     >
                         View all
-                        <MSO icon="arrow_forward" className="text-[14px]" />
+                        <MSO icon="chevron_right" className="text-[15px]" />
                     </button>
                 </div>
 
                 <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
                     {loading ? (
-                        Array.from({ length: 3 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-4 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0">
-                                <Sk className="h-4 w-28" />
-                                <Sk className="h-4 w-16 ml-auto" />
-                                <Sk className="h-5 w-20 rounded-full" />
+                        Array.from({ length: 4 }).map((_, i) => (
+                            <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0">
+                                <Sk className="h-4 w-32 flex-1" />
+                                <Sk className="h-4 w-14" />
+                                <Sk className="h-6 w-20 rounded-full" />
                             </div>
                         ))
                     ) : error ? (
                         <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
                             <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
-                            Could not load recent orders.
+                            Could not load orders. <button onClick={() => window.location.reload()} className="text-[var(--md-sys-color-primary)] hover:underline">Retry</button>
                         </div>
                     ) : orders.length === 0 ? (
-                        <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
-                            <MSO icon="receipt_long" className="text-[32px] text-[var(--md-sys-color-on-surface-variant)] opacity-30" />
-                            <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">No orders yet.</p>
+                        <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
+                            <MSO icon="receipt_long" className="text-[36px] text-[var(--md-sys-color-outline-variant)]" />
+                            <div>
+                                <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">No orders yet</p>
+                                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                                    Orders will appear here once customers start buying.
+                                </p>
+                            </div>
                             <button
                                 onClick={() => navigate('products')}
-                                className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2 mt-1"
+                                className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
                             >
-                                Add your first product →
+                                Add your first product
                             </button>
                         </div>
                     ) : (
-                        orders.slice(0, 5).map((order) => {
-                            const s = STATUS[order.status] ?? STATUS.pending
-                            return (
-                                <button
-                                    key={order.id}
-                                    onClick={() => navigate('orders')}
-                                    className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0 hover:bg-[var(--md-sys-color-surface-variant)]/50 transition-colors text-left group"
-                                >
-                                    <div className="flex-1 min-w-0">
-                                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
-                                            {order.customer_name}
-                                        </p>
-                                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
-                                            {timeAgo(order.created_at)}
-                                        </p>
-                                    </div>
-                                    <span className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] tabular-nums shrink-0">
-                                        {fmt(order.total, store?.currency ?? 'KES')}
-                                    </span>
-                                    <span className={cn(
-                                        'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full shrink-0',
-                                        'bg-[var(--md-sys-color-surface-variant)]',
-                                        s.color
-                                    )}>
-                                        <MSO icon={s.icon} className="text-[12px]" />
-                                        {s.label}
-                                    </span>
-                                </button>
-                            )
-                        })
+                        orders.slice(0, 5).map((order) => (
+                            <button
+                                key={order.id}
+                                onClick={() => navigate('orders')}
+                                className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0 hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors text-left group"
+                            >
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
+                                        {order.customer_name}
+                                    </p>
+                                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                                        {timeAgo(order.created_at)}
+                                    </p>
+                                </div>
+                                <span className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] tabular-nums shrink-0">
+                                    {fmt(order.total, store?.currency ?? 'KES')}
+                                </span>
+                                <StatusBadge status={order.status} />
+                            </button>
+                        ))
                     )}
                 </div>
             </motion.div>
 
-            {/* ── Settings quick links ────────────────────────────────────── */}
-            <motion.div {...item(4)}>
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-3">
+            {/* ── Settings quick links ─────────────────────────────────────── */}
+            <motion.div {...stagger(3)}>
+                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">
                     Settings
                 </p>
-                <div className="grid sm:grid-cols-2 gap-2">
-                    {QUICK_LINKS.map((link) => (
+                {/* Single-column flat rows — like Linear's sidebar nav at 100% width */}
+                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
+                    {QUICK_LINKS.map((link, i) => (
                         <button
                             key={link.tab}
                             onClick={() => navigate(link.tab)}
                             className={cn(
-                                'flex items-center gap-3 px-4 py-3 rounded-2xl text-left group',
-                                'border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]',
-                                'hover:bg-[var(--md-sys-color-surface-variant)]/60 hover:border-[var(--md-sys-color-outline)] transition-all duration-150'
+                                'w-full flex items-center gap-3 px-4 py-3 text-left group',
+                                'border-b border-[var(--md-sys-color-outline-variant)] last:border-0',
+                                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-100'
                             )}
                         >
-                            <div className="flex items-center justify-center w-8 h-8 rounded-xl bg-[var(--md-sys-color-surface-variant)] shrink-0 group-hover:bg-[var(--md-sys-color-primary-container)] transition-colors">
-                                <MSO icon={link.icon} className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
-                                        {link.label}
-                                    </span>
-                                    {link.beta && (
-                                        <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)]">
-                                            beta
-                                        </span>
-                                    )}
-                                </div>
-                                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate mt-0.5">
-                                    {link.description}
-                                </p>
-                            </div>
+                            <MSO
+                                icon={link.icon}
+                                className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors shrink-0"
+                            />
+                            <span className="flex-1 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
+                                {link.label}
+                            </span>
+                            {link.beta && (
+                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] shrink-0">
+                                    beta
+                                </span>
+                            )}
                             <MSO
                                 icon="chevron_right"
-                                className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] opacity-0 group-hover:opacity-60 transition-opacity shrink-0"
+                                className="text-[16px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors shrink-0"
                             />
                         </button>
                     ))}

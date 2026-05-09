@@ -165,7 +165,7 @@ function NavItem({
                         : 'h-8 px-3',
                     // Active state — filled green pill
                     isActive && !hasSubTabs
-                        ? 'bg-[rgb(var(--background))] text-[rgb(var(--foreground))] font-medium'
+                        ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
                         : isActive && hasSubTabs
                             ? 'text-[rgb(var(--brand))] font-medium hover:bg-[rgb(var(--muted-foreground))]'
                             : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-[var(--md-sys-color-on-surface)]'
@@ -858,8 +858,8 @@ export function MobileSettingsNav({
             <div
                 className={cn(
                     // Key change: `fixed` + fully off-screen when closed — zero layout impact
-                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[80dvh] w-[240px] my-auto ml-2 rounded-lg',
-                    'bg-[rgb(var(--brand-container))] dark:bg-[#18191d] shadow-xl',
+                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[98dvh] w-[300px] my-auto ml-2 rounded-lg',
+                    'bg-card shadow-xl',
                     // Disable CSS transition while user is actively dragging for immediate feedback
                     dragging.current ? '' : 'transition-transform duration-200 ease-out',
                     open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]', // +ml-2 so it fully exits
