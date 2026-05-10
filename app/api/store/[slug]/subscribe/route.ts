@@ -3,7 +3,7 @@ import { auth0 } from '@/lib/auth0'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
-const PRO_PAYMENT_URL = 'https://payment.intasend.com/pay/7cb6de2e-970f-42c4-ac6e-9cc8d797fd9c/'
+const PRO_PAYMENT_URL = 'https://payment.intasend.com/subscriptions/charge/3Y3XX0L/plan/'
 
 export async function POST(
     request: NextRequest,
