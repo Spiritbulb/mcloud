@@ -12,6 +12,7 @@ import { trackVisit } from '@/app/onboarding/actions'
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
+// settings-shell.tsx — replace SECTIONS
 export const SECTIONS: readonly NavSection[] = [
     {
         id: 'store',
@@ -19,7 +20,6 @@ export const SECTIONS: readonly NavSection[] = [
         tabs: [
             { id: 'home', label: 'Overview', icon: 'home' },
             { id: 'general', label: 'General', icon: 'storefront' },
-
             { id: 'appearance', label: 'Appearance', icon: 'palette' },
         ],
     },
@@ -36,7 +36,7 @@ export const SECTIONS: readonly NavSection[] = [
         label: 'Commerce',
         tabs: [
             { id: 'orders', label: 'Orders', icon: 'receipt_long' },
-            { id: 'customers', label: 'Customers', icon: 'person', beta: true },
+            { id: 'customers', label: 'Customers', icon: 'person', beta: true, pro: true },
             { id: 'blog', label: 'Blog', icon: 'article' },
         ],
     },
@@ -44,19 +44,26 @@ export const SECTIONS: readonly NavSection[] = [
         id: 'advanced',
         label: 'Advanced',
         tabs: [
-            { id: 'members', label: 'Members', icon: 'group' },
-            { id: 'domain', label: 'Domain', icon: 'language', beta: true },
+            { id: 'members', label: 'Members', icon: 'group', pro: true },
+            { id: 'domain', label: 'Domain', icon: 'language', pro: true },
             {
                 id: 'integrations',
                 label: 'Integrations',
                 icon: 'link',
-                beta: true,
+                pro: true,
                 subTabs: [
                     { id: 'payments', label: 'Payments' },
                     { id: 'notifications', label: 'Notifications' },
                     { id: 'social', label: 'Socials' },
                 ],
             },
+        ],
+    },
+    {
+        id: 'account',
+        label: 'Account',
+        tabs: [
+            { id: 'billing', label: 'Billing', icon: 'credit_card' },
         ],
     },
 ] as const

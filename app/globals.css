@@ -703,3 +703,16 @@
 body:has([data-settings-shell]) {
   overflow: hidden;
 }
+
+/* globals.css */
+.nav-badge-pro {
+  background-color: oklch(0.75 0.15 60);
+  /* warm gold */
+  color: oklch(0.25 0.08 60);
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 9999px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}

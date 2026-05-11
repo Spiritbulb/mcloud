@@ -43,6 +43,7 @@ type Tab = {
     readonly icon: string           // Material Symbols name e.g. "home"
     readonly beta?: boolean
     readonly subTabs?: readonly SubTab[]
+    readonly pro?: boolean
 }
 
 type NavSection = {
@@ -65,6 +66,7 @@ type NavStore = {
     logo_url?: string
     role?: string
     custom_domain?: string
+    is_pro: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -113,6 +115,7 @@ function CollapseToggle({
 // ─── NavItem ──────────────────────────────────────────────────────────────────
 
 function NavItem({
+    store,
     tab,
     activeTab,
     activeSubTab,
@@ -121,6 +124,7 @@ function NavItem({
     slug,
     railMode,
 }: {
+    store: NavStore
     tab: Tab
     activeTab: string
     activeSubTab: string
@@ -192,6 +196,10 @@ function NavItem({
                                 NEW
                             </span>
                         )}
+
+                        {tab.pro && !store.is_pro && (
+                            <span className="nav-badge nav-badge-pro">PRO</span>
+                        )}
                         {hasSubTabs && (
                             <span className={cn(
                                 'material-symbols-outlined text-[16px] shrink-0 transition-transform duration-150',
@@ -245,6 +253,7 @@ function NavSectionGroup({
     onSelectSubTab,
     slug,
     railMode,
+    store,
 }: {
     section: NavSection
     activeTab: string
@@ -253,6 +262,7 @@ function NavSectionGroup({
     onSelectSubTab: (id: string) => void
     slug: string
     railMode: boolean
+    store: NavStore
 }) {
     const [collapsed, setCollapsed] = useState(false)
 
@@ -276,6 +286,7 @@ function NavSectionGroup({
                             onSelectSubTab={onSelectSubTab}
                             slug={slug}
                             railMode={railMode}
+                            store={store}
                         />
                     ))}
                 </ul>
@@ -466,8 +477,6 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
 
     const menuItems = [
         ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
-        { href: '#billing', icon: 'credit_card', label: 'Billing' },
-        { href: '#misc', icon: 'tune', label: 'Misc' },
     ]
 
     return (
@@ -656,6 +665,7 @@ function SidebarShell({
                         onSelectSubTab={onSelectSubTab}
                         slug={store.slug}
                         railMode={railMode}
+                        store={store}
                     />
                 ))}
             </nav>
@@ -896,6 +906,7 @@ export function MobileSettingsNav({
                             onSelectSubTab={handleSubSelect}
                             slug={store.slug}
                             railMode={false}
+                            store={store}
                         />
                     ))}
                 </nav>
