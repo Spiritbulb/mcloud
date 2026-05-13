@@ -9,6 +9,7 @@ import { createClient } from '@/lib/client'
 import { useCart } from '@/contexts/CartContext'
 import ClassicProductDetailPage from '../../../../src/themes/classic/ProductDetailPage'
 import type { ProductDetailData, ProductVariant } from '../../../../src/themes/types'
+import { trackView, trackAddToCart } from '../lib/analytics'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicProductDetailPage,
@@ -124,8 +125,15 @@ export default function ProductDetailContainer() {
         }
     }, [selectedOptions, product])
 
+    useEffect(() => {
+        if (storeSlug && product?.id) {
+            trackView(storeSlug, product.id)
+        }
+    }, [storeSlug, product?.id])
+
     const handleAddToCart = async () => {
         if (!selectedVariant || !product) return
+        trackAddToCart(storeSlug, product.id)
         await addToCart({
             variantId: selectedVariant.id,
             productId: product.id,

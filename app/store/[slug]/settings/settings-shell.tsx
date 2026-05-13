@@ -150,7 +150,7 @@ export default function SettingsShell({
         avatarUrl: user?.avatarUrl,
         accountHref: process.env.NODE_ENV === 'development'
             ? `http://localhost:3000/store/${slug}/settings/account`
-            : `https://${slug}.menengai.cloud/settings/account`,
+            : `https://admin.menengai.cloud/settings/account`,
         onSignOut: () => { window.location.href = `${process.env.APP_BASE_URL}/auth/logout` },
     }
 

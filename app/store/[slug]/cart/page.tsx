@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/client'
 import ClassicCartPage from '../../../../src/themes/classic/CartPage'
 import type { MpesaConfig, GuestDetails } from '../../../../src/themes/types'
+import { trackCheckout, trackOrderPlaced } from '../lib/analytics'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicCartPage,
@@ -65,6 +66,12 @@ export default function CartPageContainer() {
     useEffect(() => {
         if (!loading && cartItems.length > 0) refreshCart()
     }, [])
+
+    useEffect(() => {
+        if (storeSlug) {
+            trackCheckout(storeSlug)
+        }
+    }, [storeSlug])
 
     const subtotalKES = safeCartItems.reduce((s, i) => s + i.price * i.quantity, 0)
     const totalKES = subtotalKES
@@ -145,6 +152,7 @@ export default function CartPageContainer() {
 
         if (orderError || !order) throw orderError ?? new Error('Failed to create order')
 
+
         const { error: itemsError } = await supabase.from('order_items').insert(
             safeCartItems.map((item) => ({
                 order_id: order.id,
@@ -159,7 +167,11 @@ export default function CartPageContainer() {
             }))
         )
         if (itemsError) throw itemsError
-
+        if (storeSlug) {
+            for (const item of safeCartItems) {
+                trackOrderPlaced(storeSlug, item.productId, order.id)
+            }
+        }
         return orderNumber
     }
 

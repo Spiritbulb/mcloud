@@ -1114,6 +1114,83 @@ export type Database = {
           },
         ]
       }
+      store_analytics: {
+        Row: {
+          country_code: string | null
+          created_at: string
+          device_type: string | null
+          event: Database["public"]["Enums"]["analytics_event_type"]
+          id: string
+          order_id: string | null
+          product_id: string | null
+          referrer: string | null
+          session_id: string | null
+          store_id: string
+          utm_campaign: string | null
+          utm_medium: string | null
+          utm_source: string | null
+        }
+        Insert: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          store_id: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Update: {
+          country_code?: string | null
+          created_at?: string
+          device_type?: string | null
+          event?: Database["public"]["Enums"]["analytics_event_type"]
+          id?: string
+          order_id?: string | null
+          product_id?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          store_id?: string
+          utm_campaign?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_analytics_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_analytics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_integrations: {
         Row: {
           config: Json
@@ -1802,6 +1879,64 @@ export type Database = {
         }
         Relationships: []
       }
+      store_funnel_7d: {
+        Row: {
+          add_to_carts: number | null
+          checkouts: number | null
+          orders: number | null
+          store_id: string | null
+          views: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_top_product_month: {
+        Row: {
+          image_url: string | null
+          name: string | null
+          product_id: string | null
+          revenue: number | null
+          store_id: string | null
+          units_sold: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_analytics_product_id_fkey"
+            columns: ["product_id"]
+            isOneToOne: false
+            referencedRelation: "products"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_analytics_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       auth0_uid: { Args: never; Returns: string }
@@ -1809,7 +1944,11 @@ export type Database = {
       increment_store_views: { Args: { store_id: string }; Returns: undefined }
     }
     Enums: {
-      [_ in never]: never
+      analytics_event_type:
+        | "view"
+        | "add_to_cart"
+        | "checkout_started"
+        | "order_placed"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1936,6 +2075,13 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      analytics_event_type: [
+        "view",
+        "add_to_cart",
+        "checkout_started",
+        "order_placed",
+      ],
+    },
   },
 } as const

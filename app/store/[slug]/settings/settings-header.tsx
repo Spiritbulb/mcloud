@@ -115,10 +115,7 @@ export function SettingsHeader({
                 <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
                     {activeLabel}
                 </span>
-                {/* Pro badge next to page title if this page is pro-gated */}
-                {isPro && (
-                    <ProBadge />
-                )}
+
             </div>
 
             {/* Right actions */}
@@ -127,9 +124,9 @@ export function SettingsHeader({
                 {/* Upgrade chip — free users only */}
                 {!isPro && <UpgradeChip slug={store?.slug ?? ''} />}
 
-                {/* Pro indicator — pro users only */}
+                {/* Pro badge next to page title if this page is pro-gated */}
                 {isPro && (
-                    <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--md-sys-color-primary-container)]">
+                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--md-sys-color-primary-container)]">
                         <MSO icon="workspace_premium" className="text-[13px] text-[var(--md-sys-color-primary)]" fill={1} />
                         <span className="text-[11px] font-semibold text-[var(--md-sys-color-primary)]">Pro</span>
                     </div>

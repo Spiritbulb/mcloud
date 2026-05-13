@@ -109,133 +109,6 @@ function getGreeting() {
 }
 
 
-// ─── HeroStoreCard ────────────────────────────────────────────────────────────
-
-function HeroStoreCard({
-  store,
-  picking,
-  onPick,
-}: {
-  store: ExistingStore
-  picking: string | null
-  onPick: (slug: string) => void
-}) {
-  const isPicking = picking === store.slug
-  const isDisabled = picking !== null && !isPicking
-  const ago = timeAgo(store.last_visited_at)
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, y: 12 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, delay: 0.05, ease: [0.25, 0.1, 0.25, 1] }}
-      onClick={() => !isDisabled && onPick(store.slug)}
-      disabled={isDisabled}
-      className={cn(
-        'group w-full text-left rounded-2xl border transition-all duration-200',
-        'bg-[var(--md-sys-color-primary-container)] border-[var(--md-sys-color-primary)]/20',
-        'p-5 flex items-center gap-4',
-        !isDisabled && 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
-        isPicking && 'scale-[0.99]',
-        isDisabled && 'opacity-40 cursor-not-allowed'
-      )}
-    >
-      {/* Logo */}
-      <div className={cn(
-        'w-12 h-12 shrink-0 flex items-center justify-center rounded-xl font-semibold text-sm overflow-hidden',
-        !store.logo_url && 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-      )}>
-        {store.logo_url
-          ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
-          : getInitials(store.name)
-        }
-      </div>
-
-      {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-0.5">
-          <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)] truncate">
-            {store.name}
-          </p>
-          <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-primary)] shrink-0">
-            <MSO icon="history" className="text-[11px]" />
-            Last visited
-          </span>
-        </div>
-        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-          {store.slug}.menengai.cloud
-          {ago && <span className="opacity-60"> · {ago}</span>}
-        </p>
-      </div>
-
-      {/* Arrow */}
-      <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-1')}>
-        {isPicking
-          ? <div className="w-4 h-4 border-2 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
-          : <MSO icon="arrow_forward" className="text-[20px] text-[var(--md-sys-color-primary)]" />
-        }
-      </div>
-    </motion.button>
-  )
-}
-
-
-// ─── CompactStoreCard ─────────────────────────────────────────────────────────
-
-function CompactStoreCard({
-  store,
-  index,
-  picking,
-  onPick,
-}: {
-  store: ExistingStore
-  index: number
-  picking: string | null
-  onPick: (slug: string) => void
-}) {
-  const isPicking = picking === store.slug
-  const isDisabled = picking !== null && !isPicking
-
-  return (
-    <motion.button
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: 0.08 + index * 0.05, ease: [0.25, 0.1, 0.25, 1] }}
-      onClick={() => !isDisabled && onPick(store.slug)}
-      disabled={isDisabled}
-      className={cn(
-        'group text-left rounded-2xl border transition-all duration-200',
-        'bg-[var(--md-sys-color-surface)] border-[var(--md-sys-color-outline-variant)]',
-        'p-4 flex items-center gap-3',
-        !isDisabled && 'hover:shadow-sm hover:border-[var(--md-sys-color-primary)]/30 cursor-pointer',
-        isPicking && 'scale-[0.99]',
-        isDisabled && 'opacity-40 cursor-not-allowed'
-      )}
-    >
-      <div className={cn(
-        'w-8 h-8 shrink-0 flex items-center justify-center rounded-lg font-semibold text-xs overflow-hidden',
-        !store.logo_url && 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-      )}>
-        {store.logo_url
-          ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
-          : getInitials(store.name)
-        }
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
-        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{store.slug}.menengai.cloud</p>
-      </div>
-      <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-0.5')}>
-        {isPicking
-          ? <div className="w-3.5 h-3.5 border-2 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
-          : <MSO icon="arrow_forward" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
-        }
-      </div>
-    </motion.button>
-  )
-}
-
-
 // ─── CREATE FORM (split-screen) ───────────────────────────────────────────────
 
 type CreateStep = 'profile' | 'store' | 'prefs'
@@ -654,86 +527,15 @@ export default function OnboardingPage({ existingStores = [], userName }: Onboar
   return (
     <div className="min-h-[100dvh] flex flex-col items-center justify-center px-4 py-16 bg-[var(--md-sys-color-surface)]">
       <AnimatePresence mode="wait">
-
-        {/* ── HOME ── */}
-        {view === 'home' && (
-          <motion.div
-            key="home"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -12 }}
-            transition={{ duration: 0.26 }}
-            className="w-full max-w-2xl space-y-3"
-          >
-            {/* Greeting */}
-            <motion.div
-              initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.28, delay: 0.02 }}
-              className="mb-6"
-            >
-              <h1 className="text-[22px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight">
-                {greeting}{firstName ? `, ${firstName}` : ''} 👋
-              </h1>
-              <p className="mt-1 text-[14px] text-[var(--md-sys-color-on-surface-variant)]">
-                {sorted.length === 1
-                  ? 'Jump back into your store, or start a new one.'
-                  : `You have ${sorted.length} stores. Pick one to continue.`}
-              </p>
-            </motion.div>
-
-            {/* Hero card — most recent store */}
-            <HeroStoreCard store={sorted[0]} picking={picking} onPick={handlePick} />
-
-            {/* Compact grid — remaining stores + new shop */}
-            {(sorted.length > 1 || true) && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mt-2">
-                {sorted.slice(1).map((store, i) => (
-                  <CompactStoreCard
-                    key={store.id}
-                    store={store}
-                    index={i}
-                    picking={picking}
-                    onPick={handlePick}
-                  />
-                ))}
-
-                {/* New shop */}
-                <motion.button
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.26, delay: 0.08 + (sorted.length - 1) * 0.05 }}
-                  onClick={() => setView('create')}
-                  disabled={picking !== null}
-                  className={cn(
-                    'flex items-center gap-3 p-4 rounded-2xl text-left',
-                    'border border-dashed border-[var(--md-sys-color-outline-variant)]',
-                    'hover:border-[var(--md-sys-color-primary)]/40 hover:bg-[var(--md-sys-color-primary-container)]/20',
-                    'transition-all duration-150 group',
-                    picking !== null && 'opacity-40 cursor-not-allowed'
-                  )}
-                >
-                  <div className="w-8 h-8 rounded-lg bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center group-hover:bg-[var(--md-sys-color-primary-container)] transition-colors shrink-0">
-                    <MSO icon="add" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors" />
-                  </div>
-                  <div>
-                    <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">New shop</p>
-                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">Free forever</p>
-                  </div>
-                </motion.button>
-              </div>
-            )}
-          </motion.div>
-        )}
-
         {/* ── CREATE ── */}
-        {view === 'create' && (
-          <CreateForm
-            key="create"
-            initialName={userName}
-            onBack={() => hasExisting ? setView('home') : undefined}
-            hasExisting={hasExisting}
-          />
-        )}
+
+        <CreateForm
+          key="create"
+          initialName={userName}
+          onBack={() => hasExisting ? setView('home') : undefined}
+          hasExisting={hasExisting}
+        />
+
 
       </AnimatePresence>
 

@@ -25,10 +25,7 @@ export async function GET(
 
     const storeId = currentMembership.store_id
 
-    // 7 days ago ISO string — used for funnel window
-    const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
-
-    // Start of current calendar month
+    const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
@@ -38,8 +35,8 @@ export async function GET(
         { data: orderAgg },
         { data: recentOrders },
         { data: integrations },
-        { data: recentOrderCount },   // funnel: orders last 7d
-        { data: topProductRows },     // top product this month
+        { data: funnelRows },
+        { data: topProductRows },
     ] = await Promise.all([
         supabase
             .from('stores')
@@ -70,23 +67,34 @@ export async function GET(
             .select('provider, is_active')
             .eq('store_id', storeId),
 
-        // Funnel: orders in last 7d
+        // ── Funnel: aggregate event counts from store_analytics (last 7d) ──
         supabase
-            .from('orders')
-            .select('id', { count: 'exact', head: true })
+            .from('store_analytics')
+            .select('event')
             .eq('store_id', storeId)
-            .gte('created_at', since),
+            .gte('created_at', since7d),
 
-        // Top product this month: join order_items → products, sum revenue + units
+        // ── Top product: order_items this month, joined to products ──
         supabase
             .from('order_items')
             .select(`
-        quantity,
-        price,
-        product:products ( id, name, images )
-      `)
-            .eq('store_id', storeId)
-            .gte('created_at', monthStart),
+                quantity,
+                price,
+                total,
+                product:products ( id, name, images )
+            `)
+            .gte('created_at', monthStart)
+            // filter to this store via the orders join
+            .in(
+                'order_id',
+                // subquery: all order IDs for this store this month
+                (await supabase
+                    .from('orders')
+                    .select('id')
+                    .eq('store_id', storeId)
+                    .gte('created_at', monthStart)
+                ).data?.map(o => o.id) ?? []
+            ),
     ])
 
     if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
@@ -100,26 +108,57 @@ export async function GET(
     const paypalEnabled = integrations?.some(i => i.provider === 'paypal' && i.is_active) ?? false
     const stripeEnabled = integrations?.some(i => i.provider === 'stripe' && i.is_active) ?? false
 
+    // ── Funnel ─────────────────────────────────────────────────────────────────
+    // Count each event type from store_analytics rows returned above.
+    // views falls back to stores.views (all-time counter) when no analytics rows
+    // exist yet — gives a non-zero number on day one.
+    const eventCounts = (funnelRows ?? []).reduce(
+        (acc, row) => {
+            if (row.event in acc) acc[row.event as keyof typeof acc]++
+            return acc
+        },
+        { view: 0, add_to_cart: 0, checkout_started: 0, order_placed: 0 }
+    )
+
+    const funnel = {
+        views: store.views ?? 0,
+        add_to_carts: eventCounts.add_to_cart,
+        checkouts: eventCounts.checkout_started,
+        orders: eventCounts.order_placed,
+    }
+
     // ── Top product ────────────────────────────────────────────────────────────
-    // Aggregate order_items client-side (avoids a raw SQL call)
-    type ProductAgg = { id: string; name: string; image_url?: string; revenue: number; units_sold: number }
+    type ProductAgg = {
+        id: string
+        name: string
+        image_url?: string
+        revenue: number
+        units_sold: number
+    }
+
     const productMap = new Map<string, ProductAgg>()
 
     for (const row of topProductRows ?? []) {
         const p = row.product as any
         if (!p?.id) continue
         const existing = productMap.get(p.id)
-        const lineRevenue = (row.price ?? 0) * (row.quantity ?? 0)
+        // use row.total (already price × qty) rather than recomputing
+        const lineRevenue = (row.total ?? row.price * row.quantity)
+        const units = row.quantity ?? 0
+        const imageUrl = Array.isArray(p.images)
+            ? (p.images[0] as any)?.url ?? p.images[0] ?? undefined
+            : undefined
+
         if (existing) {
             existing.revenue += lineRevenue
-            existing.units_sold += row.quantity ?? 0
+            existing.units_sold += units
         } else {
             productMap.set(p.id, {
                 id: p.id,
                 name: p.name,
-                image_url: Array.isArray(p.images) ? p.images[0] ?? undefined : undefined,
+                image_url: imageUrl,
                 revenue: lineRevenue,
-                units_sold: row.quantity ?? 0,
+                units_sold: units,
             })
         }
     }
@@ -127,15 +166,6 @@ export async function GET(
     const topProduct = productMap.size > 0
         ? [...productMap.values()].sort((a, b) => b.revenue - a.revenue)[0]
         : null
-
-    // ── Funnel ─────────────────────────────────────────────────────────────────
-    // views comes from stores.views (your new column — total all-time counter)
-    // For a 7d window approximation we just surface the raw total for now;
-    // swap for a time-series table later if needed.
-    const funnel = {
-        views: store.views ?? 0,
-        orders_7d: recentOrderCount?.length ?? 0,  // count from head query above
-    }
 
     return NextResponse.json({
         store: {

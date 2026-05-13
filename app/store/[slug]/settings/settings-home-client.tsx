@@ -33,8 +33,6 @@ type StoreOverview = {
     custom_domain_verified?: boolean
 }
 
-// ─── Types (add to OverviewData) ──────────────────────────────────────────────
-
 type Funnel = {
     views: number
     add_to_carts: number
@@ -50,12 +48,11 @@ type TopProduct = {
     units_sold: number
 }
 
-// extend OverviewData:
 type OverviewData = {
     store: StoreOverview
     recent_orders: Order[]
-    funnel?: Funnel        // ← add
-    top_product?: TopProduct  // ← add
+    funnel?: Funnel
+    top_product?: TopProduct
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -90,7 +87,7 @@ function timeAgo(iso: string) {
     return new Date(iso).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
 }
 
-// ─── Skeleton ─────────────────────────────────────────────────────────────────
+// ─── Primitives ───────────────────────────────────────────────────────────────
 
 function Sk({ className }: { className?: string }) {
     return (
@@ -100,8 +97,6 @@ function Sk({ className }: { className?: string }) {
         )} />
     )
 }
-
-// ─── MSO ─────────────────────────────────────────────────────────────────────
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (
@@ -115,16 +110,9 @@ function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; 
 }
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
-// Clean, no icon circles. Value-first, label second. Vercel/Linear style.
 
-function KpiCard({
-    label, value, sub, loading, featured,
-}: {
-    label: string
-    value: string
-    sub?: string
-    loading?: boolean
-    featured?: boolean
+function KpiCard({ label, value, sub, loading, featured }: {
+    label: string; value: string; sub?: string; loading?: boolean; featured?: boolean
 }) {
     return (
         <div className={cn(
@@ -137,30 +125,18 @@ function KpiCard({
                 ? <Sk className="h-8 w-24 mb-1" />
                 : <p className={cn(
                     'text-[28px] font-semibold tabular-nums leading-none tracking-tight',
-                    featured
-                        ? 'text-[var(--md-sys-color-on-primary-container)]'
-                        : 'text-[var(--md-sys-color-on-surface)]'
-                )}>
-                    {value}
-                </p>
+                    featured ? 'text-[var(--md-sys-color-on-primary-container)]' : 'text-[var(--md-sys-color-on-surface)]'
+                )}>{value}</p>
             }
             <p className={cn(
                 'text-[12px] font-medium',
-                featured
-                    ? 'text-[var(--md-sys-color-primary)]'
-                    : 'text-[var(--md-sys-color-on-surface-variant)]'
-            )}>
-                {label}
-            </p>
+                featured ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
+            )}>{label}</p>
             {sub && !loading && (
                 <p className={cn(
                     'text-[11px]',
-                    featured
-                        ? 'text-[var(--md-sys-color-primary)]/60'
-                        : 'text-[var(--md-sys-color-on-surface-variant)] opacity-60'
-                )}>
-                    {sub}
-                </p>
+                    featured ? 'text-[var(--md-sys-color-primary)]/60' : 'text-[var(--md-sys-color-on-surface-variant)] opacity-60'
+                )}>{sub}</p>
             )}
         </div>
     )
@@ -182,7 +158,6 @@ function StatusBadge({ status }: { status: Order['status'] }) {
 }
 
 // ─── Payments callout ─────────────────────────────────────────────────────────
-// Tonal card, not dashed. Resembles Shopify's "action required" cards.
 
 function PaymentsCallout({ onNavigate }: { onNavigate: () => void }) {
     return (
@@ -199,9 +174,7 @@ function PaymentsCallout({ onNavigate }: { onNavigate: () => void }) {
                 <MSO icon="payments" className="text-[20px] text-[var(--md-sys-color-on-secondary-container)]" fill={1} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">
-                    Set up payments
-                </p>
+                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">Set up payments</p>
                 <p className="text-[12px] text-[var(--md-sys-color-on-secondary-container)]/70 mt-0.5 leading-relaxed">
                     Connect M-Pesa or PayPal so customers can checkout. Takes about 2 minutes.
                 </p>
@@ -221,12 +194,14 @@ function pct(a: number, b: number) {
     return `${((a / b) * 100).toFixed(1)}%`
 }
 
-function FunnelRow({ funnel, loading }: { funnel?: Funnel; loading: boolean }) {
+function FunnelRow({ funnel, loading, onViewAnalytics }: {
+    funnel?: Funnel; loading: boolean; onViewAnalytics: () => void
+}) {
     const steps = [
         { label: 'Views', value: funnel?.views, rate: null },
         { label: 'Add to cart', value: funnel?.add_to_carts, rate: pct(funnel?.add_to_carts ?? 0, funnel?.views ?? 0) },
-        { label: 'Checkouts', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, funnel?.add_to_carts ?? 0) },
-        { label: 'Orders', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, funnel?.checkouts ?? 0) },
+        { label: 'Checkouts Started', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, funnel?.add_to_carts ?? 0) },
+        { label: 'Orders Placed', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, funnel?.checkouts ?? 0) },
     ]
 
     return (
@@ -234,30 +209,24 @@ function FunnelRow({ funnel, loading }: { funnel?: Funnel; loading: boolean }) {
             <div className="grid grid-cols-4 divide-x divide-[var(--md-sys-color-outline-variant)]">
                 {steps.map((step, i) => (
                     <div key={step.label} className="flex flex-col gap-1 px-4 py-4">
-                        {/* Bar fill — visual proportion */}
                         <div className="h-1 rounded-full bg-[var(--md-sys-color-surface-variant)] mb-2 overflow-hidden">
                             {!loading && funnel && (
                                 <div
                                     className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
                                     style={{
-                                        width: i === 0
-                                            ? '100%'
-                                            : `${((steps[i].value ?? 0) / (funnel.views || 1)) * 100}%`,
+                                        width: i === 0 ? '100%' : `${((steps[i].value ?? 0) / (funnel.views || 1)) * 100}%`,
                                         opacity: 1 - i * 0.15,
                                     }}
                                 />
                             )}
                         </div>
-
                         {loading
                             ? <Sk className="h-5 w-14" />
                             : <p className="text-[18px] font-semibold tabular-nums leading-none text-[var(--md-sys-color-on-surface)]">
                                 {(step.value ?? 0).toLocaleString()}
                             </p>
                         }
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
-                            {step.label}
-                        </p>
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{step.label}</p>
                         {step.rate && (
                             <p className="text-[11px] font-medium text-[var(--md-sys-color-primary)] mt-0.5">
                                 {step.rate} conv.
@@ -267,11 +236,18 @@ function FunnelRow({ funnel, loading }: { funnel?: Funnel; loading: boolean }) {
                 ))}
             </div>
 
-            {/* Period label */}
-            <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+            {/* Footer — period label + analytics link */}
+            <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
                     Last 7 days · store visits → purchases
                 </p>
+                <button
+                    onClick={onViewAnalytics}
+                    className="flex items-center gap-0.5 text-[11px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
+                >
+                    Full report
+                    <MSO icon="chevron_right" className="text-[13px]" />
+                </button>
             </div>
         </div>
     )
@@ -279,18 +255,9 @@ function FunnelRow({ funnel, loading }: { funnel?: Funnel; loading: boolean }) {
 
 // ─── TopProductCard ───────────────────────────────────────────────────────────
 
-function TopProductCard({
-    product,
-    currency,
-    loading,
-    onNavigate,
-}: {
-    product?: TopProduct
-    currency: string
-    loading: boolean
-    onNavigate: () => void
+function TopProductCard({ product, currency, loading, onNavigate }: {
+    product?: TopProduct; currency: string; loading: boolean; onNavigate: () => void
 }) {
-    // Don't render if loaded and no product exists yet
     if (!loading && !product) return null
 
     return (
@@ -303,7 +270,6 @@ function TopProductCard({
                 'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
             )}
         >
-            {/* Thumbnail */}
             <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
                 {loading
                     ? <Sk className="w-full h-full rounded-none" />
@@ -312,19 +278,13 @@ function TopProductCard({
                         : <MSO icon="inventory_2" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
                 }
             </div>
-
-            {/* Info */}
             <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-1.5 mb-0.5">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
-                        Top product
-                    </span>
-                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
+                    Top product
+                </span>
                 {loading
-                    ? <Sk className="h-4 w-32" />
-                    : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
-                        {product!.name}
-                    </p>
+                    ? <Sk className="h-4 w-32 mt-0.5" />
+                    : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{product!.name}</p>
                 }
                 {!loading && product && (
                     <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
@@ -332,8 +292,6 @@ function TopProductCard({
                     </p>
                 )}
             </div>
-
-            {/* Revenue */}
             <div className="shrink-0 text-right">
                 {loading
                     ? <Sk className="h-5 w-16" />
@@ -351,7 +309,6 @@ function TopProductCard({
 }
 
 // ─── Quick links ──────────────────────────────────────────────────────────────
-// Flat, compact rows — not icon-in-circle cards. Resembles Linear's settings nav.
 
 type QuickLink = { tab: TabId; label: string; icon: string; beta?: boolean }
 
@@ -360,6 +317,7 @@ const QUICK_LINKS: QuickLink[] = [
     { tab: 'appearance', label: 'Appearance', icon: 'palette' },
     { tab: 'products', label: 'Products', icon: 'inventory_2' },
     { tab: 'orders', label: 'Orders', icon: 'receipt_long' },
+    { tab: 'analytics', label: 'Analytics', icon: 'bar_chart' },
     { tab: 'blog', label: 'Blog', icon: 'article' },
     { tab: 'integrations', label: 'Integrations', icon: 'link', beta: true },
     { tab: 'domain', label: 'Custom domain', icon: 'language', beta: true },
@@ -436,7 +394,6 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                                 )} />
                                 {store.active ? 'Live' : 'Offline'}
                             </span>
-
                             <a
                                 href={`https://${store.slug}.menengai.cloud`}
                                 target="_blank"
@@ -465,23 +422,20 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                     loading={loading}
                     featured
                 />
-                <KpiCard
-                    label="Orders"
-                    value={store?.order_count?.toString() ?? '—'}
-                    loading={loading}
-                />
-                <KpiCard
-                    label="Products"
-                    value={store?.product_count?.toString() ?? '—'}
-                    loading={loading}
-                />
+                <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} loading={loading} />
+                <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} loading={loading} />
             </motion.div>
 
-
+            {/* ── Funnel ───────────────────────────────────────────────────── */}
             <motion.div {...stagger(2)}>
-                <FunnelRow funnel={data?.funnel} loading={loading} />
+                <FunnelRow
+                    funnel={data?.funnel}
+                    loading={loading}
+                    onViewAnalytics={() => navigate('analytics')}
+                />
             </motion.div>
 
+            {/* ── Top product ──────────────────────────────────────────────── */}
             <motion.div {...stagger(3)}>
                 <TopProductCard
                     product={data?.top_product}
@@ -506,11 +460,9 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
             </AnimatePresence>
 
             {/* ── Recent orders ─────────────────────────────────────────────── */}
-            <motion.div {...stagger(2)}>
+            <motion.div {...stagger(4)}>
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
-                        Recent orders
-                    </p>
+                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Recent orders</p>
                     <button
                         onClick={() => navigate('orders')}
                         className="flex items-center gap-0.5 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
@@ -532,7 +484,10 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
                     ) : error ? (
                         <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
                             <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
-                            Could not load orders. <button onClick={() => window.location.reload()} className="text-[var(--md-sys-color-primary)] hover:underline">Retry</button>
+                            Could not load orders.{' '}
+                            <button onClick={() => window.location.reload()} className="text-[var(--md-sys-color-primary)] hover:underline">
+                                Retry
+                            </button>
                         </div>
                     ) : orders.length === 0 ? (
                         <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
@@ -576,13 +531,10 @@ export default function SettingsHomeClient({ slug }: { slug: string }) {
             </motion.div>
 
             {/* ── Settings quick links ─────────────────────────────────────── */}
-            <motion.div {...stagger(3)}>
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">
-                    Settings
-                </p>
-                {/* Single-column flat rows — like Linear's sidebar nav at 100% width */}
+            <motion.div {...stagger(5)}>
+                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">Settings</p>
                 <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
-                    {QUICK_LINKS.map((link, i) => (
+                    {QUICK_LINKS.map((link) => (
                         <button
                             key={link.tab}
                             onClick={() => navigate(link.tab)}

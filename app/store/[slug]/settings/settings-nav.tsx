@@ -8,8 +8,7 @@ import '@material/web/divider/divider.js'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { TabId } from './settings-shell'
-import { usePathname, useRouter } from 'next/navigation'
-import { Store } from '@/src/themes/types'
+import { useRouter } from 'next/navigation'
 
 // ─── Material Web JSX declarations ───────────────────────────────────────────
 
@@ -28,7 +27,6 @@ declare global {
                 target?: string
             }
             'md-divider': React.HTMLAttributes<HTMLElement>
-
         }
     }
 }
@@ -40,15 +38,15 @@ type SubTab = { readonly id: string; readonly label: string }
 type Tab = {
     readonly id: string
     readonly label: string
-    readonly icon: string           // Material Symbols name e.g. "home"
+    readonly icon: string
     readonly beta?: boolean
-    readonly subTabs?: readonly SubTab[]
     readonly pro?: boolean
+    readonly subTabs?: readonly SubTab[]
 }
 
 type NavSection = {
     readonly id: string
-    readonly label: string          // e.g. "STORE", "ACCOUNTING", "SYSTEM"
+    readonly label: string
     readonly tabs: readonly Tab[]
 }
 
@@ -66,13 +64,20 @@ type NavStore = {
     logo_url?: string
     role?: string
     custom_domain?: string
-    is_pro: boolean
+    is_pro?: boolean
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function getInitials(name: string) {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+}
+
+function settingsPath(slug: string, ...segments: string[]) {
+    const base = process.env.NODE_ENV === 'development'
+        ? `/store/${slug}/settings`
+        : `/settings`
+    return segments.length ? `${base}/${segments.join('/')}` : base
 }
 
 // ─── CollapseToggle ───────────────────────────────────────────────────────────
@@ -89,7 +94,6 @@ function CollapseToggle({
     railMode: boolean
 }) {
     if (railMode) {
-        // In rail mode just render a divider between sections
         return <div className="mx-2 my-1 h-px bg-[var(--md-sys-color-outline-variant)]" />
     }
 
@@ -134,21 +138,13 @@ function NavItem({
     railMode: boolean
 }) {
     const router = useRouter()
-    const basePath = process.env.NODE_ENV === 'development'
-        ? `/store/${slug}/settings`
-        : `/settings`
-
     const hasSubTabs = !!tab.subTabs?.filter(s => s.id && s.label).length
     const isActive = activeTab === tab.id
     const [open, setOpen] = useState(isActive && hasSubTabs)
 
     const handleClick = () => {
         if (tab.id === 'home') {
-            router.push(
-                process.env.NODE_ENV === 'development'
-                    ? `/store/${slug}/settings`
-                    : `/settings`
-            )
+            router.push(settingsPath(slug))
         } else if (hasSubTabs) {
             setOpen(v => !v)
         } else {
@@ -163,11 +159,7 @@ function NavItem({
                 title={railMode ? tab.label : undefined}
                 className={cn(
                     'flex items-center gap-2.5 w-full transition-colors duration-100 rounded-md',
-                    // Sizing — full row in expanded, icon-only in rail
-                    railMode
-                        ? 'justify-center w-10 h-10 mx-auto'
-                        : 'h-8 px-3',
-                    // Active state — filled green pill
+                    railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3',
                     isActive && !hasSubTabs
                         ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
                         : isActive && hasSubTabs
@@ -178,9 +170,7 @@ function NavItem({
                 <span className={cn(
                     'material-symbols-outlined shrink-0',
                     railMode ? 'text-[20px]' : 'text-[18px]',
-                    isActive
-                        ? 'text-[rgb(var(--brand))]'
-                        : 'text-[rgb(var(--foreground))]'
+                    isActive ? 'text-[rgb(var(--brand))]' : 'text-[rgb(var(--foreground))]'
                 )}>
                     {tab.icon}
                 </span>
@@ -189,14 +179,10 @@ function NavItem({
                     <>
                         <span className="flex-1 text-left text-[13px] truncate">{tab.label}</span>
                         {tab.beta && (
-                            <span className={cn(
-                                'nav-badge',
-                                isActive ? 'nav-badge-active' : 'nav-badge-default'
-                            )}>
+                            <span className={cn('nav-badge', isActive ? 'nav-badge-active' : 'nav-badge-default')}>
                                 NEW
                             </span>
                         )}
-
                         {tab.pro && !store.is_pro && (
                             <span className="nav-badge nav-badge-pro">PRO</span>
                         )}
@@ -222,7 +208,7 @@ function NavItem({
                             <li key={sub.id}>
                                 <button
                                     onClick={() => {
-                                        router.push(`${basePath}/${tab.id}/${sub.id}`)
+                                        router.push(settingsPath(slug, tab.id, sub.id))
                                         onSelectSubTab(sub.id)
                                     }}
                                     className={cn(
@@ -243,7 +229,7 @@ function NavItem({
     )
 }
 
-// ─── NavSection ───────────────────────────────────────────────────────────────
+// ─── NavSectionGroup ──────────────────────────────────────────────────────────
 
 function NavSectionGroup({
     section,
@@ -310,23 +296,10 @@ function StoreSwitcher({
     const [open, setOpen] = useState(false)
     const hasMultiple = allStores.length > 1
 
-    if (railMode) {
-        return (
-            <div className="flex justify-center py-2">
-                <button
-                    id={anchorId}
-                    onClick={() => hasMultiple && setOpen(v => !v)}
-                    title={store.name}
-                    className="store-avatar-fallback flex w-8 h-8 items-center justify-center rounded-md text-[11px] font-bold overflow-hidden"
-                >
-                    {store.logo_url
-                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
-                        : getInitials(store.name)
-                    }
-                </button>
-                {hasMultiple && renderMenu()}
-            </div>
-        )
+    function switchStore(slug: string) {
+        const domain = process.env.NODE_ENV === 'production' ? '; domain=.menengai.cloud' : ''
+        document.cookie = `mng_active_store=${slug}; path=/; max-age=2592000; SameSite=Lax${domain}`
+        window.location.href = settingsPath(slug)
     }
 
     function renderMenu() {
@@ -352,8 +325,7 @@ function StoreSwitcher({
                     // @ts-ignore
                     <md-menu-item
                         key={s.slug}
-                        href={`https://${s.slug}.menengai.cloud/settings`}
-                        onClick={() => setOpen(false)}
+                        onClick={() => { setOpen(false); switchStore(s.slug) }}
                     >
                         <div slot="start" className="store-avatar-fallback flex w-5 h-5 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
                             {s.logo_url
@@ -373,6 +345,25 @@ function StoreSwitcher({
                 ))}
                 {/* @ts-ignore */}
             </md-menu>
+        )
+    }
+
+    if (railMode) {
+        return (
+            <div className="flex justify-center py-2">
+                <button
+                    id={anchorId}
+                    onClick={() => hasMultiple && setOpen(v => !v)}
+                    title={store.name}
+                    className="store-avatar-fallback flex w-8 h-8 items-center justify-center rounded-md text-[11px] font-bold overflow-hidden"
+                >
+                    {store.logo_url
+                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover" />
+                        : getInitials(store.name)
+                    }
+                </button>
+                {hasMultiple && renderMenu()}
+            </div>
         )
     }
 
@@ -412,22 +403,21 @@ function StoreSwitcher({
 }
 
 // ─── UtilityItems ─────────────────────────────────────────────────────────────
-// Notifications + Support — pinned above user footer
 
 function UtilityItems({
     railMode,
     notificationCount = 0,
-    store
+    store,
 }: {
     railMode: boolean
     notificationCount?: number
     store: NavStore
 }) {
+    const router = useRouter()
     const items = [
-        { icon: 'notifications', label: 'Notifications', badge: notificationCount, href: `/store/${store.slug}/settings/notifications` },
-        { icon: 'help_outline', label: 'Support', href: `/support` },
+        { icon: 'notifications', label: 'Notifications', badge: notificationCount, href: settingsPath(store.slug, 'notifications') },
+        { icon: 'help_outline', label: 'Support', href: '/support' },
     ]
-    const router = useRouter();
 
     return (
         <ul className={cn('space-y-0.5 list-none p-0 mb-2', !railMode && 'px-1')}>
@@ -439,9 +429,7 @@ function UtilityItems({
                         className={cn(
                             'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
                             'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
-                            railMode
-                                ? 'justify-center w-10 h-10 mx-auto relative'
-                                : 'h-8 px-3'
+                            railMode ? 'justify-center w-10 h-10 mx-auto relative' : 'h-8 px-3'
                         )}
                     >
                         <span className="material-symbols-outlined text-[18px] shrink-0 relative">
@@ -471,12 +459,21 @@ function UtilityItems({
 
 // ─── AccountFooter ────────────────────────────────────────────────────────────
 
-function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean }) {
+function AccountFooter({
+    user,
+    railMode,
+    slug,
+}: {
+    user: NavUser
+    railMode: boolean
+    slug: string
+}) {
     const anchorId = 'account-footer-anchor'
     const [open, setOpen] = useState(false)
 
     const menuItems = [
         ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
+        { href: settingsPath(slug, 'billing'), icon: 'credit_card', label: 'Billing' },
     ]
 
     return (
@@ -488,9 +485,7 @@ function AccountFooter({ user, railMode }: { user: NavUser; railMode: boolean })
                 className={cn(
                     'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none',
                     'hover:bg-[var(--md-sys-color-surface-variant)]',
-                    railMode
-                        ? 'justify-center w-10 h-10 mx-auto'
-                        : 'w-full px-2 py-1.5'
+                    railMode ? 'justify-center w-10 h-10 mx-auto' : 'w-full px-2 py-1.5'
                 )}
             >
                 <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
@@ -627,8 +622,7 @@ function SidebarShell({
 
     return (
         <aside className={cn(
-            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md',
-            'bg-card',
+            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md bg-card',
             'transition-all duration-200 ease-out',
             railMode ? 'w-[56px]' : 'w-[220px]'
         )}>
@@ -638,22 +632,17 @@ function SidebarShell({
                 railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
             )}>
                 {!railMode && (
-                    <div className="flex items-center gap-2 min-w-0">
-                        {/* Menengai Cloud logo mark */}
-                        <Link href="/" className="flex items-center shrink-0">
-                            <img src={src} alt="Logo" className="w-auto h-5" />
-                        </Link>
-                    </div>
+                    <Link href="/" className="flex items-center shrink-0">
+                        <img src={src} alt="Logo" className="w-auto h-5" />
+                    </Link>
                 )}
-                <div className='flex items-center'>
+                <div className="flex items-center">
                     <RailToggle railMode={railMode} onToggle={onToggleRail} />
                 </div>
             </div>
 
-            {/* Store switcher */}
             <StoreSwitcher store={store} allStores={allStores} railMode={railMode} />
 
-            {/* Nav sections — scrollable */}
             <nav className="flex-1 overflow-y-auto overflow-x-hidden py-2">
                 {SECTIONS.map((section) => (
                     <NavSectionGroup
@@ -670,11 +659,8 @@ function SidebarShell({
                 ))}
             </nav>
 
-            {/* Utility items */}
             <UtilityItems railMode={railMode} notificationCount={notificationCount} store={store} />
-
-            {/* User footer */}
-            <AccountFooter user={user} railMode={railMode} />
+            <AccountFooter user={user} railMode={railMode} slug={store.slug} />
         </aside>
     )
 }
@@ -723,45 +709,6 @@ export function SettingsNav({
     )
 }
 
-// ─── ChevronTab ───────────────────────────────────────────────────────────────
-// Persistent left-edge tab — tap or drag right to open nav
-
-function ChevronTab({
-    onOpen,
-    dragX,
-}: {
-    onOpen: () => void
-    dragX: number
-}) {
-    // Tab peeks out 28px, slides with drag
-    const translate = Math.min(dragX, 240)
-
-    return (
-        <div
-            className="md:hidden fixed left-0 top-1/2 -translate-y-1/2 z-50"
-            style={{ transform: `translateY(-50%) translateX(${translate}px)` }}
-        >
-            <button
-                onTouchStart={e => e.stopPropagation()}
-                onClick={onOpen}
-                aria-label="Open navigation"
-                className={cn(
-                    'flex items-center justify-center',
-                    'w-6 h-14 rounded-r-xl',
-                    'bg-[var(--md-sys-color-primary-container)]',
-                    'shadow-md',
-                    'transition-colors duration-150',
-                    'active:bg-[var(--md-sys-color-primary)]',
-                )}
-            >
-                <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">
-                    chevron_right
-                </span>
-            </button>
-        </div>
-    )
-}
-
 // ─── MobileSettingsNav ────────────────────────────────────────────────────────
 
 export function MobileSettingsNav({
@@ -796,55 +743,81 @@ export function MobileSettingsNav({
     const { resolvedTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
 
-    // Gesture state
+    // Panel swipe-to-close gesture state
     const touchStartX = useRef<number | null>(null)
     const touchStartY = useRef<number | null>(null)
     const dragging = useRef(false)
     const [dragX, setDragX] = useState(0)
 
-    useEffect(() => setMounted(true), [])
-
-    // ── Drag state for chevron tab ─────────────────────────────────────────────
+    // Chevron tab swipe-to-open gesture state
     const tabTouchStartX = useRef<number | null>(null)
     const [tabDragX, setTabDragX] = useState(0)
 
+    useEffect(() => setMounted(true), [])
+
+    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
+
+    // ── Chevron tab handlers (swipe right to open) ────────────────────────────
     const handleTabTouchStart = (e: React.TouchEvent) => {
         tabTouchStartX.current = e.touches[0].clientX
         setTabDragX(0)
     }
-
     const handleTabTouchMove = (e: React.TouchEvent) => {
         if (tabTouchStartX.current === null) return
         const dx = e.touches[0].clientX - tabTouchStartX.current
         if (dx < 0) return
         setTabDragX(Math.min(dx, 240))
     }
-
     const handleTabTouchEnd = () => {
         if (tabDragX >= 60) onOpen()
         setTabDragX(0)
         tabTouchStartX.current = null
     }
 
-    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
+    // ── Panel handlers (swipe left to close) ─────────────────────────────────
+    const handlePanelTouchStart = (e: React.TouchEvent) => {
+        touchStartX.current = e.touches[0].clientX
+        touchStartY.current = e.touches[0].clientY
+        dragging.current = false
+        setDragX(0)
+    }
+    const handlePanelTouchMove = (e: React.TouchEvent) => {
+        if (touchStartX.current === null) return
+        const dx = e.touches[0].clientX - touchStartX.current
+        const dy = Math.abs(e.touches[0].clientY - (touchStartY.current ?? 0))
+        // Ignore vertical scrolls
+        if (!dragging.current && dy > 10) { touchStartX.current = null; return }
+        // Only track leftward swipe
+        if (dx < 0) {
+            dragging.current = true
+            setDragX(dx)
+        }
+    }
+    const handlePanelTouchEnd = () => {
+        if (dragX < -60) onClose()
+        setDragX(0)
+        dragging.current = false
+        touchStartX.current = null
+    }
 
-    // Panel translate: normal open/close + live drag offset
+    // Panel translate: open/close + live drag offset
     const panelTranslate = open
-        ? `translateX(${dragX}px)`           // open + possible swipe-to-close drag
-        : dragX > 0
-            ? `translateX(calc(-100% + ${dragX}px))`  // closed + swipe-to-open drag preview
+        ? dragX < 0 ? `translateX(${dragX}px)` : undefined
+        : tabDragX > 0
+            ? `translateX(calc(-100% + ${tabDragX}px))`
             : undefined
 
     return (
         <>
-            {/* Backdrop — only in DOM when open, pointer-events off so it takes no space when absent */}
+            {/* Backdrop */}
             {open && (
                 <div
                     className="md:hidden fixed inset-0 z-40"
                     onClick={onClose}
                 />
             )}
-            {/* Chevron tab — always visible when nav is closed */}
+
+            {/* Chevron tab — visible when closed */}
             {!open && (
                 <div
                     className="md:hidden fixed left-0 top-1/2 z-50"
@@ -865,25 +838,24 @@ export function MobileSettingsNav({
                 </div>
             )}
 
+            {/* Panel */}
             <div
                 className={cn(
-                    // Key change: `fixed` + fully off-screen when closed — zero layout impact
                     'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[98dvh] w-[300px] my-auto ml-2 rounded-lg',
                     'bg-card shadow-xl',
-                    // Disable CSS transition while user is actively dragging for immediate feedback
                     dragging.current ? '' : 'transition-transform duration-200 ease-out',
-                    open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]', // +ml-2 so it fully exits
+                    open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]',
                 )}
                 style={panelTranslate ? { transform: panelTranslate } : undefined}
-
+                onTouchStart={handlePanelTouchStart}
+                onTouchMove={handlePanelTouchMove}
+                onTouchEnd={handlePanelTouchEnd}
             >
-                {/* Header with close */}
+                {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center gap-2">
-                        <Link href="/" className="flex items-center shrink-0">
-                            <img src={src} alt="Logo" className="w-auto h-5" />
-                        </Link>
-                    </div>
+                    <Link href="/" className="flex items-center shrink-0">
+                        <img src={src} alt="Logo" className="w-auto h-5" />
+                    </Link>
                     <button
                         onClick={onClose}
                         aria-label="Close navigation"
@@ -912,11 +884,11 @@ export function MobileSettingsNav({
                 </nav>
 
                 <UtilityItems railMode={false} notificationCount={notificationCount} store={store} />
-                <AccountFooter user={user} railMode={false} />
+                <AccountFooter user={user} railMode={false} slug={store.slug} />
             </div>
         </>
     )
 }
 
-// ─── Re-export NavSection type for use in settings-shell ─────────────────────
+// ─── Re-export types ──────────────────────────────────────────────────────────
 export type { NavSection, NavStore, NavUser, Tab, SubTab }

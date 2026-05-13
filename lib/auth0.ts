@@ -30,12 +30,12 @@ export const auth0 = new Auth0Client({
         if (error) {
             return NextResponse.redirect(
                 toURL(`${BASE_URL}/auth/login?error=${encodeURIComponent(error.message)}`)
-            );
+            )
         }
 
         if (session?.user) {
-            const { sub: userId, email, name, picture } = session.user;
-            const supabase = await createClient();
+            const { sub: userId, email, name, picture } = session.user
+            const supabase = await createClient()
 
             await supabase.from('users').upsert({
                 id: userId,
@@ -43,12 +43,18 @@ export const auth0 = new Auth0Client({
                 name,
                 avatar_url: picture,
                 updated_at: new Date().toISOString(),
-            }, { onConflict: 'id' });
+            }, { onConflict: 'id' })
 
-            return NextResponse.redirect(toURL(`/onboarding`));
+            // Check if user has any stores
+            const { count } = await supabase
+                .from('store_members')
+                .select('*', { count: 'exact', head: true })
+                .eq('user_id', userId)
+
+            // New user → onboarding, existing user → pick
+            return NextResponse.redirect(toURL(count ? '/pick' : '/onboarding'))
         }
 
-        // Fallback
-        return NextResponse.redirect(toURL('/'));
-    }
+        return NextResponse.redirect(toURL('/'))
+    },
 });
