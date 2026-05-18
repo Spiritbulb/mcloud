@@ -1352,10 +1352,15 @@ export type Database = {
           created_at: string | null
           currency: string
           id: string
-          intasend_invoice_id: string | null
-          intasend_tracking_id: string | null
+          paystack_customer_code: string | null
+          paystack_email_token: string | null
+          paystack_paid_at: string | null
+          paystack_reference: string | null
+          paystack_subscription_code: string | null
           period_end: string | null
           period_start: string | null
+          plan: string | null
+          provider: string | null
           status: string
           store_id: string
         }
@@ -1364,10 +1369,15 @@ export type Database = {
           created_at?: string | null
           currency?: string
           id?: string
-          intasend_invoice_id?: string | null
-          intasend_tracking_id?: string | null
+          paystack_customer_code?: string | null
+          paystack_email_token?: string | null
+          paystack_paid_at?: string | null
+          paystack_reference?: string | null
+          paystack_subscription_code?: string | null
           period_end?: string | null
           period_start?: string | null
+          plan?: string | null
+          provider?: string | null
           status?: string
           store_id: string
         }
@@ -1376,10 +1386,15 @@ export type Database = {
           created_at?: string | null
           currency?: string
           id?: string
-          intasend_invoice_id?: string | null
-          intasend_tracking_id?: string | null
+          paystack_customer_code?: string | null
+          paystack_email_token?: string | null
+          paystack_paid_at?: string | null
+          paystack_reference?: string | null
+          paystack_subscription_code?: string | null
           period_end?: string | null
           period_start?: string | null
+          plan?: string | null
+          provider?: string | null
           status?: string
           store_id?: string
         }

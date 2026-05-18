@@ -198,7 +198,7 @@ export function SettingsHeader({
                                     <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
                                     <DropdownMenuItem
                                         className="rounded-lg cursor-pointer text-[13px] md:hidden"
-                                        onSelect={upgradeFromDropdown}
+                                        onSelect={() => upgradeFromDropdown('pro')}
                                     >
                                         <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)]" fill={1} />
                                         <span className="text-[var(--md-sys-color-primary)] font-medium">Upgrade to Pro</span>

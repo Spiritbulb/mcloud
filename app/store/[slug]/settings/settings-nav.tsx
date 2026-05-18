@@ -10,26 +10,6 @@ import Link from 'next/link'
 import type { TabId } from './settings-shell'
 import { useRouter } from 'next/navigation'
 
-// ─── Material Web JSX declarations ───────────────────────────────────────────
-
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'md-menu': React.HTMLAttributes<HTMLElement> & {
-                anchor?: string
-                open?: boolean
-                positioning?: string
-                'anchor-corner'?: string
-                'menu-corner'?: string
-            }
-            'md-menu-item': React.HTMLAttributes<HTMLElement> & {
-                href?: string
-                target?: string
-            }
-            'md-divider': React.HTMLAttributes<HTMLElement>
-        }
-    }
-}
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -304,7 +284,7 @@ function StoreSwitcher({
 
     function renderMenu() {
         return (
-            // @ts-ignore
+            
             <md-menu
                 anchor={anchorId}
                 open={open || undefined}
@@ -319,10 +299,10 @@ function StoreSwitcher({
                         Your stores
                     </p>
                 </div>
-                {/* @ts-ignore */}
+               
                 <md-divider />
                 {allStores.map((s) => (
-                    // @ts-ignore
+                    
                     <md-menu-item
                         key={s.slug}
                         onClick={() => { setOpen(false); switchStore(s.slug) }}
@@ -340,10 +320,10 @@ function StoreSwitcher({
                             )}
                         </div>
                         <span slot="supporting-text" className="capitalize text-[11px]">{s.role}</span>
-                        {/* @ts-ignore */}
+                        
                     </md-menu-item>
                 ))}
-                {/* @ts-ignore */}
+                
             </md-menu>
         )
     }
@@ -514,7 +494,7 @@ function AccountFooter({
                 )}
             </button>
 
-            {/* @ts-ignore */}
+            
             <md-menu
                 anchor={anchorId}
                 open={open || undefined}
@@ -536,23 +516,23 @@ function AccountFooter({
                         <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
                     </div>
                 </div>
-                {/* @ts-ignore */}
+             
                 <md-divider />
                 {menuItems.map((item) => (
-                    // @ts-ignore
+                    
                     <md-menu-item key={item.label} href={item.href} onClick={() => setOpen(false)}>
                         <span slot="start" className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)]">
                             {item.icon}
                         </span>
                         <span slot="headline">{item.label}</span>
-                        {/* @ts-ignore */}
+                        
                     </md-menu-item>
                 ))}
                 {user.onSignOut && (
                     <>
-                        {/* @ts-ignore */}
+                       
                         <md-divider />
-                        {/* @ts-ignore */}
+                        
                         <md-menu-item
                             onClick={() => { setOpen(false); user.onSignOut?.() }}
                             style={{ '--md-menu-item-label-text-color': 'var(--md-sys-color-error)' }}
@@ -561,11 +541,11 @@ function AccountFooter({
                                 logout
                             </span>
                             <span slot="headline">Sign out</span>
-                            {/* @ts-ignore */}
+                          
                         </md-menu-item>
                     </>
                 )}
-                {/* @ts-ignore */}
+             
             </md-menu>
         </div>
     )

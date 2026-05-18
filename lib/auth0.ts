@@ -5,8 +5,12 @@ import { createClient } from '@/lib/server';
 // Validate at module load time so you get a clear error on startup,
 // not a cryptic TypeError buried inside a callback.
 const BASE_URL = process.env.APP_BASE_URL;
+const ADMIN_BASE_URL = process.env.ADMIN_BASE_URL;
 if (!BASE_URL) {
     throw new Error("Missing required environment variable: APP_BASE_URL");
+}
+if (!ADMIN_BASE_URL) {
+    throw new Error("Missing required environment variable: ADMIN_BASE_URL");
 }
 
 function toURL(path: string): URL {
@@ -52,7 +56,7 @@ export const auth0 = new Auth0Client({
                 .eq('user_id', userId)
 
             // New user → onboarding, existing user → pick
-            return NextResponse.redirect(toURL(count ? '/pick' : '/onboarding'))
+            return NextResponse.redirect(new URL(count ? '/pick' : '/onboarding', ADMIN_BASE_URL))
         }
 
         return NextResponse.redirect(toURL('/'))

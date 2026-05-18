@@ -64,6 +64,32 @@ function getGreeting() {
     return 'Good evening'
 }
 
+// With this M3 circular indicator:
+function M3CircularIndicator({ size = 20 }: { size?: number }) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 20 20"
+            className="animate-spin"
+            style={{ animationDuration: '1000ms', animationTimingFunction: 'linear' }}
+        >
+            <circle
+                cx="10"
+                cy="10"
+                r="7.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeDasharray="47.1"
+                strokeDashoffset="11.8"
+                className="text-[var(--md-sys-color-primary)]"
+            />
+        </svg>
+    )
+}
+
 // ─── HeroStoreCard ─────────────────────────────────────────────────────────────
 
 function HeroStoreCard({ store, picking, onPick }: {
@@ -114,7 +140,7 @@ function HeroStoreCard({ store, picking, onPick }: {
             </div>
             <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-1')}>
                 {isPicking
-                    ? <div className="w-4 h-4 border-2 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
+                    ? <M3CircularIndicator />
                     : <MSO icon="arrow_forward" className="text-[20px] text-[var(--md-sys-color-primary)]" />}
             </div>
         </motion.button>
@@ -159,7 +185,7 @@ function CompactStoreCard({ store, index, picking, onPick }: {
             </div>
             <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-0.5')}>
                 {isPicking
-                    ? <div className="w-3.5 h-3.5 border-2 border-[var(--md-sys-color-primary)] border-t-transparent rounded-full animate-spin" />
+                    ? <M3CircularIndicator size={18}/>
                     : <MSO icon="arrow_forward" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />}
             </div>
         </motion.button>
