@@ -342,7 +342,7 @@ export default function DocsEditorClient({ initialDocs }: { initialDocs: Editabl
                 </a>
                 {/* Auth0 logout — goes to Auth0 then redirects home */}
                 <a
-                    href="/api/auth/logout"
+                    href="/auth/logout"
                     className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <span className="hidden sm:inline">Sign out</span>

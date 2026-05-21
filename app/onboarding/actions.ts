@@ -11,12 +11,25 @@ export async function completeOnboarding(formData: FormData) {
     const slug = formData.get('slug') as string
     const currency = formData.get('currency') as string
     const timezone = formData.get('timezone') as string
+    const orgId = (formData.get('orgId') as string) || null
 
     const session = await auth0.getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const { sub: userId, email, picture } = session.user
     const supabase = await createClient()
+
+    // If creating inside an org, verify the user actually belongs to it
+    let finalOrgId: string | null = null
+    if (orgId) {
+        const { data: orgMember } = await supabase
+            .from('org_members')
+            .select('role')
+            .eq('org_id', orgId)
+            .eq('user_id', userId)
+            .maybeSingle()
+        if (orgMember) finalOrgId = orgId
+    }
 
     await supabase.from('users').upsert({
         id: userId, email, name: fullName, avatar_url: picture,
@@ -32,7 +45,7 @@ export async function completeOnboarding(formData: FormData) {
 
     const { error: storeError } = await supabase.from('stores').insert({
         name: storeName, slug: finalSlug, owner_id: userId,
-        currency, timezone, is_active: true,
+        currency, timezone, is_active: true, org_id: finalOrgId,
     })
     if (storeError) return { error: storeError.message }
 
@@ -44,6 +57,11 @@ export async function completeOnboarding(formData: FormData) {
     })
     if (memberError) return { error: memberError.message }
 
+    if (finalOrgId) {
+        const { data: org } = await supabase
+            .from('orgs').select('slug').eq('id', finalOrgId).single()
+        if (org) redirect(`/org/${org.slug}/${finalSlug}/settings`)
+    }
     redirect(`/store/${finalSlug}/settings`)
 }
 

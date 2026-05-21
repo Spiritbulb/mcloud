@@ -16,10 +16,9 @@ export default async function AcceptInvitePage({
 
     const supabase = await createClient()
 
-    // Fetch invite
     const { data: invite } = await supabase
         .from('store_invites')
-        .select('*, stores(slug)')
+        .select('*, stores(slug, org:orgs(slug))')
         .eq('token', token)
         .is('accepted_at', null)
         .gt('expires_at', new Date().toISOString())
@@ -38,7 +37,6 @@ export default async function AcceptInvitePage({
         )
     }
 
-    // Accept invite — add to store_members
     await supabase.from('store_members').insert({
         store_id: invite.store_id,
         user_id: session.user.sub,
@@ -46,11 +44,15 @@ export default async function AcceptInvitePage({
         permissions: [],
     })
 
-    // Mark accepted
     await supabase
         .from('store_invites')
         .update({ accepted_at: new Date().toISOString() })
         .eq('id', invite.id)
 
-    redirect(`/store/${invite.stores.slug}/settings`)
+    const storeSlug = invite.stores.slug
+    const orgSlug = (invite.stores.org as any)?.slug
+    if (orgSlug) {
+        redirect(`/org/${orgSlug}/${storeSlug}/settings`)
+    }
+    redirect(`/store/${storeSlug}/settings`)
 }

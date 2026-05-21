@@ -56,7 +56,7 @@ export const auth0 = new Auth0Client({
                 .eq('user_id', userId)
 
             // New user → onboarding, existing user → pick
-            return NextResponse.redirect(new URL(count ? '/pick' : '/onboarding', ADMIN_BASE_URL))
+            return NextResponse.redirect(new URL(count ? '/org/pick' : '/onboarding', ADMIN_BASE_URL))
         }
 
         return NextResponse.redirect(toURL('/'))

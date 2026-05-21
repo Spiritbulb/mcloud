@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { SettingsSection, SettingsField } from '../../app/store/[slug]/settings/settings-primitives'
+import { SettingsSection, SettingsField } from '@/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
 import { THEMES } from '../../src/themes'
 

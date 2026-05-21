@@ -30,7 +30,8 @@ export async function GET(
                 id,
                 name,
                 slug,
-                logo_url
+                logo_url,
+                org:orgs(slug)
             )
         `)
         .eq('user_id', userId)
@@ -59,14 +60,27 @@ export async function GET(
     if (error) console.error('[store fetch]', error.code, error.message)
     if (!storeData) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
 
+    // Optional org layer — null for stores not yet associated with an org (backward compatible)
+    let org: { id: string; name: string; slug: string; logo_url: string | null } | null = null
+    if (storeData.org_id) {
+        const { data: orgData } = await supabase
+            .from('orgs')
+            .select('id, name, slug, logo_url')
+            .eq('id', storeData.org_id)
+            .single()
+        org = orgData ?? null
+    }
+
     const allStores = memberships.map((m) => {
         const memberStore = Array.isArray(m.store) ? m.store[0] : m.store
+        const memberOrg = Array.isArray(memberStore?.org) ? memberStore.org[0] : memberStore?.org
         return {
             id: memberStore?.id ?? '',
             name: memberStore?.name ?? '',
             slug: memberStore?.slug ?? '',
             logo_url: memberStore?.logo_url ?? null,
             role: m.role,
+            org_slug: memberOrg?.slug ?? null,
         }
     })
 
@@ -81,5 +95,6 @@ export async function GET(
         },
         role: currentMembership.role,
         allStores,
+        org,
     })
 }

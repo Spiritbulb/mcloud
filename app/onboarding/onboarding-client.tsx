@@ -34,6 +34,7 @@ interface ExistingStore {
 interface OnboardingPageProps {
   existingStores?: ExistingStore[]
   userName?: string
+  orgId?: string | null
 }
 
 
@@ -142,10 +143,12 @@ function CreateForm({
   initialName,
   onBack,
   hasExisting,
+  orgId,
 }: {
   initialName?: string
   onBack: () => void
   hasExisting: boolean
+  orgId?: string | null
 }) {
   const [step, setStep] = useState<CreateStep>('profile')
   const [dir, setDir] = useState(1)
@@ -190,6 +193,7 @@ function CreateForm({
     fd.append('currency', currency)
     fd.append('timezone', timezone)
     fd.append('profile', profile ?? 'new')
+    if (orgId) fd.append('orgId', orgId)
     try {
       const result = await completeOnboarding(fd)
       if (result?.error) { setError(result.error); setIsLoading(false) }
@@ -507,7 +511,7 @@ function CreateForm({
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function OnboardingPage({ existingStores = [], userName }: OnboardingPageProps) {
+export default function OnboardingPage({ existingStores = [], userName, orgId }: OnboardingPageProps) {
   const router = useRouter()
   const sorted = sortByRecent(existingStores)
   const hasExisting = sorted.length > 0
@@ -534,6 +538,7 @@ export default function OnboardingPage({ existingStores = [], userName }: Onboar
           initialName={userName}
           onBack={() => hasExisting ? setView('home') : undefined}
           hasExisting={hasExisting}
+          orgId={orgId}
         />
 
 

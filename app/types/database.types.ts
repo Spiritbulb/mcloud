@@ -618,6 +618,136 @@ export type Database = {
           },
         ]
       }
+      org_integrations: {
+        Row: {
+          config: Json
+          created_at: string
+          id: string
+          is_active: boolean
+          org_id: string
+          provider: string
+          updated_at: string
+          webhook_secret: string | null
+        }
+        Insert: {
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          org_id: string
+          provider: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Update: {
+          config?: Json
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          org_id?: string
+          provider?: string
+          updated_at?: string
+          webhook_secret?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_integrations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      org_members: {
+        Row: {
+          created_at: string
+          id: string
+          org_id: string
+          permissions: Json
+          role: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          org_id: string
+          permissions?: Json
+          role?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          org_id?: string
+          permissions?: Json
+          role?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_members_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "org_members_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      orgs: {
+        Row: {
+          created_at: string
+          id: string
+          logo_url: string | null
+          name: string
+          owner_id: string
+          public_id: string
+          settings: Json
+          slug: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name: string
+          owner_id: string
+          public_id: string
+          settings?: Json
+          slug: string
+          type?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          logo_url?: string | null
+          name?: string
+          owner_id?: string
+          public_id?: string
+          settings?: Json
+          slug?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "orgs_owner_id_fkey"
+            columns: ["owner_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payment_links: {
         Row: {
           amount: number
@@ -1196,6 +1326,7 @@ export type Database = {
           config: Json
           created_at: string | null
           id: string
+          inherited_from_org: boolean
           is_active: boolean | null
           provider: string
           store_id: string
@@ -1206,6 +1337,7 @@ export type Database = {
           config?: Json
           created_at?: string | null
           id?: string
+          inherited_from_org?: boolean
           is_active?: boolean | null
           provider: string
           store_id: string
@@ -1216,6 +1348,7 @@ export type Database = {
           config?: Json
           created_at?: string | null
           id?: string
+          inherited_from_org?: boolean
           is_active?: boolean | null
           provider?: string
           store_id?: string
@@ -1540,6 +1673,7 @@ export type Database = {
           is_pro: boolean
           logo_url: string | null
           name: string
+          org_id: string | null
           owner_id: string
           pro_expires_at: string | null
           pro_since: string | null
@@ -1560,6 +1694,7 @@ export type Database = {
           is_pro?: boolean
           logo_url?: string | null
           name: string
+          org_id?: string | null
           owner_id: string
           pro_expires_at?: string | null
           pro_since?: string | null
@@ -1580,6 +1715,7 @@ export type Database = {
           is_pro?: boolean
           logo_url?: string | null
           name?: string
+          org_id?: string | null
           owner_id?: string
           pro_expires_at?: string | null
           pro_since?: string | null
@@ -1591,6 +1727,13 @@ export type Database = {
           views?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "stores_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "stores_owner_id_fkey"
             columns: ["owner_id"]

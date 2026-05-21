@@ -5,8 +5,13 @@ import { redirect } from 'next/navigation'
 import OnboardingPage from './onboarding-client'
 import { getOnboardingData } from './actions'
 
-export default async function Page() {
+export default async function Page({
+    searchParams,
+}: {
+    searchParams: Promise<{ org?: string }>
+}) {
     const { stores, userName } = await getOnboardingData()
+    const { org } = await searchParams
 
-    return <OnboardingPage existingStores={stores} />
+    return <OnboardingPage existingStores={stores} orgId={org ?? null} />
 }

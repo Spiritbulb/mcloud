@@ -17,7 +17,7 @@ export async function GET(
         // Verify the store exists
         const { data: store, error: storeError } = await supabase
             .from('stores')
-            .select('id')
+            .select('id, org_id')
             .eq('slug', slug)
             .single()
 
@@ -27,18 +27,41 @@ export async function GET(
 
         const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace | undefined
 
+        // Org-level integrations act as a baseline that store-level settings can override.
+        // Stores without an org_id skip this entirely and behave exactly as before.
+        const orgMap: Record<string, any> = {}
+        if (store.org_id) {
+            const { data: orgIntegrations } = await supabase
+                .from('org_integrations')
+                .select('provider, config, is_active')
+                .eq('org_id', store.org_id)
+
+            orgIntegrations?.forEach(intg => {
+                orgMap[intg.provider] = {
+                    ...(typeof intg.config === 'object' && intg.config ? intg.config : {}),
+                    enabled: intg.is_active,
+                    _inheritedFromOrg: true,
+                }
+            })
+        }
+
         // Always fetch Postgres data as the baseline (covers existing stores + dev where KV is unbound)
         const { data: pgIntegrations } = await supabase
             .from('store_integrations')
-            .select('provider, config, is_active')
+            .select('provider, config, is_active, inherited_from_org')
             .eq('store_id', store.id)
 
-        const pgMap: Record<string, any> = {}
+        const pgMap: Record<string, any> = { ...orgMap }
         if (pgIntegrations) {
             pgIntegrations.forEach(intg => {
+                // A store row with inherited_from_org=true keeps the org baseline but lets the store toggle is_active.
+                // A store row with inherited_from_org=false fully overrides the org config.
+                const orgBase = intg.inherited_from_org ? orgMap[intg.provider] : null
                 pgMap[intg.provider] = {
+                    ...(orgBase ?? {}),
                     ...(typeof intg.config === 'object' && intg.config ? intg.config : {}),
-                    enabled: intg.is_active
+                    enabled: intg.is_active,
+                    _inheritedFromOrg: !!intg.inherited_from_org,
                 }
             })
         }
@@ -64,7 +87,7 @@ export async function GET(
         // Filter out secrets before returning to frontend
         const sanitize = (data: any) => {
             if (!data) return null
-            const { consumerKey, consumerSecret, publishableKey, secretKey, clientId, secret, passkey, ...safe } = data
+            const { consumerKey, consumerSecret, publishableKey, secretKey, clientId, secret, passkey, _inheritedFromOrg, ...safe } = data
             return {
                 ...safe,
                 hasConsumerKey: !!consumerKey,
@@ -73,7 +96,8 @@ export async function GET(
                 hasSecretKey: !!secretKey,
                 hasClientId: !!clientId,
                 hasSecret: !!secret,
-                hasPasskey: !!passkey
+                hasPasskey: !!passkey,
+                inheritedFromOrg: !!_inheritedFromOrg,
             }
         }
 

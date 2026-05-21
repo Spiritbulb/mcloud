@@ -19,12 +19,16 @@ export default async function SettingsPage() {
 
     const { data: store, error } = await supabase
         .from('stores')
-        .select('slug')  // only need slug for the redirect
+        .select('slug, org:orgs(slug)')
         .eq('id', memberStore.store_id)
         .single()
 
     if (error) console.error('[store fetch]', error.code, error.message)
     if (!store) notFound()
 
+    const orgSlug = (store.org as any)?.slug
+    if (orgSlug) {
+        redirect(`${process.env.APP_BASE_URL}/org/${orgSlug}/${store.slug}/settings`)
+    }
     redirect(`${process.env.APP_BASE_URL}/store/${store.slug}/settings`)
 }
