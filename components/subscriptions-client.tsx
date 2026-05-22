@@ -44,12 +44,11 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
     }
 
     return (
-        <div className="min-h-[100dvh] bg-background p-6">
-            <div className="max-w-5xl mx-auto space-y-6">
-                <div>
-                    <h1 className="text-2xl font-semibold text-foreground">Subscriptions</h1>
-                    <p className="text-sm text-muted-foreground mt-1">{rows.length} total — manually activate after confirming payment</p>
-                </div>
+        <div className="max-w-5xl space-y-6">
+            <div>
+                <h1 className="text-2xl font-semibold text-foreground">Subscriptions</h1>
+                <p className="text-sm text-muted-foreground mt-1">{rows.length} total — manually activate after confirming payment</p>
+            </div>
 
                 <div className="rounded-lg border border-border overflow-hidden">
                     <table className="w-full text-sm">
@@ -120,7 +119,6 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                         </tbody>
                     </table>
                 </div>
-            </div>
         </div>
     )
 }

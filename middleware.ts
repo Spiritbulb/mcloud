@@ -157,7 +157,27 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
   }
 
 
-  // ── 0b. TWA Mobile Subdomain (m.menengai.cloud) ───────────────────────────
+  // ── 0b. Sudo Subdomain (sudo.menengai.cloud) ─────────────────────────────
+  // Platform admin panel — rewrites to /admin/*. Role enforcement is
+  // handled by the /admin layout (must have role=admin in users table).
+  if (host === 'sudo.menengai.cloud') {
+    if (pathname.startsWith('/auth/')) return auth0.middleware(request)
+
+    const session = await auth0.getSession(request)
+    if (!session?.user) {
+      return NextResponse.redirect(
+        new URL(`${proto}://menengai.cloud/auth/login`, request.url),
+        302,
+      )
+    }
+
+    const url = request.nextUrl.clone()
+    url.pathname = `/admin${pathname === '/' ? '' : pathname}`
+    return NextResponse.rewrite(url)
+  }
+
+
+  // ── 0c. TWA Mobile Subdomain (m.menengai.cloud) ───────────────────────────
   // TWA does not support wildcard subdomains in assetlinks.json, so stores
   // are served via /store/{slug} paths on this fixed subdomain instead.
   if (host === 'm.menengai.cloud') {

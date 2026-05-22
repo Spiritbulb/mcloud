@@ -327,7 +327,7 @@ export default function DocsEditorClient({ initialDocs }: { initialDocs: Editabl
     const activePage = docs.find(p => p.id === activeId)
 
     return (
-        <div className="h-screen flex flex-col bg-background overflow-hidden">
+        <div className="h-full flex-1 flex flex-col bg-background overflow-hidden">
             {/* Header */}
             <header className="flex-shrink-0 border-b border-border bg-background/95 backdrop-blur px-4 sm:px-6 h-14 flex items-center gap-4 z-40">
                 <span className="font-montserrat font-bold text-foreground flex-1">Docs Editor</span>
@@ -339,13 +339,6 @@ export default function DocsEditorClient({ initialDocs }: { initialDocs: Editabl
                 >
                     <Eye className="w-4 h-4" />
                     <span className="hidden sm:inline">Preview</span>
-                </a>
-                {/* Auth0 logout — goes to Auth0 then redirects home */}
-                <a
-                    href="/auth/logout"
-                    className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <span className="hidden sm:inline">Sign out</span>
                 </a>
                 <button
                     onClick={handleSave}
