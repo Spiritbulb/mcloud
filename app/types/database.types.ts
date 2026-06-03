@@ -661,36 +661,43 @@ export type Database = {
       }
       org_invites: {
         Row: {
-          id: string
-          org_id: string
-          email: string
-          role: string
-          invited_by: string | null
           accepted_at: string | null
-          expires_at: string
           created_at: string
+          email: string | null
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          org_id: string | null
+          role: string | null
         }
         Insert: {
-          id?: string
-          org_id: string
-          email: string
-          role: string
-          invited_by?: string | null
           accepted_at?: string | null
-          expires_at: string
           created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          org_id?: string | null
+          role?: string | null
         }
         Update: {
-          id?: string
-          org_id?: string
-          email?: string
-          role?: string
-          invited_by?: string | null
           accepted_at?: string | null
-          expires_at?: string
           created_at?: string
+          email?: string | null
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          org_id?: string | null
+          role?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "org_invites_invited_by_fkey"
+            columns: ["invited_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "org_invites_org_id_fkey"
             columns: ["org_id"]
