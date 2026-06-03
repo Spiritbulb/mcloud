@@ -42,7 +42,7 @@ async function getOrgMembership(supabase: Awaited<ReturnType<typeof createClient
     const { data: member } = await supabase
         .from('org_members')
         .select('role')
-        .eq('org_id', app.org_id)
+        .eq('org_id', app.org_id!)
         .eq('user_id', userId)
         .single()
 

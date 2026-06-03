@@ -43,7 +43,7 @@ export default async function TraderLayout({
     if (!app) notFound()
 
     return (
-        <TraderShell app={app} orgSlug={orgSlug}>
+        <TraderShell app={{ ...app, is_active: app.is_active ?? false }} orgSlug={orgSlug}>
             {children}
         </TraderShell>
     )

@@ -72,7 +72,7 @@ function CreateDialog({ orgId, orgSlug, onCreated, onClose }: {
         start(async () => {
             const res = await createTradingApp(fd)
             if (res.error) { setError(res.error); return }
-            onCreated(res.app!)
+            onCreated({ ...res.app!, is_active: res.app!.is_active ?? false })
             router.push(`/org/${orgSlug}/trading/${res.slug}`)
         })
     }

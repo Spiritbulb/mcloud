@@ -14,5 +14,5 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
 
     if (!app) notFound()
 
-    return <GeneralClient app={app} orgSlug={orgSlug} traderSlug={traderSlug} />
+    return <GeneralClient app={{ ...app, is_active: app.is_active ?? false }} orgSlug={orgSlug} traderSlug={traderSlug} />
 }

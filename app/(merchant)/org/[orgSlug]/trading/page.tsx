@@ -31,7 +31,7 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
 
     return (
         <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
-            <TradingClient orgId={data.orgId!} orgSlug={orgSlug} apps={data.apps} role={data.role} />
+            <TradingClient orgId={data.orgId!} orgSlug={orgSlug} apps={data.apps.map(a => ({ ...a, is_active: a.is_active ?? false }))} role={data.role} />
         </OrgShell>
     )
 }

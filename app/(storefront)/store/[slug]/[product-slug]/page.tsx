@@ -52,6 +52,10 @@ export default async function ProductDetailPage({ params }: Props) {
 
     const product: ProductDetailData = {
         ...productData,
+        images: (productData.images ?? []) as string[],
+        inventory_quantity: productData.inventory_quantity ?? 0,
+        is_active: productData.is_active ?? false,
+        metadata: (productData.metadata ?? {}) as ProductDetailData['metadata'],
         variants: (variantsData ?? []) as ProductVariant[],
         reviewCount,
         avgRating,
