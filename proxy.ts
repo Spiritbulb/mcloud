@@ -102,7 +102,7 @@ async function getSupabaseClient() {
 
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
-export async function middleware(request: NextRequest): Promise<NextResponse> {
+export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
@@ -174,26 +174,6 @@ export async function middleware(request: NextRequest): Promise<NextResponse> {
     const url = request.nextUrl.clone()
     url.pathname = `/admin${pathname === '/' ? '' : pathname}`
     return NextResponse.rewrite(url)
-  }
-
-
-  // ── 0c. TWA Mobile Subdomain (m.menengai.cloud) ───────────────────────────
-  // TWA does not support wildcard subdomains in assetlinks.json, so stores
-  // are served via /store/{slug} paths on this fixed subdomain instead.
-  if (host === 'm.menengai.cloud') {
-    if (pathname.startsWith('/auth/')) return auth0.middleware(request)
-
-    if (PROTECTED_SUBPATHS.some((sub) => pathname.startsWith('/store/') && pathname.includes(sub))) {
-      const session = await auth0.getSession(request)
-      if (!session?.user) {
-        return NextResponse.redirect(
-          new URL(`${proto}://menengai.cloud/auth/login`, request.url),
-          302,
-        )
-      }
-    }
-
-    return NextResponse.next()
   }
 
 

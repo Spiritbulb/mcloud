@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import ReactMarkdown from 'react-markdown'
+import { MdxContent } from '@/components/MdxContent'
 import {
     ArrowLeft, ShoppingCart, Star, Minus, Plus,
     Shield, Truck, RefreshCw, Loader2,
@@ -195,24 +195,10 @@ export default function ClassicProductDetailPage({
 
                         <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
 
-                        <div className="sf-prose text-sm leading-relaxed font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                            {product.metadata?.descriptionHtml ? (
-                                <div
-                                    className="prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: product.metadata.descriptionHtml }}
-                                />
-                            ) : (
-                                <ReactMarkdown
-                                    components={{
-                                        p: ({ children }) => <p className="my-3">{children}</p>,
-                                        ul: ({ children }) => <ul className="my-3 ml-6 list-disc">{children}</ul>,
-                                        li: ({ children }) => <li className="my-1">{children}</li>,
-                                    }}
-                                >
-                                    {product.description || 'No description available for this product.'}
-                                </ReactMarkdown>
-                            )}
-                        </div>
+                        <MdxContent
+                            content={product.description || 'No description available for this product.'}
+                            size="sm"
+                        />
 
                         <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
 

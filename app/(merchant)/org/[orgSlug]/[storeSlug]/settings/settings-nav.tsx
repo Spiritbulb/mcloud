@@ -2,9 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
-import '@material/web/menu/menu.js'
-import '@material/web/menu/menu-item.js'
-import '@material/web/divider/divider.js'
 import { cn } from '@/lib/utils'
 import Link from 'next/link'
 import type { TabId } from './settings-shell'
@@ -55,9 +52,8 @@ function getInitials(name: string) {
 }
 
 function settingsPath(orgSlug: string, storeSlug: string, ...segments: string[]) {
-    const base = process.env.NODE_ENV === 'development'
-        ? `/org/${orgSlug}/${storeSlug}/settings`
-        : `/settings`
+    const base = `/org/${orgSlug}/${storeSlug}/settings`
+    
     return segments.length ? `${base}/${segments.join('/')}` : base
 }
 
@@ -280,9 +276,20 @@ function StoreSwitcher({
     railMode: boolean
     orgSlug: string
 }) {
-    const anchorId = 'store-switcher-anchor'
     const [open, setOpen] = useState(false)
     const hasMultiple = allStores.length > 1
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        function handleOutside(e: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleOutside)
+        return () => document.removeEventListener('mousedown', handleOutside)
+    }, [open])
 
     function switchStore(s: NavStore) {
         const domain = process.env.NODE_ENV === 'production' ? '; domain=.menengai.cloud' : ''
@@ -292,55 +299,44 @@ function StoreSwitcher({
 
     function renderMenu() {
         return (
-            
-            <md-menu
-                anchor={anchorId}
-                open={open || undefined}
-                positioning="popover"
-                anchor-corner="end-start"
-                menu-corner="start-start"
-                onClosed={() => setOpen(false)}
-                style={{ '--md-menu-container-color': 'var(--md-sys-color-surface)', minWidth: '240px' }}
-            >
+            <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-lg py-1 min-w-[240px]">
                 <div className="px-3 py-2">
                     <p className="text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)] uppercase tracking-wider">
                         Your stores
                     </p>
                 </div>
-               
-                <md-divider />
+                <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
                 {allStores.map((s) => (
-                    
-                    <md-menu-item
+                    <button
                         key={s.slug}
                         onClick={() => { setOpen(false); switchStore(s) }}
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
                     >
-                        <div slot="start" className="store-avatar-fallback flex w-5 h-5 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
+                        <div className="store-avatar-fallback flex w-5 h-5 shrink-0 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
                             {s.logo_url
                                 ? <img src={s.logo_url} alt={s.name} className="w-full h-full object-cover rounded" />
                                 : getInitials(s.name)
                             }
                         </div>
-                        <div slot="headline" className="flex items-center gap-2">
-                            <span className="text-[13px] font-medium">{s.name}</span>
-                            {s.slug === store.slug && (
-                                <span className="w-1.5 h-1.5 rounded-full bg-[var(--md-sys-color-primary)]" />
-                            )}
+                        <div className="flex flex-col min-w-0 flex-1">
+                            <div className="flex items-center gap-2">
+                                <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{s.name}</span>
+                                {s.slug === store.slug && (
+                                    <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--md-sys-color-primary)]" />
+                                )}
+                            </div>
+                            <span className="capitalize text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{s.role}</span>
                         </div>
-                        <span slot="supporting-text" className="capitalize text-[11px]">{s.role}</span>
-                        
-                    </md-menu-item>
+                    </button>
                 ))}
-                
-            </md-menu>
+            </div>
         )
     }
 
     if (railMode) {
         return (
-            <div className="flex justify-center py-2">
+            <div ref={containerRef} className="relative flex justify-center py-2">
                 <button
-                    id={anchorId}
                     onClick={() => hasMultiple && setOpen(v => !v)}
                     title={store.name}
                     className="store-avatar-fallback flex w-8 h-8 items-center justify-center rounded-md text-[11px] font-bold overflow-hidden"
@@ -350,15 +346,14 @@ function StoreSwitcher({
                         : getInitials(store.name)
                     }
                 </button>
-                {hasMultiple && renderMenu()}
+                {hasMultiple && open && renderMenu()}
             </div>
         )
     }
 
     return (
-        <div className="relative px-1 py-2.5">
+        <div ref={containerRef} className="relative px-1 py-2.5">
             <button
-                id={anchorId}
                 onClick={() => hasMultiple && setOpen(v => !v)}
                 className={cn(
                     'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100 bg-[rgb(var(--background))]',
@@ -385,7 +380,7 @@ function StoreSwitcher({
                     </span>
                 )}
             </button>
-            {hasMultiple && renderMenu()}
+            {hasMultiple && open && renderMenu()}
         </div>
     )
 }
@@ -460,8 +455,19 @@ function AccountFooter({
     slug: string
     orgSlug: string
 }) {
-    const anchorId = 'account-footer-anchor'
     const [open, setOpen] = useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        if (!open) return
+        function handleOutside(e: MouseEvent) {
+            if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+                setOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleOutside)
+        return () => document.removeEventListener('mousedown', handleOutside)
+    }, [open])
 
     const menuItems = [
         ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
@@ -469,9 +475,8 @@ function AccountFooter({
     ]
 
     return (
-        <div className="relative px-2 py-2.5">
+        <div ref={containerRef} className="relative px-2 py-2.5">
             <button
-                id={anchorId}
                 onClick={() => setOpen(v => !v)}
                 title={railMode ? user.name : undefined}
                 className={cn(
@@ -506,59 +511,48 @@ function AccountFooter({
                 )}
             </button>
 
-            
-            <md-menu
-                anchor={anchorId}
-                open={open || undefined}
-                positioning="popover"
-                anchor-corner="start-start"
-                menu-corner="end-start"
-                onClosed={() => setOpen(false)}
-                style={{ '--md-menu-container-color': 'var(--md-sys-color-surface)', minWidth: '216px' }}
-            >
-                <div className="flex items-center gap-2.5 px-3 py-2">
-                    <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                        {user.avatarUrl
-                            ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-md" />
-                            : getInitials(user.name)
-                        }
+            {open && (
+                <div className="absolute bottom-full left-0 right-0 z-50 mb-1 rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-lg py-1 min-w-[216px]">
+                    <div className="flex items-center gap-2.5 px-3 py-2">
+                        <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                            {user.avatarUrl
+                                ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-md" />
+                                : getInitials(user.name)
+                            }
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
+                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
+                        </div>
                     </div>
-                    <div className="flex flex-col min-w-0">
-                        <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
-                        <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
-                    </div>
-                </div>
-             
-                <md-divider />
-                {menuItems.map((item) => (
-                    
-                    <md-menu-item key={item.label} href={item.href} onClick={() => setOpen(false)}>
-                        <span slot="start" className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)]">
-                            {item.icon}
-                        </span>
-                        <span slot="headline">{item.label}</span>
-                        
-                    </md-menu-item>
-                ))}
-                {user.onSignOut && (
-                    <>
-                       
-                        <md-divider />
-                        
-                        <md-menu-item
-                            onClick={() => { setOpen(false); user.onSignOut?.() }}
-                            style={{ '--md-menu-item-label-text-color': 'var(--md-sys-color-error)' }}
+                    <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
+                    {menuItems.map((item) => (
+                        <Link
+                            key={item.label}
+                            href={item.href}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
                         >
-                            <span slot="start" className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-error)]">
-                                logout
+                            <span className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] shrink-0">
+                                {item.icon}
                             </span>
-                            <span slot="headline">Sign out</span>
-                          
-                        </md-menu-item>
-                    </>
-                )}
-             
-            </md-menu>
+                            {item.label}
+                        </Link>
+                    ))}
+                    {user.onSignOut && (
+                        <>
+                            <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
+                            <button
+                                onClick={() => { setOpen(false); user.onSignOut?.() }}
+                                className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                            >
+                                <span className="material-symbols-outlined text-[18px] shrink-0">logout</span>
+                                Sign out
+                            </button>
+                        </>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

@@ -22,6 +22,7 @@ import {
     Play,
     Shield,
 } from 'lucide-react'
+import { MdxContent } from '@/components/MdxContent'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
@@ -445,14 +446,10 @@ export default function ClassicServiceDetailsPage({
                             className="sf-prose text-sm leading-relaxed font-light"
                             style={{ color: 'var(--sf-foreground-subtle)' }}
                         >
-                            {service.metadata?.descriptionHtml ? (
-                                <div
-                                    className="prose prose-sm max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: service.metadata.descriptionHtml }}
-                                />
-                            ) : (
-                                <p>{service.description || 'No description available for this service.'}</p>
-                            )}
+                            <MdxContent
+                                content={service.description || 'No description available for this service.'}
+                                size="sm"
+                            />
                         </div>
 
                         <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />

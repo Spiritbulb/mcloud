@@ -306,7 +306,7 @@ export default function ClassicStoreFront({
             {/* ── FEATURED PRODUCTS ── */}
             {!query && featuredProducts.length > 0 && (
                 <>
-                    <section className="py-12 md:py-20">
+                    <section className="py-12 md:py-20 mx-2">
                         <div className="container mx-auto">
                             <div className="mb-10 md:mb-14">
                                 <div className="flex items-center gap-4 mb-3">

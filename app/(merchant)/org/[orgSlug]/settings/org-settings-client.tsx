@@ -62,28 +62,10 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-[var(--md-sys-color-surface)] px-4 py-12">
-            <motion.div
-                initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.26 }}
-                className="w-full max-w-xl mx-auto space-y-8"
-            >
-                {/* Header */}
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => router.push('/org/pick')}
-                        className="flex items-center justify-center w-9 h-9 rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors shrink-0"
-                        aria-label="Back to picker"
-                    >
-                        <MSO icon="arrow_back" className="text-[20px]" />
-                    </button>
-                    <div className="min-w-0">
-                        <h1 className="text-[20px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight truncate">{org.name}</h1>
-                        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-                            Organization · {storeCount} {storeCount === 1 ? 'store' : 'stores'}
-                        </p>
-                    </div>
-                </div>
-
+        <motion.div
+            initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.26 }}
+            className="w-full max-w-xl space-y-8"
+        >
                 {/* General */}
                 <section className="space-y-4 rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-6">
                     <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)]">General</h2>
@@ -149,10 +131,8 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
                         </div>
                     </section>
                 )}
-            </motion.div>
-
             <DeleteOrgDialog open={deleteOpen} onOpenChange={setDeleteOpen} org={org} storeCount={storeCount} />
-        </div>
+        </motion.div>
     )
 }
 

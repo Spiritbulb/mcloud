@@ -1,202 +1,73 @@
-'use client'
-
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { useEffect, useState, useCallback } from 'react'
-import { useParams } from 'next/navigation'
-import { Loader2, ShoppingBag, ArrowLeft } from 'lucide-react'
-import Link from 'next/link'
-import { createClient } from '@/lib/client'
-import { useCart } from '@/contexts/CartContext'
-import ClassicProductDetailPage from '@/src/themes/classic/ProductDetailPage'
+import { createClient } from '@/lib/server'
+import { notFound } from 'next/navigation'
+import { resolveTheme } from '@/src/themes/resolver'
 import type { ProductDetailData, ProductVariant } from '@/src/themes/types'
-import { trackView, trackAddToCart } from '../lib/analytics'
+import ProductDetailClient from './product-detail-client'
 
-const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
-    classic: ClassicProductDetailPage,
+interface Props {
+    params: Promise<{ slug: string; 'product-slug': string }>
 }
 
-export default function ProductDetailContainer() {
-    const params = useParams()
-    const productSlug = params?.['product-slug'] as string
-    const { storeSlug, addToCart, itemLoadingStates } = useCart()
-    const supabase = createClient()
-    const [storeId, setStoreId] = useState<string>('')
+export default async function ProductDetailPage({ params }: Props) {
+    const { slug, 'product-slug': productSlug } = await params
+    const supabase = await createClient()
 
-    const [product, setProduct] = useState<ProductDetailData | null>(null)
-    const [loading, setLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-    const [selectedVariant, setSelectedVariant] = useState<ProductVariant | null>(null)
-    const [selectedOptions, setSelectedOptions] = useState<Record<string, string>>({})
-    const [quantity, setQuantity] = useState(1)
-    const [currentImageIndex, setCurrentImageIndex] = useState(0)
-    const [themeId, setThemeId] = useState('classic')
+    const { data: rawStore } = await supabase
+        .from('stores')
+        .select('*, theme:store_themes(puck_pages)')
+        .eq('slug', slug)
+        .eq('is_active', true)
+        .single()
+    if (!rawStore) notFound()
 
-    const fetchProduct = useCallback(async () => {
-        try {
-            setError(null)
-            setLoading(true)
-            if (!storeSlug || !productSlug) throw new Error('Store or product not available')
+    const { data: productData } = await supabase
+        .from('products')
+        .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, is_active, sku, metadata')
+        .eq('store_id', rawStore.id)
+        .eq('slug', productSlug)
+        .eq('is_active', true)
+        .single()
+    if (!productData) notFound()
 
-            const { data: store, error: storeError } = await supabase
-                .from('stores')
-                .select('id, settings, theme:store_themes(theme_id)')
-                .eq('slug', storeSlug)
-                .eq('is_active', true)
-                .single()
+    const [{ data: variantsData }, { data: reviewStats }] = await Promise.all([
+        supabase
+            .from('product_variants')
+            .select('id, name, price, inventory_quantity, options, sku, image_url, is_active, position')
+            .eq('product_id', productData.id)
+            .eq('is_active', true)
+            .order('position', { ascending: true }),
 
-            if (storeError || !store) throw new Error('Store not found')
+        supabase
+            .from('product_reviews')
+            .select('rating')
+            .eq('store_id', rawStore.id)
+            .eq('is_published', true),
+    ])
 
-            const resolvedTheme = (store as any).theme?.theme_id ?? (store.settings as any)?.themeId ?? 'classic'
-            setThemeId(resolvedTheme)
-            setStoreId(store.id)
+    const reviewCount = reviewStats?.length ?? 0
+    const avgRating = reviewCount
+        ? reviewStats!.reduce((s: number, r: any) => s + r.rating, 0) / reviewCount
+        : null
 
-            const { data: productData, error: productError } = await supabase
-                .from('products')
-                .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, is_active, sku, metadata')
-                .eq('store_id', store.id)
-                .eq('slug', productSlug)
-                .eq('is_active', true)
-                .single()
-
-            if (productError || !productData) {
-                setError('Product not found')
-                return
-            }
-
-            const { data: variantsData } = await supabase
-                .from('product_variants')
-                .select('id, name, price, inventory_quantity, options, sku, image_url, is_active, position')
-                .eq('product_id', productData.id)
-                .eq('is_active', true)
-                .order('position', { ascending: true })
-
-            const variants = variantsData || []
-
-            const { data: reviewStats } = await supabase
-                .from('product_reviews')
-                .select('rating')
-                .eq('product_id', productData.id)
-                .eq('store_id', store.id)
-                .eq('is_published', true)
-
-            const reviewCount = reviewStats?.length ?? 0
-            const avgRating = reviewCount
-                ? reviewStats!.reduce((s, r) => s + r.rating, 0) / reviewCount
-                : null
-
-            setProduct({
-                ...productData,
-                variants,
-                reviewCount,
-                avgRating,
-            })
-            if (variants.length > 0) {
-                setSelectedVariant(variants[0])
-                setSelectedOptions(variants[0].options || {})
-            } else {
-                setSelectedVariant({
-                    id: productData.id,
-                    name: 'Default',
-                    price: productData.price,
-                    inventory_quantity: productData.inventory_quantity,
-                    options: {},
-                    sku: productData.sku,
-                    image_url: null,
-                })
-            }
-        } catch (err: any) {
-            console.error('Error fetching product:', err)
-            setError(err.message || 'Failed to fetch product')
-        } finally {
-            setLoading(false)
-        }
-    }, [storeSlug, productSlug, supabase])
-
-    useEffect(() => {
-        if (productSlug) fetchProduct()
-    }, [fetchProduct])
-
-    useEffect(() => {
-        if (product?.variants?.length && Object.keys(selectedOptions).length > 0) {
-            const variant = product.variants.find((v) =>
-                Object.entries(selectedOptions).every(([key, value]) => v.options?.[key] === value)
-            )
-            if (variant) setSelectedVariant(variant)
-        }
-    }, [selectedOptions, product])
-
-    useEffect(() => {
-        if (storeSlug && product?.id) {
-            trackView(storeSlug, product.id)
-        }
-    }, [storeSlug, product?.id])
-
-    const handleAddToCart = async () => {
-        if (!selectedVariant || !product) return
-        trackAddToCart(storeSlug, product.id)
-        await addToCart({
-            variantId: selectedVariant.id,
-            productId: product.id,
-            name: `${product.name} - ${selectedVariant.name}`,
-            price: selectedVariant.price,
-            image: product.images[0] || '',
-            quantity,
-        })
+    const product: ProductDetailData = {
+        ...productData,
+        variants: (variantsData ?? []) as ProductVariant[],
+        reviewCount,
+        avgRating,
     }
 
-    if (loading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="text-center space-y-3">
-                    <Loader2 className="w-10 h-10 animate-spin mx-auto" style={{ color: 'var(--sf-foreground)', opacity: 0.5 }} />
-                    <p className="text-sm font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                        Loading product details...
-                    </p>
-                </div>
-            </div>
-        )
-    }
-
-    if (error || !product) {
-        return (
-            <div className="min-h-screen flex items-center justify-center">
-                <div className="sf-card max-w-md w-full p-6 border space-y-3" style={{ borderColor: 'var(--sf-border-strong)' }}>
-                    <p className="sf-heading font-semibold" style={{ color: 'var(--sf-foreground)' }}>Product Not Found</p>
-                    <p className="text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                        {error || "The product you're looking for doesn't exist."}
-                    </p>
-                    <Link
-                        href="/products"
-                        className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-4 py-2 text-sm mt-2"
-                    >
-                        <ArrowLeft className="h-4 w-4" />
-                        Back to Products
-                    </Link>
-                </div>
-            </div>
-        )
-    }
-
-    const PageComponent = THEME_COMPONENTS[themeId] ?? ClassicProductDetailPage
-    const variantLoading = selectedVariant?.id ? itemLoadingStates[selectedVariant.id] : false
+    const themeId = (rawStore.settings as any)?.themeId ?? 'classic'
+    const { ProductDetailPage: ProductDetailPageComponent } = await resolveTheme(themeId)
 
     return (
-        <PageComponent
-            storeSlug={storeSlug ?? ''}
-            storeId={storeId}
+        <ProductDetailClient
+            storeSlug={slug}
+            storeId={rawStore.id}
             product={product}
-            selectedVariant={selectedVariant}
-            selectedOptions={selectedOptions}
-            quantity={quantity}
-            currentImageIndex={currentImageIndex}
-            onOptionChange={(name: string, val: string) =>
-                setSelectedOptions((prev) => ({ ...prev, [name]: val }))
-            }
-            onQuantityChange={setQuantity}
-            onImageChange={setCurrentImageIndex}
-            onAddToCart={handleAddToCart}
-            isAddingToCart={variantLoading ?? false}
-            onReviewSubmitted={fetchProduct}
+            variants={(variantsData ?? []) as ProductVariant[]}
+            currency={rawStore.currency ?? 'KES'}
+            ProductDetailPage={ProductDetailPageComponent}
         />
     )
 }

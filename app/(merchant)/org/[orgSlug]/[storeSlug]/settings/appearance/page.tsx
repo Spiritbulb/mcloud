@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { getStore, createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import AppearanceSettingsPage from './appearance-settings-page'
 
@@ -7,15 +7,16 @@ export default async function AppearancePage({
 }: {
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
-    const { storeSlug } = await params
-    const slug = storeSlug
-    const supabase = await createClient()
-    const { data: store } = await supabase
-        .from('stores')
-        .select('*, theme:store_themes(*)')
-        .eq('slug', slug)
-        .single()
+    const { storeSlug: slug } = await params
+    const store = await getStore(slug)
     if (!store) notFound()
 
-    return <AppearanceSettingsPage store={store} />
+    const supabase = await createClient()
+    const { data: theme } = await supabase
+        .from('store_themes')
+        .select('*')
+        .eq('store_id', store.id)
+        .single()
+
+    return <AppearanceSettingsPage store={{ ...store, theme }} />
 }

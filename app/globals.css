@@ -661,6 +661,35 @@ body:has([data-settings-shell]) {
   overflow: hidden;
 }
 
+/* ============================================================
+   PUCK EDITOR — DARK MODE OVERRIDES
+   Puck hardcodes grey-scale vars; remap them in .dark so the
+   editor chrome matches the app's dark theme.
+   grey-01 (darkest) → grey-12 (lightest) — we invert the scale.
+   ============================================================ */
+.dark {
+  --puck-color-grey-01: #e4e4e7;
+  --puck-color-grey-02: #d4d4d8;
+  --puck-color-grey-03: #a1a1aa;
+  --puck-color-grey-04: #71717a;
+  --puck-color-grey-05: #52525b;
+  --puck-color-grey-06: #3f3f46;
+  --puck-color-grey-07: #27272a;
+  --puck-color-grey-08: #1c1c1f;
+  --puck-color-grey-09: #18181b;
+  --puck-color-grey-10: #111113;
+  --puck-color-grey-11: #0d0d0f;
+  --puck-color-grey-12: #1a1a1e;
+  --puck-color-white: #18181b;
+  /* azure highlight colours — shift to match our brand */
+  --puck-color-azure-04: rgb(170 199 255);
+  --puck-color-azure-05: rgb(170 199 255);
+  --puck-color-azure-06: rgb(170 199 255);
+  --puck-color-azure-07: rgb(130 165 230);
+  --puck-color-azure-11: rgb(40 71 119);
+  --puck-color-azure-12: rgb(25 40 75);
+}
+
 /* globals.css */
 .nav-badge-pro {
   background-color: oklch(0.75 0.15 60);

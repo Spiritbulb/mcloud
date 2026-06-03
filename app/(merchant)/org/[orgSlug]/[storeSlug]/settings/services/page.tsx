@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { getStore } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import ServiceSettings from '@/components/store/service-settings'
 
@@ -8,16 +8,8 @@ export default async function ServicePage({
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
     const { storeSlug: slug } = await params
-    const supabase = await createClient()
-
-    const { data: store } = await supabase
-        .from('stores')
-        .select('id, slug, currency, settings')   // added slug + settings to match every other settings page
-        .eq('slug', slug)
-        .eq('is_active', true)                     // guard: only load active stores
-        .single()
-
-    if (!store) notFound()
+    const store = await getStore(slug)
+    if (!store || !store.is_active) notFound()
 
     return (
         <ServiceSettings

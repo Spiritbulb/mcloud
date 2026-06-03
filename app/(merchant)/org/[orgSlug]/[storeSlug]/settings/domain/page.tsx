@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { getStore } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import DomainSettings from '@/components/store/domain-settings'
 
@@ -8,12 +8,7 @@ export default async function DomainPage({
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
     const { storeSlug: slug } = await params
-    const supabase = await createClient()
-    const { data: store } = await supabase
-        .from('stores')
-        .select('id, custom_domain')
-        .eq('slug', slug)
-        .single()
+    const store = await getStore(slug)
     if (!store) notFound()
 
     return <DomainSettings storeId={store.id} currentDomain={store.custom_domain} />

@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { cache } from 'react'
 import type { Database } from '@/app/types/database.types'
 
 /**
@@ -32,3 +33,16 @@ export async function createClient() {
     }
   )
 }
+
+// Deduplicated per-render store lookup. React cache() ensures that even if
+// layout.tsx and a page.tsx both call this with the same slug, Supabase is
+// only hit once per server render.
+export const getStore = cache(async (slug: string) => {
+  const supabase = await createClient()
+  const { data } = await supabase
+    .from('stores')
+    .select('*')
+    .eq('slug', slug)
+    .single()
+  return data
+})

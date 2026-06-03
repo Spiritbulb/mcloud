@@ -2,8 +2,8 @@ import '@/app/(storefront)/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import { markdownToHtml } from '@/lib/md'
-import { BlogPostPage } from '@/components/store/blog/post-shell'
 import type { BlogPost } from '@/src/themes/types'
+import { resolveTheme } from '@/src/themes/resolver'
 
 export const revalidate = 60
 
@@ -36,27 +36,22 @@ export async function generateMetadata({ params }: Props) {
         },
     }
 }
+
 export default async function BlogPostRoute({ params }: Props) {
     const { slug, 'post-slug': postSlug } = await params
     const supabase = await createClient()
 
-    const { data: store, error: storeError } = await supabase
-        .from('stores').select('id, slug, settings')
+    const { data: rawStore } = await supabase
+        .from('stores').select('*')
         .eq('slug', slug).eq('is_active', true).single()
+    if (!rawStore) notFound()
 
-    console.log('[blog-post] slug:', slug, 'store:', store?.id ?? null, 'storeError:', storeError?.message)
-    if (!store) notFound()
-
-    const { data: post, error: postError } = await supabase
+    const { data: post } = await supabase
         .from('blog_posts')
-        .select(`*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)`)
-        .eq('store_id', store.id).eq('slug', postSlug).eq('is_published', true)
+        .select('*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)')
+        .eq('store_id', rawStore.id).eq('slug', postSlug).eq('is_published', true)
         .maybeSingle()
-
-    console.log('[blog-post] postSlug:', postSlug, 'post:', post?.id ?? null, 'postError:', postError?.message)
     if (!post) notFound()
-
-    const themeId: string = (store.settings as any)?.themeId ?? 'classic'
 
     const tags: string[] = (post as any).tags ?? []
     let relatedPosts: BlogPost[] = []
@@ -64,8 +59,8 @@ export default async function BlogPostRoute({ params }: Props) {
     if (tags.length > 0) {
         const { data: byTag } = await supabase
             .from('blog_posts')
-            .select(`*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)`)
-            .eq('store_id', store.id).eq('is_published', true)
+            .select('*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)')
+            .eq('store_id', rawStore.id).eq('is_published', true)
             .neq('id', post.id).overlaps('tags', tags)
             .order('published_at', { ascending: false }).limit(3)
         relatedPosts = (byTag ?? []) as BlogPost[]
@@ -74,8 +69,8 @@ export default async function BlogPostRoute({ params }: Props) {
     if (relatedPosts.length < 3) {
         const { data: latest } = await supabase
             .from('blog_posts')
-            .select(`*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)`)
-            .eq('store_id', store.id).eq('is_published', true)
+            .select('*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)')
+            .eq('store_id', rawStore.id).eq('is_published', true)
             .neq('id', post.id)
             .order('published_at', { ascending: false }).limit(3)
 
@@ -86,16 +81,16 @@ export default async function BlogPostRoute({ params }: Props) {
         }
     }
 
-    // Convert markdown on the server — no browser APIs, no Turbopack issues
     const contentHtml = await markdownToHtml(post.content ?? '')
+    const themeId = (rawStore.settings as any)?.themeId ?? 'classic'
+    const { BlogPostPage } = await resolveTheme(themeId)
 
     return (
         <BlogPostPage
-            themeId={themeId}
             storeSlug={slug}
             post={post as BlogPost}
             relatedPosts={relatedPosts}
             contentHtml={contentHtml}
         />
     )
-}  
+}

@@ -21,7 +21,7 @@ export default async function SettingsLayout({
                 headers: {
                     Cookie: cookieStore.toString(),
                 },
-                next: { revalidate: 0 },
+                next: { revalidate: 60 },
             }
         )
 

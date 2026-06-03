@@ -7,6 +7,11 @@ import { cookies } from "next/headers"
 import DocsClient from "@/components/docs-client"
 import type { DocPage } from "@/lib/docs"
 
+export const metadata = {
+    title: "Documentation — Menengai Cloud",
+    description: "Guides and references for getting the most out of Menengai Cloud.",
+}
+
 // How many seconds before Next.js re-fetches from Supabase.
 // 60 = changes appear within ~1 minute. Lower = fresher, more DB reads.
 export const revalidate = 60

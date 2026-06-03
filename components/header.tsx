@@ -16,6 +16,8 @@ interface HeaderProps {
     isLoggedIn?: boolean
 }
 
+const admin_url = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://admin.menengai.cloud'
+
 export function Header({ isLoggedIn = false }: HeaderProps) {
     const router = useRouter()
 
@@ -45,7 +47,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
                         {/* CTA — conditional */}
                         {isLoggedIn ? (
                             <Button asChild className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full">
-                                <Link href="/org/pick">Go to dashboard</Link>
+                                <Link href={`${admin_url}/org/pick`}>Go to dashboard</Link>
                             </Button>
                         ) : (
                             <Button

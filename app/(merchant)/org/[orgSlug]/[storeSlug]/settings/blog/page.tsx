@@ -1,6 +1,6 @@
 // app/settings/[slug]/blog/page.tsx
 
-import { createClient } from '@/lib/server'
+import { createClient, getStore } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import { BlogSettingsClient } from './blog-client'
 import type { BlogPost, BlogAuthor } from '@/src/themes/types'
@@ -11,20 +11,10 @@ interface Props {
 
 export default async function BlogSettingsPage({ params }: Props) {
     const { storeSlug: slug } = await params
-    const supabase = await createClient()
-
-    // No manual auth check needed here. The Supabase server client already
-    // carries the session cookie. If the user is unauthenticated or not a
-    // member of this store, the RLS policies on blog_posts / blog_authors
-    // will return empty results — or the store lookup itself returns null.
-    // The settings shell (client-side) handles the auth redirect separately.
-    const { data: store } = await supabase
-        .from('stores')
-        .select('id, name, slug')
-        .eq('slug', slug)
-        .single()
-
+    const store = await getStore(slug)
     if (!store) notFound()
+
+    const supabase = await createClient()
 
     // Fetch posts (all, including drafts) + authors in parallel.
     // RLS on blog_posts has a member-write policy so only store members

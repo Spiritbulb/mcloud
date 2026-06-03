@@ -4,7 +4,6 @@ import { auth0 } from '@/lib/auth0'
 import { createClient } from '@/lib/server'
 import { redirect } from 'next/navigation'
 
-
 export async function completeOnboarding(formData: FormData) {
     const fullName = formData.get('fullName') as string
     const storeName = formData.get('storeName') as string
@@ -56,6 +55,10 @@ export async function completeOnboarding(formData: FormData) {
         store_id: store!.id, user_id: userId, role: 'owner',
     })
     if (memberError) return { error: memberError.message }
+
+    await supabase.from('store_themes').insert({
+        store_id: store!.id,
+    })
 
     if (finalOrgId) {
         const { data: org } = await supabase

@@ -2,8 +2,7 @@ import '@/app/(storefront)/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
-import StoreFront from '@/components/store/Storefront'
-
+import { resolveTheme } from '@/src/themes/resolver'
 
 export const revalidate = 60
 
@@ -116,6 +115,9 @@ export default async function StorePage({ params }: Props) {
     if (store?.id) {
         incrementViews(store.id)
     }
+
+    const themeId = (store?.settings?.themeId as string) ?? 'classic'
+    const { StoreFront } = await resolveTheme(themeId)
 
     return (
         <StoreFront

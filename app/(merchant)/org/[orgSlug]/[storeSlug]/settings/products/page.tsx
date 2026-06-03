@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { getStore } from '@/lib/server'
 import { notFound } from 'next/navigation'
 import ProductSettings from '@/components/store/product-settings'
 
@@ -8,12 +8,7 @@ export default async function ProductsPage({
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
     const { storeSlug: slug } = await params
-    const supabase = await createClient()
-    const { data: store } = await supabase
-        .from('stores')
-        .select('id, currency')
-        .eq('slug', slug)
-        .single()
+    const store = await getStore(slug)
     if (!store) notFound()
 
     return <ProductSettings storeId={store.id} currency={store.currency} />

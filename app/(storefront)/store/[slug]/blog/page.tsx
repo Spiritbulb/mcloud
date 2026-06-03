@@ -1,8 +1,8 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
 import { createClient } from '@/lib/server'
 import { notFound } from 'next/navigation'
-import { BlogListPage } from '@/components/store/blog/list-shell'
 import type { BlogPost } from '@/src/themes/types'
+import { resolveTheme } from '@/src/themes/resolver'
 
 export const revalidate = 60
 
@@ -27,25 +27,26 @@ export default async function BlogListRoute({ params }: Props) {
     const { slug } = await params
     const supabase = await createClient()
 
-    const { data: store } = await supabase
-        .from('stores').select('id, slug, settings')
+    const { data: rawStore } = await supabase
+        .from('stores').select('*')
         .eq('slug', slug).eq('is_active', true).single()
-    if (!store) notFound()
-
-    const themeId: string = (store.settings as any)?.themeId ?? 'classic'
+    if (!rawStore) notFound()
 
     const { data: posts } = await supabase
         .from('blog_posts')
-        .select(`*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)`)
-        .eq('store_id', store.id)
+        .select('*, author:blog_authors(id, name, bio, avatar_url, user_id, store_id, created_at, updated_at)')
+        .eq('store_id', rawStore.id)
         .eq('is_published', true)
         .order('published_at', { ascending: false })
 
+    const blogPosts = (posts ?? []) as BlogPost[]
+    const themeId = (rawStore.settings as any)?.themeId ?? 'classic'
+    const { BlogListPage } = await resolveTheme(themeId)
+
     return (
         <BlogListPage
-            themeId={themeId}
             storeSlug={slug}
-            posts={(posts ?? []) as BlogPost[]}
+            posts={blogPosts}
         />
     )
 }

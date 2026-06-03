@@ -5,10 +5,12 @@ import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@/components/ui/sidebar'
 import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
-import type { NavSection } from './settings-nav'
+import type { NavSection, NavStore } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 import { trackVisit } from '@/app/onboarding/actions'
+import { cn } from '@/lib/utils'
+import { useOrgContext } from '@/app/(merchant)/org/[orgSlug]/org-context'
 
 // ─── Sections ────────────────────────────────────────────────────────────────
 
@@ -19,7 +21,7 @@ export const SECTIONS: readonly NavSection[] = [
         tabs: [
             { id: 'home', label: 'Overview', icon: 'home' },
             { id: 'general', label: 'General', icon: 'storefront' },
-            { id: 'appearance', label: 'Appearance', icon: 'palette' },
+            { id: 'appearance', label: 'Design', icon: 'dashboard_customize' },
         ],
     },
     {
@@ -88,6 +90,7 @@ export default function SettingsShell({
 }) {
     const store = initialStore
     const error = initialError
+    const { stores: pickerStores, orgSlug: ctxOrgSlug } = useOrgContext()
 
     const user = store ? {
         name: store.user?.name ?? 'Account',
@@ -147,14 +150,20 @@ export default function SettingsShell({
         onSignOut: () => { window.location.href = '/auth/logout' },
     }
 
-    const navStore = {
+    const navStore: NavStore = {
         name: store.name,
         slug: store.slug,
         logo_url: store.logo_url,
         custom_domain: store.custom_domain,
         is_pro: store.is_pro,
-        org: store.org ?? null,
     }
+
+    const allStores: NavStore[] = pickerStores.map((s) => ({
+        name: s.name,
+        slug: s.slug,
+        logo_url: s.logo_url,
+        org_slug: ctxOrgSlug,
+    }))
 
     const navigate = (id: TabId) => router.push(
         process.env.NODE_ENV === 'development'
@@ -181,7 +190,7 @@ export default function SettingsShell({
                     SECTIONS={SECTIONS}
                     user={navUser}
                     store={navStore}
-                    allStores={store.allStores ?? [navStore]}
+                    allStores={allStores}
                     orgSlug={orgSlug}
                 />
 
@@ -194,7 +203,7 @@ export default function SettingsShell({
                     SECTIONS={SECTIONS}
                     user={navUser}
                     store={navStore}
-                    allStores={store.allStores ?? [navStore]}
+                    allStores={allStores}
                     open={mobileNavOpen}
                     onOpen={() => setMobileNavOpen(true)}
                     onClose={() => setMobileNavOpen(false)}
@@ -205,15 +214,19 @@ export default function SettingsShell({
                 <div className="flex flex-col flex-1 min-w-0 min-h-0">
                     <div className=''>
                         <SettingsHeader
-                            store={navStore}
+                            store={store}
                             activeLabel={activeLabel}
                             onOpenMobileNav={() => setMobileNavOpen(true)}
                             mobileOpen={mobileNavOpen}
                         />
                     </div>
-                    <main className="flex-1 overflow-y-auto px-6 md:px-10 py-8">
+                    <main className={cn(
+                        'flex-1 min-h-0',
+                        activeId === 'design'
+                            ? 'overflow-hidden'
+                            : 'overflow-y-auto px-6 md:px-10 py-8'
+                    )}>
                         {children}
-
                     </main>
                 </div>
             </div>

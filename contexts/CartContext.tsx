@@ -99,3 +99,8 @@ export function useCart() {
     if (!ctx) throw new Error('useCart must be used within CartProvider');
     return ctx;
 }
+
+// Safe version — returns null when used outside CartProvider (e.g. Puck design editor)
+export function useOptionalCart() {
+    return useContext(CartContext);
+}

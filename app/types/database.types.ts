@@ -1565,6 +1565,8 @@ export type Database = {
           id: string
           muted_color: string
           primary_color: string
+          puck_content: Json | null
+          puck_pages: Json | null
           secondary_color: string
           store_id: string
           theme_id: string
@@ -1586,6 +1588,8 @@ export type Database = {
           id?: string
           muted_color?: string
           primary_color?: string
+          puck_content?: Json | null
+          puck_pages?: Json | null
           secondary_color?: string
           store_id: string
           theme_id?: string
@@ -1607,6 +1611,8 @@ export type Database = {
           id?: string
           muted_color?: string
           primary_color?: string
+          puck_content?: Json | null
+          puck_pages?: Json | null
           secondary_color?: string
           store_id?: string
           theme_id?: string
