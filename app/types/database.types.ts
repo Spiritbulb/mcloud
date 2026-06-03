@@ -669,6 +669,7 @@ export type Database = {
           invited_by: string | null
           org_id: string | null
           role: string | null
+          token: string | null
         }
         Insert: {
           accepted_at?: string | null
@@ -679,6 +680,7 @@ export type Database = {
           invited_by?: string | null
           org_id?: string | null
           role?: string | null
+          token?: string | null
         }
         Update: {
           accepted_at?: string | null
@@ -689,6 +691,7 @@ export type Database = {
           invited_by?: string | null
           org_id?: string | null
           role?: string | null
+          token?: string | null
         }
         Relationships: [
           {
