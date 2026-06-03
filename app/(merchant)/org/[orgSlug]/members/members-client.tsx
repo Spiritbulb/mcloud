@@ -16,7 +16,7 @@ import {
     UserX, Mail, Loader2, Clock, Shield, ShieldCheck, ShieldAlert,
 } from 'lucide-react'
 
-type Invite = { id: string; email: string; role: string; created_at: string; expires_at: string }
+type Invite = { id: string; email: string | null; role: string | null; created_at: string; expires_at: string | null }
 
 interface Props {
     orgId: string
@@ -26,7 +26,7 @@ interface Props {
     currentRole: string | null
 }
 
-function RoleBadge({ role }: { role: string }) {
+function RoleBadge({ role }: { role: string | null }) {
     return (
         <span className={cn(
             'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
@@ -136,9 +136,10 @@ function InviteRow({ invite, orgId, orgSlug, onRevoke }: {
     onRevoke: (id: string) => void
 }) {
     const [isPending, start] = useTransition()
+    if (!invite.expires_at) return null
 
     const expiresIn = Math.ceil((new Date(invite.expires_at).getTime() - Date.now()) / 86400000)
-
+    if (!invite.email && !invite.role) return null
     return (
         <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
             <div className="flex items-center gap-3 min-w-0">
