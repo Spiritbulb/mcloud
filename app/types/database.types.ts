@@ -1749,6 +1749,77 @@ export type Database = {
           },
         ]
       }
+      trading_apps: {
+        Row: {
+          affiliate_link: string | null
+          brand_name: string
+          created_at: string | null
+          custom_domain: string | null
+          deriv_app_id: string
+          deriv_oauth_scopes: string | null
+          deriv_redirect_uri: string
+          enabled_apps: Json | null
+          faq_affiliate_link: string | null
+          id: string
+          is_active: boolean | null
+          logo_url: string | null
+          org_id: string | null
+          primary_color: string | null
+          slug: string
+          support_email: string | null
+          support_whatsapp: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          affiliate_link?: string | null
+          brand_name: string
+          created_at?: string | null
+          custom_domain?: string | null
+          deriv_app_id: string
+          deriv_oauth_scopes?: string | null
+          deriv_redirect_uri: string
+          enabled_apps?: Json | null
+          faq_affiliate_link?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          org_id?: string | null
+          primary_color?: string | null
+          slug: string
+          support_email?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          affiliate_link?: string | null
+          brand_name?: string
+          created_at?: string | null
+          custom_domain?: string | null
+          deriv_app_id?: string
+          deriv_oauth_scopes?: string | null
+          deriv_redirect_uri?: string
+          enabled_apps?: Json | null
+          faq_affiliate_link?: string | null
+          id?: string
+          is_active?: boolean | null
+          logo_url?: string | null
+          org_id?: string | null
+          primary_color?: string | null
+          slug?: string
+          support_email?: string | null
+          support_whatsapp?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "trading_apps_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       users: {
         Row: {
           avatar_url: string | null

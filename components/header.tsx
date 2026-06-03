@@ -1,16 +1,7 @@
 'use client'
 
-import Link from "next/link"
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
-import AuthPopup from "@/lib/auth"
-import { useRouter } from "next/navigation"
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
     isLoggedIn?: boolean
@@ -22,44 +13,60 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
     const router = useRouter()
 
     return (
-        <>
-            <header className="sticky top-5 z-50 w-[90%] mx-auto rounded-full bg-[#fff]/80 dark:bg-[#000]/80 backdrop-blur">
-                <div className="mx-auto px-4">
-                    <div className="flex h-16 items-center justify-between">
-                        {/* Logo */}
-                        <Link href="/" className="flex items-center">
-                            <img src="/favicon.ico" alt="Menengai Cloud" className="w-10 h-auto" />
+        <header className="sticky top-0 z-50 border-b border-white/8 bg-[#0a0a0a]/80 backdrop-blur-md">
+            <div className="container mx-auto px-6 md:px-12 max-w-6xl">
+                <div className="flex h-14 items-center justify-between">
+                    {/* Logo */}
+                    <Link href="/" className="flex items-center gap-2.5">
+                        <img src="/favicon.ico" alt="Menengai Cloud" className="w-7 h-7" />
+                        <span className="text-[14px] font-semibold text-white hidden sm:block">Menengai Cloud</span>
+                    </Link>
+
+                    {/* Nav */}
+                    <nav className="hidden md:flex items-center gap-6">
+                        {[
+                            { href: '/docs', label: 'Docs' },
+                            { href: '/changelog', label: 'Changelog' },
+                            { href: '/support', label: 'Support' },
+                            { href: '/contact', label: 'Contact' },
+                        ].map(({ href, label }) => (
+                            <Link
+                                key={href}
+                                href={href}
+                                className="text-[13px] text-white/45 hover:text-white transition-colors"
+                            >
+                                {label}
+                            </Link>
+                        ))}
+                    </nav>
+
+                    {/* CTA */}
+                    {isLoggedIn ? (
+                        <Link
+                            href={`${admin_url}/org`}
+                            className="h-8 px-4 rounded-full bg-white text-[#0a0a0a] text-[13px] font-semibold hover:bg-white/90 transition-colors flex items-center gap-1.5"
+                        >
+                            Dashboard
+                            <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
                         </Link>
-
-                        {/* Nav links */}
-                        <nav className="hidden md:flex items-center gap-6">
-                            <Link href="/docs" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Docs
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/auth/login"
+                                className="h-8 px-4 rounded-full text-[13px] text-white/50 hover:text-white transition-colors hidden sm:flex items-center"
+                            >
+                                Log in
                             </Link>
-                            <Link href="/changelog" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Changelog
-                            </Link>
-                            <Link href="/support" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                Support
-                            </Link>
-                        </nav>
-
-                        {/* CTA — conditional */}
-                        {isLoggedIn ? (
-                            <Button asChild className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full">
-                                <Link href={`${admin_url}/org/pick`}>Go to dashboard</Link>
-                            </Button>
-                        ) : (
-                            <Button
-                                className="bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-6 h-10 text-sm cursor-pointer rounded-full"
+                            <button
                                 onClick={() => router.push('/auth/sign-up')}
+                                className="h-8 px-4 rounded-full bg-white text-[#0a0a0a] text-[13px] font-semibold hover:bg-white/90 transition-colors flex items-center gap-1.5"
                             >
                                 Get started
-                            </Button>
-                        )}
-                    </div>
+                            </button>
+                        </div>
+                    )}
                 </div>
-            </header>
-        </>
+            </div>
+        </header>
     )
 }

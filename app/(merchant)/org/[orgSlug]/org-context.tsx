@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import type { PickerStore } from '@/app/(merchant)/org/pick/actions'
+import type { PickerStore } from '@/app/(merchant)/org/actions'
 
 type OrgContextValue = {
     stores: PickerStore[]

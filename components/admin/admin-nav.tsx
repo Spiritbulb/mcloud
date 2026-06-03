@@ -287,7 +287,7 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                     </div>
                     <DropdownMenuSeparator className="bg-[var(--md-sys-color-outline-variant)]" />
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px] gap-2">
-                        <Link href="/org/pick">
+                        <Link href="/org">
                             <MSO icon="arrow_back" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
                             Back to platform
                         </Link>

@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog'
-import { updateOrg, deleteOrg } from '@/app/(merchant)/org/pick/actions'
+import { updateOrg, deleteOrg } from '@/app/(merchant)/org/actions'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (
@@ -151,7 +151,7 @@ function DeleteOrgDialog({ open, onOpenChange, org, storeCount }: {
         start(async () => {
             const res = await deleteOrg(org.id)
             if (res.error) { setError(res.error); return }
-            router.push('/org/pick')
+            router.push('/org')
         })
     }
 

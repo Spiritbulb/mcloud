@@ -78,6 +78,17 @@ export default async function OrgHomePage({
         .eq('org_id', org.id)
         .order('created_at', { ascending: true })
 
+    // Stores the user manages that are NOT in this org (personal or other orgs)
+    const { data: otherMemberships } = await supabase
+        .from('store_members')
+        .select('role, store:stores(id, name, slug, logo_url, org_id)')
+        .eq('user_id', userId)
+        .in('role', ['owner', 'admin'])
+
+    const otherStores = (otherMemberships ?? [])
+        .map(m => m.store as any)
+        .filter(s => s && s.org_id !== org.id)
+
     const storeList = stores ?? []
     const memberList = members ?? []
 
@@ -181,6 +192,41 @@ export default async function OrgHomePage({
                     })}
                 </div>
             </section>
+
+            {/* Other stores (admin on, not in this org) */}
+            {otherStores.length > 0 && (
+                <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Your other stores</h2>
+                            <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">Stores you manage outside this organisation</p>
+                        </div>
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {otherStores.map((store: any) => (
+                            <Link
+                                key={store.id}
+                                href={`/store/${store.slug}/settings`}
+                                className="flex items-center gap-3 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-4 py-3 hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                            >
+                                <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[11px] font-bold overflow-hidden store-avatar-fallback">
+                                    {store.logo_url
+                                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
+                                        : getInitials(store.name)
+                                    }
+                                </div>
+                                <div className="flex flex-col min-w-0 flex-1">
+                                    <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</span>
+                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
+                                        {store.org_id ? 'Other organisation' : 'Personal'}
+                                    </span>
+                                </div>
+                                <MSO icon="open_in_new" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
+                            </Link>
+                        ))}
+                    </div>
+                </section>
+            )}
 
             {/* Quick actions */}
             {(role === 'owner' || role === 'admin') && (

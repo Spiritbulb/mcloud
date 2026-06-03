@@ -1,4 +1,4 @@
-import { getPickerData } from '@/app/(merchant)/org/pick/actions'
+import { getPickerData } from '@/app/(merchant)/org/actions'
 import { OrgContextProvider } from './org-context'
 
 export default async function OrgLayout({

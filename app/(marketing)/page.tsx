@@ -2,21 +2,21 @@ import type { Metadata } from "next"
 import HomeClient from "@/components/home-client"
 
 export const metadata: Metadata = {
-  title: "Menengai Cloud | Your store in 2 minutes",
+  title: "Menengai Cloud — Managed Platform for Enterprise Applications",
   description:
-    "Build your e-commerce store, blog, or streaming site in minutes. Free forever. No credit card required.",
+    "Launch and host production-grade applications without managing infrastructure. E-commerce storefronts, white-label trading apps, and more.",
   openGraph: {
-    title: "Menengai Cloud | Your store in 2 minutes",
+    title: "Menengai Cloud — Managed Platform for Enterprise Applications",
     description:
-      "Build your e-commerce store, blog, or streaming site in seconds. Free forever.",
+      "Deploy storefronts, trading apps, and more — fully managed. No DevOps required.",
     url: "https://menengai.cloud",
     siteName: "Menengai Cloud",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Menengai Cloud | Your store in 2 seconds",
-    description: "Build your store, blog, or streaming site. Free forever.",
+    title: "Menengai Cloud — Managed Platform for Enterprise Applications",
+    description: "Deploy storefronts and trading apps without managing infrastructure.",
   },
 }
 

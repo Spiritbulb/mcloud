@@ -18,7 +18,7 @@ const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/'] as const
 
 const BANNER_EXCLUDED_PREFIXES = [
   '/settings', '/dashboard', '/orders', '/products/new',
-  '/auth/', '/api/', '/onboarding', '/org/pick',
+  '/auth/', '/api/', '/onboarding', '/org/',
 ] as const
 
 /**
@@ -31,7 +31,7 @@ const SYSTEM_SUBDOMAINS = new Set(['status', 'mail', 'www', 'auth'])
  * Paths that belong to the admin app itself and must never be
  * rewritten to a store path, even when a valid activeSlug cookie exists.
  */
-const ADMIN_NATIVE_PATHS = ['/org/pick', '/onboarding', '/org/'] as const
+const ADMIN_NATIVE_PATHS = ['/onboarding', '/org/'] as const
 
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -141,10 +141,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const activeSlug = request.cookies.get('mng_active_store')?.value
 
     if (!activeSlug) {
-      // No active store — send to picker, preserving intended destination
+      // No active store — send to org index, preserving intended destination
       const url = request.nextUrl.clone()
-      url.pathname = '/org/pick'
-      if (pathname !== '/' && pathname !== '/org/pick') {
+      url.pathname = '/org'
+      if (pathname !== '/' && pathname !== '/org') {
         url.searchParams.set('next', pathname)
       }
       return NextResponse.rewrite(url)

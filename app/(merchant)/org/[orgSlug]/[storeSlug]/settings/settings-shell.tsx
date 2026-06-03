@@ -8,7 +8,7 @@ import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import type { NavSection, NavStore } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
-import { trackVisit } from '@/app/onboarding/actions'
+
 import { cn } from '@/lib/utils'
 import { useOrgContext } from '@/app/(merchant)/org/[orgSlug]/org-context'
 
@@ -120,9 +120,6 @@ export default function SettingsShell({
         window.addEventListener('mobile-nav-open', handler)
         return () => window.removeEventListener('mobile-nav-open', handler)
     }, [])
-    useEffect(() => {
-        if (store) trackVisit(store.id)
-    }, [store])
 
     if (error || !store) return (
         <div className="h-[100dvh] flex flex-col items-center justify-center gap-2 text-center px-6">

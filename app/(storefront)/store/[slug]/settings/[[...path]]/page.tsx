@@ -21,6 +21,6 @@ export default async function SettingsRedirect({
     if (orgSlug) {
         redirect(`/org/${orgSlug}/${slug}/settings${rest}`)
     }
-    // Store has no org yet — redirect to picker
-    redirect('/org/pick')
+    // Store has no org yet — redirect to org hub
+    redirect('/org')
 }

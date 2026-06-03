@@ -17,6 +17,7 @@ export type OrgNavTab = {
 export const ORG_TABS: readonly OrgNavTab[] = [
     { id: 'home',         label: 'Overview',     icon: 'home' },
     { id: 'stores',       label: 'Stores',        icon: 'storefront' },
+    { id: 'trading',      label: 'Trading Apps',  icon: 'candlestick_chart' },
     { id: 'members',      label: 'Members',       icon: 'group' },
     { id: 'integrations', label: 'Integrations',  icon: 'link' },
     { id: 'settings',     label: 'Settings',      icon: 'settings' },
@@ -237,7 +238,7 @@ function SidebarShell({
                 railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
             )}>
                 {!railMode && (
-                    <Link href="/org/pick" className="flex items-center shrink-0">
+                    <Link href="/org" className="flex items-center shrink-0">
                         <img src={src} alt="Logo" className="w-auto h-5" />
                     </Link>
                 )}
@@ -415,7 +416,7 @@ export function MobileOrgNav({
                 onTouchEnd={handlePanelTouchEnd}
             >
                 <div className="flex items-center justify-between px-4 py-3">
-                    <Link href="/org/pick" className="flex items-center shrink-0">
+                    <Link href="/org" className="flex items-center shrink-0">
                         <img src={src} alt="Logo" className="w-auto h-5" />
                     </Link>
                     <button

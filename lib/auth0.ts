@@ -49,14 +49,19 @@ export const auth0 = new Auth0Client({
                 updated_at: new Date().toISOString(),
             }, { onConflict: 'id' })
 
-            // Check if user has any stores
-            const { count } = await supabase
-                .from('store_members')
-                .select('*', { count: 'exact', head: true })
+            // Check if user belongs to any org
+            const { data: firstOrg } = await supabase
+                .from('org_members')
+                .select('org:orgs(slug)')
                 .eq('user_id', userId)
+                .order('created_at', { ascending: true })
+                .limit(1)
+                .maybeSingle()
 
-            // New user → onboarding, existing user → pick
-            return NextResponse.redirect(new URL(count ? '/org/pick' : '/onboarding', ADMIN_BASE_URL))
+            const orgSlug = firstOrg ? (firstOrg.org as any)?.slug : null
+
+            // New user → onboarding, existing user → their first org
+            return NextResponse.redirect(new URL(orgSlug ? `/org/${orgSlug}` : '/onboarding', ADMIN_BASE_URL))
         }
 
         return NextResponse.redirect(toURL('/'))

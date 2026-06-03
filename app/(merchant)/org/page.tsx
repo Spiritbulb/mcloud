@@ -2,8 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth0 } from '@/lib/auth0'
 import { createClient } from '@/lib/server'
 
-// /org/pick is no longer the hub — redirect to the user's first org (or onboarding)
-export default async function PickPage() {
+export default async function OrgIndexPage() {
     const session = await auth0.getSession()
     if (!session?.user) redirect('/auth/login')
 
