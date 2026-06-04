@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
 
     // Find the subscription row
-    const { data: sub } = await supabase
+    // TODO: add intasend_invoice_id column to store_subscriptions table
+    const { data: sub } = await (supabase as any)
         .from('store_subscriptions')
         .select('id, store_id')
         .eq('intasend_invoice_id', invoiceId)

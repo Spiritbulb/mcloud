@@ -212,7 +212,8 @@ export async function updateOrg(
     if (patch.logo_url !== undefined) update.logo_url = patch.logo_url
 
     const { data, error } = await supabase
-        .from('orgs').update(update).eq('id', orgId).select('slug').single()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('orgs').update(update as any).eq('id', orgId).select('slug').single()
 
     if (error) return { error: error.message }
 

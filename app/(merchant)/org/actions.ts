@@ -195,7 +195,12 @@ export async function updateOrg(
 
     if (!(await canManageOrg(supabase, orgId, userId))) return { error: 'Forbidden' }
 
-    const update: Record<string, any> = { updated_at: new Date().toISOString() }
+    const update: {
+        name?: string
+        slug?: string
+        logo_url?: string | null
+        updated_at: string
+    } = { updated_at: new Date().toISOString() }
     if (patch.name !== undefined) {
         const n = patch.name.trim()
         if (n.length < 2) return { error: 'Name must be at least 2 characters.' }

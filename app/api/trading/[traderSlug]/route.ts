@@ -80,7 +80,8 @@ export async function PUT(
 
     const { data, error } = await supabase
         .from('trading_apps')
-        .update(update)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .update(update as any)
         .eq('id', app.id)
         .select()
         .single()
