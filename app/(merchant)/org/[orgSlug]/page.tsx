@@ -146,7 +146,7 @@ export default async function OrgHomePage({
                                 </div>
                                 <div className="flex flex-col min-w-0 flex-1">
                                     <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</span>
-                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{store.slug}.menengai.cloud</span>
+                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">menengai.cloud/s/{store.slug}</span>
                                 </div>
                                 {store.is_pro && (
                                     <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)] shrink-0" fill={1} />

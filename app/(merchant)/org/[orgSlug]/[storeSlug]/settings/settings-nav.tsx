@@ -292,8 +292,7 @@ function StoreSwitcher({
     }, [open])
 
     function switchStore(s: NavStore) {
-        const domain = process.env.NODE_ENV === 'production' ? '; domain=.menengai.cloud' : ''
-        document.cookie = `mng_active_store=${s.slug}; path=/; max-age=2592000; SameSite=Lax${domain}`
+        document.cookie = `mng_active_store=${s.slug}; path=/; max-age=2592000; SameSite=Lax`
         window.location.href = settingsPath(s.org_slug ?? orgSlug, s.slug)
     }
 
@@ -371,7 +370,7 @@ function StoreSwitcher({
                         {store.name}
                     </span>
                     <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
-                        {store.custom_domain ? `www.${store.custom_domain}` : `${store.slug}.menengai.cloud`}
+                        {store.custom_domain ? `www.${store.custom_domain}` : `menengai.cloud/s/${store.slug}`}
                     </span>
                 </div>
                 {hasMultiple && (

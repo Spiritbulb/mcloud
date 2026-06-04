@@ -5,14 +5,13 @@ import { type NextRequest, NextResponse } from 'next/server'
 // ─── Route Classification Constants ───────────────────────────────────────────
 
 /**
- * Owner-only subpaths — require auth, served via admin.menengai.cloud.
- * Hitting these on a storefront subdomain/custom domain redirects to admin.
+ * Owner-only subpaths — require auth, served via /admin.
+ * Hitting these on a storefront path/custom domain redirects to /admin.
  */
 const PROTECTED_SUBPATHS = ['/settings', '/orders', '/products/new'] as const
 
 /**
  * Prefixes that bypass all tenant/proxy logic entirely.
- * /api/ routes are served directly by Next.js — no tenant rewriting needed.
  */
 const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/'] as const
 
@@ -21,39 +20,18 @@ const BANNER_EXCLUDED_PREFIXES = [
   '/auth/', '/api/', '/onboarding', '/org/',
 ] as const
 
-/**
- * Reserved subdomains that are NOT tenant slugs.
- * 'admin' is handled separately before this check.
- */
-const SYSTEM_SUBDOMAINS = new Set(['status', 'mail', 'www', 'auth'])
-
-/**
- * Paths that belong to the admin app itself and must never be
- * rewritten to a store path, even when a valid activeSlug cookie exists.
- */
-const ADMIN_NATIVE_PATHS = ['/onboarding', '/org/'] as const
-
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getTenantSlug(host: string): string | null {
-  if (!host.endsWith('.menengai.cloud')) return null
-  const sub = host.slice(0, -'.menengai.cloud'.length)
-  return sub && !SYSTEM_SUBDOMAINS.has(sub) ? sub : null
-}
-
-function toSubdomainUrl(request: NextRequest, slug: string, path: string): URL {
-  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
-  return new URL(`${proto}://${slug}.menengai.cloud${path || '/'}`)
+function toStorefrontUrl(request: NextRequest, slug: string, path: string): URL {
+  const url = request.nextUrl.clone()
+  url.pathname = `/s/${slug}${path === '/' ? '' : path}`
+  return url
 }
 
 function toCustomDomainUrl(request: NextRequest, domain: string, path: string): URL {
   const proto = request.headers.get('x-forwarded-proto') ?? 'https'
   return new URL(`${proto}://${domain}${path || '/'}`)
-}
-
-function toAdminUrl(proto: string, path: string, search = ''): URL {
-  return new URL(`${proto}://admin.menengai.cloud${path}${search}`)
 }
 
 function isProduction(host: string): boolean {
@@ -67,7 +45,7 @@ function buildBannerScript(
   dashboardUrl: string,
   pageType: 'homepage' | 'storefront' | 'other',
 ): string {
-  return `<script data-dashboard="${dashboardUrl}" data-page="${pageType}">(function(){var STORAGE_KEY='mng_banner_dismissed';var DELAY_PAGES=['homepage','storefront'];var script=document.currentScript;var dashboardUrl=script&&script.dataset.dashboard||'/settings';var pageType=script&&script.dataset.page||'other';if(sessionStorage.getItem(STORAGE_KEY))return;if(window.location.pathname.includes('/settings'))return;var delay=DELAY_PAGES.includes(pageType)?2000+Math.random()*3000:800;function inject(){var banner=document.createElement('div');banner.id='mng-owner-banner';banner.innerHTML='<style>#mng-owner-banner{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;height:36px;background:#1c2228;color:#f5f0eb;font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.01em;transform:translateY(-100%);transition:transform .25s cubic-bezier(.16,1,.3,1);box-shadow:0 1px 0 rgba(255,255,255,.06)}#mng-owner-banner.mng-visible{transform:translateY(0)}#mng-owner-banner a{color:#c9a96e;text-decoration:none;font-weight:500;white-space:nowrap;flex-shrink:0}#mng-owner-banner a:hover{text-decoration:underline;text-underline-offset:3px}#mng-owner-banner .mng-label{opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#mng-owner-banner button{background:none;border:none;color:#f5f0eb;opacity:.4;cursor:pointer;padding:4px;font-size:14px;line-height:1;flex-shrink:0;transition:opacity .15s}#mng-owner-banner button:hover{opacity:.8}</style><span class="mng-label">You\'re viewing your store</span><a href="'+dashboardUrl+'">Edit your store \u2192</a><button aria-label="Dismiss">\u2715</button>';document.body.prepend(banner);requestAnimationFrame(function(){requestAnimationFrame(function(){banner.classList.add('mng-visible')})});banner.querySelector('button').addEventListener('click',function(){banner.style.transform='translateY(-100%)';sessionStorage.setItem(STORAGE_KEY,'1');setTimeout(function(){banner.remove()},300)})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(inject,delay)})}else{setTimeout(inject,delay)}})()</script>`
+  return `<script data-dashboard="${dashboardUrl}" data-page="${pageType}">(function(){var STORAGE_KEY='mng_banner_dismissed';var DELAY_PAGES=['homepage','storefront'];var script=document.currentScript;var dashboardUrl=script&&script.dataset.dashboard||'/settings';var pageType=script&&script.dataset.page||'other';if(sessionStorage.getItem(STORAGE_KEY))return;if(window.location.pathname.includes('/settings'))return;var delay=DELAY_PAGES.includes(pageType)?2000+Math.random()*3000:800;function inject(){var banner=document.createElement('div');banner.id='mng-owner-banner';banner.innerHTML='<style>#mng-owner-banner{position:fixed;top:0;left:0;right:0;z-index:99999;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:0 16px;height:36px;background:#1c2228;color:#f5f0eb;font-family:ui-monospace,monospace;font-size:12px;letter-spacing:.01em;transform:translateY(-100%);transition:transform .25s cubic-bezier(.16,1,.3,1);box-shadow:0 1px 0 rgba(255,255,255,.06)}#mng-owner-banner.mng-visible{transform:translateY(0)}#mng-owner-banner a{color:#c9a96e;text-decoration:none;font-weight:500;white-space:nowrap;flex-shrink:0}#mng-owner-banner a:hover{text-decoration:underline;text-underline-offset:3px}#mng-owner-banner .mng-label{opacity:.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#mng-owner-banner button{background:none;border:none;color:#f5f0eb;opacity:.4;cursor:pointer;padding:4px;font-size:14px;line-height:1;flex-shrink:0;transition:opacity .15s}#mng-owner-banner button:hover{opacity:.8}</style><span class="mng-label">You\'re viewing your store</span><a href="'+dashboardUrl+'">Edit your store →</a><button aria-label="Dismiss">✕</button>';document.body.prepend(banner);requestAnimationFrame(function(){requestAnimationFrame(function(){banner.classList.add('mng-visible')})});banner.querySelector('button').addEventListener('click',function(){banner.style.transform='translateY(-100%)';sessionStorage.setItem(STORAGE_KEY,'1');setTimeout(function(){banner.remove()},300)})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',function(){setTimeout(inject,delay)})}else{setTimeout(inject,delay)}})()</script>`
 }
 
 function injectBanner(
@@ -105,76 +83,7 @@ async function getSupabaseClient() {
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
-  const proto = request.headers.get('x-forwarded-proto') ?? 'https'
   const search = request.nextUrl.search
-
-
-  // ── 0. System Subdomains ──────────────────────────────────────────────────
-  // Checked first so admin.menengai.cloud falls through to 0a (not in the set).
-  const subdomain = host.endsWith('.menengai.cloud')
-    ? host.slice(0, -'.menengai.cloud'.length)
-    : null
-
-  if (subdomain && SYSTEM_SUBDOMAINS.has(subdomain)) {
-    return NextResponse.next()
-  }
-
-
-  // ── 0a. Admin Subdomain (admin.menengai.cloud) ────────────────────────────
-  if (host === 'admin.menengai.cloud') {
-    // Auth callbacks must pass through before any session check
-    if (pathname.startsWith('/auth/')) return auth0.middleware(request)
-
-    // Admin-native pages (picker, onboarding) render themselves — never rewrite
-    if (ADMIN_NATIVE_PATHS.some((p) => pathname.startsWith(p))) {
-      return NextResponse.next()
-    }
-
-    const session = await auth0.getSession(request)
-    if (!session?.user) {
-      return NextResponse.redirect(
-        new URL(`${proto}://menengai.cloud/auth/login`, request.url),
-        302,
-      )
-    }
-
-    const activeSlug = request.cookies.get('mng_active_store')?.value
-
-    if (!activeSlug) {
-      // No active store — send to org index, preserving intended destination
-      const url = request.nextUrl.clone()
-      url.pathname = '/org'
-      if (pathname !== '/' && pathname !== '/org') {
-        url.searchParams.set('next', pathname)
-      }
-      return NextResponse.rewrite(url)
-    }
-
-    // Rewrite cleanly — slug never appears in the URL bar
-    const url = request.nextUrl.clone()
-    url.pathname = `/store/${activeSlug}${pathname === '/' ? '' : pathname}`
-    return NextResponse.rewrite(url)
-  }
-
-
-  // ── 0b. Sudo Subdomain (sudo.menengai.cloud) ─────────────────────────────
-  // Platform admin panel — rewrites to /admin/*. Role enforcement is
-  // handled by the /admin layout (must have role=admin in users table).
-  if (host === 'sudo.menengai.cloud') {
-    if (pathname.startsWith('/auth/')) return auth0.middleware(request)
-
-    const session = await auth0.getSession(request)
-    if (!session?.user) {
-      return NextResponse.redirect(
-        new URL(`${proto}://menengai.cloud/auth/login`, request.url),
-        302,
-      )
-    }
-
-    const url = request.nextUrl.clone()
-    url.pathname = `/admin${pathname === '/' ? '' : pathname}`
-    return NextResponse.rewrite(url)
-  }
 
 
   // ── 1. Auth / API / _next Bypass ─────────────────────────────────────────
@@ -200,7 +109,57 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
 
-  // ── 2. Custom Domain ──────────────────────────────────────────────────────
+  // ── 2. Admin Path (/admin/*) ──────────────────────────────────────────────
+  if (pathname === '/admin' || pathname.startsWith('/admin/')) {
+    const session = await auth0.getSession(request)
+    if (!session?.user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url, 302)
+    }
+
+    const subpath = pathname.slice('/admin'.length) || '/'
+
+    // Store-contextual paths need the active store slug prepended
+    if (PROTECTED_SUBPATHS.some((p) => subpath.startsWith(p))) {
+      const activeSlug = request.cookies.get('mng_active_store')?.value
+      if (!activeSlug) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/org'
+        url.searchParams.set('next', subpath)
+        return NextResponse.rewrite(url)
+      }
+      const url = request.nextUrl.clone()
+      url.pathname = `/store/${activeSlug}${subpath}`
+      return NextResponse.rewrite(url)
+    }
+
+    // Everything else (org, onboarding, pick, etc.) — strip /admin prefix
+    const url = request.nextUrl.clone()
+    url.pathname = subpath
+    return NextResponse.rewrite(url)
+  }
+
+
+  // ── 3. Sudo Path (/sudo/*) ────────────────────────────────────────────────
+  // Platform admin panel — rewrites to /admin/*. Role enforcement is
+  // handled by the /admin layout (must have role=admin in users table).
+  if (pathname === '/sudo' || pathname.startsWith('/sudo/')) {
+    const session = await auth0.getSession(request)
+    if (!session?.user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url, 302)
+    }
+
+    const subpath = pathname.slice('/sudo'.length) || '/'
+    const url = request.nextUrl.clone()
+    url.pathname = `/admin${subpath === '/' ? '' : subpath}`
+    return NextResponse.rewrite(url)
+  }
+
+
+  // ── 4. Custom Domain ──────────────────────────────────────────────────────
   const isCustomDomain =
     !host.endsWith('.menengai.cloud') &&
     host !== 'menengai.cloud' &&
@@ -231,9 +190,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       )
     }
 
-    // Owner routes → admin subdomain (admin handles its own auth)
+    // Owner routes → /admin (handles its own auth)
     if (PROTECTED_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      return NextResponse.redirect(toAdminUrl(proto, pathname, search), 308)
+      const url = request.nextUrl.clone()
+      url.pathname = `/admin${pathname}`
+      url.search = search
+      return NextResponse.redirect(url, 308)
     }
 
     // Rewrite to internal store path for rendering
@@ -244,7 +206,8 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     if (!BANNER_EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p))) {
       const owner = await getOwnerSession(request)
       if (owner) {
-        injectBanner(rewrite, `${proto}://admin.menengai.cloud/settings`, 'storefront')
+        const proto = request.headers.get('x-forwarded-proto') ?? 'https'
+        injectBanner(rewrite, `${proto}://menengai.cloud/admin/settings`, 'storefront')
       }
     }
 
@@ -252,14 +215,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
 
-  // ── 3. Subdomain Tenant (slug.menengai.cloud) ─────────────────────────────
+  // ── 5. Storefront Path (/s/{slug}/*) ─────────────────────────────────────
   const devTenant = searchParams.get('_tenant')
-  const tenantSlug = getTenantSlug(host) ?? devTenant ?? null
+  const storefrontMatch = pathname.match(/^\/s\/([^/]+)(\/.*)?$/)
+  const tenantSlug = storefrontMatch?.[1] ?? devTenant ?? null
 
   if (tenantSlug) {
-    // In production, redirect storefront traffic to custom domain if one is set
-    if (!devTenant && isProduction(host)) {
-      const isOwnerRoute = PROTECTED_SUBPATHS.some((sub) => pathname.startsWith(sub))
+    const subpath = storefrontMatch?.[2] ?? '/'
+
+    // In production, redirect to custom domain if one is set
+    if (isProduction(host)) {
+      const isOwnerRoute = PROTECTED_SUBPATHS.some((sub) => subpath.startsWith(sub))
       if (!isOwnerRoute) {
         const supabase = await getSupabaseClient()
         const { data: store } = await supabase
@@ -269,42 +235,31 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
           .single()
 
         if (store?.custom_domain) {
-          const storePrefix = `/store/${tenantSlug}`
-          const cleanPath = pathname.startsWith(storePrefix)
-            ? pathname.slice(storePrefix.length) || '/'
-            : pathname
           return NextResponse.redirect(
-            toCustomDomainUrl(request, store.custom_domain, `${cleanPath}${search}`),
+            toCustomDomainUrl(request, store.custom_domain, `${subpath}${search}`),
             308,
           )
         }
       }
     }
 
-    // Strip accidental /store/{slug} prefix
-    const storePrefix = `/store/${tenantSlug}`
-    if (pathname.startsWith(storePrefix)) {
-      const cleanPath = pathname.slice(storePrefix.length) || '/'
-      return NextResponse.redirect(
-        new URL(`${proto}://${tenantSlug}.menengai.cloud${cleanPath}${search}`),
-        308,
-      )
-    }
-
-    // Owner routes → admin subdomain (admin handles its own auth)
-    if (PROTECTED_SUBPATHS.some((sub) => pathname.startsWith(sub))) {
-      return NextResponse.redirect(toAdminUrl(proto, pathname, search), 308)
+    // Owner routes → /admin
+    if (PROTECTED_SUBPATHS.some((sub) => subpath.startsWith(sub))) {
+      const url = request.nextUrl.clone()
+      url.pathname = `/admin${subpath}`
+      url.search = search
+      return NextResponse.redirect(url, 308)
     }
 
     // Rewrite to internal store path for rendering
     const url = request.nextUrl.clone()
-    url.pathname = `/store/${tenantSlug}${pathname === '/' ? '' : pathname}`
+    url.pathname = `/store/${tenantSlug}${subpath === '/' ? '' : subpath}`
     const rewrite = NextResponse.rewrite(url)
 
-    if (!BANNER_EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p))) {
+    if (!BANNER_EXCLUDED_PREFIXES.some((p) => subpath.startsWith(p))) {
       const owner = await getOwnerSession(request)
       if (owner) {
-        injectBanner(rewrite, `${proto}://admin.menengai.cloud/settings`, 'storefront')
+        injectBanner(rewrite, `/admin/settings`, 'storefront')
       }
     }
 
@@ -312,28 +267,30 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
 
-  // ── 4. Main Platform (menengai.cloud / localhost) ─────────────────────────
+  // ── 6. Main Platform (menengai.cloud / localhost) ─────────────────────────
 
-  // Redirect /store/{slug}/products/{productSlug} to the canonical domain
+  // Redirect /store/{slug}/products/{productSlug} to the canonical path
   const productsMatch = pathname.match(/^\/store\/([^/]+)\/products\/([^/]+)(\/.*)?$/)
-  if (productsMatch && isProduction(host)) {
+  if (productsMatch) {
     const [, slug, productSlug, rest = ''] = productsMatch
-    const supabase = await getSupabaseClient()
-    const { data: store } = await supabase
-      .from('stores')
-      .select('custom_domain')
-      .eq('slug', slug)
-      .single()
+    if (isProduction(host)) {
+      const supabase = await getSupabaseClient()
+      const { data: store } = await supabase
+        .from('stores')
+        .select('custom_domain')
+        .eq('slug', slug)
+        .single()
 
-    return NextResponse.redirect(
-      store?.custom_domain
-        ? toCustomDomainUrl(request, store.custom_domain, `/products/${productSlug}${rest}`)
-        : toSubdomainUrl(request, slug, `/products/${productSlug}${rest}`),
-      308,
-    )
+      return NextResponse.redirect(
+        store?.custom_domain
+          ? toCustomDomainUrl(request, store.custom_domain, `/products/${productSlug}${rest}`)
+          : toStorefrontUrl(request, slug, `/products/${productSlug}${rest}`),
+        308,
+      )
+    }
   }
 
-  // Redirect all /store/{slug} paths to their canonical domain
+  // Redirect all /store/{slug} paths to their canonical path
   const storeMatch = pathname.match(/^\/store\/([^/]+)(\/.*)?$/)
   if (storeMatch) {
     if (isProduction(host)) {
@@ -348,7 +305,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
       return NextResponse.redirect(
         store?.custom_domain
           ? toCustomDomainUrl(request, store.custom_domain, rest)
-          : toSubdomainUrl(request, slug, rest),
+          : toStorefrontUrl(request, slug, rest),
         308,
       )
     }

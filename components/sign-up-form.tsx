@@ -34,7 +34,7 @@ export function SignUpForm({ className, slug: prefillSlug, onSwitch }: SignUpFor
           <Label htmlFor="store-name" className="text-sm">Store name</Label>
           <div className="flex items-center border focus-within:ring-1 focus-within:ring-ring">
             <span className="pl-3 text-xs text-muted-foreground font-mono whitespace-nowrap">
-              menengai.cloud/
+              menengai.cloud/s/
             </span>
             <input
               id="store-name"
@@ -48,7 +48,7 @@ export function SignUpForm({ className, slug: prefillSlug, onSwitch }: SignUpFor
           </div>
           {storeName && (
             <p className="text-xs text-muted-foreground font-mono">
-              → {derivedSlug}.menengai.cloud
+              → menengai.cloud/s/{derivedSlug}
             </p>
           )}
         </div>

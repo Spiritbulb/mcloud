@@ -36,8 +36,7 @@ export async function handleCallback() {
             .single()
 
         if (store?.slug) {
-            // Redirect straight to their subdomain — no homepage detour
-            return redirect(`https://${store.slug}.menengai.cloud/settings`)
+            return redirect(`/admin/settings`)
         }
     }
 

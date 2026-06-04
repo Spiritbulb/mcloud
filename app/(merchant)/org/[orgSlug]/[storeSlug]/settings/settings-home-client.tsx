@@ -374,7 +374,7 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                     <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
                         {loading
                             ? <Sk className="h-3.5 w-44 inline-block" />
-                            : `${store?.slug ?? slug}.menengai.cloud`
+                            : `menengai.cloud/s/${store?.slug ?? slug}`
                         }
                     </p>
                 </div>
@@ -395,7 +395,7 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                                 {store.active ? 'Live' : 'Offline'}
                             </span>
                             <a
-                                href={`https://${store.slug}.menengai.cloud`}
+                                href={`/s/${store.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className={cn(

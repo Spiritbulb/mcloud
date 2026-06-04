@@ -26,7 +26,7 @@ function toURL(path: string): URL {
 export const auth0 = new Auth0Client({
     session: {
         cookie: {
-            domain: process.env.NODE_ENV === 'production' ? `.menengai.cloud` : 'localhost',
+            domain: process.env.NODE_ENV === 'production' ? `menengai.cloud` : 'localhost',
         }
     },
 
