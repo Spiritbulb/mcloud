@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 
 export async function handleCallback() {
     const session = await auth0.getSession()
-    if (!session?.user) return redirect(`${process.env.APP_BASE_URL}/auth/login`)
+    if (!session?.user) return redirect(`/auth/login`)
 
     const { sub: userId, email, name, picture } = session.user
     const supabase = await createClient()

@@ -17,7 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     const session = await auth0.getSession()
 
     if (!session?.user) {
-        redirect(`${process.env.APP_BASE_URL}/auth/login?returnTo=/admin`)
+        redirect(`/auth/login?returnTo=/admin`)
     }
 
     const user = await getAdminUser(session.user.sub)

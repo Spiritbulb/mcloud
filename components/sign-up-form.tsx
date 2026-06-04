@@ -24,7 +24,7 @@ export function SignUpForm({ className, slug: prefillSlug, onSwitch }: SignUpFor
     e.preventDefault()
     if (!storeName.trim()) return
     const state = btoa(JSON.stringify({ storeName, slug: derivedSlug }))
-    router.push(`${process.env.APP_BASE_URL}/auth/login?screen_hint=signup&state=${state}`)
+    router.push(`/auth/login?screen_hint=signup&state=${state}`)
   }
 
   return (
@@ -61,7 +61,7 @@ export function SignUpForm({ className, slug: prefillSlug, onSwitch }: SignUpFor
       <p className="text-center text-sm text-muted-foreground">
         Already have a store?{' '}
         <button
-          onClick={() => router.push(`${process.env.APP_BASE_URL}/auth/login`)}
+          onClick={() => router.push(`/auth/login`)}
           className="text-foreground font-medium hover:underline underline-offset-4"
         >
           Sign in

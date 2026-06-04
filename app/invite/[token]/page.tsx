@@ -11,7 +11,7 @@ export default async function AcceptInvitePage({
     const session = await auth0.getSession()
 
     if (!session?.user) {
-        redirect(`${process.env.APP_BASE_URL}/auth/login?returnTo=/invite/${token}`)
+        redirect(`/auth/login?returnTo=/invite/${token}`)
     }
 
     const supabase = await createClient()

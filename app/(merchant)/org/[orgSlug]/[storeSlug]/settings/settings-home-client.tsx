@@ -342,10 +342,7 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
     }, [slug])
 
     const navigate = useCallback((tab: TabId) => {
-        const base = process.env.NODE_ENV === 'development'
-            ? `/org/${orgSlug}/${slug}/settings`
-            : '/settings'
-        router.push(`${base}/${tab}`)
+        router.push(`/org/${orgSlug}/${slug}/settings/${tab}`)
     }, [router, orgSlug, slug])
 
     const store = data?.store

@@ -101,7 +101,7 @@ export default function SettingsShell({
     const router = useRouter()
 
     const activeId = (() => {
-        const isRoot = pathname === `/org/${orgSlug}/${slug}/settings` || pathname === `/settings`
+        const isRoot = pathname === `/org/${orgSlug}/${slug}/settings`
         if (isRoot) return 'home' as TabId
 
         const matched = ALL_TABS.find((t) => {
@@ -131,7 +131,7 @@ export default function SettingsShell({
             </p>
             <p className="text-sm text-muted-foreground">
                 {error === 'unauthenticated'
-                    ? <a href={`${process.env.APP_BASE_URL}/auth/login`} className="underline underline-offset-4">Sign in</a>
+                    ? <a href={`/auth/login`} className="underline underline-offset-4">Sign in</a>
                     : <a href="/auth/logout" className="underline underline-offset-4">Sign out and try again</a>
                 }
             </p>
@@ -163,9 +163,7 @@ export default function SettingsShell({
     }))
 
     const navigate = (id: TabId) => router.push(
-        process.env.NODE_ENV === 'development'
-            ? `/org/${orgSlug}/${slug}/settings/${id}`
-            : `/settings/${id}`
+        `/org/${orgSlug}/${slug}/settings/${id}`     
     )
 
     return (

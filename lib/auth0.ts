@@ -2,24 +2,13 @@ import { Auth0Client } from "@auth0/nextjs-auth0/server";
 import { NextResponse } from "next/server";
 import { createClient } from '@/lib/server';
 
-// Validate at module load time so you get a clear error on startup,
-// not a cryptic TypeError buried inside a callback.
-const BASE_URL = process.env.APP_BASE_URL;
-const ADMIN_BASE_URL = process.env.ADMIN_BASE_URL;
-if (!BASE_URL) {
-    throw new Error("Missing required environment variable: APP_BASE_URL");
-}
-if (!ADMIN_BASE_URL) {
-    throw new Error("Missing required environment variable: ADMIN_BASE_URL");
-}
+const BASE_URL = process.env.APP_BASE_URL ?? 'http://localhost:3000'
 
 function toURL(path: string): URL {
     try {
-        // If path is already absolute, use it directly.
-        return new URL(path);
+        return new URL(path)
     } catch {
-        // Otherwise resolve it relative to BASE_URL.
-        return new URL(path, BASE_URL);
+        return new URL(path, BASE_URL)
     }
 }
 
@@ -61,7 +50,7 @@ export const auth0 = new Auth0Client({
             const orgSlug = firstOrg ? (firstOrg.org as any)?.slug : null
 
             // New user → onboarding, existing user → their first org
-            return NextResponse.redirect(new URL(orgSlug ? `/org/${orgSlug}` : '/onboarding', ADMIN_BASE_URL))
+            return NextResponse.redirect(toURL(orgSlug ? `/org/${orgSlug}` : '/onboarding'))
         }
 
         return NextResponse.redirect(toURL('/'))

@@ -4,7 +4,7 @@ import { createClient } from '@/lib/server'
 
 export default async function SettingsPage() {
     const session = await auth0.getSession()
-    if (!session) redirect(`${process.env.APP_BASE_URL}/auth/login`)
+    if (!session) redirect(`/auth/login`)
 
     const userId = session.user.sub
     const supabase = await createClient()
@@ -15,7 +15,7 @@ export default async function SettingsPage() {
         .eq('user_id', userId)
         .single()
 
-    if (!memberStore) redirect(`${process.env.APP_BASE_URL}/auth/sign-up`)
+    if (!memberStore) redirect(`/auth/sign-up`)
 
     const { data: store, error } = await supabase
         .from('stores')
@@ -28,7 +28,7 @@ export default async function SettingsPage() {
 
     const orgSlug = (store.org as any)?.slug
     if (orgSlug) {
-        redirect(`${process.env.APP_BASE_URL}/org/${orgSlug}/${store.slug}/settings`)
+        redirect(`/org/${orgSlug}/${store.slug}/settings`)
     }
-    redirect(`${process.env.APP_BASE_URL}/store/${store.slug}/settings`)
+    redirect(`/store/${store.slug}/settings`)
 }
