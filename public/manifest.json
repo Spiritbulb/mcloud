@@ -8,10 +8,10 @@
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "display_override": ["standalone", "window-controls-overlay", "minimal-ui"],
   "orientation": "portrait-primary",
   "background_color": "#0a0a0a",
-  "theme_color": "#3fa9f5",
+  "theme_color": "#0a0a0a",
   "categories": ["business", "productivity", "shopping"],
   "icons": [
     {

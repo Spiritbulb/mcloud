@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cloud.menengai.twa",
+      "sha256_cert_fingerprints": [
+        "4E:A9:7D:E8:4E:B5:06:34:7F:28:FF:28:18:9E:85:12:62:7A:4C:68:DD:1D:E2:D4:69:AE:B6:E5:9E:44:D4:B4"
+      ]
+    }
+  }
+]
