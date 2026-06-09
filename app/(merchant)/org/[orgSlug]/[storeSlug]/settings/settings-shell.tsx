@@ -37,6 +37,7 @@ export const SECTIONS: readonly NavSection[] = [
         label: 'Commerce',
         tabs: [
             { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+            { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
             { id: 'customers', label: 'Customers', icon: 'person', beta: true, pro: true },
             { id: 'blog', label: 'Blog', icon: 'article' },
         ],

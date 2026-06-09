@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>You're offline — Menengai Cloud</title>
+  <link rel="icon" href="/favicon.ico" />
+  <style>
+    :root { color-scheme: light dark; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 24px;
+      background: #0a0a0a;
+      color: #fff;
+    }
+    @media (prefers-color-scheme: light) {
+      body { background: #fcfcff; color: #1a1c1e; }
+      .sub { color: #42474e; }
+      .btn { background: #006399; color: #fff; }
+    }
+    .wrap { max-width: 380px; }
+    img { width: 72px; height: 72px; margin-bottom: 24px; opacity: 0.9; }
+    h1 { font-size: 1.6rem; font-weight: 700; letter-spacing: -0.01em; margin-bottom: 12px; }
+    .sub { font-size: 0.95rem; line-height: 1.6; color: rgba(255,255,255,0.6); margin-bottom: 28px; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      height: 44px; padding: 0 22px; border-radius: 9999px;
+      background: #3fa9f5; color: #0a0a0a;
+      font-size: 0.9rem; font-weight: 600; text-decoration: none;
+      border: none; cursor: pointer;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #f59e0b; display: inline-block; }
+    .status { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8rem; opacity: 0.55; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <img src="/icons/icon-192.png" alt="Menengai Cloud" />
+    <h1>You're offline</h1>
+    <p class="sub">We can't reach Menengai Cloud right now. Check your connection — your work is safe and will be here when you're back.</p>
+    <button class="btn" onclick="location.reload()">Try again</button>
+    <div class="status"><span class="dot"></span> No internet connection</div>
+  </div>
+  <script>
+    // Auto-retry when the connection returns
+    window.addEventListener('online', () => location.reload());
+  </script>
+</body>
+</html>

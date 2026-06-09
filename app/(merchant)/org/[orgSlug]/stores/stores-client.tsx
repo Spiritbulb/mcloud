@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useTransition, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
 import { createStore, deleteStore } from './actions'
@@ -225,6 +225,12 @@ export default function StoresClient({ orgId, orgSlug, stores: initial, role }: 
     const [deleteTarget, setDeleteTarget] = useState<Store | null>(null)
 
     const canManage = role === 'owner' || role === 'admin'
+
+    // Allow the org dashboard CTA to deep-link straight into the create flow (?new=1)
+    const searchParams = useSearchParams()
+    useEffect(() => {
+        if (canManage && searchParams.get('new') === '1') setCreateOpen(true)
+    }, [canManage, searchParams])
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">

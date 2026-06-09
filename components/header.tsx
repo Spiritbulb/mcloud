@@ -17,7 +17,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
 
     const isDark = resolvedTheme === 'dark'
     // Light (blue) logo reads on dark backgrounds; dark logo on light. Default to light before mount.
-    const logo = mounted && !isDark ? '/logo-dark.svg' : '/logo-light.svg'
+    const logo = '/logo-light.svg'
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">

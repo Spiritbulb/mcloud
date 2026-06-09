@@ -27,10 +27,14 @@ type StoreOverview = {
     order_count: number
     revenue_total: number
     currency: string
+    is_pro?: boolean
     payments_enabled?: boolean
     mpesa_enabled?: boolean
     paypal_enabled?: boolean
-    custom_domain_verified?: boolean
+    custom_domain_set?: boolean
+    primary_color?: string | null
+    theme?: string | null
+    notifications_enabled?: boolean
 }
 
 type Funnel = {
@@ -111,16 +115,28 @@ function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; 
 
 // ─── KPI Card ─────────────────────────────────────────────────────────────────
 
-function KpiCard({ label, value, sub, loading, featured }: {
-    label: string; value: string; sub?: string; loading?: boolean; featured?: boolean
+function KpiCard({ label, value, sub, icon, loading, featured }: {
+    label: string; value: string; sub?: string; icon?: string; loading?: boolean; featured?: boolean
 }) {
     return (
         <div className={cn(
-            'rounded-2xl p-5 flex flex-col gap-1',
+            'relative overflow-hidden rounded-2xl p-5 flex flex-col gap-1',
             featured
                 ? 'bg-[var(--md-sys-color-primary-container)] col-span-2 sm:col-span-1'
                 : 'bg-[var(--md-sys-color-surface-container-low)] border border-[var(--md-sys-color-outline-variant)]'
         )}>
+            {icon && (
+                <MSO
+                    icon={icon}
+                    fill={1}
+                    className={cn(
+                        'absolute right-3 top-3 text-[20px]',
+                        featured
+                            ? 'text-[var(--md-sys-color-primary)] opacity-70'
+                            : 'text-[var(--md-sys-color-on-surface-variant)] opacity-30'
+                    )}
+                />
+            )}
             {loading
                 ? <Sk className="h-8 w-24 mb-1" />
                 : <p className={cn(
@@ -308,6 +324,155 @@ function TopProductCard({ product, currency, loading, onNavigate }: {
     )
 }
 
+// ─── Welcome hero ─────────────────────────────────────────────────────────────
+
+function WelcomeHero({ store, loading, onVisit }: {
+    store?: StoreOverview; loading: boolean; onVisit: () => void
+}) {
+    const hasRevenue = !!store && store.revenue_total > 0
+    const headline = loading
+        ? null
+        : !store
+            ? 'Your store'
+            : hasRevenue
+                ? `${store.name} is making money.`
+                : `${store.name} is ready to sell.`
+    const sub = loading
+        ? null
+        : hasRevenue
+            ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
+            : 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
+
+    return (
+        <div className="relative overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+            {/* brand glow */}
+            <div
+                className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full opacity-60 blur-3xl"
+                style={{ background: 'radial-gradient(circle, var(--md-sys-color-primary-container) 0%, transparent 70%)' }}
+            />
+            <div className="relative flex items-start justify-between gap-4 p-5 sm:p-6">
+                <div className="min-w-0 space-y-1.5">
+                    <div className="flex items-center gap-2">
+                        {!loading && store && (
+                            <span className={cn(
+                                'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full',
+                                store.active
+                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
+                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-error)]'
+                            )}>
+                                <span className={cn(
+                                    'w-1.5 h-1.5 rounded-full',
+                                    store.active ? 'bg-[var(--md-sys-color-primary)]' : 'bg-[var(--md-sys-color-error)]'
+                                )} />
+                                {store.active ? 'Live' : 'Offline'}
+                            </span>
+                        )}
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
+                            {loading ? <Sk className="h-3 w-40 inline-block" /> : `menengai.cloud/s/${store?.slug ?? ''}`}
+                        </p>
+                    </div>
+                    {headline
+                        ? <h1 className="text-[1.4rem] sm:text-[1.6rem] font-bold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)]">
+                            {headline}
+                        </h1>
+                        : <Sk className="h-7 w-56" />
+                    }
+                    {sub
+                        ? <p className="text-[13px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md">{sub}</p>
+                        : <Sk className="h-4 w-72" />
+                    }
+                </div>
+
+                {!loading && store && (
+                    <a
+                        href={`/s/${store.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={onVisit}
+                        className={cn(
+                            'shrink-0 inline-flex items-center gap-1.5 h-9 px-4 rounded-full',
+                            'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                            'text-[12px] font-semibold hover:opacity-90 transition-opacity'
+                        )}
+                    >
+                        Visit store
+                        <MSO icon="open_in_new" className="text-[15px]" />
+                    </a>
+                )}
+            </div>
+        </div>
+    )
+}
+
+// ─── Share store card ─────────────────────────────────────────────────────────
+
+function ShareStore({ slug }: { slug: string }) {
+    const [copied, setCopied] = useState(false)
+    const url = `menengai.cloud/s/${slug}`
+
+    const copy = () => {
+        navigator.clipboard?.writeText(`https://${url}`).then(() => {
+            setCopied(true)
+            setTimeout(() => setCopied(false), 1800)
+        })
+    }
+
+    return (
+        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
+                <MSO icon="share" className="text-[18px] text-[var(--md-sys-color-primary)]" fill={1} />
+            </div>
+            <div className="flex-1 min-w-0">
+                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your store</p>
+                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{url}</p>
+            </div>
+            <button
+                onClick={copy}
+                className={cn(
+                    'shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium transition-colors',
+                    copied
+                        ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
+                        : 'border border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-low)]'
+                )}
+            >
+                <MSO icon={copied ? 'check' : 'content_copy'} className="text-[14px]" />
+                {copied ? 'Copied' : 'Copy link'}
+            </button>
+        </div>
+    )
+}
+
+// ─── Pro upsell ───────────────────────────────────────────────────────────────
+
+function ProUpsell({ onNavigate }: { onNavigate: () => void }) {
+    return (
+        <button
+            onClick={onNavigate}
+            className="w-full text-left rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 group hover:border-[var(--md-sys-color-primary)] transition-colors relative overflow-hidden"
+        >
+            <div
+                className="pointer-events-none absolute -left-10 -bottom-12 h-40 w-40 rounded-full opacity-40 blur-3xl"
+                style={{ background: 'radial-gradient(circle, var(--md-sys-color-primary-container) 0%, transparent 70%)' }}
+            />
+            <div className="relative flex items-start gap-4">
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
+                    <MSO icon="workspace_premium" className="text-[20px] text-[var(--md-sys-color-primary)]" fill={1} />
+                </div>
+                <div className="flex-1 min-w-0">
+                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Grow with Pro</p>
+                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-relaxed max-w-sm">
+                        Your own domain, advanced analytics, a blog, and your branding out front. Everything you need to scale.
+                    </p>
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--md-sys-color-primary)] mt-2 group-hover:gap-1.5 transition-all">
+                        See Pro features
+                        <MSO icon="arrow_forward" className="text-[14px]" />
+                    </span>
+                </div>
+            </div>
+        </button>
+    )
+}
+
 // ─── Quick links ──────────────────────────────────────────────────────────────
 
 type QuickLink = { tab: TabId; label: string; icon: string; beta?: boolean }
@@ -347,7 +512,8 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
 
     const store = data?.store
     const orders = data?.recent_orders ?? []
-    const paymentsNeeded = !loading && store && !(store.payments_enabled || store.mpesa_enabled)
+    // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
+    const paymentsNeeded = !loading && store && !store.payments_enabled
 
     const ease = [0.25, 0.1, 0.25, 1] as const
     const stagger = (i: number) => ({
@@ -359,55 +525,9 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
     return (
         <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
 
-            {/* ── Store header ─────────────────────────────────────────────── */}
-            <motion.div {...stagger(0)} className="flex items-center justify-between gap-4">
-                <div className="space-y-0.5">
-                    {loading
-                        ? <Sk className="h-6 w-36" />
-                        : <h1 className="text-[18px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight">
-                            {store?.name ?? 'Your store'}
-                        </h1>
-                    }
-                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-                        {loading
-                            ? <Sk className="h-3.5 w-44 inline-block" />
-                            : `menengai.cloud/s/${store?.slug ?? slug}`
-                        }
-                    </p>
-                </div>
-
-                <div className="flex items-center gap-2 shrink-0">
-                    {!loading && store && (
-                        <>
-                            <span className={cn(
-                                'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full',
-                                store.active
-                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
-                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-error)]'
-                            )}>
-                                <span className={cn(
-                                    'w-1.5 h-1.5 rounded-full',
-                                    store.active ? 'bg-[var(--md-sys-color-primary)]' : 'bg-[var(--md-sys-color-error)]'
-                                )} />
-                                {store.active ? 'Live' : 'Offline'}
-                            </span>
-                            <a
-                                href={`/s/${store.slug}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className={cn(
-                                    'flex items-center justify-center w-8 h-8 rounded-xl',
-                                    'bg-[var(--md-sys-color-surface-container)] border border-[var(--md-sys-color-outline-variant)]',
-                                    'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
-                                    'hover:border-[var(--md-sys-color-outline)] transition-all duration-150'
-                                )}
-                                title="Visit store"
-                            >
-                                <MSO icon="open_in_new" className="text-[15px]" />
-                            </a>
-                        </>
-                    )}
-                </div>
+            {/* ── Welcome hero ─────────────────────────────────────────────── */}
+            <motion.div {...stagger(0)}>
+                <WelcomeHero store={store} loading={loading} onVisit={() => { }} />
             </motion.div>
 
             {/* ── KPIs ─────────────────────────────────────────────────────── */}
@@ -416,11 +536,12 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                     label="Revenue"
                     value={store ? fmt(store.revenue_total, store.currency) : '—'}
                     sub="all time"
+                    icon="payments"
                     loading={loading}
                     featured
                 />
-                <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} loading={loading} />
-                <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} loading={loading} />
+                <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} icon="receipt_long" loading={loading} />
+                <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} icon="inventory_2" loading={loading} />
             </motion.div>
 
             {/* ── Funnel ───────────────────────────────────────────────────── */}
@@ -456,6 +577,13 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                 )}
             </AnimatePresence>
 
+            {/* ── Share store ──────────────────────────────────────────────── */}
+            {!loading && store && (
+                <motion.div {...stagger(4)}>
+                    <ShareStore slug={store.slug} />
+                </motion.div>
+            )}
+
             {/* ── Recent orders ─────────────────────────────────────────────── */}
             <motion.div {...stagger(4)}>
                 <div className="flex items-center justify-between mb-3">
@@ -487,19 +615,24 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                             </button>
                         </div>
                     ) : orders.length === 0 ? (
-                        <div className="flex flex-col items-center gap-3 px-5 py-12 text-center">
-                            <MSO icon="receipt_long" className="text-[36px] text-[var(--md-sys-color-outline-variant)]" />
-                            <div>
-                                <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">No orders yet</p>
-                                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
-                                    Orders will appear here once customers start buying.
+                        <div className="flex flex-col items-center gap-4 px-5 py-12 text-center">
+                            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--md-sys-color-primary-container)]">
+                                <MSO icon="rocket_launch" className="text-[26px] text-[var(--md-sys-color-primary)]" fill={1} />
+                            </div>
+                            <div className="max-w-xs">
+                                <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">Your first sale is close</p>
+                                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-1 leading-relaxed">
+                                    {store && store.product_count > 0
+                                        ? 'Your products are live. Share your store link and watch the orders roll in.'
+                                        : 'Add a product, then share your link. Orders show up here the moment a customer checks out.'}
                                 </p>
                             </div>
                             <button
-                                onClick={() => navigate('products')}
-                                className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
+                                onClick={() => navigate(store && store.product_count > 0 ? 'orders' : 'products')}
+                                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[12px] font-semibold hover:opacity-90 transition-opacity"
                             >
-                                Add your first product
+                                <MSO icon="add" className="text-[16px]" />
+                                {store && store.product_count > 0 ? 'View orders' : 'Add your first product'}
                             </button>
                         </div>
                     ) : (
@@ -527,8 +660,15 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                 </div>
             </motion.div>
 
+            {/* ── Grow with Pro (non-Pro stores only) ──────────────────────── */}
+            {!loading && store && !store.is_pro && (
+                <motion.div {...stagger(5)}>
+                    <ProUpsell onNavigate={() => navigate('billing')} />
+                </motion.div>
+            )}
+
             {/* ── Settings quick links ─────────────────────────────────────── */}
-            <motion.div {...stagger(5)}>
+            <motion.div {...stagger(6)}>
                 <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">Settings</p>
                 <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
                     {QUICK_LINKS.map((link) => (

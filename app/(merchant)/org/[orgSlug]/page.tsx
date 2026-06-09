@@ -92,9 +92,117 @@ export default async function OrgHomePage({
     const storeList = stores ?? []
     const memberList = members ?? []
 
+    const firstName = (shellUser.name || 'there').split(' ')[0]
+    const isPro = org.type === 'pro'
+    const hasStores = storeList.length > 0
+    const canManage = role === 'owner' || role === 'admin'
+
     return (
         <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
         <div className="max-w-4xl mx-auto space-y-8">
+            {/* Welcome hero */}
+            <section className="relative overflow-hidden">
+                <div className="relative flex flex-col sm:flex-row items-center gap-6 p-6 sm:p-8">
+                    <div className="flex-1 min-w-0 space-y-3 text-center sm:text-left">
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-primary)]">
+                            {org.name}
+                        </p>
+                        <h1 className="text-[1.75rem] sm:text-[2rem] font-bold leading-tight text-[var(--md-sys-color-on-surface)]">
+                            {hasStores
+                                ? `Welcome back, ${firstName}.`
+                                : `Let's get you online, ${firstName}.`}
+                        </h1>
+                        <p className="text-[14px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md mx-auto sm:mx-0">
+                            {hasStores
+                                ? `You're running ${storeList.length} ${storeList.length === 1 ? 'store' : 'stores'} here. Hosting, SSL, and uptime are handled — you focus on selling.`
+                                : 'Your organisation is ready. Spin up your first storefront and start taking real orders this afternoon — no servers, no setup tickets.'}
+                        </p>
+                        {canManage && (
+                            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
+                                <Link
+                                    href={`/org/${orgSlug}/stores?new=1`}
+                                    className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold hover:opacity-90 transition-opacity"
+                                >
+                                    <MSO icon="add" className="text-[18px]" />
+                                    {hasStores ? 'New store' : 'Create your first store'}
+                                </Link>
+                                {!isPro && (
+                                    <Link
+                                        href={`/org/${orgSlug}/settings`}
+                                        className="inline-flex items-center gap-1.5 h-10 px-4 rounded-full border border-[var(--md-sys-color-outline-variant)] text-[13px] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                                    >
+                                        <MSO icon="workspace_premium" className="text-[16px]" fill={1} />
+                                        Upgrade to Pro
+                                    </Link>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    <img
+                        src="/run-it-online.svg"
+                        alt=""
+                        aria-hidden="true"
+                        className="w-80 sm:w-72 h-auto shrink-0 select-none"
+                    />
+                </div>
+            </section>
+
+            {/* Quick access — jump straight into a managed store */}
+            {(storeList.length > 0 || otherStores.length > 0) && (
+                <section className="space-y-3">
+                    <div className="flex items-center justify-between">
+                        <h2 className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Jump back in</h2>
+                        <Link
+                            href={`/org/${orgSlug}/stores`}
+                            className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline"
+                        >
+                            View all
+                        </Link>
+                    </div>
+                    <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x [scrollbar-width:thin]">
+                        {[
+                            ...storeList.map((s) => ({ ...s, external: false as const })),
+                            ...otherStores.map((s: any) => ({ ...s, external: true as const })),
+                        ].map((store: any) => (
+                            <Link
+                                key={store.id}
+                                href={`/org/${orgSlug}/${store.slug}/settings`}
+                                className="group snap-start shrink-0 w-40 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4 hover:bg-[var(--md-sys-color-surface-variant)] hover:border-[var(--md-sys-color-primary)] transition-colors"
+                            >
+                                <div className="flex items-center justify-between mb-3">
+                                    <div className="w-10 h-10 rounded-lg shrink-0 flex items-center justify-center text-[12px] font-bold overflow-hidden store-avatar-fallback">
+                                        {store.logo_url
+                                            ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
+                                            : getInitials(store.name)
+                                        }
+                                    </div>
+                                    {store.external
+                                        ? <MSO icon="open_in_new" className="text-[15px] text-[var(--md-sys-color-on-surface-variant)] opacity-40" />
+                                        : store.is_pro
+                                            ? <MSO icon="workspace_premium" className="text-[15px] text-[var(--md-sys-color-primary)]" fill={1} />
+                                            : null
+                                    }
+                                </div>
+                                <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
+                                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
+                                    {store.external ? 'Other workspace' : `/${store.slug}`}
+                                </p>
+                            </Link>
+                        ))}
+
+                        {canManage && (
+                            <Link
+                                href={`/org/${orgSlug}/stores?new=1`}
+                                className="snap-start shrink-0 w-40 rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] p-4 flex flex-col items-center justify-center gap-1.5 text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-primary)] hover:border-[var(--md-sys-color-primary)] transition-colors"
+                            >
+                                <MSO icon="add_circle" className="text-[24px]" />
+                                <span className="text-[12px] font-medium">New store</span>
+                            </Link>
+                        )}
+                    </div>
+                </section>
+            )}
+
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[
@@ -113,50 +221,6 @@ export default async function OrgHomePage({
                     </div>
                 ))}
             </div>
-
-            {/* Stores */}
-            <section className="space-y-3">
-                <div className="flex items-center justify-between">
-                    <h2 className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Stores</h2>
-                    <Link
-                        href={`/org/${orgSlug}/stores`}
-                        className="text-[12px] text-[var(--md-sys-color-primary)] hover:underline"
-                    >
-                        View all
-                    </Link>
-                </div>
-                {storeList.length === 0 ? (
-                    <div className="rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] p-8 text-center">
-                        <MSO icon="storefront" className="text-[32px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 mb-2" />
-                        <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">No stores in this organization yet.</p>
-                    </div>
-                ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {storeList.slice(0, 6).map((store) => (
-                            <Link
-                                key={store.id}
-                                href={`/org/${orgSlug}/${store.slug}/settings`}
-                                className="flex items-center gap-3 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-4 py-3 hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
-                            >
-                                <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[11px] font-bold overflow-hidden store-avatar-fallback">
-                                    {store.logo_url
-                                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
-                                        : getInitials(store.name)
-                                    }
-                                </div>
-                                <div className="flex flex-col min-w-0 flex-1">
-                                    <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</span>
-                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">menengai.cloud/s/{store.slug}</span>
-                                </div>
-                                {store.is_pro && (
-                                    <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)] shrink-0" fill={1} />
-                                )}
-                                <MSO icon="chevron_right" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
-                            </Link>
-                        ))}
-                    </div>
-                )}
-            </section>
 
             {/* Members */}
             <section className="space-y-3">
@@ -192,41 +256,6 @@ export default async function OrgHomePage({
                     })}
                 </div>
             </section>
-
-            {/* Other stores (admin on, not in this org) */}
-            {otherStores.length > 0 && (
-                <section className="space-y-3">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Your other stores</h2>
-                            <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">Stores you manage outside this organisation</p>
-                        </div>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        {otherStores.map((store: any) => (
-                            <Link
-                                key={store.id}
-                                href={`/org/${orgSlug}/${store.slug}/settings`}
-                                className="flex items-center gap-3 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-4 py-3 hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
-                            >
-                                <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[11px] font-bold overflow-hidden store-avatar-fallback">
-                                    {store.logo_url
-                                        ? <img src={store.logo_url} alt={store.name} className="w-full h-full object-cover rounded-lg" />
-                                        : getInitials(store.name)
-                                    }
-                                </div>
-                                <div className="flex flex-col min-w-0 flex-1">
-                                    <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</span>
-                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-                                        {store.org_id ? 'Other organisation' : 'Personal'}
-                                    </span>
-                                </div>
-                                <MSO icon="open_in_new" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
-                            </Link>
-                        ))}
-                    </div>
-                </section>
-            )}
 
             {/* Quick actions */}
             {(role === 'owner' || role === 'admin') && (

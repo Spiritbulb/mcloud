@@ -1,4 +1,6 @@
 import type { Metadata } from "next"
+import { redirect } from "next/navigation"
+import { auth0 } from "@/lib/auth0"
 import HomeClient from "@/components/home-client"
 
 export const metadata: Metadata = {
@@ -20,6 +22,11 @@ export const metadata: Metadata = {
   },
 }
 
-export default function Page() {
+export default async function Page() {
+  // Logged-in users skip marketing and go straight to their org (or onboarding).
+  // /org/pick resolves the user's first org and redirects, or sends them to /onboarding.
+  const session = await auth0.getSession()
+  if (session?.user) redirect("/org/pick")
+
   return <HomeClient />
 }

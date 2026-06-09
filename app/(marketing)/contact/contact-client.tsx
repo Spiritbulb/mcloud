@@ -32,13 +32,13 @@ function FadeIn({ children, className, delay = 0 }: {
 }
 
 const inputCls = cn(
-    'w-full h-11 rounded-xl px-4 text-[14px] text-white placeholder:text-white/25',
-    'bg-white/5 border border-white/10',
-    'focus:outline-none focus:border-white/30 focus:bg-white/8',
+    'w-full h-11 rounded-xl px-4 text-[14px] text-foreground placeholder:text-muted-foreground/60',
+    'bg-foreground/5 border border-border',
+    'focus:outline-none focus:border-foreground/30 focus:bg-foreground/[0.08]',
     'transition-all duration-150'
 )
 
-const labelCls = 'block text-[12px] font-medium text-white/50 mb-1.5'
+const labelCls = 'block text-[12px] font-medium text-muted-foreground mb-1.5'
 
 export default function ContactClient() {
     const [interest, setInterest] = useState<string | null>(null)
@@ -75,7 +75,7 @@ export default function ContactClient() {
     }
 
     return (
-        <div className="min-h-[100dvh] bg-[#0a0a0a] text-white">
+        <div className="min-h-[100dvh] bg-background text-foreground">
 
             {/* Glow */}
             <div className="pointer-events-none fixed inset-0">
@@ -85,12 +85,12 @@ export default function ContactClient() {
             <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-4xl py-24 md:py-32">
 
                 <FadeIn className="mb-14 space-y-4 max-w-xl">
-                    <p className="text-[12px] font-semibold uppercase tracking-widest text-white/30">Contact sales</p>
+                    <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/60">Contact sales</p>
                     <h1 className="text-[2.8rem] md:text-[3.5rem] font-bold leading-[1.04] tracking-tight">
                         Let's talk<br />
-                        <span className="text-white/30">about your project.</span>
+                        <span className="text-muted-foreground/60">about your project.</span>
                     </h1>
-                    <p className="text-[15px] text-white/40 leading-relaxed">
+                    <p className="text-[15px] text-muted-foreground/70 leading-relaxed">
                         Tell us what you're building and we'll figure out how Menengai Cloud can help. We typically respond within one business day.
                     </p>
                 </FadeIn>
@@ -112,10 +112,10 @@ export default function ContactClient() {
                                             check_circle
                                         </span>
                                     </div>
-                                    <h2 className="text-[20px] font-semibold text-white">Message sent.</h2>
-                                    <p className="text-[14px] text-white/45 leading-relaxed max-w-sm">
+                                    <h2 className="text-[20px] font-semibold text-foreground">Message sent.</h2>
+                                    <p className="text-[14px] text-muted-foreground/80 leading-relaxed max-w-sm">
                                         Your default mail client should have opened with the message pre-filled. If it didn't, email us directly at{' '}
-                                        <a href="mailto:sales@spiritb.uk" className="text-white/70 underline underline-offset-2 hover:text-white transition-colors">
+                                        <a href="mailto:sales@spiritb.uk" className="text-foreground/80 underline underline-offset-2 hover:text-foreground transition-colors">
                                             sales@spiritb.uk
                                         </a>
                                     </p>
@@ -138,8 +138,8 @@ export default function ContactClient() {
                                                     className={cn(
                                                         'h-8 px-4 rounded-full text-[13px] font-medium border transition-all duration-150',
                                                         interest === opt.id
-                                                            ? 'bg-white text-[#0a0a0a] border-white'
-                                                            : 'border-white/12 text-white/50 hover:border-white/25 hover:text-white'
+                                                            ? 'bg-foreground text-background border-transparent'
+                                                            : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
                                                     )}
                                                 >
                                                     {opt.label}
@@ -151,7 +151,7 @@ export default function ContactClient() {
                                     {/* Name + email row */}
                                     <div className="grid sm:grid-cols-2 gap-4">
                                         <div>
-                                            <label className={labelCls}>Name <span className="text-white/25">*</span></label>
+                                            <label className={labelCls}>Name <span className="text-muted-foreground/60">*</span></label>
                                             <input
                                                 type="text"
                                                 value={name}
@@ -162,7 +162,7 @@ export default function ContactClient() {
                                             />
                                         </div>
                                         <div>
-                                            <label className={labelCls}>Email <span className="text-white/25">*</span></label>
+                                            <label className={labelCls}>Email <span className="text-muted-foreground/60">*</span></label>
                                             <input
                                                 type="email"
                                                 value={email}
@@ -176,7 +176,7 @@ export default function ContactClient() {
 
                                     {/* Org */}
                                     <div>
-                                        <label className={labelCls}>Organisation <span className="text-white/20">(optional)</span></label>
+                                        <label className={labelCls}>Organisation <span className="text-muted-foreground/50">(optional)</span></label>
                                         <input
                                             type="text"
                                             value={org}
@@ -188,7 +188,7 @@ export default function ContactClient() {
 
                                     {/* Message */}
                                     <div>
-                                        <label className={labelCls}>Message <span className="text-white/20">(optional)</span></label>
+                                        <label className={labelCls}>Message <span className="text-muted-foreground/50">(optional)</span></label>
                                         <textarea
                                             value={message}
                                             onChange={e => setMessage(e.target.value)}
@@ -206,13 +206,13 @@ export default function ContactClient() {
                                         type="submit"
                                         disabled={!canSubmit || isPending}
                                         className={cn(
-                                            'h-11 px-6 rounded-full bg-white text-[#0a0a0a] text-[14px] font-semibold',
-                                            'flex items-center gap-2 hover:bg-white/90 active:scale-[0.98] transition-all',
+                                            'h-11 px-6 rounded-full bg-foreground text-background text-[14px] font-semibold',
+                                            'flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all',
                                             'disabled:opacity-30 disabled:cursor-not-allowed'
                                         )}
                                     >
                                         {isPending && (
-                                            <div className="w-3.5 h-3.5 border-2 border-[#0a0a0a] border-t-transparent rounded-full animate-spin" />
+                                            <div className="w-3.5 h-3.5 border-2 border-background border-t-transparent rounded-full animate-spin" />
                                         )}
                                         Send message
                                         {!isPending && <span className="material-symbols-outlined text-[16px]">send</span>}
@@ -224,8 +224,8 @@ export default function ContactClient() {
 
                     {/* Sidebar */}
                     <FadeIn delay={0.2} className="space-y-6">
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6 space-y-5">
-                            <h3 className="text-[13px] font-semibold text-white/60 uppercase tracking-widest">Direct contact</h3>
+                        <div className="rounded-2xl border border-border bg-foreground/[0.03] p-6 space-y-5">
+                            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">Direct contact</h3>
                             <a
                                 href="mailto:sales@spiritb.uk"
                                 className="flex items-center gap-3 group"
@@ -234,14 +234,14 @@ export default function ContactClient() {
                                     <span className="material-symbols-outlined text-[18px] text-[#95ccff]">mail</span>
                                 </div>
                                 <div>
-                                    <p className="text-[13px] font-medium text-white group-hover:text-white/80 transition-colors">sales@spiritb.uk</p>
-                                    <p className="text-[11px] text-white/30">Typically replies in 1 business day</p>
+                                    <p className="text-[13px] font-medium text-foreground group-hover:text-foreground/80 transition-colors">sales@spiritb.uk</p>
+                                    <p className="text-[11px] text-muted-foreground/60">Typically replies in 1 business day</p>
                                 </div>
                             </a>
                         </div>
 
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.03] p-6 space-y-4">
-                            <h3 className="text-[13px] font-semibold text-white/60 uppercase tracking-widest">Good to know</h3>
+                        <div className="rounded-2xl border border-border bg-foreground/[0.03] p-6 space-y-4">
+                            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">Good to know</h3>
                             {[
                                 'No lock-in contracts',
                                 'Setup assistance included',
@@ -252,7 +252,7 @@ export default function ContactClient() {
                                     <span className="material-symbols-outlined text-[14px] text-emerald-400 mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
                                         check_circle
                                     </span>
-                                    <span className="text-[13px] text-white/45 leading-snug">{item}</span>
+                                    <span className="text-[13px] text-muted-foreground/80 leading-snug">{item}</span>
                                 </div>
                             ))}
                         </div>

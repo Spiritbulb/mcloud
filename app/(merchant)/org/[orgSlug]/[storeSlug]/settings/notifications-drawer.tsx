@@ -53,7 +53,7 @@ export const WIZARD_STEPS: WizardStep[] = [
         title: 'Connect your domain',
         description: 'Replace your menengai.cloud/s/ URL with your own branded domain.',
         tab: 'domain',
-        isDone: (s) => !!(s?.custom_domain_verified),
+        isDone: (s) => !!(s?.custom_domain_set || s?.custom_domain_verified),
     },
     {
         id: 'go-live',

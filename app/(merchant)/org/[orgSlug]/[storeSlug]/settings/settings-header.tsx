@@ -138,9 +138,8 @@ export function SettingsHeader({
 
                 {/* Pro badge next to page title if this page is pro-gated */}
                 {isPro && (
-                    <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-[var(--md-sys-color-primary-container)]">
+                    <div className="flex items-center gap-1.5 p-1 rounded-full bg-[var(--md-sys-color-primary-container)]">
                         <MSO icon="workspace_premium" className="text-[13px] text-[var(--md-sys-color-primary)]" fill={1} />
-                        <span className="text-[11px] font-semibold text-[var(--md-sys-color-primary)]">Pro</span>
                     </div>
                 )}
 

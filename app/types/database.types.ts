@@ -2227,6 +2227,10 @@ export type Database = {
     Functions: {
       auth0_uid: { Args: never; Returns: string }
       generate_order_number: { Args: { store_uuid: string }; Returns: string }
+      get_store_analytics: {
+        Args: { p_end: string; p_start: string; p_store_id: string }
+        Returns: Json
+      }
       increment_store_views: { Args: { store_id: string }; Returns: undefined }
     }
     Enums: {

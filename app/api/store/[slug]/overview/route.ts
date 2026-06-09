@@ -179,10 +179,13 @@ export async function GET(
             currency: store.currency,
             primary_color: (settings.primaryColor as string) ?? null,
             theme: (settings.themeId as string) ?? null,
+            is_pro: store.is_pro ?? false,
             payments_enabled: mpesaEnabled || paypalEnabled || stripeEnabled,
             mpesa_enabled: mpesaEnabled,
             paypal_enabled: paypalEnabled,
-            custom_domain_verified: !!store.custom_domain,
+            // a domain string is set on the store; this is NOT a DNS-verified check
+            // (verification is a live Vercel lookup via /api/store/domain)
+            custom_domain_set: !!store.custom_domain,
             notifications_enabled: false,
         },
         recent_orders: (recentOrders ?? []).map(o => ({

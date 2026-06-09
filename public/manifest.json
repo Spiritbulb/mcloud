@@ -1,25 +1,81 @@
 {
+  "id": "/",
   "name": "Menengai Cloud",
   "short_name": "Menengai",
-  "description": "Fast, managed websites for Kenyan businesses",
+  "description": "Fast, managed websites and storefronts for Kenyan businesses. Hosting, SSL, and uptime handled for you.",
+  "lang": "en",
+  "dir": "ltr",
   "start_url": "/",
-  "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#423e7b",
-  "orientation": "portrait-primary",
   "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "portrait-primary",
+  "background_color": "#0a0a0a",
+  "theme_color": "#3fa9f5",
+  "categories": ["business", "productivity", "shopping"],
   "icons": [
     {
-      "src": "/mclogo.png",
-      "sizes": "256x256",
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/mclogo.v1.png",
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Go to dashboard",
+      "short_name": "Dashboard",
+      "description": "Open your organisation dashboard",
+      "url": "/org/pick",
+      "icons": [{ "src": "/icons/shortcut-dashboard.png", "sizes": "96x96", "type": "image/png" }]
+    },
+    {
+      "name": "Contact sales",
+      "short_name": "Contact",
+      "description": "Talk to the Menengai Cloud team",
+      "url": "/contact",
+      "icons": [{ "src": "/icons/shortcut-dashboard.png", "sizes": "96x96", "type": "image/png" }]
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/screenshots/shot-1.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Run your business online with Menengai Cloud"
+    },
+    {
+      "src": "/screenshots/shot-2.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Track everything — sales, traffic, and what's working"
+    },
+    {
+      "src": "/screenshots/shot-3.png",
+      "sizes": "1080x1920",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "Make it yours — your brand, your storefront"
     }
   ]
 }
