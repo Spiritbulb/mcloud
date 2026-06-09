@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "cloud.menengai.twa",
       "sha256_cert_fingerprints": [
-        "4E:A9:7D:E8:4E:B5:06:34:7F:28:FF:28:18:9E:85:12:62:7A:4C:68:DD:1D:E2:D4:69:AE:B6:E5:9E:44:D4:B4"
+        "4E:A9:7D:E8:4E:B5:06:34:7F:28:FF:28:18:9E:85:12:62:7A:4C:68:DD:1D:E2:D4:69:AE:B6:E5:9E:44:D4:B4",
+        "E5:FE:78:AE:7B:C0:A9:10:52:9D:2E:5A:31:9F:5D:71:F7:86:00:CB:0A:28:61:E1:A9:6E:32:87:A7:CC:F7:89"
       ]
     }
   }

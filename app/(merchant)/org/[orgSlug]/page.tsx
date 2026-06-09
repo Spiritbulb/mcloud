@@ -52,38 +52,41 @@ export default async function OrgHomePage({
     const isOwner = org.owner_id === userId
     const role = membership.role
 
-    const { data: userRow } = await supabase
-        .from('users')
-        .select('name, email, avatar_url')
-        .eq('id', userId)
-        .single()
+    // These four queries are independent — run them in parallel instead of
+    // sequentially (was ~4 round-trips, now 1) to cut server response time.
+    const [
+        { data: userRow },
+        { data: stores },
+        { data: members },
+        { data: otherMemberships },
+    ] = await Promise.all([
+        supabase
+            .from('users')
+            .select('name, email, avatar_url')
+            .eq('id', userId)
+            .single(),
+        supabase
+            .from('stores')
+            .select('id, name, slug, logo_url, is_pro')
+            .eq('org_id', org.id)
+            .order('created_at', { ascending: false }),
+        supabase
+            .from('org_members')
+            .select('id, role, user:users(name, email, avatar_url)')
+            .eq('org_id', org.id)
+            .order('created_at', { ascending: true }),
+        supabase
+            .from('store_members')
+            .select('role, store:stores(id, name, slug, logo_url, org_id)')
+            .eq('user_id', userId)
+            .in('role', ['owner', 'admin']),
+    ])
 
     const shellUser = {
         name: userRow?.name ?? session.user.name ?? 'Account',
         email: userRow?.email ?? session.user.email ?? '',
         avatarUrl: userRow?.avatar_url ?? undefined,
     }
-
-    // Fetch stores in this org
-    const { data: stores } = await supabase
-        .from('stores')
-        .select('id, name, slug, logo_url, is_pro')
-        .eq('org_id', org.id)
-        .order('created_at', { ascending: false })
-
-    // Fetch members
-    const { data: members } = await supabase
-        .from('org_members')
-        .select('id, role, user:users(name, email, avatar_url)')
-        .eq('org_id', org.id)
-        .order('created_at', { ascending: true })
-
-    // Stores the user manages that are NOT in this org (personal or other orgs)
-    const { data: otherMemberships } = await supabase
-        .from('store_members')
-        .select('role, store:stores(id, name, slug, logo_url, org_id)')
-        .eq('user_id', userId)
-        .in('role', ['owner', 'admin'])
 
     const otherStores = (otherMemberships ?? [])
         .map(m => m.store as any)

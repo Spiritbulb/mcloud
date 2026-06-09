@@ -622,6 +622,29 @@
   animation: fade-in 200ms ease forwards;
 }
 
+/* Lightweight rise-in used in place of framer-motion for simple mount animations.
+   Staggered delay variants avoid per-element JS animation on the dashboard. */
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-rise {
+  animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+.animate-rise-1 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 50ms; }
+.animate-rise-2 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 100ms; }
+.animate-rise-3 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 150ms; }
+.animate-rise-4 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 200ms; }
+.animate-rise-5 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 250ms; }
+.animate-rise-6 { animation: rise-in 280ms cubic-bezier(0.25, 0.1, 0.25, 1) both; animation-delay: 300ms; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-rise, .animate-rise-1, .animate-rise-2, .animate-rise-3,
+  .animate-rise-4, .animate-rise-5, .animate-rise-6 { animation: none; }
+}
+
 /* Crater eruption — used on the onboarding launch moment */
 @keyframes erupt {
   0% {

@@ -100,8 +100,28 @@ export default async function RootLayout({
         className={`antialiased`}
       >
 
-        {/* SW registration */}
-        <Script id="sw-reg" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `if('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');` }} />
+        {/* SW registration — auto-reload once when a new service worker takes over,
+            so users never get stale cached content and never need a manual refresh. */}
+        <Script id="sw-reg" strategy="afterInteractive" dangerouslySetInnerHTML={{ __html: `
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').then((reg) => {
+              // When an updated worker is found and installed, it activates (skipWaiting),
+              // then controllerchange fires — reload once to pick up fresh assets.
+              reg.addEventListener('updatefound', () => {
+                const sw = reg.installing;
+                if (sw) sw.addEventListener('statechange', () => {
+                  if (sw.state === 'activated') {/* controllerchange will handle reload */}
+                });
+              });
+            });
+            let refreshing = false;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+              if (refreshing) return;
+              refreshing = true;
+              window.location.reload();
+            });
+          }
+        ` }} />
         {/* GA Scripts */}
         <Script
           strategy="afterInteractive"

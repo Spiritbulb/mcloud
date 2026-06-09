@@ -4,7 +4,6 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { motion, AnimatePresence } from 'framer-motion'
 import { cn } from '@/lib/utils'
 import type { TabId } from './settings-shell'
 
@@ -515,23 +514,16 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
     // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
     const paymentsNeeded = !loading && store && !store.payments_enabled
 
-    const ease = [0.25, 0.1, 0.25, 1] as const
-    const stagger = (i: number) => ({
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        transition: { duration: 0.28, delay: i * 0.05, ease },
-    })
-
     return (
         <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
 
             {/* ── Welcome hero ─────────────────────────────────────────────── */}
-            <motion.div {...stagger(0)}>
+            <div className="animate-rise">
                 <WelcomeHero store={store} loading={loading} onVisit={() => { }} />
-            </motion.div>
+            </div>
 
             {/* ── KPIs ─────────────────────────────────────────────────────── */}
-            <motion.div {...stagger(1)} className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="animate-rise-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <KpiCard
                     label="Revenue"
                     value={store ? fmt(store.revenue_total, store.currency) : '—'}
@@ -542,50 +534,43 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                 />
                 <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} icon="receipt_long" loading={loading} />
                 <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} icon="inventory_2" loading={loading} />
-            </motion.div>
+            </div>
 
             {/* ── Funnel ───────────────────────────────────────────────────── */}
-            <motion.div {...stagger(2)}>
+            <div className="animate-rise-2">
                 <FunnelRow
                     funnel={data?.funnel}
                     loading={loading}
                     onViewAnalytics={() => navigate('analytics')}
                 />
-            </motion.div>
+            </div>
 
             {/* ── Top product ──────────────────────────────────────────────── */}
-            <motion.div {...stagger(3)}>
+            <div className="animate-rise-3">
                 <TopProductCard
                     product={data?.top_product}
                     currency={store?.currency ?? 'KES'}
                     loading={loading}
                     onNavigate={() => navigate('products')}
                 />
-            </motion.div>
+            </div>
 
             {/* ── Payments callout ─────────────────────────────────────────── */}
-            <AnimatePresence>
-                {paymentsNeeded && (
-                    <motion.div
-                        initial={{ opacity: 0, height: 0 }}
-                        animate={{ opacity: 1, height: 'auto' }}
-                        exit={{ opacity: 0, height: 0 }}
-                        transition={{ duration: 0.25 }}
-                    >
-                        <PaymentsCallout onNavigate={() => navigate('integrations')} />
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {paymentsNeeded && (
+                <div className="animate-rise">
+                    <PaymentsCallout onNavigate={() => navigate('integrations')} />
+                </div>
+            )}
 
             {/* ── Share store ──────────────────────────────────────────────── */}
             {!loading && store && (
-                <motion.div {...stagger(4)}>
+                <div className="animate-rise-4">
                     <ShareStore slug={store.slug} />
-                </motion.div>
+                </div>
             )}
 
             {/* ── Recent orders ─────────────────────────────────────────────── */}
-            <motion.div {...stagger(4)}>
+            <div className="animate-rise-4">
                 <div className="flex items-center justify-between mb-3">
                     <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Recent orders</p>
                     <button
@@ -658,17 +643,17 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                         ))
                     )}
                 </div>
-            </motion.div>
+            </div>
 
             {/* ── Grow with Pro (non-Pro stores only) ──────────────────────── */}
             {!loading && store && !store.is_pro && (
-                <motion.div {...stagger(5)}>
+                <div className="animate-rise-5">
                     <ProUpsell onNavigate={() => navigate('billing')} />
-                </motion.div>
+                </div>
             )}
 
             {/* ── Settings quick links ─────────────────────────────────────── */}
-            <motion.div {...stagger(6)}>
+            <div className="animate-rise-6">
                 <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">Settings</p>
                 <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
                     {QUICK_LINKS.map((link) => (
@@ -700,7 +685,7 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
                         </button>
                     ))}
                 </div>
-            </motion.div>
+            </div>
 
         </div>
     )
