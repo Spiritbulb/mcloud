@@ -9,6 +9,8 @@ interface HeaderProps {
 
 export function Header({ isLoggedIn = false }: HeaderProps) {
     const router = useRouter()
+    // Header always sits on a dark background, so always use the light (blue #3fa9f5) logo
+    const logo = '/logo-light.svg'
 
     return (
         <header className="sticky top-0 z-50 border-b border-white/8 bg-[#0a0a0a]/80 backdrop-blur-md">
@@ -16,7 +18,7 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
                 <div className="flex h-14 items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2.5">
-                        <img src="/favicon.ico" alt="Menengai Cloud" className="w-7 h-7" />
+                        <img src={logo} alt="Menengai Cloud" className="w-12 h-auto" />
                         <span className="text-[14px] font-semibold text-white hidden sm:block">Menengai Cloud</span>
                     </Link>
 

@@ -79,7 +79,7 @@ export default function ContactClient() {
 
             {/* Glow */}
             <div className="pointer-events-none fixed inset-0">
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#415f91]/15 rounded-full blur-[120px]" />
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#3fa9f5]/15 rounded-full blur-[120px]" />
             </div>
 
             <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-4xl py-24 md:py-32">
@@ -230,8 +230,8 @@ export default function ContactClient() {
                                 href="mailto:sales@spiritb.uk"
                                 className="flex items-center gap-3 group"
                             >
-                                <div className="w-9 h-9 rounded-xl bg-[#415f91]/20 flex items-center justify-center shrink-0">
-                                    <span className="material-symbols-outlined text-[18px] text-[#aac7ff]">mail</span>
+                                <div className="w-9 h-9 rounded-xl bg-[#3fa9f5]/20 flex items-center justify-center shrink-0">
+                                    <span className="material-symbols-outlined text-[18px] text-[#95ccff]">mail</span>
                                 </div>
                                 <div>
                                     <p className="text-[13px] font-medium text-white group-hover:text-white/80 transition-colors">sales@spiritb.uk</p>

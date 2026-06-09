@@ -1,4 +1,4 @@
-import { cookies } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import SettingsShell from './settings-shell'
 
 export default async function SettingsLayout({
@@ -10,13 +10,22 @@ export default async function SettingsLayout({
 }) {
     const { orgSlug, storeSlug } = await params
     const cookieStore = await cookies()
+    const headerStore = await headers()
+
+    // Build an absolute base URL from the incoming request so server-side fetch
+    // works in every environment (local dev, preview, prod) and uses the same
+    // host the browser authenticated against — env vars like
+    // NEXT_PUBLIC_API_BASE_URL point at prod and break local/preview.
+    const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host')
+    const proto = headerStore.get('x-forwarded-proto') ?? 'https'
+    const baseUrl = `${proto}://${host}/api`
 
     let initialStore: any = null
     let initialError: 'unauthenticated' | 'forbidden' | 'unknown' | null = null
 
     try {
         const res = await fetch(
-            `${process.env.API_BASE_URL}/store/${storeSlug}`,
+            `${baseUrl}/store/${storeSlug}`,
             {
                 headers: {
                     Cookie: cookieStore.toString(),
