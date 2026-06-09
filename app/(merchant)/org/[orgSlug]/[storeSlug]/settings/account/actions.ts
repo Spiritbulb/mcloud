@@ -171,15 +171,15 @@ export async function getSessions() {
         return true
     })
 
-    const sessions = await Promise.all(
-        unique.map(async (l, i) => ({
-            id: l.log_id,
-            device: formatDevice(l.user_agent ?? ''),
-            location: await formatLocation(l.ip),
-            lastActive: formatRelativeTime(l.date),
-            current: i === 0,
-        }))
-    )
+    const sessions = unique.map((l, i) => ({
+        id: l.log_id,
+        device: formatDevice(l.user_agent ?? ''),
+        // Auth0 already geolocates the login IP in location_info (no external,
+        // unencrypted IP lookup needed — keeps user data encrypted in transit).
+        location: formatLocation(l.location_info, l.ip),
+        lastActive: formatRelativeTime(l.date),
+        current: i === 0,
+    }))
 
     return { sessions }
 }
@@ -264,16 +264,21 @@ function formatDevice(ua: string): string {
     return `${browser} on ${os}`
 }
 
-async function formatLocation(ip?: string): Promise<string> {
-    if (!ip || ip === '127.0.0.1' || ip === '::1') return 'Local'
-    try {
-        const res = await fetch(`http://ip-api.com/json/${ip}?fields=city,countryCode`)
-        const { city, countryCode } = await res.json()
-        if (!city) return ip
-        return `${city}, ${countryCode}`
-    } catch {
-        return ip ?? 'Unknown'
-    }
+// Auth0 log entries carry a `location_info` object with geo already resolved
+// (city_name, country_code, country_name). We read that instead of sending the
+// user's IP to an external HTTP service, so no user data leaves over plain HTTP.
+type Auth0LocationInfo = {
+    city_name?: string
+    country_code?: string
+    country_name?: string
+}
+
+function formatLocation(loc?: Auth0LocationInfo, ip?: string): string {
+    if (ip === '127.0.0.1' || ip === '::1') return 'Local'
+    if (loc?.city_name && loc.country_code) return `${loc.city_name}, ${loc.country_code}`
+    if (loc?.country_name) return loc.country_name
+    if (loc?.country_code) return loc.country_code
+    return ip ?? 'Unknown'
 }
 
 function formatRelativeTime(dateStr?: string): string {
