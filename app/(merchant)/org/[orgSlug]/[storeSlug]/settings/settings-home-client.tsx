@@ -501,7 +501,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
     useEffect(() => {
         // Server render supplied the data; skip the redundant client round-trip.
         if (initialData) return
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/overview`, {
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/overview?org=${encodeURIComponent(orgSlug)}`, {
             credentials: 'include',
         })
             .then(r => r.ok ? r.json() : Promise.reject())

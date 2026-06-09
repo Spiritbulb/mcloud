@@ -7,11 +7,15 @@ import { createClient } from '@/lib/server'
 
 export type StoreSettingsResult =
     | { error: 'forbidden' | 'not_found' | 'unknown'; data: null }
+    // User IS a member of the store, but the org slug in the URL is wrong.
+    // `correctOrgSlug` is where the store actually lives, so the caller can redirect.
+    | { error: 'wrong_org'; data: null; correctOrgSlug: string }
     | { error: null; data: any }
 
 export async function getStoreSettingsData(
     userId: string,
-    slug: string
+    slug: string,
+    orgSlug: string
 ): Promise<StoreSettingsResult> {
     const supabase = await createClient()
 
@@ -34,11 +38,22 @@ export async function getStoreSettingsData(
 
     if (!memberships?.length) return { error: 'forbidden', data: null }
 
-    const currentMembership = memberships.find((m) => {
+    // Match by store slug first (the user's actual membership)…
+    const bySlug = memberships.find((m) => {
         const s = Array.isArray(m.store) ? m.store[0] : m.store
         return s?.slug === slug
     })
-    if (!currentMembership?.store_id) return { error: 'not_found', data: null }
+    if (!bySlug?.store_id) return { error: 'not_found', data: null }
+
+    // …then authorize the org in the URL. If the user is a member but the org
+    // slug is wrong, report the correct org so the caller can redirect them.
+    const matchedStore = Array.isArray(bySlug.store) ? bySlug.store[0] : bySlug.store
+    const matchedOrg = Array.isArray(matchedStore?.org) ? matchedStore.org[0] : matchedStore?.org
+    if (matchedOrg?.slug && matchedOrg.slug !== orgSlug) {
+        return { error: 'wrong_org', data: null, correctOrgSlug: matchedOrg.slug }
+    }
+
+    const currentMembership = bySlug
 
     const { data: storeData, error } = await supabase
         .from('stores')
@@ -95,19 +110,29 @@ export async function getStoreSettingsData(
 // with the page) instead of a post-mount client fetch.
 export async function getStoreOverview(
     userId: string,
-    slug: string
+    slug: string,
+    orgSlug: string
 ): Promise<StoreSettingsResult> {
     const supabase = await createClient()
 
     const { data: memberships } = await supabase
         .from('store_members')
-        .select('store_id, role, store:stores(id, name, slug, logo_url)')
+        .select('store_id, role, store:stores(id, name, slug, logo_url, org:orgs(slug))')
         .eq('user_id', userId)
 
     if (!memberships?.length) return { error: 'forbidden', data: null }
 
-    const currentMembership = memberships.find(m => (m.store as any)?.slug === slug)
-    if (!currentMembership) return { error: 'not_found', data: null }
+    const bySlug = memberships.find(m => (m.store as any)?.slug === slug)
+    if (!bySlug) return { error: 'not_found', data: null }
+
+    // Authorize the org; redirect-friendly wrong_org when the member's URL is off.
+    const matchedStore = bySlug.store as any
+    const matchedOrg = Array.isArray(matchedStore?.org) ? matchedStore.org[0] : matchedStore?.org
+    if (matchedOrg?.slug && matchedOrg.slug !== orgSlug) {
+        return { error: 'wrong_org', data: null, correctOrgSlug: matchedOrg.slug }
+    }
+
+    const currentMembership = bySlug
 
     const storeId = currentMembership.store_id
 

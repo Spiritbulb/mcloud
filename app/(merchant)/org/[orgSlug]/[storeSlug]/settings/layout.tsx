@@ -1,3 +1,4 @@
+import { redirect } from 'next/navigation'
 import { auth0 } from '@/lib/auth0'
 import { getStoreSettingsData } from '@/lib/store-data'
 import SettingsShell from './settings-shell'
@@ -20,7 +21,11 @@ export default async function SettingsLayout({
     if (!session?.user) {
         initialError = 'unauthenticated'
     } else {
-        const result = await getStoreSettingsData(session.user.sub, storeSlug)
+        const result = await getStoreSettingsData(session.user.sub, storeSlug, orgSlug)
+        // Member of the store but wrong org slug in the URL → send them to the real one.
+        if (result.error === 'wrong_org') {
+            redirect(`/org/${result.correctOrgSlug}/${storeSlug}/settings`)
+        }
         if (result.error === 'forbidden' || result.error === 'not_found') initialError = 'forbidden'
         else if (result.error) initialError = 'unknown'
         else {

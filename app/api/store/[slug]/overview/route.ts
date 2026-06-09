@@ -10,10 +10,13 @@ export async function GET(
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { slug } = await params
-    const result = await getStoreOverview(session.user.sub, slug)
+    const orgSlug = request.nextUrl.searchParams.get('org')
+    if (!orgSlug) return NextResponse.json({ error: 'Bad Request' }, { status: 400 })
+
+    const result = await getStoreOverview(session.user.sub, slug, orgSlug)
 
     if (result.error === 'forbidden') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (result.error === 'not_found') return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+    if (result.error === 'not_found' || result.error === 'wrong_org') return NextResponse.json({ error: 'Not Found' }, { status: 404 })
     if (result.error) return NextResponse.json({ error: 'Server error' }, { status: 500 })
 
     return NextResponse.json(result.data)

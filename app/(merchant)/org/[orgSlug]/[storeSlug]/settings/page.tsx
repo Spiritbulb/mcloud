@@ -19,7 +19,7 @@ export default async function SettingsHomePage({
     const session = await auth0.getSession()
     let initialData = null
     if (session?.user) {
-        const result = await getStoreOverview(session.user.sub, storeSlug)
+        const result = await getStoreOverview(session.user.sub, storeSlug, orgSlug)
         if (!result.error) initialData = result.data
     }
 
