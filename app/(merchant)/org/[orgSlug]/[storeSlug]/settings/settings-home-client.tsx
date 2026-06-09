@@ -489,13 +489,18 @@ const QUICK_LINKS: QuickLink[] = [
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; orgSlug: string }) {
+export default function SettingsHomeClient({ slug, orgSlug, initialData = null }: {
+    slug: string; orgSlug: string; initialData?: OverviewData | null
+}) {
     const router = useRouter()
-    const [data, setData] = useState<OverviewData | null>(null)
-    const [loading, setLoading] = useState(true)
+    const [data, setData] = useState<OverviewData | null>(initialData)
+    // When the server already provided data, render it immediately — no fetch, no skeleton.
+    const [loading, setLoading] = useState(!initialData)
     const [error, setError] = useState(false)
 
     useEffect(() => {
+        // Server render supplied the data; skip the redundant client round-trip.
+        if (initialData) return
         fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/overview`, {
             credentials: 'include',
         })
@@ -503,7 +508,7 @@ export default function SettingsHomeClient({ slug, orgSlug }: { slug: string; or
             .then(setData)
             .catch(() => setError(true))
             .finally(() => setLoading(false))
-    }, [slug])
+    }, [slug, initialData])
 
     const navigate = useCallback((tab: TabId) => {
         router.push(`/org/${orgSlug}/${slug}/settings/${tab}`)

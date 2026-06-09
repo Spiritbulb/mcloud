@@ -1,4 +1,5 @@
-import { cookies, headers } from 'next/headers'
+import { auth0 } from '@/lib/auth0'
+import { getStoreSettingsData } from '@/lib/store-data'
 import SettingsShell from './settings-shell'
 
 export default async function SettingsLayout({
@@ -9,37 +10,31 @@ export default async function SettingsLayout({
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
     const { orgSlug, storeSlug } = await params
-    const cookieStore = await cookies()
-    const headerStore = await headers()
 
-    // Build an absolute base URL from the incoming request so server-side fetch
-    // works in every environment (local dev, preview, prod) and uses the same
-    // host the browser authenticated against — env vars like
-    // NEXT_PUBLIC_API_BASE_URL point at prod and break local/preview.
-    const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host')
-    const proto = headerStore.get('x-forwarded-proto') ?? 'https'
-    const baseUrl = `${proto}://${host}/api`
-
+    // Query Supabase directly instead of fetching our own /api/store over HTTP —
+    // removes a full server→HTTP→server round-trip on every settings page load.
     let initialStore: any = null
     let initialError: 'unauthenticated' | 'forbidden' | 'unknown' | null = null
 
-    try {
-        const res = await fetch(
-            `${baseUrl}/store/${storeSlug}`,
-            {
-                headers: {
-                    Cookie: cookieStore.toString(),
-                },
-                next: { revalidate: 60 },
+    const session = await auth0.getSession()
+    if (!session?.user) {
+        initialError = 'unauthenticated'
+    } else {
+        const result = await getStoreSettingsData(session.user.sub, storeSlug)
+        if (result.error === 'forbidden' || result.error === 'not_found') initialError = 'forbidden'
+        else if (result.error) initialError = 'unknown'
+        else {
+            const data = result.data
+            if (!data.user?.name) {
+                data.user = {
+                    ...data.user,
+                    name: data.user?.name || session.user.name || 'Account',
+                    email: data.user?.email || session.user.email || '',
+                    avatar_url: data.user?.avatar_url ?? session.user.picture ?? null,
+                }
             }
-        )
-
-        if (res.status === 401) initialError = 'unauthenticated'
-        else if (res.status === 403 || res.status === 404) initialError = 'forbidden'
-        else if (!res.ok) initialError = 'unknown'
-        else initialStore = await res.json()
-    } catch {
-        initialError = 'unknown'
+            initialStore = data
+        }
     }
 
     return (

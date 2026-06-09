@@ -1,5 +1,5 @@
 import { auth0 } from '@/lib/auth0'
-import { createClient } from '@/lib/server'
+import { getStoreSettingsData } from '@/lib/store-data'
 import { NextResponse, NextRequest } from 'next/server'
 
 export async function GET(
@@ -10,91 +10,22 @@ export async function GET(
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { slug } = await params
-    const userId = session.user.sub
-    const supabase = await createClient()
+    const result = await getStoreSettingsData(session.user.sub, slug)
 
-    // Fetch the logged-in user's own profile
-    const { data: sessionUser } = await supabase
-        .from('users')
-        .select('id, name, email, avatar_url')
-        .eq('id', userId)
-        .single()
+    if (result.error === 'forbidden') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (result.error === 'not_found') return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+    if (result.error) return NextResponse.json({ error: 'Server error' }, { status: 500 })
 
-    // Fetch ALL stores this user belongs to
-    const { data: memberships } = await supabase
-        .from('store_members')
-        .select(`
-            store_id,
-            role,
-            store:stores(
-                id,
-                name,
-                slug,
-                logo_url,
-                org:orgs(slug)
-            )
-        `)
-        .eq('user_id', userId)
-
-    if (!memberships?.length)
-        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-
-    const currentMembership = memberships.find((m) => {
-        const s = Array.isArray(m.store) ? m.store[0] : m.store
-        return s?.slug === slug
-    })
-
-    if (!currentMembership?.store_id)
-        return NextResponse.json({ error: 'Not Found' }, { status: 404 })
-
-    // Fetch full store details
-    const { data: storeData, error } = await supabase
-        .from('stores')
-        .select(`
-            *,
-            theme:store_themes(*)
-        `)
-        .eq('id', currentMembership.store_id)
-        .single()
-
-    if (error) console.error('[store fetch]', error.code, error.message)
-    if (!storeData) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
-
-    // Optional org layer — null for stores not yet associated with an org (backward compatible)
-    let org: { id: string; name: string; slug: string; logo_url: string | null } | null = null
-    if (storeData.org_id) {
-        const { data: orgData } = await supabase
-            .from('orgs')
-            .select('id, name, slug, logo_url')
-            .eq('id', storeData.org_id)
-            .single()
-        org = orgData ?? null
+    // Backfill the user fields from the session when the profile row is empty.
+    const data = result.data
+    if (!data.user?.name) {
+        data.user = {
+            ...data.user,
+            name: data.user?.name || session.user.name || 'Account',
+            email: data.user?.email || session.user.email || '',
+            avatar_url: data.user?.avatar_url ?? session.user.picture ?? null,
+        }
     }
 
-    const allStores = memberships.map((m) => {
-        const memberStore = Array.isArray(m.store) ? m.store[0] : m.store
-        const memberOrg = Array.isArray(memberStore?.org) ? memberStore.org[0] : memberStore?.org
-        return {
-            id: memberStore?.id ?? '',
-            name: memberStore?.name ?? '',
-            slug: memberStore?.slug ?? '',
-            logo_url: memberStore?.logo_url ?? null,
-            role: m.role,
-            org_slug: memberOrg?.slug ?? null,
-        }
-    })
-
-    return NextResponse.json({
-        ...storeData,
-        // `user` is always the logged-in user, never the store owner
-        user: sessionUser ?? {
-            id: userId,
-            name: session.user.name ?? 'Account',
-            email: session.user.email ?? '',
-            avatar_url: session.user.picture ?? null,
-        },
-        role: currentMembership.role,
-        allStores,
-        org,
-    })
+    return NextResponse.json(data)
 }
