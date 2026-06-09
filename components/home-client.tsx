@@ -65,16 +65,16 @@ function FadeIn({ children, className, delay = 0, y = 20 }: {
 function FaqItem({ q, a }: FaqEntry) {
     const [open, setOpen] = useState(false)
     return (
-        <div className="border-b border-white/8 last:border-0">
+        <div className="border-b border-border last:border-0">
             <button
                 onClick={() => setOpen(v => !v)}
                 className="flex items-start justify-between w-full gap-6 text-left py-5"
             >
-                <span className="text-[15px] font-medium text-white/90 leading-snug">{q}</span>
+                <span className="text-[15px] font-medium text-foreground/90 leading-snug">{q}</span>
                 <motion.span
                     animate={{ rotate: open ? 45 : 0 }}
                     transition={{ duration: 0.2 }}
-                    className="material-symbols-outlined text-[18px] text-white/40 shrink-0 mt-0.5 select-none"
+                    className="material-symbols-outlined text-[18px] text-muted-foreground/70 shrink-0 mt-0.5 select-none"
                 >
                     add
                 </motion.span>
@@ -88,7 +88,7 @@ function FaqItem({ q, a }: FaqEntry) {
                         transition={{ duration: 0.22, ease: [0.25, 0.1, 0.25, 1] }}
                         className="overflow-hidden"
                     >
-                        <p className="text-[14px] text-white/60 leading-relaxed pb-5">{a}</p>
+                        <p className="text-[14px] text-muted-foreground leading-relaxed pb-5">{a}</p>
                     </motion.div>
                 )}
             </AnimatePresence>
@@ -106,13 +106,13 @@ function SectionHeading({ eyebrow, title, sub, accent }: {
 }) {
     return (
         <FadeIn className="mb-14 space-y-3">
-            <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: accent ?? 'rgba(255,255,255,0.4)' }}>
+            <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: accent ?? 'rgb(var(--muted-foreground))' }}>
                 {eyebrow}
             </p>
-            <h2 className="text-[2.2rem] md:text-[2.8rem] font-bold text-white tracking-tight leading-[1.08]">
+            <h2 className="text-[2.2rem] md:text-[2.8rem] font-bold text-foreground tracking-tight leading-[1.08]">
                 {title}
             </h2>
-            {sub && <p className="text-[15px] text-white/55 max-w-xl leading-relaxed pt-1">{sub}</p>}
+            {sub && <p className="text-[15px] text-muted-foreground max-w-xl leading-relaxed pt-1">{sub}</p>}
         </FadeIn>
     )
 }
@@ -124,7 +124,7 @@ function FeatureGrid({ items, accent }: { items: Feature[]; accent: string }) {
         <div className="grid md:grid-cols-2 gap-5">
             {items.map((item, i) => (
                 <FadeIn key={item.title} delay={i * 0.06}>
-                    <div className="flex gap-4 p-6 rounded-2xl border border-white/8 hover:border-white/15 hover:bg-white/[0.03] transition-all duration-200 h-full">
+                    <div className="flex gap-4 p-6 rounded-2xl border border-border hover:border-foreground/20 hover:bg-foreground/[0.04] transition-all duration-200 h-full">
                         <div
                             className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
                             style={{ backgroundColor: `${accent}1f` }}
@@ -137,8 +137,8 @@ function FeatureGrid({ items, accent }: { items: Feature[]; accent: string }) {
                             </span>
                         </div>
                         <div className="space-y-1.5">
-                            <h3 className="text-[15px] font-semibold text-white">{item.title}</h3>
-                            <p className="text-[13px] text-white/55 leading-relaxed">{item.body}</p>
+                            <h3 className="text-[15px] font-semibold text-foreground">{item.title}</h3>
+                            <p className="text-[13px] text-muted-foreground leading-relaxed">{item.body}</p>
                         </div>
                     </div>
                 </FadeIn>
@@ -191,11 +191,11 @@ function FeatureShowcase({ items, accent }: { items: Feature[]; accent: string }
                                     )}
                                 </div>
 
-                                <h3 className="text-[1.5rem] md:text-[1.75rem] font-bold text-white tracking-tight leading-[1.15]">
+                                <h3 className="text-[1.5rem] md:text-[1.75rem] font-bold text-foreground tracking-tight leading-[1.15]">
                                     {item.title}
                                 </h3>
 
-                                <p className="text-[15px] md:text-[16px] text-white/55 leading-relaxed max-w-md">
+                                <p className="text-[15px] md:text-[16px] text-muted-foreground leading-relaxed max-w-md">
                                     {item.body}
                                 </p>
 
@@ -209,7 +209,7 @@ function FeatureShowcase({ items, accent }: { items: Feature[]; accent: string }
                                                 >
                                                     check_circle
                                                 </span>
-                                                <span className="text-[14px] text-white/70 leading-snug">{point}</span>
+                                                <span className="text-[14px] text-muted-foreground leading-snug">{point}</span>
                                             </li>
                                         ))}
                                     </ul>
@@ -231,10 +231,10 @@ function Steps({ steps }: { steps: Step[] }) {
             {steps.map((item, i) => (
                 <FadeIn key={item.step} delay={i * 0.1}>
                     <div className="space-y-4">
-                        <span className="text-[11px] font-bold text-white/30 tracking-widest">{item.step}</span>
-                        <div className="w-px h-8 bg-gradient-to-b from-white/25 to-transparent ml-0.5" />
-                        <h3 className="text-[15px] font-semibold text-white">{item.title}</h3>
-                        <p className="text-[13px] text-white/55 leading-relaxed">{item.body}</p>
+                        <span className="text-[11px] font-bold text-muted-foreground/60 tracking-widest">{item.step}</span>
+                        <div className="w-px h-8 bg-gradient-to-b from-foreground/25 to-transparent ml-0.5" />
+                        <h3 className="text-[15px] font-semibold text-foreground">{item.title}</h3>
+                        <p className="text-[13px] text-muted-foreground leading-relaxed">{item.body}</p>
                     </div>
                 </FadeIn>
             ))}
@@ -249,9 +249,9 @@ function Objections({ items }: { items: Objection[] }) {
         <div className="grid md:grid-cols-2 gap-5">
             {items.map((item, i) => (
                 <FadeIn key={item.q} delay={i * 0.07}>
-                    <div className="p-6 rounded-2xl border border-white/8 bg-white/[0.02] h-full space-y-2.5">
-                        <h3 className="text-[15px] font-semibold text-white leading-snug">{item.q}</h3>
-                        <p className="text-[13px] text-white/55 leading-relaxed">{item.a}</p>
+                    <div className="p-6 rounded-2xl border border-border bg-foreground/[0.02] h-full space-y-2.5">
+                        <h3 className="text-[15px] font-semibold text-foreground leading-snug">{item.q}</h3>
+                        <p className="text-[13px] text-muted-foreground leading-relaxed">{item.a}</p>
                     </div>
                 </FadeIn>
             ))}
@@ -270,13 +270,13 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                         className={cn(
                             'relative flex flex-col gap-6 p-7 rounded-2xl border h-full transition-colors duration-200',
                             plan.highlight
-                                ? 'border-white/25 bg-white/[0.06]'
-                                : 'border-white/8 bg-white/[0.02] hover:border-white/15'
+                                ? 'border-border bg-foreground/[0.06]'
+                                : 'border-border bg-foreground/[0.02] hover:border-border'
                         )}
                     >
                         {plan.highlight && (
                             <span
-                                className="absolute -top-2.5 left-7 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-[#0a0a0a]"
+                                className="absolute -top-2.5 left-7 text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded-full text-background"
                                 style={{ backgroundColor: accent }}
                             >
                                 Most popular
@@ -288,10 +288,10 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                                 {plan.name}
                             </p>
                             <div className="flex items-end gap-1.5 pt-1">
-                                <span className="text-[28px] font-bold text-white leading-none">{plan.price}</span>
-                                {plan.cadence && <span className="text-[12px] text-white/45 mb-0.5">{plan.cadence}</span>}
+                                <span className="text-[28px] font-bold text-foreground leading-none">{plan.price}</span>
+                                {plan.cadence && <span className="text-[12px] text-muted-foreground/70 mb-0.5">{plan.cadence}</span>}
                             </div>
-                            <p className="text-[13px] text-white/55 leading-relaxed pt-2">{plan.blurb}</p>
+                            <p className="text-[13px] text-muted-foreground leading-relaxed pt-2">{plan.blurb}</p>
                         </div>
 
                         <ul className="space-y-2.5 flex-1">
@@ -303,7 +303,7 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                                     >
                                         check
                                     </span>
-                                    <span className="text-[13px] text-white/65 leading-snug">{f}</span>
+                                    <span className="text-[13px] text-muted-foreground leading-snug">{f}</span>
                                 </li>
                             ))}
                         </ul>
@@ -313,8 +313,8 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                             className={cn(
                                 'h-11 px-5 rounded-full text-[14px] font-semibold flex items-center justify-center gap-2 transition-colors',
                                 plan.highlight
-                                    ? 'bg-white text-[#0a0a0a] hover:bg-white/90'
-                                    : 'border border-white/15 text-white/80 hover:text-white hover:border-white/30'
+                                    ? 'bg-foreground text-background hover:opacity-90'
+                                    : 'border border-border text-foreground/80 hover:text-foreground hover:border-border'
                             )}
                         >
                             {plan.cta}
@@ -338,23 +338,23 @@ function MatrixCell({ value, accent }: { value: string | boolean; accent: string
         )
     }
     if (value === false) {
-        return <span className="text-white/20 text-[16px]">—</span>
+        return <span className="text-muted-foreground/50 text-[16px]">—</span>
     }
-    return <span className="text-[13px] text-white/70">{value}</span>
+    return <span className="text-[13px] text-muted-foreground">{value}</span>
 }
 
 function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: FeatureRow[]; accent: string }) {
     return (
         <FadeIn>
-            <div className="overflow-x-auto rounded-2xl border border-white/8 bg-white/[0.02]">
+            <div className="overflow-x-auto rounded-2xl border border-border bg-foreground/[0.02]">
                 <table className="w-full min-w-[520px] border-collapse">
                     <thead>
-                        <tr className="border-b border-white/8">
-                            <th className="text-left text-[12px] font-semibold uppercase tracking-widest text-white/40 px-6 py-4">
+                        <tr className="border-b border-border">
+                            <th className="text-left text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/70 px-6 py-4">
                                 Compare plans
                             </th>
                             {plans.map(p => (
-                                <th key={p} className="text-center text-[13px] font-semibold text-white px-4 py-4">
+                                <th key={p} className="text-center text-[13px] font-semibold text-foreground px-4 py-4">
                                     {p}
                                 </th>
                             ))}
@@ -362,8 +362,8 @@ function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: Feature
                     </thead>
                     <tbody>
                         {rows.map((row, i) => (
-                            <tr key={row.label} className={cn(i !== rows.length - 1 && 'border-b border-white/6')}>
-                                <td className="text-[13px] text-white/65 px-6 py-3.5">{row.label}</td>
+                            <tr key={row.label} className={cn(i !== rows.length - 1 && 'border-b border-border')}>
+                                <td className="text-[13px] text-muted-foreground px-6 py-3.5">{row.label}</td>
                                 {row.values.map((v, j) => (
                                     <td key={j} className="text-center px-4 py-3.5">
                                         <MatrixCell value={v} accent={accent} />
@@ -383,7 +383,7 @@ function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: Feature
 function FaqBlock({ faqs }: { faqs: FaqEntry[] }) {
     return (
         <FadeIn>
-            <div className="rounded-2xl border border-white/8 bg-white/[0.02] px-6 py-2">
+            <div className="rounded-2xl border border-border bg-foreground/[0.02] px-6 py-2">
                 {faqs.map((faq, i) => <FaqItem key={i} {...faq} />)}
             </div>
         </FadeIn>
@@ -393,7 +393,7 @@ function FaqBlock({ faqs }: { faqs: FaqEntry[] }) {
 // ─── Divider ──────────────────────────────────────────────────────────────────
 
 function Divider() {
-    return <div className="border-t border-white/6" />
+    return <div className="border-t border-border" />
 }
 
 // ════════════════════════════════════════════════════════════════════════════
@@ -576,7 +576,7 @@ function EcommerceTab() {
                     <SectionHeading
                         accent={STORE_ACCENT}
                         eyebrow="For e-commerce"
-                        title={<>Start today. <span className="text-white/40">Grow it on your terms.</span></>}
+                        title={<>Start today. <span className="text-muted-foreground/70">Grow it on your terms.</span></>}
                         sub="Everything a small business needs to sell online, with none of the hosting headaches. Start free, and only pay when you are ready for your own name out front."
                     />
                     <FeatureShowcase items={STORE_FEATURES} accent={STORE_ACCENT} />
@@ -586,7 +586,7 @@ function EcommerceTab() {
             <Divider />
 
             {/* How it works */}
-            <section className="py-24 md:py-32 bg-white/[0.02]">
+            <section className="py-24 md:py-32 bg-foreground/[0.02]">
                 <div className="container mx-auto px-6 md:px-12 max-w-5xl">
                     <SectionHeading accent={STORE_ACCENT} eyebrow="How it works" title="Signup to selling in an afternoon." />
                     <Steps steps={STORE_STEPS} />
@@ -629,28 +629,28 @@ function EcommerceTab() {
                 </div>
                 <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-3xl text-center">
                     <FadeIn className="space-y-7">
-                        <h2 className="text-[2.6rem] md:text-[3.6rem] font-bold text-white leading-[1.05] tracking-tight">
+                        <h2 className="text-[2.6rem] md:text-[3.6rem] font-bold text-foreground leading-[1.05] tracking-tight">
                             Open your shop today.
                         </h2>
-                        <p className="text-[16px] text-white/55 max-w-lg mx-auto leading-relaxed">
+                        <p className="text-[16px] text-muted-foreground max-w-lg mx-auto leading-relaxed">
                             Start free, take real orders, and add your own domain when you are ready. You skip every infrastructure decision.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                             <Link
                                 href="/auth/sign-up"
-                                className="h-12 px-8 rounded-full bg-white text-[#0a0a0a] text-[15px] font-semibold hover:bg-white/90 transition-colors flex items-center gap-2"
+                                className="h-12 px-8 rounded-full bg-foreground text-background text-[15px] font-semibold hover:opacity-90 transition-colors flex items-center gap-2"
                             >
                                 Start a storefront free
                                 <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
                             </Link>
                             <Link
                                 href="/contact"
-                                className="h-12 px-8 rounded-full border border-white/15 text-[15px] text-white/70 hover:text-white hover:border-white/30 transition-colors flex items-center gap-2"
+                                className="h-12 px-8 rounded-full border border-border text-[15px] text-muted-foreground hover:text-foreground hover:border-border transition-colors flex items-center gap-2"
                             >
                                 Ask us a question
                             </Link>
                         </div>
-                        <p className="text-[12px] text-white/30">
+                        <p className="text-[12px] text-muted-foreground/60">
                             Free to start, Pro from KES 2,499/mo. No card required.
                         </p>
                     </FadeIn>
@@ -779,7 +779,7 @@ function BrokersTab() {
             <Divider />
 
             {/* How it works */}
-            <section className="py-24 md:py-32 bg-white/[0.02]">
+            <section className="py-24 md:py-32 bg-foreground/[0.02]">
                 <div className="container mx-auto px-6 md:px-12 max-w-5xl">
                     <SectionHeading accent={BROKER_ACCENT} eyebrow="How it works" title="From a conversation to a live platform." />
                     <Steps steps={BROKER_STEPS} />
@@ -798,7 +798,7 @@ function BrokersTab() {
                         sub="Every trading app ships with the same foundation. The price reflects your brand, your domain, and the API you build on."
                     />
                     <FadeIn>
-                        <div className="grid md:grid-cols-[1.1fr_1fr] gap-px rounded-2xl overflow-hidden border border-white/10 bg-white/[0.02]">
+                        <div className="grid md:grid-cols-[1.1fr_1fr] gap-px rounded-2xl overflow-hidden border border-border bg-foreground/[0.02]">
                             {/* What's included */}
                             <div className="p-8 md:p-10 space-y-6">
                                 <p className="text-[12px] font-semibold uppercase tracking-widest" style={{ color: BROKER_ACCENT }}>
@@ -810,29 +810,29 @@ function BrokersTab() {
                                             <span className="material-symbols-outlined text-[16px] mt-0.5 shrink-0" style={{ color: BROKER_ACCENT }}>
                                                 check_circle
                                             </span>
-                                            <span className="text-[13px] text-white/65 leading-snug">{item}</span>
+                                            <span className="text-[13px] text-muted-foreground leading-snug">{item}</span>
                                         </li>
                                     ))}
                                 </ul>
                             </div>
 
                             {/* Quote panel */}
-                            <div className="p-8 md:p-10 flex flex-col justify-center gap-5 bg-white/[0.03]">
+                            <div className="p-8 md:p-10 flex flex-col justify-center gap-5 bg-foreground/[0.03]">
                                 <div className="space-y-1.5">
-                                    <p className="text-[13px] text-white/45">Pricing</p>
-                                    <p className="text-[28px] font-bold text-white leading-tight">Quoted per project</p>
-                                    <p className="text-[13px] text-white/55 leading-relaxed">
+                                    <p className="text-[13px] text-muted-foreground/70">Pricing</p>
+                                    <p className="text-[28px] font-bold text-foreground leading-tight">Quoted per project</p>
+                                    <p className="text-[13px] text-muted-foreground leading-relaxed">
                                         Tell us what you have in mind and we put real numbers in front of you, usually within one business day.
                                     </p>
                                 </div>
                                 <Link
                                     href="/contact"
-                                    className="h-11 px-6 rounded-full bg-white text-[#0a0a0a] text-[14px] font-semibold flex items-center justify-center gap-2 hover:bg-white/90 transition-colors"
+                                    className="h-11 px-6 rounded-full bg-foreground text-background text-[14px] font-semibold flex items-center justify-center gap-2 hover:opacity-90 transition-colors"
                                 >
                                     Talk to sales
                                     <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
                                 </Link>
-                                <p className="text-[12px] text-white/30">No lock-in. Setup assistance included.</p>
+                                <p className="text-[12px] text-muted-foreground/60">No lock-in. Setup assistance included.</p>
                             </div>
                         </div>
                     </FadeIn>
@@ -861,22 +861,22 @@ function BrokersTab() {
                 </div>
                 <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-3xl text-center">
                     <FadeIn className="space-y-7">
-                        <h2 className="text-[2.6rem] md:text-[3.6rem] font-bold text-white leading-[1.05] tracking-tight">
+                        <h2 className="text-[2.6rem] md:text-[3.6rem] font-bold text-foreground leading-[1.05] tracking-tight">
                             Put your own name on it.
                         </h2>
-                        <p className="text-[16px] text-white/55 max-w-lg mx-auto leading-relaxed">
+                        <p className="text-[16px] text-muted-foreground max-w-lg mx-auto leading-relaxed">
                             Tell us about your brand and your market. We will scope a branded trading platform and put real numbers in front of you.
                         </p>
                         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
                             <Link
                                 href="/contact"
-                                className="h-12 px-8 rounded-full bg-white text-[#0a0a0a] text-[15px] font-semibold hover:bg-white/90 transition-colors flex items-center gap-2"
+                                className="h-12 px-8 rounded-full bg-foreground text-background text-[15px] font-semibold hover:opacity-90 transition-colors flex items-center gap-2"
                             >
                                 Talk to sales
                                 <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
                             </Link>
                         </div>
-                        <p className="text-[12px] text-white/30">
+                        <p className="text-[12px] text-muted-foreground/60">
                             Quoted per project. No lock-in. Typically a reply within one business day.
                         </p>
                     </FadeIn>
@@ -901,13 +901,13 @@ export default function HomeClient() {
     const [tab, setTab] = useState<Tab>('ecommerce')
 
     return (
-        <div className="min-h-[100dvh] bg-[#0a0a0a] text-white overflow-x-hidden">
+        <div className="min-h-[100dvh] bg-background text-foreground overflow-x-hidden">
 
             {/* ── HERO ──────────────────────────────────────────────────────── */}
             <section className="relative">
-                {/* Grid overlay */}
-                <div className="absolute inset-0 pointer-events-none opacity-[0.03]"
-                    style={{ backgroundImage: 'linear-gradient(white 1px, transparent 1px), linear-gradient(90deg, white 1px, transparent 1px)', backgroundSize: '72px 72px' }} />
+                {/* Grid overlay — currentColor inherits foreground so it adapts per theme */}
+                <div className="absolute inset-0 pointer-events-none opacity-[0.03] text-foreground"
+                    style={{ backgroundImage: 'linear-gradient(currentColor 1px, transparent 1px), linear-gradient(90deg, currentColor 1px, transparent 1px)', backgroundSize: '72px 72px' }} />
 
                 <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-6xl w-full pt-8 pb-12 md:pt-10 md:pb-20">
                     <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-12 items-center">
@@ -919,11 +919,11 @@ export default function HomeClient() {
                                 transition={{ duration: 0.6, ease: [0.25, 0.1, 0.25, 1] }}
                                 className="space-y-7"
                             >
-                                <h1 className="text-[3rem] md:text-[4.2rem] font-bold leading-[1.05] tracking-tight text-white">
+                                <h1 className="text-[3rem] md:text-[4.2rem] font-bold leading-[1.05] tracking-tight text-foreground">
                                     Run something online.
                                 </h1>
 
-                                <p className="text-[17px] text-white/65 leading-relaxed max-w-[560px]">
+                                <p className="text-[17px] text-muted-foreground leading-relaxed max-w-[560px]">
                                     Getting a business online here has become wrestling with AI or paying a developer who vanishes after launch.<br /> <br /> Menengai Cloud is the third option. You bring the brand, we run the infrastructure underneath it. Pick your path:
                                 </p>
                             </motion.div>
@@ -933,7 +933,7 @@ export default function HomeClient() {
                                 initial={{ opacity: 0, y: 16 }}
                                 animate={{ opacity: 1, y: 0 }}
                                 transition={{ duration: 0.5, delay: 0.15, ease: [0.25, 0.1, 0.25, 1] }}
-                                className="mt-10 inline-flex p-1 rounded-full border border-white/10 bg-white/[0.03]"
+                                className="mt-10 inline-flex p-1 rounded-full border border-border bg-foreground/[0.03]"
                                 role="tablist"
                                 aria-label="Choose your path"
                             >
@@ -945,14 +945,14 @@ export default function HomeClient() {
                                         onClick={() => setTab(t.id)}
                                         className={cn(
                                             'relative h-10 px-5 sm:px-7 rounded-full text-[14px] font-semibold transition-colors duration-200 z-10',
-                                            tab === t.id ? 'text-[#0a0a0a]' : 'text-white/55 hover:text-white'
+                                            tab === t.id ? 'text-background' : 'text-muted-foreground hover:text-foreground'
                                         )}
                                     >
                                         {tab === t.id && (
                                             <motion.span
                                                 layoutId="tab-pill"
                                                 transition={{ type: 'spring', stiffness: 400, damping: 34 }}
-                                                className="absolute inset-0 rounded-full bg-white -z-10"
+                                                className="absolute inset-0 rounded-full bg-foreground -z-10"
                                             />
                                         )}
                                         {t.label}

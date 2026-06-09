@@ -206,7 +206,7 @@ export default async function OrgHomePage({
                         {otherStores.map((store: any) => (
                             <Link
                                 key={store.id}
-                                href={`/store/${store.slug}/settings`}
+                                href={`/org/${orgSlug}/${store.slug}/settings`}
                                 className="flex items-center gap-3 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-4 py-3 hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
                             >
                                 <div className="w-9 h-9 rounded-lg shrink-0 flex items-center justify-center text-[11px] font-bold overflow-hidden store-avatar-fallback">
