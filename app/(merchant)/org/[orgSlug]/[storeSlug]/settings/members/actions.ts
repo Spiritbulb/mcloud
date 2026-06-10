@@ -1,6 +1,6 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
@@ -9,7 +9,7 @@ import type { MemberRow } from './utils'
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function getMembers(slug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated', members: [], invites: [], currentRole: null }
 
     const supabase = await createClient()
@@ -55,20 +55,20 @@ export async function getMembers(slug: string) {
         .order('created_at', { ascending: false })
 
     // Current user's role in this store
-    const currentMember = members?.find((m: any) => m.users?.id === session.user.sub)
+    const currentMember = members?.find((m: any) => m.users?.id === session.user.id)
 
     return {
         storeId: store.id,
         members: safeMembers,
         invites: invites ?? [],
-        currentRole: safeMembers.find((m) => m.users?.id === session.user.sub)?.role ?? null,
+        currentRole: safeMembers.find((m) => m.users?.id === session.user.id)?.role ?? null,
     }
 }
 
 // ─── Invite member ─────────────────────────────────────────────────────────────
 
 export async function inviteMember(formData: FormData) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const storeId = formData.get('storeId') as string
@@ -85,7 +85,7 @@ export async function inviteMember(formData: FormData) {
         .from('store_members')
         .select('role')
         .eq('store_id', storeId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {
@@ -145,7 +145,7 @@ export async function inviteMember(formData: FormData) {
     const { data: inviter } = await supabase
         .from('users')
         .select('name')
-        .eq('id', session.user.sub)
+        .eq('id', session.user.id)
         .single()
 
     // Insert invite
@@ -155,7 +155,7 @@ export async function inviteMember(formData: FormData) {
             store_id: storeId,
             email,
             role,
-            invited_by: session.user.sub,
+            invited_by: session.user.id,
         })
         .select('token')
         .single()
@@ -202,7 +202,7 @@ export async function updateMemberPermissions(
     storeId: string,
     permissions: string[]
 ) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -212,7 +212,7 @@ export async function updateMemberPermissions(
         .from('store_members')
         .select('role')
         .eq('store_id', storeId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {
@@ -242,7 +242,7 @@ export async function updateMemberPermissions(
 // ─── Remove member ─────────────────────────────────────────────────────────────
 
 export async function removeMember(memberId: string, storeId: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -251,7 +251,7 @@ export async function removeMember(memberId: string, storeId: string) {
         .from('store_members')
         .select('role')
         .eq('store_id', storeId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {
@@ -284,7 +284,7 @@ export async function removeMember(memberId: string, storeId: string) {
 // ─── Revoke invite ─────────────────────────────────────────────────────────────
 
 export async function revokeInvite(inviteId: string, storeId: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -293,7 +293,7 @@ export async function revokeInvite(inviteId: string, storeId: string) {
         .from('store_members')
         .select('role')
         .eq('store_id', storeId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {

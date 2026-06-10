@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import OrgSettingsClient from './org-settings-client'
 
@@ -9,10 +9,10 @@ export default async function OrgSettingsPage({
     params: Promise<{ orgSlug: string }>
 }) {
     const { orgSlug } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect('/auth/login')
 
-    const userId = session.user.sub
+    const userId = session.user.id
     const supabase = await createClient()
 
     const { data: org } = await supabase

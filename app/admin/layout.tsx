@@ -1,4 +1,4 @@
-import { auth0 } from "@/lib/auth0"
+import { getSession } from '@/lib/auth/server'
 import { createClient } from "@/lib/client"
 import { redirect } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
@@ -14,13 +14,13 @@ async function getAdminUser(sub: string) {
 }
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
-    const session = await auth0.getSession()
+    const session = await getSession()
 
     if (!session?.user) {
         redirect(`/auth/login?returnTo=/admin`)
     }
 
-    const user = await getAdminUser(session.user.sub)
+    const user = await getAdminUser(session.user.id)
 
     if (user?.role !== "admin") {
         return (

@@ -1,10 +1,10 @@
 // app/api/admin/subscriptions/activate/route.ts
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
-    const session = await auth0.getSession(request)
+    const session = await getSession(request)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const supabase = await createClient()
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
     const { data: user } = await supabase
         .from('users')
         .select('role')
-        .eq('id', session.user.sub)
+        .eq('id', session.user.id)
         .single()
 
     if (user?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

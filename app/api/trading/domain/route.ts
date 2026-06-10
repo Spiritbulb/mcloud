@@ -1,4 +1,4 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -53,7 +53,7 @@ async function getOrgMembership(supabase: Awaited<ReturnType<typeof createClient
 
 // POST /api/trading/domain  { traderSlug, domain }
 export async function POST(req: NextRequest) {
-    const session = await auth0.getSession(req)
+    const session = await getSession(req)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { traderSlug, domain } = await req.json()
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     const clean = domain.trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '')
 
     const supabase = await createClient()
-    const app = await getOrgMembership(supabase, session.user.sub, traderSlug)
+    const app = await getOrgMembership(supabase, session.user.id, traderSlug)
     if (!app) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const vercelRes = await addDomain(clean)
@@ -80,14 +80,14 @@ export async function POST(req: NextRequest) {
 
 // GET /api/trading/domain?traderSlug=xxx
 export async function GET(req: NextRequest) {
-    const session = await auth0.getSession(req)
+    const session = await getSession(req)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const traderSlug = req.nextUrl.searchParams.get('traderSlug')
     if (!traderSlug) return NextResponse.json({ error: 'Missing traderSlug' }, { status: 400 })
 
     const supabase = await createClient()
-    const app = await getOrgMembership(supabase, session.user.sub, traderSlug)
+    const app = await getOrgMembership(supabase, session.user.id, traderSlug)
     if (!app) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { data } = await supabase
@@ -108,14 +108,14 @@ export async function GET(req: NextRequest) {
 
 // DELETE /api/trading/domain  { traderSlug }  — clear domain from DB (doesn't remove from Vercel)
 export async function DELETE(req: NextRequest) {
-    const session = await auth0.getSession(req)
+    const session = await getSession(req)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { traderSlug } = await req.json()
     if (!traderSlug) return NextResponse.json({ error: 'Missing traderSlug' }, { status: 400 })
 
     const supabase = await createClient()
-    const app = await getOrgMembership(supabase, session.user.sub, traderSlug)
+    const app = await getOrgMembership(supabase, session.user.id, traderSlug)
     if (!app) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     await supabase

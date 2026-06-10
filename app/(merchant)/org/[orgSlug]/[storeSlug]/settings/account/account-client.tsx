@@ -290,7 +290,7 @@ function SessionsSection() {
     return (
         <Section
             title="Recent login activity"
-            description="Devices and locations that recently signed in to your account. If you see something you don't recognise, change your password."
+            description="Devices and locations that recently signed in to your account. If you see something you don't recognise, sign out and contact support."
         >
             {loading ? (
                 <div className="space-y-2">

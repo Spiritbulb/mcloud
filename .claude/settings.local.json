@@ -8,7 +8,6 @@
       "Bash(Select-Object FullName)",
       "Bash(Format-Table -AutoSize)",
       "Bash(mv \"c:/Users/busie/mcloud-1/app/org/[slug]\" \"c:/Users/busie/mcloud-1/app/org/[orgSlug]\")",
-      "Bash(cmd /c \"rename \\\\\"c:\\\\\\\\Users\\\\\\\\busie\\\\\\\\mcloud-1\\\\\\\\app\\\\\\\\org\\\\\\\\[slug]\\\\\" \\\\\"[orgSlug]\\\\\"\")",
       "Bash(grep -rn '`/store/\\\\${' \"c:/Users/busie/mcloud-1/app/org/\" --include=\"*.tsx\" --include=\"*.ts\")",
       "Bash(Get-ChildItem -Path \"c:\\\\Users\\\\busie\\\\mcloud-1\" -Force)",
       "Bash(Select-Object Name, FullName, PSIsContainer)",

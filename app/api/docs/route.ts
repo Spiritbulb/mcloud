@@ -2,7 +2,7 @@
 // Protected by Auth0 session + role = 'admin' check in your users table.
 // No passphrase needed — remove DOCS_EDITOR_PASSPHRASE from your env.
 
-import { auth0 } from "@/lib/auth0"
+import { getSession } from '@/lib/auth/server'
 import { createClient } from "@/lib/client"
 import { revalidatePath } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
@@ -11,25 +11,25 @@ import type { DocPage } from "@/lib/docs"
 // Service-role client — bypasses RLS, only used server-side
 const adminSupabase = createClient()
 
-async function getAdminStatus(auth0Sub: string): Promise<boolean> {
+async function getAdminStatus(userId: string): Promise<boolean> {
     const { data } = await adminSupabase
         .from("users")
         .select("role")
-        .eq("id", auth0Sub)
+        .eq("id", userId)
         .single()
 
     return data?.role === "admin"
 }
 
 export async function POST(req: NextRequest) {
-    // ── 1. Must be logged in via Auth0 ─────────────────────────────────────────
-    const session = await auth0.getSession(req)
+    // ── 1. Must be logged in ───────────────────────────────────────────────────
+    const session = await getSession(req)
     if (!session?.user) {
         return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
     }
 
     // ── 2. Must be an admin in your users table ─────────────────────────────────
-    const isAdmin = await getAdminStatus(session.user.sub)
+    const isAdmin = await getAdminStatus(session.user.id)
     if (!isAdmin) {
         return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }

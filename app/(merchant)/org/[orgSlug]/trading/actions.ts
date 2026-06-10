@@ -1,10 +1,10 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 
 export async function getOrgTradingApps(orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Unauthenticated', apps: [], orgId: null, role: null }
 
     const supabase = await createClient()
@@ -21,7 +21,7 @@ export async function getOrgTradingApps(orgSlug: string) {
         .from('org_members')
         .select('role')
         .eq('org_id', org.id)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!member) return { error: 'Not a member', apps: [], orgId: null, role: null }
@@ -36,7 +36,7 @@ export async function getOrgTradingApps(orgSlug: string) {
 }
 
 export async function createTradingApp(formData: FormData) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Unauthenticated' }
 
     const orgId = formData.get('orgId') as string
@@ -55,7 +55,7 @@ export async function createTradingApp(formData: FormData) {
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!member || !['owner', 'admin'].includes(member.role)) {

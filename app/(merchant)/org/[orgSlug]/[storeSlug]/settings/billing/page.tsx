@@ -1,4 +1,4 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { redirect } from 'next/navigation'
 import BillingClient from '@/components/billing-client'
@@ -12,7 +12,7 @@ export default async function BillingPage({
 }) {
     const { orgSlug, storeSlug } = await params
     const { upgraded } = await searchParams
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect(`/auth/login`)
 
     const supabase = await createClient()

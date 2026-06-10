@@ -1,4 +1,4 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -26,12 +26,12 @@ export async function GET(
     req: NextRequest,
     { params }: { params: Promise<{ traderSlug: string }> },
 ) {
-    const session = await auth0.getSession(req)
+    const session = await getSession(req)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { traderSlug } = await params
     const supabase = await createClient()
-    const { app, role } = await resolveApp(supabase, session.user.sub, traderSlug)
+    const { app, role } = await resolveApp(supabase, session.user.id, traderSlug)
 
     if (!app || !role) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -43,12 +43,12 @@ export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ traderSlug: string }> },
 ) {
-    const session = await auth0.getSession(req)
+    const session = await getSession(req)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { traderSlug } = await params
     const supabase = await createClient()
-    const { app, role } = await resolveApp(supabase, session.user.sub, traderSlug)
+    const { app, role } = await resolveApp(supabase, session.user.id, traderSlug)
 
     if (!app) return NextResponse.json({ error: 'Not found' }, { status: 404 })
     if (!role || !['owner', 'admin'].includes(role)) {

@@ -1,11 +1,11 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { revalidatePath } from 'next/cache'
 
 export async function getOrgStores(orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated', stores: [], role: null }
 
     const supabase = await createClient()
@@ -22,7 +22,7 @@ export async function getOrgStores(orgSlug: string) {
         .from('org_members')
         .select('role')
         .eq('org_id', org.id)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!membership) return { error: 'Not a member', stores: [], role: null }
@@ -37,7 +37,7 @@ export async function getOrgStores(orgSlug: string) {
 }
 
 export async function createStore(formData: FormData) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const orgId = formData.get('orgId') as string
@@ -54,7 +54,7 @@ export async function createStore(formData: FormData) {
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!membership || !['owner', 'admin'].includes(membership.role)) {
@@ -71,7 +71,7 @@ export async function createStore(formData: FormData) {
 
     const { data: store, error } = await supabase
         .from('stores')
-        .insert({ name, slug, org_id: orgId, owner_id: session.user.sub })
+        .insert({ name, slug, org_id: orgId, owner_id: session.user.id })
         .select('id, slug')
         .single()
 
@@ -80,7 +80,7 @@ export async function createStore(formData: FormData) {
     // Add creator as store owner
     await supabase.from('store_members').insert({
         store_id: store.id,
-        user_id: session.user.sub,
+        user_id: session.user.id,
         role: 'owner',
     })
 
@@ -89,7 +89,7 @@ export async function createStore(formData: FormData) {
 }
 
 export async function deleteStore(storeId: string, orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -101,7 +101,7 @@ export async function deleteStore(storeId: string, orgSlug: string) {
         .single()
 
     if (!store) return { error: 'Store not found' }
-    if (store.owner_id !== session.user.sub) return { error: 'Only the store owner can delete it' }
+    if (store.owner_id !== session.user.id) return { error: 'Only the store owner can delete it' }
 
     const { error } = await supabase.from('stores').delete().eq('id', storeId)
     if (error) return { error: error.message }
@@ -111,7 +111,7 @@ export async function deleteStore(storeId: string, orgSlug: string) {
 }
 
 export async function updateStore(storeId: string, orgSlug: string, fields: { name?: string; logo_url?: string | null }) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -120,7 +120,7 @@ export async function updateStore(storeId: string, orgSlug: string, fields: { na
         .from('store_members')
         .select('role')
         .eq('store_id', storeId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!member || !['owner', 'admin'].includes(member.role)) {

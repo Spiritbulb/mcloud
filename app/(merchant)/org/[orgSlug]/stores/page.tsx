@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import OrgShell from '../org-shell'
 import StoresClient from './stores-client'
@@ -7,7 +7,7 @@ import { getOrgStores } from './actions'
 
 export default async function Page({ params }: { params: Promise<{ orgSlug: string }> }) {
     const { orgSlug } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect('/auth/login')
 
     const supabase = await createClient()
@@ -19,7 +19,7 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
 
     if (!org) notFound()
 
-    const { data: userRow } = await supabase.from('users').select('name, email, avatar_url').eq('id', session.user.sub).single()
+    const { data: userRow } = await supabase.from('users').select('name, email, avatar_url').eq('id', session.user.id).single()
     const shellUser = {
         name: userRow?.name ?? session.user.name ?? 'Account',
         email: userRow?.email ?? session.user.email ?? '',

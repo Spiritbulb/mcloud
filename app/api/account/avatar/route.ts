@@ -1,4 +1,4 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
@@ -8,7 +8,7 @@ const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
 
 // POST /api/account/avatar
 export async function POST(request: NextRequest) {
-    const session = await auth0.getSession(request)
+    const session = await getSession(request)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const formData = await request.formData()
@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'File too large. Maximum size is 5 MB.' }, { status: 400 })
     }
 
-    const userId = session.user.sub
+    const userId = session.user.id
     const ext = file.type.split('/')[1].replace('jpeg', 'jpg')
     const path = `${userId}/avatar.${ext}`
 

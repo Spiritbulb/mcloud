@@ -1,11 +1,11 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { revalidatePath } from 'next/cache'
 
 async function authorise(orgSlug: string, traderSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Unauthenticated' as const, app: null, supabase: null }
 
     const supabase = await createClient()
@@ -14,7 +14,7 @@ async function authorise(orgSlug: string, traderSlug: string) {
     if (!org) return { error: 'Not found' as const, app: null, supabase: null }
 
     const { data: member } = await supabase
-        .from('org_members').select('role').eq('org_id', org.id).eq('user_id', session.user.sub).single()
+        .from('org_members').select('role').eq('org_id', org.id).eq('user_id', session.user.id).single()
 
     if (!member || !['owner', 'admin'].includes(member.role)) {
         return { error: 'Forbidden' as const, app: null, supabase: null }

@@ -1,5 +1,23 @@
-import { auth0 } from '@/lib/auth0'
+import { authMiddleware, prepareMiddleware } from '@/lib/auth/server'
+import type { AuthSession } from '@/lib/auth/types'
 import { type NextRequest, NextResponse } from 'next/server'
+
+
+// ─── Response builders ────────────────────────────────────────────────────────
+// Forward the auth provider's request headers (if any) on responses that render
+// downstream, so server-side session reads (e.g. WorkOS withAuth) see the session.
+
+function nextResponse(authHeaders?: Headers): NextResponse {
+  return authHeaders
+    ? NextResponse.next({ request: { headers: authHeaders } })
+    : NextResponse.next()
+}
+
+function rewriteResponse(url: URL, authHeaders?: Headers): NextResponse {
+  return authHeaders
+    ? NextResponse.rewrite(url, { request: { headers: authHeaders } })
+    : NextResponse.rewrite(url)
+}
 
 
 // ─── Route Classification Constants ───────────────────────────────────────────
@@ -13,7 +31,7 @@ const PROTECTED_SUBPATHS = ['/settings', '/orders', '/products/new'] as const
 /**
  * Prefixes that bypass all tenant/proxy logic entirely.
  */
-const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/'] as const
+const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/', '/callback'] as const
 
 const BANNER_EXCLUDED_PREFIXES = [
   '/settings', '/dashboard', '/orders', '/products/new',
@@ -63,15 +81,6 @@ function injectBanner(
 
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
-async function getOwnerSession(request: NextRequest): Promise<{ sub: string } | null> {
-  try {
-    const session = await auth0.getSession(request)
-    return session?.user?.sub ? { sub: session.user.sub } : null
-  } catch {
-    return null
-  }
-}
-
 async function getSupabaseClient() {
   const { createClient } = await import('@/lib/server')
   return createClient()
@@ -81,6 +90,17 @@ async function getSupabaseClient() {
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  // Resolve auth once per request (provider-specific): session for gating below,
+  // request headers to forward downstream, and a finalize step for response headers.
+  const { session, requestHeaders, finalize } = await prepareMiddleware(request)
+  return finalize(await handle(request, session, requestHeaders))
+}
+
+async function handle(
+  request: NextRequest,
+  session: AuthSession | null,
+  authHeaders?: Headers,
+): Promise<NextResponse> {
   const { pathname, searchParams } = request.nextUrl
   const host = request.headers.get('host') ?? ''
   const search = request.nextUrl.search
@@ -88,9 +108,15 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── 1. Auth / API / _next Bypass ─────────────────────────────────────────
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
-    if (pathname.startsWith('/auth/')) return auth0.middleware(request)
+    if (pathname.startsWith('/auth/')) {
+      const res = await authMiddleware(request)
+      // authMiddleware redirects /auth/login & /auth/sign-up to the provider. Other
+      // /auth/* routes (post-login, logout, error) render normally and must get the
+      // session request headers forwarded so withAuth() works on them.
+      return res.headers.has('location') ? res : nextResponse(authHeaders)
+    }
 
-    let response = NextResponse.next()
+    let response = nextResponse(authHeaders)
 
     if (pathname.startsWith('/api/')) {
       const origin = request.headers.get('origin')
@@ -111,7 +137,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── 2. Admin Path (/admin/*) ──────────────────────────────────────────────
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
-    const session = await auth0.getSession(request)
     if (!session?.user) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
@@ -127,17 +152,17 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         const url = request.nextUrl.clone()
         url.pathname = '/org'
         url.searchParams.set('next', subpath)
-        return NextResponse.rewrite(url)
+        return rewriteResponse(url, authHeaders)
       }
       const url = request.nextUrl.clone()
       url.pathname = `/store/${activeSlug}${subpath}`
-      return NextResponse.rewrite(url)
+      return rewriteResponse(url, authHeaders)
     }
 
     // Everything else (org, onboarding, pick, etc.) — strip /admin prefix
     const url = request.nextUrl.clone()
     url.pathname = subpath
-    return NextResponse.rewrite(url)
+    return rewriteResponse(url, authHeaders)
   }
 
 
@@ -145,7 +170,6 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // Platform admin panel — rewrites to /admin/*. Role enforcement is
   // handled by the /admin layout (must have role=admin in users table).
   if (pathname === '/sudo' || pathname.startsWith('/sudo/')) {
-    const session = await auth0.getSession(request)
     if (!session?.user) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
@@ -155,7 +179,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     const subpath = pathname.slice('/sudo'.length) || '/'
     const url = request.nextUrl.clone()
     url.pathname = `/admin${subpath === '/' ? '' : subpath}`
-    return NextResponse.rewrite(url)
+    return rewriteResponse(url, authHeaders)
   }
 
 
@@ -201,11 +225,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // Rewrite to internal store path for rendering
     const url = request.nextUrl.clone()
     url.pathname = `/store/${slug}${pathname === '/' ? '' : pathname}`
-    const rewrite = NextResponse.rewrite(url)
+    const rewrite = rewriteResponse(url, authHeaders)
 
     if (!BANNER_EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p))) {
-      const owner = await getOwnerSession(request)
-      if (owner) {
+      if (session?.user) {
         const proto = request.headers.get('x-forwarded-proto') ?? 'https'
         injectBanner(rewrite, `${proto}://menengai.cloud/admin/settings`, 'storefront')
       }
@@ -254,11 +277,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     // Rewrite to internal store path for rendering
     const url = request.nextUrl.clone()
     url.pathname = `/store/${tenantSlug}${subpath === '/' ? '' : subpath}`
-    const rewrite = NextResponse.rewrite(url)
+    const rewrite = rewriteResponse(url, authHeaders)
 
     if (!BANNER_EXCLUDED_PREFIXES.some((p) => subpath.startsWith(p))) {
-      const owner = await getOwnerSession(request)
-      if (owner) {
+      if (session?.user) {
         injectBanner(rewrite, `/admin/settings`, 'storefront')
       }
     }
@@ -268,6 +290,15 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
 
   // ── 6. Main Platform (menengai.cloud / localhost) ─────────────────────────
+
+  // Logged-in users skip the marketing homepage and go straight to their org.
+  // Done here (not in the page) so it's a clean HTTP redirect, not a rendered-page
+  // redirect that can fall back to a meta-refresh.
+  if (pathname === '/' && session?.user) {
+    const url = request.nextUrl.clone()
+    url.pathname = '/org'
+    return NextResponse.redirect(url, 307)
+  }
 
   // Redirect /store/{slug}/products/{productSlug} to the canonical path
   const productsMatch = pathname.match(/^\/store\/([^/]+)\/products\/([^/]+)(\/.*)?$/)
@@ -309,10 +340,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
         308,
       )
     }
-    return NextResponse.next()
+    return nextResponse(authHeaders)
   }
 
-  return NextResponse.next()
+  return nextResponse(authHeaders)
 }
 
 

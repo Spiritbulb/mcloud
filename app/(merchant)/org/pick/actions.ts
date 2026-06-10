@@ -1,6 +1,6 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { revalidatePath } from 'next/cache'
 
@@ -47,10 +47,10 @@ export async function getPickerData(): Promise<{
     orgs: PickerOrg[]
     userName: string | null
 }> {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { stores: [], orgs: [], userName: null }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     const { data: user } = await supabase
@@ -136,10 +136,10 @@ export async function getPickerData(): Promise<{
 // ─── Track visit ──────────────────────────────────────────────────────────────
 
 export async function trackVisit(storeId: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     await supabase
@@ -156,10 +156,10 @@ export async function createOrg(name: string): Promise<{ error?: string; org?: {
     const trimmed = name?.trim()
     if (!trimmed || trimmed.length < 2) return { error: 'Name must be at least 2 characters.' }
 
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     const slug = await uniqueOrgSlug(supabase, trimmed)
@@ -187,10 +187,10 @@ export async function updateOrg(
     orgId: string,
     patch: { name?: string; slug?: string; logo_url?: string | null }
 ): Promise<{ error?: string; slug?: string }> {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     if (!(await canManageOrg(supabase, orgId, userId))) return { error: 'Forbidden' }
@@ -223,10 +223,10 @@ export async function updateOrg(
 }
 
 export async function deleteOrg(orgId: string): Promise<{ error?: string }> {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     // Only the owner can delete an org
@@ -248,10 +248,10 @@ export async function deleteOrg(orgId: string): Promise<{ error?: string }> {
 // ─── Store ↔ org CRUD ─────────────────────────────────────────────────────────
 
 export async function moveStore(storeId: string, orgId: string | null): Promise<{ error?: string }> {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     const { data: store } = await supabase.from('stores').select('owner_id').eq('id', storeId).single()
@@ -272,10 +272,10 @@ export async function moveStore(storeId: string, orgId: string | null): Promise<
 }
 
 export async function deleteStore(storeId: string): Promise<{ error?: string }> {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
-    const { sub: userId } = session.user
+    const { id: userId } = session.user
     const supabase = await createClient()
 
     const { data: store } = await supabase.from('stores').select('owner_id').eq('id', storeId).single()

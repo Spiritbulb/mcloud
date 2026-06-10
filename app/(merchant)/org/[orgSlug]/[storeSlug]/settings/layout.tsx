@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { getStoreSettingsData } from '@/lib/store-data'
 import SettingsShell from './settings-shell'
 
@@ -17,11 +17,11 @@ export default async function SettingsLayout({
     let initialStore: any = null
     let initialError: 'unauthenticated' | 'forbidden' | 'unknown' | null = null
 
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) {
         initialError = 'unauthenticated'
     } else {
-        const result = await getStoreSettingsData(session.user.sub, storeSlug, orgSlug)
+        const result = await getStoreSettingsData(session.user.id, storeSlug, orgSlug)
         // Member of the store but wrong org slug in the URL → send them to the real one.
         if (result.error === 'wrong_org') {
             redirect(`/org/${result.correctOrgSlug}/${storeSlug}/settings`)
@@ -35,7 +35,7 @@ export default async function SettingsLayout({
                     ...data.user,
                     name: data.user?.name || session.user.name || 'Account',
                     email: data.user?.email || session.user.email || '',
-                    avatar_url: data.user?.avatar_url ?? session.user.picture ?? null,
+                    avatar_url: data.user?.avatar_url ?? session.user.avatarUrl ?? null,
                 }
             }
             initialStore = data

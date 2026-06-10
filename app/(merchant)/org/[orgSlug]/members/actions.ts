@@ -1,6 +1,6 @@
 'use server'
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
@@ -20,7 +20,7 @@ export type OrgMemberRow = {
 }
 
 export async function getOrgMembers(orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated', members: [], invites: [], currentRole: null }
 
     const supabase = await createClient()
@@ -59,12 +59,12 @@ export async function getOrgMembers(orgSlug: string) {
         orgName: org.name,
         members: safeMembers,
         invites: invites ?? [],
-        currentRole: safeMembers.find((m) => m.users?.id === session.user.sub)?.role ?? null,
+        currentRole: safeMembers.find((m) => m.users?.id === session.user.id)?.role ?? null,
     }
 }
 
 export async function inviteOrgMember(formData: FormData) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const orgId = formData.get('orgId') as string
@@ -81,7 +81,7 @@ export async function inviteOrgMember(formData: FormData) {
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {
@@ -120,11 +120,11 @@ export async function inviteOrgMember(formData: FormData) {
     if ((count ?? 0) >= 10) return { error: 'Daily invite limit reached (10/day).' }
 
     const { data: org } = await supabase.from('orgs').select('name, slug').eq('id', orgId).single()
-    const { data: inviter } = await supabase.from('users').select('name').eq('id', session.user.sub).single()
+    const { data: inviter } = await supabase.from('users').select('name').eq('id', session.user.id).single()
 
     const { data: invite, error: inviteError } = await supabase
         .from('org_invites')
-        .insert({ org_id: orgId, email, role, invited_by: session.user.sub })
+        .insert({ org_id: orgId, email, role, invited_by: session.user.id })
         .select('token')
         .single()
 
@@ -149,7 +149,7 @@ export async function inviteOrgMember(formData: FormData) {
 }
 
 export async function updateOrgMemberRole(memberId: string, orgId: string, orgSlug: string, role: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     if (!['admin', 'member'].includes(role)) return { error: 'Invalid role' }
@@ -160,7 +160,7 @@ export async function updateOrgMemberRole(memberId: string, orgId: string, orgSl
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!caller || caller.role !== 'owner') return { error: 'Only owners can change roles' }
@@ -176,7 +176,7 @@ export async function updateOrgMemberRole(memberId: string, orgId: string, orgSl
 }
 
 export async function removeOrgMember(memberId: string, orgId: string, orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -185,7 +185,7 @@ export async function removeOrgMember(memberId: string, orgId: string, orgSlug: 
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) return { error: 'Not authorized' }
@@ -202,7 +202,7 @@ export async function removeOrgMember(memberId: string, orgId: string, orgSlug: 
 }
 
 export async function revokeOrgInvite(inviteId: string, orgId: string, orgSlug: string) {
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
     const supabase = await createClient()
@@ -211,7 +211,7 @@ export async function revokeOrgInvite(inviteId: string, orgId: string, orgSlug: 
         .from('org_members')
         .select('role')
         .eq('org_id', orgId)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .maybeSingle()
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) return { error: 'Not authorized' }

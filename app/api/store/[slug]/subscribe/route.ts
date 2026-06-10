@@ -1,5 +1,5 @@
 // app/api/store/[slug]/subscribe/route.ts
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
@@ -14,7 +14,7 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
 ) {
-  const session = await auth0.getSession(request)
+  const session = await getSession(request)
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { slug } = await params
@@ -41,7 +41,7 @@ try {
     .from('store_members')
     .select('role')
     .eq('store_id', store.id)
-    .eq('user_id', session.user.sub)
+    .eq('user_id', session.user.id)
     .in('role', ['owner', 'admin'])
     .single()
 
@@ -68,7 +68,7 @@ try {
         store_id: store.id,
         store_slug: slug,
         plan_tier: plan,
-        user_id: session.user.sub,
+        user_id: session.user.id,
       },
     }),
   })

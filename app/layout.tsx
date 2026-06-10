@@ -6,7 +6,7 @@ import { ThemeColorSync } from "@/components/theme-color-sync";
 import Script from "next/script";
 import { Suspense } from "react";
 import Analytics from "@/components/analytics";
-import { Auth0Provider } from "@auth0/nextjs-auth0/client";
+import { AuthProvider } from "@/lib/auth/provider";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -163,12 +163,12 @@ export default async function RootLayout({
           <Suspense fallback={null}>
             <Analytics />   {/* ← GA route tracking goes here */}
           </Suspense>
-          <Auth0Provider>
+          <AuthProvider>
             {bannerScript && (
               <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
             )}
             {children}
-          </Auth0Provider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

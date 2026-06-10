@@ -1,10 +1,10 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 // PATCH /api/account/profile
 export async function PATCH(request: NextRequest) {
-    const session = await auth0.getSession(request)
+    const session = await getSession(request)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await request.json()
@@ -18,7 +18,7 @@ export async function PATCH(request: NextRequest) {
     const { error } = await supabase
         .from('users')
         .update({ name })
-        .eq('id', session.user.sub)
+        .eq('id', session.user.id)
 
     if (error) {
         console.error('[profile update]', error.code, error.message)

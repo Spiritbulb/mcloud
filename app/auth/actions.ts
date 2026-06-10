@@ -1,22 +1,23 @@
 'use server'
 
 import { createClient } from '@/lib/server'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
+import { LOGIN_URL } from '@/lib/auth/routes'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 
 export async function handleCallback() {
-    const session = await auth0.getSession()
-    if (!session?.user) return redirect(`/auth/login`)
+    const session = await getSession()
+    if (!session?.user) return redirect(LOGIN_URL)
 
-    const { sub: userId, email, name, picture } = session.user
+    const { id: userId, email, name, avatarUrl } = session.user
     const supabase = await createClient()
 
     await supabase.from('users').upsert({
         id: userId,
         email,
         name,
-        avatar_url: picture,
+        avatar_url: avatarUrl,
         updated_at: new Date().toISOString(),
     }, { onConflict: 'id' })
 

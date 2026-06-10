@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import Link from 'next/link'
 import { cn } from '@/lib/utils'
@@ -20,16 +20,22 @@ function getInitials(name: string) {
     return name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
 }
 
+// Resolve a store's actual org slug from the (array-or-object) nested relation.
+function orgSlugOf(store: { org?: { slug?: string } | { slug?: string }[] | null }): string | null {
+    const o = Array.isArray(store?.org) ? store.org[0] : store?.org
+    return o?.slug ?? null
+}
+
 export default async function OrgHomePage({
     params,
 }: {
     params: Promise<{ orgSlug: string }>
 }) {
     const { orgSlug } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect('/auth/login')
 
-    const userId = session.user.sub
+    const userId = session.user.id
     const supabase = await createClient()
 
     const { data: org } = await supabase
@@ -77,7 +83,7 @@ export default async function OrgHomePage({
             .order('created_at', { ascending: true }),
         supabase
             .from('store_members')
-            .select('role, store:stores(id, name, slug, logo_url, org_id)')
+            .select('role, store:stores(id, name, slug, logo_url, org_id, org:orgs(slug))')
             .eq('user_id', userId)
             .in('role', ['owner', 'admin']),
     ])
@@ -164,12 +170,14 @@ export default async function OrgHomePage({
                     </div>
                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-1 px-1 snap-x [scrollbar-width:thin]">
                         {[
-                            ...storeList.map((s) => ({ ...s, external: false as const })),
-                            ...otherStores.map((s: any) => ({ ...s, external: true as const })),
+                            // Stores in THIS org link with the current orgSlug; stores from
+                            // OTHER workspaces must link with their own org slug, not this one.
+                            ...storeList.map((s) => ({ ...s, external: false as const, linkOrgSlug: orgSlug })),
+                            ...otherStores.map((s: any) => ({ ...s, external: true as const, linkOrgSlug: orgSlugOf(s) ?? orgSlug })),
                         ].map((store: any) => (
                             <Link
                                 key={store.id}
-                                href={`/org/${orgSlug}/${store.slug}/settings`}
+                                href={`/org/${store.linkOrgSlug}/${store.slug}/settings`}
                                 className="group snap-start shrink-0 w-40 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4 hover:bg-[var(--md-sys-color-surface-variant)] hover:border-[var(--md-sys-color-primary)] transition-colors"
                             >
                                 <div className="flex items-center justify-between mb-3">

@@ -1,5 +1,5 @@
 import { redirect, notFound } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import TraderShell from './trader-shell'
 
@@ -11,7 +11,7 @@ export default async function TraderLayout({
     params: Promise<{ orgSlug: string; traderSlug: string }>
 }) {
     const { orgSlug, traderSlug } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect('/auth/login')
 
     const supabase = await createClient()
@@ -28,7 +28,7 @@ export default async function TraderLayout({
         .from('org_members')
         .select('role')
         .eq('org_id', org.id)
-        .eq('user_id', session.user.sub)
+        .eq('user_id', session.user.id)
         .single()
 
     if (!member) notFound()

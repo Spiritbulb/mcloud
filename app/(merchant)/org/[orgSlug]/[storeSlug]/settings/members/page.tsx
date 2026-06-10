@@ -1,7 +1,7 @@
 import { getMembers } from './actions'
 import MembersPage from './members-client'
 import { notFound, redirect } from 'next/navigation'
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 
 export default async function Page({
     params,
@@ -9,7 +9,7 @@ export default async function Page({
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
     const { orgSlug, storeSlug } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
     if (!session?.user) redirect(`/auth/login`)
 
     const data = await getMembers(storeSlug)

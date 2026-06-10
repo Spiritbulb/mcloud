@@ -1,4 +1,4 @@
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { redirect } from 'next/navigation'
 
@@ -8,7 +8,7 @@ export default async function AcceptInvitePage({
     params: Promise<{ token: string }>
 }) {
     const { token } = await params
-    const session = await auth0.getSession()
+    const session = await getSession()
 
     if (!session?.user) {
         redirect(`/auth/login?returnTo=/invite/${token}`)
@@ -39,7 +39,7 @@ export default async function AcceptInvitePage({
 
     await supabase.from('store_members').insert({
         store_id: invite.store_id,
-        user_id: session.user.sub,
+        user_id: session.user.id,
         role: invite.role,
         permissions: [],
     })

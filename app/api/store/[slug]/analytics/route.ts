@@ -1,6 +1,6 @@
 // app/api/store/[slug]/analytics/route.ts
 
-import { auth0 } from '@/lib/auth0'
+import { getSession } from '@/lib/auth/server'
 import { createClient } from '@/lib/server'
 import { NextResponse, NextRequest } from 'next/server'
 
@@ -11,11 +11,11 @@ export async function GET(
     request: NextRequest,
     { params }: { params: Promise<{ slug: string }> }
 ) {
-    const session = await auth0.getSession(request)
+    const session = await getSession(request)
     if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { slug } = await params
-    const userId = session.user.sub
+    const userId = session.user.id
     const supabase = await createClient()
 
     // Resolve the store and confirm the caller is a member.
