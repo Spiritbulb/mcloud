@@ -147,22 +147,22 @@ function AccountFooter({
                     railMode ? 'justify-center w-10 h-10 mx-auto' : 'w-full px-2 py-1.5'
                 )}
             >
-                <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                <span className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
                     {user.avatarUrl
                         ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
                         : getInitials(user.name)
                     }
-                </div>
+                </span>
                 {!railMode && (
                     <>
-                        <div className="flex flex-col min-w-0 flex-1 text-left">
+                        <span className="flex flex-col min-w-0 flex-1 text-left">
                             <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate leading-tight">
                                 {user.name}
                             </span>
                             <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
                                 {user.email}
                             </span>
-                        </div>
+                        </span>
                         <span className={cn(
                             'material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] transition-transform duration-150',
                             open && 'rotate-180'
