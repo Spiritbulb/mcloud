@@ -2,7 +2,7 @@
 // Fetches from Supabase at request time, cached with ISR.
 // Edit via /docs-editor → Supabase updates → page re-fetches within revalidate window.
 
-import { createClient } from "@/lib/client"
+import { createClient } from "@mcloud/db/client"
 import { cookies } from "next/headers"
 import DocsClient from "@/components/docs-client"
 import type { DocPage } from "@/lib/docs"

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 
 type Bucket = 'store-assets' | 'product-images'
 

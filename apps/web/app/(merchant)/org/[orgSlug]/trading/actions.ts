@@ -1,7 +1,7 @@
 'use server'
 
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 
 export async function getOrgTradingApps(orgSlug: string) {
     const session = await getSession()

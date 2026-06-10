@@ -3,7 +3,7 @@
 
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
-import { createCustomerClient } from '@/lib/customer-client'
+import { createCustomerClient } from '@mcloud/db/customer-client'
 import Link from 'next/link'
 import { use } from 'react'
 

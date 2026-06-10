@@ -1,0 +1,23 @@
+{
+  "name": "@mcloud/db",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./server": "./src/server.ts",
+    "./client": "./src/client.ts",
+    "./customer-server": "./src/customer-server.ts",
+    "./customer-client": "./src/customer-client.ts",
+    "./types": "./src/database.types.ts"
+  },
+  "dependencies": {
+    "@supabase/ssr": "^0.8.0",
+    "@supabase/supabase-js": "^2.98.0"
+  },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*"
+  },
+  "devDependencies": {
+    "@mcloud/config": "*"
+  }
+}

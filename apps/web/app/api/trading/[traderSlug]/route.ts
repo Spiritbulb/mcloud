@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 async function resolveApp(supabase: Awaited<ReturnType<typeof createClient>>, userId: string, traderSlug: string) {

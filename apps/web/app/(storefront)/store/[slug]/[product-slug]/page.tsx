@@ -1,5 +1,5 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { resolveTheme } from '@/src/themes/resolver'
 import type { ProductDetailData, ProductVariant } from '@/src/themes/types'

@@ -2,7 +2,7 @@
 // Provider-agnostic post-authentication logic: mirror the identity into our
 // `users` table and decide where the freshly-authenticated user lands. Called by
 // the active provider adapter's callback hook (was lib/auth0.ts#onCallback).
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import type { AuthUser } from './types'
 
 /**

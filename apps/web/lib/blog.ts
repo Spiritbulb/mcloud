@@ -2,7 +2,7 @@
 // All Supabase queries for blog posts and authors.
 // Import { createClient } from wherever your app creates its browser/server client.
 
-import { createClient } from '@/lib/client'   // adjust to your path
+import { createClient } from '@mcloud/db/client'   // adjust to your path
 import type { BlogPost, BlogAuthor } from '@/src/themes/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

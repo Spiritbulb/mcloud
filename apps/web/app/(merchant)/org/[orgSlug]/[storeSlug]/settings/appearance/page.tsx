@@ -1,4 +1,4 @@
-import { getStore, createClient } from '@/lib/server'
+import { getStore, createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import AppearanceSettingsPage from './appearance-settings-page'
 

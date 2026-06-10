@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useTransition } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 // CodeMirror lives in its own isolated module — this is what fixes the
 // Turbopack "negative timestamp" / Failed to fetch errors.
 import { MarkdownEditor } from '@/components/store/blog/editor'

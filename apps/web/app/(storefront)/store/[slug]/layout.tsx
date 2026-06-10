@@ -2,7 +2,7 @@
 import { CartProvider } from '@/contexts/CartContext'
 import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'

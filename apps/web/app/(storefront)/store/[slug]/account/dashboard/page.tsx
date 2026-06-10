@@ -4,11 +4,11 @@
 import { useEffect, useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useWishlist } from '@/contexts/WishlistContext'
-import { createCustomerClient } from '@/lib/customer-client'
+import { createCustomerClient } from '@mcloud/db/customer-client'
 import { useParams, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Package, User, MapPin, Heart, LogOut } from 'lucide-react'
-import type { Tables } from '@/app/types/database.types'
+import type { Tables } from '@mcloud/db/types'
 
 type Order = Tables<'orders'> & { order_items: Tables<'order_items'>[] }
 type Customer = Tables<'customers'>

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import type { Metadata } from 'next'
 
 interface Props {

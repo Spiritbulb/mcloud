@@ -1,6 +1,6 @@
 // app/settings/[slug]/blog/page.tsx
 
-import { createClient, getStore } from '@/lib/server'
+import { createClient, getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { BlogSettingsClient } from './blog-client'
 import type { BlogPost, BlogAuthor } from '@/src/themes/types'

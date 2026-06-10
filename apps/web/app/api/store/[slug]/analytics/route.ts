@@ -1,7 +1,7 @@
 // app/api/store/[slug]/analytics/route.ts
 
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 }

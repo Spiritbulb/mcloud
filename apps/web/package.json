@@ -8,13 +8,14 @@
     "start": "next start",
     "lint": "eslint",
     "prebuild": "node scripts/generate-theme-manifest.mjs",
-    "sb-typegen": "npx supabase gen types typescript --project-id cuptlifacdkeagrrofni > app/types/database.types.ts",
+    "sb-typegen": "npx supabase gen types typescript --project-id cuptlifacdkeagrrofni > ../../packages/db/src/database.types.ts",
     "release": "node scripts/release.mjs",
     "release:minor": "node scripts/release.mjs minor",
     "release:major": "node scripts/release.mjs major",
     "docs": "npx typedoc --entryPointStrategy expand --skipErrorChecking ./app ./components ./lib ./contexts ./hooks ./scripts ./src && start ./docs/index.html"
   },
   "dependencies": {
+    "@mcloud/db": "*",
     "@auth0/nextjs-auth0": "^4.19.0",
     "@codemirror/lang-markdown": "^6.5.0",
     "@material/web": "^2.4.1",

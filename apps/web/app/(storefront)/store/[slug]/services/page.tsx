@@ -3,7 +3,7 @@ import '@/app/(storefront)/store/[slug]/storefront.css'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 
 import ClassicServiceDetailPage from '@/src/themes/classic/ServiceDetailsPage'
 

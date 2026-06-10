@@ -3,7 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 import { X } from 'lucide-react'
 
 interface ImageUploadProps {

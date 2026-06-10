@@ -82,7 +82,7 @@ function injectBanner(
 // ─── Auth Helpers ─────────────────────────────────────────────────────────────
 
 async function getSupabaseClient() {
-  const { createClient } = await import('@/lib/server')
+  const { createClient } = await import('@mcloud/db/server')
   return createClient()
 }
 

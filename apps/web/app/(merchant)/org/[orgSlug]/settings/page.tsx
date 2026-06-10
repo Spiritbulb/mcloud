@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import OrgSettingsClient from './org-settings-client'
 
 export default async function OrgSettingsPage({

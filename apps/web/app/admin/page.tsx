@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { createClient } from "@/lib/client"
+import { createClient } from "@mcloud/db/client"
 import Link from "next/link"
 
 export const metadata: Metadata = {

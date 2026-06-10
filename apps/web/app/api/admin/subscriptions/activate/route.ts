@@ -1,6 +1,6 @@
 // app/api/admin/subscriptions/activate/route.ts
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {

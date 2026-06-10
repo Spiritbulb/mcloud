@@ -1,5 +1,5 @@
 // app/api/store/[slug]/reviews/route.ts
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(

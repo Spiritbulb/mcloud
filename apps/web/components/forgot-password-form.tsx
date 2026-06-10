@@ -1,7 +1,7 @@
 'use client'
 
 import { cn } from '@/lib/utils'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 import { Button } from '@/components/ui/button'
 import {
   Card,

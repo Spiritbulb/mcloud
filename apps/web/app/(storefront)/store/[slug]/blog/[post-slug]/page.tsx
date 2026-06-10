@@ -1,5 +1,5 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { markdownToHtml } from '@/lib/md'
 import type { BlogPost } from '@/src/themes/types'

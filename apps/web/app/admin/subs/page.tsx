@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/client"
+import { createClient } from "@mcloud/db/client"
 import type { Metadata } from "next"
 import SubscriptionsClient from "@/components/subscriptions-client"
 

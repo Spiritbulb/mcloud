@@ -3,7 +3,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
 import type { User, Session } from '@supabase/supabase-js'
-import { createCustomerClient } from '@/lib/customer-client'
+import { createCustomerClient } from '@mcloud/db/customer-client'
 
 interface CustomerAuthContextType {
     user: User | null

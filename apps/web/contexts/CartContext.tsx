@@ -1,7 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
-import { createClient } from '@/lib/client';
+import { createClient } from '@mcloud/db/client';
 
 export interface CartItem {
     variantId: string;

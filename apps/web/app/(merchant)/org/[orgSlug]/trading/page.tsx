@@ -1,6 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import OrgShell from '../org-shell'
 import TradingClient from './trading-client'
 import { getOrgTradingApps } from './actions'

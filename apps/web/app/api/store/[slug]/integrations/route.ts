@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 
 interface KVNamespace {
     get(key: string, type: 'json'): Promise<any>

@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { createClient } from '@/lib/client'
-import type { Tables } from '@/app/types/database.types'
+import { createClient } from '@mcloud/db/client'
+import type { Tables } from '@mcloud/db/types'
 import { Switch } from '@/components/ui/switch'
 import { cn } from '@/lib/utils'
 import { motion, AnimatePresence } from 'framer-motion'

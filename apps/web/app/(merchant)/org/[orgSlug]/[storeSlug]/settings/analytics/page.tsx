@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getStore } from '@/lib/server'
+import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import AnalyticsClient from './analytics-client'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 import { SaveBar, SaveToast } from '../settings-primitives'
 import AppearanceSettings from '@/components/store/appearance-settings'
 

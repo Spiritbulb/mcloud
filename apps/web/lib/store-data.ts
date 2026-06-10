@@ -3,7 +3,7 @@
 // /api/store/[slug] (so client components keep working). Querying Supabase
 // directly removes a full network round-trip on every settings page load.
 
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 
 export type StoreSettingsResult =
     | { error: 'forbidden' | 'not_found' | 'unknown'; data: null }

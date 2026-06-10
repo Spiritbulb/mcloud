@@ -1,6 +1,6 @@
 // lib/customer-client.ts
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/app/types/database.types'
+import type { Database } from './database.types'
 
 export function createCustomerClient() {
     return createBrowserClient<Database>(

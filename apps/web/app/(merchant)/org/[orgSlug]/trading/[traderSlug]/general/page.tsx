@@ -1,5 +1,5 @@
 import { notFound } from 'next/navigation'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import GeneralClient from './general-client'
 
 export default async function Page({ params }: { params: Promise<{ orgSlug: string; traderSlug: string }> }) {

@@ -2,7 +2,7 @@
 
 import { getSession } from '@/lib/auth/server'
 import { updateUserProfile, deleteUser, getLoginHistory } from '@/lib/auth/management'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 

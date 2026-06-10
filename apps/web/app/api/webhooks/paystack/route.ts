@@ -1,5 +1,5 @@
 // app/api/webhooks/paystack/route.ts
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 

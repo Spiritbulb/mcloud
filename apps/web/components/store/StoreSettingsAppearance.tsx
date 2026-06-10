@@ -15,7 +15,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Loader2, Save } from 'lucide-react'

@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN!

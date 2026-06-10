@@ -3,7 +3,7 @@
 // Handler (not a page) so the redirect is a clean HTTP redirect.
 import { NextResponse, type NextRequest } from 'next/server'
 import { getCurrentUser } from '@/lib/auth/server'
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 import { LOGIN_URL, SIGNUP_URL } from '@/lib/auth/routes'
 
 export async function GET(request: NextRequest) {

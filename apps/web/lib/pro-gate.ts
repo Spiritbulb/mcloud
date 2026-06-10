@@ -1,5 +1,5 @@
 // lib/pro-gate.ts
-import { createClient } from '@/lib/server'
+import { createClient } from '@mcloud/db/server'
 
 export async function isStorePro(storeId: string): Promise<boolean> {
     const supabase = await createClient()

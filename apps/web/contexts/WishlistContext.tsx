@@ -2,7 +2,7 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { createCustomerClient } from '@/lib/customer-client'
+import { createCustomerClient } from '@mcloud/db/customer-client'
 import { useCustomerAuth } from './CustomerAuthContext'
 
 interface WishlistContextType {

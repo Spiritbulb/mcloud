@@ -1,6 +1,6 @@
 // app/api/payments/paypal/capture-order/route.ts  
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient as createServerClient } from '@/lib/server';
+import { createClient as createServerClient } from '@mcloud/db/server';
 
 const PAYPAL_BASE = process.env.PAYPAL_MODE === 'live'
   ? 'https://api-m.paypal.com'

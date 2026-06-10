@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 import { SettingsSection, SettingsField, SaveBar, SaveToast } from '../../settings-primitives'
 
 export default function SocialSettingsPage({ store }: { store: any }) {

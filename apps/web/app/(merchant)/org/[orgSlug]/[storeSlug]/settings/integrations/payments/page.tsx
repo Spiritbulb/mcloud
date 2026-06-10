@@ -1,4 +1,4 @@
-import { getStore } from '@/lib/server'
+import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import PaymentSettings from '@/components/store/payment-settings'
 

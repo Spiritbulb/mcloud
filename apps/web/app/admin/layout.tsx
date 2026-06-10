@@ -1,5 +1,5 @@
 import { getSession } from '@/lib/auth/server'
-import { createClient } from "@/lib/client"
+import { createClient } from "@mcloud/db/client"
 import { redirect } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
 

@@ -2,6 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
     output: 'standalone',
+    transpilePackages: ['@mcloud/db'],
     turbopack: {},
     allowedDevOrigins: ['http://localhost:3000'],
     images: {

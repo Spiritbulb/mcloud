@@ -1,6 +1,6 @@
 // hooks/use-track-visit.ts
 import { useEffect } from 'react'
-import { createClient } from '@/lib/client'
+import { createClient } from '@mcloud/db/client'
 
 export function useTrackVisit(storeId: string, userId: string) {
     useEffect(() => {
