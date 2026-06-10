@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Search, X, Loader2, BookOpen, Clock, ArrowRight, Tag } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@mcloud/ui/card'
+import { Input } from '@mcloud/ui/input'
 import type { BlogListPageProps, BlogPost } from '../types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 export function SettingSection({ label, children }: { label: string; children: React.ReactNode }) {
     return (

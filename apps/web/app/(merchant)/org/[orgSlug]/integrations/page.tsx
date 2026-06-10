@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@/lib/auth/server'
 import { createClient } from '@mcloud/db/server'
 import OrgShell from '../org-shell'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (

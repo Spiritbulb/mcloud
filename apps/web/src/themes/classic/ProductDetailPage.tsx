@@ -7,9 +7,9 @@ import {
     Shield, Truck, RefreshCw, Loader2,
     ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Card } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { Button } from '@mcloud/ui/button'
+import { Card } from '@mcloud/ui/card'
+import { cn } from '@mcloud/ui/utils'
 import type { ProductDetailPageProps } from '../types'
 import { WishlistButton } from '@/components/store/WishlistButton'
 import { ReviewsSection } from './ReviewsSection'

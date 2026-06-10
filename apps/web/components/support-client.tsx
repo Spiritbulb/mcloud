@@ -6,7 +6,7 @@ import type { Variants } from "framer-motion"
 import { Search, Mail } from "lucide-react"
 
 // Assuming Button component exists. If not, this might need an update.
-import { Button } from "@/components/ui/button"
+import { Button } from "@mcloud/ui/button"
 
 const fadeUp: Variants = {
     hidden: { opacity: 0, y: 32 },

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import Link from 'next/link'
 import type { TabId } from './settings-shell'
 import { useRouter } from 'next/navigation'

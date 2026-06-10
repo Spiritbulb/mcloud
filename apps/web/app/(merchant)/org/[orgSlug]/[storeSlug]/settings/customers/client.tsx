@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { Search, Users } from 'lucide-react'
-import { Input } from '@/components/ui/input'
-import { Badge } from '@/components/ui/badge'
+import { Input } from '@mcloud/ui/input'
+import { Badge } from '@mcloud/ui/badge'
 
 type Customer = {
     id: string

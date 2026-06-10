@@ -2,18 +2,18 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@mcloud/db/client'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
+import { Badge } from '@mcloud/ui/badge'
+import { Card, CardContent } from '@mcloud/ui/card'
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select'
+} from '@mcloud/ui/select'
 import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronDown, ChevronUp, ShoppingBag } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 interface OrderItem {
     id: string

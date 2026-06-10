@@ -4,7 +4,7 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@/lib/storefront-url'
 import type { TabId } from './settings-shell'
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 import '@material/web/progress/circular-progress.js'
 

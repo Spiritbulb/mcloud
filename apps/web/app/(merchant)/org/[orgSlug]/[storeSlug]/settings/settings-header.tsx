@@ -9,9 +9,9 @@ import {
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@mcloud/ui/dropdown-menu'
 import { ProBadge, useUpgrade, UpgradeModal } from '@/components/pro'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 

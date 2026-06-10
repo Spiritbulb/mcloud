@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { SettingsSection, SettingsField } from '@/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
 import { THEMES } from '../../src/themes'
@@ -14,9 +14,9 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from '@mcloud/ui/select'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

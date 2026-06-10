@@ -1,17 +1,17 @@
 'use client'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { createClient } from '@mcloud/db/client'
-import { Button } from '@/components/ui/button'
+import { Button } from '@mcloud/ui/button'
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+} from '@mcloud/ui/card'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 

@@ -3,14 +3,14 @@
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog'
+} from '@mcloud/ui/dialog'
 import {
     DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
     DropdownMenuSeparator, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent,
-} from '@/components/ui/dropdown-menu'
+} from '@mcloud/ui/dropdown-menu'
 import { trackVisit, createOrg, moveStore, deleteStore, type PickerStore, type PickerOrg } from './actions'
 
 // ─── MSO ──────────────────────────────────────────────────────────────────────

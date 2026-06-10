@@ -3,10 +3,10 @@
 import { useState, useTransition } from 'react'
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import {
     Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
-} from '@/components/ui/dialog'
+} from '@mcloud/ui/dialog'
 import { updateOrg, deleteOrg } from '@/app/(merchant)/org/actions'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {

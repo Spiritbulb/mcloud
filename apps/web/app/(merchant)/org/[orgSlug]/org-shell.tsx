@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { OrgNav, MobileOrgNav, ORG_TABS } from './org-nav'
 import type { OrgTabId } from './org-nav'
 

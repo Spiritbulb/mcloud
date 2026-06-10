@@ -9,10 +9,10 @@ import {
     Shield, Info, AlertCircle, Phone, Mail, MessageCircle,
 } from 'lucide-react'
 import { convertKEStoUSD, formatKES, formatUSD } from '@/lib/currency'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { Button } from '@mcloud/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@mcloud/ui/card'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
 import { CopyButton } from '@/components/animate-ui/components/buttons/copy'
 import type { CartPageProps, GuestDetails } from '../types'
 

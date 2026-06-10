@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { motion } from "motion/react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn } from "@mcloud/ui/utils";
 
 interface Feature {
     step?: string;

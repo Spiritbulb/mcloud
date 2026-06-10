@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

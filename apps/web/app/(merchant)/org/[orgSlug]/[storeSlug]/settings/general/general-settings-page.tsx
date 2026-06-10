@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react'
 import { createClient } from '@mcloud/db/client'
 import type { Tables } from '@mcloud/db/types'
-import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
+import { Switch } from '@mcloud/ui/switch'
+import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
 
 type Store = Tables<'stores'>

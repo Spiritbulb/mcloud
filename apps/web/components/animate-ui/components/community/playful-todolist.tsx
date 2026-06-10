@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { motion, type Transition } from 'motion/react';
-import { Label } from '@/components/ui/label';
+import { Label } from '@mcloud/ui/label';
 import { Checkbox } from '@/components/animate-ui/primitives/radix/checkbox';
 
 const checkboxItems = [

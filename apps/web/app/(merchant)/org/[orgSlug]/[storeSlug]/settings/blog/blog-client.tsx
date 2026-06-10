@@ -16,25 +16,25 @@ import {
     Globe, Lock, User, Clock, Tag, X,
     BookOpen, AlertCircle, CheckCircle2, ArrowLeft, Users,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Badge } from '@/components/ui/badge'
+import { Button } from '@mcloud/ui/button'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
+import { Textarea } from '@mcloud/ui/textarea'
+import { Badge } from '@mcloud/ui/badge'
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from '@/components/ui/select'
+} from '@mcloud/ui/select'
 import {
     Dialog,
     DialogContent,
     DialogHeader,
     DialogTitle,
     DialogFooter,
-} from '@/components/ui/dialog'
+} from '@mcloud/ui/dialog'
 import {
     AlertDialog,
     AlertDialogAction,
@@ -44,8 +44,8 @@ import {
     AlertDialogFooter,
     AlertDialogHeader,
     AlertDialogTitle,
-} from '@/components/ui/alert-dialog'
-import { cn } from '@/lib/utils'
+} from '@mcloud/ui/alert-dialog'
+import { cn } from '@mcloud/ui/utils'
 import type { BlogPost, BlogAuthor } from '@/src/themes/types'
 
 // Radix Select forbids empty-string values (it uses "" internally to mean

@@ -23,9 +23,9 @@ import {
     Shield,
 } from 'lucide-react'
 import { MdxContent } from '@/components/MdxContent'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
-import { cn } from '@/lib/utils'
+import { Button } from '@mcloud/ui/button'
+import { Card, CardContent } from '@mcloud/ui/card'
+import { cn } from '@mcloud/ui/utils'
 import type { ServiceDetailsPageProps, ServicePackage } from '../types'
 
 // ─── Availability badge ───────────────────────────────────────────────────────

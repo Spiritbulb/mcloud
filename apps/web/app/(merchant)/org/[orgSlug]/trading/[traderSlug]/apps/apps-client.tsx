@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { updateTraderField } from '../actions'
 import { SettingSection, SaveButton } from '../settings-primitives'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 type AppOption = {
     id: string

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { motion } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { completeOnboarding } from '@/app/(merchant)/org/actions'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {

@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { createTradingApp } from './actions'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {

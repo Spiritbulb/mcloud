@@ -1,7 +1,7 @@
 'use client'
 
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { cn } from '@mcloud/ui/utils'
+import { Button } from '@mcloud/ui/button'
 
 function Form({ className, onSwitch }: { className?: string; onSwitch?: () => void }) {
   return (

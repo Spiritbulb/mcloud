@@ -3,14 +3,14 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuSeparator,
     DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from '@mcloud/ui/dropdown-menu'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { createClient } from '@mcloud/db/client'
-import { Button } from '@/components/ui/button'
+import { Button } from '@mcloud/ui/button'
 import { useRouter } from 'next/navigation'
 
 export function LogoutButton() {

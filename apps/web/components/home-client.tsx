@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { useState, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { CookieBanner } from './cookie-banner'
 
 // ─── Types ────────────────────────────────────────────────────────────────────

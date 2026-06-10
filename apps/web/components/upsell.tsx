@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { motion, useScroll, useTransform, Variants } from 'framer-motion'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardHeader, CardTitle } from '@mcloud/ui/card'
+import { Button } from '@mcloud/ui/button'
 import { Sparkles } from 'lucide-react'
 import AuthPopup from "@/lib/auth"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from './ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@mcloud/ui/dialog'
 
 // Determine which video to show based on day of year
 const useAlternatingTheme = () => {

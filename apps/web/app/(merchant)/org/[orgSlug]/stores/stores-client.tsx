@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { createStore, deleteStore } from './actions'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {

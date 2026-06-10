@@ -3,8 +3,8 @@
 
 import { useState, useEffect } from 'react'
 import { Star, BadgeCheck } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { cn } from '@mcloud/ui/utils'
+import { Button } from '@mcloud/ui/button'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useParams, useRouter } from 'next/navigation'
 

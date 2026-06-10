@@ -2,7 +2,7 @@
 
 import { useState, useTransition, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 
 const INTERESTS = [
     { id: 'storefront', label: 'E-commerce storefront' },

@@ -1,13 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
-import { Separator } from '@/components/ui/separator'
-import { Switch } from '@/components/ui/switch'
+import { Button } from '@mcloud/ui/button'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
+import { Badge } from '@mcloud/ui/badge'
+import { Card, CardContent } from '@mcloud/ui/card'
+import { Separator } from '@mcloud/ui/separator'
+import { Switch } from '@mcloud/ui/switch'
 import { Check, ExternalLink, Phone, Loader2, CreditCard, Wallet } from 'lucide-react'
 
 interface IntegrationData {

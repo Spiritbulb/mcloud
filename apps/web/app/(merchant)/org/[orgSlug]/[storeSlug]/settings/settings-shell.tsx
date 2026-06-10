@@ -2,14 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
-import { SidebarProvider } from '@/components/ui/sidebar'
+import { SidebarProvider } from '@mcloud/ui/sidebar'
 import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
 import type { NavSection, NavStore } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
 
-import { cn } from '@/lib/utils'
+import { cn } from '@mcloud/ui/utils'
 import { useOrgContext } from '@/app/(merchant)/org/[orgSlug]/org-context'
 
 // ─── Sections ────────────────────────────────────────────────────────────────

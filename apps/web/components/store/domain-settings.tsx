@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent } from '@/components/ui/card'
+import { Button } from '@mcloud/ui/button'
+import { Input } from '@mcloud/ui/input'
+import { Label } from '@mcloud/ui/label'
+import { Card, CardContent } from '@mcloud/ui/card'
 import { Check, CheckCircle, Loader2 } from 'lucide-react'
 
 export default function DomainSettings({
