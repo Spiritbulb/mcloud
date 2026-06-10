@@ -2,9 +2,9 @@
 // /org/pick is no longer the hub — redirect to the user's first org (or onboarding).
 // Route Handler (not a page) so the redirect is a clean HTTP redirect.
 import { NextResponse, type NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/auth/server'
+import { getCurrentUser } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
-import { LOGIN_URL } from '@/lib/auth/routes'
+import { LOGIN_URL } from '@mcloud/auth/routes'
 
 export async function GET(request: NextRequest) {
     const user = await getCurrentUser()

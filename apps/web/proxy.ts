@@ -1,5 +1,5 @@
-import { authMiddleware, prepareMiddleware } from '@/lib/auth/server'
-import type { AuthSession } from '@/lib/auth/types'
+import { authMiddleware, prepareMiddleware } from '@mcloud/auth/server'
+import type { AuthSession } from '@mcloud/auth/types'
 import { type NextRequest, NextResponse } from 'next/server'
 
 

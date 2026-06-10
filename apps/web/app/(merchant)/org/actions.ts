@@ -1,6 +1,6 @@
 'use server'
 
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'

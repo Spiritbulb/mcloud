@@ -1,0 +1,26 @@
+{
+  "name": "@mcloud/auth",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./server": "./src/server.ts",
+    "./management": "./src/management.ts",
+    "./routes": "./src/routes.ts",
+    "./callback": "./src/callback.ts",
+    "./provider": "./src/provider.tsx",
+    "./types": "./src/types.ts"
+  },
+  "dependencies": {
+    "@mcloud/db": "*",
+    "@workos-inc/authkit-nextjs": "*",
+    "@auth0/nextjs-auth0": "*"
+  },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*"
+  },
+  "devDependencies": {
+    "@mcloud/config": "*"
+  }
+}

@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { getStoreSettingsData } from '@/lib/store-data'
 import { NextResponse, NextRequest } from 'next/server'
 

@@ -2,7 +2,7 @@
 // Protected by Auth0 session + role = 'admin' check in your users table.
 // No passphrase needed — remove DOCS_EDITOR_PASSPHRASE from your env.
 
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { createClient } from "@mcloud/db/client"
 import { revalidatePath } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"

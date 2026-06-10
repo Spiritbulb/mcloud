@@ -1,5 +1,5 @@
 // app/api/store/[slug]/subscribe/route.ts
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 

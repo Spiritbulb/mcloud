@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import OnboardingClient from './onboarding-client'
 

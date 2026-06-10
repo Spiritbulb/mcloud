@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { getStoreOverview } from '@/lib/store-data'
 import SettingsHomeClient from './settings-home-client'
 

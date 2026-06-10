@@ -3,9 +3,9 @@
 // Handler, not a page: returns a real HTTP redirect so there's no layout-hydration
 // race with the redirect (which caused a client-side removeChild error as a page).
 import { NextResponse, type NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/auth/server'
+import { getCurrentUser } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
-import { LOGIN_URL } from '@/lib/auth/routes'
+import { LOGIN_URL } from '@mcloud/auth/routes'
 
 export async function GET(request: NextRequest) {
     const user = await getCurrentUser()

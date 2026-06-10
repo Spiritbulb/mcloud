@@ -6,7 +6,7 @@ import { ThemeColorSync } from "@/components/theme-color-sync";
 import Script from "next/script";
 import { Suspense } from "react";
 import Analytics from "@/components/analytics";
-import { AuthProvider } from "@/lib/auth/provider";
+import { AuthProvider } from "@mcloud/auth/provider";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });

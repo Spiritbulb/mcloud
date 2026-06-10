@@ -2,9 +2,9 @@
 // /settings — resolve the user's store and redirect into its settings. Route
 // Handler (not a page) so the redirect is a clean HTTP redirect.
 import { NextResponse, type NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/auth/server'
+import { getCurrentUser } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
-import { LOGIN_URL, SIGNUP_URL } from '@/lib/auth/routes'
+import { LOGIN_URL, SIGNUP_URL } from '@mcloud/auth/routes'
 
 export async function GET(request: NextRequest) {
     const user = await getCurrentUser()

@@ -1,5 +1,5 @@
 // components/header-wrapper.tsx
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 import { Header } from './header'
 
 export async function HeaderWrapper() {

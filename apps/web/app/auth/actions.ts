@@ -1,8 +1,8 @@
 'use server'
 
 import { createClient } from '@mcloud/db/server'
-import { getSession } from '@/lib/auth/server'
-import { LOGIN_URL } from '@/lib/auth/routes'
+import { getSession } from '@mcloud/auth/server'
+import { LOGIN_URL } from '@mcloud/auth/routes'
 import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 

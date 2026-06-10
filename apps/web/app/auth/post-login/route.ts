@@ -7,9 +7,9 @@
 // Provider-agnostic: uses lib/auth, not WorkOS directly. Mirrors the identity into
 // our users table and routes to the user's first org (or onboarding).
 import { NextResponse, type NextRequest } from 'next/server'
-import { getCurrentUser } from '@/lib/auth/server'
-import { onAuthenticated } from '@/lib/auth/callback'
-import { LOGIN_URL } from '@/lib/auth/routes'
+import { getCurrentUser } from '@mcloud/auth/server'
+import { onAuthenticated } from '@mcloud/auth/callback'
+import { LOGIN_URL } from '@mcloud/auth/routes'
 
 export async function GET(request: NextRequest) {
     const user = await getCurrentUser()

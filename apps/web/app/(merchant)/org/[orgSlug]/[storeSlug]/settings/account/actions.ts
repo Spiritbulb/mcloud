@@ -1,7 +1,7 @@
 'use server'
 
-import { getSession } from '@/lib/auth/server'
-import { updateUserProfile, deleteUser, getLoginHistory } from '@/lib/auth/management'
+import { getSession } from '@mcloud/auth/server'
+import { updateUserProfile, deleteUser, getLoginHistory } from '@mcloud/auth/management'
 import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'

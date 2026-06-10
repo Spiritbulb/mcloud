@@ -1,7 +1,7 @@
 import { getMembers } from './actions'
 import MembersPage from './members-client'
 import { notFound, redirect } from 'next/navigation'
-import { getSession } from '@/lib/auth/server'
+import { getSession } from '@mcloud/auth/server'
 
 export default async function Page({
     params,
