@@ -74,11 +74,12 @@ export const viewport: Viewport = {
   // Draw content under the system bars so the TWA feels edge-to-edge (native).
   // Pair with env(safe-area-inset-*) padding in globals.css.
   viewportFit: "cover",
-  // Adaptive system bars: off-white in light mode, dark shell in dark mode.
-  // Chrome/TWA reads this to tint the Android status bar.
+  // Adaptive system bars matching the app `--background` token (globals.css):
+  // light #FCFCFF, dark #1A1C1E. ThemeColorSync overrides these with the
+  // resolved theme once hydrated; these are the SSR/no-JS first-paint values.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
-    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+    { media: "(prefers-color-scheme: light)", color: "#FCFCFF" },
+    { media: "(prefers-color-scheme: dark)", color: "#1A1C1E" },
   ],
 };
 

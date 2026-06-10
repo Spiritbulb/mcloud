@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@/lib/storefront-url'
 import type { TabId } from './settings-shell'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -367,7 +368,7 @@ function WelcomeHero({ store, loading, onVisit }: {
                             </span>
                         )}
                         <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-                            {loading ? <Sk className="h-3 w-40 inline-block" /> : `menengai.cloud/s/${store?.slug ?? ''}`}
+                            {loading ? <Sk className="h-3 w-40 inline-block" /> : storefrontDisplayUrl(store?.slug ?? '')}
                         </p>
                     </div>
                     {headline
@@ -384,10 +385,17 @@ function WelcomeHero({ store, loading, onVisit }: {
 
                 {!loading && store && (
                     <a
-                        href={`/s/${store.slug}`}
+                        href={storefrontUrl(store.slug)}
                         target="_blank"
                         rel="noopener noreferrer"
-                        onClick={onVisit}
+                        onClick={(e) => {
+                            // Storefront is customer-facing: force it out of the
+                            // TWA shell into the browser rather than navigating
+                            // inside the merchant app.
+                            e.preventDefault()
+                            onVisit()
+                            openExternal(storefrontUrl(store.slug))
+                        }}
                         className={cn(
                             'shrink-0 inline-flex items-center gap-1.5 h-9 px-4 rounded-full',
                             'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
@@ -407,10 +415,10 @@ function WelcomeHero({ store, loading, onVisit }: {
 
 function ShareStore({ slug }: { slug: string }) {
     const [copied, setCopied] = useState(false)
-    const url = `menengai.cloud/s/${slug}`
+    const url = storefrontDisplayUrl(slug)
 
     const copy = () => {
-        navigator.clipboard?.writeText(`https://${url}`).then(() => {
+        navigator.clipboard?.writeText(storefrontUrl(slug)).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 1800)
         })

@@ -13,9 +13,13 @@ import { useTheme } from "next-themes"
  * Without this, OS=light + user-forced-dark gives a light status bar over a
  * dark page. This effect rewrites the meta so the bar always matches the page.
  */
+// These MUST match the `--background` token in globals.css so the status bar
+// blends into the app surface (no seam). Keep in sync if --background changes:
+//   light :root  --background: 252 252 255  -> #FCFCFF
+//   .dark        --background:  26  28  30  -> #1A1C1E
 const COLORS = {
-  light: "#fafafa",
-  dark: "#0a0a0a",
+  light: "#FCFCFF",
+  dark: "#1A1C1E",
 } as const
 
 export function ThemeColorSync() {
