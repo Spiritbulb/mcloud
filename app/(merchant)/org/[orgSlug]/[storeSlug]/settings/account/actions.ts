@@ -184,11 +184,9 @@ export async function getSessions() {
     return { sessions }
 }
 
-// ─── Revoke session (UI only — Auth0 logs are read-only on free plan) ──────────
-
-export async function revokeSession(_sessionId: string) {
-    return { success: true }
-}
+// Note: real per-device session revocation requires Auth0's Sessions API, which
+// is gated behind a paid plan (returns 403 feature_not_enabled on free). The list
+// above is read-only login history. Real revoke lands with the WorkOS migration.
 
 // ─── Delete account ────────────────────────────────────────────────────────────
 

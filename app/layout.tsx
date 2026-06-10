@@ -1,7 +1,8 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { headers } from "next/headers";
 import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import Script from "next/script";
 import { Suspense } from "react";
 import Analytics from "@/components/analytics";
@@ -67,6 +68,20 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  // Draw content under the system bars so the TWA feels edge-to-edge (native).
+  // Pair with env(safe-area-inset-*) padding in globals.css.
+  viewportFit: "cover",
+  // Adaptive system bars: off-white in light mode, dark shell in dark mode.
+  // Chrome/TWA reads this to tint the Android status bar.
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafafa" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a0a0a" },
+  ],
+};
+
 
 export default async function RootLayout({
   children,
@@ -89,8 +104,7 @@ export default async function RootLayout({
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Menengai" />
         <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
-        {/* Keep the system bars dark to match the app shell; avoids a coloured status bar */}
-        <meta name="theme-color" content="#0a0a0a" />
+        {/* theme-color (incl. light/dark variants) is set via the `viewport` export above */}
         <link
           rel="stylesheet"
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
@@ -144,6 +158,7 @@ export default async function RootLayout({
           defaultTheme="system"
           enableSystem
         >
+          <ThemeColorSync />
           <Suspense fallback={null}>
             <Analytics />   {/* ← GA route tracking goes here */}
           </Suspense>

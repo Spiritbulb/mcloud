@@ -10,8 +10,7 @@ import {
     updateDisplayName,
     updateAvatar,
     deleteAccount,
-    getSessions,
-    revokeSession
+    getSessions
 } from './actions'
 import { useEffect } from 'react'
 
@@ -277,7 +276,6 @@ function EmailSection({ user }: { user: User }) {
 function SessionsSection() {
     const [sessions, setSessions] = useState<SessionEntry[]>([])
     const [loading, setLoading] = useState(true)
-    const [revoking, setRevoking] = useState<string | null>(null)
 
     useEffect(() => {
         getSessions()
@@ -289,17 +287,10 @@ function SessionsSection() {
             .finally(() => setLoading(false))
     }, [])
 
-    const revoke = async (id: string) => {
-        setRevoking(id)
-        await revokeSession(id)
-        setSessions((prev) => prev.filter((s) => s.id !== id))
-        setRevoking(null)
-    }
-
     return (
         <Section
-            title="Active sessions"
-            description="Recent devices that have signed in to your account."
+            title="Recent login activity"
+            description="Devices and locations that recently signed in to your account. If you see something you don't recognise, change your password."
         >
             {loading ? (
                 <div className="space-y-2">
@@ -308,7 +299,7 @@ function SessionsSection() {
                     ))}
                 </div>
             ) : sessions.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No recent sessions found.</p>
+                <p className="text-sm text-muted-foreground">No recent login activity found.</p>
             ) : (
                 <div className="divide-y divide-border rounded-md border border-border overflow-hidden">
                     {sessions.map((s) => (
@@ -326,7 +317,7 @@ function SessionsSection() {
                                         {s.device}
                                         {s.current && (
                                             <span className="ml-2 text-[10px] font-semibold uppercase tracking-wider text-green-600 dark:text-green-400">
-                                                current
+                                                most recent
                                             </span>
                                         )}
                                     </p>
@@ -335,16 +326,6 @@ function SessionsSection() {
                                     </p>
                                 </div>
                             </div>
-                            {!s.current && (
-                                <button
-                                    onClick={() => revoke(s.id)}
-                                    disabled={revoking === s.id}
-                                    title="Removes from this list. For full security, change your password."
-                                    className="ml-4 text-[12px] text-destructive hover:underline underline-offset-2 disabled:opacity-50 shrink-0"
-                                >
-                                    {revoking === s.id ? 'Removing…' : 'Remove'}
-                                </button>
-                            )}
                         </div>
                     ))}
                 </div>
