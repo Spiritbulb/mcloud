@@ -28,27 +28,24 @@ export function ThemeColorSync() {
   useEffect(() => {
     const color = resolvedTheme === "dark" ? COLORS.dark : COLORS.light
 
-    // Collapse the two media-scoped tags into a single active one so our
-    // value wins regardless of OS scheme, then keep it updated.
-    const tags = document.querySelectorAll<HTMLMetaElement>(
-      'meta[name="theme-color"]',
+    // Own ONE dedicated <meta> tag and update its content. Crucially, do NOT
+    // touch the per-scheme <meta theme-color> tags React renders from
+    // viewport.themeColor: removing a React-managed DOM node desyncs React's
+    // fiber tree from the real DOM and crashes the next client navigation with
+    // "Cannot read properties of null (reading 'removeChild')" in
+    // commitDeletionEffectsOnFiber. Our tag carries no `media` and is appended
+    // last, so the browser uses it regardless of OS scheme — the status bar
+    // follows the *resolved* theme, which is the whole point.
+    let meta = document.head.querySelector<HTMLMetaElement>(
+      "meta[data-theme-color-sync]",
     )
-    if (tags.length === 0) {
-      const meta = document.createElement("meta")
-      meta.name = "theme-color"
-      meta.content = color
+    if (!meta) {
+      meta = document.createElement("meta")
+      meta.setAttribute("name", "theme-color")
+      meta.setAttribute("data-theme-color-sync", "")
       document.head.appendChild(meta)
-      return
     }
-    tags.forEach((tag, i) => {
-      if (i === 0) {
-        tag.removeAttribute("media")
-        tag.content = color
-      } else {
-        // Drop the now-redundant scheme-specific duplicates.
-        tag.remove()
-      }
-    })
+    meta.setAttribute("content", color)
   }, [resolvedTheme])
 
   return null
