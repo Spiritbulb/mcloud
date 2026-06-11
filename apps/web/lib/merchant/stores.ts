@@ -38,6 +38,86 @@ export function canManage(role: Role | null): boolean {
     return role === 'owner' || role === 'admin'
 }
 
+export type StoreAccess =
+    | { error: 'not_found' | 'forbidden'; storeId: null; role: null }
+    | { error: null; storeId: string; role: Role }
+
+/**
+ * Resolve a store by slug and confirm the user can access it (store member OR
+ * member of the store's org). Returns the storeId + effective role. The single
+ * gate every store-scoped mobile endpoint calls.
+ */
+export async function requireStoreAccess(slug: string, userId: string): Promise<StoreAccess> {
+    const supabase = await createClient()
+    const { data: store } = await supabase
+        .from('stores')
+        .select('id, org_id')
+        .eq('slug', slug)
+        .single()
+    if (!store) return { error: 'not_found', storeId: null, role: null }
+
+    let role = await getStoreRole(store.id, userId)
+    if (!role && store.org_id) role = await getOrgRole(store.org_id, userId)
+    if (!role) return { error: 'forbidden', storeId: null, role: null }
+
+    return { error: null, storeId: store.id, role }
+}
+
+export interface StoreHub {
+    id: string
+    name: string
+    slug: string
+    logo_url: string | null
+    is_pro: boolean
+    custom_domain: string | null
+    orgSlug: string | null
+    role: Role
+    canManage: boolean
+}
+
+export type StoreHubResult =
+    | { error: 'not_found' | 'forbidden'; store: null }
+    | { error: null; store: StoreHub }
+
+/**
+ * Resolve a single store for the hub screen, guarding access. A user may view a
+ * store if they're a store member OR a member of the store's org (mirrors web).
+ * Returns the store + the user's effective role.
+ */
+export async function getStoreHub(slug: string, userId: string): Promise<StoreHubResult> {
+    const supabase = await createClient()
+
+    const { data: store } = await supabase
+        .from('stores')
+        .select('id, name, slug, logo_url, is_pro, custom_domain, org_id, org:orgs(slug)')
+        .eq('slug', slug)
+        .single()
+
+    if (!store) return { error: 'not_found', store: null }
+
+    // Effective role: prefer the store-member role; fall back to org role.
+    let role = await getStoreRole(store.id, userId)
+    if (!role && store.org_id) role = await getOrgRole(store.org_id, userId)
+    if (!role) return { error: 'forbidden', store: null }
+
+    const org = Array.isArray(store.org) ? store.org[0] : store.org
+
+    return {
+        error: null,
+        store: {
+            id: store.id,
+            name: store.name,
+            slug: store.slug,
+            logo_url: store.logo_url ?? null,
+            is_pro: !!store.is_pro,
+            custom_domain: store.custom_domain ?? null,
+            orgSlug: org?.slug ?? null,
+            role,
+            canManage: canManage(role),
+        },
+    }
+}
+
 export type OrgStoresResult =
     | { error: 'not_found' | 'not_member'; orgId: null; stores: []; role: null }
     | { error: null; orgId: string; stores: any[]; role: Role }

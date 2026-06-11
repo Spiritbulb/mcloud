@@ -62,13 +62,51 @@ async function clearTokens() {
   await SecureStore.deleteItemAsync(TOKEN_KEY)
 }
 
+/** Mint a fresh access token from the stored refresh token. Returns null on failure. */
+async function refreshTokens(): Promise<Tokens | null> {
+  const tokens = await loadTokens()
+  if (!tokens?.refreshToken) return null
+  try {
+    const refreshed = await AuthSession.refreshAsync(
+      { clientId: config.workosClientId, refreshToken: tokens.refreshToken },
+      discovery,
+    )
+    const next: Tokens = {
+      accessToken: refreshed.accessToken,
+      refreshToken: refreshed.refreshToken ?? tokens.refreshToken,
+      expiresAt: refreshed.expiresIn ? Date.now() + refreshed.expiresIn * 1000 : undefined,
+    }
+    await saveTokens(next)
+    return next
+  } catch {
+    return null
+  }
+}
+
+/** Fetch /api/mobile/me with a token; returns the user or null (no side effects). */
+async function fetchMe(accessToken: string): Promise<SessionUser | null> {
+  try {
+    const res = await fetch(`${config.apiBaseUrl}/api/mobile/me`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    })
+    if (!res.ok) return null
+    const data = (await res.json()) as { user: SessionUser }
+    return data.user
+  } catch {
+    return null
+  }
+}
+
 const redirectUri = AuthSession.makeRedirectUri({ scheme: 'mcloud', path: 'auth' })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<SessionUser | null>(null)
   const [loading, setLoading] = React.useState(true)
 
-  // Resolve the current user from /api/mobile/me on boot if we have a token.
+  // Resolve the current user on boot/reload. The WorkOS access token is short-lived,
+  // so a stale token is NORMAL after a reload — try it, and on failure refresh once
+  // before giving up. Only a failed refresh (true expiry/revocation) signs the user
+  // out, so reloads don't bounce you back to the login screen.
   const hydrate = React.useCallback(async () => {
     const tokens = await loadTokens()
     if (!tokens?.accessToken) {
@@ -76,23 +114,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false)
       return
     }
-    try {
-      const res = await fetch(`${config.apiBaseUrl}/api/mobile/me`, {
-        headers: { Authorization: `Bearer ${tokens.accessToken}` },
-      })
-      if (res.ok) {
-        const data = (await res.json()) as { user: SessionUser }
-        setUser(data.user)
-      } else {
-        await clearTokens()
-        setUser(null)
-      }
-    } catch {
-      // Offline: keep the stored token but no verified user yet.
-      setUser(null)
-    } finally {
-      setLoading(false)
+
+    let me = await fetchMe(tokens.accessToken)
+    if (!me) {
+      const refreshed = await refreshTokens()
+      if (refreshed) me = await fetchMe(refreshed.accessToken)
     }
+
+    if (me) {
+      setUser(me)
+    } else {
+      await clearTokens()
+      setUser(null)
+    }
+    setLoading(false)
   }, [])
 
   React.useEffect(() => {
@@ -154,27 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [hydrate])
 
-  const refresh = React.useCallback(async (): Promise<Tokens | null> => {
-    const tokens = await loadTokens()
-    if (!tokens?.refreshToken) return null
-    try {
-      const refreshed = await AuthSession.refreshAsync(
-        { clientId: config.workosClientId, refreshToken: tokens.refreshToken },
-        discovery,
-      )
-      const next: Tokens = {
-        accessToken: refreshed.accessToken,
-        refreshToken: refreshed.refreshToken ?? tokens.refreshToken,
-        expiresAt: refreshed.expiresIn
-          ? Date.now() + refreshed.expiresIn * 1000
-          : undefined,
-      }
-      await saveTokens(next)
-      return next
-    } catch {
-      return null
-    }
-  }, [])
+  const refresh = React.useCallback(() => refreshTokens(), [])
 
   const signOut = React.useCallback(async () => {
     await clearTokens()

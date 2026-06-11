@@ -1,7 +1,12 @@
-// Small set of styled primitives matching the marketing palette/theme.
+// Material 3 UI primitives. All read the active scheme via useTheme() so they
+// follow the system light/dark setting and match the web merchant UI tokens.
 import * as React from 'react'
 import {
   ActivityIndicator,
+  Animated,
+  Easing,
+  Image,
+  Modal,
   Pressable,
   StyleSheet,
   Text,
@@ -11,146 +16,468 @@ import {
   type ViewProps,
 } from 'react-native'
 import * as WebBrowser from 'expo-web-browser'
-import { theme } from '../lib/theme'
+import { useTheme, type Theme } from '../lib/theme'
 import { config } from '../lib/config'
 
-export function Screen({ children, style, ...rest }: ViewProps) {
+// ── Motion: staggered entrance (the one orchestrated page-load moment) ──────────
+
+export function FadeInUp({
+  children,
+  delay = 0,
+  distance = 14,
+  style,
+}: {
+  children: React.ReactNode
+  delay?: number
+  distance?: number
+  style?: ViewProps['style']
+}) {
+  const p = React.useRef(new Animated.Value(0)).current
+  React.useEffect(() => {
+    Animated.timing(p, {
+      toValue: 1,
+      duration: 420,
+      delay,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start()
+  }, [p, delay])
   return (
-    <View style={[styles.screen, style]} {...rest}>
+    <Animated.View
+      style={[
+        { alignSelf: 'stretch' },
+        style,
+        {
+          opacity: p,
+          transform: [{ translateY: p.interpolate({ inputRange: [0, 1], outputRange: [distance, 0] }) }],
+        },
+      ]}
+    >
       {children}
-    </View>
+    </Animated.View>
   )
 }
 
-export function H1({ children }: { children: React.ReactNode }) {
-  return <Text style={[styles.text, theme.font.h1]}>{children}</Text>
-}
-export function H2({ children }: { children: React.ReactNode }) {
-  return <Text style={[styles.text, theme.font.h2]}>{children}</Text>
-}
-export function Overline({ children }: { children: React.ReactNode }) {
-  return <Text style={[{ color: theme.color.muted }, theme.font.overline]}>{children}</Text>
-}
-export function Body({ children, muted }: { children: React.ReactNode; muted?: boolean }) {
+// ── Remote marketing image (served from apps/web/public) ────────────────────────
+
+export function MarketingImage({
+  name,
+  width,
+  height,
+  opacity,
+}: {
+  name: string // e.g. 'marketing-make-it-yours.png'
+  width: number
+  height: number
+  opacity?: number
+}) {
   return (
-    <Text style={[theme.font.body, { color: muted ? theme.color.muted : theme.color.foreground }]}>
+    <Image
+      source={{ uri: `${config.webBaseUrl}/${name}` }}
+      style={{ width, height, opacity }}
+      resizeMode="contain"
+    />
+  )
+}
+
+// ── Text ──────────────────────────────────────────────────────────────────────
+
+export function Display({ children }: { children: React.ReactNode }) {
+  const t = useTheme()
+  return <Text style={[t.type.displaySmall, { color: t.colors.onSurface }]}>{children}</Text>
+}
+export function HeadlineLarge({ children }: { children: React.ReactNode }) {
+  const t = useTheme()
+  return <Text style={[t.type.headlineLarge, { color: t.colors.onSurface }]}>{children}</Text>
+}
+export function HeadlineSmall({ children }: { children: React.ReactNode }) {
+  const t = useTheme()
+  return <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>{children}</Text>
+}
+export function TitleLarge({ children, color }: { children: React.ReactNode; color?: string }) {
+  const t = useTheme()
+  return <Text style={[t.type.titleLarge, { color: color ?? t.colors.onSurface }]}>{children}</Text>
+}
+export function TitleMedium({ children, color }: { children: React.ReactNode; color?: string }) {
+  const t = useTheme()
+  return <Text style={[t.type.titleMedium, { color: color ?? t.colors.onSurface }]}>{children}</Text>
+}
+export function Body({ children, variant }: { children: React.ReactNode; variant?: boolean }) {
+  const t = useTheme()
+  return (
+    <Text style={[t.type.bodyMedium, { color: variant ? t.colors.onSurfaceVariant : t.colors.onSurface }]}>
       {children}
     </Text>
   )
 }
+export function Overline({ children, color }: { children: React.ReactNode; color?: string }) {
+  const t = useTheme()
+  return <Text style={[t.type.overline, { color: color ?? t.colors.primary }]}>{children}</Text>
+}
+
+// ── Button (M3 variants) ───────────────────────────────────────────────────────
+
+type ButtonVariant = 'filled' | 'tonal' | 'outlined' | 'text' | 'danger'
 
 export function Button({
   label,
   onPress,
-  variant = 'primary',
+  variant = 'filled',
   loading,
   disabled,
+  icon,
 }: {
   label: string
   onPress: () => void
-  variant?: 'primary' | 'outline' | 'danger'
+  variant?: ButtonVariant
   loading?: boolean
   disabled?: boolean
+  icon?: React.ReactNode
 }) {
-  const isPrimary = variant === 'primary'
-  const isDanger = variant === 'danger'
+  const t = useTheme()
+  const { bg, fg, border } = buttonColors(t, variant)
+  const isInactive = disabled || loading
   return (
     <Pressable
       onPress={onPress}
-      disabled={disabled || loading}
+      disabled={isInactive}
       style={({ pressed }) => [
         styles.btn,
-        isPrimary && { backgroundColor: theme.color.foreground },
-        isDanger && { backgroundColor: theme.color.danger },
-        variant === 'outline' && { borderWidth: 1, borderColor: theme.color.borderStrong },
-        (pressed || disabled || loading) && { opacity: 0.7 },
+        { backgroundColor: bg, borderColor: border, borderWidth: border ? 1 : 0 },
+        pressed && { opacity: 0.85 },
+        isInactive && { opacity: 0.5 },
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={isPrimary || isDanger ? theme.color.onAccent : theme.color.foreground} />
+        <ActivityIndicator color={fg} size="small" />
       ) : (
-        <Text
-          style={[
-            theme.font.label,
-            { color: isPrimary || isDanger ? theme.color.onAccent : theme.color.foreground },
-          ]}
-        >
-          {label}
-        </Text>
+        <>
+          {icon}
+          <Text style={[t.type.labelLarge, { color: fg }]}>{label}</Text>
+        </>
       )}
     </Pressable>
   )
 }
 
-export function Field({ label, ...rest }: { label: string } & TextInputProps) {
-  return (
-    <View style={{ gap: theme.space(1.5) }}>
-      <Text style={[theme.font.label, { color: theme.color.muted }]}>{label}</Text>
-      <TextInput
-        placeholderTextColor={theme.color.muted}
-        style={styles.input}
-        autoCapitalize="none"
-        {...rest}
-      />
-    </View>
-  )
+function buttonColors(t: Theme, v: ButtonVariant): { bg: string; fg: string; border?: string } {
+  switch (v) {
+    case 'filled':
+      return { bg: t.colors.primary, fg: t.colors.onPrimary }
+    case 'tonal':
+      return { bg: t.colors.secondaryContainer, fg: t.colors.onSecondaryContainer }
+    case 'outlined':
+      return { bg: 'transparent', fg: t.colors.primary, border: t.colors.outlineVariant }
+    case 'text':
+      return { bg: 'transparent', fg: t.colors.primary }
+    case 'danger':
+      return { bg: t.colors.errorContainer, fg: t.colors.onErrorContainer }
+  }
 }
 
-export function Card({ children, style, ...rest }: ViewProps) {
+// ── Card (M3 outlined surface) ─────────────────────────────────────────────────
+
+export function Card({ children, style, tonal, ...rest }: ViewProps & { tonal?: boolean }) {
+  const t = useTheme()
   return (
-    <View style={[styles.card, style]} {...rest}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: tonal ? t.colors.surfaceContainer : t.colors.surface,
+          borderColor: t.colors.outlineVariant,
+        },
+        style,
+      ]}
+      {...rest}
+    >
       {children}
     </View>
   )
 }
 
-/** Opens a path on apps/web in the in-app browser — the "complex stuff → web" pattern. */
-export function ManageOnWeb({ label, path }: { label: string; path: string }) {
+// ── Text field (M3 outlined) ────────────────────────────────────────────────────
+
+export function Field({
+  label,
+  helper,
+  ...rest
+}: { label: string; helper?: string } & TextInputProps) {
+  const t = useTheme()
+  const [focused, setFocused] = React.useState(false)
+  return (
+    <View style={{ gap: t.space(1.5) }}>
+      <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>{label}</Text>
+      <TextInput
+        placeholderTextColor={t.colors.onSurfaceVariant}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        style={[
+          t.type.bodyLarge,
+          styles.input,
+          {
+            color: t.colors.onSurface,
+            backgroundColor: t.colors.surface,
+            borderColor: focused ? t.colors.primary : t.colors.outlineVariant,
+            borderWidth: focused ? 2 : 1,
+          },
+        ]}
+        {...rest}
+      />
+      {helper ? (
+        <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>{helper}</Text>
+      ) : null}
+    </View>
+  )
+}
+
+// ── Avatar (logo, or initials on a deterministic tonal tile) ────────────────────
+
+// Five M3-harmonious container tints; pick one deterministically from the name so
+// each store/org gets a stable, distinct colour instead of all-blue sameness.
+function avatarTints(t: Theme) {
+  return t.dark
+    ? [
+        ['rgb(0 74 117)', 'rgb(205 229 255)'],
+        ['rgb(79 64 97)', 'rgb(238 220 255)'],
+        ['rgb(58 72 87)', 'rgb(213 228 246)'],
+        ['rgb(56 70 60)', 'rgb(200 240 210)'],
+        ['rgb(90 64 50)', 'rgb(255 220 200)'],
+      ]
+    : [
+        ['rgb(205 229 255)', 'rgb(0 51 82)'],
+        ['rgb(238 220 255)', 'rgb(56 42 73)'],
+        ['rgb(213 228 246)', 'rgb(14 29 42)'],
+        ['rgb(200 240 210)', 'rgb(16 56 30)'],
+        ['rgb(255 224 204)', 'rgb(72 40 20)'],
+      ]
+}
+
+function hashIndex(s: string, n: number) {
+  let h = 0
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0
+  return h % n
+}
+
+export function Avatar({
+  name,
+  uri,
+  size = 44,
+  radius,
+}: {
+  name: string
+  uri?: string | null
+  size?: number
+  radius?: number
+}) {
+  const t = useTheme()
+  const r = radius ?? Math.round(size * 0.32)
+  const initials = name.split(' ').map((n) => n[0]).join('').toUpperCase().slice(0, 2)
+  const tints = avatarTints(t)
+  const [bg, fg] = tints[hashIndex(name, tints.length)]
+  return (
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: r,
+        overflow: 'hidden',
+        backgroundColor: bg,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {uri ? (
+        <Image source={{ uri }} style={{ width: size, height: size }} resizeMode="cover" />
+      ) : (
+        <Text style={[{ fontSize: size * 0.36, fontWeight: '700', color: fg }]}>{initials}</Text>
+      )}
+    </View>
+  )
+}
+
+// ── Badge (self-sizing — fixes the stretched PRO chip) ──────────────────────────
+
+export function Badge({
+  label,
+  tone = 'primary',
+}: {
+  label: string
+  tone?: 'primary' | 'tertiary' | 'neutral'
+}) {
+  const t = useTheme()
+  const map = {
+    primary: [t.colors.primaryContainer, t.colors.onPrimaryContainer],
+    tertiary: [t.colors.tertiaryContainer, t.colors.onSurface],
+    neutral: [t.colors.surfaceContainerHigh, t.colors.onSurfaceVariant],
+  } as const
+  const [bg, fg] = map[tone]
+  return (
+    <View style={{ alignSelf: 'flex-start', backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9999 }}>
+      <Text style={[t.type.labelMedium, { color: fg, letterSpacing: 0.8 }]}>{label}</Text>
+    </View>
+  )
+}
+
+// ── Role/count pill for section headers ─────────────────────────────────────────
+
+export function MetaPill({ label }: { label: string }) {
+  const t = useTheme()
+  return (
+    <View
+      style={{
+        alignSelf: 'flex-start',
+        flexDirection: 'row',
+        backgroundColor: t.colors.surfaceContainerHigh,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 9999,
+      }}
+    >
+      <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>{label}</Text>
+    </View>
+  )
+}
+
+// ── Safe destructive confirmation (type-to-confirm) ─────────────────────────────
+
+export function ConfirmDelete({
+  visible,
+  title,
+  message,
+  confirmWord,
+  confirmLabel = 'Delete',
+  loading,
+  onCancel,
+  onConfirm,
+}: {
+  visible: boolean
+  title: string
+  message: string
+  /** The exact text the user must type to enable the destructive action. */
+  confirmWord: string
+  confirmLabel?: string
+  loading?: boolean
+  onCancel: () => void
+  onConfirm: () => void
+}) {
+  const t = useTheme()
+  const [typed, setTyped] = React.useState('')
+  React.useEffect(() => {
+    if (!visible) setTyped('')
+  }, [visible])
+  const matches = typed.trim() === confirmWord
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <View style={confirmStyles.backdrop}>
+        <View style={[confirmStyles.sheet, { backgroundColor: t.colors.surfaceContainerHigh }]}>
+          <Text style={[t.type.titleLarge, { color: t.colors.error }]}>{title}</Text>
+          <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>{message}</Text>
+          <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>
+            Type <Text style={{ color: t.colors.onSurface, fontWeight: '700' }}>{confirmWord}</Text> to confirm.
+          </Text>
+          <TextInput
+            value={typed}
+            onChangeText={setTyped}
+            autoCapitalize="none"
+            autoCorrect={false}
+            placeholder={confirmWord}
+            placeholderTextColor={t.colors.onSurfaceVariant}
+            style={[
+              t.type.bodyLarge,
+              confirmStyles.input,
+              { color: t.colors.onSurface, borderColor: matches ? t.colors.error : t.colors.outlineVariant },
+            ]}
+          />
+          <View style={confirmStyles.actions}>
+            <View style={{ flex: 1 }}>
+              <Button label="Cancel" variant="text" onPress={onCancel} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button
+                label={confirmLabel}
+                variant="danger"
+                onPress={onConfirm}
+                loading={loading}
+                disabled={!matches}
+              />
+            </View>
+          </View>
+        </View>
+      </View>
+    </Modal>
+  )
+}
+
+const confirmStyles = StyleSheet.create({
+  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center', padding: 24 },
+  sheet: { borderRadius: 28, padding: 24, gap: 14 },
+  input: { minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16 },
+  actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
+})
+
+// ── Screen container ─────────────────────────────────────────────────────────────
+
+export function Screen({ children, style, ...rest }: ViewProps) {
+  const t = useTheme()
+  return (
+    <View style={[{ flex: 1, backgroundColor: t.colors.background }, style]} {...rest}>
+      {children}
+    </View>
+  )
+}
+
+// ── "Manage on web" row — the deep-link-out pattern ──────────────────────────────
+
+export function ManageOnWeb({ label, path, icon }: { label: string; path: string; icon?: React.ReactNode }) {
+  const t = useTheme()
   return (
     <Pressable
       onPress={() => WebBrowser.openBrowserAsync(`${config.webBaseUrl}${path}`)}
-      style={({ pressed }) => [styles.manageRow, pressed && { opacity: 0.6 }]}
+      style={({ pressed }) => [
+        styles.manageRow,
+        { borderColor: t.colors.outlineVariant, backgroundColor: t.colors.surface },
+        pressed && { backgroundColor: t.colors.surfaceContainerLow },
+      ]}
     >
-      <Text style={[theme.font.label, { color: theme.color.foreground }]}>{label}</Text>
-      <Text style={{ color: theme.color.accent, fontWeight: '600' }}>Manage on web →</Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.space(3), flex: 1 }}>
+        {icon}
+        <Text style={[t.type.labelLarge, { color: t.colors.onSurface }]}>{label}</Text>
+      </View>
+      <Text style={[t.type.labelMedium, { color: t.colors.primary }]}>Manage on web ↗</Text>
     </Pressable>
   )
 }
 
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: theme.color.background, padding: theme.space(5) },
-  text: { color: theme.color.foreground },
   btn: {
-    height: 50,
-    borderRadius: theme.radius.md,
+    height: 48,
+    borderRadius: 9999,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: theme.space(5),
-  },
-  input: {
-    height: 48,
-    borderRadius: theme.radius.md,
-    borderWidth: 1,
-    borderColor: theme.color.border,
-    paddingHorizontal: theme.space(3.5),
-    color: theme.color.foreground,
-    fontSize: 15,
+    gap: 8,
+    paddingHorizontal: 24,
   },
   card: {
-    borderRadius: theme.radius.lg,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.color.border,
-    backgroundColor: theme.color.surfaceSubtle,
-    padding: theme.space(4),
+    padding: 16,
+  },
+  input: {
+    minHeight: 52,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
   },
   manageRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: theme.space(4),
-    paddingHorizontal: theme.space(4),
-    borderRadius: theme.radius.md,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: theme.color.border,
   },
 })

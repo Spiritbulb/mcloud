@@ -19,6 +19,92 @@ export type Store = {
   created_at: string
 }
 
+// ── Picker (mobile home) ────────────────────────────────────────────────────────
+
+export type PickerStore = {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  is_pro: boolean
+}
+
+export type PickerOrgGroup = Org & { stores: PickerStore[] }
+
+export type PickerOtherStore = PickerStore & {
+  orgSlug: string | null
+  orgName: string | null
+}
+
+export type PickerData = {
+  orgs: PickerOrgGroup[]
+  otherStores: PickerOtherStore[]
+}
+
+// ── Store hub ───────────────────────────────────────────────────────────────────
+
+export type StoreHub = {
+  id: string
+  name: string
+  slug: string
+  logo_url: string | null
+  is_pro: boolean
+  custom_domain: string | null
+  orgSlug: string | null
+  role: string
+  canManage: boolean
+}
+
+// ── Section types ───────────────────────────────────────────────────────────────
+
+export type Product = {
+  id: string
+  name: string
+  slug: string
+  price: number
+  compare_at_price: number | null
+  inventory_quantity: number | null
+  track_inventory: boolean
+  is_active: boolean
+  images: unknown
+  created_at: string | null
+}
+
+export type Order = {
+  id: string
+  order_number: string
+  status: string
+  fulfillment_status: string | null
+  total: number
+  currency: string
+  customer_phone: string | null
+  created_at: string | null
+}
+
+export type Branding = {
+  name: string
+  logo_url: string | null
+  description: string | null
+  currency: string
+  role: string
+  canManage: boolean
+}
+
+export type ManualMpesa = {
+  enabled: boolean
+  mpesa_type: 'till' | 'paybill'
+  mpesa_till: string
+  mpesa_paybill: string
+  mpesa_account: string
+  canManage: boolean
+}
+
+export type AnalyticsTotals = {
+  totals?: { revenue?: number; orders?: number; visitors?: number; views?: number }
+  previous?: { revenue?: number; orders?: number; visitors?: number; views?: number }
+  [k: string]: unknown
+}
+
 type Fetch = (path: string, init?: RequestInit) => Promise<Response>
 
 async function json<T>(res: Response): Promise<T> {
@@ -31,6 +117,78 @@ async function json<T>(res: Response): Promise<T> {
 
 export function api(authedFetch: Fetch) {
   return {
+    async getPicker(): Promise<PickerData> {
+      const res = await authedFetch('/api/mobile/picker')
+      return json<PickerData>(res)
+    },
+
+    async getStoreHub(slug: string): Promise<StoreHub> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/hub`)
+      return (await json<{ store: StoreHub }>(res)).store
+    },
+
+    async deleteStore(slug: string, confirm: string): Promise<void> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/hub`, {
+        method: 'DELETE',
+        body: JSON.stringify({ confirm }),
+      })
+      await json(res)
+    },
+
+    // Products
+    async listProducts(slug: string): Promise<{ products: Product[]; role: string }> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/products`)
+      return json<{ products: Product[]; role: string }>(res)
+    },
+    async createProduct(slug: string, input: { name: string; price: number; inventory_quantity?: number | null }): Promise<Product> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/products`, { method: 'POST', body: JSON.stringify(input) })
+      return (await json<{ product: Product }>(res)).product
+    },
+    async updateProduct(slug: string, id: string, patch: Partial<{ name: string; price: number; inventory_quantity: number | null; is_active: boolean }>): Promise<Product> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
+      return (await json<{ product: Product }>(res)).product
+    },
+    async deleteProduct(slug: string, id: string): Promise<void> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, { method: 'DELETE' })
+      await json(res)
+    },
+
+    // Orders
+    async listOrders(slug: string): Promise<Order[]> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/orders`)
+      return (await json<{ orders: Order[] }>(res)).orders
+    },
+    async updateOrderStatus(slug: string, id: string, fulfillment_status: string): Promise<Order> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ fulfillment_status }) })
+      return (await json<{ order: Order }>(res)).order
+    },
+
+    // Branding
+    async getBranding(slug: string): Promise<Branding> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/branding`)
+      return (await json<{ branding: Branding }>(res)).branding
+    },
+    async updateBranding(slug: string, patch: Partial<{ name: string; logo_url: string | null; description: string | null }>): Promise<Branding> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/branding`, { method: 'PATCH', body: JSON.stringify(patch) })
+      return (await json<{ branding: Branding }>(res)).branding
+    },
+
+    // Manual M-Pesa
+    async getMpesa(slug: string): Promise<ManualMpesa> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/mpesa`)
+      return (await json<{ mpesa: ManualMpesa }>(res)).mpesa
+    },
+    async updateMpesa(slug: string, patch: Partial<ManualMpesa>): Promise<ManualMpesa> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/mpesa`, { method: 'PATCH', body: JSON.stringify(patch) })
+      return (await json<{ mpesa: ManualMpesa }>(res)).mpesa
+    },
+
+    // Analytics
+    async getAnalytics(slug: string, days = 30): Promise<AnalyticsTotals> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/analytics?days=${days}`)
+      return (await json<{ analytics: AnalyticsTotals }>(res)).analytics
+    },
+
     async listOrgs(): Promise<Org[]> {
       const res = await authedFetch('/api/mobile/orgs')
       return (await json<{ orgs: Org[] }>(res)).orgs

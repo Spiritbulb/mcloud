@@ -1,15 +1,23 @@
 import { Redirect, Stack } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '@/auth/AuthContext'
-import { theme } from '@/lib/theme'
+import { useTheme } from '@/lib/theme'
 
 export default function AppLayout() {
+  const t = useTheme()
   const { user, loading } = useAuth()
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: theme.color.background }}>
-        <ActivityIndicator color={theme.color.foreground} />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.colors.background,
+        }}
+      >
+        <ActivityIndicator color={t.colors.primary} />
       </View>
     )
   }
@@ -21,14 +29,20 @@ export default function AppLayout() {
     <Stack
       screenOptions={{
         headerShadowVisible: false,
-        headerStyle: { backgroundColor: theme.color.background },
-        headerTintColor: theme.color.foreground,
-        headerTitleStyle: { fontWeight: '700' },
-        contentStyle: { backgroundColor: theme.color.background },
+        headerStyle: { backgroundColor: t.colors.background },
+        headerTintColor: t.colors.onSurface,
+        headerTitleStyle: { fontWeight: '700', color: t.colors.onSurface },
+        contentStyle: { backgroundColor: t.colors.background },
       }}
     >
-      <Stack.Screen name="orgs" options={{ title: 'Organizations' }} />
+      <Stack.Screen name="orgs" options={{ headerShown: false }} />
       <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
+      <Stack.Screen name="store/[storeSlug]/index" options={{ title: 'Store', headerShown: true, headerBackTitle: 'Back' }} />
+      <Stack.Screen name="store/[storeSlug]/products" options={{ headerShown: true, headerBackTitle: 'Back' }} />
+      <Stack.Screen name="store/[storeSlug]/orders" options={{ headerShown: true, headerBackTitle: 'Back' }} />
+      <Stack.Screen name="store/[storeSlug]/branding" options={{ headerShown: true, headerBackTitle: 'Back' }} />
+      <Stack.Screen name="store/[storeSlug]/mpesa" options={{ headerShown: true, headerBackTitle: 'Back' }} />
+      <Stack.Screen name="store/[storeSlug]/analytics" options={{ headerShown: true, headerBackTitle: 'Back' }} />
     </Stack>
   )
 }

@@ -1,22 +1,22 @@
-// Home / sign-in. Marketing-styled landing: big tracking-tight headline, brand
-// charcoal hero, gold accent. Redirects into the app once authenticated.
+// Home / sign-in — expressive Material 3, follows system light/dark.
 import * as React from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
-import { Button } from '@/components/ui'
-import { theme } from '@/lib/theme'
+import { Button, FadeInUp, MarketingImage } from '@/components/ui'
+import { useTheme } from '@/lib/theme'
 
 export default function Home() {
+  const t = useTheme()
   const { user, loading, signIn } = useAuth()
   const [signingIn, setSigningIn] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
 
   if (loading) {
     return (
-      <View style={[styles.fill, styles.center]}>
-        <ActivityIndicator color={theme.color.foreground} />
+      <View style={[styles.fill, styles.center, { backgroundColor: t.colors.background }]}>
+        <ActivityIndicator color={t.colors.primary} />
       </View>
     )
   }
@@ -36,33 +36,59 @@ export default function Home() {
   }
 
   return (
-    <SafeAreaView style={styles.fill}>
-      <View style={styles.hero}>
-        <Text style={styles.kicker}>MENENGAI CLOUD</Text>
-        <Text style={styles.headline}>Run your stores{'\n'}from your pocket.</Text>
-        <Text style={styles.sub}>
-          Manage products, orders, payments and branding — the essentials, on the go. Everything else
-          is one tap away on the web.
-        </Text>
+    <SafeAreaView style={[styles.fill, { backgroundColor: t.colors.background }]}>
+      <View style={styles.body}>
+        {/* Marketing illustration in a tonal panel */}
+        <FadeInUp delay={0}>
+          <View style={[styles.illoPanel, { backgroundColor: t.colors.primaryContainer }]}>
+            <MarketingImage name="marketing-make-it-yours.png" width={220} height={180} />
+          </View>
+        </FadeInUp>
+
+        <View style={styles.copy}>
+          <FadeInUp delay={80}>
+            <Text style={[t.type.overline, { color: t.colors.primary }]}>MENENGAI CLOUD</Text>
+          </FadeInUp>
+          <FadeInUp delay={140}>
+            <Text style={[t.type.displaySmall, { color: t.colors.onSurface, fontWeight: '700' }]}>
+              Run your stores{'\n'}from your pocket.
+            </Text>
+          </FadeInUp>
+          <FadeInUp delay={200}>
+            <Text style={[t.type.bodyLarge, { color: t.colors.onSurfaceVariant, maxWidth: 330 }]}>
+              Products, orders, payments and branding — the essentials, on the go. Everything else is
+              one tap away on the web.
+            </Text>
+          </FadeInUp>
+        </View>
       </View>
 
-      <View style={styles.footer}>
-        {error && <Text style={styles.error}>{error}</Text>}
-        <Button label="Sign in" onPress={onSignIn} loading={signingIn} />
-        <Text style={styles.fine}>Uses your existing Menengai Cloud account.</Text>
-      </View>
+      <FadeInUp delay={260} style={styles.footer}>
+        {error && (
+          <View style={[styles.errorChip, { backgroundColor: t.colors.errorContainer }]}>
+            <Text style={[t.type.bodyMedium, { color: t.colors.onErrorContainer }]}>{error}</Text>
+          </View>
+        )}
+        <Button label="Sign in" onPress={onSignIn} loading={signingIn} variant="filled" />
+        <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant, textAlign: 'center' }]}>
+          Uses your existing Menengai Cloud account.
+        </Text>
+      </FadeInUp>
     </SafeAreaView>
   )
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1, backgroundColor: theme.color.foreground },
+  fill: { flex: 1 },
   center: { alignItems: 'center', justifyContent: 'center' },
-  hero: { flex: 1, justifyContent: 'center', paddingHorizontal: theme.space(6), gap: theme.space(4) },
-  kicker: { color: theme.color.accent, ...theme.font.overline },
-  headline: { color: theme.color.onDark, fontSize: 40, fontWeight: '700', letterSpacing: -0.8, lineHeight: 44 },
-  sub: { color: 'rgba(245,240,235,0.7)', fontSize: 16, lineHeight: 24, maxWidth: 340 },
-  footer: { paddingHorizontal: theme.space(6), paddingBottom: theme.space(6), gap: theme.space(3) },
-  error: { color: '#fca5a5', fontSize: 13, textAlign: 'center' },
-  fine: { color: 'rgba(245,240,235,0.5)', fontSize: 12, textAlign: 'center' },
+  body: { flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 32 },
+  illoPanel: {
+    borderRadius: 28,
+    paddingVertical: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  copy: { gap: 14 },
+  footer: { paddingHorizontal: 28, paddingBottom: 28, gap: 12 },
+  errorChip: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12 },
 })
