@@ -21,4 +21,4 @@ Beta — active development.
 
 ---
 
-Built by [Spiritbulb](https://spiritbulb.com)
+Built by [Spiritbulb](https://spiritb.uk)

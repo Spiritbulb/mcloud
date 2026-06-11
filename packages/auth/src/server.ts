@@ -15,6 +15,18 @@ export async function getCurrentUser(req?: NextRequest): Promise<AuthUser | null
     return session?.user ?? null
 }
 
+/**
+ * Resolve a session for non-cookie clients (the mobile app) from the
+ * `Authorization: Bearer <token>` header. Returns null when the header is
+ * missing or the token is invalid. Used by /api/mobile/* route handlers.
+ */
+export async function getMobileSession(req: NextRequest): Promise<AuthSession | null> {
+    const header = req.headers.get('authorization')
+    const token = header?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim()
+    if (!token) return null
+    return provider.getSessionFromToken(token)
+}
+
 /** Handles the provider's auth routes — mounted by the catch-all route + proxy. */
 export function authMiddleware(req: NextRequest) {
     return provider.middleware(req)

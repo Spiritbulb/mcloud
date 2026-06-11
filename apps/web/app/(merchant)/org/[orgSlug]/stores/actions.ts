@@ -3,37 +3,17 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
+import { createStoreForUser, listOrgStores } from '@/lib/merchant/stores'
 
 export async function getOrgStores(orgSlug: string) {
     const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated', stores: [], role: null }
 
-    const supabase = await createClient()
+    const result = await listOrgStores(orgSlug, session.user.id)
+    if (result.error === 'not_found') return { error: 'Org not found', stores: [], role: null }
+    if (result.error === 'not_member') return { error: 'Not a member', stores: [], role: null }
 
-    const { data: org } = await supabase
-        .from('orgs')
-        .select('id, name, slug')
-        .eq('slug', orgSlug)
-        .single()
-
-    if (!org) return { error: 'Org not found', stores: [], role: null }
-
-    const { data: membership } = await supabase
-        .from('org_members')
-        .select('role')
-        .eq('org_id', org.id)
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-
-    if (!membership) return { error: 'Not a member', stores: [], role: null }
-
-    const { data: stores } = await supabase
-        .from('stores')
-        .select('id, name, slug, logo_url, is_pro, created_at')
-        .eq('org_id', org.id)
-        .order('created_at', { ascending: false })
-
-    return { orgId: org.id, stores: stores ?? [], role: membership.role }
+    return { orgId: result.orgId, stores: result.stores, role: result.role }
 }
 
 export async function createStore(formData: FormData) {
@@ -42,50 +22,14 @@ export async function createStore(formData: FormData) {
 
     const orgId = formData.get('orgId') as string
     const orgSlug = formData.get('orgSlug') as string
-    const name = (formData.get('name') as string)?.trim()
-    const slug = (formData.get('slug') as string)?.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
+    const name = formData.get('name') as string
+    const slug = formData.get('slug') as string
 
-    if (!name || !slug) return { error: 'Name and slug are required' }
-    if (!/^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(slug)) return { error: 'Slug must be lowercase alphanumeric with hyphens' }
-
-    const supabase = await createClient()
-
-    const { data: membership } = await supabase
-        .from('org_members')
-        .select('role')
-        .eq('org_id', orgId)
-        .eq('user_id', session.user.id)
-        .maybeSingle()
-
-    if (!membership || !['owner', 'admin'].includes(membership.role)) {
-        return { error: 'Only owners and admins can create stores' }
-    }
-
-    const { data: existing } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('slug', slug)
-        .maybeSingle()
-
-    if (existing) return { error: 'A store with this slug already exists' }
-
-    const { data: store, error } = await supabase
-        .from('stores')
-        .insert({ name, slug, org_id: orgId, owner_id: session.user.id })
-        .select('id, slug')
-        .single()
-
-    if (error) return { error: error.message }
-
-    // Add creator as store owner
-    await supabase.from('store_members').insert({
-        store_id: store.id,
-        user_id: session.user.id,
-        role: 'owner',
-    })
+    const result = await createStoreForUser({ orgId, name, slug }, session.user.id)
+    if (result.error) return { error: result.error }
 
     revalidatePath(`/org/${orgSlug}/stores`)
-    return { success: true, slug: store.slug }
+    return { success: true, slug: result.slug }
 }
 
 export async function deleteStore(storeId: string, orgSlug: string) {

@@ -107,6 +107,11 @@ export const auth0Provider: AuthProviderAdapter = {
         return { user: mapUser(session.user as Parameters<typeof mapUser>[0]) }
     },
 
+    // Auth0 is the legacy provider; mobile bearer-token auth is WorkOS-only.
+    async getSessionFromToken(): Promise<AuthSession | null> {
+        return null
+    },
+
     middleware(req: NextRequest) {
         return client.middleware(req)
     },

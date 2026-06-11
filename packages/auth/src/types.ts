@@ -45,6 +45,12 @@ export interface LoginEvent {
 export interface AuthProviderAdapter {
     /** Resolve the current session. `req` is passed in API routes. */
     getSession(req?: NextRequest): Promise<AuthSession | null>
+    /**
+     * Resolve a session from a raw provider access token (bearer), for non-cookie
+     * clients like the mobile app. Returns null if the token is invalid/expired or
+     * the provider doesn't support token auth.
+     */
+    getSessionFromToken(accessToken: string): Promise<AuthSession | null>
     /** Resolve session + middleware headers once per request (called by the app middleware). */
     prepareMiddleware(req: NextRequest): Promise<MiddlewarePrep>
     /** Handles the provider's auth routes (/auth/login, /auth/sign-up, etc). */

@@ -14,11 +14,21 @@ import {
     applyResponseHeaders,
 } from '@workos-inc/authkit-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
+import { createRemoteJWKSet, jwtVerify } from 'jose'
 import type { AuthProviderAdapter, AuthSession, AuthUser, LoginEvent } from '../types'
 import { LOGIN_URL, SIGNUP_URL } from '../routes'
 import { formatDevice, formatRelativeTime } from '../format'
 
 const POST_LOGIN_PATH = '/auth/post-login'
+
+// ── Bearer-token verification (mobile) ────────────────────────────────────────
+// WorkOS access tokens are JWTs signed by the AuthKit JWKS for this client. We
+// verify the signature against the remote JWKS (cached by jose across calls) and
+// read `sub` (the WorkOS user id), then load the full user so mapUser()'s
+// externalId-based identity continuity applies exactly as for the cookie session.
+const jwks = createRemoteJWKSet(
+    new URL(`https://api.workos.com/sso/jwks/${process.env.WORKOS_CLIENT_ID}`),
+)
 
 // Structural shape of the WorkOS user fields we consume. Typed locally (rather than
 // importing @workos-inc/node's User) because AuthKit bundles its own SDK version,
@@ -69,6 +79,20 @@ export const workosProvider: AuthProviderAdapter = {
         // middleware). Never called from inside the middleware itself.
         const { user } = await withAuth()
         return user ? { user: mapUser(user) } : null
+    },
+
+    async getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
+        try {
+            const { payload } = await jwtVerify(accessToken, jwks)
+            const sub = typeof payload.sub === 'string' ? payload.sub : null
+            if (!sub) return null
+            // Load the full user so externalId (identity continuity) is available.
+            const user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
+            return user ? { user: mapUser(user) } : null
+        } catch {
+            // Invalid signature, expired, wrong issuer, or user lookup failed.
+            return null
+        }
     },
 
     async prepareMiddleware(req: NextRequest) {

@@ -14,7 +14,8 @@
   "dependencies": {
     "@mcloud/db": "*",
     "@workos-inc/authkit-nextjs": "*",
-    "@auth0/nextjs-auth0": "*"
+    "@auth0/nextjs-auth0": "*",
+    "jose": "^6.2.3"
   },
   "peerDependencies": {
     "next": "*",
