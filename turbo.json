@@ -4,9 +4,8 @@
   "tasks": {
     "build": {
       "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "env": [
+      "outputs": [".next/**", "!.next/cache/**"],
+      "env": [
         "AUTH0_CLIENT_ID",
         "AUTH0_CLIENT_SECRET",
         "AUTH0_DOMAIN",
@@ -20,8 +19,10 @@
         "TRADING_VERCEL_PROJECT_ID",
         "WORKOS_API_KEY",
         "WORKOS_CLIENT_ID",
-        "WORKOS_COOKIE_PASSWORD"
-      ],
+        "WORKOS_COOKIE_PASSWORD",
+        "NEXT_PUBLIC_APP_URL"
+      ]
+    },
     "dev": {
       "cache": false,
       "persistent": true
@@ -31,7 +32,7 @@
       "persistent": true
     },
     "lint": {
-      "dependsOn": ["^build"]
+      "dependsOn": ["^lint"]
     }
   }
 }
