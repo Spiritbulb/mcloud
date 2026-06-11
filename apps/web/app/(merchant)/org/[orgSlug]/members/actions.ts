@@ -5,8 +5,13 @@ import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
-
+function getResend() {
+  const apiKey = process.env.RESEND_API_KEY
+  if (!apiKey) {
+    throw new Error('RESEND_API_KEY is not configured')
+  }
+  return new Resend(apiKey)
+}
 export type OrgMemberRow = {
     id: string
     role: string
@@ -129,8 +134,11 @@ export async function inviteOrgMember(formData: FormData) {
         .single()
 
     if (inviteError) return { error: inviteError.message }
+const appUrl = process.env.NEXT_PUBLIC_APP_URL
+if (!appUrl) return { error: 'App URL is not configured' }
 
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/org/${invite.token}`
+const inviteUrl = `${appUrl}/invite/org/${invite.token}`
+    const resend = getResend()
     await resend.emails.send({
         from: 'Menengai Cloud <noreply@menengai.cloud>',
         to: email,

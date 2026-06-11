@@ -70,6 +70,6 @@ native app as an **update** to that same listing:
    update (not a new app) before promoting.
 
 ```bash
-eas build -p android --profile preview      # APK smoke test
-eas build -p android --profile production    # AAB for Play
+eas-cli build -p android --profile preview      # APK smoke test
+eas-cli build -p android --profile production    # AAB for Play
 ```
