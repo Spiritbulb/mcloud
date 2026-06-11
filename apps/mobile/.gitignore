@@ -16,7 +16,13 @@ expo-env.d.ts
 *.p8
 *.p12
 *.key
+*.keystore
 *.mobileprovision
+
+# EAS / Play signing secrets — NEVER commit
+credentials.json
+upload.keystore
+google-service-account.json
 
 # Metro
 .metro-health-check*

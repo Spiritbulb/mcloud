@@ -47,6 +47,8 @@ type AuthState = {
   signOut: () => Promise<void>
   /** fetch() against apps/web with the bearer token attached + refresh-on-401. */
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>
+  /** Re-resolve the current user from stored tokens (after deep-link auth completes). */
+  refreshSession: () => Promise<void>
 }
 
 const AuthContext = React.createContext<AuthState | null>(null)
@@ -97,7 +99,73 @@ async function fetchMe(accessToken: string): Promise<SessionUser | null> {
   }
 }
 
-const redirectUri = AuthSession.makeRedirectUri({ scheme: 'mcloud', path: 'auth' })
+// Deterministic redirect URI. We hardcode the native scheme form so the dev client
+// and the production (standalone) build send the IDENTICAL value, and it matches the
+// exact string registered in the WorkOS dashboard. makeRedirectUri can emit different
+// shapes (mcloud://auth vs mcloud:///auth vs an exp proxy) across build types, which
+// breaks WorkOS's exact-match on redirect_uri and bounces the user back to sign-in.
+const redirectUri = 'mcloud://auth'
+
+// PKCE verifier for the in-flight login. Persisted (secure store) so the redirect
+// landing route (app/auth.tsx) can complete the token exchange even if promptAsync
+// didn't resolve to success — which happens on production standalone builds where
+// the mcloud:// deep link is routed by expo-router before AuthSession catches it.
+const VERIFIER_KEY = 'mcloud.workos.pkce_verifier'
+const DEBUG_KEY = 'mcloud.auth.debug'
+
+// Lightweight on-device auth breadcrumb (shown on the home screen) so we can
+// diagnose the redirect/exchange flow without a console. Remove once stable.
+async function setDebug(msg: string) {
+  try { await SecureStore.setItemAsync(DEBUG_KEY, `${new Date().toISOString().slice(11, 19)} ${msg}`) } catch {}
+}
+export async function getAuthDebug(): Promise<string | null> {
+  try { return await SecureStore.getItemAsync(DEBUG_KEY) } catch { return null }
+}
+
+// An auth code may be reported through TWO paths at once: promptAsync resolving
+// (dev) AND the mcloud://auth deep link landing on app/auth.tsx. WorkOS rejects a
+// second exchange of the same code ("already exchanged"), which would clobber the
+// session. So the PKCE verifier acts as a single-use CLAIM: the first caller to
+// read-and-delete it owns the exchange; the other finds nothing and no-ops.
+let claimInFlight: Promise<boolean> | null = null
+
+async function claimAndExchange(code: string): Promise<boolean> {
+  // Collapse concurrent calls in the same JS context to one in-flight exchange.
+  if (claimInFlight) return claimInFlight
+  claimInFlight = (async () => {
+    const verifier = await SecureStore.getItemAsync(VERIFIER_KEY)
+    if (!verifier) return false // another path already claimed + exchanged this login
+    await SecureStore.deleteItemAsync(VERIFIER_KEY) // claim it before exchanging
+    try {
+      const tokenRes = await AuthSession.exchangeCodeAsync(
+        { clientId: config.workosClientId, code, redirectUri, extraParams: { code_verifier: verifier } },
+        discovery,
+      )
+      await saveTokens({
+        accessToken: tokenRes.accessToken,
+        refreshToken: tokenRes.refreshToken,
+        expiresAt: tokenRes.expiresIn ? Date.now() + tokenRes.expiresIn * 1000 : undefined,
+      })
+      return true
+    } catch (e) {
+      console.error('[auth] token exchange failed:', e)
+      return false
+    } finally {
+      claimInFlight = null
+    }
+  })()
+  return claimInFlight
+}
+
+/**
+ * Called by app/auth.tsx when the mcloud://auth?code=... deep link lands there.
+ * Idempotent with the inline promptAsync path via the single-use verifier claim.
+ */
+export async function completeAuthFromCode(code: string): Promise<boolean> {
+  const ok = await claimAndExchange(code)
+  await setDebug(`exchange:${ok} (via deeplink)`)
+  return ok
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<SessionUser | null>(null)
@@ -110,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrate = React.useCallback(async () => {
     const tokens = await loadTokens()
     if (!tokens?.accessToken) {
+      await setDebug('hydrate: no token stored')
       setUser(null)
       setLoading(false)
       return
@@ -119,6 +188,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!me) {
       const refreshed = await refreshTokens()
       if (refreshed) me = await fetchMe(refreshed.accessToken)
+    }
+    if (me) {
+      await setDebug('hydrate: token=yes me=ok')
+    } else {
+      // Token didn't verify on the API — hit the diagnostic to learn exactly why.
+      let why = '?'
+      try {
+        const res = await fetch(`${config.apiBaseUrl}/api/mobile/debug-auth`, {
+          headers: { Authorization: `Bearer ${tokens.accessToken}` },
+        })
+        const d = await res.json()
+        why = `jwt=${d.jwtVerify ?? '?'} getUser=${d.getUser ?? '?'} apiKey=${d.env?.WORKOS_API_KEY ?? '?'} cid=${(d.env?.WORKOS_CLIENT_ID_full ?? '?').slice(-6)}`
+      } catch (e) {
+        why = `diag-failed:${e instanceof Error ? e.message : 'err'}`
+      }
+      await setDebug(`me=FAILED ${why}`)
     }
 
     if (me) {
@@ -148,45 +233,40 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       extraParams: { provider: 'authkit' },
     })
 
+    // Build the request to generate the PKCE verifier, then persist it so the
+    // redirect landing route can complete the exchange regardless of how the
+    // mcloud:// deep link is delivered in this build type.
+    await request.makeAuthUrlAsync(discovery)
+    if (request.codeVerifier) {
+      await SecureStore.setItemAsync(VERIFIER_KEY, request.codeVerifier)
+    }
+
     // showInRecents helps the system browser hand the redirect back to this
     // pending session (rather than cold-launching the app via the deep link).
     const result = await request.promptAsync(discovery, { showInRecents: true })
-    if (result.type !== 'success' || !result.params.code) {
-      if (result.type === 'error') {
-        throw new Error(result.error?.message ?? result.params?.error_description ?? 'Authorization failed')
+    await setDebug(`prompt:${result.type} code:${('params' in result && result.params?.code) ? 'yes' : 'no'}`)
+
+    // Happy path: promptAsync resolved with the code (dev client). Exchange via the
+    // shared claim so we never double-exchange if the deep link also fired.
+    if (result.type === 'success' && result.params.code) {
+      const ok = await claimAndExchange(result.params.code)
+      await setDebug(`exchange:${ok} (via prompt)`)
+      await hydrate()
+      if (!ok) {
+        const tokens = await loadTokens()
+        if (!tokens?.accessToken) throw new Error('Could not complete sign-in. Please try again.')
       }
       return
     }
 
-    // Exchange the authorization code for tokens (PKCE verifier included).
-    try {
-      const tokenRes = await AuthSession.exchangeCodeAsync(
-        {
-          clientId: config.workosClientId,
-          code: result.params.code,
-          redirectUri,
-          extraParams: request.codeVerifier
-            ? { code_verifier: request.codeVerifier }
-            : undefined,
-        },
-        discovery,
-      )
-
-      const tokens: Tokens = {
-        accessToken: tokenRes.accessToken,
-        refreshToken: tokenRes.refreshToken,
-        expiresAt: tokenRes.expiresIn
-          ? Date.now() + tokenRes.expiresIn * 1000
-          : undefined,
-      }
-      await saveTokens(tokens)
-      await hydrate()
-    } catch (e) {
-      // Surface token-exchange failures (e.g. WorkOS rejecting the request shape)
-      // instead of silently swallowing them — the home screen shows this.
-      console.error('[auth] token exchange failed:', e)
-      throw e instanceof Error ? e : new Error('Token exchange failed')
+    // Otherwise the redirect was handled as a deep link by app/auth.tsx, which
+    // completes the exchange and re-hydrates. Surface a true error only.
+    if (result.type === 'error') {
+      throw new Error(result.error?.message ?? result.params?.error_description ?? 'Authorization failed')
     }
+    // dismiss/cancel: re-check whether the deep-link path already signed us in.
+    await new Promise((r) => setTimeout(r, 400)) // give the deep-link path a beat
+    await hydrate()
   }, [hydrate])
 
   const refresh = React.useCallback(() => refreshTokens(), [])
@@ -225,8 +305,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const value = React.useMemo(
-    () => ({ user, loading, signIn, signOut, authedFetch }),
-    [user, loading, signIn, signOut, authedFetch],
+    () => ({ user, loading, signIn, signOut, authedFetch, refreshSession: hydrate }),
+    [user, loading, signIn, signOut, authedFetch, hydrate],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

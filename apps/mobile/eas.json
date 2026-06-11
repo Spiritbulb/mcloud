@@ -1,7 +1,7 @@
 {
   "cli": {
     "version": ">= 12.0.0",
-    "appVersionSource": "remote"
+    "appVersionSource": "local"
   },
   "build": {
     "development": {
@@ -11,12 +11,15 @@
     },
     "preview": {
       "distribution": "internal",
+      "channel": "preview",
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_ENV": "preview"
       }
     },
     "production": {
+      "channel": "production",
+      "credentialsSource": "local",
       "android": {
         "buildType": "app-bundle"
       },

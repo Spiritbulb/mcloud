@@ -3,7 +3,7 @@ import * as React from 'react'
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native'
 import { Redirect } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
-import { useAuth } from '@/auth/AuthContext'
+import { getAuthDebug, useAuth } from '@/auth/AuthContext'
 import { Button, FadeInUp, MarketingImage } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
 
@@ -12,6 +12,12 @@ export default function Home() {
   const { user, loading, signIn } = useAuth()
   const [signingIn, setSigningIn] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [debug, setDebugState] = React.useState<string | null>(null)
+
+  React.useEffect(() => {
+    const id = setInterval(async () => setDebugState(await getAuthDebug()), 800)
+    return () => clearInterval(id)
+  }, [])
 
   if (loading) {
     return (
@@ -73,6 +79,11 @@ export default function Home() {
         <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant, textAlign: 'center' }]}>
           Uses your existing Menengai Cloud account.
         </Text>
+        {debug && (
+          <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant, textAlign: 'center', opacity: 0.7 }]}>
+            debug: {debug}
+          </Text>
+        )}
       </FadeInUp>
     </SafeAreaView>
   )

@@ -30,9 +30,7 @@ auto-payments). Shares identity (WorkOS) and types (`@mcloud/db/types`) with the
 
 `app.json` → `expo.extra` (already set for local dev):
 
-- `apiBaseUrl` / `webBaseUrl` — `http://192.168.1.68:3000` (this machine's LAN IP, so a
-  physical phone can reach the dev server; `localhost` would mean the phone itself).
-  Update if your LAN IP changes.
+- `apiBaseUrl` / `webBaseUrl` — `https://mcloud-turbo.vercel.app/`
 - `workosClientId` — `client_01KR36PSYHBHBMG4ED4GSDM6DQ` (public AuthKit client id).
 
 In the **WorkOS dashboard** → Redirects, register the native redirect URI:

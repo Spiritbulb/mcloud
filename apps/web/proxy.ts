@@ -31,7 +31,7 @@ const PROTECTED_SUBPATHS = ['/settings', '/orders', '/products/new'] as const
 /**
  * Prefixes that bypass all tenant/proxy logic entirely.
  */
-const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/', '/callback'] as const
+const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/', '/callback', '/.well-known/'] as const
 
 const BANNER_EXCLUDED_PREFIXES = [
   '/settings', '/dashboard', '/orders', '/products/new',
