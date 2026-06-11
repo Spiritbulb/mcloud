@@ -5,8 +5,8 @@
 // Only ever loaded via dynamic() from blog-post-shell.tsx — never
 // imported statically from any server-reachable file.
 
-import ClassicBlogPostPage from '@/src/themes/classic/BlogPostPage'
-import type { BlogPostPageProps } from '@/src/themes/types'
+import ClassicBlogPostPage from '@mcloud/themes/classic/BlogPostPage'
+import type { BlogPostPageProps } from '@mcloud/themes/types'
 
 const THEMES: Record<string, React.ComponentType<BlogPostPageProps>> = {
     classic: ClassicBlogPostPage,

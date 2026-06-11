@@ -3,7 +3,7 @@
 // Import { createClient } from wherever your app creates its browser/server client.
 
 import { createClient } from '@mcloud/db/client'   // adjust to your path
-import type { BlogPost, BlogAuthor } from '@/src/themes/types'
+import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

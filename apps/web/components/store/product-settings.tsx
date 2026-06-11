@@ -13,7 +13,7 @@ import { Separator } from '@mcloud/ui/separator'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, Package } from 'lucide-react'
 import ImageUpload from './image-upload'
-import { Product, Variant } from '@/src/themes/types'
+import { Product, Variant } from '@mcloud/themes/types'
 
 
 

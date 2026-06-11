@@ -4,8 +4,8 @@
 // Owns all static imports of theme components + framer-motion.
 // Only ever loaded via dynamic() from blog-list-shell.tsx.
 
-import ClassicBlogListPage from '@/src/themes/classic/BlogListPage'
-import type { BlogListPageProps } from '@/src/themes/types'
+import ClassicBlogListPage from '@mcloud/themes/classic/BlogListPage'
+import type { BlogListPageProps } from '@mcloud/themes/types'
 
 const THEMES: Record<string, React.ComponentType<BlogListPageProps>> = {
     classic: ClassicBlogListPage,

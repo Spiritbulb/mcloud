@@ -18,7 +18,7 @@ import {
     BadgePercent, Tag, Zap, Video, Image as ImageIcon,
 } from 'lucide-react'
 import ImageUpload from './image-upload'
-import { ServiceItem, ServicePackage, ServiceMediaItem } from '@/src/themes/types'
+import { ServiceItem, ServicePackage, ServiceMediaItem } from '@mcloud/themes/types'
 
 // Local draft type — all fields are strings so HTML inputs bind freely.
 // On save, fields are parsed to their ServicePackage types.

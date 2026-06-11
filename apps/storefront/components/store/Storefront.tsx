@@ -1,0 +1,27 @@
+'use client'
+
+// components/store/Storefront.tsx
+// Same fix as BlogPage.tsx — theme files import framer-motion, so they must
+// be behind dynamic() to stay out of the server component import graph.
+
+import dynamic from 'next/dynamic'
+import { Loader2 } from 'lucide-react'
+import type { StoreFrontProps } from '@mcloud/themes/types'
+
+const Spinner = () => (
+    <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+    </div>
+)
+
+const THEMES: Record<string, React.ComponentType<StoreFrontProps>> = {
+    classic: dynamic(() => import('@mcloud/themes/classic/StoreFront'), { ssr: false, loading: Spinner })
+}
+
+export default function StoreFront(props: StoreFrontProps) {
+    const themeId = (props.store.settings as any)?.themeId ?? 'classic'
+    console.log('🎭 Storefront.tsx — themeId:', themeId, 'services:', (props as any).services?.length)
+
+    const Component = THEMES[themeId] ?? THEMES.classic
+    return <Component {...props} />
+}

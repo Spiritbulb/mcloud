@@ -5,7 +5,7 @@ import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
 import { cn } from '@mcloud/ui/utils'
 import { SettingsSection, SettingsField } from '@/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
-import { THEMES } from '../../src/themes'
+import { THEMES } from '@mcloud/themes'
 
 // shadcn primitives
 import {

@@ -1,0 +1,23 @@
+{
+  "name": "@mcloud/themes",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./types": "./src/types.ts",
+    "./resolver": "./src/resolver.ts",
+    "./*": "./src/*.tsx"
+  },
+  "dependencies": {
+    "@mcloud/ui": "*",
+    "framer-motion": "^12.15.0",
+    "lucide-react": "^0.511.0"
+  },
+  "peerDependencies": {
+    "next": "*",
+    "react": "*"
+  },
+  "devDependencies": {
+    "@mcloud/config": "*"
+  }
+}

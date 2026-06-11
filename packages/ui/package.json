@@ -4,6 +4,8 @@
   "private": true,
   "exports": {
     "./utils": "./src/utils.ts",
+    "./use-mobile": "./src/use-mobile.ts",
+    "./use-controlled-state": "./src/use-controlled-state.tsx",
     "./*": "./src/*.tsx"
   },
   "dependencies": {

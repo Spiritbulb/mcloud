@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+/* Scan the shared UI package so its Tailwind classes aren't purged. */
+@source "../../../packages/ui/src";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+*,
+::before,
+::after {
+  box-sizing: border-box;
+}

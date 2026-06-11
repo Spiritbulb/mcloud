@@ -17,6 +17,7 @@
   "dependencies": {
     "@mcloud/auth": "*",
     "@mcloud/db": "*",
+    "@mcloud/themes": "*",
     "@mcloud/ui": "*",
     "@auth0/nextjs-auth0": "^4.19.0",
     "@codemirror/lang-markdown": "^6.5.0",

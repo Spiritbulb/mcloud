@@ -11,7 +11,7 @@
 
 import dynamic from 'next/dynamic'
 import { Loader2 } from 'lucide-react'
-import type { BlogPostPageProps } from '@/src/themes/types'
+import type { BlogPostPageProps } from '@mcloud/themes/types'
 
 // ALL real imports live inside the dynamic() factory — never at the top level.
 const BlogPostPageInner = dynamic(

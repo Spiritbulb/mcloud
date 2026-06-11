@@ -11,7 +11,7 @@ import {
     getPostBySlug,
     getRelatedPosts,
 } from '@/lib/blog'
-import type { BlogPost } from '@/src/themes/types'
+import type { BlogPost } from '@mcloud/themes/types'
 
 // ─── Blog list ────────────────────────────────────────────────────────────────
 
