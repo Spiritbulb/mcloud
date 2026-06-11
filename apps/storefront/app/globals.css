@@ -1,7 +1,8 @@
 @import "tailwindcss";
 
-/* Scan the shared UI package so its Tailwind classes aren't purged. */
+/* Scan shared packages so their Tailwind classes aren't purged. */
 @source "../../../packages/ui/src";
+@source "../../../packages/themes/src";
 
 @custom-variant dark (&:where(.dark, .dark *));
 

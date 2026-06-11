@@ -3,7 +3,7 @@
 import { createClient, getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { BlogSettingsClient } from './blog-client'
-import type { BlogPost, BlogAuthor } from '@/src/themes/types'
+import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
 
 interface Props {
     params: Promise<{ orgSlug: string; storeSlug: string }>

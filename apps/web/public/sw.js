@@ -4,7 +4,7 @@
 //   - Static assets (same-origin GET, non-API): stale-while-revalidate
 //   - API / auth / cross-origin: network-only (never cache auth or live data)
 
-const VERSION = 'mc-v2';
+const VERSION = 'mc-v3';
 const STATIC_CACHE = `${VERSION}-static`;
 const PAGE_CACHE = `${VERSION}-pages`;
 
@@ -47,7 +47,21 @@ self.addEventListener('fetch', (event) => {
   // Never cache auth / API
   if (NETWORK_ONLY.some((re) => re.test(url.pathname))) return;
 
-  // Navigations → network-first with offline fallback
+  // Never intercept React Server Component (RSC) flight requests. These are
+  // App Router client navigations (RSC:1 header / ?_rsc= query) that stream a
+  // flight payload — caching or substituting an HTML fallback corrupts the
+  // stream and crashes the flight reader (enqueueModel / "convert value to Response").
+  if (
+    request.headers.get('RSC') === '1' ||
+    request.headers.get('Next-Router-Prefetch') === '1' ||
+    url.searchParams.has('_rsc')
+  ) {
+    return;
+  }
+
+  // Navigations → network-first with offline fallback.
+  // Only ever fall back to the cached *document* or offline.html, both of which
+  // are real HTML Responses; never serve a cached flight/asset to a navigation.
   if (request.mode === 'navigate') {
     event.respondWith(
       fetch(request)
@@ -56,14 +70,19 @@ self.addEventListener('fetch', (event) => {
           caches.open(PAGE_CACHE).then((c) => c.put(request, copy));
           return res;
         })
-        .catch(() =>
-          caches.match(request).then((cached) => cached || caches.match('/offline.html'))
-        )
+        .catch(async () => {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          const offline = await caches.match('/offline.html');
+          // respondWith requires a Response — never resolve to undefined.
+          return offline || Response.error();
+        })
     );
     return;
   }
 
-  // Static assets → stale-while-revalidate
+  // Static assets → stale-while-revalidate.
+  // Guard every path so respondWith always receives a real Response.
   event.respondWith(
     caches.match(request).then((cached) => {
       const network = fetch(request)
@@ -74,7 +93,7 @@ self.addEventListener('fetch', (event) => {
           }
           return res;
         })
-        .catch(() => cached);
+        .catch(() => cached || Response.error());
       return cached || network;
     })
   );

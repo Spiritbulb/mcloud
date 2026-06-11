@@ -154,9 +154,9 @@ async function handle(
         url.searchParams.set('next', subpath)
         return rewriteResponse(url, authHeaders)
       }
-      const url = request.nextUrl.clone()
-      url.pathname = `/store/${activeSlug}${subpath}`
-      return rewriteResponse(url, authHeaders)
+      // /store/{slug}/settings/* is now in apps/storefront which redirects to the
+      // merchant org settings — use /s/ so it routes through the storefront app.
+      return NextResponse.redirect(toStorefrontUrl(request, activeSlug, subpath), 307)
     }
 
     // Everything else (org, onboarding, pick, etc.) — strip /admin prefix
@@ -222,19 +222,10 @@ async function handle(
       return NextResponse.redirect(url, 308)
     }
 
-    // Rewrite to internal store path for rendering
-    const url = request.nextUrl.clone()
-    url.pathname = `/store/${slug}${pathname === '/' ? '' : pathname}`
-    const rewrite = rewriteResponse(url, authHeaders)
-
-    if (!BANNER_EXCLUDED_PREFIXES.some((p) => pathname.startsWith(p))) {
-      if (session?.user) {
-        const proto = request.headers.get('x-forwarded-proto') ?? 'https'
-        injectBanner(rewrite, `${proto}://menengai.cloud/admin/settings`, 'storefront')
-      }
-    }
-
-    return rewrite
+    // Redirect to the storefront app
+    const storefrontOrigin = process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'
+    const storefrontPath = `/store/${slug}${pathname === '/' ? '' : pathname}${search}`
+    return NextResponse.redirect(`${storefrontOrigin}${storefrontPath}`, 307)
   }
 
 
@@ -274,18 +265,10 @@ async function handle(
       return NextResponse.redirect(url, 308)
     }
 
-    // Rewrite to internal store path for rendering
-    const url = request.nextUrl.clone()
-    url.pathname = `/store/${tenantSlug}${subpath === '/' ? '' : subpath}`
-    const rewrite = rewriteResponse(url, authHeaders)
-
-    if (!BANNER_EXCLUDED_PREFIXES.some((p) => subpath.startsWith(p))) {
-      if (session?.user) {
-        injectBanner(rewrite, `/admin/settings`, 'storefront')
-      }
-    }
-
-    return rewrite
+    // Redirect to the storefront app
+    const storefrontOrigin = process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'
+    const storefrontUrl = `${storefrontOrigin}/store/${tenantSlug}${subpath === '/' ? '' : subpath}${search}`
+    return NextResponse.redirect(storefrontUrl, 307)
   }
 
 
@@ -340,7 +323,9 @@ async function handle(
         308,
       )
     }
-    return nextResponse(authHeaders)
+    // In dev, redirect /store/{slug}/* directly to the storefront app
+    const storefrontOrigin = process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'
+    return NextResponse.redirect(`${storefrontOrigin}/store/${storeMatch[1]}${storeMatch[2] ?? '/'}${search}`, 307)
   }
 
   return nextResponse(authHeaders)

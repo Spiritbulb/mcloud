@@ -46,7 +46,7 @@ import {
     AlertDialogTitle,
 } from '@mcloud/ui/alert-dialog'
 import { cn } from '@mcloud/ui/utils'
-import type { BlogPost, BlogAuthor } from '@/src/themes/types'
+import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
 
 // Radix Select forbids empty-string values (it uses "" internally to mean
 // "nothing selected / show placeholder"). Use a sentinel instead.
