@@ -4,6 +4,7 @@ import {
   Pressable,
   RefreshControl,
   ScrollView,
+  Share,
   StyleSheet,
   Text,
   View,
@@ -191,7 +192,7 @@ export default function TodayTab() {
               <View style={s.actionRow}>
                 <ActionTile t={t} icon="share-outline" label="Share store" onPress={() => {
                   const url = store.custom_domain ? `https://${store.custom_domain}` : `https://menengai.cloud/s/${store.slug}`
-                  Alert.alert('Share your store', url, [{ text: 'OK' }])
+                  Share.share({ message: url, url })
                 }} />
                 <ActionTile t={t} icon="color-palette-outline" label="Branding" onPress={() => router.push(`/store/${slug}/branding` as never)} />
               </View>
