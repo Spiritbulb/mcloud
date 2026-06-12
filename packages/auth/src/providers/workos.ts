@@ -30,6 +30,14 @@ const jwks = createRemoteJWKSet(
     new URL(`https://api.workos.com/sso/jwks/${process.env.WORKOS_CLIENT_ID}`),
 )
 
+// ── Mobile session cache ───────────────────────────────────────────────────────
+// getUser() is a live WorkOS API call — caching by `sub` eliminates it for all
+// repeat requests within a session. TTL matches a typical access token lifetime;
+// entries are evicted on expiry rather than on every request.
+const SESSION_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
+type CachedSession = { session: AuthSession; expiresAt: number }
+const sessionCache = new Map<string, CachedSession>()
+
 // Structural shape of the WorkOS user fields we consume. Typed locally (rather than
 // importing @workos-inc/node's User) because AuthKit bundles its own SDK version,
 // and `name` only exists on newer versions — so we read it optionally.
@@ -121,11 +129,17 @@ export const workosProvider: AuthProviderAdapter = {
             const { payload } = await jwtVerify(accessToken, jwks)
             const sub = typeof payload.sub === 'string' ? payload.sub : null
             if (!sub) return null
+
+            const cached = sessionCache.get(sub)
+            if (cached && cached.expiresAt > Date.now()) return cached.session
+
             // Load the full user so externalId (identity continuity) is available.
             let user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
             if (!user) return null
             user = await ensureLinked(user) // Phase 2b auto-link (idempotent)
-            return { user: mapUser(user) }
+            const session: AuthSession = { user: mapUser(user) }
+            sessionCache.set(sub, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
+            return session
         } catch {
             // Invalid signature, expired, wrong issuer, or user lookup failed.
             return null
