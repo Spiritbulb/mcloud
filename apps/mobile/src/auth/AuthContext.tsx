@@ -152,7 +152,8 @@ async function claimAndExchange(code: string): Promise<boolean> {
  * Idempotent with the inline promptAsync path via the single-use verifier claim.
  */
 export async function completeAuthFromCode(code: string): Promise<boolean> {
-  return claimAndExchange(code)
+  const ok = await claimAndExchange(code)
+  return ok
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
