@@ -111,16 +111,6 @@ const redirectUri = 'mcloud://auth'
 // didn't resolve to success — which happens on production standalone builds where
 // the mcloud:// deep link is routed by expo-router before AuthSession catches it.
 const VERIFIER_KEY = 'mcloud.workos.pkce_verifier'
-const DEBUG_KEY = 'mcloud.auth.debug'
-
-// Lightweight on-device auth breadcrumb (shown on the home screen) so we can
-// diagnose the redirect/exchange flow without a console. Remove once stable.
-async function setDebug(msg: string) {
-  try { await SecureStore.setItemAsync(DEBUG_KEY, `${new Date().toISOString().slice(11, 19)} ${msg}`) } catch {}
-}
-export async function getAuthDebug(): Promise<string | null> {
-  try { return await SecureStore.getItemAsync(DEBUG_KEY) } catch { return null }
-}
 
 // An auth code may be reported through TWO paths at once: promptAsync resolving
 // (dev) AND the mcloud://auth deep link landing on app/auth.tsx. WorkOS rejects a
@@ -162,9 +152,7 @@ async function claimAndExchange(code: string): Promise<boolean> {
  * Idempotent with the inline promptAsync path via the single-use verifier claim.
  */
 export async function completeAuthFromCode(code: string): Promise<boolean> {
-  const ok = await claimAndExchange(code)
-  await setDebug(`exchange:${ok} (via deeplink)`)
-  return ok
+  return claimAndExchange(code)
 }
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -178,7 +166,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrate = React.useCallback(async () => {
     const tokens = await loadTokens()
     if (!tokens?.accessToken) {
-      await setDebug('hydrate: no token stored')
       setUser(null)
       setLoading(false)
       return
@@ -188,22 +175,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (!me) {
       const refreshed = await refreshTokens()
       if (refreshed) me = await fetchMe(refreshed.accessToken)
-    }
-    if (me) {
-      await setDebug('hydrate: token=yes me=ok')
-    } else {
-      // Token didn't verify on the API — hit the diagnostic to learn exactly why.
-      let why = '?'
-      try {
-        const res = await fetch(`${config.apiBaseUrl}/api/mobile/debug-auth`, {
-          headers: { Authorization: `Bearer ${tokens.accessToken}` },
-        })
-        const d = await res.json()
-        why = `jwt=${d.jwtVerify ?? '?'} getUser=${d.getUser ?? '?'} apiKey=${d.env?.WORKOS_API_KEY ?? '?'} cid=${(d.env?.WORKOS_CLIENT_ID_full ?? '?').slice(-6)}`
-      } catch (e) {
-        why = `diag-failed:${e instanceof Error ? e.message : 'err'}`
-      }
-      await setDebug(`me=FAILED ${why}`)
     }
 
     if (me) {
@@ -244,13 +215,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // showInRecents helps the system browser hand the redirect back to this
     // pending session (rather than cold-launching the app via the deep link).
     const result = await request.promptAsync(discovery, { showInRecents: true })
-    await setDebug(`prompt:${result.type} code:${('params' in result && result.params?.code) ? 'yes' : 'no'}`)
 
     // Happy path: promptAsync resolved with the code (dev client). Exchange via the
     // shared claim so we never double-exchange if the deep link also fired.
     if (result.type === 'success' && result.params.code) {
       const ok = await claimAndExchange(result.params.code)
-      await setDebug(`exchange:${ok} (via prompt)`)
       await hydrate()
       if (!ok) {
         const tokens = await loadTokens()

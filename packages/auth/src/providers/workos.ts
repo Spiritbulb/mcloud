@@ -72,13 +72,48 @@ function toWorkOSId(id: string): string | null {
     return id.startsWith('user_') ? id : null
 }
 
+/**
+ * Phase 2b auto-link: if a WorkOS user has no externalId, look up the original
+ * Auth0 identity (`auth0|...` users row with the same email) and set the WorkOS
+ * externalId to it, so all existing org/store memberships keyed on the Auth0 sub
+ * resolve. Idempotent — once linked, externalId is non-null and this no-ops. Runs
+ * lazily at session resolution (covers both web callback and mobile token auth).
+ * Returns the user with externalId populated when a link was made.
+ */
+async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
+    if (u.externalId) return u // already linked
+    try {
+        const { createClient } = await import('@mcloud/db/server')
+        const supabase = await createClient()
+        const { data: auth0Row } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', u.email)
+            .like('id', 'auth0|%')
+            .maybeSingle()
+
+        const auth0Id = auth0Row?.id
+        if (!auth0Id) return u // brand-new user, nothing to link
+
+        await getWorkOS().userManagement.updateUser({ userId: u.id, externalId: auth0Id })
+        return { ...u, externalId: auth0Id }
+    } catch {
+        // Never block login on a linking failure — fall back to the WorkOS id.
+        return u
+    }
+}
+
 export const workosProvider: AuthProviderAdapter = {
     async getSession(): Promise<AuthSession | null> {
         // Reads the session from the request headers that prepareMiddleware injected
         // (works in server components, actions, and API routes — all run after the
         // middleware). Never called from inside the middleware itself.
         const { user } = await withAuth()
-        return user ? { user: mapUser(user) } : null
+        if (!user) return null
+        // Phase 2b auto-link. withAuth()'s user already carries externalId once set,
+        // so ensureLinked no-ops after the first link (no per-request write).
+        const linked = await ensureLinked(user as WorkOSUserish)
+        return { user: mapUser(linked) }
     },
 
     async getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
@@ -87,8 +122,10 @@ export const workosProvider: AuthProviderAdapter = {
             const sub = typeof payload.sub === 'string' ? payload.sub : null
             if (!sub) return null
             // Load the full user so externalId (identity continuity) is available.
-            const user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
-            return user ? { user: mapUser(user) } : null
+            let user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
+            if (!user) return null
+            user = await ensureLinked(user) // Phase 2b auto-link (idempotent)
+            return { user: mapUser(user) }
         } catch {
             // Invalid signature, expired, wrong issuer, or user lookup failed.
             return null
