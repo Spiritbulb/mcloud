@@ -46,38 +46,36 @@ export type StoreAccess =
  * Resolve a store by slug and confirm the user can access it (store member OR
  * member of the store's org). Returns the storeId + effective role. The single
  * gate every store-scoped mobile endpoint calls.
- *
- * Single round trip: fetches store + both membership rows in one query via
- * Supabase's embedded select, avoiding two sequential role-check calls.
  */
 export async function requireStoreAccess(slug: string, userId: string): Promise<StoreAccess> {
     const supabase = await createClient()
+
     const { data: store } = await supabase
         .from('stores')
-        .select(`
-            id,
-            org_id,
-            store_members!left(role),
-            orgs!left(org_members!left(role))
-        `)
+        .select('id, org_id')
         .eq('slug', slug)
-        .eq('store_members.user_id', userId)
-        .eq('orgs.org_members.user_id', userId)
         .single()
-
     if (!store) return { error: 'not_found', storeId: null, role: null }
 
-    const storeMembers = Array.isArray(store.store_members) ? store.store_members : []
-    const storeRole = storeMembers[0]?.role ?? null
+    // Run both membership checks in parallel against the already-created client.
+    const [storeMemberRow, orgMemberRow] = await Promise.all([
+        supabase
+            .from('store_members')
+            .select('role')
+            .eq('store_id', store.id)
+            .eq('user_id', userId)
+            .maybeSingle(),
+        store.org_id
+            ? supabase
+                  .from('org_members')
+                  .select('role')
+                  .eq('org_id', store.org_id)
+                  .eq('user_id', userId)
+                  .maybeSingle()
+            : Promise.resolve({ data: null }),
+    ])
 
-    let orgRole: string | null = null
-    if (!storeRole && store.org_id) {
-        const orgs = Array.isArray(store.orgs) ? store.orgs : store.orgs ? [store.orgs] : []
-        const orgMembers = Array.isArray(orgs[0]?.org_members) ? orgs[0].org_members : []
-        orgRole = orgMembers[0]?.role ?? null
-    }
-
-    const role = storeRole ?? orgRole
+    const role = storeMemberRow.data?.role ?? orgMemberRow.data?.role ?? null
     if (!role) return { error: 'forbidden', storeId: null, role: null }
 
     return { error: null, storeId: store.id, role }
