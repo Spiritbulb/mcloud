@@ -22,12 +22,9 @@ const NATIVE: Row[] = [
   { key: 'analytics', label: 'Analytics', desc: 'Sales at a glance', icon: 'bar-chart-outline' },
 ]
 
-const WEB: { key: string; label: string; desc: string; icon: React.ComponentProps<typeof Ionicons>['name']; path: (s: StoreHub) => string }[] = [
-  { key: 'payments', label: 'Auto payments', desc: 'Paystack, cards, Daraja', icon: 'card-outline', path: (s) => `/org/${s.orgSlug}/${s.slug}/settings/integrations/payments` },
-  { key: 'domain', label: 'Custom domain', desc: 'Connect your own URL', icon: 'globe-outline', path: (s) => `/org/${s.orgSlug}/${s.slug}/settings/domain` },
-  { key: 'members', label: 'Members', desc: 'Team & roles', icon: 'people-outline', path: (s) => `/org/${s.orgSlug}/${s.slug}/settings/members` },
-  { key: 'design', label: 'Design editor', desc: 'Theme & layout', icon: 'brush-outline', path: (s) => `/org/${s.orgSlug}/${s.slug}/settings/appearance` },
-]
+function advancedSettingsUrl(s: StoreHub): string {
+  return `/org/${s.orgSlug}/${s.slug}/settings`
+}
 
 export default function MoreTab() {
   const t = useTheme()
@@ -88,20 +85,16 @@ export default function MoreTab() {
               ))}
             </Card>
 
-            <Text style={[t.type.labelLarge, s.label, { color: t.colors.onSurfaceVariant }]}>Advanced · on the web</Text>
             <Card style={s.group}>
-              {WEB.map((w, i) => (
-                <SettingsRow
-                  key={w.key}
-                  t={t}
-                  icon={w.icon}
-                  label={w.label}
-                  desc={w.desc}
-                  external
-                  divider={i < WEB.length - 1}
-                  onPress={() => WebBrowser.openBrowserAsync(`${config.webBaseUrl}${w.path(store)}`)}
-                />
-              ))}
+              <SettingsRow
+                t={t}
+                icon="open-outline"
+                label="Advanced settings"
+                desc="Payments, domain, members, design"
+                external
+                divider={false}
+                onPress={() => WebBrowser.openBrowserAsync(`${config.webBaseUrl}${advancedSettingsUrl(store)}`)}
+              />
             </Card>
 
             {canManage && (
