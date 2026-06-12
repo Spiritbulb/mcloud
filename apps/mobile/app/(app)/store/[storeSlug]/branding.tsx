@@ -2,16 +2,17 @@
 // Slug is intentionally never shown/editable.
 import * as React from 'react'
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Branding } from '@/lib/api'
-import { Avatar, Body, Button, Card, Field } from '@/components/ui'
+import { Avatar, Body, Button, Card, Field, ScreenHeader } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 export default function BrandingScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
+  const router = useRouter()
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -54,10 +55,12 @@ export default function BrandingScreen() {
 
   if (loading) {
     return (
-      <View style={[s.fill, { backgroundColor: t.colors.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <Stack.Screen options={{ title: 'Branding' }} />
-        <ActivityIndicator color={t.colors.primary} />
-      </View>
+      <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
+        <ScreenHeader title="Branding" onBack={() => router.back()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={t.colors.primary} />
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -65,8 +68,8 @@ export default function BrandingScreen() {
   const dirty = !!branding && (name.trim() !== branding.name || description !== (branding.description ?? ''))
 
   return (
-    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={[]}>
-      <Stack.Screen options={{ title: 'Branding' }} />
+    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
+      <ScreenHeader title="Branding" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {error || !branding ? (
           <Card><Body variant>{error ?? 'Unavailable'}</Body></Card>

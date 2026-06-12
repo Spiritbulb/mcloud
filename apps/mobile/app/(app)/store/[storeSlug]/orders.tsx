@@ -1,7 +1,8 @@
 // Orders — list + fulfillment status update. M3, system theme.
 import * as React from 'react'
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Order } from '@/lib/api'
 import { Badge, Body, Card } from '@/components/ui'
@@ -17,7 +18,8 @@ function statusTone(s: string | null): 'primary' | 'tertiary' | 'neutral' {
 
 export default function OrdersScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
+  const insets = useSafeAreaInsets()
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -65,7 +67,11 @@ export default function OrdersScreen() {
       data={orders}
       keyExtractor={(o) => o.id}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={t.colors.primary} />}
-      ListHeaderComponent={<Stack.Screen options={{ title: 'Orders' }} />}
+      ListHeaderComponent={
+        <View style={{ paddingTop: insets.top + 8, marginBottom: 12 }}>
+          <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Orders</Text>
+        </View>
+      }
       ListEmptyComponent={!loading ? <Card><Body variant>{error ?? 'No orders yet.'}</Body></Card> : null}
       ItemSeparatorComponent={() => <View style={{ height: 12 }} />}
       renderItem={({ item }) => (

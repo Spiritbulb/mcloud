@@ -136,14 +136,13 @@ export type Theme = {
 }
 
 /** Follows the OS light/dark setting (matches system theme). */
+// Pre-built, STABLE theme objects (one per scheme). Returning these by reference
+// instead of a fresh object each render keeps `t` referentially stable, so
+// downstream useMemo/StyleSheet caches actually hit and components don't re-render
+// or rebuild styles every frame.
+const lightTheme: Theme = { colors: light, dark: false, shape, type, space }
+const darkTheme: Theme = { colors: dark, dark: true, shape, type, space }
+
 export function useTheme(): Theme {
-  const scheme = useColorScheme()
-  const isDark = scheme === 'dark'
-  return {
-    colors: isDark ? dark : light,
-    dark: isDark,
-    shape,
-    type,
-    space,
-  }
+  return useColorScheme() === 'dark' ? darkTheme : lightTheme
 }

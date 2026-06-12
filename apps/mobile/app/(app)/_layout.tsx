@@ -37,12 +37,8 @@ export default function AppLayout() {
     >
       <Stack.Screen name="orgs" options={{ headerShown: false }} />
       <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
-      <Stack.Screen name="store/[storeSlug]/index" options={{ title: 'Store', headerShown: true, headerBackTitle: 'Back' }} />
-      <Stack.Screen name="store/[storeSlug]/products" options={{ headerShown: true, headerBackTitle: 'Back' }} />
-      <Stack.Screen name="store/[storeSlug]/orders" options={{ headerShown: true, headerBackTitle: 'Back' }} />
-      <Stack.Screen name="store/[storeSlug]/branding" options={{ headerShown: true, headerBackTitle: 'Back' }} />
-      <Stack.Screen name="store/[storeSlug]/mpesa" options={{ headerShown: true, headerBackTitle: 'Back' }} />
-      <Stack.Screen name="store/[storeSlug]/analytics" options={{ headerShown: true, headerBackTitle: 'Back' }} />
+      {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}
+      <Stack.Screen name="store/[storeSlug]" options={{ headerShown: false }} />
     </Stack>
   )
 }

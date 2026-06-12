@@ -8,19 +8,20 @@
 //
 // Data comes from GET /api/mobile/picker (lib/merchant/orgs getPickerData).
 import * as React from 'react'
-import { ActivityIndicator, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type PickerData, type PickerStore } from '@/lib/api'
-import { Avatar, Badge, FadeInUp, MarketingImage, MetaPill, Overline } from '@/components/ui'
+import { Avatar, Badge, FadeInUp, MarketingImage, MetaPill, Overline, SkeletonCard } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 // ── Screen ──────────────────────────────────────────────────────────────────────
 
 export default function PickerScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
   const router = useRouter()
   const { user, signOut, authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -55,7 +56,6 @@ export default function PickerScreen() {
   const otherStores = data?.otherStores ?? []
   const firstName = (user?.name ?? user?.email ?? 'there').split(' ')[0].split('@')[0]
   const totalStores = orgs.reduce((n, o) => n + o.stores.length, 0) + otherStores.length
-  let order = 0 // running index for staggered entrance
 
   return (
     <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
@@ -98,17 +98,23 @@ export default function PickerScreen() {
 
         {/* Loading / error / empty */}
         {loading && !data ? (
-          <View style={{ paddingVertical: 48, alignItems: 'center' }}>
-            <ActivityIndicator color={t.colors.primary} />
+          <View style={{ gap: 12, marginTop: 8 }}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
           </View>
         ) : error ? (
           <View style={[s.notice, { backgroundColor: t.colors.errorContainer }]}>
             <Text style={[t.type.bodyMedium, { color: t.colors.onErrorContainer }]}>{error}</Text>
           </View>
         ) : orgs.length === 0 && otherStores.length === 0 ? (
-          <View style={[s.notice, { backgroundColor: t.colors.surfaceContainer }]}>
-            <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
-              No workspaces yet. Create one on the web to get started.
+          <View style={s.emptyState}>
+            <MarketingImage name="marketing-make-it-yours.png" width={160} height={130} />
+            <Text style={[t.type.titleMedium, { color: t.colors.onSurface, textAlign: 'center' }]}>
+              No stores yet
+            </Text>
+            <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant, textAlign: 'center' }]}>
+              Create your first store on the web, then manage it here.
             </Text>
           </View>
         ) : null}
@@ -128,10 +134,11 @@ export default function PickerScreen() {
           </FadeInUp>
         )}
 
-        {/* Org groups */}
-        {orgs.map((org) => (
-          <View key={org.id} style={s.group}>
-            <FadeInUp delay={100 + order++ * 50}>
+        {/* Org groups — one entrance animation per section (capped stagger) keeps
+            the load light no matter how many stores the user has. */}
+        {orgs.map((org, gi) => (
+          <FadeInUp key={org.id} delay={Math.min(100 + gi * 60, 340)}>
+            <View style={s.group}>
               <Pressable
                 onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
                 style={({ pressed }) => [s.groupHeader, pressed && { opacity: 0.65 }]}
@@ -140,60 +147,56 @@ export default function PickerScreen() {
                   <Text style={[t.type.titleLarge, { color: t.colors.onSurface }]}>{org.name}</Text>
                   <MetaPill label={`${org.role} · ${org.stores.length} ${org.stores.length === 1 ? 'store' : 'stores'}`} />
                 </View>
-                <Text style={[s.chevron, { color: t.colors.onSurfaceVariant }]}>›</Text>
+                <Ionicons name="chevron-forward" size={20} color={t.colors.onSurfaceVariant} />
               </Pressable>
-            </FadeInUp>
 
-            <View style={s.cardStack}>
-              {org.stores.map((st) => (
-                <FadeInUp key={st.id} delay={100 + order++ * 50}>
+              <View style={s.cardStack}>
+                {org.stores.map((st) => (
                   <StoreCard
+                    key={st.id}
                     t={t}
                     store={st}
                     onPress={() => router.push(`/store/${st.slug}` as never)}
                   />
-                </FadeInUp>
-              ))}
+                ))}
 
-              {org.canManage && (
-                <FadeInUp delay={100 + order++ * 50}>
+                {org.canManage && (
                   <Pressable
                     onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
                     style={({ pressed }) => [s.addStore, pressed && { backgroundColor: t.colors.surfaceContainerLow }]}
                   >
                     <Text style={[t.type.labelLarge, { color: t.colors.primary }]}>+  New store</Text>
                   </Pressable>
-                </FadeInUp>
-              )}
+                )}
+              </View>
             </View>
-          </View>
+          </FadeInUp>
         ))}
 
         {/* Other workspaces */}
         {otherStores.length > 0 && (
-          <View style={s.group}>
-            <FadeInUp delay={100 + order++ * 50}>
+          <FadeInUp delay={360}>
+            <View style={s.group}>
               <View style={{ gap: 4 }}>
                 <Text style={[t.type.titleMedium, { color: t.colors.onSurfaceVariant }]}>Other workspaces</Text>
                 <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
                   Stores you manage elsewhere
                 </Text>
               </View>
-            </FadeInUp>
-            <View style={s.cardStack}>
-              {otherStores.map((st) => (
-                <FadeInUp key={st.id} delay={100 + order++ * 50}>
+              <View style={s.cardStack}>
+                {otherStores.map((st) => (
                   <StoreCard
+                    key={st.id}
                     t={t}
                     store={st}
                     subtitle={'Other workspace'}
                     external
                     onPress={() => router.push(`/store/${st.slug}` as never)}
                   />
-                </FadeInUp>
-              ))}
+                ))}
+              </View>
             </View>
-          </View>
+          </FadeInUp>
         )}
 
         <View style={{ height: 32 }} />
@@ -218,7 +221,7 @@ function StoreCard({
 }: {
   t: Theme; store: PickerStore; subtitle?: string; external?: boolean; onPress: () => void
 }) {
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
   return (
     <Pressable
       onPress={onPress}
@@ -240,7 +243,7 @@ function StoreCard({
         </Text>
       </View>
       {external ? (
-        <Text style={{ color: t.colors.onSurfaceVariant, opacity: 0.5, fontSize: 18 }}>↗</Text>
+        <Ionicons name="open-outline" size={18} color={t.colors.onSurfaceVariant} />
       ) : store.is_pro ? (
         <Badge label="PRO" tone="primary" />
       ) : null}
@@ -273,6 +276,7 @@ const styles = (t: Theme) =>
     stats: { flexDirection: 'row', gap: 12, alignSelf: 'stretch' },
     group: { gap: 14, alignSelf: 'stretch' },
     notice: { alignSelf: 'stretch', borderRadius: 16, padding: 16 },
+    emptyState: { alignSelf: 'stretch', alignItems: 'center', gap: 10, paddingVertical: 32, paddingHorizontal: 24 },
     groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     chevron: { fontSize: 24, fontWeight: '300' },
     cardStack: { gap: 12, alignSelf: 'stretch' },

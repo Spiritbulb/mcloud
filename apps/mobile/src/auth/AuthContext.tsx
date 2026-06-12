@@ -19,6 +19,7 @@ import { config } from '../lib/config'
 WebBrowser.maybeCompleteAuthSession()
 
 const TOKEN_KEY = 'mcloud.workos.tokens'
+const USER_KEY = 'mcloud.workos.user'
 
 // WorkOS AuthKit OAuth endpoints. AuthKit exposes standard OAuth2 endpoints under
 // the WorkOS API domain.
@@ -62,6 +63,7 @@ async function loadTokens(): Promise<Tokens | null> {
 }
 async function clearTokens() {
   await SecureStore.deleteItemAsync(TOKEN_KEY)
+  try { await SecureStore.deleteItemAsync(USER_KEY) } catch {}
 }
 
 /** Mint a fresh access token from the stored refresh token. Returns null on failure. */
@@ -85,17 +87,44 @@ async function refreshTokens(): Promise<Tokens | null> {
   }
 }
 
-/** Fetch /api/mobile/me with a token; returns the user or null (no side effects). */
-async function fetchMe(accessToken: string): Promise<SessionUser | null> {
+// Cache the last-known user so the app can show a session offline / on a flaky
+// launch instead of bouncing to login when the server is briefly unreachable.
+async function saveUser(u: SessionUser) {
+  try { await SecureStore.setItemAsync(USER_KEY, JSON.stringify(u)) } catch {}
+}
+async function loadCachedUser(): Promise<SessionUser | null> {
   try {
-    const res = await fetch(`${config.apiBaseUrl}/api/mobile/me`, {
+    const raw = await SecureStore.getItemAsync(USER_KEY)
+    return raw ? (JSON.parse(raw) as SessionUser) : null
+  } catch { return null }
+}
+
+type MeResult =
+  | { kind: 'ok'; user: SessionUser }
+  | { kind: 'unauthorized' } // token genuinely rejected (401/403) — safe to clear
+  | { kind: 'network' } // couldn't reach the server — DO NOT clear the session
+
+/**
+ * Fetch /api/mobile/me. Crucially distinguishes a rejected token (unauthorized →
+ * sign out) from a transient network failure (network → keep the session), so a
+ * flaky connection on launch never logs the user out.
+ */
+async function fetchMe(accessToken: string): Promise<MeResult> {
+  let res: Response
+  try {
+    res = await fetch(`${config.apiBaseUrl}/api/mobile/me`, {
       headers: { Authorization: `Bearer ${accessToken}` },
     })
-    if (!res.ok) return null
-    const data = (await res.json()) as { user: SessionUser }
-    return data.user
   } catch {
-    return null
+    return { kind: 'network' } // server unreachable
+  }
+  if (res.status === 401 || res.status === 403) return { kind: 'unauthorized' }
+  if (!res.ok) return { kind: 'network' } // 5xx etc. — transient, keep session
+  try {
+    const data = (await res.json()) as { user: SessionUser }
+    return { kind: 'ok', user: data.user }
+  } catch {
+    return { kind: 'network' }
   }
 }
 
@@ -165,22 +194,38 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // before giving up. Only a failed refresh (true expiry/revocation) signs the user
   // out, so reloads don't bounce you back to the login screen.
   const hydrate = React.useCallback(async () => {
-    const tokens = await loadTokens()
+    let tokens = await loadTokens()
     if (!tokens?.accessToken) {
       setUser(null)
       setLoading(false)
       return
     }
 
+    // Proactively refresh if the access token is expired/near-expiry (60s skew),
+    // so we don't waste a round-trip on a token we know is stale.
+    if (tokens.expiresAt && tokens.expiresAt - Date.now() < 60_000) {
+      const refreshed = await refreshTokens()
+      if (refreshed) tokens = refreshed
+    }
+
     let me = await fetchMe(tokens.accessToken)
-    if (!me) {
+
+    // Access token rejected → try a refresh, then re-check with the new token.
+    if (me.kind === 'unauthorized') {
       const refreshed = await refreshTokens()
       if (refreshed) me = await fetchMe(refreshed.accessToken)
     }
 
-    if (me) {
-      setUser(me)
+    if (me.kind === 'ok') {
+      await saveUser(me.user)
+      setUser(me.user)
+    } else if (me.kind === 'network') {
+      // Server unreachable — keep the session and show the cached user so the app
+      // stays usable; we re-verify on the next focus/request. NEVER log out here.
+      const cached = await loadCachedUser()
+      setUser((prev) => prev ?? cached)
     } else {
+      // unauthorized AND refresh failed → token truly invalid → sign out.
       await clearTokens()
       setUser(null)
     }

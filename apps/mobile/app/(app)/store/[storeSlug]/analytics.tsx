@@ -1,11 +1,11 @@
 // Analytics — a little read-only summary (last 30 days). M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type AnalyticsTotals } from '@/lib/api'
-import { Body, Card, Overline } from '@/components/ui'
+import { Body, Card, Overline, ScreenHeader } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 function num(v: unknown): number {
@@ -20,8 +20,9 @@ function delta(cur: number, prev: number): { label: string; up: boolean } | null
 
 export default function AnalyticsScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
+  const router = useRouter()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 
@@ -53,8 +54,8 @@ export default function AnalyticsScreen() {
   ]
 
   return (
-    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={[]}>
-      <Stack.Screen options={{ title: 'Analytics' }} />
+    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
+      <ScreenHeader title="Analytics" onBack={() => router.back()} />
       <ScrollView
         contentContainerStyle={s.scroll}
         refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={t.colors.primary} />}

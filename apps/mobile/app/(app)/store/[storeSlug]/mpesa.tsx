@@ -2,17 +2,18 @@
 // M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams, useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type ManualMpesa } from '@/lib/api'
-import { Body, Button, Card, Field } from '@/components/ui'
+import { Body, Button, Card, Field, ScreenHeader } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 export default function MpesaScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
+  const router = useRouter()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 
@@ -56,10 +57,12 @@ export default function MpesaScreen() {
 
   if (loading) {
     return (
-      <View style={[s.fill, { backgroundColor: t.colors.background, alignItems: 'center', justifyContent: 'center' }]}>
-        <Stack.Screen options={{ title: 'Manual M-Pesa' }} />
-        <ActivityIndicator color={t.colors.primary} />
-      </View>
+      <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
+        <ScreenHeader title="Manual M-Pesa" onBack={() => router.back()} />
+        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+          <ActivityIndicator color={t.colors.primary} />
+        </View>
+      </SafeAreaView>
     )
   }
 
@@ -67,8 +70,8 @@ export default function MpesaScreen() {
   const isTill = m?.mpesa_type === 'till'
 
   return (
-    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={[]}>
-      <Stack.Screen options={{ title: 'Manual M-Pesa' }} />
+    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
+      <ScreenHeader title="Manual M-Pesa" onBack={() => router.back()} />
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {error || !m ? (
           <Card><Body variant>{error ?? 'Unavailable'}</Body></Card>

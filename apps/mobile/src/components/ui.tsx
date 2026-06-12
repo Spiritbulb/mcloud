@@ -58,6 +58,55 @@ export function FadeInUp({
   )
 }
 
+// ── Skeleton (shimmer loading placeholder) ──────────────────────────────────────
+
+export function Skeleton({
+  height = 16,
+  width = '100%',
+  radius = 8,
+  style,
+}: {
+  height?: number
+  width?: number | `${number}%`
+  radius?: number
+  style?: ViewProps['style']
+}) {
+  const t = useTheme()
+  const shimmer = React.useRef(new Animated.Value(0)).current
+  React.useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(shimmer, { toValue: 1, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(shimmer, { toValue: 0, duration: 800, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ]),
+    )
+    loop.start()
+    return () => loop.stop()
+  }, [shimmer])
+  return (
+    <Animated.View
+      style={[
+        { height, width, borderRadius: radius, backgroundColor: t.colors.surfaceContainerHigh, opacity: shimmer.interpolate({ inputRange: [0, 1], outputRange: [0.5, 1] }) },
+        style,
+      ]}
+    />
+  )
+}
+
+/** A card-shaped skeleton row (avatar + two lines) for list loading states. */
+export function SkeletonCard() {
+  const t = useTheme()
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 16, borderWidth: 1, borderColor: t.colors.outlineVariant }}>
+      <Skeleton height={44} width={'100%' as never} radius={12} style={{ width: 44 }} />
+      <View style={{ flex: 1, gap: 8 }}>
+        <Skeleton height={14} width={'60%'} />
+        <Skeleton height={12} width={'40%'} />
+      </View>
+    </View>
+  )
+}
+
 // ── Remote marketing image (served from apps/web/public) ────────────────────────
 
 export function MarketingImage({
@@ -415,6 +464,24 @@ const confirmStyles = StyleSheet.create({
   sheet: { borderRadius: 28, padding: 24, gap: 14 },
   input: { minHeight: 52, borderRadius: 12, borderWidth: 1, paddingHorizontal: 16 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
+})
+
+// ── Screen header (back + title) for pushed sub-screens inside the tabs ─────────
+
+export function ScreenHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  const t = useTheme()
+  return (
+    <View style={headerStyles.bar}>
+      <Pressable onPress={onBack} hitSlop={12} style={({ pressed }) => pressed && { opacity: 0.6 }}>
+        <Text style={{ fontSize: 26, color: t.colors.onSurface }}>‹</Text>
+      </Pressable>
+      <Text style={[t.type.titleLarge, { color: t.colors.onSurface, flex: 1 }]}>{title}</Text>
+    </View>
+  )
+}
+
+const headerStyles = StyleSheet.create({
+  bar: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, height: 52 },
 })
 
 // ── Screen container ─────────────────────────────────────────────────────────────

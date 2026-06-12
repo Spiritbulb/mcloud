@@ -1,7 +1,8 @@
 // Products — list + create + inline edit (price/stock) + delete. M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
-import { Stack, useLocalSearchParams } from 'expo-router'
+import { useLocalSearchParams } from 'expo-router'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
 import { Avatar, Badge, Body, Button, Card, Field } from '@/components/ui'
@@ -9,7 +10,8 @@ import { useTheme, type Theme } from '@/lib/theme'
 
 export default function ProductsScreen() {
   const t = useTheme()
-  const s = styles(t)
+  const s = React.useMemo(() => styles(t), [t])
+  const insets = useSafeAreaInsets()
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -89,8 +91,8 @@ export default function ProductsScreen() {
       keyExtractor={(p) => p.id}
       refreshControl={<RefreshControl refreshing={loading} onRefresh={load} tintColor={t.colors.primary} />}
       ListHeaderComponent={
-        <View style={{ gap: 16, marginBottom: 16 }}>
-          <Stack.Screen options={{ title: 'Products' }} />
+        <View style={{ gap: 16, marginBottom: 16, paddingTop: insets.top + 8 }}>
+          <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Products</Text>
           {canManage && (
             <Card tonal style={{ gap: 12 }}>
               <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Add a product</Text>
