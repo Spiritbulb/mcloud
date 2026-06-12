@@ -162,6 +162,13 @@ export function api(authedFetch: Fetch) {
       const res = await authedFetch(`/api/mobile/stores/${slug}/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ fulfillment_status }) })
       return (await json<{ order: Order }>(res)).order
     },
+    async fulfillOrder(slug: string, id: string): Promise<Order> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/orders/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ fulfillment_status: 'fulfilled' }),
+      })
+      return (await json<{ order: Order }>(res)).order
+    },
 
     // Branding
     async getBranding(slug: string): Promise<Branding> {
