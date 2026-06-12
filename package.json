@@ -15,8 +15,6 @@
     "lint": "turbo run lint"
   },
   "devDependencies": {
-    "@tailwindcss/postcss": "^4",
-    "tailwindcss": "^4",
     "turbo": "^2.5.0"
   }
 }
