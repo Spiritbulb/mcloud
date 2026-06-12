@@ -1,6 +1,0 @@
-{
-  "$schema": "https://openapi.vercel.sh/vercel.json",
-  "installCommand": "npm install",
-  "buildCommand": "turbo run build --filter=@mcloud/web",
-  "outputDirectory": "apps/web/.next"
-}
