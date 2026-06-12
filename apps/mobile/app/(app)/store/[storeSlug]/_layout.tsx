@@ -6,11 +6,13 @@
 // for now tabs switch on tap via expo-router Tabs (no rebuild needed).
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { StoreProvider } from '@/store/StoreContext'
 import { useTheme } from '@/lib/theme'
 
 export default function StoreTabsLayout() {
   const t = useTheme()
+  const insets = useSafeAreaInsets()
 
   return (
     <StoreProvider>
@@ -23,8 +25,8 @@ export default function StoreTabsLayout() {
           backgroundColor: t.colors.surfaceContainer,
           borderTopColor: t.colors.outlineVariant,
           borderTopWidth: 0.5,
-          height: 64,
-          paddingBottom: 8,
+          height: 64 + insets.bottom,
+          paddingBottom: 8 + insets.bottom,
           paddingTop: 6,
         },
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600' },
@@ -33,8 +35,8 @@ export default function StoreTabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Overview',
-          tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} />,
+          title: 'Today',
+          tabBarIcon: ({ color, size }) => <Ionicons name="sunny-outline" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
