@@ -46,18 +46,38 @@ export type StoreAccess =
  * Resolve a store by slug and confirm the user can access it (store member OR
  * member of the store's org). Returns the storeId + effective role. The single
  * gate every store-scoped mobile endpoint calls.
+ *
+ * Single round trip: fetches store + both membership rows in one query via
+ * Supabase's embedded select, avoiding two sequential role-check calls.
  */
 export async function requireStoreAccess(slug: string, userId: string): Promise<StoreAccess> {
     const supabase = await createClient()
     const { data: store } = await supabase
         .from('stores')
-        .select('id, org_id')
+        .select(`
+            id,
+            org_id,
+            store_members!left(role),
+            orgs!left(org_members!left(role))
+        `)
         .eq('slug', slug)
+        .eq('store_members.user_id', userId)
+        .eq('orgs.org_members.user_id', userId)
         .single()
+
     if (!store) return { error: 'not_found', storeId: null, role: null }
 
-    let role = await getStoreRole(store.id, userId)
-    if (!role && store.org_id) role = await getOrgRole(store.org_id, userId)
+    const storeMembers = Array.isArray(store.store_members) ? store.store_members : []
+    const storeRole = storeMembers[0]?.role ?? null
+
+    let orgRole: string | null = null
+    if (!storeRole && store.org_id) {
+        const orgs = Array.isArray(store.orgs) ? store.orgs : store.orgs ? [store.orgs] : []
+        const orgMembers = Array.isArray(orgs[0]?.org_members) ? orgs[0].org_members : []
+        orgRole = orgMembers[0]?.role ?? null
+    }
+
+    const role = storeRole ?? orgRole
     if (!role) return { error: 'forbidden', storeId: null, role: null }
 
     return { error: null, storeId: store.id, role }

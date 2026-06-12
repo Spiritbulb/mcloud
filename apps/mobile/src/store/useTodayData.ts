@@ -23,12 +23,9 @@ export function useTodayData(storeSlug: string): TodayData {
     setError(null)
     setLoading(true)
     try {
-      const [ordersRes, analyticsRes] = await Promise.all([
-        client.listOrders(storeSlug),
-        client.getAnalytics(storeSlug, 1),
-      ])
-      setUnfulfilledOrders(ordersRes.filter((o) => !o.fulfillment_status || o.fulfillment_status === 'unfulfilled'))
-      setAnalytics(analyticsRes)
+      const data = await client.getToday(storeSlug)
+      setUnfulfilledOrders(data.unfulfilledOrders)
+      setAnalytics(data.analytics)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {

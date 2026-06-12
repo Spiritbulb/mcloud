@@ -10,5 +10,7 @@ export async function GET(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const data = await getPickerData(auth.user.id)
-    return NextResponse.json(data)
+    return NextResponse.json(data, {
+        headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' },
+    })
 }

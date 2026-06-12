@@ -232,6 +232,49 @@ export async function getAnalytics(
     return { error: null, status: 200, data }
 }
 
+// ── Today (combined unfulfilled orders + analytics) ──────────────────────────────
+
+export interface TodayData {
+    unfulfilledOrders: MobileOrder[]
+    analytics: unknown
+}
+
+export async function getTodayData(
+    slug: string,
+    userId: string,
+): Promise<Guarded<TodayData>> {
+    const access = await requireStoreAccess(slug, userId)
+    if (access.error) return accessFail(access.error)
+
+    const supabase = await createClient()
+    const end = new Date()
+    const start = new Date(end.getTime() - 1 * 24 * 60 * 60 * 1000)
+
+    const [ordersRes, analyticsRes] = await Promise.all([
+        supabase
+            .from('orders')
+            .select(ORDER_COLS)
+            .eq('store_id', access.storeId)
+            .in('fulfillment_status', ['unfulfilled', null])
+            .order('created_at', { ascending: false })
+            .limit(50),
+        supabase.rpc('get_store_analytics', {
+            p_store_id: access.storeId,
+            p_start: start.toISOString(),
+            p_end: end.toISOString(),
+        }),
+    ])
+
+    return {
+        error: null,
+        status: 200,
+        data: {
+            unfulfilledOrders: (ordersRes.data ?? []) as MobileOrder[],
+            analytics: analyticsRes.data ?? null,
+        },
+    }
+}
+
 // ── Delete store (owner only — destructive) ──────────────────────────────────────
 
 export async function deleteStore(

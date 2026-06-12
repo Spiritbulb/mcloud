@@ -190,6 +190,12 @@ export function api(authedFetch: Fetch) {
       return (await json<{ mpesa: ManualMpesa }>(res)).mpesa
     },
 
+    // Today (combined unfulfilled orders + analytics — single request)
+    async getToday(slug: string): Promise<{ unfulfilledOrders: Order[]; analytics: AnalyticsTotals }> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/today`)
+      return json<{ unfulfilledOrders: Order[]; analytics: AnalyticsTotals }>(res)
+    },
+
     // Analytics
     async getAnalytics(slug: string, days = 30): Promise<AnalyticsTotals> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/analytics?days=${days}`)
