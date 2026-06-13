@@ -9,5 +9,7 @@ export async function GET(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const orgs = await listUserOrgs(auth.user.id)
-    return NextResponse.json({ orgs })
+    return NextResponse.json({ orgs }, {
+        headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' },
+    })
 }

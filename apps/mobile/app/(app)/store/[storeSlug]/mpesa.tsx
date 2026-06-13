@@ -2,9 +2,10 @@
 // M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
+import { useStore } from '@/store/StoreContext'
 import { api, type ManualMpesa } from '@/lib/api'
 import { Body, Button, Card, Field, ScreenHeader } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
@@ -12,7 +13,7 @@ import { useTheme, type Theme } from '@/lib/theme'
 export default function MpesaScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
-  const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
+  const { slug: storeSlug } = useStore()
   const router = useRouter()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])

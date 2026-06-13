@@ -1,10 +1,10 @@
 // Products — list + create + inline edit (price/stock) + delete. M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
-import { useLocalSearchParams } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
+import { useStore } from '@/store/StoreContext'
 import { Avatar, Badge, Body, Button, Card, Field } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
@@ -12,7 +12,7 @@ export default function ProductsScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
   const insets = useSafeAreaInsets()
-  const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
+  const { slug: storeSlug } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 

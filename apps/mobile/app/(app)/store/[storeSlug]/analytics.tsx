@@ -1,9 +1,10 @@
 // Analytics — a little read-only summary (last 30 days). M3, system theme.
 import * as React from 'react'
 import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native'
-import { useLocalSearchParams, useRouter } from 'expo-router'
+import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
+import { useStore } from '@/store/StoreContext'
 import { api, type AnalyticsTotals } from '@/lib/api'
 import { Body, Card, Overline, ScreenHeader } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
@@ -21,7 +22,7 @@ function delta(cur: number, prev: number): { label: string; up: boolean } | null
 export default function AnalyticsScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
-  const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
+  const { slug: storeSlug } = useStore()
   const router = useRouter()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])

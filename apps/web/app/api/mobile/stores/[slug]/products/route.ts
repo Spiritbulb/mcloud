@@ -12,7 +12,9 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     const result = await listProducts(slug, auth.user.id)
     if (result.error === 'not_found') return fail(404, 'Store not found')
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
-    return NextResponse.json({ products: result.data, role: result.role })
+    return NextResponse.json({ products: result.data, role: result.role }, {
+        headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' },
+    })
 }
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

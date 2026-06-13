@@ -12,5 +12,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     const result = await getAnalytics(slug, auth.user.id, Math.min(Math.max(days, 1), 365))
     if (result.error === 'not_found') return fail(404, 'Store not found')
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
-    return NextResponse.json({ analytics: result.data })
+    return NextResponse.json({ analytics: result.data }, {
+        headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' },
+    })
 }
