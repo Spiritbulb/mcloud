@@ -62,11 +62,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
     const { slug } = store
 
-    // Strip a stray /store/{slug} prefix if someone lands here with it.
-    const storePrefix = `/store/${slug}`
-    const path = pathname.startsWith(storePrefix)
-      ? pathname.slice(storePrefix.length) || '/'
-      : pathname
+    // A custom domain should never carry a /store/{anySlug} prefix. Strip one if
+    // present (e.g. someone shared https://locdessence.shop/store/locd26/cart) so
+    // it resolves to the bare storefront path.
+    const path = pathname.replace(/^\/store\/[^/]+/, '') || '/'
 
     return rewriteToStore(request, slug, `${path}${search}`)
   }
