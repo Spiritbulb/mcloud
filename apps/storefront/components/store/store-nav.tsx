@@ -4,6 +4,7 @@ import { ShoppingBag, Heart, User } from 'lucide-react'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useStoreHref } from '@/contexts/StoreContext'
 import { useWishlist } from '@/contexts/WishlistContext'
 
 interface Store {
@@ -29,12 +30,13 @@ export default function StoreNav({ store }: { store: Store }) {
     const { cartItems } = useCart()
     const { user } = useCustomerAuth()
     const { wishlistIds } = useWishlist()
+    const href = useStoreHref()
 
     return (
         <nav className="sf-nav sticky top-0 z-40">
             <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
 
-                <Link href={`/store/${store.slug}`} className="flex items-center gap-3">
+                <Link href={href('/')} className="flex items-center gap-3">
                     {store.logo_url ? (
                         <img
                             src={store.logo_url}
@@ -54,7 +56,7 @@ export default function StoreNav({ store }: { store: Store }) {
 
                 <div className="flex items-center gap-1">
                     <Link
-                        href={`/store/${store.slug}/account/dashboard`}
+                        href={href('/account/dashboard')}
                         className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
                         style={{ color: 'var(--sf-foreground)' }}
                         aria-label="Wishlist"
@@ -64,7 +66,7 @@ export default function StoreNav({ store }: { store: Store }) {
                     </Link>
 
                     <Link
-                        href={`/store/${store.slug}/account/${user ? 'dashboard' : 'login'}`}
+                        href={href(`/account/${user ? 'dashboard' : 'login'}`)}
                         className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
                         style={{ color: 'var(--sf-foreground)' }}
                         aria-label={user ? 'My account' : 'Sign in'}
@@ -76,7 +78,7 @@ export default function StoreNav({ store }: { store: Store }) {
                     </Link>
 
                     <Link
-                        href={`/store/${store.slug}/cart`}
+                        href={href('/cart')}
                         className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
                         style={{ color: 'var(--sf-foreground)' }}
                         aria-label="Cart"

@@ -1,8 +1,10 @@
 // app/(storefront)/store/[slug]/layout.tsx
 import { CartProvider } from '@/contexts/CartContext'
 import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
+import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import { createClient } from '@mcloud/db/server'
+import { isCustomDomainHost } from '@/lib/host'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
@@ -103,20 +105,30 @@ export default async function StoreLayout({
     // is somehow null (notFound will have fired upstream anyway).
     const storeId = store?.id ?? ''
 
+    // On a custom domain the storefront is white-labelled: in-store links must be
+    // bare ("/cart") so the internal slug never appears. On the platform host they
+    // stay slug-prefixed ("/store/{slug}/cart"). Derived from the request host so
+    // every link/button renders the host-correct URL with no client redirect hop.
+    const host = headersList.get('host') ?? ''
+    const onCustomDomain = isCustomDomainHost(host)
+    const basePath = onCustomDomain ? '' : `/store/${slug}`
+
     return (
         // CustomerAuthProvider has no server deps — sits at the top
         <CustomerAuthProvider>
-            {/* WishlistProvider needs storeId, which we have server-side */}
-            <WishlistProvider storeId={storeId}>
-                <CartProvider storeSlug={slug}>
-                    <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
-                        {bannerScript && (
-                            <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
-                        )}
-                        {children}
-                    </LayoutWrapper>
-                </CartProvider>
-            </WishlistProvider>
+            <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
+                {/* WishlistProvider needs storeId, which we have server-side */}
+                <WishlistProvider storeId={storeId}>
+                    <CartProvider storeSlug={slug}>
+                        <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
+                            {bannerScript && (
+                                <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
+                            )}
+                            {children}
+                        </LayoutWrapper>
+                    </CartProvider>
+                </WishlistProvider>
+            </StoreProvider>
         </CustomerAuthProvider>
     )
 }

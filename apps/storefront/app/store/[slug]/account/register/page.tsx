@@ -3,12 +3,13 @@
 
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useStoreContext, useStoreHref } from '@/contexts/StoreContext'
 import { createCustomerClient } from '@mcloud/db/customer-client'
 import Link from 'next/link'
-import { use } from 'react'
 
-export default function RegisterPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = use(params)
+export default function RegisterPage() {
+    const href = useStoreHref()
+    const { slug } = useStoreContext()
     const { signUp } = useCustomerAuth()
     const supabase = createCustomerClient()
 
@@ -60,7 +61,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
                     Click it to activate your account, then sign in.
                 </p>
                 <Link
-                    href={`/store/${slug}/account/login`}
+                    href={href('/account/login')}
                     className="inline-block text-sm underline underline-offset-4"
                 >
                     Back to sign in
@@ -126,7 +127,7 @@ export default function RegisterPage({ params }: { params: Promise<{ slug: strin
 
                 <p className="text-center text-sm text-muted-foreground">
                     Already have an account?{' '}
-                    <Link href={`/store/${slug}/account/login`} className="text-black underline underline-offset-4">
+                    <Link href={href('/account/login')} className="text-black underline underline-offset-4">
                         Sign in
                     </Link>
                 </p>

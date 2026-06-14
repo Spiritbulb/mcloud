@@ -2,30 +2,28 @@
 'use client'
 
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useStoreHref } from '@/contexts/StoreContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
-import { use } from 'react'
 
 const PUBLIC_PATHS = ['/login', '/register']
 
 export default function AccountLayout({
     children,
-    params,
 }: {
     children: React.ReactNode
-    params: Promise<{ slug: string }>
 }) {
-    const { slug } = use(params)
     const { user, loading } = useCustomerAuth()
+    const href = useStoreHref()
     const router = useRouter()
     const pathname = usePathname()
     const isPublicPath = PUBLIC_PATHS.some(p => pathname.endsWith(p))
 
     useEffect(() => {
         if (loading) return
-        if (!user && !isPublicPath) router.replace(`/store/${slug}/account/login`)
-        if (user && isPublicPath) router.replace(`/store/${slug}/account/dashboard`)
-    }, [user, loading, isPublicPath, slug])
+        if (!user && !isPublicPath) router.replace(href('/account/login'))
+        if (user && isPublicPath) router.replace(href('/account/dashboard'))
+    }, [user, loading, isPublicPath, href, router])
 
     if (loading) return (
         <div className="min-h-screen flex items-center justify-center">

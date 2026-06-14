@@ -3,11 +3,11 @@
 
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useStoreHref } from '@/contexts/StoreContext'
 import Link from 'next/link'
-import { use } from 'react'
 
-export default function LoginPage({ params }: { params: Promise<{ slug: string }> }) {
-    const { slug } = use(params)
+export default function LoginPage() {
+    const href = useStoreHref()
     const { signIn } = useCustomerAuth()
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -73,7 +73,7 @@ export default function LoginPage({ params }: { params: Promise<{ slug: string }
 
                 <p className="text-center text-sm text-muted-foreground">
                     No account?{' '}
-                    <Link href={`/store/${slug}/account/register`} className="text-black underline underline-offset-4">
+                    <Link href={href('/account/register')} className="text-black underline underline-offset-4">
                         Create one
                     </Link>
                 </p>

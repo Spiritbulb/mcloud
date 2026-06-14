@@ -4,8 +4,9 @@
 import { useEffect, useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useWishlist } from '@/contexts/WishlistContext'
+import { useStoreContext, useStoreHref } from '@/contexts/StoreContext'
 import { createCustomerClient } from '@mcloud/db/customer-client'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Package, User, MapPin, Heart, LogOut } from 'lucide-react'
 import type { Tables } from '@mcloud/db/types'
@@ -40,7 +41,8 @@ export default function DashboardPage() {
     const { user, signOut } = useCustomerAuth()
     const { wishlistIds, toggle } = useWishlist()
     const supabase = createCustomerClient()
-    const params = useParams<{ slug: string }>()
+    const href = useStoreHref()
+    const { slug } = useStoreContext()
     const router = useRouter()
 
     const [tab, setTab] = useState<Tab>('orders')
@@ -74,7 +76,7 @@ export default function DashboardPage() {
         setLoading(true)
 
         const { data: store } = await supabase
-            .from('stores').select('id').eq('slug', params.slug).single()
+            .from('stores').select('id').eq('slug', slug).single()
         if (!store) return setLoading(false)
 
         // Fetch customer first — we need their id to scope orders correctly
@@ -157,7 +159,7 @@ export default function DashboardPage() {
 
     const handleSignOut = async () => {
         await signOut()
-        router.push(`/store/${params.slug}`)
+        router.push(href('/'))
     }
 
     const fmt = (amount: number, currency: string) =>
@@ -186,7 +188,7 @@ export default function DashboardPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <Link href={`/store/${params.slug}`} className="text-sm text-muted-foreground hover:text-black transition-colors">
+                        <Link href={href('/')} className="text-sm text-muted-foreground hover:text-black transition-colors">
                             ← Back to store
                         </Link>
                         <button
@@ -230,7 +232,7 @@ export default function DashboardPage() {
                             <div className="text-center py-20 space-y-3">
                                 <Package className="w-10 h-10 mx-auto text-gray-200" />
                                 <p className="text-sm text-muted-foreground">No orders yet</p>
-                                <Link href={`/store/${params.slug}`} className="text-sm underline underline-offset-4">
+                                <Link href={href('/')} className="text-sm underline underline-offset-4">
                                     Start shopping
                                 </Link>
                             </div>
@@ -374,7 +376,7 @@ export default function DashboardPage() {
                             <div className="text-center py-20 space-y-3">
                                 <Heart className="w-10 h-10 mx-auto text-gray-200" />
                                 <p className="text-sm text-muted-foreground">Your wishlist is empty</p>
-                                <Link href={`/store/${params.slug}`} className="text-sm underline underline-offset-4">
+                                <Link href={href('/')} className="text-sm underline underline-offset-4">
                                     Browse products
                                 </Link>
                             </div>
@@ -384,7 +386,7 @@ export default function DashboardPage() {
                                     const image = (product.images as string[])?.[0]
                                     return (
                                         <div key={product.id} className="group relative border hover:border-black/30 transition-colors">
-                                            <Link href={`/store/${params.slug}/${product.slug}`}>
+                                            <Link href={href(`/${product.slug}`)}>
                                                 <div className="aspect-square bg-gray-50 overflow-hidden">
                                                     {image ? (
                                                         <img src={image} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />

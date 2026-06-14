@@ -3,14 +3,15 @@
 
 import { Heart } from 'lucide-react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useStoreHref } from '@/contexts/StoreContext'
 import { useWishlist } from '@/contexts/WishlistContext'
-import { useParams, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useIsMobile } from '@mcloud/ui/use-mobile'
 
 export function WishlistButton({ productId, storeId, size }: { productId: string; storeId: string | null, size?: string }) {
     const { user } = useCustomerAuth()
     const { isWishlisted, toggle } = useWishlist()
-    const params = useParams<{ slug: string }>()
+    const href = useStoreHref()
     const router = useRouter()
     const isMobile = useIsMobile()
 
@@ -20,7 +21,7 @@ export function WishlistButton({ productId, storeId, size }: { productId: string
         e.preventDefault()
         e.stopPropagation()
         if (!user) {
-            router.push(`/store/${params.slug}/account/login`)
+            router.push(href('/account/login'))
             return
         }
         if (storeId) {
