@@ -36,16 +36,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     const supabase = await createClient()
 
+    type ProductRow = { id: string; name: string; images?: string[] | null }
+
     // Resolve products to get titles and images for order_items
     const productIds = body.lines.map((l) => l.product_id)
-    const { data: products } = await supabase
+    const { data: products } = (await supabase
         .from('products')
         .select('id, name, images')
         .in('id', productIds)
-        .eq('store_id', access.storeId)
+        .eq('store_id', access.storeId)) as { data: ProductRow[] | null }
 
     if (!products?.length) return fail(400, 'No valid products found')
-    const productMap = Object.fromEntries(products.map((p) => [p.id, p]))
+    const productMap = Object.fromEntries(products.map((p) => [p.id, p])) as Record<string, ProductRow>
 
     const total = body.lines.reduce((sum, l) => sum + l.price * l.quantity, 0)
     const currency = 'KES'
@@ -78,6 +80,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
             title: productMap[l.product_id].name,
             quantity: l.quantity,
             price: l.price,
+            total: l.price * l.quantity,
             image_url: productMap[l.product_id].images?.[0] ?? null,
         }))
 
