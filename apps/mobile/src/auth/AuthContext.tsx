@@ -301,7 +301,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         headers: {
           ...(init.headers ?? {}),
           Authorization: `Bearer ${accessToken}`,
-          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+          ...(init.body && !(init.body instanceof FormData) ? { 'Content-Type': 'application/json' } : {}),
         },
       })
 

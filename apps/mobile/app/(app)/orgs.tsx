@@ -66,7 +66,7 @@ export default function PickerScreen() {
           <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Hi, {firstName}</Text>
         </View>
         <Pressable
-          onPress={signOut}
+          onPress={() => router.push('/(app)/account')}
           hitSlop={10}
           style={({ pressed }) => [s.avatarBtn, pressed && { opacity: 0.7 }]}
         >

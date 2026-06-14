@@ -240,7 +240,9 @@ export function api(authedFetch: Fetch) {
       const mime = mimeMap[ext] ?? 'image/jpeg'
 
       const form = new FormData()
-      form.append('file', { uri: localUri, name: filename, type: mime } as unknown as Blob)
+      // React Native FormData requires the native { uri, name, type } shape as the value
+      // with the filename passed as the third argument — plain object cast, no Blob wrapper.
+      form.append('file', { uri: localUri, name: filename, type: mime } as unknown as File, filename)
       form.append('bucket', bucket)
       form.append('path', path)
 

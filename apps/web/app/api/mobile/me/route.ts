@@ -6,5 +6,5 @@ import { requireMobileUser } from '../_lib'
 export async function GET(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
-    return NextResponse.json({ user: auth.user })
+    return NextResponse.json({ user: auth.user }, { headers: { 'Cache-Control': 'no-store' } })
 }

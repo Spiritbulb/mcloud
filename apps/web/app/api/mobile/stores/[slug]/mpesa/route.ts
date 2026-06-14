@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     const result = await getMpesa(slug, auth.user.id)
     if (result.error === 'not_found') return fail(404, 'Store not found')
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
-    return NextResponse.json({ mpesa: result.data })
+    return NextResponse.json({ mpesa: result.data }, { headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' } })
 }
 
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {

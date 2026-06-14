@@ -99,6 +99,20 @@ export default function MoreTab() {
               />
             </Card>
 
+            <Text style={[t.type.labelLarge, s.label, { color: t.colors.onSurfaceVariant }]}>Account</Text>
+            <Card style={s.group}>
+              <SettingsRow
+                t={t}
+                icon="person-circle-outline"
+                label="Account"
+                desc="Profile, appearance, sign out"
+                divider={false}
+                iconColor="rgb(0 90 120)"
+                iconBg="rgb(200 235 245)"
+                onPress={() => router.push('/(app)/account')}
+              />
+            </Card>
+
             {canManage && (
               <>
                 <Text style={[t.type.labelLarge, s.label, { color: t.colors.error }]}>Danger zone</Text>
