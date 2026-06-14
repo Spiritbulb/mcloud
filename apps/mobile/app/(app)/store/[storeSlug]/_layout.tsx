@@ -60,10 +60,12 @@ export default function StoreTabsLayout() {
         }}
       />
 
-      {/* Stack screens pushed from the More tab — hidden from the tab bar. */}
+      {/* Stack screens pushed from tabs — hidden from the tab bar. */}
       <Tabs.Screen name="branding" options={{ href: null }} />
       <Tabs.Screen name="mpesa" options={{ href: null }} />
       <Tabs.Screen name="analytics" options={{ href: null }} />
+      <Tabs.Screen name="product-form" options={{ href: null }} />
+      <Tabs.Screen name="sale-form" options={{ href: null }} />
     </Tabs>
     </StoreProvider>
   )

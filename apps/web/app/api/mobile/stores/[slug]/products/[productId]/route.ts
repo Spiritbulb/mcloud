@@ -13,7 +13,7 @@ export async function PATCH(
 
     const { slug, productId } = await params
     const body = (await req.json().catch(() => null)) as
-        | { name?: string; price?: number; inventory_quantity?: number | null; is_active?: boolean; images?: string[] }
+        | { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; is_active?: boolean; images?: string[] }
         | null
     if (!body) return fail(400, 'Invalid JSON body')
 

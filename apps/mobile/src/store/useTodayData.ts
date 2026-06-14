@@ -18,16 +18,18 @@ export function useTodayData(storeSlug: string): TodayData {
   const [analytics, setAnalytics] = React.useState<AnalyticsTotals | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [error, setError] = React.useState<string | null>(null)
+  const hasData = React.useRef(false)
 
   const refresh = React.useCallback(async () => {
     setError(null)
-    setLoading(true)
+    if (!hasData.current) setLoading(true)
     try {
       const data = await client.getToday(storeSlug)
       setUnfulfilledOrders(data.unfulfilledOrders)
       setAnalytics(data.analytics)
+      hasData.current = true
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load')
+      if (!hasData.current) setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
     }

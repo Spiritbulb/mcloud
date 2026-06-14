@@ -14,7 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type PickerData, type PickerStore } from '@/lib/api'
-import { Avatar, Badge, FadeInUp, MarketingImage, MetaPill, Overline, SkeletonCard } from '@/components/ui'
+import { Avatar, Badge, FadeInUp, MarketingImage, MetaPill, SkeletonCard } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 // ── Screen ──────────────────────────────────────────────────────────────────────
@@ -23,20 +23,24 @@ export default function PickerScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
   const router = useRouter()
-  const { user, signOut, authedFetch } = useAuth()
+  const { user, authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 
   const [data, setData] = React.useState<PickerData | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const hasData = React.useRef(false)
 
   const load = React.useCallback(async () => {
     setError(null)
+    if (!hasData.current) setLoading(true)
     try {
-      setData(await client.getPicker())
+      const d = await client.getPicker()
+      setData(d)
+      hasData.current = true
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load')
+      if (!hasData.current) setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
       setRefreshing(false)
@@ -57,6 +61,13 @@ export default function PickerScreen() {
   const firstName = (user?.name ?? user?.email ?? 'there').split(' ')[0].split('@')[0]
   const totalStores = orgs.reduce((n, o) => n + o.stores.length, 0) + otherStores.length
 
+  // New user with no orgs/stores → onboarding
+  React.useEffect(() => {
+    if (!loading && data && orgs.length === 0 && otherStores.length === 0) {
+      router.replace('/(app)/onboarding' as never)
+    }
+  }, [loading, data, orgs.length, otherStores.length, router])
+
   return (
     <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
       {/* Top app bar */}
@@ -66,7 +77,7 @@ export default function PickerScreen() {
           <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Hi, {firstName}</Text>
         </View>
         <Pressable
-          onPress={() => router.push('/(app)/account')}
+          onPress={() => router.push('/(app)/account' as never)}
           hitSlop={10}
           style={({ pressed }) => [s.avatarBtn, pressed && { opacity: 0.7 }]}
         >
@@ -139,17 +150,29 @@ export default function PickerScreen() {
         {orgs.map((org, gi) => (
           <FadeInUp key={org.id} delay={Math.min(100 + gi * 60, 340)}>
             <View style={s.group}>
-              <Pressable
-                onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
-                style={({ pressed }) => [s.groupHeader, pressed && { opacity: 0.65 }]}
-              >
-                <Avatar name={org.name} uri={org.logo_url} size={40} radius={12} />
-                <View style={{ flex: 1, gap: 4 }}>
-                  <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{org.name}</Text>
-                  <MetaPill label={`${org.role} · ${org.stores.length} ${org.stores.length === 1 ? 'store' : 'stores'}`} />
-                </View>
-                <Ionicons name="chevron-forward" size={20} color={t.colors.onSurfaceVariant} />
-              </Pressable>
+              <View style={s.groupHeader}>
+                <Pressable
+                  onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
+                  style={({ pressed }) => [s.groupHeaderTap, pressed && { opacity: 0.65 }]}
+                >
+                  <Avatar name={org.name} uri={org.logo_url} size={40} radius={12} />
+                  <View style={{ flex: 1, gap: 4 }}>
+                    <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{org.name}</Text>
+                    <MetaPill label={`${org.role} · ${org.stores.length} ${org.stores.length === 1 ? 'store' : 'stores'}`} />
+                  </View>
+                  <Ionicons name="chevron-forward" size={20} color={t.colors.onSurfaceVariant} />
+                </Pressable>
+                {org.canManage && (
+                  <Pressable
+                    onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
+                    hitSlop={8}
+                    style={({ pressed }) => [s.newStoreBtn, { backgroundColor: t.colors.surfaceContainerHigh }, pressed && { opacity: 0.6 }]}
+                  >
+                    <Ionicons name="add" size={16} color={t.colors.onSurfaceVariant} />
+                    <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>New store</Text>
+                  </Pressable>
+                )}
+              </View>
 
               <View style={s.cardStack}>
                 {org.stores.map((st) => (
@@ -160,15 +183,6 @@ export default function PickerScreen() {
                     onPress={() => router.push(`/store/${st.slug}` as never)}
                   />
                 ))}
-
-                {org.canManage && (
-                  <Pressable
-                    onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
-                    style={({ pressed }) => [s.addStore, pressed && { backgroundColor: t.colors.surfaceContainerLow }]}
-                  >
-                    <Text style={[t.type.labelLarge, { color: t.colors.onSurfaceVariant }]}>+  New store</Text>
-                  </Pressable>
-                )}
               </View>
             </View>
           </FadeInUp>
@@ -277,6 +291,8 @@ const styles = (t: Theme) =>
     notice: { alignSelf: 'stretch', borderRadius: 16, padding: 16 },
     emptyState: { alignSelf: 'stretch', alignItems: 'center', gap: 10, paddingVertical: 32, paddingHorizontal: 24 },
     groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+    groupHeaderTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },
+    newStoreBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 20 },
     chevron: { fontSize: 24, fontWeight: '300' },
     cardStack: { gap: 12, alignSelf: 'stretch' },
     storeCard: {

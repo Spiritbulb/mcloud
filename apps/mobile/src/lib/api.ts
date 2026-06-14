@@ -150,11 +150,11 @@ export function api(authedFetch: Fetch) {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products`)
       return json<{ products: Product[]; role: string }>(res)
     },
-    async createProduct(slug: string, input: { name: string; price: number; inventory_quantity?: number | null }): Promise<Product> {
+    async createProduct(slug: string, input: { name: string; price: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean }): Promise<Product> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products`, { method: 'POST', body: JSON.stringify(input) })
       return (await json<{ product: Product }>(res)).product
     },
-    async updateProduct(slug: string, id: string, patch: Partial<{ name: string; price: number; inventory_quantity: number | null; is_active: boolean }>): Promise<Product> {
+    async updateProduct(slug: string, id: string, patch: Partial<{ name: string; price: number; compare_at_price: number | null; inventory_quantity: number | null; track_inventory: boolean; is_active: boolean; images: string[] }>): Promise<Product> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
       return (await json<{ product: Product }>(res)).product
     },
@@ -172,6 +172,11 @@ export function api(authedFetch: Fetch) {
       const res = await authedFetch(`/api/mobile/stores/${slug}/orders/${id}`, { method: 'PATCH', body: JSON.stringify({ fulfillment_status }) })
       return (await json<{ order: Order }>(res)).order
     },
+    async createManualOrder(slug: string, input: { lines: { product_id: string; quantity: number; price: number }[]; customer_phone?: string | null; customer_email?: string | null }): Promise<Order> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/orders`, { method: 'POST', body: JSON.stringify(input) })
+      return (await json<{ order: Order }>(res)).order
+    },
+
     async fulfillOrder(slug: string, id: string): Promise<Order> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/orders/${id}`, {
         method: 'PATCH',
@@ -215,6 +220,11 @@ export function api(authedFetch: Fetch) {
     async listOrgs(): Promise<Org[]> {
       const res = await authedFetch('/api/mobile/orgs')
       return (await json<{ orgs: Org[] }>(res)).orgs
+    },
+
+    async createOrg(name: string): Promise<{ id: string; slug: string }> {
+      const res = await authedFetch('/api/mobile/orgs', { method: 'POST', body: JSON.stringify({ name }) })
+      return (await json<{ org: { id: string; slug: string } }>(res)).org
     },
 
     async listStores(orgSlug: string): Promise<{ stores: Store[]; role: string; orgId: string }> {

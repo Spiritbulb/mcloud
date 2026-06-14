@@ -37,7 +37,7 @@ export interface MobileOrder {
 const ORDER_COLS =
     'id, order_number, status, fulfillment_status, total, currency, customer_phone, customer_email, created_at, order_items(id, title, quantity, price, image_url)'
 
-function shapeOrder(raw: Record<string, unknown>): MobileOrder {
+export function shapeOrder(raw: Record<string, unknown>): MobileOrder {
     const items = (raw.order_items as MobileOrderItem[] | null) ?? []
     return {
         id: raw.id as string,

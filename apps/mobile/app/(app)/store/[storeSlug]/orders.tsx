@@ -2,7 +2,9 @@
 import * as React from 'react'
 import { Alert, FlatList, Pressable, RefreshControl, StyleSheet, Text, View } from 'react-native'
 import { Image } from 'expo-image'
+import { useRouter } from 'expo-router'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
+import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
 import { api, type Order } from '@/lib/api'
@@ -22,7 +24,8 @@ export default function OrdersScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
   const insets = useSafeAreaInsets()
-  const { slug: storeSlug } = useStore()
+  const router = useRouter()
+  const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 
@@ -30,20 +33,24 @@ export default function OrdersScreen() {
   const [loading, setLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const hasData = orders.length > 0
 
-  const load = React.useCallback(async () => {
-    setError(null)
+  const load = React.useCallback(async (silent = false) => {
+    if (!silent) setError(null)
+    if (!hasData) setLoading(true)
     try {
       setOrders(await client.listOrders(storeSlug))
+      setError(null)
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load')
+      if (!hasData) setError(e instanceof Error ? e.message : 'Failed to load')
     } finally {
       setLoading(false)
       setRefreshing(false)
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, storeSlug])
 
-  const onRefresh = React.useCallback(() => { setRefreshing(true); load() }, [load])
+  const onRefresh = React.useCallback(() => { setRefreshing(true); load(true) }, [load])
 
   React.useEffect(() => { load() }, [load])
 
@@ -70,8 +77,18 @@ export default function OrdersScreen() {
       keyExtractor={(o) => o.id}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.colors.primary} />}
       ListHeaderComponent={
-        <View style={{ paddingTop: insets.top + 8, marginBottom: 12 }}>
+        <View style={[s.header, { paddingTop: insets.top + 8 }]}>
           <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Orders</Text>
+          {(store?.canManage) && (
+            <Pressable
+              onPress={() => router.push(`/store/${storeSlug}/sale-form` as never)}
+              hitSlop={8}
+              style={({ pressed }) => [s.addBtn, { backgroundColor: t.colors.surfaceContainerHigh }, pressed && { opacity: 0.6 }]}
+            >
+              <Ionicons name="add" size={18} color={t.colors.onSurface} />
+              <Text style={[t.type.labelLarge, { color: t.colors.onSurface }]}>New sale</Text>
+            </Pressable>
+          )}
         </View>
       }
       ListEmptyComponent={
@@ -134,6 +151,8 @@ const styles = (t: Theme) =>
   StyleSheet.create({
     fill: { flex: 1 },
     list: { padding: 20 },
+    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 },
+    addBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20 },
     row: {
       alignSelf: 'stretch',
       flexDirection: 'row',

@@ -36,6 +36,7 @@ export default function AppLayout() {
       }}
     >
       <Stack.Screen name="orgs" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
       <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
       <Stack.Screen name="account" options={{ title: 'Account' }} />
       {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}

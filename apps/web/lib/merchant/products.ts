@@ -51,7 +51,7 @@ export type MutateResult =
 export async function createProduct(
     slug: string,
     userId: string,
-    input: { name?: string; price?: number; inventory_quantity?: number | null },
+    input: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean },
 ): Promise<MutateResult> {
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
@@ -80,7 +80,9 @@ export async function createProduct(
             name,
             slug: slugFinal,
             price,
+            compare_at_price: input.compare_at_price ?? null,
             inventory_quantity: input.inventory_quantity ?? null,
+            track_inventory: input.track_inventory ?? false,
             is_active: true,
         })
         .select(COLS)
@@ -94,7 +96,7 @@ export async function updateProduct(
     slug: string,
     userId: string,
     productId: string,
-    patch: { name?: string; price?: number; inventory_quantity?: number | null; is_active?: boolean; images?: string[] },
+    patch: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; is_active?: boolean; images?: string[] },
 ): Promise<MutateResult> {
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
@@ -111,7 +113,9 @@ export async function updateProduct(
         if (!Number.isFinite(p) || p < 0) return { error: 'Invalid price', status: 400, data: null }
         update.price = p
     }
+    if (patch.compare_at_price !== undefined) update.compare_at_price = patch.compare_at_price
     if (patch.inventory_quantity !== undefined) update.inventory_quantity = patch.inventory_quantity
+    if (patch.track_inventory !== undefined) update.track_inventory = patch.track_inventory
     if (patch.is_active !== undefined) update.is_active = patch.is_active
     if (patch.images !== undefined) update.images = patch.images
 
