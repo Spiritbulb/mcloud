@@ -142,7 +142,7 @@ export default function TodayTab() {
                   ))}
                   {unfulfilledOrders.length > 3 && (
                     <Pressable onPress={() => router.push(`/store/${slug}/orders` as never)} style={({ pressed }) => pressed && { opacity: 0.6 }}>
-                      <Text style={[t.type.labelLarge, { color: t.colors.primary, textAlign: 'center', paddingVertical: 4 }]}>
+                      <Text style={[t.type.labelLarge, { color: t.colors.onSurfaceVariant, textAlign: 'center', paddingVertical: 4 }]}>
                         See all {unfulfilledOrders.length} orders →
                       </Text>
                     </Pressable>
@@ -162,7 +162,7 @@ export default function TodayTab() {
                 <PulseStat label="Orders today" value={String(todayOrders)} up={null} t={t} />
                 <View style={[s.pulseDivider, { backgroundColor: t.colors.outlineVariant }]} />
                 <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-                  <Ionicons name="bar-chart-outline" size={20} color={t.colors.primary} />
+                  <Ionicons name="bar-chart-outline" size={20} color={t.colors.onSurfaceVariant} />
                   <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>Analytics</Text>
                 </View>
               </Pressable>
@@ -185,16 +185,16 @@ export default function TodayTab() {
               <Text style={[t.type.labelLarge, s.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Quick actions</Text>
               <View style={s.actionRow}>
                 {canManage && (
-                  <ActionTile t={t} icon="add-circle-outline" label="Add product" onPress={() => router.push(`/store/${slug}/products` as never)} />
+                  <ActionTile t={t} icon="add-circle-outline" label="Add product" iconColor="rgb(20 100 55)" iconBg="rgb(205 240 220)" onPress={() => router.push(`/store/${slug}/products` as never)} />
                 )}
-                <ActionTile t={t} icon="receipt-outline" label="Orders" onPress={() => router.push(`/store/${slug}/orders` as never)} />
+                <ActionTile t={t} icon="receipt-outline" label="Orders" iconColor="rgb(120 80 0)" iconBg="rgb(255 235 180)" onPress={() => router.push(`/store/${slug}/orders` as never)} />
               </View>
               <View style={s.actionRow}>
-                <ActionTile t={t} icon="share-outline" label="Share store" onPress={() => {
+                <ActionTile t={t} icon="share-outline" label="Share store" iconColor="rgb(0 90 120)" iconBg="rgb(200 235 245)" onPress={() => {
                   const url = store.custom_domain ? `https://${store.custom_domain}` : `https://menengai.cloud/s/${store.slug}`
                   Share.share({ message: url, url })
                 }} />
-                <ActionTile t={t} icon="color-palette-outline" label="Branding" onPress={() => router.push(`/store/${slug}/branding` as never)} />
+                <ActionTile t={t} icon="color-palette-outline" label="Branding" iconColor="rgb(80 60 140)" iconBg="rgb(237 232 255)" onPress={() => router.push(`/store/${slug}/branding` as never)} />
               </View>
             </FadeInUp>
 
@@ -224,7 +224,7 @@ function PulseStat({ label, value, up, t }: { label: string; value: string; up: 
   )
 }
 
-function ActionTile({ t, icon, label, onPress }: { t: Theme; icon: React.ComponentProps<typeof Ionicons>['name']; label: string; onPress: () => void }) {
+function ActionTile({ t, icon, label, onPress, iconColor, iconBg }: { t: Theme; icon: React.ComponentProps<typeof Ionicons>['name']; label: string; onPress: () => void; iconColor?: string; iconBg?: string }) {
   return (
     <Pressable
       onPress={onPress}
@@ -233,8 +233,8 @@ function ActionTile({ t, icon, label, onPress }: { t: Theme; icon: React.Compone
         { backgroundColor: pressed ? t.colors.surfaceContainerHigh : t.colors.surfaceContainer },
       ]}
     >
-      <View style={[actionStyles.iconWrap, { backgroundColor: t.colors.surface }]}>
-        <Ionicons name={icon} size={22} color={t.colors.primary} />
+      <View style={[actionStyles.iconWrap, { backgroundColor: iconBg ?? t.colors.surfaceContainerHigh }]}>
+        <Ionicons name={icon} size={22} color={iconColor ?? t.colors.onSurface} />
       </View>
       <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{label}</Text>
     </Pressable>

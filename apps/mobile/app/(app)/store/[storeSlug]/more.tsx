@@ -14,12 +14,12 @@ import { useStore } from '@/store/StoreContext'
 import { config } from '@/lib/config'
 import { useTheme, type Theme } from '@/lib/theme'
 
-type Row = { key: string; label: string; desc: string; icon: React.ComponentProps<typeof Ionicons>['name']; manageOnly?: boolean }
+type Row = { key: string; label: string; desc: string; icon: React.ComponentProps<typeof Ionicons>['name']; manageOnly?: boolean; iconColor?: string; iconBg?: string }
 
 const NATIVE: Row[] = [
-  { key: 'branding', label: 'Branding', desc: 'Name, logo, description', icon: 'color-palette-outline', manageOnly: true },
-  { key: 'mpesa', label: 'Manual M-Pesa', desc: 'Till / paybill setup', icon: 'cash-outline', manageOnly: true },
-  { key: 'analytics', label: 'Analytics', desc: 'Sales at a glance', icon: 'bar-chart-outline' },
+  { key: 'branding',  label: 'Branding',       desc: 'Name, logo, description', icon: 'color-palette-outline', manageOnly: true, iconColor: 'rgb(80 60 140)',  iconBg: 'rgb(237 232 255)' },
+  { key: 'mpesa',     label: 'Manual M-Pesa',   desc: 'Till / paybill setup',    icon: 'cash-outline',          manageOnly: true, iconColor: 'rgb(20 100 55)',  iconBg: 'rgb(205 240 220)' },
+  { key: 'analytics', label: 'Analytics',       desc: 'Sales at a glance',       icon: 'bar-chart-outline',                       iconColor: 'rgb(120 80 0)',   iconBg: 'rgb(255 235 180)' },
 ]
 
 function advancedSettingsUrl(s: StoreHub): string {
@@ -80,6 +80,8 @@ export default function MoreTab() {
                   label={r.label}
                   desc={r.desc}
                   divider={i < nativeVisible.length - 1}
+                  iconColor={r.iconColor}
+                  iconBg={r.iconBg}
                   onPress={() => router.push(`/store/${slug}/${r.key}` as never)}
                 />
               ))}
@@ -135,7 +137,7 @@ export default function MoreTab() {
 }
 
 function SettingsRow({
-  t, icon, label, desc, external, divider, onPress,
+  t, icon, label, desc, external, divider, onPress, iconColor, iconBg,
 }: {
   t: Theme
   icon: React.ComponentProps<typeof Ionicons>['name']
@@ -144,11 +146,13 @@ function SettingsRow({
   external?: boolean
   divider?: boolean
   onPress: () => void
+  iconColor?: string
+  iconBg?: string
 }) {
   return (
     <Pressable onPress={onPress} style={({ pressed }) => [rowStyles.row, pressed && { opacity: 0.6 }]}>
-      <View style={[rowStyles.icon, { backgroundColor: t.colors.surfaceContainerHigh }]}>
-        <Ionicons name={icon} size={20} color={t.colors.primary} />
+      <View style={[rowStyles.icon, { backgroundColor: iconBg ?? t.colors.surfaceContainerHigh }]}>
+        <Ionicons name={icon} size={20} color={iconColor ?? t.colors.onSurface} />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{label}</Text>
@@ -157,7 +161,7 @@ function SettingsRow({
       <Ionicons
         name={external ? 'open-outline' : 'chevron-forward'}
         size={18}
-        color={external ? t.colors.primary : t.colors.onSurfaceVariant}
+        color={t.colors.onSurfaceVariant}
       />
       {divider && <View style={[rowStyles.divider, { backgroundColor: t.colors.outlineVariant }]} />}
     </Pressable>

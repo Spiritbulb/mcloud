@@ -66,8 +66,16 @@ export type Product = {
   inventory_quantity: number | null
   track_inventory: boolean
   is_active: boolean
-  images: unknown
+  images: string[]
   created_at: string | null
+}
+
+export type OrderItem = {
+  id: string
+  title: string
+  quantity: number
+  price: number
+  image_url: string | null
 }
 
 export type Order = {
@@ -78,6 +86,8 @@ export type Order = {
   total: number
   currency: string
   customer_phone: string | null
+  customer_email: string | null
+  items: OrderItem[]
   created_at: string | null
 }
 
@@ -218,6 +228,33 @@ export function api(authedFetch: Fetch) {
         body: JSON.stringify(input),
       })
       return json<{ slug: string }>(res)
+    },
+
+    // Image upload — streams a local file to Supabase storage via the web API.
+    // bucket: 'store-assets' | 'product-images'
+    // path: e.g. `${storeId}/logo` or `${storeId}/products/${productId}`
+    async uploadImage(localUri: string, bucket: 'store-assets' | 'product-images', path: string): Promise<string> {
+      const filename = localUri.split('/').pop() ?? 'image.jpg'
+      const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg'
+      const mimeMap: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' }
+      const mime = mimeMap[ext] ?? 'image/jpeg'
+
+      const form = new FormData()
+      form.append('file', { uri: localUri, name: filename, type: mime } as unknown as Blob)
+      form.append('bucket', bucket)
+      form.append('path', path)
+
+      const res = await authedFetch('/api/mobile/upload', { method: 'POST', body: form as unknown as BodyInit })
+      return (await json<{ url: string }>(res)).url
+    },
+
+    // Update product images array
+    async updateProductImages(slug: string, id: string, images: string[]): Promise<Product> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ images }),
+      })
+      return (await json<{ product: Product }>(res)).product
     },
   }
 }

@@ -12,7 +12,7 @@ export interface MobileProduct {
     inventory_quantity: number | null
     track_inventory: boolean
     is_active: boolean
-    images: unknown
+    images: string[]
     created_at: string | null
 }
 
@@ -94,7 +94,7 @@ export async function updateProduct(
     slug: string,
     userId: string,
     productId: string,
-    patch: { name?: string; price?: number; inventory_quantity?: number | null; is_active?: boolean },
+    patch: { name?: string; price?: number; inventory_quantity?: number | null; is_active?: boolean; images?: string[] },
 ): Promise<MutateResult> {
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
@@ -113,6 +113,7 @@ export async function updateProduct(
     }
     if (patch.inventory_quantity !== undefined) update.inventory_quantity = patch.inventory_quantity
     if (patch.is_active !== undefined) update.is_active = patch.is_active
+    if (patch.images !== undefined) update.images = patch.images
 
     const supabase = await createClient()
     const { data, error } = await supabase

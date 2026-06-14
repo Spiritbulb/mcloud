@@ -175,6 +175,7 @@ export function Button({
   loading,
   disabled,
   icon,
+  accentColor,
 }: {
   label: string
   onPress: () => void
@@ -182,9 +183,11 @@ export function Button({
   loading?: boolean
   disabled?: boolean
   icon?: React.ReactNode
+  accentColor?: { bg: string; fg: string }
 }) {
   const t = useTheme()
-  const { bg, fg, border } = buttonColors(t, variant)
+  const resolved = buttonColors(t, variant)
+  const { bg, fg, border } = accentColor ? { ...resolved, bg: accentColor.bg, fg: accentColor.fg } : resolved
   const isInactive = disabled || loading
   return (
     <Pressable
@@ -350,9 +353,11 @@ export function Avatar({
 export function Badge({
   label,
   tone = 'primary',
+  accentColor,
 }: {
   label: string
   tone?: 'primary' | 'tertiary' | 'neutral'
+  accentColor?: { bg: string; fg: string }
 }) {
   const t = useTheme()
   const map = {
@@ -360,7 +365,7 @@ export function Badge({
     tertiary: [t.colors.tertiaryContainer, t.colors.onSurface],
     neutral: [t.colors.surfaceContainerHigh, t.colors.onSurfaceVariant],
   } as const
-  const [bg, fg] = map[tone]
+  const [bg, fg] = accentColor ? [accentColor.bg, accentColor.fg] : map[tone]
   return (
     <View style={{ alignSelf: 'flex-start', backgroundColor: bg, paddingHorizontal: 10, paddingVertical: 3, borderRadius: 9999 }}>
       <Text style={[t.type.labelMedium, { color: fg, letterSpacing: 0.8 }]}>{label}</Text>

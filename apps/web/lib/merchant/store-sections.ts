@@ -13,6 +13,14 @@ function accessFail(err: 'not_found' | 'forbidden') {
 
 // ── Orders ──────────────────────────────────────────────────────────────────────
 
+export interface MobileOrderItem {
+    id: string
+    title: string
+    quantity: number
+    price: number
+    image_url: string | null
+}
+
 export interface MobileOrder {
     id: string
     order_number: string
@@ -21,11 +29,29 @@ export interface MobileOrder {
     total: number
     currency: string
     customer_phone: string | null
+    customer_email: string | null
+    items: MobileOrderItem[]
     created_at: string | null
 }
 
 const ORDER_COLS =
-    'id, order_number, status, fulfillment_status, total, currency, customer_phone, created_at'
+    'id, order_number, status, fulfillment_status, total, currency, customer_phone, customer_email, created_at, order_items(id, title, quantity, price, image_url)'
+
+function shapeOrder(raw: Record<string, unknown>): MobileOrder {
+    const items = (raw.order_items as MobileOrderItem[] | null) ?? []
+    return {
+        id: raw.id as string,
+        order_number: raw.order_number as string,
+        status: raw.status as string,
+        fulfillment_status: raw.fulfillment_status as string | null,
+        total: raw.total as number,
+        currency: raw.currency as string,
+        customer_phone: raw.customer_phone as string | null,
+        customer_email: raw.customer_email as string | null,
+        items,
+        created_at: raw.created_at as string | null,
+    }
+}
 
 export async function listOrders(slug: string, userId: string): Promise<Guarded<MobileOrder[]>> {
     const access = await requireStoreAccess(slug, userId)
@@ -39,7 +65,7 @@ export async function listOrders(slug: string, userId: string): Promise<Guarded<
         .order('created_at', { ascending: false })
         .limit(100)
 
-    return { error: null, status: 200, data: (data ?? []) as MobileOrder[] }
+    return { error: null, status: 200, data: (data ?? []).map((r) => shapeOrder(r as Record<string, unknown>)) }
 }
 
 const FULFILLMENT = ['unfulfilled', 'fulfilled', 'partial', 'cancelled'] as const
@@ -67,7 +93,7 @@ export async function updateOrderStatus(
         .single()
 
     if (error || !data) return { error: 'not_found', status: 404, data: null }
-    return { error: null, status: 200, data: data as MobileOrder }
+    return { error: null, status: 200, data: shapeOrder(data as Record<string, unknown>) }
 }
 
 // ── Branding ────────────────────────────────────────────────────────────────────
@@ -269,7 +295,7 @@ export async function getTodayData(
         error: null,
         status: 200,
         data: {
-            unfulfilledOrders: (ordersRes.data ?? []) as MobileOrder[],
+            unfulfilledOrders: (ordersRes.data ?? []).map((r) => shapeOrder(r as Record<string, unknown>)),
             analytics: analyticsRes.data ?? null,
         },
     }

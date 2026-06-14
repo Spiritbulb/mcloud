@@ -49,8 +49,8 @@
       "typedRoutes": true
     },
     "extra": {
-      "apiBaseUrl": "https://mcloud-turbo.vercel.app",
-      "webBaseUrl": "https://mcloud-turbo.vercel.app",
+      "apiBaseUrl": "https://www.menengai.cloud",
+      "webBaseUrl": "https://www.menengai.cloud",
       "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",
       "workosDomain": "https://api.workos.com",
       "router": {},

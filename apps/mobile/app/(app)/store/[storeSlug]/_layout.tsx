@@ -19,12 +19,11 @@ export default function StoreTabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: t.colors.primary,
+        tabBarActiveTintColor: t.colors.onSurface,
         tabBarInactiveTintColor: t.colors.onSurfaceVariant,
         tabBarStyle: {
           backgroundColor: t.colors.surfaceContainer,
-          borderTopColor: t.colors.outlineVariant,
-          borderTopWidth: 0.5,
+          borderTopWidth: 0,
           height: 64 + insets.bottom,
           paddingBottom: 8 + insets.bottom,
           paddingTop: 6,

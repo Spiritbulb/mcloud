@@ -85,10 +85,10 @@ export default function PickerScreen() {
         <FadeInUp delay={0}>
           <View style={s.hero}>
             <View style={s.heroText}>
-              <Text style={[t.type.titleLarge, { color: t.colors.onPrimaryContainer }]}>
-                {totalStores > 0 ? `${totalStores} stores, one tap away` : 'Let’s get you online'}
+              <Text style={[t.type.titleLarge, { color: t.colors.onSurface }]}>
+                {totalStores > 0 ? `${totalStores} stores, one tap away` : "Let’s get you online"}
               </Text>
-              <Text style={[t.type.bodyMedium, { color: t.colors.onPrimaryContainer, opacity: 0.85 }]}>
+              <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
                 Hosting, SSL and uptime are handled. You focus on selling.
               </Text>
             </View>
@@ -143,8 +143,9 @@ export default function PickerScreen() {
                 onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
                 style={({ pressed }) => [s.groupHeader, pressed && { opacity: 0.65 }]}
               >
-                <View style={{ flex: 1, gap: 6 }}>
-                  <Text style={[t.type.titleLarge, { color: t.colors.onSurface }]}>{org.name}</Text>
+                <Avatar name={org.name} uri={org.logo_url} size={40} radius={12} />
+                <View style={{ flex: 1, gap: 4 }}>
+                  <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{org.name}</Text>
                   <MetaPill label={`${org.role} · ${org.stores.length} ${org.stores.length === 1 ? 'store' : 'stores'}`} />
                 </View>
                 <Ionicons name="chevron-forward" size={20} color={t.colors.onSurfaceVariant} />
@@ -165,7 +166,7 @@ export default function PickerScreen() {
                     onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
                     style={({ pressed }) => [s.addStore, pressed && { backgroundColor: t.colors.surfaceContainerLow }]}
                   >
-                    <Text style={[t.type.labelLarge, { color: t.colors.primary }]}>+  New store</Text>
+                    <Text style={[t.type.labelLarge, { color: t.colors.onSurfaceVariant }]}>+  New store</Text>
                   </Pressable>
                 )}
               </View>
@@ -231,8 +232,6 @@ function StoreCard({
         pressed && { backgroundColor: t.colors.surfaceContainerHigh },
       ]}
     >
-      {/* Leading accent rail */}
-      <View style={[s.accent, { backgroundColor: store.is_pro ? t.colors.primary : t.colors.outlineVariant }]} />
       <Avatar name={store.name} uri={store.logo_url} size={48} />
       <View style={{ flex: 1, gap: 4 }}>
         <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]} numberOfLines={1}>
@@ -266,8 +265,8 @@ const styles = (t: Theme) =>
     hero: {
       flexDirection: 'row',
       alignItems: 'center',
-      backgroundColor: t.colors.primaryContainer,
-      borderRadius: 28,
+      backgroundColor: t.colors.surfaceContainerHigh,
+      borderRadius: 20,
       padding: 20,
       overflow: 'hidden',
       gap: 12,
