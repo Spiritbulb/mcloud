@@ -20,6 +20,12 @@ WebBrowser.maybeCompleteAuthSession()
 
 const TOKEN_KEY = 'mcloud.workos.tokens'
 const USER_KEY = 'mcloud.workos.user'
+// Set on explicit sign-out, consumed on the next sign-in. WorkOS keeps its own
+// session in the system browser, so clearing only our local tokens lets the next
+// authorize silently re-auth (looks like sign-out "didn't work"). When this flag
+// is present we add `prompt=login` so WorkOS shows the real login screen, letting
+// the user sign in fresh or as a different account.
+const FORCE_LOGIN_KEY = 'mcloud.workos.force_login'
 
 // WorkOS AuthKit OAuth endpoints. AuthKit exposes standard OAuth2 endpoints under
 // the WorkOS API domain.
@@ -148,6 +154,14 @@ const VERIFIER_KEY = 'mcloud.workos.pkce_verifier'
 // read-and-delete it owns the exchange; the other finds nothing and no-ops.
 let claimInFlight: Promise<boolean> | null = null
 
+// A sign-in already in progress. Tapping "Sign in" again while the browser is
+// open (or while the redirect is being processed) must NOT start a second
+// authorize request — doing so overwrites VERIFIER_KEY with a new PKCE verifier,
+// so when the FIRST request's code comes back it's exchanged against the SECOND
+// verifier and WorkOS rejects it with "Invalid code verifier". Collapsing repeat
+// taps onto the same in-flight promise keeps one verifier paired with one code.
+let signInInFlight: Promise<void> | null = null
+
 async function claimAndExchange(code: string): Promise<boolean> {
   // Collapse concurrent calls in the same JS context to one in-flight exchange.
   if (claimInFlight) return claimInFlight
@@ -236,10 +250,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     hydrate()
   }, [hydrate])
 
-  const signIn = React.useCallback(async () => {
+  const runSignIn = React.useCallback(async () => {
     if (!config.workosClientId) {
       throw new Error('Missing WorkOS client id (app.json extra.workosClientId).')
     }
+
+    // If the user just signed out, force WorkOS to show the login screen instead
+    // of silently re-using its browser session. Consume the flag either way.
+    let forceLogin = false
+    try {
+      forceLogin = (await SecureStore.getItemAsync(FORCE_LOGIN_KEY)) === '1'
+      if (forceLogin) await SecureStore.deleteItemAsync(FORCE_LOGIN_KEY)
+    } catch {}
 
     const request = new AuthSession.AuthRequest({
       clientId: config.workosClientId,
@@ -247,12 +269,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       responseType: AuthSession.ResponseType.Code,
       usePKCE: true,
       scopes: ['openid', 'profile', 'email', 'offline_access'],
-      extraParams: { provider: 'authkit' },
+      extraParams: forceLogin
+        ? { provider: 'authkit', prompt: 'login' }
+        : { provider: 'authkit' },
     })
 
     // Build the request to generate the PKCE verifier, then persist it so the
     // redirect landing route can complete the exchange regardless of how the
-    // mcloud:// deep link is delivered in this build type.
+    // mcloud:// deep link is delivered in this build type. Clear any stale
+    // verifier from a previously abandoned attempt first, so only THIS request's
+    // verifier is on disk when its code returns.
+    await SecureStore.deleteItemAsync(VERIFIER_KEY)
     await request.makeAuthUrlAsync(discovery)
     if (request.codeVerifier) {
       await SecureStore.setItemAsync(VERIFIER_KEY, request.codeVerifier)
@@ -284,10 +311,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await hydrate()
   }, [hydrate])
 
+  // Re-entrancy guard: repeat taps on "Sign in" while one attempt is pending
+  // share that attempt instead of starting a second authorize request (which
+  // would clobber the PKCE verifier → "Invalid code verifier"). See signInInFlight.
+  const signIn = React.useCallback(async () => {
+    if (signInInFlight) return signInInFlight
+    signInInFlight = runSignIn().finally(() => {
+      signInInFlight = null
+    })
+    return signInInFlight
+  }, [runSignIn])
+
   const refresh = React.useCallback(() => refreshTokens(), [])
 
   const signOut = React.useCallback(async () => {
     await clearTokens()
+    // Force the WorkOS login screen on the next sign-in (the browser still holds
+    // a WorkOS session; without this the next authorize re-auths silently).
+    try { await SecureStore.setItemAsync(FORCE_LOGIN_KEY, '1') } catch {}
     setUser(null)
   }, [])
 
