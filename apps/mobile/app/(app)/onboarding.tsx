@@ -68,7 +68,7 @@ export default function OnboardingScreen() {
 
             <FadeInUp delay={80} style={styles.copy}>
               <Text style={[t.type.overline, { color: t.colors.primary }]}>STEP 1 OF 2</Text>
-              <Text style={[t.type.headlineMedium, { color: t.colors.onSurface, fontWeight: '700' }]}>
+              <Text style={[t.type.headlineLarge, { color: t.colors.onSurface, fontWeight: '700' }]}> 
                 Name your workspace
               </Text>
               <Text style={[t.type.bodyLarge, { color: t.colors.onSurfaceVariant }]}>
@@ -99,7 +99,7 @@ export default function OnboardingScreen() {
 
             <FadeInUp delay={80} style={styles.copy}>
               <Text style={[t.type.overline, { color: t.colors.primary }]}>STEP 2 OF 2</Text>
-              <Text style={[t.type.headlineMedium, { color: t.colors.onSurface, fontWeight: '700' }]}>
+              <Text style={[t.type.headlineLarge, { color: t.colors.onSurface, fontWeight: '700' }]}> 
                 Create your first store
               </Text>
               <Text style={[t.type.bodyLarge, { color: t.colors.onSurfaceVariant }]}>
