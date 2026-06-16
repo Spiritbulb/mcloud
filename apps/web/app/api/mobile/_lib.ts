@@ -3,6 +3,7 @@
 // JSON. proxy.ts already adds CORS + bypasses tenant logic for /api/*.
 
 import { getMobileSession } from '@mcloud/auth/server'
+import { ensureUserRow } from '@mcloud/auth/callback'
 import type { AuthUser } from '@mcloud/auth/types'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -23,5 +24,8 @@ export async function requireMobileUser(
 ): Promise<{ user: AuthUser } | NextResponse> {
     const session = await getMobileSession(req)
     if (!session?.user) return fail(401, 'Unauthorized')
+    // Mobile has no login callback, so provision the users row here (idempotent)
+    // before any handler writes rows that FK to users.id (org/store creation).
+    await ensureUserRow(session.user)
     return { user: session.user }
 }

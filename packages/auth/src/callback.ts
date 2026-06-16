@@ -6,12 +6,16 @@ import { createClient } from '@mcloud/db/server'
 import type { AuthUser } from './types'
 
 /**
- * Upsert the user row and return the path to redirect to after login:
- * their first org if they belong to one, otherwise onboarding.
+ * Mirror the authenticated identity into our `users` table. Idempotent.
+ *
+ * This MUST run before any write that FKs to `users.id` (org/store creation).
+ * The web callback runs it via onAuthenticated(); the mobile flow has no callback
+ * — it authenticates by bearer token — so the mobile API layer calls this directly
+ * on each request. Without it, a brand-new user who signs up on mobile has no
+ * `users` row, and their first createOrg() fails the owner_id/user_id FK.
  */
-export async function onAuthenticated(user: AuthUser): Promise<string> {
+export async function ensureUserRow(user: AuthUser): Promise<void> {
     const supabase = await createClient()
-
     await supabase.from('users').upsert(
         {
             id: user.id,
@@ -22,6 +26,16 @@ export async function onAuthenticated(user: AuthUser): Promise<string> {
         },
         { onConflict: 'id' },
     )
+}
+
+/**
+ * Upsert the user row and return the path to redirect to after login:
+ * their first org if they belong to one, otherwise onboarding.
+ */
+export async function onAuthenticated(user: AuthUser): Promise<string> {
+    const supabase = await createClient()
+
+    await ensureUserRow(user)
 
     const { data: firstOrg } = await supabase
         .from('org_members')
