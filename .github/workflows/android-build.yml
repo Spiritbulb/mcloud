@@ -1,0 +1,87 @@
+name: Android build (AAB)
+
+# Free alternative to EAS Build: runs expo prebuild + Gradle bundleRelease on a
+# GitHub runner and uploads a signed .aab artifact. Signed with the SAME upload
+# keystore EAS uses, so the bundle's identity matches the existing Play listing.
+#
+# Trigger manually from the Actions tab ("Run workflow"). apps/mobile is a
+# standalone Expo project (excluded from the npm workspaces at the repo root), so
+# everything runs with apps/mobile as the working directory.
+
+on:
+  workflow_dispatch:
+    inputs:
+      versionCode:
+        description: "Android versionCode override (blank = use app.json value)"
+        required: false
+        type: string
+
+defaults:
+  run:
+    working-directory: apps/mobile
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install dependencies
+        # Standalone project: a plain install in apps/mobile (no root workspace hoist).
+        run: npm install --no-audit --no-fund
+
+      - name: Optional versionCode override
+        if: ${{ inputs.versionCode != '' }}
+        run: |
+          node -e "const fs=require('fs');const p='app.json';const j=JSON.parse(fs.readFileSync(p));j.expo.android.versionCode=Number(process.env.VC);fs.writeFileSync(p,JSON.stringify(j,null,2));console.log('versionCode ->',j.expo.android.versionCode)"
+        env:
+          VC: ${{ inputs.versionCode }}
+
+      - name: Prebuild (generate native android/)
+        run: npx expo prebuild --platform android --no-install
+
+      - name: Decode keystore
+        # The keystore is provided as a base64 secret (it's a binary file). Write it
+        # to android/app so Gradle can find it via the signingConfig below.
+        run: |
+          echo "$ANDROID_KEYSTORE_BASE64" | base64 -d > android/app/upload.keystore
+          ls -l android/app/upload.keystore
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+      - name: Build signed release bundle
+        # Pass signing material as Gradle properties. expo prebuild's android template
+        # wires release signingConfig from these -P properties when present.
+        run: |
+          ./gradlew :app:bundleRelease \
+            -PMYAPP_UPLOAD_STORE_FILE=upload.keystore \
+            -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
+            -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
+            -PMYAPP_UPLOAD_KEY_PASSWORD="$ANDROID_KEY_PASSWORD"
+        working-directory: apps/mobile/android
+        env:
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+
+      - name: Upload AAB artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release-aab
+          path: apps/mobile/android/app/build/outputs/bundle/release/app-release.aab
+          if-no-files-found: error

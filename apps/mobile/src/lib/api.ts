@@ -1,5 +1,6 @@
 // Typed wrappers over the /api/mobile/* endpoints. All calls go through the
 // authedFetch from AuthContext (bearer token + refresh-on-401).
+import { File as ExpoFile } from 'expo-file-system'
 
 export type Org = {
   id: string
@@ -244,19 +245,27 @@ export function api(authedFetch: Fetch) {
     // bucket: 'store-assets' | 'product-images'
     // path: e.g. `${storeId}/logo` or `${storeId}/products/${productId}`
     async uploadImage(localUri: string, bucket: 'store-assets' | 'product-images', path: string): Promise<string> {
-      const filename = localUri.split('/').pop() ?? 'image.jpg'
-      const ext = filename.split('.').pop()?.toLowerCase() ?? 'jpg'
-      const mimeMap: Record<string, string> = { jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', heic: 'image/heic', heif: 'image/heif' }
-      const mime = mimeMap[ext] ?? 'image/jpeg'
+      if (!localUri) throw new Error('No image to upload.')
+      const cleanUri = localUri.split('?')[0].split('#')[0]
+      const rawName = cleanUri.split('/').pop() || 'image.jpg'
+      const ext = (rawName.includes('.') ? rawName.split('.').pop() : 'jpg')!.toLowerCase()
+      // Give the part a name WITH an extension — some Android pick results have none.
+      const filename = rawName.includes('.') ? rawName : `${rawName}.${ext}`
 
+      // The global fetch in Expo is the WinterCG `expo/fetch`, whose multipart
+      // serializer CANNOT consume React Native's `{ uri, name, type }` file part
+      // (it throws "Unsupported FormDataPart implementation"). It only accepts a
+      // Blob. expo-file-system's `File` implements Blob (with a `bytes()` method
+      // and a populated `type`), so we append it DIRECTLY — do NOT slice() or wrap
+      // it in a new Blob, which routes through RN's Blob ctor and throws
+      // "Creating blobs from 'ArrayBuffer' ... are not supported".
+      const file = new ExpoFile(localUri)
       const form = new FormData()
-      // React Native FormData requires the native { uri, name, type } shape as the value
-      // with the filename passed as the third argument — plain object cast, no Blob wrapper.
-      form.append('file', { uri: localUri, name: filename, type: mime } as unknown as File, filename)
+      form.append('file', file as unknown as Blob, filename)
       form.append('bucket', bucket)
       form.append('path', path)
 
-      const res = await authedFetch('/api/mobile/upload', { method: 'POST', body: form as unknown as BodyInit })
+      const res = await authedFetch('/api/mobile/upload', { method: 'POST', body: form })
       return (await json<{ url: string }>(res)).url
     },
 

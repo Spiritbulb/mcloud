@@ -1,7 +1,7 @@
 ﻿// Onboarding — new users with no org/store yet.
 // Step 1: name your workspace (org). Step 2: create first store.
 import * as React from 'react'
-import { Alert, Pressable, StyleSheet, Text, View } from 'react-native'
+import { Alert, KeyboardAvoidingView, Platform, Pressable, StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
@@ -56,6 +56,7 @@ export default function OnboardingScreen() {
 
   return (
     <SafeAreaView style={[styles.fill, { backgroundColor: t.colors.background }]} edges={['top', 'bottom']}>
+      <KeyboardAvoidingView style={styles.fill} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
       <View style={styles.body}>
 
         {step === 1 ? (
@@ -150,6 +151,7 @@ export default function OnboardingScreen() {
           </>
         )}
       </FadeInUp>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   )
 }
