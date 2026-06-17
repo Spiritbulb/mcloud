@@ -5,6 +5,7 @@ import { useState, useRef } from 'react'
 import { motion, useInView, AnimatePresence } from 'framer-motion'
 import { cn } from '@mcloud/ui/utils'
 import { CookieBanner } from './cookie-banner'
+import { BetaSignupForm } from '@/app/(marketing)/beta/beta-signup-form'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -976,6 +977,34 @@ export default function HomeClient() {
                             />
                         </motion.div>
                     </div>
+                </div>
+            </section>
+
+            {/* ── BETA SIGNUP BAND ──────────────────────────────────────────── */}
+            <section className="relative">
+                <div className="container mx-auto px-6 md:px-12 max-w-4xl w-full pb-4">
+                    <motion.div
+                        initial={{ opacity: 0, y: 16 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true, margin: '-40px' }}
+                        transition={{ duration: 0.5, ease: [0.25, 0.1, 0.25, 1] }}
+                        className="rounded-2xl border border-border bg-foreground/[0.03] p-6 md:p-8"
+                    >
+                        <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                            <div className="space-y-1.5 md:max-w-sm">
+                                <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                                    Closed beta
+                                </p>
+                                <h2 className="text-[20px] md:text-[22px] font-semibold leading-snug text-foreground">
+                                    Be first on the new mobile app.
+                                </h2>
+                                <p className="text-[14px] text-muted-foreground/70 leading-relaxed">
+                                    Join the beta and we&apos;ll send your invite as spots open up.
+                                </p>
+                            </div>
+                            <BetaSignupForm source="homepage" className="w-full md:w-[360px]" />
+                        </div>
+                    </motion.div>
                 </div>
             </section>
 
