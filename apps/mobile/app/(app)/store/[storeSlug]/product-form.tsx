@@ -7,17 +7,18 @@ import {
 } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
-import { Stack, useLocalSearchParams, useRouter } from 'expo-router'
+import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
 import { useStore } from '@/store/StoreContext'
-import { Avatar, Button, Field } from '@/components/ui'
+import { Button, Field } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
 
 export default function ProductFormScreen() {
   const t = useTheme()
   const router = useRouter()
+  const navigation = useNavigation()
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -30,6 +31,10 @@ export default function ProductFormScreen() {
   const [compareAt, setCompareAt] = React.useState('')
   const [inventory, setInventory] = React.useState('')
   const [trackInventory, setTrackInventory] = React.useState(false)
+  const [isActive, setIsActive] = React.useState(true)
+  const [description, setDescription] = React.useState('')
+  const [sku, setSku] = React.useState('')
+  const [barcode, setBarcode] = React.useState('')
   const [images, setImages] = React.useState<string[]>([])
   const [saving, setSaving] = React.useState(false)
   const [uploadingImage, setUploadingImage] = React.useState(false)
@@ -45,11 +50,14 @@ export default function ProductFormScreen() {
       setCompareAt(prod.compare_at_price != null ? String(prod.compare_at_price) : '')
       setInventory(prod.inventory_quantity != null ? String(prod.inventory_quantity) : '')
       setTrackInventory(prod.track_inventory)
+      setIsActive(prod.is_active)
+      setDescription(prod.description ?? '')
+      setSku(prod.sku ?? '')
+      setBarcode(prod.barcode ?? '')
       setImages(prod.images ?? [])
     })
   }, [isEdit, productId, storeSlug, client])
 
-  const thumb = images[0] ?? null
   const canSave = name.trim().length > 0 && price.trim().length > 0 && Number.isFinite(Number(price))
 
   const onPickImage = async () => {
@@ -65,14 +73,16 @@ export default function ProductFormScreen() {
       quality: 0.85,
     })
     if (result.canceled || !result.assets[0]) return
+    const pickedUri = result.assets[0].uri
 
-    // If editing an existing product, upload immediately
+    // Editing an existing product: upload now and APPEND to the gallery.
     if (isEdit && productId) {
       setUploadingImage(true)
       try {
         const storeId = store?.id ?? storeSlug
-        const url = await client.uploadImage(result.assets[0].uri, 'product-images', `${storeId}/${productId}/0`)
-        const next = [url, ...images.filter((u) => u !== url)]
+        // Index the storage path by current image count to avoid overwriting.
+        const url = await client.uploadImage(pickedUri, 'product-images', `${storeId}/${productId}/${images.length}`)
+        const next = [...images, url]
         await client.updateProduct(storeSlug, productId, { images: next })
         setImages(next)
       } catch (e) {
@@ -81,8 +91,23 @@ export default function ProductFormScreen() {
         setUploadingImage(false)
       }
     } else {
-      // For new products, store uri locally — upload after create
-      setImages([result.assets[0].uri])
+      // New product: keep local uris, upload them all after create.
+      setImages((prev) => [...prev, pickedUri])
+    }
+  }
+
+  const onRemoveImage = async (uri: string) => {
+    const next = images.filter((u) => u !== uri)
+    setImages(next)
+    // For an existing product, persist the removal immediately.
+    if (isEdit && productId) {
+      try {
+        await client.updateProduct(storeSlug, productId, { images: next })
+      } catch (e) {
+        // Roll back on failure so UI stays truthful.
+        setImages(images)
+        Alert.alert('Could not remove image', e instanceof Error ? e.message : 'Error')
+      }
     }
   }
 
@@ -101,6 +126,10 @@ export default function ProductFormScreen() {
           compare_at_price: compareNum,
           inventory_quantity: invNum,
           track_inventory: trackInventory,
+          is_active: isActive,
+          description: description.trim() || null,
+          sku: sku.trim() || null,
+          barcode: barcode.trim() || null,
         })
         router.back()
       } else {
@@ -110,16 +139,26 @@ export default function ProductFormScreen() {
           compare_at_price: compareNum,
           inventory_quantity: invNum,
           track_inventory: trackInventory,
+          description: description.trim() || null,
+          sku: sku.trim() || null,
+          barcode: barcode.trim() || null,
         })
-        // Upload local image if one was picked
-        if (images[0] && !images[0].startsWith('http')) {
+        // Upload any locally-picked images, in order, then persist the gallery.
+        const localUris = images.filter((u) => !u.startsWith('http'))
+        if (localUris.length > 0) {
           try {
             const storeId = store?.id ?? storeSlug
-            const url = await client.uploadImage(images[0], 'product-images', `${storeId}/${prod.id}/0`)
-            await client.updateProduct(storeSlug, prod.id, { images: [url] })
+            const urls: string[] = []
+            for (let i = 0; i < localUris.length; i++) {
+              urls.push(await client.uploadImage(localUris[i], 'product-images', `${storeId}/${prod.id}/${i}`))
+            }
+            await client.updateProduct(storeSlug, prod.id, { images: urls, is_active: isActive })
           } catch {
-            // Image upload failure is non-fatal — product was created
+            // Image upload failure is non-fatal — the product was still created.
           }
+        } else if (!isActive) {
+          // No images but the user toggled the product off — persist that.
+          try { await client.updateProduct(storeSlug, prod.id, { is_active: isActive }) } catch {}
         }
         router.back()
       }
@@ -130,44 +169,48 @@ export default function ProductFormScreen() {
     }
   }
 
+  // The parent is a headerless Tabs navigator; the layout turns the header ON for
+  // this screen, and we set its title + Save action here (kept in sync with state).
+  React.useLayoutEffect(() => {
+    navigation.setOptions({
+      title: isEdit ? 'Edit product' : 'New product',
+      headerRight: () => (
+        <Pressable onPress={onSave} disabled={!canSave || saving} hitSlop={12} style={{ paddingHorizontal: 4 }}>
+          <Text style={[t.type.labelLarge, { color: canSave && !saving ? t.colors.primary : t.colors.onSurfaceVariant }]}>
+            {saving ? 'Saving…' : 'Save'}
+          </Text>
+        </Pressable>
+      ),
+    })
+    // onSave closes over current form state; re-set when those change.
+  }, [navigation, isEdit, canSave, saving, t, onSave])
+
   return (
     <KeyboardAvoidingView
       style={[styles.fill, { backgroundColor: t.colors.background }]}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <Stack.Screen
-        options={{
-          title: isEdit ? 'Edit product' : 'New product',
-          headerRight: () => (
-            <Pressable onPress={onSave} disabled={!canSave || saving} hitSlop={12}>
-              <Text style={[t.type.labelLarge, { color: canSave ? t.colors.primary : t.colors.onSurfaceVariant }]}>
-                {saving ? 'Saving…' : 'Save'}
+      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+        {/* Images — horizontal strip; tap a tile's ✕ to remove, last tile adds. */}
+        <View style={styles.section}>
+          <Text style={[t.type.labelLarge, styles.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Photos</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.imageStrip} keyboardShouldPersistTaps="handled">
+            {images.map((uri) => (
+              <View key={uri} style={[styles.imageTile, { backgroundColor: t.colors.surfaceContainerHigh }]}>
+                <Image source={{ uri }} style={styles.imageTileImg} contentFit="cover" />
+                <Pressable onPress={() => onRemoveImage(uri)} hitSlop={8} style={[styles.removeBtn, { backgroundColor: 'rgba(0,0,0,0.6)' }]}>
+                  <Ionicons name="close" size={14} color="#fff" />
+                </Pressable>
+              </View>
+            ))}
+            <Pressable onPress={onPickImage} disabled={uploadingImage} style={[styles.addTile, { borderColor: t.colors.outlineVariant, backgroundColor: t.colors.surfaceContainerLow }]}>
+              <Ionicons name={uploadingImage ? 'hourglass-outline' : 'camera-outline'} size={22} color={t.colors.onSurfaceVariant} />
+              <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>
+                {uploadingImage ? 'Uploading…' : 'Add'}
               </Text>
             </Pressable>
-          ),
-        }}
-      />
-
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
-        {/* Image picker */}
-        <Pressable onPress={onPickImage} style={styles.imageRow}>
-          <View style={[styles.imageWrap, { backgroundColor: t.colors.surfaceContainerHigh }]}>
-            {thumb ? (
-              <Image source={{ uri: thumb }} style={styles.image} contentFit="cover" />
-            ) : (
-              <Avatar name={name || '?'} size={72} radius={16} />
-            )}
-            <View style={[styles.cameraOverlay, { backgroundColor: uploadingImage ? t.colors.surfaceContainer : 'rgba(0,0,0,0.42)' }]}>
-              <Ionicons name={uploadingImage ? 'hourglass-outline' : 'camera-outline'} size={18} color="#fff" />
-            </View>
-          </View>
-          <View style={{ flex: 1, gap: 4 }}>
-            <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Product image</Text>
-            <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
-              {thumb ? 'Tap to change' : 'Tap to add a photo'}
-            </Text>
-          </View>
-        </Pressable>
+          </ScrollView>
+        </View>
 
         <View style={[styles.divider, { backgroundColor: t.colors.outlineVariant }]} />
 
@@ -189,6 +232,16 @@ export default function ProductFormScreen() {
             placeholder="0"
             keyboardType="decimal-pad"
             returnKeyType="next"
+          />
+          <Field
+            label="Description"
+            value={description}
+            onChangeText={setDescription}
+            placeholder="Optional — shown on the product page"
+            multiline
+            numberOfLines={4}
+            autoCapitalize="sentences"
+            returnKeyType="default"
           />
           <Field
             label="Compare-at price (KES)"
@@ -226,9 +279,49 @@ export default function ProductFormScreen() {
               onChangeText={setInventory}
               placeholder="0"
               keyboardType="number-pad"
-              returnKeyType="done"
+              returnKeyType="next"
             />
           )}
+          <Field
+            label="SKU"
+            value={sku}
+            onChangeText={setSku}
+            placeholder="Optional — your stock-keeping code"
+            autoCapitalize="characters"
+            autoCorrect={false}
+            returnKeyType="next"
+          />
+          <Field
+            label="Barcode"
+            value={barcode}
+            onChangeText={setBarcode}
+            placeholder="Optional — UPC / EAN"
+            autoCapitalize="characters"
+            autoCorrect={false}
+            keyboardType="default"
+            returnKeyType="done"
+          />
+        </View>
+
+        <View style={[styles.divider, { backgroundColor: t.colors.outlineVariant }]} />
+
+        {/* Availability */}
+        <View style={styles.section}>
+          <Text style={[t.type.labelLarge, styles.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Availability</Text>
+          <View style={[styles.toggleRow, { backgroundColor: t.colors.surfaceContainerLow, borderRadius: 12 }]}>
+            <View style={{ flex: 1 }}>
+              <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Active</Text>
+              <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
+                {isActive ? 'Visible in your store' : 'Hidden — customers can’t see or buy it'}
+              </Text>
+            </View>
+            <Switch
+              value={isActive}
+              onValueChange={setIsActive}
+              trackColor={{ true: t.colors.primary }}
+              thumbColor={isActive ? t.colors.onPrimary : t.colors.outline}
+            />
+          </View>
         </View>
 
         <View style={{ height: 32 }} />
@@ -242,10 +335,11 @@ export default function ProductFormScreen() {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   scroll: { padding: 20, gap: 16 },
-  imageRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  imageWrap: { width: 80, height: 80, borderRadius: 16, overflow: 'hidden', position: 'relative', alignItems: 'center', justifyContent: 'center' },
-  image: { width: 80, height: 80 },
-  cameraOverlay: { position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  imageStrip: { flexDirection: 'row', gap: 12, paddingVertical: 2 },
+  imageTile: { width: 88, height: 88, borderRadius: 14, overflow: 'hidden', position: 'relative' },
+  imageTileImg: { width: 88, height: 88 },
+  removeBtn: { position: 'absolute', top: 4, right: 4, width: 22, height: 22, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  addTile: { width: 88, height: 88, borderRadius: 14, borderWidth: 1, borderStyle: 'dashed', alignItems: 'center', justifyContent: 'center', gap: 4 },
   divider: { height: StyleSheet.hairlineWidth, marginVertical: 4 },
   section: { gap: 12 },
   sectionLabel: { letterSpacing: 0.5, marginBottom: 2 },

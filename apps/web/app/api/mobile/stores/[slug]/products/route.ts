@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     const { slug } = await params
     const body = (await req.json().catch(() => null)) as
-        | { name?: string; price?: number; inventory_quantity?: number | null }
+        | { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; description?: string | null; sku?: string | null; barcode?: string | null }
         | null
     if (!body) return fail(400, 'Invalid JSON body')
 

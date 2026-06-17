@@ -68,6 +68,9 @@ export type Product = {
   track_inventory: boolean
   is_active: boolean
   images: string[]
+  description: string | null
+  sku: string | null
+  barcode: string | null
   created_at: string | null
 }
 
@@ -151,11 +154,11 @@ export function api(authedFetch: Fetch) {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products`)
       return json<{ products: Product[]; role: string }>(res)
     },
-    async createProduct(slug: string, input: { name: string; price: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean }): Promise<Product> {
+    async createProduct(slug: string, input: { name: string; price: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; description?: string | null; sku?: string | null; barcode?: string | null }): Promise<Product> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products`, { method: 'POST', body: JSON.stringify(input) })
       return (await json<{ product: Product }>(res)).product
     },
-    async updateProduct(slug: string, id: string, patch: Partial<{ name: string; price: number; compare_at_price: number | null; inventory_quantity: number | null; track_inventory: boolean; is_active: boolean; images: string[] }>): Promise<Product> {
+    async updateProduct(slug: string, id: string, patch: Partial<{ name: string; price: number; compare_at_price: number | null; inventory_quantity: number | null; track_inventory: boolean; is_active: boolean; images: string[]; description: string | null; sku: string | null; barcode: string | null }>): Promise<Product> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, { method: 'PATCH', body: JSON.stringify(patch) })
       return (await json<{ product: Product }>(res)).product
     },

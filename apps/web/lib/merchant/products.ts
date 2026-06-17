@@ -13,11 +13,14 @@ export interface MobileProduct {
     track_inventory: boolean
     is_active: boolean
     images: string[]
+    description: string | null
+    sku: string | null
+    barcode: string | null
     created_at: string | null
 }
 
 const COLS =
-    'id, name, slug, price, compare_at_price, inventory_quantity, track_inventory, is_active, images, created_at'
+    'id, name, slug, price, compare_at_price, inventory_quantity, track_inventory, is_active, images, description, sku, barcode, created_at'
 
 function slugify(s: string) {
     return s.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
@@ -51,7 +54,7 @@ export type MutateResult =
 export async function createProduct(
     slug: string,
     userId: string,
-    input: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean },
+    input: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; description?: string | null; sku?: string | null; barcode?: string | null },
 ): Promise<MutateResult> {
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
@@ -84,6 +87,9 @@ export async function createProduct(
             inventory_quantity: input.inventory_quantity ?? null,
             track_inventory: input.track_inventory ?? false,
             is_active: true,
+            description: input.description?.trim() || null,
+            sku: input.sku?.trim() || null,
+            barcode: input.barcode?.trim() || null,
         })
         .select(COLS)
         .single()
@@ -96,7 +102,7 @@ export async function updateProduct(
     slug: string,
     userId: string,
     productId: string,
-    patch: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; is_active?: boolean; images?: string[] },
+    patch: { name?: string; price?: number; compare_at_price?: number | null; inventory_quantity?: number | null; track_inventory?: boolean; is_active?: boolean; images?: string[]; description?: string | null; sku?: string | null; barcode?: string | null },
 ): Promise<MutateResult> {
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
@@ -118,6 +124,10 @@ export async function updateProduct(
     if (patch.track_inventory !== undefined) update.track_inventory = patch.track_inventory
     if (patch.is_active !== undefined) update.is_active = patch.is_active
     if (patch.images !== undefined) update.images = patch.images
+    // Normalise empty strings to null so optional text fields clear cleanly.
+    if (patch.description !== undefined) update.description = patch.description?.trim() || null
+    if (patch.sku !== undefined) update.sku = patch.sku?.trim() || null
+    if (patch.barcode !== undefined) update.barcode = patch.barcode?.trim() || null
 
     const supabase = await createClient()
     const { data, error } = await supabase

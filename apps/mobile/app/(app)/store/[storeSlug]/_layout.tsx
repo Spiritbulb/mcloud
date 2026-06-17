@@ -14,6 +14,17 @@ export default function StoreTabsLayout() {
   const t = useTheme()
   const insets = useSafeAreaInsets()
 
+  // Shared header config for screens pushed over the tabs (href: null). Title and
+  // any headerRight action are set per-screen via navigation.setOptions.
+  const pushedScreenOptions = {
+    href: null as null,
+    headerShown: true,
+    headerShadowVisible: false,
+    headerStyle: { backgroundColor: t.colors.background },
+    headerTintColor: t.colors.onSurface,
+    headerTitleStyle: { fontWeight: '700' as const, color: t.colors.onSurface },
+  }
+
   return (
     <StoreProvider>
     <Tabs
@@ -60,12 +71,14 @@ export default function StoreTabsLayout() {
         }}
       />
 
-      {/* Stack screens pushed from tabs — hidden from the tab bar. */}
-      <Tabs.Screen name="branding" options={{ href: null }} />
-      <Tabs.Screen name="mpesa" options={{ href: null }} />
-      <Tabs.Screen name="analytics" options={{ href: null }} />
-      <Tabs.Screen name="product-form" options={{ href: null }} />
-      <Tabs.Screen name="sale-form" options={{ href: null }} />
+      {/* Stack screens pushed from tabs — hidden from the tab bar. Each gets a real
+          native header (title/actions set per-screen via navigation.setOptions) so
+          content doesn't run under the status bar. */}
+      <Tabs.Screen name="branding" options={pushedScreenOptions} />
+      <Tabs.Screen name="mpesa" options={pushedScreenOptions} />
+      <Tabs.Screen name="analytics" options={pushedScreenOptions} />
+      <Tabs.Screen name="product-form" options={pushedScreenOptions} />
+      <Tabs.Screen name="sale-form" options={pushedScreenOptions} />
     </Tabs>
     </StoreProvider>
   )

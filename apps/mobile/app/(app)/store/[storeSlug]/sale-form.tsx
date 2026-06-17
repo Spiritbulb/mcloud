@@ -6,7 +6,7 @@ import {
   Pressable, ScrollView, StyleSheet, Text, View,
 } from 'react-native'
 import { Image } from 'expo-image'
-import { Stack, useRouter } from 'expo-router'
+import { useNavigation, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
@@ -20,6 +20,7 @@ export default function SaleFormScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
   const router = useRouter()
+  const navigation = useNavigation()
   const { slug: storeSlug } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
@@ -31,6 +32,10 @@ export default function SaleFormScreen() {
   const [customerEmail, setCustomerEmail] = React.useState('')
   const [saving, setSaving] = React.useState(false)
   const [step, setStep] = React.useState<'pick' | 'confirm'>('pick')
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({ title: step === 'confirm' ? 'Confirm sale' : 'New sale' })
+  }, [navigation, step])
 
   React.useEffect(() => {
     client.listProducts(storeSlug)
@@ -82,7 +87,6 @@ export default function SaleFormScreen() {
         style={[s.fill, { backgroundColor: t.colors.background }]}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Stack.Screen options={{ title: 'Confirm sale' }} />
         <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
           <Text style={[t.type.labelLarge, s.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Items</Text>
           {lines.map((l) => (
@@ -120,7 +124,6 @@ export default function SaleFormScreen() {
   // Step: pick products
   return (
     <View style={[s.fill, { backgroundColor: t.colors.background }]}>
-      <Stack.Screen options={{ title: 'New sale' }} />
       <FlatList
         data={products}
         keyExtractor={(p) => p.id}

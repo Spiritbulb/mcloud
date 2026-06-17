@@ -3,22 +3,25 @@ import * as React from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { Image } from 'expo-image'
 import * as ImagePicker from 'expo-image-picker'
-import { useRouter } from 'expo-router'
-import { SafeAreaView } from 'react-native-safe-area-context'
+import { useNavigation } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
 import { api, type Branding } from '@/lib/api'
-import { Body, Button, Card, Field, ScreenHeader } from '@/components/ui'
+import { Body, Button, Card, Field } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
 export default function BrandingScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
-  const router = useRouter()
+  const navigation = useNavigation()
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
+
+  React.useLayoutEffect(() => {
+    navigation.setOptions({ title: 'Branding' })
+  }, [navigation])
 
   const [branding, setBranding] = React.useState<Branding | null>(null)
   const [name, setName] = React.useState('')
@@ -90,12 +93,9 @@ export default function BrandingScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
-        <ScreenHeader title="Branding" onBack={() => router.back()} />
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <ActivityIndicator color={t.colors.primary} />
-        </View>
-      </SafeAreaView>
+      <View style={[s.fill, { backgroundColor: t.colors.background, alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={t.colors.primary} />
+      </View>
     )
   }
 
@@ -103,8 +103,7 @@ export default function BrandingScreen() {
   const dirty = !!branding && (name.trim() !== branding.name || description !== (branding.description ?? ''))
 
   return (
-    <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
-      <ScreenHeader title="Branding" onBack={() => router.back()} />
+    <View style={[s.fill, { backgroundColor: t.colors.background }]}>
       <ScrollView contentContainerStyle={s.scroll} keyboardShouldPersistTaps="handled">
         {error || !branding ? (
           <Card><Body variant>{error ?? 'Unavailable'}</Body></Card>
@@ -166,7 +165,7 @@ export default function BrandingScreen() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   )
 }
 
