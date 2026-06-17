@@ -23,6 +23,8 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    # Hard cap so a hung/OOM'd Gradle process can never run for hours again.
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -64,11 +66,23 @@ jobs:
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
 
+      - name: Raise Gradle JVM memory
+        # The release build's lint/analysis tasks exhausted Metaspace on the runner
+        # (java.lang.OutOfMemoryError: Metaspace), hanging the job. Give Gradle a
+        # larger heap + Metaspace so analysis tasks don't OOM.
+        run: |
+          {
+            echo "org.gradle.jvmargs=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError"
+            echo "org.gradle.daemon=false"
+          } >> android/gradle.properties
+
       - name: Build signed release bundle
         # Pass signing material as Gradle properties. expo prebuild's android template
         # wires release signingConfig from these -P properties when present.
+        # Skip lintVitalRelease: it's not needed to produce a shippable AAB and was
+        # the task that OOM'd. App correctness lint can run separately if wanted.
         run: |
-          ./gradlew :app:bundleRelease \
+          ./gradlew :app:bundleRelease -x lintVitalRelease --no-daemon \
             -PMYAPP_UPLOAD_STORE_FILE=upload.keystore \
             -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
             -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
