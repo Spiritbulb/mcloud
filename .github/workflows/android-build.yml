@@ -82,7 +82,7 @@ jobs:
         # Skip lintVitalRelease: it's not needed to produce a shippable AAB and was
         # the task that OOM'd. App correctness lint can run separately if wanted.
         run: |
-          ./gradlew :app:bundleRelease -x lintVitalRelease --no-daemon \
+          ./gradlew :app:bundleRelease -x lintVitalRelease --no-daemon --stacktrace --info \
             -PMYAPP_UPLOAD_STORE_FILE=upload.keystore \
             -PMYAPP_UPLOAD_KEY_ALIAS="$ANDROID_KEY_ALIAS" \
             -PMYAPP_UPLOAD_STORE_PASSWORD="$ANDROID_KEYSTORE_PASSWORD" \
