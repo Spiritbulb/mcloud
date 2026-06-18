@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { Avatar, Card } from '@/components/ui'
 import { useTheme, useThemePreference, type ThemePreference } from '@/lib/theme'
+import { registerPush } from '@/notifications/registerPush'
 
 const APPEARANCE_OPTIONS: { value: ThemePreference; label: string; icon: React.ComponentProps<typeof Ionicons>['name'] }[] = [
   { value: 'light', label: 'Light', icon: 'sunny-outline' },
@@ -16,7 +17,7 @@ const APPEARANCE_OPTIONS: { value: ThemePreference; label: string; icon: React.C
 export default function AccountScreen() {
   const t = useTheme()
   const s = React.useMemo(() => styles(t), [t])
-  const { user, signOut } = useAuth()
+  const { user, signOut, authedFetch } = useAuth()
   const { preference, setPreference } = useThemePreference()
 
   const onSignOut = () => {
@@ -35,6 +36,14 @@ export default function AccountScreen() {
       ...options,
       { text: 'Cancel', style: 'cancel' },
     ])
+  }
+
+  const onEnableNotifications = async () => {
+    const r = await registerPush(authedFetch)
+    if (r === 'registered') Alert.alert('Notifications on', 'You\'ll get alerts on this device.')
+    else if (r === 'denied') Alert.alert('Notifications blocked', 'Enable them in your device Settings to get alerts.')
+    else if (r === 'unsupported') Alert.alert('Not supported', 'Push notifications need a physical device.')
+    else Alert.alert('Something went wrong', 'Could not enable notifications. Try again.')
   }
 
   const currentAppearanceLabel = APPEARANCE_OPTIONS.find((o) => o.value === preference)?.label ?? 'System'
@@ -72,6 +81,16 @@ export default function AccountScreen() {
             <View style={{ flex: 1 }}>
               <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Appearance</Text>
               <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>{currentAppearanceLabel}</Text>
+            </View>
+            <Ionicons name="chevron-forward" size={18} color={t.colors.onSurfaceVariant} />
+          </Pressable>
+          <Pressable onPress={onEnableNotifications} style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}>
+            <View style={[s.iconBox, { backgroundColor: t.colors.surfaceContainerHigh }]}>
+              <Ionicons name="notifications-outline" size={20} color={t.colors.onSurfaceVariant} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Notifications</Text>
+              <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>Enable alerts on this device</Text>
             </View>
             <Ionicons name="chevron-forward" size={18} color={t.colors.onSurfaceVariant} />
           </Pressable>

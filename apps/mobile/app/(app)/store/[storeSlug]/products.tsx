@@ -10,6 +10,7 @@ import { type Product } from '@/lib/api'
 import { useStore } from '@/store/StoreContext'
 import { Avatar, Badge, Body, Card } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
+import { useIsOnline } from '@/lib/net'
 import { useProducts, useUpdateProduct, useDeleteProduct } from '@/data/products'
 
 export default function ProductsScreen() {
@@ -18,6 +19,7 @@ export default function ProductsScreen() {
   const insets = useSafeAreaInsets()
   const router = useRouter()
   const { slug: storeSlug } = useStore()
+  const online = useIsOnline()
   const { data, isLoading, isFetching, isError, error, refetch } = useProducts(storeSlug)
   const products = data?.products ?? []
   const role = data?.role ?? ''
@@ -66,6 +68,9 @@ export default function ProductsScreen() {
             <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Products</Text>
             {backgroundRefreshing && (
               <Text style={[t.type.labelSmall, { color: t.colors.onSurfaceVariant, marginTop: 2 }]}>Updating…</Text>
+            )}
+            {!online && (
+              <Text style={[t.type.labelSmall, { color: t.colors.onSurfaceVariant, marginTop: 2 }]}>Offline — showing saved data</Text>
             )}
           </View>
           {canManage && (

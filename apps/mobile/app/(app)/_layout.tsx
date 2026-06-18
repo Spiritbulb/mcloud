@@ -2,8 +2,11 @@ import { Redirect, Stack } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '@/auth/AuthContext'
 import { useTheme } from '@/lib/theme'
+import { useNotificationRegistration } from '@/notifications/useNotificationRegistration'
+import { QueryProvider } from '@/data/QueryProvider'
 
 export default function AppLayout() {
+  useNotificationRegistration()
   const t = useTheme()
   const { user, loading } = useAuth()
 
@@ -25,22 +28,30 @@ export default function AppLayout() {
   // Gate: anything under (app) requires a session.
   if (!user) return <Redirect href="/" />
 
+  // QueryProvider lives HERE, below the auth gate, not at the root. Its persisted
+  // cache restores from AsyncStorage asynchronously; at the root that restore sat in
+  // front of the mcloud://auth deep-link landing on a production cold-launch, so the
+  // OAuth code was dropped and interactive sign-in silently failed. Only screens under
+  // (app) use queries, so scoping it here keeps offline persistence without ever
+  // gating the sign-in / redirect routes.
   return (
-    <Stack
-      screenOptions={{
-        headerShadowVisible: false,
-        headerStyle: { backgroundColor: t.colors.background },
-        headerTintColor: t.colors.onSurface,
-        headerTitleStyle: { fontWeight: '700', color: t.colors.onSurface },
-        contentStyle: { backgroundColor: t.colors.background },
-      }}
-    >
-      <Stack.Screen name="orgs" options={{ headerShown: false }} />
-      <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-      <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
-      <Stack.Screen name="account" options={{ title: 'Account' }} />
-      {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}
-      <Stack.Screen name="store/[storeSlug]" options={{ headerShown: false }} />
-    </Stack>
+    <QueryProvider>
+      <Stack
+        screenOptions={{
+          headerShadowVisible: false,
+          headerStyle: { backgroundColor: t.colors.background },
+          headerTintColor: t.colors.onSurface,
+          headerTitleStyle: { fontWeight: '700', color: t.colors.onSurface },
+          contentStyle: { backgroundColor: t.colors.background },
+        }}
+      >
+        <Stack.Screen name="orgs" options={{ headerShown: false }} />
+        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+        <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
+        <Stack.Screen name="account" options={{ title: 'Account' }} />
+        {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}
+        <Stack.Screen name="store/[storeSlug]" options={{ headerShown: false }} />
+      </Stack>
+    </QueryProvider>
   )
 }

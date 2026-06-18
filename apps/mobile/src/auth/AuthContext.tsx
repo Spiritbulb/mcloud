@@ -285,9 +285,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       await SecureStore.setItemAsync(VERIFIER_KEY, request.codeVerifier)
     }
 
-    // showInRecents helps the system browser hand the redirect back to this
-    // pending session (rather than cold-launching the app via the deep link).
-    const result = await request.promptAsync(discovery, { showInRecents: true })
+    // showInRecents:false keeps the auth Custom Tab bound to THIS app's task, so the
+    // OS is far less likely to reclaim the backgrounded app and cold-relaunch it via
+    // the mcloud://auth deep link. The inline promptAsync result is the primary path;
+    // the deep-link landing (app/auth.tsx) remains a fallback.
+    const result = await request.promptAsync(discovery, { showInRecents: false })
 
     // Happy path: promptAsync resolved with the code (dev client). Exchange via the
     // shared claim so we never double-exchange if the deep link also fired.
