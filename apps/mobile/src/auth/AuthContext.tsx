@@ -339,13 +339,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const withAuth = (accessToken: string): RequestInit => ({
         ...init,
-        // The mobile read routes send Cache-Control: max-age=… for web/browser
-        // benefit, but RN's native fetch honors it on-device and would serve a
-        // stale body for that window — which fights react-query's invalidation
-        // (e.g. a refetch after toggling a product's active flag returns the OLD
-        // value, reverting the optimistic update). react-query is now the cache
-        // layer, so bypass the device HTTP cache entirely. No-op on writes.
-        cache: 'no-store',
         headers: {
           ...(init.headers ?? {}),
           Authorization: `Bearer ${accessToken}`,
