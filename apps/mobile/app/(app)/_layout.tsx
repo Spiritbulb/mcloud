@@ -2,8 +2,10 @@ import { Redirect, Stack } from 'expo-router'
 import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '@/auth/AuthContext'
 import { useTheme } from '@/lib/theme'
+import { useNotificationRegistration } from '@/notifications/useNotificationRegistration'
 
 export default function AppLayout() {
+  useNotificationRegistration()
   const t = useTheme()
   const { user, loading } = useAuth()
 
