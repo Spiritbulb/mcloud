@@ -45,12 +45,14 @@
         }
       ],
       "./plugins/withReleaseSigning",
-      "expo-notifications"
+      "expo-notifications",
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true
     },
     "extra": {
+      "sentryDsn": "",
       "apiBaseUrl": "https://www.menengai.cloud",
       "webBaseUrl": "https://www.menengai.cloud",
       "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",

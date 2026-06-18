@@ -1,9 +1,16 @@
+import * as Sentry from '@sentry/react-native'
+import Constants from 'expo-constants'
 import { Stack } from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ThemeProvider, useTheme } from '@/lib/theme'
 import { QueryProvider } from '@/data/QueryProvider'
+
+const sentryDsn = Constants.expoConfig?.extra?.sentryDsn as string | undefined
+if (sentryDsn) {
+  Sentry.init({ dsn: sentryDsn, enableNative: true })
+}
 
 function AppShell() {
   const t = useTheme()
@@ -27,7 +34,7 @@ function AppShell() {
   )
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <SafeAreaProvider>
       <ThemeProvider>
@@ -40,3 +47,5 @@ export default function RootLayout() {
     </SafeAreaProvider>
   )
 }
+
+export default sentryDsn ? Sentry.wrap(RootLayout) : RootLayout
