@@ -17,6 +17,7 @@ import { queryKeys } from '@/data/queryClient'
 import { useStore } from '@/store/StoreContext'
 import { Button, Field } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
+import { haptic } from '@/lib/haptics'
 
 export default function ProductFormScreen() {
   const t = useTheme()
@@ -137,6 +138,7 @@ export default function ProductFormScreen() {
           sku: sku.trim() || null,
           barcode: barcode.trim() || null,
         }})
+        haptic.success()
         router.back()
       } else {
         const prod = await createMut.mutateAsync({
@@ -167,6 +169,7 @@ export default function ProductFormScreen() {
           try { await client.updateProduct(storeSlug, prod.id, { is_active: isActive }) } catch {}
         }
         await qc.invalidateQueries({ queryKey: queryKeys.products(storeSlug) })
+        haptic.success()
         router.back()
       }
     } catch (e) {
