@@ -22,7 +22,7 @@ export async function GET(req: NextRequest) {
 
     const orgs = await listUserOrgs(auth.user.id)
     return NextResponse.json({ orgs }, {
-        headers: { 'Cache-Control': 'private, max-age=300, stale-while-revalidate=600' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }
 

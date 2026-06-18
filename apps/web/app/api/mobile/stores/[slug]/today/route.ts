@@ -15,6 +15,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
 
     return NextResponse.json(result.data, {
-        headers: { 'Cache-Control': 'private, max-age=30, stale-while-revalidate=60' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }

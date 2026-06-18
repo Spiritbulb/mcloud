@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     if (result.error === 'not_found') return fail(404, 'Store not found')
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
     return NextResponse.json({ products: result.data, role: result.role }, {
-        headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }
 

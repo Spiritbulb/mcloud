@@ -20,7 +20,7 @@ export async function GET(
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
 
     return NextResponse.json({ store: result.store }, {
-        headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }
 

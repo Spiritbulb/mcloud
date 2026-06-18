@@ -13,6 +13,6 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
     if (result.error === 'not_found') return fail(404, 'Store not found')
     if (result.error === 'forbidden') return fail(403, 'No access to this store')
     return NextResponse.json({ analytics: result.data }, {
-        headers: { 'Cache-Control': 'private, max-age=60, stale-while-revalidate=120' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }

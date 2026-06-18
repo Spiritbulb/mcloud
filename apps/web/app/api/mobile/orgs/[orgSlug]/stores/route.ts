@@ -21,7 +21,7 @@ export async function GET(
     if (result.error === 'not_member') return fail(403, 'Not a member of this org')
 
     return NextResponse.json({ orgId: result.orgId, role: result.role, stores: result.stores }, {
-        headers: { 'Cache-Control': 'private, max-age=120, stale-while-revalidate=300' },
+        headers: { 'Cache-Control': 'no-store' },
     })
 }
 
