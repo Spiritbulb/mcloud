@@ -5,6 +5,7 @@ import * as Notifications from 'expo-notifications'
 import * as Device from 'expo-device'
 import { Platform } from 'react-native'
 import Constants from 'expo-constants'
+import { api } from '@/lib/api'
 
 type Fetch = (path: string, init?: RequestInit) => Promise<Response>
 export type PushRegisterResult = 'registered' | 'denied' | 'unsupported' | 'error'
@@ -26,11 +27,9 @@ export async function registerPush(authedFetch: Fetch): Promise<PushRegisterResu
     const tokenResp = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined,
     )
-    const res = await authedFetch('/api/mobile/push-token', {
-      method: 'POST',
-      body: JSON.stringify({ token: tokenResp.data, platform: Platform.OS }),
-    })
-    if (!res.ok) return 'error'
+    // Single source of truth for the endpoint contract — the api client owns the
+    // path + body shape (throws on non-ok, caught below → 'error').
+    await api(authedFetch).registerPushToken(tokenResp.data, Platform.OS)
     return 'registered'
   } catch {
     return 'error'
