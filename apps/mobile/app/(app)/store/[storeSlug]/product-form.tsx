@@ -12,6 +12,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
 import { useCreateProduct, useUpdateProduct } from '@/data/products'
+import { useQueryClient } from '@tanstack/react-query'
+import { queryKeys } from '@/data/queryClient'
 import { useStore } from '@/store/StoreContext'
 import { Button, Field } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
@@ -23,6 +25,7 @@ export default function ProductFormScreen() {
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const qc = useQueryClient()
   const createMut = useCreateProduct(storeSlug)
   const updateMut = useUpdateProduct(storeSlug)
   const { productId } = useLocalSearchParams<{ productId?: string }>()
@@ -163,6 +166,7 @@ export default function ProductFormScreen() {
           // No images but the user toggled the product off — persist that.
           try { await client.updateProduct(storeSlug, prod.id, { is_active: isActive }) } catch {}
         }
+        await qc.invalidateQueries({ queryKey: queryKeys.products(storeSlug) })
         router.back()
       }
     } catch (e) {
