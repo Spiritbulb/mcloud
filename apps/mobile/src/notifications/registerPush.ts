@@ -12,14 +12,14 @@ export type PushRegisterResult = 'registered' | 'denied' | 'unsupported' | 'erro
 export async function registerPush(authedFetch: Fetch): Promise<PushRegisterResult> {
   if (!Device.isDevice) return 'unsupported' // simulators can't get a token
 
-  const existing = await Notifications.getPermissionsAsync()
-  let status = existing.status
-  if (status !== 'granted') {
-    status = (await Notifications.requestPermissionsAsync()).status
-  }
-  if (status !== 'granted') return 'denied'
-
   try {
+    const existing = await Notifications.getPermissionsAsync()
+    let status = existing.status
+    if (status !== 'granted') {
+      status = (await Notifications.requestPermissionsAsync()).status
+    }
+    if (status !== 'granted') return 'denied'
+
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
       (Constants as { easConfig?: { projectId?: string } }).easConfig?.projectId
