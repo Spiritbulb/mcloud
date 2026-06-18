@@ -68,6 +68,27 @@ export type Database = {
           },
         ]
       }
+      beta_signups: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
       blog_authors: {
         Row: {
           avatar_url: string | null
