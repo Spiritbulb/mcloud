@@ -11,6 +11,7 @@ import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type Product } from '@/lib/api'
+import { useCreateProduct, useUpdateProduct } from '@/data/products'
 import { useStore } from '@/store/StoreContext'
 import { Button, Field } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
@@ -22,6 +23,8 @@ export default function ProductFormScreen() {
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const createMut = useCreateProduct(storeSlug)
+  const updateMut = useUpdateProduct(storeSlug)
   const { productId } = useLocalSearchParams<{ productId?: string }>()
   const isEdit = !!productId
 
@@ -120,7 +123,7 @@ export default function ProductFormScreen() {
       const invNum = inventory.trim() ? Number(inventory) : null
 
       if (isEdit && productId) {
-        await client.updateProduct(storeSlug, productId, {
+        await updateMut.mutateAsync({ id: productId, patch: {
           name: name.trim(),
           price: priceNum,
           compare_at_price: compareNum,
@@ -130,10 +133,10 @@ export default function ProductFormScreen() {
           description: description.trim() || null,
           sku: sku.trim() || null,
           barcode: barcode.trim() || null,
-        })
+        }})
         router.back()
       } else {
-        const prod = await client.createProduct(storeSlug, {
+        const prod = await createMut.mutateAsync({
           name: name.trim(),
           price: priceNum,
           compare_at_price: compareNum,
