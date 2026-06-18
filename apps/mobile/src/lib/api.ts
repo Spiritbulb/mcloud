@@ -272,6 +272,14 @@ export function api(authedFetch: Fetch) {
       return (await json<{ url: string }>(res)).url
     },
 
+    async registerPushToken(token: string, platform: string): Promise<void> {
+      const res = await authedFetch('/api/mobile/push-token', {
+        method: 'POST',
+        body: JSON.stringify({ token, platform }),
+      })
+      await json(res)
+    },
+
     // Update product images array
     async updateProductImages(slug: string, id: string, images: string[]): Promise<Product> {
       const res = await authedFetch(`/api/mobile/stores/${slug}/products/${id}`, {
