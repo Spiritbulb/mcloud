@@ -5,7 +5,6 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ThemeProvider, useTheme } from '@/lib/theme'
-import { QueryProvider } from '@/data/QueryProvider'
 
 const sentryDsn = Constants.expoConfig?.extra?.sentryDsn as string | undefined
 if (sentryDsn) {
@@ -39,9 +38,7 @@ function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <QueryProvider>
-            <AppShell />
-          </QueryProvider>
+          <AppShell />
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
