@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ThemeProvider, useTheme } from '@/lib/theme'
+import { QueryProvider } from '@/data/QueryProvider'
 
 function AppShell() {
   const t = useTheme()
@@ -31,7 +32,9 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <AuthProvider>
-          <AppShell />
+          <QueryProvider>
+            <AppShell />
+          </QueryProvider>
         </AuthProvider>
       </ThemeProvider>
     </SafeAreaProvider>
