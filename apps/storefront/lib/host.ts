@@ -6,10 +6,18 @@
  * internal store slug must never appear in a URL, so in-store links are bare
  * ("/cart") rather than slug-prefixed ("/store/{slug}/cart").
  */
+/**
+ * Platform apex domains. Migrating menengai.cloud → mcloud.co.ke; both point at
+ * prod during the transition, so either (and any subdomain) counts as a platform
+ * host. Drop menengai.cloud here once the migration completes.
+ */
+const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
+
 export function isPlatformHost(host: string): boolean {
     return (
-        host === 'menengai.cloud' ||
-        host.endsWith('.menengai.cloud') ||
+        PLATFORM_APEX_DOMAINS.some(
+            (apex) => host === apex || host.endsWith(`.${apex}`),
+        ) ||
         host.includes('localhost') ||
         host.includes('192.168.1.') ||
         host.includes('127.0.0.1')

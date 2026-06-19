@@ -52,8 +52,23 @@ function toCustomDomainUrl(request: NextRequest, domain: string, path: string): 
   return new URL(`${proto}://${domain}${path || '/'}`)
 }
 
+/**
+ * Platform apex domains. We're migrating from menengai.cloud → mcloud.co.ke; both
+ * point at prod during the transition, so the app must recognise either as "the
+ * platform host" (not a merchant custom domain). menengai.cloud will be dropped
+ * once the migration completes — remove it here and the recognition logic follows.
+ */
+const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
+
+/** True when `host` is a platform apex or any of its subdomains (incl. www). */
+function isPlatformHost(host: string): boolean {
+  return PLATFORM_APEX_DOMAINS.some(
+    (apex) => host === apex || host.endsWith(`.${apex}`),
+  )
+}
+
 function isProduction(host: string): boolean {
-  return host === 'menengai.cloud' || host.endsWith('.menengai.cloud')
+  return isPlatformHost(host)
 }
 
 
@@ -185,8 +200,7 @@ async function handle(
 
   // ── 4. Custom Domain ──────────────────────────────────────────────────────
   const isCustomDomain =
-    !host.endsWith('.menengai.cloud') &&
-    host !== 'menengai.cloud' &&
+    !isPlatformHost(host) &&
     !host.includes('localhost') &&
     !host.includes('192.168.1.')
 
