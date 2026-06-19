@@ -182,6 +182,16 @@ export const auth0Provider: AuthProviderAdapter = {
             current: i === 0,
         }))
     },
+
+    // Native magic-code auth is a WorkOS-only flow (the mobile migration). Auth0 is
+    // the dormant provider; it never serves the mobile app, so these are not
+    // implemented. Throwing keeps the adapter contract honest if ever reactivated.
+    async sendMagicCode() {
+        throw new Error('Magic-code auth is not supported by the Auth0 provider.')
+    },
+    async verifyMagicCode() {
+        throw new Error('Magic-code auth is not supported by the Auth0 provider.')
+    },
 }
 
 // Real per-device session revocation requires Auth0's Sessions API (paywalled —

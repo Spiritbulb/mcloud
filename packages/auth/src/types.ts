@@ -29,6 +29,20 @@ export interface MiddlewarePrep {
     finalize: (res: NextResponse) => NextResponse
 }
 
+/**
+ * Tokens minted by a native (non-browser) authentication, e.g. the mobile
+ * magic-code flow. Same shape the mobile app already stores from OAuth: a
+ * provider access token (JWT, verified downstream via getSessionFromToken),
+ * a refresh token, and the access token's lifetime in seconds.
+ */
+export interface NativeAuthTokens {
+    accessToken: string
+    refreshToken: string
+    /** Access-token lifetime in seconds, derived from the JWT `exp` claim. */
+    expiresIn: number
+    user: AuthUser
+}
+
 /** A past login, surfaced in the account "Recent login activity" list. */
 export interface LoginEvent {
     id: string
@@ -61,4 +75,11 @@ export interface AuthProviderAdapter {
     deleteUser(id: string): Promise<void>
     /** Recent login history for the account activity list. */
     getLoginHistory(id: string): Promise<LoginEvent[]>
+    /**
+     * Native passwordless auth (mobile magic-code), bypassing the browser/OAuth
+     * round-trip. `sendMagicCode` emails a one-time code; `verifyMagicCode`
+     * exchanges the code for tokens. Providers that don't support it throw.
+     */
+    sendMagicCode(email: string): Promise<void>
+    verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null>
 }

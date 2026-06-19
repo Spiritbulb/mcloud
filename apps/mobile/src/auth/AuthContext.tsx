@@ -51,6 +51,10 @@ type AuthState = {
   user: SessionUser | null
   loading: boolean
   signIn: () => Promise<void>
+  /** Native magic-code: email a one-time code. Throws on a hard failure. */
+  sendCode: (email: string) => Promise<void>
+  /** Native magic-code: exchange the code for a session. Throws on invalid code. */
+  verifyCode: (email: string, code: string) => Promise<void>
   signOut: () => Promise<void>
   /** fetch() against apps/web with the bearer token attached + refresh-on-401. */
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>
@@ -324,6 +328,51 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return signInInFlight
   }, [runSignIn])
 
+  // ── Native magic-code auth ────────────────────────────────────────────────────
+  // Replaces the browser/OAuth round-trip: the app POSTs to our own backend, which
+  // talks to WorkOS server-side. No system browser, no mcloud:// deep link, so the
+  // whole OS-kills-app-mid-login failure class is gone. The token shape returned by
+  // /verify is identical to the OAuth flow, so everything downstream is unchanged.
+  const sendCode = React.useCallback(async (email: string) => {
+    const res = await fetch(`${config.apiBaseUrl}/api/mobile/auth/send-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+    if (!res.ok) {
+      const data = (await res.json().catch(() => ({}))) as { error?: string }
+      throw new Error(data.error ?? 'Could not send a code. Please try again.')
+    }
+  }, [])
+
+  const verifyCode = React.useCallback(
+    async (email: string, code: string) => {
+      const res = await fetch(`${config.apiBaseUrl}/api/mobile/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, code }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        accessToken?: string
+        refreshToken?: string
+        expiresIn?: number
+        error?: string
+      }
+      if (!res.ok || !data.accessToken) {
+        throw new Error(data.error ?? 'That code is invalid or expired.')
+      }
+      await saveTokens({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresAt: data.expiresIn ? Date.now() + data.expiresIn * 1000 : undefined,
+      })
+      // A fresh native sign-in must NOT carry the old force-login flag forward.
+      try { await SecureStore.deleteItemAsync(FORCE_LOGIN_KEY) } catch {}
+      await hydrate()
+    },
+    [hydrate],
+  )
+
   const refresh = React.useCallback(() => refreshTokens(), [])
 
   const signOut = React.useCallback(async () => {
@@ -363,8 +412,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const value = React.useMemo(
-    () => ({ user, loading, signIn, signOut, authedFetch, refreshSession: hydrate }),
-    [user, loading, signIn, signOut, authedFetch, hydrate],
+    () => ({ user, loading, signIn, sendCode, verifyCode, signOut, authedFetch, refreshSession: hydrate }),
+    [user, loading, signIn, sendCode, verifyCode, signOut, authedFetch, hydrate],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

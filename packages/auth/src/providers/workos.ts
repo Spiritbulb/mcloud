@@ -14,8 +14,8 @@ import {
     applyResponseHeaders,
 } from '@workos-inc/authkit-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
-import { createRemoteJWKSet, jwtVerify } from 'jose'
-import type { AuthProviderAdapter, AuthSession, AuthUser, LoginEvent } from '../types'
+import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
+import type { AuthProviderAdapter, AuthSession, AuthUser, LoginEvent, NativeAuthTokens } from '../types'
 import { LOGIN_URL, SIGNUP_URL } from '../routes'
 import { formatDevice, formatRelativeTime } from '../format'
 
@@ -248,6 +248,44 @@ export const workosProvider: AuthProviderAdapter = {
             lastActive: formatRelativeTime(s.createdAt),
             current: i === 0,
         }))
+    },
+
+    // ── Native magic-code auth (mobile) ──────────────────────────────────────────
+    // WorkOS Magic Auth: createMagicAuth emails a one-time code; the same flow
+    // creates the user on first use, so it covers sign-in AND sign-up. No browser,
+    // no OAuth redirect — the mobile app POSTs to our /api/mobile/auth/* routes,
+    // which call these server-side with the WORKOS_API_KEY.
+
+    async sendMagicCode(email: string): Promise<void> {
+        // Idempotent per email from WorkOS's side; emails the 6-digit code.
+        await getWorkOS().userManagement.createMagicAuth({ email })
+    },
+
+    async verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {
+        try {
+            const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
+                clientId: process.env.WORKOS_CLIENT_ID,
+                email,
+                code,
+            })
+            // Phase 2b auto-link (idempotent) so externalId-based identity continuity
+            // applies exactly as in the cookie/bearer paths.
+            const user = await ensureLinked(res.user as WorkOSUserish)
+            // The access token is a JWT; derive its lifetime from `exp` so the app's
+            // proactive-refresh keeps working without a separate expiresIn field
+            // (authenticateWithMagicAuth doesn't return one).
+            const exp = decodeJwt(res.accessToken).exp
+            const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
+            return {
+                accessToken: res.accessToken,
+                refreshToken: res.refreshToken,
+                expiresIn,
+                user: mapUser(user),
+            }
+        } catch {
+            // Invalid/expired code, or WorkOS rejected the request.
+            return null
+        }
     },
 }
 
