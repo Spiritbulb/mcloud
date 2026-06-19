@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import TraderShell from './trader-shell'
 
@@ -12,7 +13,7 @@ export default async function TraderLayout({
 }) {
     const { orgSlug, traderSlug } = await params
     const session = await getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/trading/${traderSlug}`))
 
     const supabase = await createClient()
 

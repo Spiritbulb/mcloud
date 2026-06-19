@@ -1,4 +1,5 @@
 import { getSession } from '@mcloud/auth/server'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
 import BillingClient from '@/components/billing-client'
@@ -13,7 +14,7 @@ export default async function BillingPage({
     const { orgSlug, storeSlug } = await params
     const { upgraded } = await searchParams
     const session = await getSession()
-    if (!session?.user) redirect(`/auth/login`)
+    if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings/billing`))
 
     const supabase = await createClient()
     const { data: store } = await supabase

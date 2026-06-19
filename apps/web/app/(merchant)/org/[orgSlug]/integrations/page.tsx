@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import OrgShell from '../org-shell'
 import { cn } from '@mcloud/ui/utils'
@@ -75,7 +76,7 @@ const CATEGORIES = [...new Set(INTEGRATIONS.map(i => i.category))]
 export default async function Page({ params }: { params: Promise<{ orgSlug: string }> }) {
     const { orgSlug } = await params
     const session = await getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/integrations`))
 
     const supabase = await createClient()
     const { data: org } = await supabase

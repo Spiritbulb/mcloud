@@ -1,5 +1,6 @@
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import OrgShell from '../org-shell'
 
@@ -12,7 +13,7 @@ export default async function OrgPagesLayout({
 }) {
     const { orgSlug } = await params
     const session = await getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/settings`))
     const userId = session.user.id
     const supabase = await createClient()
 
