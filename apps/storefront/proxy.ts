@@ -11,10 +11,13 @@ async function getSupabaseClient() {
   return createClient()
 }
 
-/** Rewrite to the canonical /store/{slug}{path} route, tagging the resolved slug. */
-function rewriteToStore(request: NextRequest, slug: string, path: string): NextResponse {
+/**
+ * Rewrite to the canonical /store/{slug}{path} route, tagging the resolved slug.
+ * Only `pathname` is rewritten; the cloned URL keeps its original query string.
+ */
+function rewriteToStore(request: NextRequest, slug: string, pathname: string): NextResponse {
   const url = request.nextUrl.clone()
-  url.pathname = `/store/${slug}${path === '/' ? '' : path}`
+  url.pathname = `/store/${slug}${pathname === '/' ? '' : pathname}`
   return NextResponse.rewrite(url, {
     request: { headers: withStoreSlug(request, slug) },
   })
@@ -66,7 +69,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
     // Clean path → rewrite internally onto the /store/{slug} route tree. The slug
     // stays server-side; the visible URL remains the bare custom-domain path.
-    return rewriteToStore(request, slug, `${pathname}${search}`)
+    return rewriteToStore(request, slug, pathname)
   }
 
   // ── 3. Platform host (shop.menengai.cloud, localhost) ────────────────────────
@@ -118,7 +121,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // No custom domain. Bare slug → rewrite onto the route tree (hides /store from
   // the URL). Canonical /store/{slug} → already correct, render as-is.
   if (!isCanonical) {
-    return rewriteToStore(request, store.slug, `${rest}${search}`)
+    return rewriteToStore(request, store.slug, rest)
   }
   return NextResponse.next()
 }
