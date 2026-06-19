@@ -37,3 +37,14 @@ export function isLocalHost(host: string): boolean {
 export function storeBasePath(host: string, slug: string): string {
     return isCustomDomainHost(host) ? '' : `/store/${slug}`
 }
+
+/**
+ * Absolute origin of the merchant web app (where /org/* lives). The storefront
+ * runs on its own / custom domains, so any link into merchant settings must be
+ * absolute — a relative redirect would stay on the storefront host. Derived from
+ * the API base URL by dropping the trailing "/api". No trailing slash.
+ */
+export function webAppOrigin(): string {
+    const api = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
+    return new URL(api).origin
+}

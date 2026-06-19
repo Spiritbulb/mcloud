@@ -4,6 +4,7 @@
 // HTTP redirect) so there's no layout-hydration race.
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { webAppOrigin } from '@/lib/host'
 
 export async function GET(
     request: NextRequest,
@@ -20,6 +21,8 @@ export async function GET(
 
     const orgSlug = store ? (store.org as { slug?: string } | null)?.slug : null
     const rest = path?.length ? `/${path.join('/')}` : ''
+    // Merchant settings live on the web-app origin, not the storefront/custom
+    // domain. Resolve against webAppOrigin() so the redirect crosses domains.
     const dest = orgSlug ? `/org/${orgSlug}/${slug}/settings${rest}` : '/org'
-    return NextResponse.redirect(new URL(dest, request.url))
+    return NextResponse.redirect(new URL(dest, webAppOrigin()))
 }
