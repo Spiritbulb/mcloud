@@ -78,7 +78,10 @@ export default function Home() {
     <SafeAreaView style={[styles.fill, { backgroundColor: t.colors.background }]}>
       <KeyboardAvoidingView
         style={styles.fill}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        // Android needs an explicit behavior — `undefined` is a no-op that lets the
+        // keyboard cover the inputs. 'height' shrinks the view so the footer
+        // (inputs + buttons) rides above the keyboard; iOS uses 'padding'.
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <View style={styles.body}>
           <FadeInUp delay={0}>
