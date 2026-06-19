@@ -21,6 +21,36 @@ import { formatDevice, formatRelativeTime } from '../format'
 
 const POST_LOGIN_PATH = '/auth/post-login'
 
+/**
+ * Platform apex domains served by this app. Both run against prod during the
+ * menengai.cloud → mcloud.co.ke migration. Mirrors the list in the app proxies;
+ * kept here so the auth handshake can decide whether to pin its callback to the
+ * request's own origin (see platformCallbackUri).
+ */
+const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
+
+function isPlatformHost(host: string): boolean {
+    return (
+        PLATFORM_APEX_DOMAINS.some((apex) => host === apex || host.endsWith(`.${apex}`)) ||
+        host.includes('localhost') ||
+        host.includes('127.0.0.1')
+    )
+}
+
+/**
+ * Same-origin /callback URL for the host this request actually arrived on, so the
+ * OAuth handshake completes on the host that holds the PKCE cookie. Reads the
+ * forwarded host/proto set by the platform edge (Vercel) before falling back to
+ * the request host. Returns undefined for non-platform hosts so AuthKit uses the
+ * configured WORKOS_REDIRECT_URI — we only ever pin to a known platform origin.
+ */
+function platformCallbackUri(req: NextRequest): string | undefined {
+    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? ''
+    if (!host || !isPlatformHost(host)) return undefined
+    const proto = req.headers.get('x-forwarded-proto') ?? (host.includes('localhost') ? 'http' : 'https')
+    return `${proto}://${host}/callback`
+}
+
 // ── Bearer-token verification (mobile) ────────────────────────────────────────
 // WorkOS access tokens are JWTs signed by the AuthKit JWKS for this client. We
 // verify the signature against the remote JWKS (cached by jose across calls) and
@@ -162,12 +192,20 @@ export const workosProvider: AuthProviderAdapter = {
     async middleware(req: NextRequest) {
         const { pathname, searchParams } = req.nextUrl
         const returnTo = searchParams.get('returnTo') ?? POST_LOGIN_PATH
+        // Keep the OAuth handshake on the host the user started from. The PKCE/state
+        // cookie is set on that host; if WorkOS bounced back to a fixed callback on a
+        // *different* platform host (we run both menengai.cloud and mcloud.co.ke during
+        // migration), the cookie wouldn't be present and the callback would fail with
+        // "Couldn't sign in". So pin the redirect URI to this request's own origin.
+        // NOTE: every origin used here must be registered in the WorkOS dashboard's
+        // redirect URI allowlist, or WorkOS rejects the authorize request.
+        const redirectUri = platformCallbackUri(req)
 
         if (pathname === LOGIN_URL) {
-            return NextResponse.redirect(await getSignInUrl({ returnTo }))
+            return NextResponse.redirect(await getSignInUrl({ returnTo, redirectUri }))
         }
         if (pathname === SIGNUP_URL) {
-            return NextResponse.redirect(await getSignUpUrl({ returnTo }))
+            return NextResponse.redirect(await getSignUpUrl({ returnTo, redirectUri }))
         }
         // /auth/logout (route handler), CALLBACK_PATH, /auth/post-login: fall through.
         return NextResponse.next()
