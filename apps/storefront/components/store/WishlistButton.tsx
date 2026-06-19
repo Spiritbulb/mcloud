@@ -24,8 +24,10 @@ export function WishlistButton({ productId, storeId, size }: { productId: string
             router.push(href('/account/login'))
             return
         }
+        // storeId presence still guards against rendering for a product with no
+        // resolved store; the route resolves the real store from the slug itself.
         if (storeId) {
-            toggle(productId, storeId)
+            toggle(productId)
         }
     }
 

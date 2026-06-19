@@ -100,11 +100,6 @@ export default async function StoreLayout({
         } as React.CSSProperties)
         : {}
 
-    // Pass store.id down to WishlistProvider so it never has to
-    // re-fetch it on the client. Falls back to empty string if store
-    // is somehow null (notFound will have fired upstream anyway).
-    const storeId = store?.id ?? ''
-
     // On a custom domain the storefront is white-labelled: in-store links must be
     // bare ("/cart") so the internal slug never appears. On the platform host they
     // stay slug-prefixed ("/store/{slug}/cart"). Derived from the request host so
@@ -117,8 +112,8 @@ export default async function StoreLayout({
         // CustomerAuthProvider has no server deps — sits at the top
         <CustomerAuthProvider>
             <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
-                {/* WishlistProvider needs storeId, which we have server-side */}
-                <WishlistProvider storeId={storeId}>
+                {/* WishlistProvider resolves the store + customer server-side via the slug. */}
+                <WishlistProvider storeSlug={slug}>
                     <CartProvider storeSlug={slug}>
                         <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
                             {bannerScript && (

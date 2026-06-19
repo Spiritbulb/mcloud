@@ -402,7 +402,7 @@ export default function DashboardPage() {
                                                 </div>
                                             </Link>
                                             <button
-                                                onClick={() => toggle(product.id, product.store_id)}
+                                                onClick={() => toggle(product.id)}
                                                 className="absolute top-2 right-2 w-7 h-7 bg-white border flex items-center justify-center hover:bg-red-50 transition-colors"
                                                 title="Remove from wishlist"
                                             >
