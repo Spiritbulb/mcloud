@@ -10,8 +10,10 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@mcloud/ui/dropdown-menu'
-import { ProBadge, useUpgrade, UpgradeModal } from '@/components/pro'
+import { UpgradeChip } from '@/components/pro'
 import { cn } from '@mcloud/ui/utils'
+
+const BETA_URL = 'https://menengai.cloud/beta'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 
@@ -49,37 +51,6 @@ function ThemeToggle() {
     )
 }
 
-// ─── UpgradeChip (updated) ────────────────────────────────────────────────────
-
-function UpgradeChip({ slug }: { slug: string }) {
-    const [modalOpen, setModalOpen] = useState(false)
-
-    return (
-        <>
-            <button
-                onClick={() => setModalOpen(true)}
-                className={cn(
-                    'flex items-center gap-1.5 rounded-full transition-all duration-150',
-                    'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]',
-                    'hover:opacity-80 active:scale-[0.97]',
-                    'w-8 h-8 justify-center',
-                    'md:w-auto md:h-7 md:px-3',
-                )}
-                title="Upgrade to Pro"
-            >
-                <MSO icon="workspace_premium" className="text-[16px]" fill={1} />
-                <span className="hidden md:inline text-[12px] font-semibold">Upgrade</span>
-            </button>
-
-            <UpgradeModal
-                slug={slug}
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-            />
-        </>
-    )
-}
-
 // ─── SettingsHeader ───────────────────────────────────────────────────────────
 
 export function SettingsHeader({
@@ -94,7 +65,6 @@ export function SettingsHeader({
     onOpenMobileNav?: () => void
 }) {
     const isPro = store?.is_pro ?? false
-    const { upgrade: upgradeFromDropdown } = useUpgrade(store?.slug ?? '')
 
     return (
         <header className="shrink-0 h-[57px] bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
@@ -134,7 +104,7 @@ export function SettingsHeader({
             <div className="flex items-center gap-1 shrink-0">
 
                 {/* Upgrade chip — free users only */}
-                {!isPro && <UpgradeChip slug={store?.slug ?? ''} />}
+                {!isPro && <UpgradeChip />}
 
                 {/* Pro badge next to page title if this page is pro-gated */}
                 {isPro && (
@@ -203,16 +173,21 @@ export function SettingsHeader({
                                 </Link>
                             </DropdownMenuItem>
 
-                            {/* Upgrade option in dropdown for mobile — only for free users */}
+                            {/* Get Pro — only for free users. Subscriptions happen in the
+                                mobile app; point merchants to the beta to get it. */}
                             {!isPro && (
                                 <>
                                     <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
-                                    <DropdownMenuItem
-                                        className="rounded-lg cursor-pointer text-[13px] md:hidden"
-                                        onSelect={() => upgradeFromDropdown('pro')}
-                                    >
-                                        <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)]" fill={1} />
-                                        <span className="text-[var(--md-sys-color-primary)] font-medium">Upgrade to Pro</span>
+                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
+                                        <Link
+                                            href={BETA_URL}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="flex items-center gap-2.5"
+                                        >
+                                            <MSO icon="workspace_premium" className="text-[16px] text-[var(--md-sys-color-primary)]" fill={1} />
+                                            <span className="text-[var(--md-sys-color-primary)] font-medium">Get Pro (mobile app)</span>
+                                        </Link>
                                     </DropdownMenuItem>
                                 </>
                             )}

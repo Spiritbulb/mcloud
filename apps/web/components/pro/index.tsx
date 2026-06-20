@@ -1,9 +1,13 @@
 // components/pro/index.tsx
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+
+// Where merchants go to get on Pro now: subscription happens in the mobile app,
+// and the beta is the entry point. Absolute so it works from any merchant origin.
+const BETA_URL = 'https://menengai.cloud/beta'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 
@@ -16,42 +20,6 @@ function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; 
             {icon}
         </span>
     )
-}
-
-// ─── Types ────────────────────────────────────────────────────────────────────
-
-export interface ProConfig {
-    isPro: boolean
-    slug: string
-    onUpgradeSuccess?: () => void
-}
-
-// ─── useUpgrade ───────────────────────────────────────────────────────────────
-
-export function useUpgrade(slug: string) {
-    const [loading, setLoading] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-
-    const upgrade = async (plan: 'hobby' | 'pro') => {
-        setLoading(true)
-        setError(null)
-        try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/subscribe`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ plan }),
-            })
-            const data = await res.json()
-            if (!res.ok) throw new Error(data.error ?? 'Failed to start upgrade')
-            window.location.href = data.url
-        } catch (e) {
-            setError(e instanceof Error ? e.message : 'Something went wrong')
-            setLoading(false)
-        }
-    }
-
-    return { upgrade, loading, error }
 }
 
 // ─── ProBadge ────────────────────────────────────────────────────────────────
@@ -70,50 +38,19 @@ export function ProBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
     )
 }
 
-// ─── ProUpgradeCard ───────────────────────────────────────────────────────────
-// Pure display — no upgrade logic. Receives onUpgrade + loading + error from parent.
+// ─── SubscribeCard ────────────────────────────────────────────────────────────
+// Pure display. Explains that Pro is subscribed via the mobile app and points to
+// the beta. No web payment.
 
-const PLANS = {
-    hobby: {
-        label: 'Hobby',
-        price: 'KES 1,499',
-        description: 'For small stores just getting started',
-        features: [
-            'Custom domain (bring your own)',
-            'Basic analytics',
-            'Unlimited products',
-            'Email support',
-        ],
-    },
-    pro: {
-        label: 'Pro',
-        price: 'KES 2,499',
-        description: 'Everything you need to grow your store',
-        features: [
-            'Custom domain (bring your own)',
-            'Advanced analytics & funnel data',
-            'Remove Menengai Cloud branding',
-            'Priority support',
-            'Unlimited products',
-            'Blog & content pages',
-        ],
-    },
-} as const
+const PRO_FEATURES = [
+    'Custom domain (bring your own)',
+    'Advanced analytics & funnel data',
+    'Remove Menengai Cloud branding',
+    'Priority support',
+    'Blog & content pages',
+] as const
 
-type PlanKey = keyof typeof PLANS
-
-export function ProUpgradeCard({
-    onUpgrade,
-    loading,
-    error,
-}: {
-    onUpgrade: (plan: PlanKey) => void
-    loading: boolean
-    error: string | null
-}) {
-    const [selected, setSelected] = useState<PlanKey>('pro')
-    const plan = PLANS[selected]
-
+export function SubscribeCard() {
     return (
         <div className={cn(
             'rounded-2xl overflow-hidden',
@@ -121,52 +58,22 @@ export function ProUpgradeCard({
             'bg-[var(--md-sys-color-primary-container)]',
         )}>
             {/* Header */}
-            <div className="px-6 pt-6 pb-4">
-                <div className="flex items-center gap-2 mb-4">
+            <div className="px-6 pt-6 pb-3">
+                <div className="flex items-center gap-2 mb-3">
                     <MSO icon="workspace_premium" className="text-[20px] text-[var(--md-sys-color-primary)]" fill={1} />
                     <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)]">
                         Menengai Cloud Pro
                     </p>
                 </div>
-
-                {/* Plan toggle */}
-                <div className="flex gap-2">
-                    {(Object.keys(PLANS) as PlanKey[]).map(key => (
-                        <button
-                            key={key}
-                            onClick={() => setSelected(key)}
-                            className={cn(
-                                'flex-1 flex flex-col items-start px-3 py-2.5 rounded-xl border transition-all duration-150',
-                                selected === key
-                                    ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary)]/10'
-                                    : 'border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/40 opacity-70',
-                            )}
-                        >
-                            <div className="flex items-center justify-between w-full">
-                                <span className="text-[13px] font-semibold text-[var(--md-sys-color-on-primary-container)]">
-                                    {PLANS[key].label}
-                                </span>
-                                {selected === key && (
-                                    <MSO icon="radio_button_checked" className="text-[14px] text-[var(--md-sys-color-primary)]" fill={1} />
-                                )}
-                            </div>
-                            <span className="text-[12px] font-bold text-[var(--md-sys-color-primary)] tabular-nums">
-                                {PLANS[key].price}
-                                <span className="font-normal text-[10px] opacity-70">/mo</span>
-                            </span>
-                        </button>
-                    ))}
-                </div>
-            </div>
-
-            {/* Description */}
-            <div className="px-6 pb-2">
-                <p className="text-[12px] text-[var(--md-sys-color-primary)]/80">{plan.description}</p>
+                <p className="text-[12px] text-[var(--md-sys-color-primary)]/90 leading-relaxed">
+                    Pro subscriptions are managed in the Menengai Cloud mobile app. Join the
+                    beta to get the app and unlock Pro for your store.
+                </p>
             </div>
 
             {/* Feature list */}
-            <div className="px-6 pb-5 space-y-2 mt-2">
-                {plan.features.map(f => (
+            <div className="px-6 pb-5 space-y-2 mt-1">
+                {PRO_FEATURES.map(f => (
                     <div key={f} className="flex items-center gap-2.5">
                         <MSO icon="check" className="text-[15px] text-[var(--md-sys-color-primary)] shrink-0" />
                         <p className="text-[12px] text-[var(--md-sys-color-on-primary-container)]">{f}</p>
@@ -176,51 +83,39 @@ export function ProUpgradeCard({
 
             {/* CTA */}
             <div className="px-6 pb-6 space-y-2">
-                {error && (
-                    <p className="text-[11px] text-[var(--md-sys-color-error)]">{error}</p>
-                )}
-                <button
-                    onClick={() => onUpgrade(selected)}
-                    disabled={loading}
+                <a
+                    href={BETA_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
                     className={cn(
                         'w-full inline-flex items-center justify-center gap-2',
                         'font-semibold rounded-full transition-all duration-150',
                         'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
                         'text-[14px] h-10 px-6',
-                        'hover:opacity-90 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed',
+                        'hover:opacity-90 active:scale-[0.98]',
                     )}
                 >
-                    {loading ? (
-                        <>
-                            <span className="w-4 h-4 border-2 border-current/30 border-t-current rounded-full animate-spin" />
-                            Redirecting…
-                        </>
-                    ) : (
-                        <>
-                            <MSO icon="workspace_premium" className="text-[18px]" fill={1} />
-                            Continue with {plan.label}
-                        </>
-                    )}
-                </button>
+                    <MSO icon="rocket_launch" className="text-[18px]" fill={1} />
+                    Join the beta
+                </a>
+                <p className="text-[11px] text-center text-[var(--md-sys-color-primary)]/70">
+                    Already in the beta? Subscribe from the app.
+                </p>
             </div>
         </div>
     )
 }
 
-// ─── UpgradeModal ─────────────────────────────────────────────────────────────
-// Owns the upgrade hook — passes it down to ProUpgradeCard.
+// ─── SubscribeModal ───────────────────────────────────────────────────────────
+// Replaces the old UpgradeModal. Shows the SubscribeCard, no payment logic.
 
-export function UpgradeModal({
-    slug,
+export function SubscribeModal({
     open,
     onClose,
 }: {
-    slug: string
     open: boolean
     onClose: () => void
 }) {
-    const { upgrade, loading, error } = useUpgrade(slug)
-
     useEffect(() => {
         if (!open) return
         const handler = (e: KeyboardEvent) => e.key === 'Escape' && onClose()
@@ -270,11 +165,7 @@ export function UpgradeModal({
                         </button>
 
                         <div className="p-4">
-                            <ProUpgradeCard
-                                onUpgrade={upgrade}
-                                loading={loading}
-                                error={error}
-                            />
+                            <SubscribeCard />
                         </div>
                     </motion.div>
                 </>
@@ -284,15 +175,9 @@ export function UpgradeModal({
 }
 
 // ─── UpgradeButton ────────────────────────────────────────────────────────────
-// Opens the modal. No upgrade logic here.
+// Opens the subscribe modal. (Name kept for existing call sites.)
 
-export function UpgradeButton({
-    slug,
-    size = 'md',
-}: {
-    slug: string
-    size?: 'md' | 'lg'
-}) {
+export function UpgradeButton({ size = 'md' }: { size?: 'md' | 'lg' }) {
     const [modalOpen, setModalOpen] = useState(false)
 
     return (
@@ -311,19 +196,15 @@ export function UpgradeButton({
                 Upgrade to Pro
             </button>
 
-            <UpgradeModal
-                slug={slug}
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-            />
+            <SubscribeModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }
 
 // ─── UpgradeChip ──────────────────────────────────────────────────────────────
-// Compact header chip — opens modal.
+// Compact header chip — opens subscribe modal.
 
-export function UpgradeChip({ slug }: { slug: string }) {
+export function UpgradeChip() {
     const [modalOpen, setModalOpen] = useState(false)
 
     return (
@@ -343,11 +224,7 @@ export function UpgradeChip({ slug }: { slug: string }) {
                 <span className="hidden md:inline text-[12px] font-semibold">Upgrade</span>
             </button>
 
-            <UpgradeModal
-                slug={slug}
-                open={modalOpen}
-                onClose={() => setModalOpen(false)}
-            />
+            <SubscribeModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }
@@ -355,10 +232,9 @@ export function UpgradeChip({ slug }: { slug: string }) {
 // ─── ProGate ─────────────────────────────────────────────────────────────────
 
 export function ProGate({
-    isPro, slug, feature, description, children,
+    isPro, feature, description, children,
 }: {
     isPro: boolean
-    slug: string
     feature: string
     description?: string
     children: React.ReactNode
@@ -383,7 +259,7 @@ export function ProGate({
                                 {feature} is a Pro feature
                             </p>
                             <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] leading-relaxed">
-                                {description ?? 'Upgrade to Menengai Cloud Pro to unlock this feature.'}
+                                {description ?? 'Subscribe to Menengai Cloud Pro in the mobile app to unlock this feature.'}
                             </p>
                         </div>
                         <button
@@ -395,13 +271,13 @@ export function ProGate({
                             )}
                         >
                             <MSO icon="workspace_premium" className="text-[16px]" fill={1} />
-                            Upgrade to Pro
+                            Get Pro
                         </button>
                     </div>
                 </div>
             </div>
 
-            <UpgradeModal slug={slug} open={modalOpen} onClose={() => setModalOpen(false)} />
+            <SubscribeModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }
@@ -409,10 +285,9 @@ export function ProGate({
 // ─── ProGateInline ────────────────────────────────────────────────────────────
 
 export function ProGateInline({
-    isPro, slug, feature, description, children,
+    isPro, feature, description, children,
 }: {
     isPro: boolean
-    slug: string
     feature: string
     description?: string
     children?: React.ReactNode
@@ -434,7 +309,7 @@ export function ProGateInline({
                 <div className="space-y-1.5 max-w-xs">
                     <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-surface)]">{feature}</p>
                     <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)] leading-relaxed">
-                        {description ?? 'This feature is available on Menengai Cloud Pro.'}
+                        {description ?? 'This feature is available on Menengai Cloud Pro — subscribe in the mobile app.'}
                     </p>
                 </div>
                 <button
@@ -446,11 +321,11 @@ export function ProGateInline({
                     )}
                 >
                     <MSO icon="workspace_premium" className="text-[18px]" fill={1} />
-                    Upgrade to Pro
+                    Get Pro
                 </button>
             </div>
 
-            <UpgradeModal slug={slug} open={modalOpen} onClose={() => setModalOpen(false)} />
+            <SubscribeModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }
@@ -458,10 +333,9 @@ export function ProGateInline({
 // ─── ProLockRow ───────────────────────────────────────────────────────────────
 
 export function ProLockRow({
-    isPro, slug, label, children,
+    isPro, label, children,
 }: {
     isPro: boolean
-    slug: string
     label: string
     children?: React.ReactNode
 }) {
@@ -488,11 +362,11 @@ export function ProLockRow({
                     )}
                 >
                     <MSO icon="workspace_premium" className="text-[12px]" fill={1} />
-                    Upgrade
+                    Get Pro
                 </button>
             </div>
 
-            <UpgradeModal slug={slug} open={modalOpen} onClose={() => setModalOpen(false)} />
+            <SubscribeModal open={modalOpen} onClose={() => setModalOpen(false)} />
         </>
     )
 }
