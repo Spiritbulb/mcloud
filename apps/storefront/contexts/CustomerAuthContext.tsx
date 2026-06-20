@@ -9,7 +9,7 @@ interface CustomerAuthContextType {
     user: User | null
     session: Session | null
     loading: boolean
-    signUp: (email: string, password: string, storeId: string) => Promise<{ error: Error | null }>
+    signUp: (email: string, password: string) => Promise<{ error: Error | null }>
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>
     signOut: () => Promise<void>
     refreshUser: () => Promise<void>
@@ -43,20 +43,12 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
         setUser(user)
     }, [])
 
-    const signUp = useCallback(async (email: string, password: string, storeId: string) => {
-        const { data, error } = await supabase.auth.signUp({ email, password })
+    const signUp = useCallback(async (email: string, password: string) => {
+        // Auth signup only. The customers row is provisioned lazily on the first
+        // authenticated load (getStoreCustomer), since email confirmation means
+        // there's no session here to authorize a write.
+        const { error } = await supabase.auth.signUp({ email, password })
         if (error) return { error }
-
-        if (data.user) {
-            // Create the customers record linked to this store
-            await supabase.from('customers').upsert({
-                store_id: storeId,
-                email,
-                first_name: '',
-                last_name: '',
-            }, { onConflict: 'store_id,email', ignoreDuplicates: true })
-        }
-
         return { error: null }
     }, [])
 

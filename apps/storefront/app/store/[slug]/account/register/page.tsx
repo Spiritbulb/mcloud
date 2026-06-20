@@ -3,15 +3,12 @@
 
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
-import { useStoreContext, useStoreHref } from '@/contexts/StoreContext'
-import { createCustomerClient } from '@mcloud/db/customer-client'
+import { useStoreHref } from '@/contexts/StoreContext'
 import Link from 'next/link'
 
 export default function RegisterPage() {
     const href = useStoreHref()
-    const { slug } = useStoreContext()
     const { signUp } = useCustomerAuth()
-    const supabase = createCustomerClient()
 
     const [email, setEmail] = useState('')
     const [password, setPassword] = useState('')
@@ -26,19 +23,7 @@ export default function RegisterPage() {
         setLoading(true)
         setError(null)
 
-        const { data: store } = await supabase
-            .from('stores')
-            .select('id')
-            .eq('slug', slug)
-            .eq('is_active', true)
-            .single()
-
-        if (!store) {
-            setError('Store not found')
-            return setLoading(false)
-        }
-
-        const { error } = await signUp(email, password, store.id)
+        const { error } = await signUp(email, password)
         if (error) {
             setError(error.message)
             setLoading(false)

@@ -5,7 +5,6 @@ import { useEffect, useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useWishlist } from '@/contexts/WishlistContext'
 import { useStoreContext, useStoreHref } from '@/contexts/StoreContext'
-import { createCustomerClient } from '@mcloud/db/customer-client'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Package, User, MapPin, Heart, LogOut } from 'lucide-react'
@@ -40,7 +39,6 @@ function StatusBadge({ status }: { status: string }) {
 export default function DashboardPage() {
     const { user, signOut } = useCustomerAuth()
     const { wishlistIds, toggle } = useWishlist()
-    const supabase = createCustomerClient()
     const href = useStoreHref()
     const { slug } = useStoreContext()
     const router = useRouter()
@@ -66,85 +64,51 @@ export default function DashboardPage() {
 
     useEffect(() => { if (user) load() }, [user])
 
-    // Load wishlist products when wishlistIds or tab changes
-    useEffect(() => {
-        if (tab === 'wishlist' && wishlistIds.size > 0) loadWishlistProducts()
-        if (tab === 'wishlist' && wishlistIds.size === 0) setWishlistProducts([])
-    }, [tab, wishlistIds])
-
+    // One server call returns customer + orders + wishlist products, scoped to the
+    // verified customer. No anon DB access from the browser.
     const load = async () => {
         setLoading(true)
-
-        const { data: store } = await supabase
-            .from('stores').select('id').eq('slug', slug).single()
-        if (!store) return setLoading(false)
-
-        // Fetch customer first — we need their id to scope orders correctly
-        const { data: c } = await supabase
-            .from('customers')
-            .select('*')
-            .eq('store_id', store.id)
-            .eq('email', user!.email!)
-            .single()
-
-        if (c) {
-            setCustomer(c)
-            setFirstName(c.first_name ?? '')
-            setLastName(c.last_name ?? '')
-            setPhone(c.phone ?? '')
-            const addrs = Array.isArray(c.addresses) ? c.addresses as any[] : []
-            if (addrs[0]) {
-                setAddrLine1(addrs[0].line1 ?? '')
-                setAddrCity(addrs[0].city ?? '')
-                setAddrCountry(addrs[0].country ?? 'Kenya')
+        try {
+            const res = await fetch(`/api/store/${slug}/account`)
+            const data = (await res.json().catch(() => ({}))) as {
+                customer?: Customer | null
+                orders?: Order[]
+                wishlistProducts?: WishlistProduct[]
             }
+
+            const c = data.customer ?? null
+            if (c) {
+                setCustomer(c)
+                setFirstName(c.first_name ?? '')
+                setLastName(c.last_name ?? '')
+                setPhone(c.phone ?? '')
+                const addrs = Array.isArray(c.addresses) ? (c.addresses as any[]) : []
+                if (addrs[0]) {
+                    setAddrLine1(addrs[0].line1 ?? '')
+                    setAddrCity(addrs[0].city ?? '')
+                    setAddrCountry(addrs[0].country ?? 'Kenya')
+                }
+            }
+            setOrders(data.orders ?? [])
+            setWishlistProducts(data.wishlistProducts ?? [])
+        } finally {
+            setLoading(false)
         }
-
-        // Now fetch orders scoped to this customer record
-        // If no customer record exists yet, orders will correctly return empty
-        const { data: o } = await supabase
-            .from('orders')
-            .select('*, order_items(*)')
-            .eq('store_id', store.id)
-            .eq('customer_id', c?.id ?? '')
-            .order('created_at', { ascending: false })
-            .limit(20)
-
-        setOrders((o as Order[]) ?? [])
-        setLoading(false)
-
-        const { data: emailOrders } = await supabase
-            .from('orders')
-            .select('*, order_items(*)')
-            .eq('store_id', store.id)
-            .eq('customer_email', user!.email!)
-            .is('customer_id', null)          // only unlinked ones, avoid dupes
-            .order('created_at', { ascending: false })
-            .limit(20)
-
-        const allOrders = [
-            ...((o as Order[]) ?? []),
-            ...((emailOrders as Order[]) ?? []),
-        ].sort((a, b) => new Date(b.created_at!).getTime() - new Date(a.created_at!).getTime())
-
-        setOrders(allOrders)
     }
 
-
-
-    const loadWishlistProducts = async () => {
-        const ids = [...wishlistIds]
-        const { data } = await supabase.from('products').select('*').in('id', ids)
-        setWishlistProducts(data ?? [])
-    }
+    // Wishlist removals on this page update wishlistIds optimistically; reflect that
+    // by filtering the loaded products rather than refetching.
+    const visibleWishlist = wishlistProducts.filter((p) => wishlistIds.has(p.id))
 
     const saveProfile = async () => {
         if (!customer) return
         setSaving(true)
-        const { error } = await supabase.from('customers')
-            .update({ first_name: firstName, last_name: lastName, phone })
-            .eq('id', customer.id)
-        setSaveMsg(error ? 'Failed to save.' : 'Changes saved.')
+        const res = await fetch(`/api/store/${slug}/account`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ profile: { first_name: firstName, last_name: lastName, phone } }),
+        })
+        setSaveMsg(res.ok ? 'Changes saved.' : 'Failed to save.')
         setTimeout(() => setSaveMsg(null), 3000)
         setSaving(false)
     }
@@ -153,7 +117,11 @@ export default function DashboardPage() {
         if (!customer) return
         setSavingAddr(true)
         const addresses = [{ line1: addrLine1, city: addrCity, country: addrCountry, label: 'Default' }]
-        await supabase.from('customers').update({ addresses }).eq('id', customer.id)
+        await fetch(`/api/store/${slug}/account`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ addresses }),
+        })
         setSavingAddr(false)
     }
 
@@ -382,7 +350,7 @@ export default function DashboardPage() {
                             </div>
                         ) : (
                             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                                {wishlistProducts.map(product => {
+                                {visibleWishlist.map(product => {
                                     const image = (product.images as string[])?.[0]
                                     return (
                                         <div key={product.id} className="group relative border hover:border-black/30 transition-colors">

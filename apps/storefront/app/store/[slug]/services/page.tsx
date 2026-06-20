@@ -3,7 +3,6 @@ import '@/app/store/[slug]/storefront.css'
 import { useEffect, useState, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import { useCart } from '@/contexts/CartContext'
-import { createClient } from '@mcloud/db/client'
 
 import ClassicServiceDetailPage from '@mcloud/themes/classic/ServiceDetailsPage'
 
@@ -21,7 +20,6 @@ export default function ServiceDetailContainer() {
     const { storeSlug } = useCart()
     const params = useParams<{ serviceSlug: string }>()
     const serviceSlug = params?.serviceSlug
-    const supabase = createClient()
 
     const [service, setService] = useState<ServiceItem | null>(null)
     const [loading, setLoading] = useState(true)
@@ -41,79 +39,20 @@ export default function ServiceDetailContainer() {
             if (!storeSlug) throw new Error('Store slug not available')
             if (!serviceSlug) throw new Error('Service slug not available')
 
-            // 1. Resolve store + theme
-            const { data: store, error: storeError } = await supabase
-                .from('stores')
-                .select('id, settings, theme:store_themes(theme_id)')
-                .eq('slug', storeSlug)
-                .eq('is_active', true)
-                .single()
-
-            if (storeError || !store) throw new Error('Store not found')
-
-            const resolvedTheme =
-                (store as any).theme?.theme_id ??
-                (store.settings as any)?.themeId ??
-                'classic'
-            setThemeId(resolvedTheme)
-
-            // 2. Fetch from services table ✅
-            const { data: serviceData, error: serviceError } = await (supabase as any)
-                .from('services')
-                .select('id, name, slug, description, price, is_active, sku, metadata')
-                .eq('store_id', store.id)
-                .eq('slug', serviceSlug)
-                .eq('is_active', true)
-                .single()
-
-            if (serviceError || !serviceData) throw new Error('Service not found')
-
-            // 3. Map DB row → ServiceItem shape
-            const raw = serviceData as any
-            const mapped: ServiceItem = {
-                id: raw.id,
-                name: raw.name,
-                slug: raw.slug,
-                description: raw.description ?? null,
-                price: raw.price,
-                compare_at_price: null,
-                images: [],
-                is_active: raw.is_active,
-                sku: raw.sku ?? null,
-                item_type: 'service',
-                media: raw.metadata?.media ?? [],
-                availability: raw.metadata?.availability ?? 'available',
-                packages: raw.metadata?.packages ?? [],
-                metadata: {
-                    serviceType: raw.metadata?.serviceType ?? null,
-                    quantityUnit: raw.metadata?.quantityUnit ?? '',
-                    booking: raw.metadata?.booking ?? 'instant',
-                    tags: raw.metadata?.tags ?? [],
-                    rating: raw.metadata?.rating ?? null,
-                    reviews: raw.metadata?.reviews ?? null,
-                    features: raw.metadata?.features ?? [],
-                    descriptionHtml: raw.metadata?.descriptionHtml ?? null,
-                    durationMinutes: raw.metadata?.durationMinutes ?? null,
-                    durationHours: raw.metadata?.durationHours ?? null,
-                    durationDay: raw.metadata?.durationDay ?? null,
-                    minQuantity: raw.metadata?.minQuantity ?? null,
-                    maxQuantity: raw.metadata?.maxQuantity ?? null,
-                    quantityStep: raw.metadata?.quantityStep ?? null,
-                    deliveryDays: raw.metadata?.deliveryDays ?? null,
-                    location: raw.metadata?.location ?? null,
-                    requiresDeposit: raw.metadata?.requiresDeposit ?? false,
-                    depositPercent: raw.metadata?.depositPercent ?? null,
-                    packages: raw.metadata?.packages ?? [],
-                    media: raw.metadata?.media ?? [],
-                    availability: raw.metadata?.availability ?? 'available',
-                },
+            // Server route maps the DB row → ServiceItem and resolves the theme.
+            const res = await fetch(`/api/store/${storeSlug}/services/${serviceSlug}`)
+            if (!res.ok) throw new Error('Service not found')
+            const { service: mapped, themeId: resolvedTheme } = (await res.json()) as {
+                service: ServiceItem
+                themeId: string
             }
 
+            setThemeId(resolvedTheme ?? 'classic')
             setService(mapped)
 
-            // 4. Auto-select featured package
-            const featured = (raw.metadata?.packages ?? []).find(
-                (p: ServicePackage) => p.is_featured
+            // Auto-select featured package
+            const featured = (mapped.metadata?.packages ?? []).find(
+                (p: ServicePackage) => p.is_featured,
             ) ?? null
             setSelectedPackage(featured)
 

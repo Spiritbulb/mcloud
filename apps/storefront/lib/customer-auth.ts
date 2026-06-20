@@ -16,8 +16,12 @@ export interface StoreCustomer {
 
 /**
  * Resolve the signed-in customer's `customers` row for the given store, from the
- * verified Supabase Auth session. Returns null when there is no session or no
- * matching customer row (caller should respond 401).
+ * verified Supabase Auth session — creating the row if it doesn't exist yet.
+ *
+ * Customer rows are provisioned LAZILY here (not at sign-up): Supabase requires
+ * email confirmation, so there's no session at sign-up time to authorize a write.
+ * The first authenticated load (dashboard/wishlist) creates the row from the
+ * verified email. Idempotent. Returns null only when there is no valid session.
  */
 export async function getStoreCustomer(storeId: string): Promise<StoreCustomer | null> {
     const authed = await createCustomerServerClient()
@@ -26,18 +30,25 @@ export async function getStoreCustomer(storeId: string): Promise<StoreCustomer |
     } = await authed.auth.getUser()
     if (!user?.email) return null
 
-    // Service-role lookup, scoped to this store + the VERIFIED email.
     const admin = await createClient()
     const { data: customer } = await admin
         .from('customers')
         .select('id, email')
         .eq('store_id', storeId)
         .eq('email', user.email)
+        .maybeSingle()
+
+    if (customer) return { id: customer.id, email: customer.email ?? user.email }
+
+    // First authenticated visit for this store → provision the row.
+    const { data: created } = await admin
+        .from('customers')
+        .insert({ store_id: storeId, email: user.email, first_name: '', last_name: '' })
+        .select('id, email')
         .single()
 
-    if (!customer) return null
-    // email is non-null here: we matched on the verified session email above.
-    return { id: customer.id, email: customer.email ?? user.email }
+    if (!created) return null
+    return { id: created.id, email: created.email ?? user.email }
 }
 
 /** Resolve an active store's id from its slug, or null. */
