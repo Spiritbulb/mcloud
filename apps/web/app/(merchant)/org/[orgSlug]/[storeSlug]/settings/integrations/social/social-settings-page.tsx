@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@mcloud/db/client'
 import { SettingsSection, SettingsField, SaveBar, SaveToast } from '../../settings-primitives'
+import { updateStoreSettings } from '../../actions'
 
 export default function SocialSettingsPage({ store }: { store: any }) {
     const links = store.settings?.socialLinks ?? {}
@@ -15,8 +15,7 @@ export default function SocialSettingsPage({ store }: { store: any }) {
 
     const handleSave = async () => {
         setSaving(true)
-        const supabase = createClient()
-        await supabase.from('stores').update({
+        await updateStoreSettings(store.slug, {
             settings: {
                 ...store.settings,
                 socialLinks: {
@@ -26,7 +25,7 @@ export default function SocialSettingsPage({ store }: { store: any }) {
                     whatsapp: whatsapp || undefined,
                 },
             },
-        }).eq('id', store.id)
+        })
         setSaving(false)
         setSaved(true)
         setTimeout(() => setSaved(false), 2500)

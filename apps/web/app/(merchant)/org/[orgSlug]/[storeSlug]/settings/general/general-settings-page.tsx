@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { createClient } from '@mcloud/db/client'
 import type { Tables } from '@mcloud/db/types'
+import { updateStoreSettings } from '../actions'
 import { Switch } from '@mcloud/ui/switch'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -273,12 +273,14 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
         if (!isDirty && saveState === 'idle') return
         setSaveState('saving')
         try {
-            const supabase = createClient()
-            const { error } = await supabase
-                .from('stores')
-                .update({ name, description: description || null, currency, timezone, is_active: isActive })
-                .eq('id', store.id)
-            if (error) throw error
+            const { error } = await updateStoreSettings(store.slug, {
+                name,
+                description: description || null,
+                currency,
+                timezone,
+                is_active: isActive,
+            })
+            if (error) throw new Error(error)
             setSaveState('saved')
             setTimeout(() => setSaveState('idle'), 2500)
         } catch {
