@@ -1002,7 +1002,12 @@ export default function HomeClient() {
                                     Join the beta and we&apos;ll send your invite as spots open up.
                                 </p>
                             </div>
-                            <BetaSignupForm source="homepage" className="w-full md:w-[360px]" />
+                            <div className="w-full md:w-[360px]">
+                                <BetaSignupForm source="homepage" />
+                                <p className="mt-3 text-[12px] text-muted-foreground/50">
+                                    Use a Google account (Gmail) — the Android beta installs through Google Play.
+                                </p>
+                            </div>
                         </div>
                     </motion.div>
                 </div>

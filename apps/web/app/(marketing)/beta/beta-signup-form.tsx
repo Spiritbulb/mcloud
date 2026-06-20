@@ -65,7 +65,7 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
                                 type="email"
                                 value={email}
                                 onChange={(e) => { setEmail(e.target.value); if (error) setError(null) }}
-                                placeholder="you@example.com"
+                                placeholder="you@gmail.com"
                                 aria-label="Email address"
                                 className={inputCls}
                                 required

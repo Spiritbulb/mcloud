@@ -51,7 +51,8 @@ export default function BetaClient() {
                 <FadeIn delay={0.1} className="mt-10">
                     <BetaSignupForm source="beta-page" />
                     <p className="mt-3 text-[12px] text-muted-foreground/50">
-                        No spam. We&apos;ll only email you about your beta invite.
+                        Use a Google account (Gmail) — the Android beta installs through
+                        Google Play, so we can only invite Google accounts. No spam.
                     </p>
                 </FadeIn>
             </div>

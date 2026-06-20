@@ -19,7 +19,7 @@ export async function sendBetaWelcome(email: string): Promise<{ ok: boolean; err
 
     const optInBlock = PLAY_OPT_IN_URL
         ? `<a href="${PLAY_OPT_IN_URL}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px">Opt in to the Android beta →</a>
-  <p style="font-size:12px;color:#9ca3af;margin:24px 0 0">Open this on the Android device you'll test with, then install from the Play Store.</p>`
+  <p style="font-size:12px;color:#9ca3af;margin:24px 0 0">Open this on the Android device you'll test with — signed in to the Google account on this email — then install from the Play Store. The beta only works with Google accounts.</p>`
         : `<p style="font-size:15px;color:#374151;margin:0 0 8px">We'll follow up shortly with your invite link to install the app.</p>`
 
     try {
