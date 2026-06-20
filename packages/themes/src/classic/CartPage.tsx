@@ -426,9 +426,9 @@ export default function ClassicCartPage({
 
                                     <p className="text-xs text-center leading-relaxed" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                         By completing your purchase you agree to our{' '}
-                                        <Link href="/terms" className="underline underline-offset-2" style={{ color: 'var(--sf-foreground)' }}>Terms</Link>
+                                        <Link href="https://spiritb.uk/terms" className="underline underline-offset-2" style={{ color: 'var(--sf-foreground)' }}>Terms</Link>
                                         {' '}and{' '}
-                                        <Link href="/privacy" className="underline underline-offset-2" style={{ color: 'var(--sf-foreground)' }}>Privacy Policy</Link>
+                                        <Link href="https://spiritb.uk/privacy" className="underline underline-offset-2" style={{ color: 'var(--sf-foreground)' }}>Privacy Policy</Link>
                                     </p>
                                 </CardContent>
                             </Card>
