@@ -86,6 +86,10 @@ export interface Product {
     item_type: string
     is_active: boolean
     sku: string | null
+    /** Average published-review rating (1–5). Null when the product has no reviews. */
+    rating?: number | null
+    /** Number of published reviews. */
+    review_count?: number
 }
 
 export interface Collection {
@@ -114,6 +118,10 @@ export interface ProductItem {
     sku: string | null
     metadata: any
     position?: number
+    /** Average published-review rating (1–5). Null when the product has no reviews. */
+    rating?: number | null
+    /** Number of published reviews. */
+    review_count?: number
 }
 
 

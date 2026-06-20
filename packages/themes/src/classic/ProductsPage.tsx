@@ -2,11 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Search, Loader2, ShoppingBag, X, Star, BadgeCheck, Package, Zap, Clock, MapPin, CalendarCheck } from 'lucide-react'
+import { Search, Loader2, ShoppingBag, X, Star, BadgeCheck, Package, Clock, MapPin, CalendarCheck } from 'lucide-react'
 import { useCart } from '@/contexts/CartContext'
 import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@mcloud/ui/card'
+import { Card, CardContent } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ProductsPageProps, ProductItem, ServiceItem } from '../types'
 
@@ -43,8 +43,8 @@ function ProductCard({ product }: { product: ProductItem }) {
     }
 
     return (
-        <Card className="sf-card group hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col py-0">
-            <div className="relative overflow-hidden aspect-[4/5] sf-bg-muted">
+        <div className="sf-tile group flex flex-col h-full">
+            <Link href={`/products/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -61,62 +61,52 @@ function ProductCard({ product }: { product: ProductItem }) {
                         <span className="text-white font-medium">Sold Out</span>
                     </div>
                 )}
-            </div>
+            </Link>
 
-            <CardContent className="pt-4 pb-6 flex-1 flex flex-col">
-                <div className="space-y-2 mb-4">
-                    <div className="flex items-center gap-1 text-sm mb-1" style={{ color: 'var(--sf-foreground)', opacity: 0.45 }}>
-                        <Star className="w-3 h-3 sf-star-filled" />
-                        <span>4.8 (23)</span>
-                    </div>
-                    <Link href={`/products/${product.slug}`} className="block">
-                        <CardTitle className="sf-heading text-lg font-normal leading-tight line-clamp-2 group-hover:underline" style={{ color: 'var(--sf-foreground)' }}>
-                            {product.name}
-                        </CardTitle>
-                    </Link>
-                    <CardDescription>
-                        <span className="text-sm line-clamp-2 block" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                            {product.description?.slice(0, 100) + '...' || 'Premium quality product for your needs.'}
-                        </span>
-                    </CardDescription>
-                </div>
-
-                <div className="flex-1 flex flex-col justify-end space-y-3" style={{ borderTop: '1px solid var(--sf-border)', paddingTop: '1rem' }}>
-                    <div className="flex items-end justify-between">
-                        <div className="space-y-1">
-                            <div className="text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
-                                KSh {product.price.toLocaleString()}
-                            </div>
-                            {hasDiscount && (
-                                <div className="text-sm line-through" style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}>
-                                    KSh {product.compare_at_price!.toLocaleString()}
-                                </div>
-                            )}
+            <div className="pt-3 flex-1 flex flex-col">
+                <div className="space-y-1">
+                    {product.review_count ? (
+                        <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                            <Star className="w-3 h-3 sf-star-filled" />
+                            <span>{product.rating!.toFixed(1)} ({product.review_count})</span>
                         </div>
-                        {stock > 0 ? (
-                            <Button size="sm" onClick={handleAddToCart} disabled={isLoading} className="sf-btn-primary flex-shrink-0">
-                                {isLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <ShoppingBag className="w-4 h-4 mr-2" />}
-                                Add to Cart
-                            </Button>
-                        ) : (
-                            <span className="sf-badge-oos flex-shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium">
-                                <Package className="w-3 h-3" />
-                                Sold Out
-                            </span>
-                        )}
-                    </div>
-                    <div className="flex items-center justify-between text-xs pt-2" style={{ color: 'var(--sf-foreground)', opacity: 0.38 }}>
-                        <span>SKU: {product.sku || product.id.slice(-8)}</span>
-                        {stock > 0 && (
-                            <span className="flex items-center gap-1">
-                                <Zap className="w-3 h-3" />
-                                {stock} in stock
-                            </span>
-                        )}
-                    </div>
+                    ) : null}
+                    <Link href={`/products/${product.slug}`} className="block">
+                        <h3 className="sf-heading text-base font-normal leading-tight line-clamp-2 sf-tile-name">
+                            {product.name}
+                        </h3>
+                    </Link>
+                    {product.description && (
+                        <p className="text-xs line-clamp-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                            {product.description}
+                        </p>
+                    )}
                 </div>
-            </CardContent>
-        </Card>
+
+                <div className="flex-1 flex items-end justify-between gap-2 pt-3">
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-base font-light sf-text-accent">
+                            KSh {product.price.toLocaleString()}
+                        </span>
+                        {hasDiscount && (
+                            <span className="text-xs line-through" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                KSh {product.compare_at_price!.toLocaleString()}
+                            </span>
+                        )}
+                    </div>
+                    {stock > 0 ? (
+                        <Button size="sm" onClick={handleAddToCart} disabled={isLoading} className="sf-btn-primary shrink-0">
+                            {isLoading ? <Loader2 className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
+                        </Button>
+                    ) : (
+                        <span className="sf-badge-oos shrink-0 inline-flex items-center gap-1 px-2.5 py-1 text-xs font-medium">
+                            <Package className="w-3 h-3" />
+                            Sold Out
+                        </span>
+                    )}
+                </div>
+            </div>
+        </div>
     )
 }
 
@@ -141,8 +131,8 @@ function ServiceCard({ service }: { service: ServiceItem }) {
     }[availability]
 
     return (
-        <Card className="sf-card group hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col py-0">
-            <div className="relative overflow-hidden aspect-[4/3] sf-bg-muted">
+        <div className="sf-tile group flex flex-col h-full">
+            <Link href={`/services/${service.slug}`} className="block relative overflow-hidden aspect-[4/3] sf-bg-muted">
                 {thumb ? (
                     <img
                         src={thumb}
@@ -159,17 +149,17 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                     <span className={cn('h-1.5 w-1.5 rounded-full', availColor)} />
                     {availLabel}
                 </span>
-            </div>
+            </Link>
 
-            <CardContent className="pt-4 pb-6 flex-1 flex flex-col">
-                <div className="space-y-2 mb-4">
+            <div className="pt-3 flex-1 flex flex-col">
+                <div className="space-y-1">
                     {service.metadata?.serviceType && (
-                        <p className="text-xs uppercase tracking-widest sf-text-accent font-medium">
+                        <p className="text-[10px] uppercase tracking-[0.18em] sf-text-accent font-medium">
                             {service.metadata.serviceType}
                         </p>
                     )}
                     {service.metadata?.rating != null && (
-                        <div className="flex items-center gap-1 text-sm" style={{ color: 'var(--sf-foreground)', opacity: 0.45 }}>
+                        <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
                             <Star className="w-3 h-3 sf-star-filled" />
                             <span>{service.metadata.rating.toFixed(1)}
                                 {service.metadata.reviews != null && ` (${service.metadata.reviews})`}
@@ -177,16 +167,16 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                         </div>
                     )}
                     <Link href={`/services/${service.slug}`} className="block">
-                        <CardTitle className="sf-heading text-lg font-normal leading-tight line-clamp-2 group-hover:underline" style={{ color: 'var(--sf-foreground)' }}>
+                        <h3 className="sf-heading text-base font-normal leading-tight line-clamp-2 sf-tile-name">
                             {service.name}
-                        </CardTitle>
+                        </h3>
                     </Link>
-                    <CardDescription>
-                        <span className="text-sm line-clamp-2 block" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                            {service.description?.slice(0, 100) || 'Professional service tailored to your needs.'}
-                        </span>
-                    </CardDescription>
-                    <div className="flex flex-wrap gap-3 text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                    {service.description && (
+                        <p className="text-xs line-clamp-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                            {service.description}
+                        </p>
+                    )}
+                    <div className="flex flex-wrap gap-3 text-xs pt-0.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
                         {service.metadata?.deliveryDays && (
                             <span className="flex items-center gap-1">
                                 <Clock className="w-3 h-3" />
@@ -202,35 +192,28 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                     </div>
                 </div>
 
-                <div className="flex-1 flex flex-col justify-end space-y-3" style={{ borderTop: '1px solid var(--sf-border)', paddingTop: '1rem' }}>
-                    <div className="flex items-end justify-between">
-                        <div className="space-y-0.5">
-                            <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                {packages.length > 0 ? 'From' : 'Price'}
-                            </p>
-                            <div className="text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
-                                KSh {minPrice.toLocaleString()}
-                            </div>
-                            {packages.length > 0 && (
-                                <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                    {packages.length} package{packages.length !== 1 ? 's' : ''}
-                                </p>
-                            )}
-                        </div>
-                        <Link href={`/services/${service.slug}`}>
-                            <Button
-                                size="sm"
-                                className="sf-btn-primary shrink-0"
-                                disabled={availability === 'unavailable'}
-                            >
-                                <CalendarCheck className="w-4 h-4 mr-2" />
-                                {availability === 'busy' ? 'View' : 'Book'}
-                            </Button>
-                        </Link>
+                <div className="flex-1 flex items-end justify-between gap-2 pt-3">
+                    <div className="flex items-baseline gap-1.5">
+                        <span className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                            {packages.length > 0 ? 'From' : 'Price'}
+                        </span>
+                        <span className="text-base font-light sf-text-accent">
+                            KSh {minPrice.toLocaleString()}
+                        </span>
                     </div>
+                    <Link href={`/services/${service.slug}`}>
+                        <Button
+                            size="sm"
+                            className="sf-btn-primary shrink-0"
+                            disabled={availability === 'unavailable'}
+                        >
+                            <CalendarCheck className="w-4 h-4 mr-2" />
+                            {availability === 'busy' ? 'View' : 'Book'}
+                        </Button>
+                    </Link>
                 </div>
-            </CardContent>
-        </Card>
+            </div>
+        </div>
     )
 }
 
@@ -302,7 +285,7 @@ export default function ClassicProductsPage({
 
     return (
         <div className="min-h-screen">
-            <div className="max-w-7xl mx-auto px-8 py-12">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 {/* Header */}
                 <div className="text-center mb-12">
                     <h1 className="sf-heading text-4xl md:text-5xl font-light tracking-tight mb-4">
@@ -377,7 +360,7 @@ export default function ClassicProductsPage({
                             </div>
                         ) : (
                             <>
-                                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                <div className="grid gap-x-6 gap-y-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                     {filteredProducts.map((product) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))}
@@ -417,7 +400,7 @@ export default function ClassicProductsPage({
                             </div>
                         ) : (
                             <>
-                                <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                                <div className="grid gap-x-6 gap-y-10 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
                                     {filteredServices.map((service) => (
                                         <ServiceCard key={service.id} service={service} />
                                     ))}

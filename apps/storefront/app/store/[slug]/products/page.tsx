@@ -1,7 +1,8 @@
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
-import { castStore, castProducts } from '@/lib/db-cast'
+import { castStore, castProductItems } from '@/lib/db-cast'
+import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
 
 export const revalidate = 60
@@ -38,7 +39,7 @@ export default async function ProductsPage({ params }: Props) {
     ] = await Promise.all([
         supabase
             .from('products')
-            .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, track_inventory, sku, metadata')
+            .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, track_inventory, sku, metadata, is_active')
             .eq('store_id', rawStore.id)
             .eq('is_active', true)
             .order('created_at', { ascending: false })
@@ -54,8 +55,15 @@ export default async function ProductsPage({ params }: Props) {
     ])
 
     const store = castStore(rawStore)
-    const products = castProducts(rawProducts ?? [])
+    const baseProducts = castProductItems(rawProducts ?? [])
     const services = (rawServices ?? []) as any[]
+
+    const aggregates = await getReviewAggregates(
+        supabase,
+        rawStore.id,
+        baseProducts.map((p) => p.id)
+    )
+    const products = withReviewAggregates(baseProducts, aggregates)
 
     const themeId = (store?.settings?.themeId as string) ?? 'classic'
     const { ProductsPage: ProductsPageComponent } = await resolveTheme(themeId)
@@ -64,7 +72,7 @@ export default async function ProductsPage({ params }: Props) {
         <ProductsPageComponent
             storeSlug={slug}
             storeId={rawStore.id}
-            products={products as any}
+            products={products}
             services={services}
             currency={rawStore.currency ?? 'KES'}
         />

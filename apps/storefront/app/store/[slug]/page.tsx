@@ -2,6 +2,7 @@ import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
 
 export const revalidate = 60
@@ -102,15 +103,21 @@ export default async function StorePage({ params }: Props) {
     ])
 
     const store = castStore(rawStore)
-    const products = castProducts(rawProducts ?? [])
+    const baseProducts = castProducts(rawProducts ?? [])
     const collections = castCollections(rawCollections ?? [])
     const services = (rawServices ?? []) as any[]
 
-    const featured = castProducts(
+    const baseFeatured = castProducts(
         (featuredRows ?? [])
             .map((row: any) => row.products)
             .filter(Boolean)
     )
+
+    // Real per-product review aggregates — one query for everything on the page.
+    const allIds = [...new Set([...baseProducts, ...baseFeatured].map((p) => p.id))]
+    const aggregates = await getReviewAggregates(supabase, rawStore.id, allIds)
+    const products = withReviewAggregates(baseProducts, aggregates)
+    const featured = withReviewAggregates(baseFeatured, aggregates)
 
     if (store?.id) {
         incrementViews(store.id)

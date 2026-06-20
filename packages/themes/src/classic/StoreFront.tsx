@@ -11,6 +11,21 @@ import { motion } from 'framer-motion'
 import { cn } from '@mcloud/ui/utils'
 import type { StoreFrontProps, ServiceItem } from '../types'
 
+// ─── Section Header ───────────────────────────────────────────────────────────
+function SectionHeader({ eyebrow, title, meta }: { eyebrow: string; title: string; meta?: string }) {
+    return (
+        <div className="mb-8 md:mb-12">
+            <div className="flex items-end justify-between gap-4 border-b pb-4" style={{ borderColor: 'var(--sf-foreground)' }}>
+                <div>
+                    <span className="text-[11px] uppercase tracking-[0.2em] sf-text-accent font-medium">{eyebrow}</span>
+                    <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight mt-1">{title}</h2>
+                </div>
+                {meta && <span className="text-xs shrink-0 pb-1" style={{ color: 'var(--sf-foreground-subtle)' }}>{meta}</span>}
+            </div>
+        </div>
+    )
+}
+
 function formatPrice(amount: number, currency: string) {
     return new Intl.NumberFormat('en-KE', {
         style: 'currency',
@@ -37,45 +52,44 @@ function ProductCard({
     const image = product.images?.[0] || null
 
     return (
-        <Link href={`/store/${storeSlug}/${product.slug}`} className="group block">
-            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
-                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
-                    {image ? (
-                        <img src={image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
-                        </div>
-                    )}
-                    {!inStock && (
-                        <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
-                            <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
-                        </div>
-                    )}
-                    {hasDiscount && inStock && (
-                        <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">Sale</span>
-                    )}
-                </div>
-                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
-                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{product.name}</CardTitle>
-                    {product.description && (
-                        <CardDescription>
-                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{product.description}</span>
-                        </CardDescription>
-                    )}
-                </CardHeader>
-                <CardFooter className="flex justify-between items-center px-4 pb-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(product.price, currency)}</span>
+        <Link href={`/store/${storeSlug}/${product.slug}`} className="sf-tile group block">
+            <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                {image ? (
+                    <img src={image} alt={product.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <ShoppingBag className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                    </div>
+                )}
+                {!inStock && (
+                    <div className="absolute inset-0 sf-bg-overlay flex items-center justify-center">
+                        <span className="sf-badge-oos inline-flex items-center rounded-sm px-2.5 py-0.5 text-xs font-medium">Out of stock</span>
+                    </div>
+                )}
+                {hasDiscount && inStock && (
+                    <span className="sf-badge-sale sf-border-radius absolute top-2 left-2 inline-flex items-center px-2.5 py-0.5 text-xs font-medium">Sale</span>
+                )}
+            </div>
+            <div className="pt-3 space-y-0.5">
+                <h3 className="sf-heading text-base font-normal line-clamp-2 sf-tile-name">{product.name}</h3>
+                {product.review_count ? (
+                    <div className="flex items-center gap-1 text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                        <Star className="w-3 h-3 sf-star-filled" />
+                        <span>{product.rating!.toFixed(1)} ({product.review_count})</span>
+                    </div>
+                ) : null}
+                <div className="flex items-baseline justify-between gap-2 pt-0.5">
+                    {product.description ? (
+                        <span className="text-xs line-clamp-1" style={{ color: 'var(--sf-foreground-subtle)' }}>{product.description}</span>
+                    ) : <span />}
+                    <span className="flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-base font-light sf-text-accent">{formatPrice(product.price, currency)}</span>
                         {hasDiscount && (
                             <span className="text-xs line-through" style={{ color: 'var(--sf-foreground-subtle)' }}>{formatPrice(product.compare_at_price!, currency)}</span>
                         )}
-                    </div>
-                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
-                        View <ArrowRight className="h-3 w-3" />
-                    </button>
-                </CardFooter>
-            </Card>
+                    </span>
+                </div>
+            </div>
         </Link>
     )
 }
@@ -99,54 +113,45 @@ function ServiceCard({
     const availLabel = { available: 'Available', busy: 'Busy', unavailable: 'Unavailable' }[availability]
 
     return (
-        <Link href={`/store/${storeSlug}/services/${service.slug}`} className="group block">
-            <Card className="sf-card overflow-hidden transition-all pt-0 cursor-pointer">
-                <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
-                    {thumb ? (
-                        <img src={thumb} alt={service.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <CalendarCheck className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
-                        </div>
+        <Link href={`/store/${storeSlug}/services/${service.slug}`} className="sf-tile group block">
+            <div className="relative overflow-hidden sf-bg-muted h-56 sm:h-64">
+                {thumb ? (
+                    <img src={thumb} alt={service.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <CalendarCheck className="w-8 h-8" style={{ color: 'var(--sf-foreground)', opacity: 0.25 }} />
+                    </div>
+                )}
+                {/* Availability badge */}
+                <span className="absolute top-2 left-2 sf-card inline-flex items-center gap-1.5 px-2 py-0.5 text-xs shadow">
+                    <span className={cn('h-1.5 w-1.5 rounded-full', availDot)} />
+                    {availLabel}
+                </span>
+            </div>
+            <div className="pt-3 space-y-1">
+                {service.metadata?.serviceType && (
+                    <p className="text-[10px] uppercase tracking-[0.18em] sf-text-accent font-medium">{service.metadata.serviceType}</p>
+                )}
+                <h3 className="sf-heading text-base font-normal line-clamp-2 sf-tile-name">{service.name}</h3>
+                {service.description && (
+                    <p className="text-xs line-clamp-1" style={{ color: 'var(--sf-foreground-subtle)' }}>{service.description}</p>
+                )}
+                <div className="flex flex-wrap gap-3 text-xs pt-0.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                    {service.metadata?.deliveryDays && (
+                        <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.metadata.deliveryDays}d delivery</span>
                     )}
-                    {/* Availability badge */}
-                    <span className="absolute top-2 left-2 sf-card inline-flex items-center gap-1.5 px-2 py-0.5 text-xs shadow">
-                        <span className={cn('h-1.5 w-1.5 rounded-full', availDot)} />
-                        {availLabel}
-                    </span>
+                    {service.metadata?.location && (
+                        <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.metadata.location}</span>
+                    )}
+                    {service.metadata?.rating != null && (
+                        <span className="flex items-center gap-1"><Star className="w-3 h-3 sf-star-filled" />{service.metadata.rating.toFixed(1)}</span>
+                    )}
                 </div>
-                <CardHeader className="space-y-1 px-4 pt-4 pb-2">
-                    {service.metadata?.serviceType && (
-                        <p className="text-xs uppercase tracking-widest sf-text-accent font-medium">{service.metadata.serviceType}</p>
-                    )}
-                    <CardTitle className="sf-heading text-base font-normal line-clamp-2">{service.name}</CardTitle>
-                    {service.description && (
-                        <CardDescription>
-                            <span className="text-xs line-clamp-2" style={{ color: 'var(--sf-foreground-subtle)' }}>{service.description}</span>
-                        </CardDescription>
-                    )}
-                    <div className="flex flex-wrap gap-3 text-xs pt-1" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                        {service.metadata?.deliveryDays && (
-                            <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{service.metadata.deliveryDays}d delivery</span>
-                        )}
-                        {service.metadata?.location && (
-                            <span className="flex items-center gap-1"><MapPin className="w-3 h-3" />{service.metadata.location}</span>
-                        )}
-                        {service.metadata?.rating != null && (
-                            <span className="flex items-center gap-1"><Star className="w-3 h-3 sf-star-filled" />{service.metadata.rating.toFixed(1)}</span>
-                        )}
-                    </div>
-                </CardHeader>
-                <CardFooter className="flex justify-between items-center px-4 pb-4">
-                    <div>
-                        <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>{packages.length > 0 ? 'From' : 'Price'}</p>
-                        <span className="text-base font-light" style={{ color: 'var(--sf-foreground)' }}>{formatPrice(minPrice, currency)}</span>
-                    </div>
-                    <button className="sf-pill sf-pill-inactive inline-flex items-center gap-1 px-3 py-1 text-sm border" tabIndex={-1} aria-hidden="true">
-                        Book <ArrowRight className="h-3 w-3" />
-                    </button>
-                </CardFooter>
-            </Card>
+                <div className="flex items-baseline gap-1.5 pt-1">
+                    <span className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>{packages.length > 0 ? 'From' : 'Price'}</span>
+                    <span className="text-base font-light sf-text-accent">{formatPrice(minPrice, currency)}</span>
+                </div>
+            </div>
         </Link>
     )
 }
@@ -159,10 +164,6 @@ export default function ClassicStoreFront({
     featuredProducts,
     services = [],
 }: StoreFrontProps) {
-    console.log('🔥 StoreFront received:', {
-        products: products.length,
-        services: services.length,
-    })
     const router = useRouter()
     const [query, setQuery] = useState('')
     const [activeCollection, setActiveCollection] = useState<string | null>(null)
@@ -205,52 +206,56 @@ export default function ClassicStoreFront({
         <div className="min-h-screen">
             {/* ── HERO ── */}
             {!query && (
-                <section className="relative w-full h-[70vh] sm:h-[90vh] overflow-hidden">
+                <section className="relative w-full overflow-hidden">
                     {heroSlides.map((slide, index) => (
-                        <div key={index} className={`absolute inset-0 transition-opacity duration-700 ${index === currentSlide ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                            {slide.image ? (
-                                <>
-                                    <img src={slide.image} alt={slide.title} className="w-full h-full object-cover" />
-                                    <div className="absolute inset-0 bg-black/30 md:bg-black/20" />
-                                </>
-                            ) : (
-                                <div className="sf-hero-fallback absolute inset-0">
-                                    <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_20%_50%,white,transparent_60%)]" />
-                                </div>
-                            )}
-                            <div className="absolute inset-0 flex items-end md:items-center">
+                        <div key={index} className={`grid md:grid-cols-2 ${index === currentSlide ? 'block' : 'hidden'}`}>
+                            {/* Text column */}
+                            <div className="order-2 md:order-1 flex items-center">
                                 <motion.div
-                                    initial={{ opacity: 0, y: 40 }}
-                                    animate={{ opacity: index === currentSlide ? 1 : 0, y: index === currentSlide ? 0 : 40 }}
-                                    transition={{ duration: 0.5 }}
-                                    className="w-full px-4 sm:px-6 md:px-8 pb-16 md:pb-0"
+                                    key={currentSlide}
+                                    initial={{ opacity: 0, y: 32 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+                                    className="w-full px-6 sm:px-10 md:px-14 py-12 md:py-24 max-w-xl mx-auto md:mx-0 space-y-5"
                                 >
-                                    <div className="sf-hero-card max-w-xl space-y-4 p-5 sm:p-6">
-                                        {slide.accent && (
-                                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{slide.accent}</span>
-                                        )}
-                                        <h1 className="sf-heading text-3xl md:text-5xl font-bold tracking-tight">{slide.title}</h1>
-                                        {slide.subtitle && (
-                                            <p className="text-base md:text-lg font-light" style={{ color: 'var(--sf-foreground-subtle)' }}>{slide.subtitle}</p>
-                                        )}
-                                        <Button
-                                            size="lg"
-                                            className="sf-btn-primary mt-2 group rounded-none"
-                                            onClick={() => document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })}
-                                        >
-                                            {slide.buttonText ?? 'Shop now'}
-                                            <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
-                                        </Button>
-                                    </div>
+                                    {slide.accent && (
+                                        <div className="flex items-center gap-3">
+                                            <span className="h-0.5 w-9 sf-bg-accent" />
+                                            <span className="text-[11px] uppercase tracking-[0.2em] sf-text-accent font-medium">{slide.accent}</span>
+                                        </div>
+                                    )}
+                                    <h1 className="sf-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.04]">{slide.title}</h1>
+                                    {slide.subtitle && (
+                                        <p className="text-base md:text-lg font-light max-w-md" style={{ color: 'var(--sf-foreground-subtle)' }}>{slide.subtitle}</p>
+                                    )}
+                                    <Button
+                                        size="lg"
+                                        className="sf-btn-primary mt-1 group rounded-none"
+                                        onClick={() => document.getElementById('catalogue')?.scrollIntoView({ behavior: 'smooth' })}
+                                    >
+                                        {slide.buttonText ?? 'Shop now'}
+                                        <ArrowRight className="ml-2 w-4 h-4 transition-transform group-hover:translate-x-1" />
+                                    </Button>
                                 </motion.div>
+                            </div>
+                            {/* Image column */}
+                            <div className="order-1 md:order-2 relative h-[42vh] sm:h-[56vh] md:h-auto md:min-h-[78vh]">
+                                {slide.image ? (
+                                    <img src={slide.image} alt={slide.title} className="absolute inset-0 w-full h-full object-cover" />
+                                ) : (
+                                    <div className="sf-hero-fallback absolute inset-0">
+                                        <div className="absolute inset-0 opacity-10 bg-[radial-gradient(circle_at_30%_40%,white,transparent_60%)]" />
+                                    </div>
+                                )}
                             </div>
                         </div>
                     ))}
                     {heroSlides.length > 1 && (
-                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-30">
+                        <div className="absolute bottom-6 left-6 sm:left-10 md:left-14 flex gap-2 z-30">
                             {heroSlides.map((_, index) => (
-                                <button key={index} onClick={() => setCurrentSlide(index)}
-                                    className={`h-0.5 transition-all duration-300 ${index === currentSlide ? 'w-12 bg-white' : 'w-6 bg-white/30'}`}
+                                <button key={index} onClick={() => setCurrentSlide(index)} aria-label={`Slide ${index + 1}`}
+                                    className={`h-0.5 transition-all duration-300 ${index === currentSlide ? 'w-12 sf-bg-accent' : 'w-6'}`}
+                                    style={index === currentSlide ? undefined : { backgroundColor: 'var(--sf-border-strong)' }}
                                 />
                             ))}
                         </div>
@@ -263,11 +268,8 @@ export default function ClassicStoreFront({
                 <>
                     <Separator />
                     <section className="sf-section-muted py-12 md:py-20">
-                        <div className="container mx-auto">
-                            <div className="mb-10 md:mb-14">
-                                <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">Collections</span>
-                                <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight">Shop by Category</h2>
-                            </div>
+                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                            <SectionHeader eyebrow="Collections" title="Shop by Category" meta={`${collections.length} categories`} />
                             <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none mb-8">
                                 <button onClick={() => setActiveCollection(null)} className={`sf-pill shrink-0 px-4 py-1.5 text-sm border transition-colors ${activeCollection === null ? 'sf-pill-active' : 'sf-pill-inactive'}`}>All</button>
                                 {collections.map((c) => (
@@ -306,16 +308,9 @@ export default function ClassicStoreFront({
             {/* ── FEATURED PRODUCTS ── */}
             {!query && featuredProducts.length > 0 && (
                 <>
-                    <section className="py-12 md:py-20 mx-2">
-                        <div className="container mx-auto">
-                            <div className="mb-10 md:mb-14">
-                                <div className="flex items-center gap-4 mb-3">
-                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
-                                    <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">Featured</span>
-                                    <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
-                                </div>
-                                <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Top Picks</h2>
-                            </div>
+                    <section className="py-12 md:py-20">
+                        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                            <SectionHeader eyebrow="Featured" title="Top Picks" />
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                                 {featuredProducts.map((product) => (
                                     <ProductCard key={product.id} product={product} currency={store.currency} storeSlug={store.slug} />
@@ -329,37 +324,34 @@ export default function ClassicStoreFront({
 
             {/* ── CATALOGUE (products + services) ── */}
             <section id="catalogue" className="py-12 md:py-20">
-                <div className="container mx-auto">
-                    <div className="mb-10 md:mb-14">
-                        <div className="flex items-center gap-4 mb-3">
-                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
-                            <span className="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
-                                {showTabs ? 'Catalogue' : hasServices ? 'Services' : 'All Products'}
-                            </span>
-                            <div className="h-px flex-1" style={{ backgroundColor: 'var(--sf-border)' }} />
+                <div className="max-w-7xl px-4 sm:px-6 lg:px-8 mx-auto">
+                    {showTabs ? (
+                        <div className="mb-8 md:mb-12">
+                            <span className="text-[11px] uppercase tracking-[0.2em] sf-text-accent font-medium">Catalogue</span>
+                            <h2 className="sf-heading text-3xl md:text-4xl font-light tracking-tight mt-1 mb-5">Browse Everything</h2>
+                            <div className="flex gap-7 border-b" style={{ borderColor: 'var(--sf-foreground)' }}>
+                                {(['products', 'services'] as const).map((tab) => (
+                                    <button
+                                        key={tab}
+                                        onClick={() => setActiveTab(tab)}
+                                        className="pb-3 text-sm capitalize transition-colors border-b-2 -mb-px"
+                                        style={{
+                                            borderColor: activeTab === tab ? 'var(--sf-accent)' : 'transparent',
+                                            color: activeTab === tab ? 'var(--sf-foreground)' : 'var(--sf-foreground-subtle)',
+                                            fontWeight: activeTab === tab ? 500 : 400,
+                                        }}
+                                    >
+                                        {tab} <span className="text-xs opacity-70">({tab === 'products' ? products.length : services.length})</span>
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                        <h2 className="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">
-                            {showTabs ? 'Browse Everything' : hasServices ? 'Our Services' : 'Browse Everything'}
-                        </h2>
-                    </div>
-
-                    {/* Tabs — only when both exist */}
-                    {showTabs && (
-                        <div className="flex gap-1 mb-8 border-b" style={{ borderColor: 'var(--sf-border)' }}>
-                            {(['products', 'services'] as const).map((tab) => (
-                                <button
-                                    key={tab}
-                                    onClick={() => setActiveTab(tab)}
-                                    className="px-6 py-3 text-sm font-medium capitalize transition-colors border-b-2 -mb-px"
-                                    style={{
-                                        borderColor: activeTab === tab ? 'var(--sf-accent)' : 'transparent',
-                                        color: activeTab === tab ? 'var(--sf-accent)' : 'var(--sf-foreground-subtle)',
-                                    }}
-                                >
-                                    {tab} ({tab === 'products' ? products.length : services.length})
-                                </button>
-                            ))}
-                        </div>
+                    ) : (
+                        <SectionHeader
+                            eyebrow={hasServices ? 'Services' : 'All Products'}
+                            title={hasServices ? 'Our Services' : 'Browse Everything'}
+                            meta={`${hasServices ? services.length : products.length} items`}
+                        />
                     )}
 
                     {/* Products grid */}

@@ -44,58 +44,56 @@ export default function ClassicServicesPage({
     }
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-8 py-12">
-            <h1 className="sf-heading text-3xl font-light tracking-tight mb-8">Services</h1>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            <h1 className="sf-heading text-3xl md:text-4xl font-light tracking-tight mb-8">Services</h1>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-6 gap-y-10">
                 {services.map((service) => {
                     const isAvailable = service.availability === 'available'
                     return (
                         <Link
                             key={service.id}
                             href={`/store/${storeSlug}/services/${service.slug}`}
-                            className="sf-card group block border overflow-hidden hover:shadow-md transition-shadow"
+                            className="sf-tile group block"
                         >
                             {/* Image */}
-                            <div className="aspect-video sf-bg-muted overflow-hidden">
+                            <div className="relative aspect-video sf-bg-muted overflow-hidden">
                                 {service.images?.[0] ? (
                                     <img
                                         src={service.images[0]}
                                         alt={service.name}
-                                        className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                     />
                                 ) : (
                                     <div className="w-full h-full flex items-center justify-center">
                                         <span className="text-2xl opacity-10">◈</span>
                                     </div>
                                 )}
+                                <span
+                                    className="absolute top-2 left-2 shrink-0 h-2 w-2 rounded-full"
+                                    style={{
+                                        backgroundColor: isAvailable
+                                            ? 'var(--sf-dot-instock, #22c55e)'
+                                            : 'var(--sf-dot-outofstock, #ef4444)',
+                                    }}
+                                />
                             </div>
 
                             {/* Info */}
-                            <div className="p-4 space-y-2">
-                                <div className="flex items-start justify-between gap-2">
-                                    <p className="font-medium text-sm leading-snug" style={{ color: 'var(--sf-foreground)' }}>
-                                        {service.name}
-                                    </p>
-                                    <span
-                                        className="shrink-0 h-2 w-2 rounded-full mt-1.5"
-                                        style={{
-                                            backgroundColor: isAvailable
-                                                ? 'var(--sf-dot-instock, #22c55e)'
-                                                : 'var(--sf-dot-outofstock, #ef4444)',
-                                        }}
-                                    />
-                                </div>
+                            <div className="pt-3 space-y-1">
+                                <h3 className="sf-heading text-base font-normal leading-snug line-clamp-2 sf-tile-name">
+                                    {service.name}
+                                </h3>
 
                                 {service.description && (
                                     <p
-                                        className="text-xs leading-relaxed line-clamp-2"
+                                        className="text-xs leading-relaxed line-clamp-1"
                                         style={{ color: 'var(--sf-foreground-subtle)' }}
                                     >
                                         {service.description}
                                     </p>
                                 )}
 
-                                <p className="text-sm font-light pt-1" style={{ color: 'var(--sf-foreground)' }}>
+                                <p className="text-base font-light sf-text-accent pt-0.5">
                                     {new Intl.NumberFormat('en-KE', {
                                         style: 'currency',
                                         currency: currency || 'KES',

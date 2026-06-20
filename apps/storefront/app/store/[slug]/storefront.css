@@ -314,6 +314,19 @@
     text-decoration: line-through;
 }
 
+/* ── Borderless product/service tile (editorial) ────────────────────────────── */
+.sf-tile {
+    cursor: pointer;
+}
+
+.sf-tile .sf-tile-name {
+    transition: color 0.2s ease;
+}
+
+.sf-tile:hover .sf-tile-name {
+    color: var(--sf-accent);
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────────── */
 .sf-footer {
     background-color: color-mix(in srgb, var(--sf-muted) 30%, var(--sf-background));
