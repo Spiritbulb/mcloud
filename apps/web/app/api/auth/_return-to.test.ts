@@ -26,3 +26,19 @@ test('rejects non-strings and uses the provided fallback', () => {
 test('rejects backslash-escaped tricks', () => {
   assert.equal(sanitizeReturnTo('/\\evil.com'), '/auth/post-login')
 })
+
+test('rejects URL-encoded backslash host', () => {
+  assert.equal(sanitizeReturnTo('/%5Cevil.com'), '/auth/post-login')
+})
+
+test('rejects URL-encoded protocol-relative host', () => {
+  assert.equal(sanitizeReturnTo('/%2Fevil.com'), '/auth/post-login')
+})
+
+test('rejects malformed percent-encoding', () => {
+  assert.equal(sanitizeReturnTo('/%E0%A4%A'), '/auth/post-login')
+})
+
+test('rejects null (non-string)', () => {
+  assert.equal(sanitizeReturnTo(null, '/home'), '/home')
+})
