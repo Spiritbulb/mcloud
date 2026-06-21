@@ -74,6 +74,7 @@ export function MagicCodeForm({
             placeholder="you@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            aria-label="Email address"
             className="h-10 w-full rounded-none border border-input bg-background px-3 text-sm"
           />
           <Button type="submit" disabled={busy} className="w-full h-10 rounded-none google-button-primary">
@@ -93,6 +94,9 @@ export function MagicCodeForm({
             placeholder="000000"
             value={code}
             onChange={(e) => setCode(e.target.value)}
+            aria-label="6-digit code"
+            maxLength={6}
+            pattern="[0-9]{6}"
             className="h-10 w-full rounded-none border border-input bg-background px-3 text-center text-lg tracking-[0.4em]"
           />
           <Button type="submit" disabled={busy} className="w-full h-10 rounded-none google-button-primary">

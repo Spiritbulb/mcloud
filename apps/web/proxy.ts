@@ -125,9 +125,11 @@ async function handle(
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
     if (pathname.startsWith('/auth/')) {
       const res = await authMiddleware(request)
-      // authMiddleware redirects /auth/login & /auth/sign-up to the provider. Other
-      // /auth/* routes (post-login, logout, error) render normally and must get the
-      // session request headers forwarded so withAuth() works on them.
+      // /auth/* routes render in-app now (magic-code login posts to /api/auth/*); the
+      // provider's authMiddleware no longer redirects them. It may still return a
+      // redirect for other provider flows, so honor a location header if present;
+      // otherwise render normally with the session request headers forwarded so
+      // withAuth() works on the page.
       return res.headers.has('location') ? res : nextResponse(authHeaders)
     }
 
