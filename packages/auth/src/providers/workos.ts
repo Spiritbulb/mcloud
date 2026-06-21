@@ -7,8 +7,6 @@
 import {
     authkit,
     withAuth,
-    getSignInUrl,
-    getSignUpUrl,
     getWorkOS,
     partitionAuthkitHeaders,
     applyResponseHeaders,
@@ -17,40 +15,7 @@ import {
 import { NextResponse, type NextRequest } from 'next/server'
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
 import type { AuthProviderAdapter, AuthSession, AuthUser, LoginEvent, NativeAuthTokens } from '../types'
-import { LOGIN_URL, SIGNUP_URL } from '../routes'
 import { formatDevice, formatRelativeTime } from '../format'
-
-const POST_LOGIN_PATH = '/auth/post-login'
-
-/**
- * Platform apex domains served by this app. Both run against prod during the
- * menengai.cloud → mcloud.co.ke migration. Mirrors the list in the app proxies;
- * kept here so the auth handshake can decide whether to pin its callback to the
- * request's own origin (see platformCallbackUri).
- */
-const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
-
-function isPlatformHost(host: string): boolean {
-    return (
-        PLATFORM_APEX_DOMAINS.some((apex) => host === apex || host.endsWith(`.${apex}`)) ||
-        host.includes('localhost') ||
-        host.includes('127.0.0.1')
-    )
-}
-
-/**
- * Same-origin /callback URL for the host this request actually arrived on, so the
- * OAuth handshake completes on the host that holds the PKCE cookie. Reads the
- * forwarded host/proto set by the platform edge (Vercel) before falling back to
- * the request host. Returns undefined for non-platform hosts so AuthKit uses the
- * configured WORKOS_REDIRECT_URI — we only ever pin to a known platform origin.
- */
-function platformCallbackUri(req: NextRequest): string | undefined {
-    const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? ''
-    if (!host || !isPlatformHost(host)) return undefined
-    const proto = req.headers.get('x-forwarded-proto') ?? (host.includes('localhost') ? 'http' : 'https')
-    return `${proto}://${host}/callback`
-}
 
 // ── Bearer-token verification (mobile) ────────────────────────────────────────
 // WorkOS access tokens are JWTs signed by the AuthKit JWKS for this client. We
@@ -190,25 +155,10 @@ export const workosProvider: AuthProviderAdapter = {
         }
     },
 
-    async middleware(req: NextRequest) {
-        const { pathname, searchParams } = req.nextUrl
-        const returnTo = searchParams.get('returnTo') ?? POST_LOGIN_PATH
-        // Keep the OAuth handshake on the host the user started from. The PKCE/state
-        // cookie is set on that host; if WorkOS bounced back to a fixed callback on a
-        // *different* platform host (we run both menengai.cloud and mcloud.co.ke during
-        // migration), the cookie wouldn't be present and the callback would fail with
-        // "Couldn't sign in". So pin the redirect URI to this request's own origin.
-        // NOTE: every origin used here must be registered in the WorkOS dashboard's
-        // redirect URI allowlist, or WorkOS rejects the authorize request.
-        const redirectUri = platformCallbackUri(req)
-
-        if (pathname === LOGIN_URL) {
-            return NextResponse.redirect(await getSignInUrl({ returnTo, redirectUri }))
-        }
-        if (pathname === SIGNUP_URL) {
-            return NextResponse.redirect(await getSignUpUrl({ returnTo, redirectUri }))
-        }
-        // /auth/logout (route handler), CALLBACK_PATH, /auth/post-login: fall through.
+    async middleware(_req: NextRequest) {
+        // Magic-code login renders in-app (apps/web /auth/login, /auth/sign-up post to
+        // /api/auth/*). There's no longer an OAuth redirect for these routes; let them
+        // render. /auth/logout, /callback, /auth/post-login also fall through.
         return NextResponse.next()
     },
 

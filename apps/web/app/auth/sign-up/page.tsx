@@ -1,18 +1,16 @@
-import { redirect } from 'next/navigation'
+import { MagicCodeForm } from '@/components/login-form'
 
 export default async function Page({
   searchParams,
 }: {
-  searchParams: Promise<{ slug?: string }>
+  searchParams: Promise<{ returnTo?: string }>
 }) {
-  const slug = (await searchParams).slug
-  const state = slug
-    ? btoa(JSON.stringify({ storeName: slug, slug }))
-    : undefined
-
-  const url = state
-    ? `/auth/login?screen_hint=signup&state=${state}`
-    : `/auth/login?screen_hint=signup`
-
-  redirect(url)
+  const { returnTo } = await searchParams
+  return (
+    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+      <div className="w-full max-w-sm">
+        <MagicCodeForm mode="signup" returnTo={returnTo} />
+      </div>
+    </div>
+  )
 }
