@@ -7,6 +7,7 @@
 // Same-origin form POST; the cookie is set here so it MUST stay same-origin.
 import { NextResponse, type NextRequest } from 'next/server'
 import { verifyMagicCodeWeb } from '@mcloud/auth/management'
+import { ensureUserRow } from '@mcloud/auth/callback'
 import { allowMagicVerify } from '../../_auth-ratelimit'
 import { sanitizeReturnTo } from '../_return-to'
 
@@ -42,6 +43,11 @@ export async function POST(req: NextRequest) {
             { status: 400 },
         )
     }
+
+    // Provision the users row now (idempotent) so a sanitized returnTo that skips
+    // /auth/post-login still has a users row before any FK-dependent write. Mirrors
+    // the mobile verify route.
+    await ensureUserRow(user)
 
     const next = sanitizeReturnTo(body.returnTo)
     return NextResponse.json({ ok: true, next }, { headers: { 'Cache-Control': 'no-store' } })

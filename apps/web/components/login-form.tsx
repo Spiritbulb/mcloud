@@ -129,8 +129,3 @@ export function MagicCodeForm({
     </div>
   )
 }
-
-// Back-compat alias: existing imports of LoginForm keep working (login mode).
-export const LoginForm = (props: { className?: string; returnTo?: string; onSwitch?: () => void }) => (
-  <MagicCodeForm {...props} mode="login" />
-)
