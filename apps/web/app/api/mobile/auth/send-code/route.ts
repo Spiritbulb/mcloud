@@ -6,7 +6,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { sendMagicCode } from '@mcloud/auth/management'
 import { fail } from '../../_lib'
-import { allowMagicSend } from '../_ratelimit'
+import { allowMagicSend } from '../../../_auth-ratelimit'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 

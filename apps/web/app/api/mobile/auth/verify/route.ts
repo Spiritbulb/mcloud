@@ -8,6 +8,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { verifyMagicCode } from '@mcloud/auth/management'
 import { ensureUserRow } from '@mcloud/auth/callback'
 import { fail } from '../../_lib'
+import { allowMagicVerify } from '../../../_auth-ratelimit'
 
 export async function POST(req: NextRequest) {
     let body: { email?: unknown; code?: unknown }
@@ -20,6 +21,14 @@ export async function POST(req: NextRequest) {
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
     const code = typeof body.code === 'string' ? body.code.trim() : ''
     if (!email || !code) return fail(400, 'Email and code are required')
+
+    const ip =
+        req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+        req.headers.get('x-real-ip') ||
+        'unknown'
+    if (!allowMagicVerify(email, ip)) {
+        return fail(429, 'Too many attempts. Please wait a few minutes and try again.')
+    }
 
     const tokens = await verifyMagicCode(email, code)
     if (!tokens) return fail(400, 'That code is invalid or expired. Request a new one.')
