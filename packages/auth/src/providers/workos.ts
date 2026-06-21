@@ -12,6 +12,7 @@ import {
     getWorkOS,
     partitionAuthkitHeaders,
     applyResponseHeaders,
+    saveSession,
 } from '@workos-inc/authkit-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
@@ -259,6 +260,28 @@ export const workosProvider: AuthProviderAdapter = {
     async sendMagicCode(email: string): Promise<void> {
         // Idempotent per email from WorkOS's side; emails the 6-digit code.
         await getWorkOS().userManagement.createMagicAuth({ email })
+    },
+
+    async verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null> {
+        try {
+            const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
+                clientId: process.env.WORKOS_CLIENT_ID,
+                email,
+                code,
+            })
+            const user = await ensureLinked(res.user as WorkOSUserish)
+            // Seal the WorkOS session into the authkit cookie. saveSession accepts the
+            // Session shape ({ accessToken, refreshToken, user }); pass the RAW WorkOS
+            // user (res.user) so the cookie's encoded user matches what withAuth()
+            // expects, while we return the MAPPED user to the app.
+            await saveSession(
+                { accessToken: res.accessToken, refreshToken: res.refreshToken, user: res.user },
+                req,
+            )
+            return mapUser(user)
+        } catch {
+            return null
+        }
     },
 
     async verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {

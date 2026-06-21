@@ -82,4 +82,11 @@ export interface AuthProviderAdapter {
      */
     sendMagicCode(email: string): Promise<void>
     verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null>
+    /**
+     * Web cookie-session variant of magic-code verification: verifies the code and
+     * seals the resulting session into the provider's cookie (so withAuth() reads
+     * it), returning the mapped user. Lets web do magic-code login with no OAuth
+     * redirect. Returns null on an invalid/expired code.
+     */
+    verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null>
 }

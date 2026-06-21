@@ -3,7 +3,8 @@
 // own DB writes (Supabase) stay in the calling server actions; these only sync
 // the change to / read it from the identity provider.
 import { provider } from './index'
-import type { LoginEvent, NativeAuthTokens } from './types'
+import type { AuthUser, LoginEvent, NativeAuthTokens } from './types'
+import type { NextRequest } from 'next/server'
 
 /** Sync display name and/or avatar to the identity provider. */
 export function updateUserProfile(id: string, data: { name?: string; avatarUrl?: string }): Promise<void> {
@@ -30,4 +31,12 @@ export function sendMagicCode(email: string): Promise<void> {
 /** Exchange an emailed code for tokens; null if the code is invalid/expired. */
 export function verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {
     return provider.verifyMagicCode(email, code)
+}
+
+/**
+ * Web variant: verify an emailed code and set the auth cookie (no OAuth redirect).
+ * Returns the user, or null if the code is invalid/expired.
+ */
+export function verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null> {
+    return provider.verifyMagicCodeWeb(email, code, req)
 }
