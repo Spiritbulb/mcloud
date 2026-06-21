@@ -2,7 +2,7 @@
 // Emails a one-time magic-code to `email` (WorkOS Magic Auth). This is one of the
 // only two UNAUTHENTICATED mobile routes — it mints the login. It always responds
 // 200 { ok: true } regardless of whether the email exists, to avoid account
-// enumeration. Rate-limited per email + per IP (best-effort; see _ratelimit).
+// enumeration. Rate-limited per email + per IP (best-effort; see _auth-ratelimit).
 import { NextResponse, type NextRequest } from 'next/server'
 import { sendMagicCode } from '@mcloud/auth/management'
 import { fail } from '../../_lib'
