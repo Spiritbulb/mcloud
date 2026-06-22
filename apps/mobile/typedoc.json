@@ -1,0 +1,5 @@
+{
+  "tsconfig": "./tsconfig.json",
+  "skipErrorChecking": true,
+  "entryPointStrategy": "expand"
+}

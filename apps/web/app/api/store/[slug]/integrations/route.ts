@@ -1,11 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 
-interface KVNamespace {
-    get(key: string, type: 'json'): Promise<any>
-    put(key: string, value: string): Promise<void>
-}
-
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ slug: string }> }
@@ -14,7 +9,6 @@ export async function GET(
         const { slug } = await params
         const supabase = await createClient()
 
-        // Verify the store exists
         const { data: store, error: storeError } = await supabase
             .from('stores')
             .select('id, org_id')
@@ -25,10 +19,7 @@ export async function GET(
             return NextResponse.json({ error: 'Store not found' }, { status: 404 })
         }
 
-        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace | undefined
-
         // Org-level integrations act as a baseline that store-level settings can override.
-        // Stores without an org_id skip this entirely and behave exactly as before.
         const orgMap: Record<string, any> = {}
         if (store.org_id) {
             const { data: orgIntegrations } = await supabase
@@ -45,19 +36,16 @@ export async function GET(
             })
         }
 
-        // Always fetch Postgres data as the baseline (covers existing stores + dev where KV is unbound)
         const { data: pgIntegrations } = await supabase
             .from('store_integrations')
             .select('provider, config, is_active, inherited_from_org')
             .eq('store_id', store.id)
 
-        const pgMap: Record<string, any> = { ...orgMap }
+        const dataMap: Record<string, any> = { ...orgMap }
         if (pgIntegrations) {
             pgIntegrations.forEach(intg => {
-                // A store row with inherited_from_org=true keeps the org baseline but lets the store toggle is_active.
-                // A store row with inherited_from_org=false fully overrides the org config.
                 const orgBase = intg.inherited_from_org ? orgMap[intg.provider] : null
-                pgMap[intg.provider] = {
+                dataMap[intg.provider] = {
                     ...(orgBase ?? {}),
                     ...(typeof intg.config === 'object' && intg.config ? intg.config : {}),
                     enabled: intg.is_active,
@@ -66,25 +54,6 @@ export async function GET(
             })
         }
 
-        // Overlay KV data on top of PG data (KV is source of truth in prod)
-        const getProviderData = async (provider: string) => {
-            if (kv) {
-                try {
-                    const kvData = await kv.get(`store:${store.id}:integration:${provider}`, 'json')
-                    if (kvData) return kvData
-                } catch (e) {
-                    console.warn(`KV read failed for ${provider}, falling back to PG:`, e)
-                }
-            }
-            return pgMap[provider] ?? null
-        }
-
-        const mpesaData = await getProviderData('mpesa')
-        const paypalData = await getProviderData('paypal')
-        const pesapalData = await getProviderData('pesapal')
-        const intasendData = await getProviderData('intasend')
-
-        // Filter out secrets before returning to frontend
         const sanitize = (data: any) => {
             if (!data) return null
             const { consumerKey, consumerSecret, publishableKey, secretKey, clientId, secret, passkey, _inheritedFromOrg, ...safe } = data
@@ -102,10 +71,10 @@ export async function GET(
         }
 
         return NextResponse.json({
-            mpesa: sanitize(mpesaData),
-            paypal: sanitize(paypalData),
-            pesapal: sanitize(pesapalData),
-            intasend: sanitize(intasendData)
+            mpesa: sanitize(dataMap['mpesa']),
+            paypal: sanitize(dataMap['paypal']),
+            pesapal: sanitize(dataMap['pesapal']),
+            intasend: sanitize(dataMap['intasend']),
         })
 
     } catch (error) {
@@ -122,7 +91,6 @@ export async function POST(
         const { slug } = await params
         const supabase = await createClient()
 
-        // Authenticate - check if user is the store owner
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -138,7 +106,6 @@ export async function POST(
             return NextResponse.json({ error: 'Store not found' }, { status: 404 })
         }
 
-        // Must be the owner to change these settings
         if (store.owner_id !== user.id) {
             return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
         }
@@ -150,40 +117,34 @@ export async function POST(
             return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
         }
 
-        const kv = process.env.STORE_INTEGRATIONS as unknown as KVNamespace | undefined
-
-        if (kv) {
-            try {
-                // If credentials are partially provided, fetch existing to merge
-                const existingData = await kv.get(`store:${store.id}:integration:${provider}`, 'json') || {}
-                const mergedData = { ...(existingData as object), ...data }
-                await kv.put(`store:${store.id}:integration:${provider}`, JSON.stringify(mergedData))
-            } catch (e) {
-                console.warn(`KV write failed for ${provider}, saving to PG only:`, e)
-            }
-        }
-
-        // Upsert into store_integrations — in dev this is the only storage; in prod it tracks active state
-        const { data: existingPgRecord } = await supabase
+        // Fetch existing config to merge (preserves secrets not re-submitted)
+        const { data: existing } = await supabase
             .from('store_integrations')
-            .select('id')
+            .select('id, config')
             .eq('store_id', store.id)
             .eq('provider', provider)
             .maybeSingle()
 
-        if (existingPgRecord) {
+        const mergedConfig = {
+            ...(typeof existing?.config === 'object' && existing.config ? existing.config : {}),
+            ...data,
+        }
+        // Strip the enabled flag from config — it lives in is_active
+        const { enabled, ...configOnly } = mergedConfig
+
+        if (existing) {
             await supabase
                 .from('store_integrations')
-                .update({ is_active: data.enabled ?? true, updated_at: new Date().toISOString() })
-                .eq('id', existingPgRecord.id)
+                .update({ config: configOnly, is_active: data.enabled ?? true, updated_at: new Date().toISOString() })
+                .eq('id', existing.id)
         } else {
             await supabase
                 .from('store_integrations')
                 .insert({
                     store_id: store.id,
-                    provider: provider,
+                    provider,
                     is_active: data.enabled ?? true,
-                    config: {} // No secrets stored in PG
+                    config: configOnly,
                 })
         }
 
