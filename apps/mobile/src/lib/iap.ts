@@ -92,27 +92,53 @@ export function useProIap() {
         if (connected && SKU) fetchProducts({ skus: [SKU], type: 'subs' })
     }, [connected, fetchProducts])
 
-    const proProduct = useMemo(() => {
-        const p = subscriptions.find((s) => s.id === SKU)
-        return p ? { displayPrice: p.displayPrice } : null
-    }, [subscriptions])
+    const rawProduct = useMemo(
+        () => subscriptions.find((s) => s.id === SKU),
+        [subscriptions],
+    )
 
-    const purchasePro = useCallback((slug: string) => {
+    const proProduct = useMemo(
+        () => (rawProduct ? { displayPrice: rawProduct.displayPrice } : null),
+        [rawProduct],
+    )
+
+    // Android subscriptions purchase against a base-plan *offer*. Pull the first
+    // offer token from the fetched product; Play rejects the request without it.
+    const offerToken = useMemo<string | null>(() => {
+        const offers = (rawProduct as { subscriptionOfferDetailsAndroid?: { offerToken: string }[] } | undefined)
+            ?.subscriptionOfferDetailsAndroid
+        return offers && offers.length > 0 ? offers[0].offerToken : null
+    }, [rawProduct])
+
+    const purchasePro = useCallback((slug: string): Promise<{ pro: boolean }> => {
         setError(null)
+        if (!SKU) {
+            setError('Pro is not configured yet (missing SKU).')
+            return Promise.resolve({ pro: false })
+        }
         setLoading(true)
         return new Promise<{ pro: boolean }>((resolve, reject) => {
             pending.current = { slug, resolve, reject }
             requestPurchase({
                 type: 'subs',
-                request: { google: { skus: [SKU] } },
+                request: {
+                    google: {
+                        skus: [SKU],
+                        ...(offerToken
+                            ? { subscriptionOffers: [{ sku: SKU, offerToken }] }
+                            : {}),
+                    },
+                },
             }).catch((e: unknown) => {
                 pending.current = null
                 reject(e instanceof Error ? e : new Error('Could not start purchase'))
             })
         })
-            .catch((e: Error) => { setError(e.message); throw e })
+            // Never let the rejection escape — surface it via `error` state and
+            // resolve so the caller (and the UI) stay interactive.
+            .catch((e: Error): { pro: boolean } => { setError(e.message); return { pro: false } })
             .finally(() => setLoading(false))
-    }, [requestPurchase])
+    }, [requestPurchase, offerToken])
 
     return { ready: connected, proProduct, purchasePro, loading, error }
 }
