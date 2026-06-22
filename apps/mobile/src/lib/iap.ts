@@ -56,7 +56,7 @@ export function useProIap() {
             }
         } catch (e) {
             // Do not acknowledge — Play auto-refunds the unacknowledged purchase.
-            ctx.reject(e instanceof Error ? e : new Error('Verification failed'))
+            ctx.reject(e instanceof Error ? new Error(`verify failed: ${e.message}`) : new Error('Verification failed'))
         } finally {
             pending.current = null
         }
@@ -65,13 +65,15 @@ export function useProIap() {
     const handleError = useCallback((err: { code?: string; message?: string }) => {
         const ctx = pending.current
         pending.current = null
-        if (!ctx) return
         // User dismissing the Play sheet is a benign no-op, not an error.
         if (err?.code === 'E_USER_CANCELLED' || err?.code === 'user-cancelled') {
-            ctx.resolve({ pro: false })
+            ctx?.resolve({ pro: false })
             return
         }
-        ctx.reject(new Error(err?.message ?? 'Purchase failed'))
+        // [DEBUG] capture code+message even when no purchase is pending.
+        const msg = `purchaseError [${err?.code ?? 'no-code'}]: ${err?.message ?? 'unknown'}`
+        setError(msg)
+        ctx?.reject(new Error(msg))
     }, [])
 
     const {
@@ -140,5 +142,15 @@ export function useProIap() {
             .finally(() => setLoading(false))
     }, [requestPurchase, offerToken])
 
-    return { ready: connected, proProduct, purchasePro, loading, error }
+    // [DEBUG] Temporary diagnostics for the first on-device purchase test.
+    // Remove this object (and its use in ProSheet) once purchasing works.
+    const debug = {
+        sku: SKU ?? '(unset)',
+        connected,
+        subsLoaded: subscriptions.length,
+        productFound: !!rawProduct,
+        offerToken: offerToken ? `${offerToken.slice(0, 8)}…` : '(none)',
+    }
+
+    return { ready: connected, proProduct, purchasePro, loading, error, debug }
 }
