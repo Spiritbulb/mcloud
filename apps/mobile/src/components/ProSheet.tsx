@@ -71,7 +71,12 @@ export function ProSheet({
           </ScrollView>
 
           {error && (
-            <Text style={[t.type.bodySmall, { color: t.colors.error }]} selectable>{error}</Text>
+            <View style={[styles.notice, { backgroundColor: t.colors.errorContainer }]}>
+              <Ionicons name="alert-circle-outline" size={18} color={t.colors.error} style={{ marginTop: 1 }} />
+              <Text style={[t.type.bodySmall, { color: t.colors.onErrorContainer, flex: 1 }]} selectable>
+                {error}
+              </Text>
+            </View>
           )}
 
           <View style={styles.actions}>
@@ -94,5 +99,6 @@ const styles = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   badge: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   featureRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  notice: { flexDirection: 'row', gap: 10, padding: 12, borderRadius: 14 },
   actions: { flexDirection: 'row', gap: 12, marginTop: 4 },
 })

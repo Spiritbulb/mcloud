@@ -14,6 +14,23 @@ import { api as makeApi } from '@/lib/api'
 
 const SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU as string
 
+// Raised when the Play payment SUCCEEDED but our backend failed to verify/grant
+// Pro. The user has paid (or will be charged unless Play auto-refunds), so they
+// must be told it's our side and to contact support — not that the purchase failed.
+class GrantError extends Error {
+    detail: string
+    constructor(detail: string) {
+        super(detail)
+        this.name = 'GrantError'
+        this.detail = detail
+    }
+}
+
+const SUPPORT_MESSAGE =
+    "Payment went through but we couldn't activate Pro on our end. " +
+    'You have not lost your money — please contact support@menengai.cloud ' +
+    'with your store name and we’ll sort it out right away.'
+
 type PendingPurchase = {
     slug: string
     resolve: (v: { pro: boolean }) => void
@@ -52,11 +69,13 @@ export function useProIap() {
                 await finishRef.current?.({ purchase, isConsumable: false })
                 ctx.resolve({ pro: true })
             } else {
-                ctx.reject(new Error('Subscription not granted'))
+                // Paid but backend said not granted → our problem, needs support.
+                ctx.reject(new GrantError('backend returned pro=false'))
             }
         } catch (e) {
-            // Do not acknowledge — Play auto-refunds the unacknowledged purchase.
-            ctx.reject(e instanceof Error ? new Error(`verify failed: ${e.message}`) : new Error('Verification failed'))
+            // Payment succeeded but verify/grant threw. Do NOT acknowledge — Play
+            // auto-refunds the unacknowledged purchase. Either way it's our side.
+            ctx.reject(new GrantError(e instanceof Error ? e.message : 'verify failed'))
         } finally {
             pending.current = null
         }
@@ -137,8 +156,18 @@ export function useProIap() {
             })
         })
             // Never let the rejection escape — surface it via `error` state and
-            // resolve so the caller (and the UI) stay interactive.
-            .catch((e: Error): { pro: boolean } => { setError(e.message); return { pro: false } })
+            // resolve so the caller (and the UI) stay interactive. A GrantError
+            // means the user paid but we failed to activate: show the support
+            // message (and log the technical detail), not the raw error.
+            .catch((e: Error): { pro: boolean } => {
+                if (e instanceof GrantError) {
+                    console.warn('[iap] grant failed after payment:', e.detail)
+                    setError(SUPPORT_MESSAGE)
+                } else {
+                    setError(e.message)
+                }
+                return { pro: false }
+            })
             .finally(() => setLoading(false))
     }, [requestPurchase, offerToken])
 
