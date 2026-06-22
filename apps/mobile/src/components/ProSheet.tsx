@@ -28,7 +28,7 @@ export function ProSheet({
   onSuccess: () => void
 }) {
   const t = useTheme()
-  const { proProduct, purchasePro, loading, error, debug } = useProIap()
+  const { proProduct, purchasePro, loading, error } = useProIap()
 
   const onSubscribe = async () => {
     try {
@@ -73,11 +73,6 @@ export function ProSheet({
           {error && (
             <Text style={[t.type.bodySmall, { color: t.colors.error }]} selectable>{error}</Text>
           )}
-
-          {/* [DEBUG] temporary — remove once purchasing works */}
-          <Text style={[t.type.bodySmall, { color: t.colors.onSurfaceVariant }]} selectable>
-            {`sku=${debug.sku} · connected=${debug.connected} · subs=${debug.subsLoaded} · product=${debug.productFound} · offer=${debug.offerToken}`}
-          </Text>
 
           <View style={styles.actions}>
             <View style={{ flex: 1 }}>

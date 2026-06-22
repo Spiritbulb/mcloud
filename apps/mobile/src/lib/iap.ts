@@ -70,7 +70,7 @@ export function useProIap() {
             ctx?.resolve({ pro: false })
             return
         }
-        // [DEBUG] capture code+message even when no purchase is pending.
+        // Surface the Play error code+message so failures are diagnosable in support.
         const msg = `purchaseError [${err?.code ?? 'no-code'}]: ${err?.message ?? 'unknown'}`
         setError(msg)
         ctx?.reject(new Error(msg))
@@ -142,15 +142,5 @@ export function useProIap() {
             .finally(() => setLoading(false))
     }, [requestPurchase, offerToken])
 
-    // [DEBUG] Temporary diagnostics for the first on-device purchase test.
-    // Remove this object (and its use in ProSheet) once purchasing works.
-    const debug = {
-        sku: SKU ?? '(unset)',
-        connected,
-        subsLoaded: subscriptions.length,
-        productFound: !!rawProduct,
-        offerToken: offerToken ? `${offerToken.slice(0, 8)}…` : '(none)',
-    }
-
-    return { ready: connected, proProduct, purchasePro, loading, error, debug }
+    return { ready: connected, proProduct, purchasePro, loading, error }
 }
