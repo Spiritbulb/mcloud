@@ -1,19 +1,17 @@
-// POST /api/mobile/stores/[slug]/subscribe — start a Pro subscription for a store
-// from the mobile app. Bearer-authed (WorkOS access token). Mirrors the former web
-// /api/store/[slug]/subscribe flow; this is the surface we'll wire Google Play
-// billing into for testing. For now it initializes a Paystack transaction and
-// returns a checkout URL.
+// POST /api/mobile/stores/[slug]/subscribe — verify a Google Play subscription
+// purchase and grant the store Pro. Bearer-authed (WorkOS access token).
+//
+// Body: { purchaseToken: string, productId: string }
+// The client buys the subscription natively (expo-iap), then sends us the purchase
+// token. We verify it against the Google Play Developer API before granting — and
+// only after we return success does the client acknowledge the purchase.
 
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser, fail } from '../../../_lib'
+import { verifyPlaySubscription } from '../../../_google-play'
 
-const PAYSTACK_SECRET_KEY = process.env.PAYSTACK_SECRET_KEY!
-
-const PLANS = {
-    hobby: { code: 'PLN_10bmosuhh7p4zhw', amount: 149900 }, // KES 1499 in kobo
-    pro: { code: 'PLN_ob4j8tgco6e63b0', amount: 249900 },   // KES 2499 in kobo
-}
+const PRO_SKU = process.env.GOOGLE_PLAY_PRO_SKU
 
 export async function POST(
     req: NextRequest,
@@ -25,13 +23,17 @@ export async function POST(
 
     const { slug } = await params
 
-    let plan: 'hobby' | 'pro' = 'pro'
+    let purchaseToken = ''
+    let productId = ''
     try {
         const body = await req.json()
-        if (body?.plan) plan = body.plan
+        purchaseToken = body?.purchaseToken ?? ''
+        productId = body?.productId ?? ''
     } catch {
-        // No body — default to 'pro'
+        // fall through to validation
     }
+    if (!purchaseToken) return fail(400, 'purchaseToken required')
+    if (!PRO_SKU) return fail(500, 'GOOGLE_PLAY_PRO_SKU not configured')
 
     const supabase = await createClient()
 
@@ -52,63 +54,45 @@ export async function POST(
         .single()
 
     if (!membership) return fail(403, 'Forbidden')
-    if (store.is_pro) return fail(400, 'Already subscribed')
 
-    const selectedPlan = PLANS[plan] ?? PLANS.pro
+    // A purchase token must not already belong to a different store.
+    const { data: existing } = await supabase
+        .from('store_subscriptions')
+        .select('store_id')
+        .eq('google_play_purchase_token', purchaseToken)
+        .maybeSingle()
 
-    let paystackRes: Response
-    try {
-        paystackRes = await fetch('https://api.paystack.co/transaction/initialize', {
-            method: 'POST',
-            headers: {
-                Authorization: `Bearer ${PAYSTACK_SECRET_KEY}`,
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: user.email,
-                amount: selectedPlan.amount,
-                plan: selectedPlan.code,
+    if (existing && existing.store_id !== store.id) {
+        return fail(409, 'Purchase already linked to another store')
+    }
+
+    // Verify the token with Google before granting anything.
+    const result = await verifyPlaySubscription(purchaseToken)
+    if (!result.ok) return fail(502, result.error)
+    if (!result.active) return fail(400, 'Subscription is not active')
+    if (result.productId !== PRO_SKU) return fail(400, 'Unexpected product')
+
+    // Idempotent upsert keyed on the unique purchase token — safe to call twice
+    // (covers a retry of an interrupted acknowledgement).
+    await supabase
+        .from('store_subscriptions')
+        .upsert(
+            {
+                store_id: store.id,
+                provider: 'google_play',
+                google_play_purchase_token: purchaseToken,
+                google_play_order_id: result.orderId,
+                google_play_product_id: result.productId,
+                plan: 'pro',
+                amount: 0,
                 currency: 'KES',
-                metadata: {
-                    store_id: store.id,
-                    store_slug: slug,
-                    plan_tier: plan,
-                    user_id: user.id,
-                },
-            }),
-        })
-    } catch (err) {
-        console.error('[mobile subscribe] Paystack fetch failed:', err)
-        return fail(502, 'Could not reach Paystack')
-    }
+                status: 'active',
+                period_end: result.expiryTime,
+            },
+            { onConflict: 'google_play_purchase_token' }
+        )
 
-    const rawText = await paystackRes.text()
-    if (!rawText) {
-        console.error('[mobile subscribe] Paystack empty response', paystackRes.status)
-        return fail(502, 'Paystack returned an empty response')
-    }
+    await supabase.from('stores').update({ is_pro: true }).eq('id', store.id)
 
-    let paystackData: any
-    try {
-        paystackData = JSON.parse(rawText)
-    } catch {
-        console.error('[mobile subscribe] Paystack non-JSON:', paystackRes.status, rawText)
-        return fail(502, 'Unexpected response from Paystack')
-    }
-
-    if (!paystackData.status) {
-        console.error('[mobile subscribe] Paystack error:', paystackData.message)
-        return fail(502, paystackData.message)
-    }
-
-    await supabase.from('store_subscriptions').insert({
-        store_id: store.id,
-        paystack_reference: paystackData.data.reference,
-        amount: selectedPlan.amount / 100,
-        currency: 'KES',
-        plan,
-        status: 'pending',
-    })
-
-    return NextResponse.json({ url: paystackData.data.authorization_url })
+    return NextResponse.json({ ok: true, pro: true, expiresAt: result.expiryTime })
 }

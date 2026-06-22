@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
 
     await supabase
         .from('store_subscriptions')
-        .update({ status: 'complete' })
+        .update({ status: 'active' })
         .eq('id', subscription_id)
 
     await supabase

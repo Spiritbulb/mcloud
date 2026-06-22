@@ -12,7 +12,7 @@ async function getStats() {
     const [users, stores, activeSubs, pendingSubs] = await Promise.all([
         supabase.from("users").select("id", { count: "exact", head: true }),
         supabase.from("stores").select("id", { count: "exact", head: true }),
-        supabase.from("store_subscriptions").select("id", { count: "exact", head: true }).eq("status", "complete"),
+        supabase.from("store_subscriptions").select("id", { count: "exact", head: true }).eq("status", "active"),
         supabase.from("store_subscriptions").select("id", { count: "exact", head: true }).eq("status", "pending"),
     ])
     return {

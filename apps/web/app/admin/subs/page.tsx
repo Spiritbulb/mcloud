@@ -17,8 +17,8 @@ async function getSubscriptions() {
             amount,
             currency,
             created_at,
-            intasend_invoice_id,
-            intasend_tracking_id,
+            provider,
+            google_play_order_id,
             stores (
                 id,
                 name,

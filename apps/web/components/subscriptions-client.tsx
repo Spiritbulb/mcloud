@@ -8,8 +8,8 @@ type Subscription = {
     amount: number
     currency: string
     created_at: string
-    intasend_invoice_id: string | null
-    intasend_tracking_id: string | null
+    provider: string | null
+    google_play_order_id: string | null
     stores: {
         id: string
         name: string
@@ -31,7 +31,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
         })
         if (res.ok) {
             setRows(prev => prev.map(r =>
-                r.id === subId ? { ...r, status: 'complete', stores: r.stores ? { ...r.stores, is_pro: true } : null } : r
+                r.id === subId ? { ...r, status: 'active', stores: r.stores ? { ...r.stores, is_pro: true } : null } : r
             ))
         }
         setLoading(null)
@@ -39,8 +39,9 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
 
     const statusColor: Record<string, string> = {
         pending: 'bg-yellow-100 text-yellow-800',
-        complete: 'bg-green-100 text-green-800',
-        failed: 'bg-red-100 text-red-800',
+        active: 'bg-green-100 text-green-800',
+        cancelled: 'bg-muted text-muted-foreground',
+        expired: 'bg-red-100 text-red-800',
     }
 
     return (
@@ -57,7 +58,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                 <th className="text-left px-4 py-3 font-medium">Store</th>
                                 <th className="text-left px-4 py-3 font-medium">Amount</th>
                                 <th className="text-left px-4 py-3 font-medium">Status</th>
-                                <th className="text-left px-4 py-3 font-medium">Invoice ID</th>
+                                <th className="text-left px-4 py-3 font-medium">Order ID</th>
                                 <th className="text-left px-4 py-3 font-medium">Date</th>
                                 <th className="text-left px-4 py-3 font-medium">Action</th>
                             </tr>
@@ -85,7 +86,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                         </span>
                                     </td>
                                     <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                                        {sub.intasend_invoice_id ?? sub.intasend_tracking_id ?? '—'}
+                                        {sub.google_play_order_id ?? '—'}
                                     </td>
                                     <td className="px-4 py-3 text-muted-foreground text-xs">
                                         {new Date(sub.created_at).toLocaleDateString('en-KE', {
@@ -94,7 +95,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                         })}
                                     </td>
                                     <td className="px-4 py-3">
-                                        {sub.status !== 'complete' && sub.stores && (
+                                        {sub.status !== 'active' && sub.stores && (
                                             <button
                                                 onClick={() => activate(sub.id, sub.stores!.id)}
                                                 disabled={loading === sub.id}
@@ -103,7 +104,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                                 {loading === sub.id ? 'Activating…' : 'Activate Pro'}
                                             </button>
                                         )}
-                                        {sub.status === 'complete' && (
+                                        {sub.status === 'active' && (
                                             <span className="text-xs text-muted-foreground">✓ Active</span>
                                         )}
                                     </td>

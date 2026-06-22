@@ -1556,12 +1556,10 @@ export type Database = {
           amount: number
           created_at: string | null
           currency: string
+          google_play_order_id: string | null
+          google_play_product_id: string | null
+          google_play_purchase_token: string | null
           id: string
-          paystack_customer_code: string | null
-          paystack_email_token: string | null
-          paystack_paid_at: string | null
-          paystack_reference: string | null
-          paystack_subscription_code: string | null
           period_end: string | null
           period_start: string | null
           plan: string | null
@@ -1573,12 +1571,10 @@ export type Database = {
           amount: number
           created_at?: string | null
           currency?: string
+          google_play_order_id?: string | null
+          google_play_product_id?: string | null
+          google_play_purchase_token?: string | null
           id?: string
-          paystack_customer_code?: string | null
-          paystack_email_token?: string | null
-          paystack_paid_at?: string | null
-          paystack_reference?: string | null
-          paystack_subscription_code?: string | null
           period_end?: string | null
           period_start?: string | null
           plan?: string | null
@@ -1590,12 +1586,10 @@ export type Database = {
           amount?: number
           created_at?: string | null
           currency?: string
+          google_play_order_id?: string | null
+          google_play_product_id?: string | null
+          google_play_purchase_token?: string | null
           id?: string
-          paystack_customer_code?: string | null
-          paystack_email_token?: string | null
-          paystack_paid_at?: string | null
-          paystack_reference?: string | null
-          paystack_subscription_code?: string | null
           period_end?: string | null
           period_start?: string | null
           plan?: string | null
