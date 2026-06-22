@@ -13,6 +13,7 @@ import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { Avatar, Body, Card, FadeInUp, Skeleton } from '@/components/ui'
+import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
 import { useTodayData } from '@/store/useTodayData'
 import { useAuth } from '@/auth/AuthContext'
@@ -30,6 +31,9 @@ export default function TodayTab() {
 
   const [refreshing, setRefreshing] = React.useState(false)
   const [fulfillingId, setFulfillingId] = React.useState<string | null>(null)
+  const [proOpen, setProOpen] = React.useState(false)
+
+  const showUpgrade = !!store && !store.is_pro && canManage
 
   const onRefresh = React.useCallback(async () => {
     setRefreshing(true)
@@ -107,6 +111,26 @@ export default function TodayTab() {
           <Card><Body variant>{error ?? 'Store unavailable'}</Body></Card>
         ) : (
           <>
+            {/* Upgrade banner — free stores the caller manages */}
+            {showUpgrade && (
+              <FadeInUp delay={0}>
+                <Pressable onPress={() => setProOpen(true)} style={({ pressed }) => pressed && { opacity: 0.85 }}>
+                  <Card tonal style={s.upgradeCard}>
+                    <View style={[s.upgradeIcon, { backgroundColor: t.colors.primaryContainer }]}>
+                      <Ionicons name="diamond-outline" size={20} color={t.colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Upgrade to Pro</Text>
+                      <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
+                        Custom domain, analytics & more
+                      </Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={t.colors.onSurfaceVariant} />
+                  </Card>
+                </Pressable>
+              </FadeInUp>
+            )}
+
             {/* Block 1: Pending orders */}
             {unfulfilledOrders.length > 0 && (
               <FadeInUp delay={0}>
@@ -202,6 +226,15 @@ export default function TodayTab() {
           </>
         )}
       </ScrollView>
+
+      {store && (
+        <ProSheet
+          visible={proOpen}
+          slug={store.slug}
+          onClose={() => setProOpen(false)}
+          onSuccess={refreshStore}
+        />
+      )}
     </SafeAreaView>
   )
 }
@@ -253,6 +286,8 @@ const styles = (t: Theme) =>
     storeNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1, justifyContent: 'center' },
     scroll: { paddingHorizontal: 20, paddingTop: 8, gap: 12 },
     sectionLabel: { marginBottom: 6, letterSpacing: 0.5 },
+    upgradeCard: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+    upgradeIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
     orderCard: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, borderWidth: 1 },
     fulfillBtn: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 20 },
     pulse: { flexDirection: 'row', alignItems: 'center', borderRadius: 20, padding: 16, gap: 0 },

@@ -272,6 +272,15 @@ export function api(authedFetch: Fetch) {
       return (await json<{ url: string }>(res)).url
     },
 
+    // Verify a Google Play subscription purchase server-side and grant the store Pro.
+    async subscribePro(slug: string, input: { purchaseToken: string; productId: string }): Promise<{ ok: boolean; pro: boolean; expiresAt: string | null }> {
+      const res = await authedFetch(`/api/mobile/stores/${slug}/subscribe`, {
+        method: 'POST',
+        body: JSON.stringify(input),
+      })
+      return json<{ ok: boolean; pro: boolean; expiresAt: string | null }>(res)
+    },
+
     async registerPushToken(token: string, platform: string): Promise<void> {
       const res = await authedFetch('/api/mobile/push-token', {
         method: 'POST',

@@ -2,7 +2,7 @@
 // Native: Branding · Manual M-Pesa · Analytics. Web (manage-on-web): Auto-payments
 // · Domain · Members · Design editor. Danger zone uses type-to-confirm delete.
 import * as React from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -10,9 +10,13 @@ import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/auth/AuthContext'
 import { api, type StoreHub } from '@/lib/api'
 import { Body, Card, ConfirmDelete, Skeleton } from '@/components/ui'
+import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
 import { config } from '@/lib/config'
 import { useTheme, type Theme } from '@/lib/theme'
+
+const PRO_SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU
+const PACKAGE_NAME = 'cloud.menengai.twa'
 
 type Row = { key: string; label: string; desc: string; icon: React.ComponentProps<typeof Ionicons>['name']; manageOnly?: boolean; iconColor?: string; iconBg?: string }
 
@@ -36,6 +40,15 @@ export default function MoreTab() {
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
+  const [proOpen, setProOpen] = React.useState(false)
+
+  const isPro = store?.is_pro ?? false
+
+  const openManageSubscription = () => {
+    Linking.openURL(
+      `https://play.google.com/store/account/subscriptions?sku=${PRO_SKU}&package=${PACKAGE_NAME}`,
+    )
+  }
 
   const onDelete = async () => {
     if (!store) return
@@ -87,6 +100,24 @@ export default function MoreTab() {
               ))}
             </Card>
 
+            <Text style={[t.type.labelLarge, s.label, { color: t.colors.onSurfaceVariant }]}>Subscription</Text>
+            <Card style={s.group}>
+              <SettingsRow
+                t={t}
+                icon={isPro ? 'diamond' : 'diamond-outline'}
+                label={isPro ? 'Pro plan' : 'Upgrade to Pro'}
+                desc={isPro ? 'Manage in Google Play' : 'Unlock domain, analytics & more'}
+                external={isPro}
+                divider={false}
+                iconColor="rgb(120 80 0)"
+                iconBg="rgb(255 235 180)"
+                onPress={() => {
+                  if (isPro) openManageSubscription()
+                  else if (canManage) setProOpen(true)
+                }}
+              />
+            </Card>
+
             <Card style={s.group}>
               <SettingsRow
                 t={t}
@@ -133,6 +164,15 @@ export default function MoreTab() {
           </>
         )}
       </ScrollView>
+
+      {store && (
+        <ProSheet
+          visible={proOpen}
+          slug={store.slug}
+          onClose={() => setProOpen(false)}
+          onSuccess={refresh}
+        />
+      )}
 
       {store && (
         <ConfirmDelete
