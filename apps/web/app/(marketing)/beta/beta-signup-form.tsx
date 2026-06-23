@@ -18,7 +18,7 @@ const inputCls = cn(
 
 export function BetaSignupForm({ source, className }: { source: string; className?: string }) {
     const [email, setEmail] = useState('')
-    const [done, setDone] = useState(false)
+    const [optInUrl, setOptInUrl] = useState<string | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [isPending, start] = useTransition()
 
@@ -32,7 +32,7 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
         setError(null)
         start(async () => {
             const res = await joinBeta({ email: trimmed, source })
-            if (res.ok) setDone(true)
+            if (res.ok) setOptInUrl(res.optInUrl)
             else setError(res.error)
         })
     }
@@ -40,16 +40,31 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
     return (
         <div className={className}>
             <AnimatePresence mode="wait">
-                {done ? (
+                {optInUrl !== null ? (
                     <motion.div
                         key="done"
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
-                        className="flex items-center gap-3 rounded-xl border border-border bg-foreground/5 px-4 py-3.5"
+                        className="rounded-xl border border-border bg-foreground/5 px-4 py-4 space-y-3"
                     >
-                        <span className="text-lg">🎉</span>
-                        <p className="text-[14px] text-foreground">
-                            You&apos;re on the list. We&apos;ll be in touch.
+                        <div className="flex items-center gap-3">
+                            <span className="text-lg">🎉</span>
+                            <p className="text-[14px] text-foreground">
+                                You&apos;re on the list.
+                            </p>
+                        </div>
+                        {optInUrl && (
+                            <a
+                                href={optInUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-[13px] font-medium text-background hover:opacity-90 transition-opacity"
+                            >
+                                Opt in to the Android beta →
+                            </a>
+                        )}
+                        <p className="text-[12px] text-muted-foreground">
+                            Open this on the Android device you&apos;ll test with, signed in to the Google account on this email.
                         </p>
                     </motion.div>
                 ) : (
