@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
-import Image from 'next/image'
+import { useState, useRef, useCallback } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
     Loader2, Plus, Minus, Trash2, ShoppingBag,
     Shield, Info, AlertCircle, Phone, Mail, MessageCircle,
+    CheckCircle2, XCircle,
 } from 'lucide-react'
 import { convertKEStoUSD, formatKES, formatUSD } from '@/lib/currency'
 import { Button } from '@mcloud/ui/button'
@@ -18,6 +18,12 @@ import type { CartPageProps, GuestDetails } from '../types'
 
 const EMPTY_GUEST: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
 
+type DarajaState =
+    | { phase: 'idle' }
+    | { phase: 'waiting'; orderId: string; checkoutRequestId: string }
+    | { phase: 'success'; mpesaCode: string }
+    | { phase: 'failed'; reason: string }
+
 export default function ClassicCartPage({
     storeSlug,
     cartItems,
@@ -27,6 +33,7 @@ export default function ClassicCartPage({
     onUpdateQuantity,
     onRemoveItem,
     onMpesaCheckout,
+    onDarajaCheckout,
     onPaypalCheckout,
     onPesapalCheckout,
     onIntasendCheckout,
@@ -36,6 +43,40 @@ export default function ClassicCartPage({
     const [paymentMethod, setPaymentMethod] = useState<'paypal' | 'mpesa' | 'pesapal' | 'intasend'>('mpesa')
     const [guest, setGuest] = useState<GuestDetails>(EMPTY_GUEST)
     const [error, setError] = useState('')
+    const [darajaState, setDarajaState] = useState<DarajaState>({ phase: 'idle' })
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+    const stopPolling = useCallback(() => {
+        if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
+    }, [])
+
+    const startPolling = useCallback((orderId: string) => {
+        let attempts = 0
+        const MAX = 40 // ~2 min at 3s intervals
+        pollRef.current = setInterval(async () => {
+            attempts++
+            try {
+                const res = await fetch(
+                    `${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/mpesa/status?orderId=${orderId}`,
+                    { credentials: 'include' }
+                )
+                const data = await res.json()
+                if (data.paymentStatus === 'completed') {
+                    stopPolling()
+                    setDarajaState({ phase: 'success', mpesaCode: data.mpesaCode ?? '' })
+                    setTimeout(() => router.push(`/orders/${orderId}`), 1800)
+                } else if (data.paymentStatus === 'failed') {
+                    stopPolling()
+                    setDarajaState({ phase: 'failed', reason: 'Payment was cancelled or failed. Please try again.' })
+                } else if (attempts >= MAX) {
+                    stopPolling()
+                    setDarajaState({ phase: 'failed', reason: 'Payment confirmation timed out. If you completed the payment, check your orders page.' })
+                }
+            } catch {
+                // network blip — keep polling
+            }
+        }, 3000)
+    }, [stopPolling, router])
 
     const setField = (field: keyof GuestDetails) =>
         (e: React.ChangeEvent<HTMLInputElement>) =>
@@ -45,14 +86,18 @@ export default function ClassicCartPage({
     const totalKES = subtotalKES
     const totalUSD = convertKEStoUSD(totalKES)
 
+    const isDaraja = paymentMethod === 'mpesa' && mpesaConfig?.darajaEnabled
+
     const validate = (): string | null => {
         if (paymentMethod === 'mpesa') {
             if (!guest.mpesaPhone.trim()) return 'M-PESA phone number is required'
             if (!/^(?:\+?254|0)[17]\d{8}$/.test(guest.mpesaPhone.trim()))
                 return 'Enter a valid Kenyan phone number (e.g. 0712345678)'
-            if (!guest.mpesaCode.trim()) return 'M-PESA transaction code is required'
-            if (!/^[A-Z0-9]{6,20}$/.test(guest.mpesaCode.trim().toUpperCase()))
-                return 'Invalid M-PESA transaction code format'
+            if (!isDaraja) {
+                if (!guest.mpesaCode.trim()) return 'M-PESA transaction code is required'
+                if (!/^[A-Z0-9]{6,20}$/.test(guest.mpesaCode.trim().toUpperCase()))
+                    return 'Invalid M-PESA transaction code format'
+            }
         }
         if (guest.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guest.email))
             return 'Enter a valid email address'
@@ -60,11 +105,16 @@ export default function ClassicCartPage({
     }
 
     const handleCheckout = async () => {
+        if (isDaraja && darajaState.phase === 'waiting') return
         const err = validate()
         if (err) { setError(err); return }
         setError('')
         try {
-            if (paymentMethod === 'mpesa') {
+            if (paymentMethod === 'mpesa' && isDaraja) {
+                const result = await onDarajaCheckout(guest.mpesaPhone.trim(), subtotalKES)
+                setDarajaState({ phase: 'waiting', orderId: result.orderId, checkoutRequestId: result.checkoutRequestId })
+                startPolling(result.orderId)
+            } else if (paymentMethod === 'mpesa') {
                 await onMpesaCheckout({ ...guest, mpesaCode: guest.mpesaCode.toUpperCase() })
             } else if (paymentMethod === 'paypal') {
                 await onPaypalCheckout()
@@ -300,79 +350,157 @@ export default function ClassicCartPage({
                                     {/* M-PESA form */}
                                     {paymentMethod === 'mpesa' && (
                                         <div className="space-y-4">
-                                            <div className="sf-mpesa-instructions p-4 text-xs space-y-2.5 leading-relaxed">
-                                                <p className="text-xs uppercase tracking-wider font-medium mb-3" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                                    How to pay
-                                                </p>
-                                                <div className="space-y-2">
-                                                    {[
-                                                        <>M-PESA → Lipa na M-PESA → {mpesaConfig?.type === 'paybill' ? 'Pay Bill' : 'Buy Goods and Services'}</>,
-                                                        <>
-                                                            Enter {mpesaConfig?.type === 'paybill' ? 'Business' : 'Till'} Number:{' '}
-                                                            <span className="sf-mono-tag inline-flex items-center gap-1">
-                                                                {mpesaConfig?.number || '—'}
-                                                                {mpesaConfig?.number && <CopyButton content={mpesaConfig.number} size="xs" />}
-                                                            </span>
-                                                        </>,
-                                                        ...(mpesaConfig?.type === 'paybill' && mpesaConfig.account
-                                                            ? [<>Account Number: <span className="sf-mono-tag inline-flex items-center gap-1">{mpesaConfig.account}<CopyButton content={mpesaConfig.account} size="xs" /></span></>]
-                                                            : []),
-                                                        <>Amount: <span className="sf-mono-tag font-semibold">{formatKES(totalKES)}</span></>,
-                                                        <>Enter your PIN and confirm</>,
-                                                        <>Paste the confirmation code below</>,
-                                                    ].map((step, i) => (
-                                                        <div key={i} className="flex gap-2.5">
-                                                            <span
-                                                                className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-xs font-medium rounded-full"
-                                                                style={{ backgroundColor: 'var(--sf-foreground)', color: 'var(--sf-background)', opacity: 0.7, fontSize: '10px' }}
-                                                            >
-                                                                {i + 1}
-                                                            </span>
-                                                            <span style={{ color: 'var(--sf-foreground-subtle)' }}>{step}</span>
+                                            {/* Daraja STK Push waiting state */}
+                                            {darajaState.phase === 'waiting' && (
+                                                <div className="flex flex-col items-center gap-4 py-6 text-center">
+                                                    <div className="relative">
+                                                        <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: 'color-mix(in srgb, #4CAF50 12%, var(--sf-background))' }}>
+                                                            <Phone className="w-7 h-7" style={{ color: '#4CAF50' }} />
                                                         </div>
-                                                    ))}
+                                                        <Loader2 className="w-5 h-5 animate-spin absolute -bottom-1 -right-1" style={{ color: '#4CAF50' }} />
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-sm font-medium" style={{ color: 'var(--sf-foreground)' }}>
+                                                            Check your phone
+                                                        </p>
+                                                        <p className="text-xs mt-1 leading-relaxed" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            An M-PESA prompt has been sent to<br />
+                                                            <span className="font-medium" style={{ color: 'var(--sf-foreground)' }}>{guest.mpesaPhone}</span>.
+                                                            <br />Enter your PIN to complete the payment.
+                                                        </p>
+                                                    </div>
+                                                    <button
+                                                        className="text-xs underline underline-offset-2"
+                                                        style={{ color: 'var(--sf-foreground-subtle)' }}
+                                                        onClick={() => { stopPolling(); setDarajaState({ phase: 'idle' }) }}
+                                                    >
+                                                        Cancel and try again
+                                                    </button>
                                                 </div>
-                                            </div>
+                                            )}
 
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="mpesa-phone" className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                                    <Phone className="w-3 h-3" />
-                                                    M-PESA Phone <span className="sf-required">*</span>
-                                                </Label>
-                                                <Input id="mpesa-phone" value={guest.mpesaPhone} onChange={setField('mpesaPhone')} placeholder="0712 345 678" inputMode="tel" disabled={isProcessing} />
-                                            </div>
+                                            {/* Daraja success */}
+                                            {darajaState.phase === 'success' && (
+                                                <div className="flex flex-col items-center gap-3 py-6 text-center">
+                                                    <CheckCircle2 className="w-12 h-12" style={{ color: '#4CAF50' }} />
+                                                    <div>
+                                                        <p className="text-sm font-medium" style={{ color: 'var(--sf-foreground)' }}>Payment confirmed!</p>
+                                                        <p className="text-xs mt-1" style={{ color: 'var(--sf-foreground-subtle)' }}>Redirecting to your order…</p>
+                                                    </div>
+                                                </div>
+                                            )}
 
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="mpesa-code" className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                                    Transaction Code <span className="sf-required">*</span>
-                                                </Label>
-                                                <Input
-                                                    id="mpesa-code"
-                                                    value={guest.mpesaCode}
-                                                    onChange={(e) => setGuest((p) => ({ ...p, mpesaCode: e.target.value.toUpperCase() }))}
-                                                    placeholder="e.g. QW12ABCDEF"
-                                                    disabled={isProcessing}
-                                                />
-                                            </div>
+                                            {/* Daraja failed */}
+                                            {darajaState.phase === 'failed' && (
+                                                <div className="flex flex-col items-center gap-3 py-4 text-center">
+                                                    <XCircle className="w-10 h-10" style={{ color: 'var(--sf-accent)' }} />
+                                                    <p className="text-xs leading-relaxed" style={{ color: 'var(--sf-foreground-subtle)' }}>{darajaState.reason}</p>
+                                                    <button
+                                                        className="text-xs underline underline-offset-2"
+                                                        style={{ color: 'var(--sf-foreground)' }}
+                                                        onClick={() => setDarajaState({ phase: 'idle' })}
+                                                    >
+                                                        Try again
+                                                    </button>
+                                                </div>
+                                            )}
 
-                                            <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
-                                            <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--sf-foreground-subtle)' }}>Contact (optional)</p>
+                                            {/* Daraja idle — phone entry only */}
+                                            {isDaraja && darajaState.phase === 'idle' && (
+                                                <>
+                                                    <div className="sf-mpesa-instructions p-4 text-xs space-y-2 leading-relaxed">
+                                                        <p className="text-xs uppercase tracking-wider font-medium" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            How it works
+                                                        </p>
+                                                        <p style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            Enter your M-PESA number below. You'll receive a payment prompt on your phone — just enter your PIN to pay <span className="font-medium" style={{ color: 'var(--sf-foreground)' }}>{formatKES(totalKES)}</span>.
+                                                        </p>
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="mpesa-phone" className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            <Phone className="w-3 h-3" />
+                                                            M-PESA Phone <span className="sf-required">*</span>
+                                                        </Label>
+                                                        <Input id="mpesa-phone" value={guest.mpesaPhone} onChange={setField('mpesaPhone')} placeholder="0712 345 678" inputMode="tel" disabled={isProcessing} />
+                                                    </div>
+                                                </>
+                                            )}
 
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="whatsapp" className="text-xs flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                                    <MessageCircle className="w-3 h-3" />
-                                                    WhatsApp <span style={{ opacity: 0.55 }}>(if different from M-PESA number)</span>
-                                                </Label>
-                                                <Input id="whatsapp" value={guest.whatsapp} onChange={setField('whatsapp')} placeholder="0712 345 678" inputMode="tel" disabled={isProcessing} />
-                                            </div>
+                                            {/* Manual M-PESA flow */}
+                                            {!isDaraja && darajaState.phase === 'idle' && (
+                                                <>
+                                                    <div className="sf-mpesa-instructions p-4 text-xs space-y-2.5 leading-relaxed">
+                                                        <p className="text-xs uppercase tracking-wider font-medium mb-3" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            How to pay
+                                                        </p>
+                                                        <div className="space-y-2">
+                                                            {[
+                                                                <>M-PESA → Lipa na M-PESA → {mpesaConfig?.type === 'paybill' ? 'Pay Bill' : 'Buy Goods and Services'}</>,
+                                                                <>
+                                                                    Enter {mpesaConfig?.type === 'paybill' ? 'Business' : 'Till'} Number:{' '}
+                                                                    <span className="sf-mono-tag inline-flex items-center gap-1">
+                                                                        {mpesaConfig?.number || '—'}
+                                                                        {mpesaConfig?.number && <CopyButton content={mpesaConfig.number} size="xs" />}
+                                                                    </span>
+                                                                </>,
+                                                                ...(mpesaConfig?.type === 'paybill' && mpesaConfig.account
+                                                                    ? [<>Account Number: <span className="sf-mono-tag inline-flex items-center gap-1">{mpesaConfig.account}<CopyButton content={mpesaConfig.account} size="xs" /></span></>]
+                                                                    : []),
+                                                                <>Amount: <span className="sf-mono-tag font-semibold">{formatKES(totalKES)}</span></>,
+                                                                <>Enter your PIN and confirm</>,
+                                                                <>Paste the confirmation code below</>,
+                                                            ].map((step, i) => (
+                                                                <div key={i} className="flex gap-2.5">
+                                                                    <span className="flex-shrink-0 w-4 h-4 flex items-center justify-center text-xs font-medium rounded-full" style={{ backgroundColor: 'var(--sf-foreground)', color: 'var(--sf-background)', opacity: 0.7, fontSize: '10px' }}>
+                                                                        {i + 1}
+                                                                    </span>
+                                                                    <span style={{ color: 'var(--sf-foreground-subtle)' }}>{step}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="mpesa-phone" className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            <Phone className="w-3 h-3" />
+                                                            M-PESA Phone <span className="sf-required">*</span>
+                                                        </Label>
+                                                        <Input id="mpesa-phone" value={guest.mpesaPhone} onChange={setField('mpesaPhone')} placeholder="0712 345 678" inputMode="tel" disabled={isProcessing} />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="mpesa-code" className="text-xs uppercase tracking-wider flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            Transaction Code <span className="sf-required">*</span>
+                                                        </Label>
+                                                        <Input
+                                                            id="mpesa-code"
+                                                            value={guest.mpesaCode}
+                                                            onChange={(e) => setGuest((p) => ({ ...p, mpesaCode: e.target.value.toUpperCase() }))}
+                                                            placeholder="e.g. QW12ABCDEF"
+                                                            disabled={isProcessing}
+                                                        />
+                                                    </div>
+                                                </>
+                                            )}
 
-                                            <div className="space-y-1.5">
-                                                <Label htmlFor="email" className="text-xs flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                                    <Mail className="w-3 h-3" />
-                                                    Email <span style={{ opacity: 0.55 }}>(for receipt)</span>
-                                                </Label>
-                                                <Input id="email" value={guest.email} onChange={setField('email')} placeholder="you@example.com" type="email" disabled={isProcessing} />
-                                            </div>
+                                            {darajaState.phase === 'idle' && (
+                                                <>
+                                                    <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
+                                                    <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--sf-foreground-subtle)' }}>Contact (optional)</p>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="whatsapp" className="text-xs flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            <MessageCircle className="w-3 h-3" />
+                                                            WhatsApp <span style={{ opacity: 0.55 }}>(if different from M-PESA number)</span>
+                                                        </Label>
+                                                        <Input id="whatsapp" value={guest.whatsapp} onChange={setField('whatsapp')} placeholder="0712 345 678" inputMode="tel" disabled={isProcessing} />
+                                                    </div>
+                                                    <div className="space-y-1.5">
+                                                        <Label htmlFor="email" className="text-xs flex items-center gap-1.5" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                                            <Mail className="w-3 h-3" />
+                                                            Email <span style={{ opacity: 0.55 }}>(for receipt)</span>
+                                                        </Label>
+                                                        <Input id="email" value={guest.email} onChange={setField('email')} placeholder="you@example.com" type="email" disabled={isProcessing} />
+                                                    </div>
+                                                </>
+                                            )}
                                         </div>
                                     )}
 
@@ -405,19 +533,23 @@ export default function ClassicCartPage({
                                         </div>
                                     )}
 
-                                    <Button size="lg" className="w-full sf-btn-primary" disabled={isProcessing} onClick={handleCheckout}>
-                                        {isProcessing ? (
-                                            <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
-                                        ) : paymentMethod === 'mpesa' ? (
-                                            <><Shield className="mr-2 h-4 w-4" />Confirm M-PESA Payment</>
-                                        ) : paymentMethod === 'paypal' ? (
-                                            <><Shield className="mr-2 h-4 w-4" />Pay with PayPal · {formatUSD(totalUSD)}</>
-                                        ) : paymentMethod === 'pesapal' ? (
-                                            <><Shield className="mr-2 h-4 w-4" />Pay Securely via Pesapal</>
-                                        ) : (
-                                            <><Shield className="mr-2 h-4 w-4" />Pay Securely via Intasend</>
-                                        )}
-                                    </Button>
+                                    {darajaState.phase === 'idle' && (
+                                        <Button size="lg" className="w-full sf-btn-primary" disabled={isProcessing} onClick={handleCheckout}>
+                                            {isProcessing ? (
+                                                <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
+                                            ) : isDaraja ? (
+                                                <><Phone className="mr-2 h-4 w-4" />Send M-PESA Prompt · {formatKES(totalKES)}</>
+                                            ) : paymentMethod === 'mpesa' ? (
+                                                <><Shield className="mr-2 h-4 w-4" />Confirm M-PESA Payment</>
+                                            ) : paymentMethod === 'paypal' ? (
+                                                <><Shield className="mr-2 h-4 w-4" />Pay with PayPal · {formatUSD(totalUSD)}</>
+                                            ) : paymentMethod === 'pesapal' ? (
+                                                <><Shield className="mr-2 h-4 w-4" />Pay Securely via Pesapal</>
+                                            ) : (
+                                                <><Shield className="mr-2 h-4 w-4" />Pay Securely via Intasend</>
+                                            )}
+                                        </Button>
+                                    )}
 
                                     <div className="sf-security-badge flex items-center justify-center gap-1.5 text-xs py-2">
                                         <Shield className="w-3.5 h-3.5 flex-shrink-0" />

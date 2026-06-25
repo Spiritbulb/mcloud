@@ -326,6 +326,7 @@ export interface MpesaConfig {
     number: string
     account?: string
     enabled: boolean
+    darajaEnabled: boolean
     paypalEnabled: boolean
     pesapalEnabled?: boolean
     intasendEnabled?: boolean
@@ -340,6 +341,7 @@ export interface CartPageProps {
     onUpdateQuantity: (variantId: string, qty: number) => void
     onRemoveItem: (variantId: string) => void
     onMpesaCheckout: (guest: GuestDetails) => Promise<void>
+    onDarajaCheckout: (phone: string, amount: number) => Promise<{ checkoutRequestId: string; orderId: string }>
     onPaypalCheckout: () => Promise<void>
     onPesapalCheckout?: () => Promise<void>
     onIntasendCheckout?: () => Promise<void>

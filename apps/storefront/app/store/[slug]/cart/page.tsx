@@ -49,6 +49,7 @@ export default function CartPageContainer() {
                     number: m?.mpesa_till ?? m?.mpesa_paybill ?? '',
                     account: m?.mpesa_account,
                     enabled: m?.enabled ?? false,
+                    darajaEnabled: m?.darajaEnabled ?? false,
                     paypalEnabled: p?.enabled ?? false,
                     pesapalEnabled: psa?.enabled ?? false,
                     intasendEnabled: isend?.enabled ?? false,
@@ -184,6 +185,26 @@ export default function CartPageContainer() {
         }
     }
 
+    const handleDarajaCheckout = async (phone: string, amount: number) => {
+        setIsProcessing(true)
+        try {
+            const guest: GuestDetails = { mpesaPhone: phone, mpesaCode: '', whatsapp: '', email: '' }
+            const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
+
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/mpesa/stk-push`, {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ storeSlug, phone, orderId: orderNumber, amount }),
+            })
+            const data = await res.json()
+            if (!data.success) throw new Error(data.error || 'STK push failed')
+            return { checkoutRequestId: data.checkoutRequestId, orderId: orderNumber }
+        } finally {
+            setIsProcessing(false)
+        }
+    }
+
     const handleIntasendCheckout = async () => {
         setIsProcessing(true)
         try {
@@ -215,6 +236,7 @@ export default function CartPageContainer() {
             onUpdateQuantity={updateCartLine}
             onRemoveItem={removeFromCart}
             onMpesaCheckout={handleMpesaCheckout}
+            onDarajaCheckout={handleDarajaCheckout}
             onPaypalCheckout={handlePaypalCheckout}
             onPesapalCheckout={handlePesapalCheckout}
             onIntasendCheckout={handleIntasendCheckout}
