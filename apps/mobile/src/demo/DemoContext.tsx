@@ -26,7 +26,7 @@ type DemoState = {
   deleteProduct: (id: string) => void
 }
 
-const DemoContext = React.createContext<DemoState | null>(null)
+export const DemoContext = React.createContext<DemoState | null>(null)
 
 function cloneInitialState() {
   return {
@@ -68,10 +68,15 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
     setIsDemoMode((prev) => {
       const next = !prev
       AsyncStorage.setItem(DEMO_KEY, next ? '1' : '0')
-      if (!next) setState(cloneInitialState()) // reset on disable
       return next
     })
   }, [])
+
+  React.useEffect(() => {
+    if (!isDemoMode) {
+      setState(cloneInitialState())
+    }
+  }, [isDemoMode])
 
   // Simulation loop
   React.useEffect(() => {
@@ -113,14 +118,14 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
         })
       } else {
         // Revenue tick — small web sale
-        const tick_amount = Math.floor(Math.random() * 800) + 200
+        const tickAmount = Math.floor(Math.random() * 800) + 200
         setState((s) => {
           const totals = s.todayAnalytics.totals ?? {}
           const prev = s.todayAnalytics.previous ?? {}
           return {
             ...s,
             todayAnalytics: {
-              totals: { ...totals, revenue: (totals.revenue ?? 0) + tick_amount },
+              totals: { ...totals, revenue: (totals.revenue ?? 0) + tickAmount },
               previous: prev,
             },
           }
@@ -130,7 +135,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
       schedule()
     }
 
-    let timerId: ReturnType<typeof setTimeout>
+    let timerId: ReturnType<typeof setTimeout> | undefined
     const schedule = () => {
       const delay = 8000 + Math.random() * 4000
       timerId = setTimeout(tick, delay)
