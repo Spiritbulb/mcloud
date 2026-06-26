@@ -4,6 +4,7 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
+import { useDemo } from '@/demo/DemoContext'
 import { Avatar, Card } from '@/components/ui'
 import { useTheme, useThemePreference, type ThemePreference } from '@/lib/theme'
 import { registerPush } from '@/notifications/registerPush'
@@ -19,6 +20,8 @@ export default function AccountScreen() {
   const s = React.useMemo(() => styles(t), [t])
   const { user, signOut, authedFetch } = useAuth()
   const { preference, setPreference } = useThemePreference()
+  const { isDemoMode, toggleDemo } = useDemo()
+  const isAdmin = user?.isAdmin === true
 
   const onSignOut = () => {
     Alert.alert('Sign out', 'Are you sure you want to sign out?', [
@@ -95,6 +98,53 @@ export default function AccountScreen() {
             <Ionicons name="chevron-forward" size={18} color={t.colors.onSurfaceVariant} />
           </Pressable>
         </Card>
+
+        {/* Developer (admin only) */}
+        {isAdmin && (
+          <>
+            <Text style={[t.type.labelLarge, s.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Developer</Text>
+            <Card style={s.group}>
+              <Pressable
+                onPress={toggleDemo}
+                style={({ pressed }) => [s.row, pressed && { opacity: 0.6 }]}
+              >
+                <View style={[s.iconBox, { backgroundColor: isDemoMode ? t.colors.primaryContainer : t.colors.surfaceContainerHigh }]}>
+                  <Ionicons
+                    name="flask-outline"
+                    size={20}
+                    color={isDemoMode ? t.colors.primary : t.colors.onSurfaceVariant}
+                  />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>Demo Mode</Text>
+                  <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
+                    {isDemoMode ? 'Active — showing mock store data' : 'Simulate live store activity'}
+                  </Text>
+                </View>
+                <View
+                  style={{
+                    width: 44,
+                    height: 26,
+                    borderRadius: 13,
+                    backgroundColor: isDemoMode ? t.colors.primary : t.colors.surfaceContainerHigh,
+                    justifyContent: 'center',
+                    paddingHorizontal: 3,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 20,
+                      height: 20,
+                      borderRadius: 10,
+                      backgroundColor: isDemoMode ? t.colors.onPrimary : t.colors.onSurfaceVariant,
+                      alignSelf: isDemoMode ? 'flex-end' : 'flex-start',
+                    }}
+                  />
+                </View>
+              </Pressable>
+            </Card>
+          </>
+        )}
 
         {/* Sign out */}
         <Text style={[t.type.labelLarge, s.sectionLabel, { color: t.colors.onSurfaceVariant }]}>Account</Text>
