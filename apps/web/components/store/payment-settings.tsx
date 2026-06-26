@@ -5,10 +5,9 @@ import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
 import { Label } from '@mcloud/ui/label'
 import { Badge } from '@mcloud/ui/badge'
-import { Card, CardContent } from '@mcloud/ui/card'
 import { Separator } from '@mcloud/ui/separator'
 import { Switch } from '@mcloud/ui/switch'
-import { Check, ExternalLink, Phone, Loader2, CreditCard, Wallet, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Check, ExternalLink, Phone, Loader2, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 
 interface IntegrationData {
     enabled?: boolean
@@ -42,21 +41,6 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
     const [darajaTestStatus, setDarajaTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
     const [darajaTestError, setDarajaTestError] = useState('')
 
-    // PayPal
-    const [paypalEnabled, setPaypalEnabled] = useState(false)
-    const [paypalClientId, setPaypalClientId] = useState('')
-    const [paypalSecret, setPaypalSecret] = useState('')
-    const [paypalMode, setPaypalMode] = useState<'sandbox' | 'live'>('sandbox')
-
-    // Pesapal
-    const [pesapalEnabled, setPesapalEnabled] = useState(false)
-    const [pesapalConsumerKey, setPesapalConsumerKey] = useState('')
-    const [pesapalConsumerSecret, setPesapalConsumerSecret] = useState('')
-
-    // Intasend
-    const [intasendEnabled, setIntasendEnabled] = useState(false)
-    const [intasendPublishableKey, setIntasendPublishableKey] = useState('')
-    const [intasendSecretKey, setIntasendSecretKey] = useState('')
 
     useEffect(() => {
         const fetchData = async () => {
@@ -66,7 +50,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                 })
                 if (res.ok) {
                     const data = await res.json()
-                    const { mpesa, paypal, pesapal, intasend } = data
+                    const { mpesa } = data
 
                     if (mpesa) {
                         setMpesaEnabled(mpesa.enabled ?? false)
@@ -75,16 +59,6 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                         setMpesaAccount(mpesa.mpesa_account ?? '')
                         setDarajaEnabled(mpesa.darajaEnabled ?? false)
                         setMpesaShortcode(mpesa.shortcode ?? '')
-                    }
-                    if (paypal) {
-                        setPaypalEnabled(paypal.enabled ?? false)
-                        setPaypalMode(paypal.mode ?? 'sandbox')
-                    }
-                    if (pesapal) {
-                        setPesapalEnabled(pesapal.enabled ?? false)
-                    }
-                    if (intasend) {
-                        setIntasendEnabled(intasend.enabled ?? false)
                     }
                 }
             } catch (err) {
@@ -158,31 +132,6 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
             setDarajaTestStatus('fail')
             setDarajaTestError('Network error — check your credentials and try again')
         }
-    }
-
-    const savePaypal = () => {
-        handleSave('paypal', {
-            enabled: paypalEnabled,
-            mode: paypalMode,
-            ...(paypalClientId && { clientId: paypalClientId }),
-            ...(paypalSecret && { secret: paypalSecret })
-        })
-    }
-
-    const savePesapal = () => {
-        handleSave('pesapal', {
-            enabled: pesapalEnabled,
-            ...(pesapalConsumerKey && { consumerKey: pesapalConsumerKey }),
-            ...(pesapalConsumerSecret && { consumerSecret: pesapalConsumerSecret })
-        })
-    }
-
-    const saveIntasend = () => {
-        handleSave('intasend', {
-            enabled: intasendEnabled,
-            ...(intasendPublishableKey && { publishableKey: intasendPublishableKey }),
-            ...(intasendSecretKey && { secretKey: intasendSecretKey })
-        })
     }
 
     if (loading) {
@@ -451,160 +400,6 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                 </div>
             )}
 
-            <Separator />
-
-            {/* PayPal */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-md bg-[#003087] flex items-center justify-center shrink-0">
-                        <span className="text-white text-xs font-bold">PP</span>
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">PayPal</p>
-                        <p className="text-xs text-muted-foreground">Accept international payments via PayPal</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={paypalEnabled ? 'default' : 'secondary'} className="text-[10px]">
-                            {paypalEnabled ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Switch checked={paypalEnabled} onCheckedChange={setPaypalEnabled} />
-                    </div>
-                </div>
-
-                {paypalEnabled && (
-                    <div className="space-y-4 max-w-sm pl-12">
-                        <div className="space-y-1.5">
-                            <Label>Mode</Label>
-                            <div className="flex rounded-md border overflow-hidden">
-                                {(['sandbox', 'live'] as const).map((t) => (
-                                    <button
-                                        key={t}
-                                        onClick={() => setPaypalMode(t)}
-                                        className={`flex-1 h-9 text-xs transition-colors ${paypalMode === t ? 'bg-foreground text-background font-medium' : 'text-muted-foreground hover:text-foreground hover:bg-muted'}`}
-                                    >
-                                        {t === 'sandbox' ? 'Sandbox' : 'Live'}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Client ID</Label>
-                            <Input
-                                type="password"
-                                value={paypalClientId}
-                                onChange={(e) => setPaypalClientId(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Client Secret</Label>
-                            <Input
-                                type="password"
-                                value={paypalSecret}
-                                onChange={(e) => setPaypalSecret(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <Button onClick={savePaypal} disabled={saving === 'paypal'} className="w-full h-9 text-sm">
-                            {saving === 'paypal' ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : saved === 'paypal' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : 'Save PayPal settings'}
-                        </Button>
-                    </div>
-                )}
-            </div>
-
-            <Separator />
-
-            {/* Pesapal */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-md bg-blue-600 flex items-center justify-center shrink-0">
-                        <CreditCard className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Pesapal</p>
-                        <p className="text-xs text-muted-foreground">Accept cards and mobile money via Pesapal</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={pesapalEnabled ? 'default' : 'secondary'} className="text-[10px]">
-                            {pesapalEnabled ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Switch checked={pesapalEnabled} onCheckedChange={setPesapalEnabled} />
-                    </div>
-                </div>
-
-                {pesapalEnabled && (
-                    <div className="space-y-4 max-w-sm pl-12">
-                        <div className="space-y-1.5">
-                            <Label>Consumer Key</Label>
-                            <Input
-                                type="password"
-                                value={pesapalConsumerKey}
-                                onChange={(e) => setPesapalConsumerKey(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Consumer Secret</Label>
-                            <Input
-                                type="password"
-                                value={pesapalConsumerSecret}
-                                onChange={(e) => setPesapalConsumerSecret(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <Button onClick={savePesapal} disabled={saving === 'pesapal'} className="w-full h-9 text-sm">
-                            {saving === 'pesapal' ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : saved === 'pesapal' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : 'Save Pesapal settings'}
-                        </Button>
-                    </div>
-                )}
-            </div>
-
-            <Separator />
-
-            {/* Intasend */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-md bg-purple-600 flex items-center justify-center shrink-0">
-                        <Wallet className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Intasend</p>
-                        <p className="text-xs text-muted-foreground">Accept cards and mobile money via Intasend</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={intasendEnabled ? 'default' : 'secondary'} className="text-[10px]">
-                            {intasendEnabled ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Switch checked={intasendEnabled} onCheckedChange={setIntasendEnabled} />
-                    </div>
-                </div>
-
-                {intasendEnabled && (
-                    <div className="space-y-4 max-w-sm pl-12">
-                        <div className="space-y-1.5">
-                            <Label>Publishable Key</Label>
-                            <Input
-                                type="password"
-                                value={intasendPublishableKey}
-                                onChange={(e) => setIntasendPublishableKey(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Secret Key</Label>
-                            <Input
-                                type="password"
-                                value={intasendSecretKey}
-                                onChange={(e) => setIntasendSecretKey(e.target.value)}
-                                placeholder="Leave blank to keep existing"
-                            />
-                        </div>
-                        <Button onClick={saveIntasend} disabled={saving === 'intasend'} className="w-full h-9 text-sm">
-                            {saving === 'intasend' ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : saved === 'intasend' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : 'Save Intasend settings'}
-                        </Button>
-                    </div>
-                )}
-            </div>
 
         </div>
     )

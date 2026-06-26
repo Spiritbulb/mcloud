@@ -9,7 +9,7 @@ export const metadata: Metadata = {
     title: "Menengai Cloud — Managed Platform for Enterprise Applications",
     description:
       "Deploy storefronts, trading apps, and more — fully managed. No DevOps required.",
-    url: "https://menengai.cloud",
+    url: "https://mcloud.co.ke",
     siteName: "Menengai Cloud",
     type: "website",
   },

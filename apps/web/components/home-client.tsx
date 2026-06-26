@@ -470,9 +470,9 @@ const STORE_PLANS: PlanTier[] = [
         cta: 'Start free',
         href: '/auth/sign-up',
         features: [
-            'Hosted storefront on a menengai.cloud address',
+            'Hosted storefront on a mcloud.co.ke address',
             'Unlimited products and services',
-            'Paystack checkout',
+            'M-PESA STK Push checkout',
             'Order management',
         ],
     },
@@ -513,7 +513,7 @@ const STORE_MATRIX: { plans: string[]; rows: FeatureRow[] } = {
     rows: [
         { label: 'Hosted storefront', values: [true, true, true] },
         { label: 'Unlimited products', values: [true, true, true] },
-        { label: 'Paystack checkout', values: [true, true, true] },
+        { label: 'M-PESA STK Push checkout', values: [true, true, true] },
         { label: 'Order management', values: [true, true, true] },
         { label: 'Your own domain', values: [false, true, true] },
         { label: 'Analytics', values: [false, 'Basic', 'Advanced'] },
@@ -553,7 +553,7 @@ const STORE_FAQS: FaqEntry[] = [
     },
     {
         q: 'How do payments work?',
-        a: 'Paystack is built in, so you take card and mobile money in shillings out of the box. Payouts go to your own Paystack account. The money is yours from the first sale.',
+        a: 'M-PESA STK Push is built in. When a customer checks out, a payment prompt goes straight to their phone — no copying and pasting till numbers, no manual confirmation. They enter their PIN and the order is marked paid automatically.',
     },
     {
         q: 'Can I run more than one shop?',
