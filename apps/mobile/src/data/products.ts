@@ -6,12 +6,13 @@ import { api, type Product } from '@/lib/api'
 import { useAuth } from '@/auth/AuthContext'
 import * as React from 'react'
 import { queryKeys } from './queryClient'
+import { useDemoApi } from '@/demo/demoApi'
 
 type ProductsData = { products: Product[]; role: string }
 
 function useClient() {
   const { authedFetch } = useAuth()
-  return React.useMemo(() => api(authedFetch), [authedFetch])
+  return useDemoApi(authedFetch)
 }
 
 export function useProducts(storeSlug: string) {

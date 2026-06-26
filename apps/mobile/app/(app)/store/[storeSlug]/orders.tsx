@@ -7,7 +7,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
-import { api, type Order } from '@/lib/api'
+import { type Order } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { Avatar, Badge, Body, Card } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
@@ -27,7 +28,7 @@ export default function OrdersScreen() {
   const router = useRouter()
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [orders, setOrders] = React.useState<Order[]>([])
   const [loading, setLoading] = React.useState(true)

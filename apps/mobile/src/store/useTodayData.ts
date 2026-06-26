@@ -1,6 +1,7 @@
 import * as React from 'react'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type Order, type AnalyticsTotals } from '@/lib/api'
+import { type Order, type AnalyticsTotals } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 
 export type TodayData = {
   unfulfilledOrders: Order[]
@@ -12,7 +13,7 @@ export type TodayData = {
 
 export function useTodayData(storeSlug: string): TodayData {
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [unfulfilledOrders, setUnfulfilledOrders] = React.useState<Order[]>([])
   const [analytics, setAnalytics] = React.useState<AnalyticsTotals | null>(null)

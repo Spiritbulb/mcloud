@@ -4,7 +4,8 @@ import { ActivityIndicator, RefreshControl, ScrollView, StyleSheet, Text, View }
 import { useNavigation } from 'expo-router'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
-import { api, type AnalyticsTotals } from '@/lib/api'
+import { type AnalyticsTotals } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { Body, Card, Overline } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
@@ -24,7 +25,7 @@ export default function AnalyticsScreen() {
   const { slug: storeSlug } = useStore()
   const navigation = useNavigation()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ title: 'Analytics' })

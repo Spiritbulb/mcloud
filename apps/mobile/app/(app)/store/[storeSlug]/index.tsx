@@ -17,7 +17,8 @@ import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
 import { useTodayData } from '@/store/useTodayData'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type Order } from '@/lib/api'
+import { type Order } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { useTheme, type Theme } from '@/lib/theme'
 
 export default function TodayTab() {
@@ -27,7 +28,7 @@ export default function TodayTab() {
   const { slug, store, loading: storeLoading, canManage, refresh: refreshStore } = useStore()
   const { unfulfilledOrders, analytics, loading, error, refresh: refreshToday } = useTodayData(slug)
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [refreshing, setRefreshing] = React.useState(false)
   const [fulfillingId, setFulfillingId] = React.useState<string | null>(null)
