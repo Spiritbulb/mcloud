@@ -17,6 +17,9 @@ export function makeQueryClient() {
   })
 }
 
+// Singleton used by DemoContext (cache clear on demo toggle) and QueryProvider.
+export const queryClient = makeQueryClient()
+
 export const queryKeys = {
   products: (storeSlug: string) => ['products', storeSlug] as const,
 }

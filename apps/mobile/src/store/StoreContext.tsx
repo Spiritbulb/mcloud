@@ -3,7 +3,8 @@
 import * as React from 'react'
 import { useLocalSearchParams } from 'expo-router'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type StoreHub } from '@/lib/api'
+import { type StoreHub } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 
 type StoreState = {
   slug: string
@@ -19,7 +20,7 @@ const StoreContext = React.createContext<StoreState | null>(null)
 export function StoreProvider({ children }: { children: React.ReactNode }) {
   const { storeSlug } = useLocalSearchParams<{ storeSlug: string }>()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [store, setStore] = React.useState<StoreHub | null>(null)
   const [loading, setLoading] = React.useState(true)

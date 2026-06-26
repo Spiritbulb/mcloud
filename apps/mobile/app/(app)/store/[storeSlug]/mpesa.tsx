@@ -5,7 +5,8 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Switch, Te
 import { useNavigation } from 'expo-router'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
-import { api, type ManualMpesa } from '@/lib/api'
+import { type ManualMpesa } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { Body, Button, Card, Field } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
@@ -15,7 +16,7 @@ export default function MpesaScreen() {
   const { slug: storeSlug } = useStore()
   const navigation = useNavigation()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ title: 'Manual M-Pesa' })

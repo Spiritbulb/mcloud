@@ -10,7 +10,8 @@ import * as ImagePicker from 'expo-image-picker'
 import { useLocalSearchParams, useNavigation, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type Product } from '@/lib/api'
+import { type Product } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { useCreateProduct, useUpdateProduct } from '@/data/products'
 import { useQueryClient } from '@tanstack/react-query'
 import { queryKeys } from '@/data/queryClient'
@@ -25,7 +26,7 @@ export default function ProductFormScreen() {
   const navigation = useNavigation()
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
   const qc = useQueryClient()
   const createMut = useCreateProduct(storeSlug)
   const updateMut = useUpdateProduct(storeSlug)

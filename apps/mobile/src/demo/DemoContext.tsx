@@ -10,6 +10,7 @@ import {
   makeOrder,
 } from './fixtures'
 import type { Product, Order, AnalyticsTotals } from '@/lib/api'
+import { queryClient } from '@/data/queryClient'
 
 const DEMO_KEY = 'mcloud.demo.enabled'
 
@@ -75,6 +76,7 @@ export function DemoProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (!isDemoMode) {
       setState(cloneInitialState())
+      queryClient.clear()
     }
   }, [isDemoMode])
 

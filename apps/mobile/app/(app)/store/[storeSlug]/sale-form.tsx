@@ -9,7 +9,8 @@ import { Image } from 'expo-image'
 import { useNavigation, useRouter } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type Product } from '@/lib/api'
+import { type Product } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { useStore } from '@/store/StoreContext'
 import { Avatar, Button, Field } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
@@ -23,7 +24,7 @@ export default function SaleFormScreen() {
   const navigation = useNavigation()
   const { slug: storeSlug } = useStore()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [products, setProducts] = React.useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = React.useState(true)

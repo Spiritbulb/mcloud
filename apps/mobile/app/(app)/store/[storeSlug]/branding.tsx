@@ -7,7 +7,8 @@ import { useNavigation } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useAuth } from '@/auth/AuthContext'
 import { useStore } from '@/store/StoreContext'
-import { api, type Branding } from '@/lib/api'
+import { type Branding } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { Body, Button, Card, Field } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
@@ -17,7 +18,7 @@ export default function BrandingScreen() {
   const navigation = useNavigation()
   const { slug: storeSlug, store } = useStore()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   React.useLayoutEffect(() => {
     navigation.setOptions({ title: 'Branding' })

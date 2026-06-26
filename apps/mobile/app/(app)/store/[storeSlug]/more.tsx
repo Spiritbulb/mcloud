@@ -8,7 +8,8 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
 import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/auth/AuthContext'
-import { api, type StoreHub } from '@/lib/api'
+import { type StoreHub } from '@/lib/api'
+import { useDemoApi } from '@/demo/demoApi'
 import { Body, Card, ConfirmDelete, Skeleton } from '@/components/ui'
 import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
@@ -36,7 +37,7 @@ export default function MoreTab() {
   const router = useRouter()
   const { slug, store, loading, error, canManage, refresh } = useStore()
   const { authedFetch } = useAuth()
-  const client = React.useMemo(() => api(authedFetch), [authedFetch])
+  const client = useDemoApi(authedFetch)
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
   const [deleting, setDeleting] = React.useState(false)
