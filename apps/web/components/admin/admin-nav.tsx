@@ -48,8 +48,8 @@ export const ADMIN_SECTIONS: NavSection[] = [
         id: 'platform',
         label: 'Platform',
         items: [
-            { id: 'users', label: 'Users', icon: 'people', href: '/admin/users', comingSoon: true },
-            { id: 'stores', label: 'Stores', icon: 'storefront', href: '/admin/stores', comingSoon: true },
+            { id: 'users', label: 'Users', icon: 'people', href: '/admin/users' },
+            { id: 'stores', label: 'Stores', icon: 'storefront', href: '/admin/stores' },
         ],
     },
     {
@@ -57,6 +57,7 @@ export const ADMIN_SECTIONS: NavSection[] = [
         label: 'Commerce',
         items: [
             { id: 'subs', label: 'Subscriptions', icon: 'subscriptions', href: '/admin/subs' },
+            { id: 'orders', label: 'Orders', icon: 'receipt_long', href: '/admin/orders' },
         ],
     },
     {
@@ -70,7 +71,7 @@ export const ADMIN_SECTIONS: NavSection[] = [
         id: 'system',
         label: 'System',
         items: [
-            { id: 'webhooks', label: 'Webhook Logs', icon: 'webhook', href: '/admin/webhooks', comingSoon: true },
+            { id: 'webhooks', label: 'Webhook Logs', icon: 'webhook', href: '/admin/webhooks' },
         ],
     },
 ]

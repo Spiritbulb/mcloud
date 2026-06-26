@@ -55,11 +55,35 @@ export default async function AdminDashboard() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <QuickLink
+                            href="/admin/users"
+                            icon="people"
+                            label="Users"
+                            description="Manage user accounts and admin roles"
+                        />
+                        <QuickLink
+                            href="/admin/stores"
+                            icon="storefront"
+                            label="Stores"
+                            description="View stores, manage plans and suspend if needed"
+                        />
+                        <QuickLink
                             href="/admin/subs"
                             icon="subscriptions"
                             label="Subscriptions"
                             description="View and activate pending Pro subscriptions"
                             badge={stats.pendingSubs > 0 ? stats.pendingSubs : undefined}
+                        />
+                        <QuickLink
+                            href="/admin/orders"
+                            icon="receipt_long"
+                            label="Orders"
+                            description="Browse all orders across every store"
+                        />
+                        <QuickLink
+                            href="/admin/webhooks"
+                            icon="webhook"
+                            label="Webhook Logs"
+                            description="Inspect incoming webhook events and failures"
                         />
                         <QuickLink
                             href="/admin/docs-editor"

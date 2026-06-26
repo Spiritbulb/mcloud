@@ -157,51 +157,36 @@ async function handle(
   }
 
 
-  // ── 2. Admin Path (/admin/*) ──────────────────────────────────────────────
+  // ── 2. Merchant Subpaths (/settings, /orders, /products/new) ────────────────
+  // These are store-contextual owner paths. When hit on the platform host they
+  // need the active store slug to redirect to the storefront app's owner routes.
+  if (PROTECTED_SUBPATHS.some((p) => pathname.startsWith(p))) {
+    if (!session?.user) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/auth/login'
+      return NextResponse.redirect(url, 302)
+    }
+
+    const activeSlug = request.cookies.get('mng_active_store')?.value
+    if (!activeSlug) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/org'
+      url.searchParams.set('next', pathname)
+      return rewriteResponse(url, authHeaders)
+    }
+    return NextResponse.redirect(toStorefrontUrl(request, activeSlug, pathname), 307)
+  }
+
+
+  // ── 3. Admin Console (/admin/*) ───────────────────────────────────────────
+  // Platform admin panel. Role enforcement (role=admin) is in the /admin layout.
   if (pathname === '/admin' || pathname.startsWith('/admin/')) {
     if (!session?.user) {
       const url = request.nextUrl.clone()
       url.pathname = '/auth/login'
       return NextResponse.redirect(url, 302)
     }
-
-    const subpath = pathname.slice('/admin'.length) || '/'
-
-    // Store-contextual paths need the active store slug prepended
-    if (PROTECTED_SUBPATHS.some((p) => subpath.startsWith(p))) {
-      const activeSlug = request.cookies.get('mng_active_store')?.value
-      if (!activeSlug) {
-        const url = request.nextUrl.clone()
-        url.pathname = '/org'
-        url.searchParams.set('next', subpath)
-        return rewriteResponse(url, authHeaders)
-      }
-      // /store/{slug}/settings/* is now in apps/storefront which redirects to the
-      // merchant org settings — use /s/ so it routes through the storefront app.
-      return NextResponse.redirect(toStorefrontUrl(request, activeSlug, subpath), 307)
-    }
-
-    // Everything else (org, onboarding, pick, etc.) — strip /admin prefix
-    const url = request.nextUrl.clone()
-    url.pathname = subpath
-    return rewriteResponse(url, authHeaders)
-  }
-
-
-  // ── 3. Sudo Path (/sudo/*) ────────────────────────────────────────────────
-  // Platform admin panel — rewrites to /admin/*. Role enforcement is
-  // handled by the /admin layout (must have role=admin in users table).
-  if (pathname === '/sudo' || pathname.startsWith('/sudo/')) {
-    if (!session?.user) {
-      const url = request.nextUrl.clone()
-      url.pathname = '/auth/login'
-      return NextResponse.redirect(url, 302)
-    }
-
-    const subpath = pathname.slice('/sudo'.length) || '/'
-    const url = request.nextUrl.clone()
-    url.pathname = `/admin${subpath === '/' ? '' : subpath}`
-    return rewriteResponse(url, authHeaders)
+    return nextResponse(authHeaders)
   }
 
 
