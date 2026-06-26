@@ -45,6 +45,7 @@ export type SessionUser = {
   email: string
   name?: string
   avatarUrl?: string | null
+  isAdmin?: boolean
 }
 
 type AuthState = {
@@ -131,8 +132,16 @@ async function fetchMe(accessToken: string): Promise<MeResult> {
   if (res.status === 401 || res.status === 403) return { kind: 'unauthorized' }
   if (!res.ok) return { kind: 'network' } // 5xx etc. — transient, keep session
   try {
-    const data = (await res.json()) as { user: SessionUser }
-    return { kind: 'ok', user: data.user }
+    const data = (await res.json()) as { user: SessionUser & { role?: string } }
+    const raw = data.user
+    const user: SessionUser = {
+      id: raw.id,
+      email: raw.email,
+      name: raw.name,
+      avatarUrl: raw.avatarUrl,
+      isAdmin: raw.role === 'admin',
+    }
+    return { kind: 'ok', user }
   } catch {
     return { kind: 'network' }
   }
