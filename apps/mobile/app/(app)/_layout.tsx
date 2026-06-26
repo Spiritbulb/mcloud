@@ -4,6 +4,7 @@ import { useAuth } from '@/auth/AuthContext'
 import { useTheme } from '@/lib/theme'
 import { useNotificationRegistration } from '@/notifications/useNotificationRegistration'
 import { QueryProvider } from '@/data/QueryProvider'
+import { DemoProvider } from '@/demo/DemoContext'
 
 export default function AppLayout() {
   useNotificationRegistration()
@@ -35,23 +36,25 @@ export default function AppLayout() {
   // (app) use queries, so scoping it here keeps offline persistence without ever
   // gating the sign-in / redirect routes.
   return (
-    <QueryProvider>
-      <Stack
-        screenOptions={{
-          headerShadowVisible: false,
-          headerStyle: { backgroundColor: t.colors.background },
-          headerTintColor: t.colors.onSurface,
-          headerTitleStyle: { fontWeight: '700', color: t.colors.onSurface },
-          contentStyle: { backgroundColor: t.colors.background },
-        }}
-      >
-        <Stack.Screen name="orgs" options={{ headerShown: false }} />
-        <Stack.Screen name="onboarding" options={{ headerShown: false }} />
-        <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
-        <Stack.Screen name="account" options={{ title: 'Account' }} />
-        {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}
-        <Stack.Screen name="store/[storeSlug]" options={{ headerShown: false }} />
-      </Stack>
-    </QueryProvider>
+    <DemoProvider>
+      <QueryProvider>
+        <Stack
+          screenOptions={{
+            headerShadowVisible: false,
+            headerStyle: { backgroundColor: t.colors.background },
+            headerTintColor: t.colors.onSurface,
+            headerTitleStyle: { fontWeight: '700', color: t.colors.onSurface },
+            contentStyle: { backgroundColor: t.colors.background },
+          }}
+        >
+          <Stack.Screen name="orgs" options={{ headerShown: false }} />
+          <Stack.Screen name="onboarding" options={{ headerShown: false }} />
+          <Stack.Screen name="org/[orgSlug]" options={{ title: 'Stores' }} />
+          <Stack.Screen name="account" options={{ title: 'Account' }} />
+          {/* The store folder owns its own bottom-tab navigator (_layout.tsx). */}
+          <Stack.Screen name="store/[storeSlug]" options={{ headerShown: false }} />
+        </Stack>
+      </QueryProvider>
+    </DemoProvider>
   )
 }
