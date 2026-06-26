@@ -120,7 +120,7 @@ function HeroStoreCard({ store, picking, onPick }: {
                     </span>
                 </div>
                 <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-                    menengai.cloud/s/{store.slug}{ago && <span className="opacity-60"> · {ago}</span>}
+                    shop.mcloud.co.ke/{store.slug}{ago && <span className="opacity-60"> · {ago}</span>}
                 </p>
             </div>
             <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-1')}>
@@ -166,7 +166,7 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
                 <Avatar name={store.name} logo_url={store.logo_url} size={32} rounded="rounded-lg" />
                 <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
-                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">menengai.cloud/s/{store.slug}</p>
+                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">shop.mcloud.co.ke/{store.slug}</p>
                 </div>
                 {isPicking && <M3CircularIndicator size={18} />}
             </button>

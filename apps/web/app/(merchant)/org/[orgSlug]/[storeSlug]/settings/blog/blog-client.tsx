@@ -649,7 +649,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                     className="w-full text-2xl font-semibold bg-transparent outline-none placeholder:text-muted-foreground/40 text-foreground"
                                 />
                                 <div className="flex items-center mt-2">
-                                    <span className="text-xs text-muted-foreground">{`menengai.cloud/s/${storeSlug}/blog/`}</span>
+                                    <span className="text-xs text-muted-foreground">{`shop.mcloud.co.ke/${storeSlug}/blog/`}</span>
                                     <input
                                         type="text"
                                         value={form.slug}

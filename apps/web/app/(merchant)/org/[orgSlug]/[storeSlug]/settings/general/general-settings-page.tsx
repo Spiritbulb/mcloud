@@ -306,7 +306,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     <div>
                         <FieldLabel>Store URL</FieldLabel>
                         <div className="relative">
-                            <FieldInput value={`menengai.cloud/s/${store.slug}`} disabled />
+                            <FieldInput value={`shop.mcloud.co.ke/${store.slug}`} disabled />
                             <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--md-sys-color-on-surface-variant)]/40" />
                         </div>
                     </div>
@@ -380,12 +380,12 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         <>
                             Live at{' '}
                             <a
-                                href={`/s/${store.slug}`}
+                                href={`https://shop.mcloud.co.ke/${store.slug}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline underline-offset-2 hover:opacity-80 transition-opacity"
                             >
-                                menengai.cloud/s/{store.slug}
+                                shop.mcloud.co.ke/{store.slug}
                             </a>
                             <MSO icon="open_in_new" className="text-[13px] opacity-60" />
                         </>

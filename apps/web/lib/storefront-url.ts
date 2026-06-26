@@ -6,22 +6,21 @@
  * inside the app's verified scope). These helpers produce the canonical public
  * URL and force the link to open in the real browser / Custom Tab instead.
  *
- * Decision (2026-06): storefront links always use the canonical
- * `menengai.cloud/s/<slug>` short URL, even for stores with a custom domain
- * (that URL redirects to the custom domain). Keep this in sync with the TWA
- * scope exclusion of `/s/*` so these always externalize.
+ * Storefront URLs use the shop.mcloud.co.ke/{slug} structure. The /s/{slug}
+ * form is kept as the TWA shortlink because it's out-of-scope for the Android
+ * shell, causing it to open in the real browser, which then lands on shop.*.
  */
 
-const PUBLIC_ORIGIN = "https://menengai.cloud"
+const SHOP_ORIGIN = "https://shop.mcloud.co.ke"
 
 /** Absolute, canonical public URL for a store's storefront. */
 export function storefrontUrl(slug: string): string {
-  return `${PUBLIC_ORIGIN}/s/${slug}`
+  return `${SHOP_ORIGIN}/${slug}`
 }
 
 /** Display form (no scheme) for showing the link in the UI. */
 export function storefrontDisplayUrl(slug: string): string {
-  return `menengai.cloud/s/${slug}`
+  return `shop.mcloud.co.ke/${slug}`
 }
 
 /**

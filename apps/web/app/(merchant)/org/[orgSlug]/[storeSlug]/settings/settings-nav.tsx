@@ -370,7 +370,7 @@ function StoreSwitcher({
                         {store.name}
                     </span>
                     <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
-                        {store.custom_domain ? `www.${store.custom_domain}` : `menengai.cloud/s/${store.slug}`}
+                        {store.custom_domain ? `www.${store.custom_domain}` : `shop.mcloud.co.ke/${store.slug}`}
                     </span>
                 </div>
                 {hasMultiple && (
