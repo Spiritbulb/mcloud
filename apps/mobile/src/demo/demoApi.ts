@@ -1,5 +1,5 @@
 import * as React from 'react'
-import { api, type Product, type Order, type AnalyticsTotals } from '@/lib/api'
+import { api, type Product, type Order } from '@/lib/api'
 import { useDemo } from './DemoContext'
 import { DEMO_STORE_HUB, DEMO_BRANDING, DEMO_MPESA, makeOrder } from './fixtures'
 
@@ -104,7 +104,7 @@ export function useDemoApi(authedFetch: Fetch): ReturnType<typeof api> {
         return { unfulfilledOrders, analytics: demo.todayAnalytics }
       },
 
-      async getAnalytics(_slug: string) {
+      async getAnalytics(_slug: string, _days?: number) {
         return demo.analyticsData
       },
 
@@ -125,10 +125,10 @@ export function useDemoApi(authedFetch: Fetch): ReturnType<typeof api> {
       },
 
       // These are no-ops in demo mode — silently succeed
-      async deleteStore() {},
-      async uploadImage(_uri: string) { return '' },
-      async subscribePro() { return { ok: true, pro: true, expiresAt: null } },
-      async registerPushToken() {},
+      async deleteStore(_slug: string, _confirm: string) {},
+      async uploadImage(_uri: string, _bucket: 'store-assets' | 'product-images', _path: string) { return '' },
+      async subscribePro(_slug: string, _input: Parameters<typeof real.subscribePro>[1]) { return { ok: true, pro: true, expiresAt: null } },
+      async registerPushToken(_token: string, _platform: string) {},
       async updateProductImages(_slug: string, id: string, images: string[]) {
         const existing = demo.products.find((p) => p.id === id)
         if (!existing) throw new Error('Product not found')
