@@ -15,7 +15,7 @@ export async function GET(req: NextRequest) {
         .eq('id', auth.user.id)
         .single()
 
-    const role = (data?.role as string | null) ?? 'user'
+    const role = data?.role ?? 'user'
     return NextResponse.json(
         { user: { ...auth.user, role } },
         { headers: { 'Cache-Control': 'no-store' } },
