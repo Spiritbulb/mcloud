@@ -41,12 +41,17 @@ async function withPage(fn) {
   }
 }
 
-async function screenshot(urlPath, outPath) {
-  // On Windows/Git Bash, absolute paths like /support get converted to
-  // C:/Program Files/Git/support. Detect and reverse that transformation.
+// On Windows/Git Bash, absolute args like /support get converted to
+// C:/Program Files/Git/support. Detect and reverse that transformation.
+function normalizePath(urlPath) {
   if (urlPath && /^[A-Za-z]:\/Program Files\/Git/.test(urlPath)) {
-    urlPath = urlPath.replace(/^[A-Za-z]:\/Program Files\/Git/, '') || '/';
+    return urlPath.replace(/^[A-Za-z]:\/Program Files\/Git/, '') || '/';
   }
+  return urlPath;
+}
+
+async function screenshot(urlPath, outPath) {
+  urlPath = normalizePath(urlPath);
   mkdirSync(SHOT_DIR, { recursive: true });
   outPath ??= resolve(SHOT_DIR, urlPath.replace(/\//g, '_').replace(/^_/, '') + '.png');
   await withPage(async (page) => {
@@ -102,6 +107,7 @@ async function smoke() {
 }
 
 async function nav(urlPath) {
+  urlPath = normalizePath(urlPath);
   await withPage(async (page) => {
     await page.goto(BASE_URL + urlPath);
     await page.waitForLoadState('domcontentloaded');
