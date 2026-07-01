@@ -5,7 +5,17 @@
 // knowledge of what data each section consumes. Adding a section type = a new
 // entry here + a .liquid file in packages/liquid.
 
-export type SectionType = 'hero' | 'collections' | 'featured' | 'all-products'
+import { getVertical } from '@mcloud/verticals'
+
+export type SectionType =
+  | 'hero'
+  | 'collections'
+  | 'featured'
+  | 'all-products'
+  | 'mission'
+  | 'programs'
+  | 'impact'
+  | 'contact'
 
 export interface PageSection {
   type: string
@@ -41,11 +51,32 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     templateKey: 'classic/sections/all-products',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.products }),
   },
+  mission: {
+    templateKey: 'classic/sections/mission',
+    pickContext: (ctx) => ({ store: ctx.store }),
+  },
+  programs: {
+    templateKey: 'classic/sections/programs',
+    pickContext: (ctx) => ({ store: ctx.store }),
+  },
+  impact: {
+    templateKey: 'classic/sections/impact',
+    pickContext: (ctx) => ({ store: ctx.store }),
+  },
+  contact: {
+    templateKey: 'classic/sections/contact',
+    pickContext: (ctx) => ({ store: ctx.store }),
+  },
 }
 
-export const DEFAULT_HOME_SECTIONS: PageSection[] = [
-  { type: 'hero' },
-  { type: 'collections' },
-  { type: 'featured' },
-  { type: 'all-products' },
-]
+/**
+ * The Home page's default section list for a store's vertical. Used as the
+ * fallback when a store has no seeded `pages` row. Unknown/null type → shop.
+ */
+export function defaultHomeSections(storeType?: string | null): PageSection[] {
+  const home = getVertical(storeType).defaultPages.find((p) => p.slug === '')
+  return (home?.sections ?? []).map((s) => ({ type: s.type }))
+}
+
+/** Back-compat: the shop Home section list (existing callers/tests). */
+export const DEFAULT_HOME_SECTIONS: PageSection[] = defaultHomeSections('shop')

@@ -7,7 +7,7 @@ import { resolveTheme } from '@mcloud/themes/resolver'
 import { buildHomeContext } from '@/lib/liquid-context'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
-import { DEFAULT_HOME_SECTIONS } from '@/lib/sections'
+import { defaultHomeSections } from '@/lib/sections'
 
 export const revalidate = 60
 
@@ -140,7 +140,9 @@ export default async function StorePage({ params }: Props) {
             featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
         })
         const homePage = await getPublishedPage(store.id, '')
-        const sections = homePage?.sections?.length ? homePage.sections : DEFAULT_HOME_SECTIONS
+        const sections = homePage?.sections?.length
+            ? homePage.sections
+            : defaultHomeSections(rawStore.type as string | null | undefined)
         const html = await renderPage(sections, context)
         return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
     } catch (err) {
