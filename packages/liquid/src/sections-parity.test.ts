@@ -24,4 +24,10 @@ assert.ok(coll.includes('max-w-6xl'), 'collections-grid carries its own max-w-6x
 const feat = await renderTemplate('classic/sections/featured-products', { store, products })
 assert.ok(feat.includes('max-w-6xl'), 'featured-products carries its own max-w-6xl container')
 
+// empty-list guards: sections must render nothing when list is empty
+const collEmpty = await renderTemplate('classic/sections/collections-grid', { store, collections: [] })
+assert.ok(!collEmpty.includes('Shop by Category'), 'collections-grid with empty list renders nothing (no heading)')
+const featEmpty = await renderTemplate('classic/sections/featured-products', { store, products: [] })
+assert.ok(!featEmpty.includes('Top Picks'), 'featured-products with empty list renders nothing (no heading)')
+
 console.log('sections-parity.test.ts: all assertions passed')
