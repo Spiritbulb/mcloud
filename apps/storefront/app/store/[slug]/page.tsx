@@ -138,7 +138,7 @@ export default async function StorePage({ params }: Props) {
             featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
         })
         const html = await renderTemplate('classic/templates/index', context)
-        return <div data-liquid dangerouslySetInnerHTML={{ __html: html }} />
+        return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
     } catch (err) {
         console.error('[storefront] Liquid home render failed, falling back to React:', err)
         const { StoreFront } = await resolveTheme(themeId)
