@@ -5,6 +5,7 @@
 // route handlers. Callers that need cache revalidation do it themselves.
 
 import { createClient } from '@mcloud/db/server'
+import type { Json } from '@mcloud/db/types'
 import { isVerticalId } from '@mcloud/verticals'
 import { seedPageRows } from './seed-pages'
 
@@ -222,10 +223,11 @@ export async function createStoreForUser(
     // Best-effort: seed the vertical's default pages. A failure here must never
     // block store creation — the storefront's vertical-aware fallback renders
     // the correct default even with no page row.
-    // Cast to any[] because Supabase's Json type doesn't accept SeedSection[]
-    // directly (no index signature), but the runtime shape is valid JSON.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error: seedError } = await supabase.from('pages').insert(seedPageRows(store.id, type) as any[])
+    const seedRows = seedPageRows(store.id, type).map((r) => ({
+        ...r,
+        sections: r.sections as unknown as Json,
+    }))
+    const { error: seedError } = await supabase.from('pages').insert(seedRows)
     if (seedError) {
         console.error('[stores] default page seed failed (store still created):', seedError.message)
     }
