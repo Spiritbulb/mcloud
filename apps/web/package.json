@@ -7,7 +7,6 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "prebuild": "node scripts/generate-theme-manifest.mjs",
     "sb-typegen": "npx supabase gen types typescript --project-id cuptlifacdkeagrrofni > ../../packages/db/src/database.types.ts",
     "release": "node scripts/release.mjs",
     "release:minor": "node scripts/release.mjs minor",
@@ -17,6 +16,7 @@
   "dependencies": {
     "@mcloud/auth": "*",
     "@mcloud/db": "*",
+    "@mcloud/liquid": "*",
     "@mcloud/themes": "*",
     "@mcloud/ui": "*",
     "@auth0/nextjs-auth0": "^4.19.0",
