@@ -62,4 +62,26 @@ assert.ok(!impactEmpty.includes('sf-impact'), 'impact renders nothing when setti
 const impactEmptyArr = await renderTemplate('classic/sections/impact', { store: { name: 'X', slug: 'x', settings: { impactStats: [] } } })
 assert.ok(!impactEmptyArr.includes('sf-impact'), 'impact renders nothing when settings.impactStats is []')
 
+// ── contact ──
+const contactStore = {
+  name: 'Hope Org', slug: 'hope',
+  settings: { contact: { email: 'hi@hope.org', phone: '+254700000000', address: 'Nairobi' } },
+}
+const contact = await renderTemplate('classic/sections/contact', { store: contactStore })
+assert.ok(contact.includes('sf-contact'), 'contact renders its section')
+assert.ok(contact.includes('hi@hope.org'), 'renders email')
+assert.ok(contact.includes('+254700000000'), 'renders phone')
+assert.ok(contact.includes('Nairobi'), 'renders address')
+
+// renders when ONLY social links present (no contact object)
+const socialOnly = await renderTemplate('classic/sections/contact', {
+  store: { name: 'Hope Org', slug: 'hope', settings: { socialLinks: [{ platform: 'twitter', url: 'https://x.com/hope' }] } },
+})
+assert.ok(socialOnly.includes('sf-contact'), 'contact renders when only social links present')
+assert.ok(socialOnly.includes('https://x.com/hope'), 'renders the social link url')
+
+// empty guard: no contact + no social -> nothing
+const contactEmpty = await renderTemplate('classic/sections/contact', { store: { name: 'X', slug: 'x', settings: {} } })
+assert.ok(!contactEmpty.includes('sf-contact'), 'contact renders nothing when no contact fields and no social links')
+
 console.log('ngo-sections.test.ts: all assertions passed')
