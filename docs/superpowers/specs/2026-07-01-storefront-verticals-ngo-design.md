@@ -1,7 +1,9 @@
 # Storefront Verticals — NGO (Deliverable A)
 
+> ⚠️ **SUPERSEDED (2026-07-01).** During execution we discovered a pre-existing Shopify-style **Liquid** theming system and pivoted: storefront rendering will move to Liquid (pages-as-data), not a React NGO theme. This spec's React-theme approach is abandoned. Only the **donation-endpoint** design survives, and it moves to a later sub-project. See `2026-07-01-storefront-liquid-pipeline-design.md` and memory `project_storefront_liquid`. Do not implement this document.
+
 **Date:** 2026-07-01
-**Status:** Design approved, ready for implementation plan
+**Status:** SUPERSEDED — do not implement
 **Scope:** Deliverable A only — the storefront-side vertical seam, the NGO theme, and the donation flow. Flipping a store to `type='ngo'` is done directly in the DB / superadmin for now. The polished merchant admin (vertical picker in onboarding, relabeled item editors) is a **separate, later spec (Deliverable B)** and is explicitly out of scope here.
 
 ---

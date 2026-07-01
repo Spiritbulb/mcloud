@@ -1,5 +1,7 @@
 # Storefront Verticals — NGO (Deliverable A) Implementation Plan
 
+> ⚠️ **SUPERSEDED (2026-07-01) — DO NOT EXECUTE.** Pivoted to a Liquid (pages-as-data) rendering foundation after discovering the existing Liquid system. This React-NGO-theme plan is abandoned. See `docs/superpowers/specs/2026-07-01-storefront-liquid-pipeline-design.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Make the storefront app render an NGO site (mission / programs / impact / campaigns) and accept real donations reusing the existing payment providers, driven by `stores.type`, without breaking any existing shop.
