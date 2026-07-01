@@ -4,6 +4,8 @@ import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
+import { renderTemplate } from '@mcloud/liquid'
+import { buildHomeContext } from '@/lib/liquid-context'
 
 export const revalidate = 60
 
@@ -124,15 +126,30 @@ export default async function StorePage({ params }: Props) {
     }
 
     const themeId = (store?.settings?.themeId as string) ?? 'classic'
-    const { StoreFront } = await resolveTheme(themeId)
 
-    return (
-        <StoreFront
-            store={store}
-            products={products}
-            collections={collections}
-            featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
-            services={services}
-        />
-    )
+    // Render the home via Liquid. On any template/render error, fall back to the
+    // React theme so a template bug can never take a live store down. (The
+    // fallback is a sub-project-1 safety net; removed when React is retired.)
+    try {
+        const context = buildHomeContext({
+            store,
+            products,
+            collections,
+            featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+        })
+        const html = await renderTemplate('classic/templates/index', context)
+        return <div data-liquid dangerouslySetInnerHTML={{ __html: html }} />
+    } catch (err) {
+        console.error('[storefront] Liquid home render failed, falling back to React:', err)
+        const { StoreFront } = await resolveTheme(themeId)
+        return (
+            <StoreFront
+                store={store}
+                products={products}
+                collections={collections}
+                featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
+                services={services}
+            />
+        )
+    }
 }

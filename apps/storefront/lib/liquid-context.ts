@@ -4,7 +4,7 @@
 // against exactly these shapes (see packages/liquid/themes/classic), so this is
 // a thin, explicit pass-through rather than a transform.
 
-export interface HomeContext {
+export interface HomeContext extends Record<string, unknown> {
     store: {
         id: string
         name: string
