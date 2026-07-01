@@ -4,8 +4,10 @@ import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
-import { renderTemplate } from '@mcloud/liquid'
 import { buildHomeContext } from '@/lib/liquid-context'
+import { getPublishedPage } from '@/lib/pages'
+import { renderPage } from '@/lib/render-page'
+import { DEFAULT_HOME_SECTIONS } from '@/lib/sections'
 
 export const revalidate = 60
 
@@ -137,7 +139,9 @@ export default async function StorePage({ params }: Props) {
             collections,
             featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
         })
-        const html = await renderTemplate('classic/templates/index', context)
+        const homePage = await getPublishedPage(store.id, '')
+        const sections = homePage?.sections?.length ? homePage.sections : DEFAULT_HOME_SECTIONS
+        const html = await renderPage(sections, context)
         return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
     } catch (err) {
         console.error('[storefront] Liquid home render failed, falling back to React:', err)
