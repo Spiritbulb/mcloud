@@ -1,0 +1,19 @@
+{
+  "name": "@mcloud/liquid",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./themes-manifest": "./src/themes-manifest.ts"
+  },
+  "scripts": {
+    "gen:manifest": "node scripts/build-manifest.mjs"
+  },
+  "dependencies": {
+    "liquidjs": "^10.25.2",
+    "glob": "^13.0.6"
+  },
+  "devDependencies": {
+    "@mcloud/config": "*"
+  }
+}
