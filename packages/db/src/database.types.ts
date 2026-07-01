@@ -72,18 +72,27 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          group_added_at: string | null
+          group_error: string | null
+          group_status: string
           id: string
           source: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          group_added_at?: string | null
+          group_error?: string | null
+          group_status?: string
           id?: string
           source?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          group_added_at?: string | null
+          group_error?: string | null
+          group_status?: string
           id?: string
           source?: string | null
         }
@@ -387,6 +396,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      device_push_tokens: {
+        Row: {
+          expo_push_token: string
+          id: string
+          platform: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          expo_push_token: string
+          id?: string
+          platform?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          expo_push_token?: string
+          id?: string
+          platform?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       discount_codes: {
         Row: {
@@ -816,6 +849,57 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_published: boolean
+          position: number
+          sections: Json
+          slug: string
+          store_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_published?: boolean
+          position?: number
+          sections?: Json
+          slug: string
+          store_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_published?: boolean
+          position?: number
+          sections?: Json
+          slug?: string
+          store_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
