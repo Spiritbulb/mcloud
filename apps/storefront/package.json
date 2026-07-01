@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@mcloud/db": "*",
+    "@mcloud/liquid": "*",
     "@mcloud/themes": "*",
     "@mcloud/ui": "*",
     "framer-motion": "^12.15.0",
