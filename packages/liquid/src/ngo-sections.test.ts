@@ -16,4 +16,10 @@ assert.ok(noMission.includes('sf-mission'), 'mission still renders with no setti
 assert.ok(noMission.includes('Hope Org'), 'falls back to store name')
 assert.ok(noMission.includes('We help communities'), 'falls back to store description')
 
+const noDesc = await renderTemplate('classic/sections/mission', {
+  store: { name: 'Bare Org', slug: 'bare', settings: {} },
+})
+assert.ok(noDesc.includes('sf-mission'), 'mission renders with no description')
+assert.ok(noDesc.includes('Bare Org'), 'headline still shows store name')
+
 console.log('ngo-sections.test.ts: mission assertions passed')
