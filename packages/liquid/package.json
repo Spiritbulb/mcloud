@@ -2,6 +2,7 @@
   "name": "@mcloud/liquid",
   "version": "0.0.0",
   "private": true,
+  "type": "module",
   "exports": {
     ".": "./src/index.ts",
     "./themes-manifest": "./src/themes-manifest.ts"
