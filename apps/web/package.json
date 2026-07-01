@@ -19,6 +19,7 @@
     "@mcloud/liquid": "*",
     "@mcloud/themes": "*",
     "@mcloud/ui": "*",
+    "@mcloud/verticals": "*",
     "@auth0/nextjs-auth0": "^4.19.0",
     "@codemirror/lang-markdown": "^6.5.0",
     "@material/web": "^2.4.1",

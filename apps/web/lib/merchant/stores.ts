@@ -5,6 +5,8 @@
 // route handlers. Callers that need cache revalidation do it themselves.
 
 import { createClient } from '@mcloud/db/server'
+import { isVerticalId } from '@mcloud/verticals'
+import { seedPageRows } from './seed-pages'
 
 export type Role = 'owner' | 'admin' | 'member' | string
 
@@ -181,11 +183,12 @@ export type CreateStoreResult =
  * owner/admin only, valid + unique slug. Adds the creator as store owner.
  */
 export async function createStoreForUser(
-    input: { orgId: string; name: string; slug: string },
+    input: { orgId: string; name: string; slug: string; type?: string },
     userId: string,
 ): Promise<CreateStoreResult> {
     const name = input.name?.trim()
     const slug = normalizeSlug(input.slug ?? '')
+    const type = input.type && isVerticalId(input.type) ? input.type : 'shop'
 
     if (!name || !slug) return { error: 'Name and slug are required', slug: null }
     if (!isValidSlug(slug)) return { error: 'Slug must be lowercase alphanumeric with hyphens', slug: null }
@@ -205,7 +208,7 @@ export async function createStoreForUser(
 
     const { data: store, error } = await supabase
         .from('stores')
-        .insert({ name, slug, org_id: input.orgId, owner_id: userId })
+        .insert({ name, slug, org_id: input.orgId, owner_id: userId, type })
         .select('id, slug')
         .single()
     if (error || !store) return { error: error?.message ?? 'Failed to create store', slug: null }
@@ -215,6 +218,17 @@ export async function createStoreForUser(
         user_id: userId,
         role: 'owner',
     })
+
+    // Best-effort: seed the vertical's default pages. A failure here must never
+    // block store creation — the storefront's vertical-aware fallback renders
+    // the correct default even with no page row.
+    // Cast to any[] because Supabase's Json type doesn't accept SeedSection[]
+    // directly (no index signature), but the runtime shape is valid JSON.
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error: seedError } = await supabase.from('pages').insert(seedPageRows(store.id, type) as any[])
+    if (seedError) {
+        console.error('[stores] default page seed failed (store still created):', seedError.message)
+    }
 
     return { error: null, slug: store.slug }
 }
