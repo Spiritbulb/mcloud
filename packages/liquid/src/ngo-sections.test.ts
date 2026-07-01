@@ -22,4 +22,44 @@ const noDesc = await renderTemplate('classic/sections/mission', {
 assert.ok(noDesc.includes('sf-mission'), 'mission renders with no description')
 assert.ok(noDesc.includes('Bare Org'), 'headline still shows store name')
 
-console.log('ngo-sections.test.ts: mission assertions passed')
+// ── programs ──
+const programsStore = {
+  name: 'Hope Org', slug: 'hope',
+  settings: { programs: [
+    { title: 'Clean Water', description: 'Wells for villages', image: 'https://x/water.jpg' },
+    { title: 'Schooling', description: 'Books and teachers', image: '' },
+  ] },
+}
+const programs = await renderTemplate('classic/sections/programs', { store: programsStore })
+assert.ok(programs.includes('sf-programs'), 'programs renders its section')
+assert.ok(programs.includes('Clean Water') && programs.includes('Schooling'), 'renders each program title')
+assert.ok(programs.includes('Wells for villages'), 'renders program description')
+
+// programs empty guard: no array -> nothing
+const programsEmpty = await renderTemplate('classic/sections/programs', { store: { name: 'X', slug: 'x', settings: {} } })
+assert.ok(!programsEmpty.includes('sf-programs'), 'programs renders nothing when settings.programs absent')
+
+// programs empty guard: empty array -> nothing
+const programsEmptyArr = await renderTemplate('classic/sections/programs', { store: { name: 'X', slug: 'x', settings: { programs: [] } } })
+assert.ok(!programsEmptyArr.includes('sf-programs'), 'programs renders nothing when settings.programs is []')
+
+// ── impact ──
+const impactStore = {
+  name: 'Hope Org', slug: 'hope',
+  settings: { impactStats: [
+    { label: 'People served', value: '5,000' },
+    { label: 'Villages', value: '42' },
+  ] },
+}
+const impact = await renderTemplate('classic/sections/impact', { store: impactStore })
+assert.ok(impact.includes('sf-impact'), 'impact renders its section')
+assert.ok(impact.includes('5,000') && impact.includes('People served'), 'renders stat value + label')
+assert.ok(impact.includes('42') && impact.includes('Villages'), 'renders second stat')
+
+// impact empty guard
+const impactEmpty = await renderTemplate('classic/sections/impact', { store: { name: 'X', slug: 'x', settings: {} } })
+assert.ok(!impactEmpty.includes('sf-impact'), 'impact renders nothing when settings.impactStats absent')
+const impactEmptyArr = await renderTemplate('classic/sections/impact', { store: { name: 'X', slug: 'x', settings: { impactStats: [] } } })
+assert.ok(!impactEmptyArr.includes('sf-impact'), 'impact renders nothing when settings.impactStats is []')
+
+console.log('ngo-sections.test.ts: all assertions passed')
