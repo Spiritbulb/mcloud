@@ -192,6 +192,23 @@
     background-color: var(--sf-primary);
 }
 
+/* ── NGO sections (mission / programs / contact) ─────────────────────────────── */
+/* Soft identity band behind the mission headline — light tint, not the solid
+   primary (mission uses dark heading text over it). */
+.sf-mission-fallback {
+    background-color: color-mix(in srgb, var(--sf-muted) 60%, var(--sf-background));
+}
+
+/* Inline links in the contact block (mailto:/tel:/social). */
+.sf-link {
+    color: var(--sf-primary);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.sf-link:hover {
+    color: var(--sf-accent);
+}
+
 /* The frosted card overlaid on hero images */
 .sf-hero-card {
     background-color: var(--sf-background);
