@@ -26,8 +26,9 @@ This slice makes Nuru a second consumer app riding on that shared spine (one ide
 
 ## Architecture
 
-### New workspace app: `apps/nuru`
-- Added to root `package.json` `workspaces` (alongside `apps/web`, `apps/storefront`, `apps/mobile`, `packages/*`).
+### New app: `apps/nuru`
+- Lives at `apps/nuru`, a **standalone npm project** inside the monorepo — NOT added to the root `workspaces` array. This matches `apps/mobile`, which is also standalone (root workspaces is `['apps/web', 'apps/storefront', 'packages/*']`). Rationale: the Expo/React Native SDK-57 dependency tree conflicts with the Next.js apps' hoisted tree; keeping it out of the workspace avoids React/RN version clashes. It installs its own `node_modules`.
+- Because it is standalone, `apps/nuru` talks to `apps/web` only over HTTP; it cannot and does not import the `@mcloud/*` server packages.
 - The existing Nuru scaffold is **copied** into `apps/nuru` (the standalone `c:\Users\busie\nuru` repo is left intact as the source; it is not deleted or git-moved): dark theme tokens, Fraunces font, `Logo`/`Brand`/`ThinkingIndicator`/drawer components, and the Chat/Notes/Profile screens — visually unchanged.
 - SDK 57 (as the scaffold is). It does NOT import the server packages (`@mcloud/db`, `@mcloud/auth` are Next.js server-only); it talks to `apps/web` over HTTP.
 
