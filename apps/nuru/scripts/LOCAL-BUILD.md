@@ -53,6 +53,33 @@ Recorded here so it's reproducible. All inside WSL Ubuntu, in `$HOME`:
 6. **Source** — `apps/nuru` is rsynced into `~/nuru-build` (WSL native fs, not
    `/mnt/c`, for build speed). `local-build.sh` re-syncs on each run.
 
+## OTA updates (push JS/asset fixes without a rebuild)
+
+EAS Update is configured: each build profile has a `channel` in `eas.json` and
+`expo-updates` reads `updates.url` at runtime. A build subscribes to its
+channel; publishing to that channel's branch delivers the update on next app
+launch.
+
+**Only works for builds made AFTER the channel was added** (commit 0a2fd8f).
+Rebuild once so the installed app is OTA-enabled; after that, JS/asset changes
+ship over the air.
+
+Publish an update (from WSL, after syncing latest source):
+
+```bash
+cd ~/nuru-build
+eas update --branch production --message "fix: <what changed>"
+```
+
+- **JS + assets** (components, screens, theme, images) → ship via OTA, no rebuild.
+- **Native changes** (new native package, permissions, app.json native config,
+  version bump) → still need `local-build.sh`. `runtimeVersion=appVersion` means
+  an OTA update only reaches builds of the *same* app version, so bump the
+  version when you make native changes and rebuild.
+
+The app pulls the update on the next cold start (or configure
+`checkAutomatically`/`fetchUpdateAsync` for finer control).
+
 ## Gotchas
 
 - **Git Bash mangles WSL paths.** Prefix cross-shell `wsl` calls with
