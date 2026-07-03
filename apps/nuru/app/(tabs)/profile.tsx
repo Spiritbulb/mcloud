@@ -3,18 +3,16 @@ import { View, Text, Switch, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
-import { useSession } from '@/context/SessionContext';
-import { auth } from '@/services/auth';
+import { useAuth } from '@/context/AuthContext';
 import { theme } from '@/theme';
 
 export default function Profile() {
-  const { user, setUser } = useSession();
+  const { user, signOut } = useAuth();
   const [dark, setDark] = useState(false); // placeholder toggle (not wired)
   const router = useRouter();
 
-  async function signOut() {
-    await auth.logout();
-    setUser(null);
+  async function handleSignOut() {
+    await signOut();
     router.replace('/(auth)/login');
   }
 
@@ -44,7 +42,7 @@ export default function Profile() {
         Light mode lands with the backend.
       </Text>
 
-      <Button title="Sign out" variant="ghost" onPress={signOut} />
+      <Button title="Sign out" variant="ghost" onPress={handleSignOut} />
     </Screen>
   );
 }

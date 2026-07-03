@@ -8,7 +8,7 @@ import {
   Fraunces_500Medium,
   Fraunces_600SemiBold,
 } from '@expo-google-fonts/fraunces';
-import { SessionProvider, useSession } from '@/context/SessionContext';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { theme } from '@/theme';
 
 function Loading() {
@@ -20,7 +20,7 @@ function Loading() {
 }
 
 function Guard() {
-  const { user, loading } = useSession();
+  const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
 
@@ -57,19 +57,14 @@ function Guard() {
 }
 
 export default function RootLayout() {
-  const [fontsLoaded] = useFonts({
-    Fraunces_500Medium,
-    Fraunces_600SemiBold,
-  });
-
+  const [fontsLoaded] = useFonts({ Fraunces_500Medium, Fraunces_600SemiBold });
   if (!fontsLoaded) return <Loading />;
-
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <SessionProvider>
+      <AuthProvider>
         <StatusBar style="light" />
         <Guard />
-      </SessionProvider>
+      </AuthProvider>
     </GestureHandlerRootView>
   );
 }

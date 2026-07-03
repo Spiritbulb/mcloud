@@ -2,7 +2,7 @@ import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DrawerContentComponentProps, DrawerContentScrollView } from 'expo-router/drawer';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
-import { useSession } from '@/context/SessionContext';
+import { useAuth } from '@/context/AuthContext';
 import { theme } from '@/theme';
 
 const ITEMS: { route: string; label: string; glyph: string }[] = [
@@ -16,7 +16,7 @@ const ITEMS: { route: string; label: string; glyph: string }[] = [
  * header up top, the nav items, and the signed-in user pinned to the footer.
  */
 export function DrawerContent(props: DrawerContentComponentProps) {
-  const { user } = useSession();
+  const { user } = useAuth();
   const activeRoute = props.state.routeNames[props.state.index];
 
   return (
