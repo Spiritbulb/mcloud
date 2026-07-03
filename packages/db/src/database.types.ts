@@ -72,18 +72,27 @@ export type Database = {
         Row: {
           created_at: string
           email: string
+          group_added_at: string | null
+          group_error: string | null
+          group_status: string
           id: string
           source: string | null
         }
         Insert: {
           created_at?: string
           email: string
+          group_added_at?: string | null
+          group_error?: string | null
+          group_status?: string
           id?: string
           source?: string | null
         }
         Update: {
           created_at?: string
           email?: string
+          group_added_at?: string | null
+          group_error?: string | null
+          group_status?: string
           id?: string
           source?: string | null
         }
@@ -388,6 +397,30 @@ export type Database = {
           },
         ]
       }
+      device_push_tokens: {
+        Row: {
+          expo_push_token: string
+          id: string
+          platform: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          expo_push_token: string
+          id?: string
+          platform?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          expo_push_token?: string
+          id?: string
+          platform?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       discount_codes: {
         Row: {
           code: string
@@ -471,6 +504,139 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      nuru_chat_messages: {
+        Row: {
+          context_note_ids: string[]
+          created_at: string
+          id: string
+          role: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          context_note_ids?: string[]
+          created_at?: string
+          id?: string
+          role: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          context_note_ids?: string[]
+          created_at?: string
+          id?: string
+          role?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuru_chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuru_note_chunks: {
+        Row: {
+          chunk_index: number
+          content: string
+          embedding: string
+          id: string
+          note_id: string
+          status: string
+          uploader_id: string
+        }
+        Insert: {
+          chunk_index: number
+          content: string
+          embedding: string
+          id?: string
+          note_id: string
+          status?: string
+          uploader_id: string
+        }
+        Update: {
+          chunk_index?: number
+          content?: string
+          embedding?: string
+          id?: string
+          note_id?: string
+          status?: string
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuru_note_chunks_note_id_fkey"
+            columns: ["note_id"]
+            isOneToOne: false
+            referencedRelation: "nuru_notes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuru_notes: {
+        Row: {
+          created_at: string
+          extraction_status: string
+          file_url: string | null
+          id: string
+          original_content: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          source: string
+          status: string
+          subject: string | null
+          title: string | null
+          uploader_id: string
+        }
+        Insert: {
+          created_at?: string
+          extraction_status?: string
+          file_url?: string | null
+          id?: string
+          original_content?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source: string
+          status?: string
+          subject?: string | null
+          title?: string | null
+          uploader_id: string
+        }
+        Update: {
+          created_at?: string
+          extraction_status?: string
+          file_url?: string | null
+          id?: string
+          original_content?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          source?: string
+          status?: string
+          subject?: string | null
+          title?: string | null
+          uploader_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuru_notes_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "nuru_notes_uploader_id_fkey"
+            columns: ["uploader_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       order_items: {
         Row: {
@@ -816,6 +982,57 @@ export type Database = {
             columns: ["owner_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pages: {
+        Row: {
+          created_at: string | null
+          id: string
+          is_published: boolean
+          position: number
+          sections: Json
+          slug: string
+          store_id: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          is_published?: boolean
+          position?: number
+          sections?: Json
+          slug: string
+          store_id: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          is_published?: boolean
+          position?: number
+          sections?: Json
+          slug?: string
+          store_id?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "pages_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2247,6 +2464,18 @@ export type Database = {
         Returns: Json
       }
       increment_store_views: { Args: { store_id: string }; Returns: undefined }
+      match_nuru_chunks: {
+        Args: {
+          p_match_count?: number
+          p_query_embedding: string
+          p_user_id: string
+        }
+        Returns: {
+          content: string
+          note_id: string
+          similarity: number
+        }[]
+      }
     }
     Enums: {
       analytics_event_type:
