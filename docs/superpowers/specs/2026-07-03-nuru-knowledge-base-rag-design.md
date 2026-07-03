@@ -34,7 +34,7 @@ Supabase client (`@mcloud/db/server`), user-scoping enforced in app code.
 | AI retrieval scope | **My notes (incl. pending) OR community-approved** |
 | Retrieval tech | **pgvector semantic search (RAG)** on Supabase |
 | Chat model | **GPT-5 via Azure AI Foundry** (Claude not available in user's Foundry region) |
-| Embeddings | **Azure OpenAI `text-embedding-3-small`** → `vector(1536)` |
+| Embeddings | **Azure OpenAI `text-embedding-3-large`** → `vector(3072)` |
 | OCR / text extraction | **Azure AI Vision / Document Intelligence** |
 | Review surface | **Admin via web dashboard** — deferred to slice 2; MVP approves via SQL/table edit |
 | Ingestion timing | **Synchronous** with a page/size cap (async deferred) |
@@ -69,10 +69,16 @@ Requires `create extension if not exists vector;`.
 - `note_id uuid not null references nuru_notes(id) on delete cascade`
 - `chunk_index int not null`
 - `content text not null`
-- `embedding vector(1536) not null`
+- `embedding vector(3072) not null`
 - `uploader_id uuid not null` — **denormalized** from parent note (avoids join on hot path)
 - `status text not null default 'pending'` — **denormalized** from parent note
-- Index: `ivfflat`/`hnsw` on `embedding` for cosine (`vector_cosine_ops`)
+- Index: cosine similarity (`<=>`, `vector_cosine_ops`).
+  **⚠️ pgvector `ivfflat`/`hnsw` cap at 2000 dims — a `vector(3072)` column CANNOT be
+  ANN-indexed with stock pgvector.** Options at migration time: (a) MVP scale is small →
+  run exact (unindexed) search, fine for hundreds/low-thousands of chunks; (b) reduce
+  `text-embedding-3-large` output via the `dimensions` param (Azure OpenAI supports shortening
+  to e.g. 1536/1024) and index normally; (c) store a full 3072 vector for exact rerank plus a
+  ≤2000-dim indexed vector for ANN candidate retrieval. **Decide at plan time; MVP default = (a) exact search.**
 - **Denormalized `status` must be kept in sync** when a note is approved/rejected (update both
   `nuru_notes` and its `nuru_note_chunks`, or do it in one transaction/RPC).
 
@@ -88,7 +94,7 @@ existing public `product-images`). App fetches originals via signed URLs.
 ```
 extractText(file) → text        // Azure AI Vision; typed notes skip this
 chunk(text) → chunks[]          // ~500-token chunks, small overlap
-embed(chunk) → vector(1536)     // Azure OpenAI, batched
+embed(chunk) → vector(3072)     // Azure OpenAI, batched
 chatComplete(question, chunks) → answer   // GPT-5 via Azure Foundry
 ```
 
@@ -120,7 +126,7 @@ phone picks file/photo/text
   → if file/photo: extractText(file) → text         // Azure Vision
   → insert nuru_notes row (status='pending', extraction_status)
   → chunk(text) → chunks[]
-  → embed(chunk) → vector(1536)   (batched)         // Azure OpenAI
+  → embed(chunk) → vector(3072)   (batched)         // Azure OpenAI
   → insert nuru_note_chunks rows (denormalized uploader_id + status)
   → return created note   // immediately answerable to THIS uploader (pending or not)
 ```
@@ -195,7 +201,13 @@ Admin review dashboard = separate later slice (approve via SQL until then).
 ## Open items to resolve at plan time
 
 - Exact `expo-file-system` SDK 57 API (legacy vs new) — confirm against versioned docs.
-- Azure Foundry GPT-5 deployment name/endpoint + Azure OpenAI embedding deployment name/endpoint
-  + Azure Vision endpoint — env vars in `apps/web`.
-- pgvector index type (`ivfflat` vs `hnsw`) and list/probe params — pick at migration time.
+- **Azure endpoint shape:** the added `AZURE_OPENAI_ENDPOINT` is currently a Foundry *project*
+  URL (`...services.ai.azure.com/api/projects/nuru-ai-project`), NOT an Azure OpenAI resource
+  URL (`https://<resource>.openai.azure.com`). Confirm which SDK path we use — the OpenAI SDK
+  needs the `.openai.azure.com` form; the AI-Projects/Foundry SDK uses the project URL. Resolve
+  before wiring `chatComplete`/`embed`. Deployments: chat=`gpt-5`, embed=`text-embedding-3-large`,
+  Vision endpoint=`nuru-academy-ocr.cognitiveservices.azure.com`. (Env vars are set in
+  `apps/web/.env.local`.)
+- **pgvector ANN vs 3072 dims** (see schema note): pick exact-search (MVP default) vs reducing
+  embedding `dimensions` to ≤2000 for a real `hnsw`/`ivfflat` index. Decide at migration time.
 - Chunk size/overlap tuning.
