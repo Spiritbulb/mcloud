@@ -18,6 +18,8 @@ export interface Note {
 }
 
 // Raw API row shape (snake_case) — mapped to Note in services/_map.ts.
+// GET /notes/[id] additionally attaches a camelCase `signedUrl` (a time-limited
+// download link for the private original); list rows omit it.
 export type NoteRow = {
   id: string;
   title: string | null;
@@ -27,6 +29,7 @@ export type NoteRow = {
   file_url: string | null;
   status: 'pending' | 'approved' | 'rejected';
   created_at: string;
+  signedUrl?: string | null;
 };
 
 export interface Message {

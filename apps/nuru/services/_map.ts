@@ -11,7 +11,9 @@ export function mapNote(row: NoteRow): Note {
     source: row.source,
     createdAt: row.created_at,
     status: row.status,
-    fileUrl: row.file_url,
+    // Prefer the signed download link when the detail endpoint provides one;
+    // fall back to the raw (private) storage path for list rows.
+    fileUrl: row.signedUrl ?? row.file_url,
   };
 }
 
