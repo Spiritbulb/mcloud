@@ -1,17 +1,13 @@
 import { useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
 import { Note, NoteSource } from '@/types';
-import { notes } from '@/services/notes';
+import { useApi } from '@/hooks/useApi';
+import * as DocumentPicker from 'expo-document-picker';
+import * as ImagePicker from 'expo-image-picker';
 import { Button } from '@/components/Button';
 import { theme } from '@/theme';
 
 type Props = { visible: boolean; onClose: () => void; onCreated: (note: Note) => void };
-
-const placeholderContent: Record<Exclude<NoteSource, 'text'>, { title: string; content: string }> = {
-  file:  { title: 'Uploaded document', content: '[Mock] Extracted text from your uploaded file will appear here once the backend is connected.' },
-  photo: { title: 'Photo note',        content: '[Mock] Text recognized from your photo will appear here once OCR is connected.' },
-  voice: { title: 'Voice note',        content: '[Mock] A transcript of your recording will appear here once transcription is connected.' },
-};
 
 export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
   const [mode, setMode] = useState<NoteSource | null>(null);
@@ -20,6 +16,7 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
   const [content, setContent] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { notes } = useApi();
 
   function reset() {
     setMode(null); setTitle(''); setSubject(''); setContent(''); setError(null); setBusy(false);
@@ -29,16 +26,44 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
   async function createText() {
     setBusy(true); setError(null);
     try {
-      const note = await notes.create({ title, subject, content, source: 'text' });
+      const note = await notes.create({ title, subject, source: 'text', content });
       onCreated(note); reset();
     } catch (e) { setError((e as Error).message); setBusy(false); }
   }
 
-  async function createStubbed(source: Exclude<NoteSource, 'text'>) {
+  async function pickFile() {
+    setError(null);
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'image/*'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    await upload('file', {
+      uri: asset.uri,
+      name: asset.name ?? 'document',
+      type: asset.mimeType ?? 'application/octet-stream',
+    });
+  }
+
+  async function pickPhoto() {
+    setError(null);
+    const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!perm.granted) { setError('Photo access is needed to import an image.'); return; }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.8,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const asset = result.assets[0];
+    const name = asset.fileName ?? `photo-${Date.now()}.jpg`;
+    await upload('photo', { uri: asset.uri, name, type: asset.mimeType ?? 'image/jpeg' });
+  }
+
+  async function upload(source: 'file' | 'photo', file: { uri: string; name: string; type: string }) {
     setBusy(true); setError(null);
     try {
-      const p = placeholderContent[source];
-      const note = await notes.create({ title: p.title, subject: 'General', content: p.content, source });
+      const note = await notes.create({ title, subject, source, file });
       onCreated(note); reset();
     } catch (e) { setError((e as Error).message); setBusy(false); }
   }
@@ -55,14 +80,14 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
               <Pressable style={styles.option} onPress={() => setMode('text')}>
                 <Text style={styles.optionText}>✏️  Type or paste text</Text>
               </Pressable>
-              <Pressable style={styles.option} onPress={() => createStubbed('file')}>
+              <Pressable style={styles.option} onPress={pickFile}>
                 <Text style={styles.optionText}>📄  Upload a file</Text>
               </Pressable>
-              <Pressable style={styles.option} onPress={() => createStubbed('photo')}>
+              <Pressable style={styles.option} onPress={pickPhoto}>
                 <Text style={styles.optionText}>📷  Import from photo</Text>
               </Pressable>
-              <Pressable style={styles.option} onPress={() => createStubbed('voice')}>
-                <Text style={styles.optionText}>🎙️  Record voice</Text>
+              <Pressable style={[styles.option, { opacity: 0.4 }]} disabled>
+                <Text style={styles.optionText}>🎙️  Record voice — coming soon</Text>
               </Pressable>
             </View>
           )}
