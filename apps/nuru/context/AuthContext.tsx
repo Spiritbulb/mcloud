@@ -5,7 +5,7 @@
 // the same WorkOS JWT /api/mobile/* verifies via JWKS.
 import * as React from 'react';
 import * as AuthSession from 'expo-auth-session';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStorage from '@/lib/secureStorage';
 import { config } from '@/lib/config';
 
 const TOKEN_KEY = 'nuru.workos.tokens';
@@ -39,15 +39,15 @@ type AuthState = {
 const AuthContext = React.createContext<AuthState | null>(null);
 
 async function saveTokens(t: Tokens) {
-  await SecureStore.setItemAsync(TOKEN_KEY, JSON.stringify(t));
+  await SecureStorage.setItem(TOKEN_KEY, JSON.stringify(t));
 }
 async function loadTokens(): Promise<Tokens | null> {
-  const raw = await SecureStore.getItemAsync(TOKEN_KEY);
+  const raw = await SecureStorage.getItem(TOKEN_KEY);
   return raw ? (JSON.parse(raw) as Tokens) : null;
 }
 async function clearTokens() {
-  await SecureStore.deleteItemAsync(TOKEN_KEY);
-  try { await SecureStore.deleteItemAsync(USER_KEY); } catch {}
+  await SecureStorage.deleteItem(TOKEN_KEY);
+  try { await SecureStorage.deleteItem(USER_KEY); } catch {}
 }
 
 async function refreshTokens(): Promise<Tokens | null> {
@@ -71,11 +71,11 @@ async function refreshTokens(): Promise<Tokens | null> {
 }
 
 async function saveUser(u: SessionUser) {
-  try { await SecureStore.setItemAsync(USER_KEY, JSON.stringify(u)); } catch {}
+  try { await SecureStorage.setItem(USER_KEY, JSON.stringify(u)); } catch {}
 }
 async function loadCachedUser(): Promise<SessionUser | null> {
   try {
-    const raw = await SecureStore.getItemAsync(USER_KEY);
+    const raw = await SecureStorage.getItem(USER_KEY);
     return raw ? (JSON.parse(raw) as SessionUser) : null;
   } catch { return null; }
 }
