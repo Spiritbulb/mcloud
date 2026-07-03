@@ -70,9 +70,13 @@ export async function POST(req: NextRequest) {
         }
         const bytes = await file.arrayBuffer()
 
-        // Store the original in the private bucket.
+        // Store the original in the private bucket. Supabase Storage object keys
+        // reject characters like '|', which Auth0 user ids contain (e.g.
+        // 'auth0|abc'), so sanitize the id for the path only — the DB keeps the
+        // real uploader_id.
         const ext = file.name.split('.').pop()?.toLowerCase() ?? 'bin'
-        const path = `${userId}/${Date.now()}.${ext}`
+        const safeUserId = userId.replace(/[^a-zA-Z0-9._-]/g, '_')
+        const path = `${safeUserId}/${Date.now()}.${ext}`
         const { error: upErr } = await supabase.storage
             .from('nuru-notes')
             .upload(path, bytes, { contentType: file.type, upsert: false })
