@@ -3,11 +3,12 @@ import { View, Text, TextInput, ActivityIndicator, StyleSheet } from 'react-nati
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
-import { notes } from '@/services/notes';
+import { useApi } from '@/hooks/useApi';
 import { Note } from '@/types';
 import { theme } from '@/theme';
 
 export default function NoteDetail() {
+  const { notes } = useApi();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [note, setNote] = useState<Note | null>(null);
   const [loading, setLoading] = useState(true);

@@ -5,11 +5,12 @@ import { Screen } from '@/components/Screen';
 import { NoteCard } from '@/components/NoteCard';
 import { AddNoteSheet } from '@/components/AddNoteSheet';
 import { EmptyState } from '@/components/EmptyState';
-import { notes as notesService } from '@/services/notes';
+import { useApi } from '@/hooks/useApi';
 import { Note } from '@/types';
 import { theme } from '@/theme';
 
 export default function Notes() {
+  const { notes: notesService } = useApi();
   const [items, setItems] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState('');

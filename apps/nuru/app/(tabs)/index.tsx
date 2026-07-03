@@ -7,12 +7,12 @@ import { ChatInputBar } from '@/components/ChatInputBar';
 import { EmptyState } from '@/components/EmptyState';
 import { Logo } from '@/components/Logo';
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
-import { chat } from '@/services/chat';
-import { notes as notesService } from '@/services/notes';
+import { useApi } from '@/hooks/useApi';
 import { Message } from '@/types';
 import { theme } from '@/theme';
 
 export default function Chat() {
+  const { chat, notes: notesService } = useApi();
   const params = useLocalSearchParams<{ noteId?: string }>();
   const [messages, setMessages] = useState<Message[]>([]);
   const [contextNoteIds, setContextNoteIds] = useState<string[]>([]);
