@@ -1,23 +1,20 @@
-// Azure OpenAI embeddings (text-embedding-3-large → 3072 dims). Isolated so the
-// embedding provider is swappable. Batches all texts in one request.
-// NOTE: AZURE_OPENAI_ENDPOINT must be the resource form
-// https://<resource>.openai.azure.com (NOT the Foundry project URL).
+// Azure OpenAI embeddings (text-embedding-3-large → 3072 dims), v1 API shape.
+// Isolated so the embedding provider is swappable. Batches all texts in one call.
+// v1 API (VERIFIED): POST {endpoint}/embeddings, body { input, model: deployment },
+// header api-key; NO api-version, NO /deployments/ path. AZURE_OPENAI_ENDPOINT ends in /openai/v1.
 export async function embed(texts: string[]): Promise<number[][]> {
   if (texts.length === 0) return []
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT
   const key = process.env.AZURE_OPENAI_API_KEY
   const deployment = process.env.AZURE_OPENAI_EMBEDDING_DEPLOYMENT
-  const apiVersion = process.env.AZURE_OPENAI_API_VERSION
-  if (!endpoint || !key || !deployment || !apiVersion) throw new Error('embed_failed')
+  if (!endpoint || !key || !deployment) throw new Error('embed_failed')
 
-  const url =
-    `${endpoint.replace(/\/$/, '')}/openai/deployments/${deployment}/embeddings` +
-    `?api-version=${apiVersion}`
+  const url = `${endpoint.replace(/\/$/, '')}/embeddings`
 
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ input: texts }),
+    body: JSON.stringify({ input: texts, model: deployment }),
   })
 
   if (!res.ok) {
