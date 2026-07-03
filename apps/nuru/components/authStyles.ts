@@ -21,4 +21,16 @@ export const authStyles = StyleSheet.create({
     marginTop: theme.spacing.md,
     fontSize: 15,
   },
+  codeInput: {
+    textAlign: 'center',
+    letterSpacing: 8,
+    fontSize: 24,
+    fontWeight: '700',
+  },
+  changeLink: {
+    color: theme.colors.textMuted,
+    textAlign: 'center',
+    marginTop: theme.spacing.sm,
+    fontSize: 14,
+  },
 });
