@@ -13,6 +13,7 @@
 - **Repo:** all backend work in `mcloud-1`, branch `feat/nuru-app`. Migrations in `mcloud-1/migrations/`.
 - **Route style (verbatim from `me/route.ts`):** 4-space indent; `import { NextResponse, type NextRequest } from 'next/server'`; guard with `const auth = await requireMobileUser(req); if (auth instanceof NextResponse) return auth`; DB via `const supabase = await createClient()` from `@mcloud/db/server`.
 - **User scoping is the ONLY isolation** (service-role bypasses RLS). Every read/write MUST filter by `auth.user.id`. Retrieval MUST be `uploader_id = $me OR status = 'approved'` — routed through ONE function so it can't be forgotten.
+- **`public.users.id` is `text`** (WorkOS ids like `user_01...`), verified at execution. All user-referencing columns (`uploader_id`, `user_id`, `reviewed_by`) and the `match_nuru_chunks` `p_user_id` param are **`text`, not uuid**. Generated type: `uploader_id: string`.
 - **Migrations:** lowercase SQL, `create ... if not exists` / `create or replace`, re-runnable, comment header (match `20260609_store_analytics_rpc.sql`).
 - **Embeddings:** Azure OpenAI `text-embedding-3-large` → `vector(3072)`. Env in `apps/web/.env.local`: `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_API_VERSION`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT`, `AZURE_VISION_ENDPOINT`, `AZURE_VISION_API_KEY`.
 - **⚠️ pgvector ANN indexes cap at 2000 dims.** `vector(3072)` CANNOT use `ivfflat`/`hnsw`. Slice 1 uses **exact search** (no ANN index) — correct at MVP scale. Do NOT add a vector index.
@@ -43,7 +44,7 @@ Each `_ingest/*` file has one responsibility and one export, so a later slice ca
 
 **Interfaces:**
 - Consumes: nothing.
-- Produces: tables `nuru_notes`, `nuru_note_chunks`, `nuru_chat_messages`; RPC `public.match_nuru_chunks(p_user_id uuid, p_query_embedding vector(3072), p_match_count int) returns table(note_id uuid, content text, similarity float)`; storage bucket `nuru-notes` (private). Column contract used by later tasks: `nuru_notes(id, uploader_id, title, subject, source, original_content, file_url, status, extraction_status, created_at, reviewed_at, reviewed_by)`; `nuru_note_chunks(id, note_id, chunk_index, content, embedding vector(3072), uploader_id, status)`.
+- Produces: tables `nuru_notes`, `nuru_note_chunks`, `nuru_chat_messages`; RPC `public.match_nuru_chunks(p_user_id text, p_query_embedding vector(3072), p_match_count int) returns table(note_id uuid, content text, similarity float)`; storage bucket `nuru-notes` (private). Column contract used by later tasks: `nuru_notes(id, uploader_id, title, subject, source, original_content, file_url, status, extraction_status, created_at, reviewed_at, reviewed_by)`; `nuru_note_chunks(id, note_id, chunk_index, content, embedding vector(3072), uploader_id, status)`.
 
 - [ ] **Step 1: Write the migration SQL**
 
@@ -65,7 +66,7 @@ create extension if not exists vector;
 -- ── Notes ────────────────────────────────────────────────────────────────────
 create table if not exists public.nuru_notes (
   id                uuid primary key default gen_random_uuid(),
-  uploader_id       uuid not null references public.users(id) on delete cascade,
+  uploader_id       text not null references public.users(id) on delete cascade,
   title             text,
   subject           text,
   source            text not null check (source in ('text', 'file', 'photo')),
@@ -77,7 +78,7 @@ create table if not exists public.nuru_notes (
                       check (extraction_status in ('pending', 'done', 'failed')),
   created_at        timestamptz not null default now(),
   reviewed_at       timestamptz,
-  reviewed_by       uuid references public.users(id)
+  reviewed_by       text references public.users(id)
 );
 
 create index if not exists idx_nuru_notes_uploader on public.nuru_notes (uploader_id, created_at desc);
@@ -91,7 +92,7 @@ create table if not exists public.nuru_note_chunks (
   chunk_index  int not null,
   content      text not null,
   embedding    vector(3072) not null,
-  uploader_id  uuid not null,
+  uploader_id  text not null,
   status       text not null default 'pending'
 );
 
@@ -101,7 +102,7 @@ create index if not exists idx_nuru_chunks_note on public.nuru_note_chunks (note
 -- ── Chat history ─────────────────────────────────────────────────────────────
 create table if not exists public.nuru_chat_messages (
   id               uuid primary key default gen_random_uuid(),
-  user_id          uuid not null references public.users(id) on delete cascade,
+  user_id          text not null references public.users(id) on delete cascade,
   role             text not null check (role in ('user', 'assistant')),
   text             text not null,
   context_note_ids uuid[] not null default '{}',
@@ -112,9 +113,9 @@ create index if not exists idx_nuru_chat_user on public.nuru_chat_messages (user
 
 -- ── Retrieval RPC: "my notes OR approved", exact cosine search ────────────────
 create or replace function public.match_nuru_chunks(
-  p_user_id        uuid,
+  p_user_id         text,
   p_query_embedding vector(3072),
-  p_match_count    int default 8
+  p_match_count     int default 8
 )
 returns table (note_id uuid, content text, similarity float)
 language sql

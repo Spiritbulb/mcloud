@@ -53,16 +53,21 @@ Four isolated units, each behind a clean interface, independently testable, prov
 Raw SQL migrations in `mcloud-1/migrations/` (matches `20260609_store_analytics_rpc.sql` convention).
 Requires `create extension if not exists vector;`.
 
+> **User-id type (verified at Slice 1 execution):** `public.users.id` is **`text`** (WorkOS
+> ids like `user_01...`), not uuid. So `uploader_id`, `user_id`, `reviewed_by`, and the
+> `match_nuru_chunks` `p_user_id` param are all **`text`**. `note.id`/`note_id`/chunk `id`
+> stay `uuid` (internal).
+
 **`nuru_notes`** — one row per uploaded note
 - `id uuid pk default gen_random_uuid()`
-- `uploader_id uuid not null` (→ users.id)
+- `uploader_id text not null` (→ users.id)
 - `title text`, `subject text`
 - `source text` — `'text' | 'file' | 'photo'`
 - `original_content text` — pasted text, or Azure-extracted text for files/photos
 - `file_url text null` — Supabase Storage path of original (null for typed notes)
 - `status text not null default 'pending'` — `'pending' | 'approved' | 'rejected'` (community-share gate)
 - `extraction_status text not null default 'done'` — `'pending' | 'done' | 'failed'`
-- `created_at timestamptz default now()`, `reviewed_at timestamptz null`, `reviewed_by uuid null`
+- `created_at timestamptz default now()`, `reviewed_at timestamptz null`, `reviewed_by text null`
 
 **`nuru_note_chunks`** — one row per embeddable chunk (RAG unit)
 - `id uuid pk default gen_random_uuid()`
@@ -70,7 +75,7 @@ Requires `create extension if not exists vector;`.
 - `chunk_index int not null`
 - `content text not null`
 - `embedding vector(3072) not null`
-- `uploader_id uuid not null` — **denormalized** from parent note (avoids join on hot path)
+- `uploader_id text not null` — **denormalized** from parent note (avoids join on hot path)
 - `status text not null default 'pending'` — **denormalized** from parent note
 - Index: cosine similarity (`<=>`, `vector_cosine_ops`).
   **⚠️ pgvector `ivfflat`/`hnsw` cap at 2000 dims — a `vector(3072)` column CANNOT be
@@ -83,7 +88,7 @@ Requires `create extension if not exists vector;`.
   `nuru_notes` and its `nuru_note_chunks`, or do it in one transaction/RPC).
 
 **`nuru_chat_messages`** — persisted chat history (replaces in-memory stub)
-- `id uuid pk`, `user_id uuid not null`, `role text` (`'user' | 'assistant'`),
+- `id uuid pk`, `user_id text not null`, `role text` (`'user' | 'assistant'`),
   `text text`, `context_note_ids uuid[]`, `created_at timestamptz default now()`
 
 **Storage bucket `nuru-notes`** — **private** (student notes are not world-readable, unlike the
