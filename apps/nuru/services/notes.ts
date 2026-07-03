@@ -1,41 +1,55 @@
-import { Note, NoteSource } from '@/types';
-import { delay, id, rand, maybeError } from './client';
+import { Note, NoteRow, NoteSource } from '@/types';
+import { mapNote } from './_map';
+import { File as ExpoFile } from 'expo-file-system';
 
-let store: Note[] = [
-  { id: 'n1', title: 'Photosynthesis', subject: 'Biology',
-    content: 'Light reactions occur in the thylakoid membrane...',
-    source: 'text', createdAt: '2026-06-28T10:00:00.000Z' },
-  { id: 'n2', title: 'French Revolution timeline', subject: 'History',
-    content: '1789 Estates-General; storming of the Bastille...',
-    source: 'file', createdAt: '2026-06-29T14:30:00.000Z' },
-  { id: 'n3', title: 'Derivatives cheat sheet', subject: 'Math',
-    content: 'd/dx[x^n] = n·x^(n-1); product rule...',
-    source: 'photo', createdAt: '2026-07-01T09:15:00.000Z' },
-];
+export type AuthedFetch = (path: string, init?: RequestInit) => Promise<Response>;
 
-export const notes = {
-  async list(): Promise<Note[]> {
-    await delay(rand(400, 700));
-    return [...store].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  },
-  async get(noteId: string): Promise<Note | null> {
-    await delay(rand(300, 600));
-    return store.find((n) => n.id === noteId) ?? null;
-  },
-  async create(input: {
-    title: string; subject: string; content: string; source: NoteSource;
-  }): Promise<Note> {
-    await delay(rand(500, 900));
-    maybeError();
-    const note: Note = {
-      id: id(),
-      title: input.title || 'Untitled note',
-      subject: input.subject || 'General',
-      content: input.content,
-      source: input.source,
-      createdAt: new Date().toISOString(),
-    };
-    store.unshift(note);
-    return note;
-  },
+export type CreateNoteInput = {
+  title: string;
+  subject: string;
+  source: NoteSource;
+  content?: string;
+  file?: { uri: string; name: string; type: string };
 };
+
+export function createNotesApi(authedFetch: AuthedFetch) {
+  return {
+    async list(): Promise<Note[]> {
+      const res = await authedFetch('/api/mobile/notes');
+      if (!res.ok) throw new Error('Could not load notes');
+      const { notes } = (await res.json()) as { notes: NoteRow[] };
+      return notes.map(mapNote);
+    },
+
+    async get(id: string): Promise<Note | null> {
+      const res = await authedFetch(`/api/mobile/notes/${id}`);
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error('Could not load note');
+      const { note } = (await res.json()) as { note: NoteRow };
+      return mapNote(note);
+    },
+
+    async create(input: CreateNoteInput): Promise<Note> {
+      const form = new FormData();
+      form.append('source', input.source);
+      if (input.title) form.append('title', input.title);
+      if (input.subject) form.append('subject', input.subject);
+
+      if (input.source === 'text') {
+        form.append('text', input.content ?? '');
+      } else if (input.file) {
+        // Expo fetch multipart requires an ExpoFile blob, NOT the RN {uri,name,type} part.
+        const file = new ExpoFile(input.file.uri);
+        form.append('file', file as unknown as Blob, input.file.name);
+      }
+
+      const res = await authedFetch('/api/mobile/notes', { method: 'POST', body: form });
+      if (!res.ok) {
+        const msg = await res.json().catch(() => ({ error: 'Upload failed' }));
+        throw new Error((msg as { error?: string }).error ?? 'Upload failed');
+      }
+      const { note } = (await res.json()) as { note: NoteRow };
+      return mapNote(note);
+    },
+  };
+}

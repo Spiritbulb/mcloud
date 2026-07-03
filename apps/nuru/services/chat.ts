@@ -1,33 +1,24 @@
 import { Message } from '@/types';
-import { delay, id, rand } from './client';
+import { mapMessage } from './_map';
+import type { AuthedFetch } from './notes';
 
-let history: Message[] = [];
+export function createChatApi(authedFetch: AuthedFetch) {
+  return {
+    async history(): Promise<Message[]> {
+      const res = await authedFetch('/api/mobile/chat');
+      if (!res.ok) throw new Error('Could not load chat');
+      const { messages } = (await res.json()) as { messages: Message[] };
+      return messages.map(mapMessage);
+    },
 
-function mockReply(text: string, contextNoteIds: string[]): string {
-  const ctx = contextNoteIds.length
-    ? ` Using your ${contextNoteIds.length} referenced note(s), `
-    : ' ';
-  return `Here's a mock answer.${ctx}you asked: "${text}". ` +
-    `(This is placeholder AI output — the real backend will answer from your notes.)`;
+    async send(text: string, contextNoteIds: string[]): Promise<Message> {
+      const res = await authedFetch('/api/mobile/chat', {
+        method: 'POST',
+        body: JSON.stringify({ text, contextNoteIds }),
+      });
+      if (!res.ok) throw new Error('Could not send message');
+      const { message } = (await res.json()) as { message: Message };
+      return mapMessage(message);
+    },
+  };
 }
-
-export const chat = {
-  async history(): Promise<Message[]> {
-    await delay(300);
-    return [...history];
-  },
-  async send(text: string, contextNoteIds: string[]): Promise<Message> {
-    const userMsg: Message = {
-      id: id(), role: 'user', text, contextNoteIds,
-      createdAt: new Date().toISOString(),
-    };
-    history.push(userMsg);
-    await delay(rand(600, 1100));
-    const reply: Message = {
-      id: id(), role: 'assistant', text: mockReply(text, contextNoteIds),
-      contextNoteIds, createdAt: new Date().toISOString(),
-    };
-    history.push(reply);
-    return reply;
-  },
-};
