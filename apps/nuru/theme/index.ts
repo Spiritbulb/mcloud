@@ -4,19 +4,19 @@
 // the system sans does the quiet UI work.
 
 export const colors = {
-  bg: '#14110F',           // warm near-black
-  surface: '#1F1B18',      // raised cards / input bar
-  surfaceAlt: '#2A2521',   // pressed / active states
+  bg: '#262624',           // flat neutral charcoal (Claude-style base)
+  surface: '#302F2D',      // raised cards / input bar — steps up from bg
+  surfaceAlt: '#3A3937',   // pressed / active states
   primary: '#FF9800',      // logo amber-orange — brand + actions
   primarySoft: '#3A2A14',  // amber-tinted chips on dark
   accent: '#FFB74D',       // lighter amber for secondary links
   text: '#EDE7E1',         // warm off-white
   textMuted: '#9B8F85',    // taupe
-  border: '#322C27',       // hairline warm
+  border: '#403F3C',       // hairline on charcoal
   danger: '#E0876F',       // desaturated coral for errors on dark
   onPrimary: '#1A1204',    // near-black text on amber fills
   bubbleUser: '#FF9800',   // user chat bubble (amber)
-  bubbleAi: '#24201D',     // assistant bubble (raised surface)
+  bubbleAi: '#302F2D',     // assistant bubble (raised surface)
 };
 
 export const spacing = { xs: 4, sm: 8, md: 16, lg: 24, xl: 32 };

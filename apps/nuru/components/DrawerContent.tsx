@@ -1,6 +1,6 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DrawerContentComponentProps, DrawerContentScrollView } from 'expo-router/drawer';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Logo } from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { theme } from '@/theme';
@@ -17,11 +17,15 @@ const ITEMS: { route: string; label: string; glyph: string }[] = [
  */
 export function DrawerContent(props: DrawerContentComponentProps) {
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const activeRoute = props.state.routeNames[props.state.index];
 
   return (
     <View style={styles.container}>
-      <DrawerContentScrollView {...props} contentContainerStyle={styles.scroll}>
+      <DrawerContentScrollView
+        {...props}
+        contentContainerStyle={[styles.scroll, { paddingTop: insets.top + theme.spacing.sm }]}
+      >
         <View style={styles.brand}>
           <Logo size={34} />
           <Text style={styles.brandText}>Nuru</Text>

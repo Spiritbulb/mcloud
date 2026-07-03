@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Modal, View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator } from 'react-native';
+import { Modal, View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Note, NoteSource } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import * as DocumentPicker from 'expo-document-picker';
@@ -70,7 +70,10 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
 
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={close}>
-      <View style={styles.backdrop}>
+      <KeyboardAvoidingView
+        style={styles.backdrop}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={styles.sheet}>
           <View style={styles.grabber} />
           <Text style={styles.sheetTitle}>Add a note</Text>
@@ -112,7 +115,7 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
             <Text style={{ color: theme.colors.accent, textAlign: 'center' }}>Cancel</Text>
           </Pressable>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }
