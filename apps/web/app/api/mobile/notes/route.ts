@@ -15,6 +15,24 @@ const MAX_SIZE = 8 * 1024 * 1024 // 8 MB, matches existing upload route
 const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
 const FILE_TYPES = [...IMAGE_TYPES, 'application/pdf']
 
+export async function GET(req: NextRequest) {
+    const auth = await requireMobileUser(req)
+    if (auth instanceof NextResponse) return auth
+    const userId = auth.user.id
+
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('nuru_notes')
+        .select('id, title, subject, source, original_content, file_url, status, created_at')
+        .eq('uploader_id', userId)
+        .order('created_at', { ascending: false })
+    if (error) {
+        console.error('[nuru notes list]', error.message)
+        return NextResponse.json({ error: 'Could not load notes' }, { status: 500 })
+    }
+    return NextResponse.json({ notes: data ?? [] })
+}
+
 export async function POST(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
