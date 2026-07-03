@@ -9,6 +9,7 @@
     "userInterfaceStyle": "dark",
     "ios": { "supportsTablet": true },
     "android": {
+      "package": "co.ke.mcloud.nuru",
       "adaptiveIcon": {
         "backgroundColor": "#FFFFFF",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -24,12 +25,20 @@
       [
         "expo-splash-screen",
         { "image": "./assets/images/splash-icon.png", "resizeMode": "contain", "backgroundColor": "#14110F" }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nuru needs access to your photos so you can add them as notes.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
       ]
     ],
     "experiments": { "typedRoutes": true },
     "extra": {
-      "apiBaseUrl": "http://localhost:3000",
-      "webBaseUrl": "http://localhost:3000",
+      "apiBaseUrl": "https://www.mcloud.co.ke",
+      "webBaseUrl": "https://www.mcloud.co.ke",
       "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",
       "workosDomain": "https://api.workos.com"
     }
