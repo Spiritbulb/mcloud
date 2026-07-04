@@ -3,22 +3,21 @@ import { View, Text, Animated, Easing, StyleSheet, AccessibilityInfo } from 'rea
 import { Logo } from '@/components/Logo';
 import { theme } from '@/theme';
 
-const PHRASES = [
-  'Reading your notes…',
-  'Connecting ideas…',
-  'Finding the thread…',
-  'Thinking it through…',
-  'Pulling it together…',
-];
+// Live model status → human label. Driven by the real SSE status events from the
+// chat stream (thinking → searching_notes → writing), not a blind cycle.
+const LABELS: Record<string, string> = {
+  thinking: 'Thinking…',
+  searching_notes: 'Searching your notes…',
+  writing: 'Writing…',
+};
 
 /**
- * AI activity indicator: the Nuru sunburst turning slowly while a studious
- * loading phrase cycles beneath it. Respects reduce-motion (holds still, keeps
- * cycling the words). Shown while the assistant is composing a reply.
+ * AI activity indicator: the Nuru sunburst turning slowly while the current model
+ * status shows beneath it. Respects reduce-motion (holds still). Shown while the
+ * assistant is composing a reply.
  */
-export function ThinkingIndicator({ size = 40 }: { size?: number }) {
+export function ThinkingIndicator({ size = 40, status }: { size?: number; status?: string }) {
   const spin = useRef(new Animated.Value(0)).current;
-  const [phrase, setPhrase] = useState(0);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   useEffect(() => {
@@ -49,19 +48,15 @@ export function ThinkingIndicator({ size = 40 }: { size?: number }) {
     return () => loop.stop();
   }, [reduceMotion, spin]);
 
-  useEffect(() => {
-    const t = setInterval(() => setPhrase((p) => (p + 1) % PHRASES.length), 2200);
-    return () => clearInterval(t);
-  }, []);
-
   const rotate = spin.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const label = (status && LABELS[status]) || 'Thinking…';
 
   return (
-    <View style={styles.wrap} accessibilityLabel="Nuru is thinking">
+    <View style={styles.wrap} accessibilityLabel={`Nuru is ${label}`}>
       <Animated.View style={{ transform: [{ rotate }] }}>
         <Logo size={size} />
       </Animated.View>
-      <Text style={styles.phrase}>{PHRASES[phrase]}</Text>
+      <Text style={styles.phrase}>{label}</Text>
     </View>
   );
 }

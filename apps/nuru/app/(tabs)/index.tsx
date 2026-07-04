@@ -25,6 +25,7 @@ export default function Chat() {
   const [contextNoteIds, setContextNoteIds] = useState<string[]>([]);
   const [contextLabel, setContextLabel] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
+  const [status, setStatus] = useState<string | undefined>();
   const listRef = useRef<FlatList<Message>>(null);
   const headerHeight = useHeaderHeight();
 
@@ -66,12 +67,13 @@ export default function Chat() {
   async function onSend(text: string) {
     if (!sessionId) return;
     setSending(true);
+    setStatus('thinking');
     const optimistic: Message = {
       id: 'tmp', role: 'user', text, contextNoteIds, createdAt: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimistic]);
     try {
-      await chat.send(text, contextNoteIds, sessionId);
+      await chat.send(text, contextNoteIds, sessionId, { onStatus: setStatus });
       setMessages(await chat.history(sessionId));
     } catch {
       // Roll back the optimistic bubble so a failed send doesn't leave a ghost
@@ -80,6 +82,7 @@ export default function Chat() {
       setLoadError(true);
     } finally {
       setSending(false);
+      setStatus(undefined);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     }
   }
@@ -120,7 +123,7 @@ export default function Chat() {
       )}
       {sending && (
         <View style={styles.thinking}>
-          <ThinkingIndicator size={28} />
+          <ThinkingIndicator size={28} status={status} />
         </View>
       )}
       <ChatInputBar onSend={onSend} disabled={sending} scopeLabel={contextLabel ?? undefined} />
