@@ -1,5 +1,5 @@
 import { Drawer } from 'expo-router/drawer';
-import { Pressable, Text } from 'react-native';
+import { Pressable, Text, Dimensions } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { DrawerContent } from '@/components/DrawerContent';
 import { theme } from '@/theme';
@@ -29,7 +29,7 @@ export default function DrawerLayout() {
         headerTitleStyle: { fontFamily: theme.fonts.display, fontSize: 20, color: theme.colors.text },
         headerTintColor: theme.colors.text,
         headerLeft: () => <MenuButton />,
-        drawerStyle: { backgroundColor: theme.colors.bg, width: 288 },
+        drawerStyle: { backgroundColor: theme.colors.bg, width: Dimensions.get('window').width * 0.85 },
         swipeEdgeWidth: 60,
       }}
     >

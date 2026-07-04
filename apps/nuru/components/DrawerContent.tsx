@@ -1,25 +1,45 @@
+import { useCallback, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DrawerContentComponentProps, DrawerContentScrollView } from 'expo-router/drawer';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { Feather } from '@expo/vector-icons';
 import { Logo } from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
+import { useApi } from '@/hooks/useApi';
+import { ChatSession } from '@/types';
 import { theme } from '@/theme';
 
-const ITEMS: { route: string; label: string; glyph: string }[] = [
-  { route: 'index', label: 'Chat', glyph: '✳' },
-  { route: 'notes', label: 'Notes', glyph: '❒' },
-  { route: 'profile', label: 'Profile', glyph: '◔' },
-];
-
 /**
- * The Nuru drawer — a slide-out menu in the Claude reference's shape: brand
- * header, a "New chat" action, the nav items above a divider, and the signed-in
- * user pinned to the footer with a settings gear.
+ * The Nuru drawer — near-full-width Recents list in the Claude reference's shape:
+ * brand, "New chat", the session list, Notes pinned above a divider, and the
+ * signed-in user with a settings gear in the footer.
  */
 export function DrawerContent(props: DrawerContentComponentProps) {
   const { user } = useAuth();
+  const { chat } = useApi();
   const insets = useSafeAreaInsets();
-  const activeRoute = props.state.routeNames[props.state.index];
+  const router = useRouter();
+  const [sessions, setSessions] = useState<ChatSession[]>([]);
+
+  // Refresh the list whenever the drawer regains focus (after a new message the
+  // title/order may have changed).
+  useFocusEffect(
+    useCallback(() => {
+      chat.listSessions().then(setSessions).catch(() => {});
+    }, [chat]),
+  );
+
+  async function newChat() {
+    const id = await chat.createSession();
+    props.navigation.closeDrawer();
+    router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+  }
+
+  function openSession(id: string) {
+    props.navigation.closeDrawer();
+    router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+  }
 
   return (
     <View style={styles.container}>
@@ -28,36 +48,29 @@ export function DrawerContent(props: DrawerContentComponentProps) {
         contentContainerStyle={[styles.scroll, { paddingTop: insets.top + theme.spacing.sm }]}
       >
         <View style={styles.brand}>
-          <Logo size={34} />
+          <Logo size={30} />
           <Text style={styles.brandText}>Nuru</Text>
         </View>
 
-        <Pressable
-          onPress={() => props.navigation.navigate('index')}
-          style={styles.newChat}
-          accessibilityLabel="New chat"
-        >
-          <Text style={styles.newChatGlyph}>＋</Text>
+        <Pressable onPress={newChat} style={styles.newChat} accessibilityLabel="New chat">
+          <Feather name="edit" size={18} color={theme.colors.primary} />
           <Text style={styles.newChatLabel}>New chat</Text>
         </Pressable>
 
-        <View style={styles.items}>
-          {ITEMS.map((item) => {
-            const active = activeRoute === item.route;
-            return (
-              <Pressable
-                key={item.route}
-                onPress={() => props.navigation.navigate(item.route)}
-                style={[styles.item, active && styles.itemActive]}
-              >
-                <Text style={[styles.glyph, active && styles.textActive]}>{item.glyph}</Text>
-                <Text style={[styles.label, active && styles.textActive]}>{item.label}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <Text style={styles.section}>RECENTS</Text>
+        {sessions.map((s) => (
+          <Pressable key={s.id} onPress={() => openSession(s.id)} style={styles.row}>
+            <Feather name="message-circle" size={16} color={theme.colors.textMuted} />
+            <Text style={styles.rowLabel} numberOfLines={1}>{s.title || 'New chat'}</Text>
+          </Pressable>
+        ))}
 
         <View style={styles.divider} />
+
+        <Pressable onPress={() => { props.navigation.closeDrawer(); router.push('/notes'); }} style={styles.row}>
+          <Feather name="file-text" size={16} color={theme.colors.textMuted} />
+          <Text style={styles.rowLabel}>Notes</Text>
+        </Pressable>
       </DrawerContentScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
@@ -69,12 +82,12 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           <Text style={styles.userEmail} numberOfLines={1}>{user?.email ?? ''}</Text>
         </View>
         <Pressable
-          onPress={() => props.navigation.navigate('profile')}
+          onPress={() => { props.navigation.closeDrawer(); router.push('/profile'); }}
           hitSlop={8}
           accessibilityLabel="Settings"
           style={styles.gear}
         >
-          <Text style={styles.gearGlyph}>⚙</Text>
+          <Feather name="settings" size={18} color={theme.colors.textMuted} />
         </Pressable>
       </SafeAreaView>
     </View>
@@ -86,32 +99,27 @@ const styles = StyleSheet.create({
   scroll: { paddingTop: theme.spacing.sm },
   brand: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.md,
+    paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm,
     marginBottom: theme.spacing.sm,
   },
-  brandText: { fontFamily: theme.fonts.display, fontSize: 26, color: theme.colors.text },
+  brandText: { fontFamily: theme.fonts.display, fontSize: 24, color: theme.colors.text },
   newChat: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    marginHorizontal: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md, paddingVertical: 14,
-    borderRadius: theme.radii.md,
-    marginBottom: theme.spacing.sm,
+    marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
+    paddingVertical: 11, borderRadius: theme.radii.md, marginBottom: theme.spacing.sm,
   },
-  newChatGlyph: { fontSize: 20, color: theme.colors.primary, width: 22, textAlign: 'center' },
   newChatLabel: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
-  items: { paddingHorizontal: theme.spacing.sm, gap: 4 },
-  item: {
+  section: {
+    fontSize: 11, fontWeight: '700', color: theme.colors.textMuted, letterSpacing: 1,
+    paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm, paddingBottom: theme.spacing.xs,
+  },
+  row: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md, paddingVertical: 16, borderRadius: theme.radii.md,
+    marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
+    paddingVertical: 11, borderRadius: theme.radii.md,
   },
-  itemActive: { backgroundColor: theme.colors.surfaceAlt },
-  glyph: { fontSize: 18, color: theme.colors.textMuted, width: 22, textAlign: 'center' },
-  label: { fontSize: 16, color: theme.colors.textMuted, fontWeight: '500' },
-  textActive: { color: theme.colors.primary },
-  divider: {
-    height: 1, backgroundColor: theme.colors.border,
-    marginHorizontal: theme.spacing.md, marginTop: theme.spacing.md,
-  },
+  rowLabel: { fontSize: 15, color: theme.colors.text, flex: 1 },
+  divider: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md, marginVertical: theme.spacing.sm },
   footer: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md,
@@ -125,5 +133,4 @@ const styles = StyleSheet.create({
   userName: { color: theme.colors.text, fontSize: 15, fontWeight: '600' },
   userEmail: { color: theme.colors.textMuted, fontSize: 13 },
   gear: { padding: theme.spacing.xs },
-  gearGlyph: { fontSize: 18, color: theme.colors.textMuted },
 });
