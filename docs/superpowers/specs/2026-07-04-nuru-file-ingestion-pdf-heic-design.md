@@ -34,6 +34,9 @@ Impact:
    upload, so the server only sees formats the OCR backend accepts.
 3. When a file genuinely cannot be read, the user sees an *actionable* message,
    not the generic "Could not read the file."
+4. The chat composer's "+" becomes a real attach affordance: a small dropdown
+   (Files active, Camera greyed/"coming soon"); picking a file creates a note via
+   the same ingest pipeline and scopes the chat to it.
 
 ## Non-Goals (deferred — YAGNI)
 
@@ -43,6 +46,9 @@ Impact:
 - Server-side HEIC decoding (native/wasm codec in Vercel serverless). The client
   converts instead.
 - Multi-page PDF layout fidelity beyond concatenating extracted page text.
+- Camera capture (the dropdown's Camera row is greyed/"coming soon").
+- Ephemeral (not-saved) chat attachments — the chat "+" always creates a note.
+- Attach preview thumbnails / a recent-images strip in the dropdown.
 
 ## Architecture
 
@@ -86,8 +92,8 @@ A thrown extractor error (either path) still maps to the existing generic
 Add **`expo-image-manipulator`** (standard Expo module; SDK-57 version resolved by
 `expo install`). `expo-image-picker` is already present.
 
-In `apps/nuru/components/AddNoteSheet.tsx`, a shared helper normalizes any picked
-asset before upload:
+A shared helper `apps/nuru/services/upload.ts` normalizes any picked asset before
+upload (used by both `AddNoteSheet` and the chat attach flow in Part 4):
 
 ```
 async function toUploadable(asset): { uri, name, type } {
@@ -123,10 +129,44 @@ existing `400 'Unsupported file type'` (clear) instead of an OCR failure (opaque
 renders it via `setError((e as Error).message)`. The three distinct server
 messages (scanned-PDF / no-text-image / generic) reach the user as-is.
 
+### Part 4 — Chat "+" attach → create note → scope chat (client)
+
+The chat composer's "+" (`ChatInputBar.tsx`, today a dead `View` placeholder)
+becomes a real `Pressable` that opens a small anchored dropdown.
+
+New component `apps/nuru/components/AttachMenu.tsx` — a lightweight popover (an
+absolutely-positioned card above the "+", plus a transparent full-screen backdrop
+that dismisses on outside tap; **not** a full-screen Modal). Two rows:
+- **📄 Files** (active) → `expo-document-picker`,
+  `type: ['application/pdf','image/*']`.
+- **📷 Camera** (greyed, `disabled`, "coming soon") — mirrors the existing greyed
+  "Record voice" row pattern.
+
+On file pick, the flow is identical to `AddNoteSheet.upload()`: `toUploadable`
+(HEIC→JPEG per Part 2) → `notes.create({ source:'file', file })` → the full ingest
+(Parts 1/3) → a persisted note with `{ id, title }`.
+
+**Scoping.** `app/(tabs)/index.tsx` already owns `contextNoteIds` + `contextLabel`
+and passes `scopeLabel` to `ChatInputBar`. On successful create, the attach flow
+sets `contextNoteIds=[note.id]` and `contextLabel=note.title` — the scope chip
+flips from "All notes" to the note title, and the next question is asked against
+it via the existing `noteInFocus` path. The attach handler and its busy/error
+state live in `index.tsx`; `ChatInputBar` gains `onAttach: () => void` (opens the
+menu) and an `attaching?: boolean` (spinner/disable the "+").
+
+**States.** While ingesting, the "+" shows a spinner and is disabled. Cancel is a
+no-op. Extraction failures surface the Part 3 messages inline near the composer
+(reuse the screen's existing error line). The picked file is HEIC-converted before
+upload, same as AddNoteSheet.
+
+`AddNoteSheet` is unchanged in this pass (it keeps its own rows); the dropdown is
+wired only to chat. `AttachMenu` is written standalone so AddNoteSheet could adopt
+it later.
+
 ## Data Flow
 
 ```
-Pick (AddNoteSheet)
+Add-note surface (AddNoteSheet rows) ── or ── Chat "+" (AttachMenu → Files)
   └─ toUploadable: HEIC/HEIF → JPEG (on device); else pass-through
       └─ notes.create → multipart POST /api/mobile/notes
           ├─ type check (jpeg/png/webp/pdf only)
@@ -135,6 +175,7 @@ Pick (AddNoteSheet)
                pdf  → extractPdfText (pure JS)  → '' ⇒ "scanned PDF" 422
                image→ extractText   (Azure OCR) → '' ⇒ "no text" 422
           └─ chunk + embed + persist note (unchanged)
+  └─ (chat path only) set scope → contextNoteIds=[note.id], label=note.title
 ```
 
 ## Error Handling
@@ -157,7 +198,12 @@ Pick (AddNoteSheet)
 - **Bundle guard:** `expo export --platform android` succeeds (confirms
   `expo-image-manipulator` bundles).
 - **Device:** iPhone HEIC photo → note has text; text PDF → note has text; scanned
-  PDF → the specific "import as a photo" message.
+  PDF → the specific "import as a photo" message; **chat "+" → Files → pick a
+  PDF → a note is created, the scope chip flips to its title, and a follow-up
+  question is answered against it** (Camera row visibly greyed).
+
+Part 4 adds no pure logic (it reuses `notes.create` + ingest, already covered), so
+its coverage is typecheck + `expo export` + the device check above.
 
 ## Files
 
@@ -171,4 +217,11 @@ Pick (AddNoteSheet)
 
 **Client (`apps/nuru/`):**
 - `components/AddNoteSheet.tsx` (modify) — `toUploadable` HEIC→JPEG before upload.
+- `services/upload.ts` (new) — shared `toUploadable(asset)` helper (HEIC→JPEG),
+  used by both AddNoteSheet and the chat attach flow.
+- `components/AttachMenu.tsx` (new) — the small Files/Camera(greyed) dropdown.
+- `components/ChatInputBar.tsx` (modify) — "+" becomes a `Pressable` with
+  `onAttach` + `attaching` props.
+- `app/(tabs)/index.tsx` (modify) — attach handler: pick → create note → set
+  scope; holds the AttachMenu open state + attaching/error state.
 - `package.json` — add `expo-image-manipulator`.
