@@ -13,7 +13,8 @@ const ITEMS: { route: string; label: string; glyph: string }[] = [
 
 /**
  * The Nuru drawer — a slide-out menu in the Claude reference's shape: brand
- * header up top, the nav items, and the signed-in user pinned to the footer.
+ * header, a "New chat" action, the nav items above a divider, and the signed-in
+ * user pinned to the footer with a settings gear.
  */
 export function DrawerContent(props: DrawerContentComponentProps) {
   const { user } = useAuth();
@@ -31,6 +32,15 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           <Text style={styles.brandText}>Nuru</Text>
         </View>
 
+        <Pressable
+          onPress={() => props.navigation.navigate('index')}
+          style={styles.newChat}
+          accessibilityLabel="New chat"
+        >
+          <Text style={styles.newChatGlyph}>＋</Text>
+          <Text style={styles.newChatLabel}>New chat</Text>
+        </Pressable>
+
         <View style={styles.items}>
           {ITEMS.map((item) => {
             const active = activeRoute === item.route;
@@ -46,6 +56,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
             );
           })}
         </View>
+
+        <View style={styles.divider} />
       </DrawerContentScrollView>
 
       <SafeAreaView edges={['bottom']} style={styles.footer}>
@@ -56,6 +68,14 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           <Text style={styles.userName} numberOfLines={1}>{user?.name ?? 'Student'}</Text>
           <Text style={styles.userEmail} numberOfLines={1}>{user?.email ?? ''}</Text>
         </View>
+        <Pressable
+          onPress={() => props.navigation.navigate('profile')}
+          hitSlop={8}
+          accessibilityLabel="Settings"
+          style={styles.gear}
+        >
+          <Text style={styles.gearGlyph}>⚙</Text>
+        </Pressable>
       </SafeAreaView>
     </View>
   );
@@ -67,18 +87,31 @@ const styles = StyleSheet.create({
   brand: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.md,
-    marginBottom: theme.spacing.md,
+    marginBottom: theme.spacing.sm,
   },
   brandText: { fontFamily: theme.fonts.display, fontSize: 26, color: theme.colors.text },
-  items: { paddingHorizontal: theme.spacing.sm, gap: 2 },
+  newChat: {
+    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
+    marginHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.md, paddingVertical: 14,
+    borderRadius: theme.radii.md,
+    marginBottom: theme.spacing.sm,
+  },
+  newChatGlyph: { fontSize: 20, color: theme.colors.primary, width: 22, textAlign: 'center' },
+  newChatLabel: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
+  items: { paddingHorizontal: theme.spacing.sm, gap: 4 },
   item: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    paddingHorizontal: theme.spacing.md, paddingVertical: 14, borderRadius: theme.radii.md,
+    paddingHorizontal: theme.spacing.md, paddingVertical: 16, borderRadius: theme.radii.md,
   },
   itemActive: { backgroundColor: theme.colors.surfaceAlt },
   glyph: { fontSize: 18, color: theme.colors.textMuted, width: 22, textAlign: 'center' },
   label: { fontSize: 16, color: theme.colors.textMuted, fontWeight: '500' },
   textActive: { color: theme.colors.primary },
+  divider: {
+    height: 1, backgroundColor: theme.colors.border,
+    marginHorizontal: theme.spacing.md, marginTop: theme.spacing.md,
+  },
   footer: {
     flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
     paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md,
@@ -91,4 +124,6 @@ const styles = StyleSheet.create({
   avatarText: { fontSize: 17, fontWeight: '700', color: theme.colors.primary },
   userName: { color: theme.colors.text, fontSize: 15, fontWeight: '600' },
   userEmail: { color: theme.colors.textMuted, fontSize: 13 },
+  gear: { padding: theme.spacing.xs },
+  gearGlyph: { fontSize: 18, color: theme.colors.textMuted },
 });

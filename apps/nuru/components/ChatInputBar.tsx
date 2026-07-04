@@ -3,9 +3,13 @@ import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
 import { theme } from '@/theme';
 
 /**
- * The chat composer — a single raised card. Text field on top; a control row
- * below carries the current scope chip (what the question is asked against) and
- * the send control. Modeled on the reference's rounded input bar.
+ * The chat composer — a single raised card in the reference's shape. Text field
+ * on top; a control row below carries the attach (+) affordance on the left, the
+ * current scope chip in the center (what the question is asked against), and the
+ * round send control on the right.
+ *
+ * The (+) attach button is a styled placeholder for now — file upload lands in a
+ * later slice. Its silhouette is finalized here so wiring it up is pure plumbing.
  */
 export function ChatInputBar({
   onSend,
@@ -37,6 +41,9 @@ export function ChatInputBar({
         multiline
       />
       <View style={styles.controls}>
+        <View style={styles.attach} accessibilityLabel="Attach (coming soon)">
+          <Text style={styles.attachGlyph}>＋</Text>
+        </View>
         <View style={styles.scope}>
           <View style={styles.scopeDot} />
           <Text style={styles.scopeText} numberOfLines={1}>
@@ -75,18 +82,29 @@ const styles = StyleSheet.create({
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    gap: theme.spacing.sm,
     marginTop: theme.spacing.sm,
   },
+  attach: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: theme.colors.surfaceAlt,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  attachGlyph: { color: theme.colors.textMuted, fontSize: 20, lineHeight: 22 },
   scope: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: theme.spacing.xs,
     backgroundColor: theme.colors.surfaceAlt,
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 6,
-    maxWidth: '70%',
+    paddingVertical: 8,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
   scopeDot: {
     width: 7,
