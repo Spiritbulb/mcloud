@@ -90,8 +90,9 @@ trusted from the client. Requesting another user's `sessionId` yields nothing.
 ## 4. Drawer rework (`DrawerContent.tsx` + `app/(tabs)/_layout.tsx`)
 
 - **Width → 85%** of screen width (via `Dimensions`), replacing the fixed `288`.
-- **Real icons** via `@expo/vector-icons` (Feather) — no new dependency, ships
-  in Expo, OTA-safe. Replaces the current text glyphs:
+- **Real icons** via `@expo/vector-icons` (Feather) — installed via
+  `npx expo install` (not currently present). Ships prebuilt icon fonts, no
+  native linking, so it stays OTA-safe. Replaces the current text glyphs:
   - New chat → `edit`/`plus`
   - session row → `message-circle`
   - Notes → `file-text`
