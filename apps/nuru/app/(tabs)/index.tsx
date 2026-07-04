@@ -14,7 +14,8 @@ import { theme } from '@/theme';
 
 export default function Chat() {
   const { chat, notes: notesService } = useApi();
-  const params = useLocalSearchParams<{ noteId?: string }>();
+  const params = useLocalSearchParams<{ noteId?: string; sessionId?: string }>();
+  const [sessionId, setSessionId] = useState<string | null>(params.sessionId ?? null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [contextNoteIds, setContextNoteIds] = useState<string[]>([]);
   const [contextLabel, setContextLabel] = useState<string | null>(null);
@@ -22,7 +23,18 @@ export default function Chat() {
   const listRef = useRef<FlatList<Message>>(null);
   const headerHeight = useHeaderHeight();
 
-  useEffect(() => { chat.history().then(setMessages); }, []);
+  // Resolve a session: use the routed one, else start a fresh session.
+  useEffect(() => {
+    let cancelled = false;
+    async function resolve() {
+      const sid = params.sessionId ?? (await chat.createSession());
+      if (cancelled) return;
+      setSessionId(sid);
+      chat.history(sid).then(setMessages);
+    }
+    resolve();
+    return () => { cancelled = true; };
+  }, [params.sessionId]);
 
   useEffect(() => {
     if (!params.noteId) return;
@@ -37,14 +49,15 @@ export default function Chat() {
   }
 
   async function onSend(text: string) {
+    if (!sessionId) return;
     setSending(true);
     const optimistic: Message = {
       id: 'tmp', role: 'user', text, contextNoteIds, createdAt: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimistic]);
     try {
-      await chat.send(text, contextNoteIds);
-      setMessages(await chat.history());
+      await chat.send(text, contextNoteIds, sessionId);
+      setMessages(await chat.history(sessionId));
     } finally {
       setSending(false);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
