@@ -5,6 +5,9 @@
 // the same WorkOS JWT /api/mobile/* verifies via JWKS.
 import * as React from 'react';
 import * as AuthSession from 'expo-auth-session';
+// expo/fetch is WinterCG-compliant and, unlike RN's global fetch, exposes a
+// readable res.body — required to consume the chat endpoint's live SSE stream.
+import { fetch as expoFetch } from 'expo/fetch';
 import * as SecureStorage from '@/lib/secureStorage';
 import { config } from '@/lib/config';
 
@@ -33,6 +36,8 @@ type AuthState = {
   verifyCode: (email: string, code: string) => Promise<void>;
   signOut: () => Promise<void>;
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
+  // Like authedFetch but via expo/fetch so the response body is streamable.
+  streamingFetch: (path: string, init?: RequestInit) => Promise<Response>;
   refreshSession: () => Promise<void>;
 };
 
@@ -210,9 +215,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [signOut],
   );
 
+  // Same bearer + one-shot 401 refresh as authedFetch, but via expo/fetch so the
+  // returned Response has a readable body for streaming (SSE) endpoints.
+  const streamingFetch = React.useCallback(
+    async (path: string, init: RequestInit = {}): Promise<Response> => {
+      const tokens = await loadTokens();
+      const url = path.startsWith('http') ? path : `${config.apiBaseUrl}${path}`;
+      const withAuth = (accessToken: string) => ({
+        ...init,
+        headers: {
+          ...(init.headers ?? {}),
+          Authorization: `Bearer ${accessToken}`,
+          ...(init.body ? { 'Content-Type': 'application/json' } : {}),
+        },
+      });
+      let res = await expoFetch(url, withAuth(tokens?.accessToken ?? '') as Parameters<typeof expoFetch>[1]);
+      if (res.status === 401) {
+        const refreshed = await refreshTokens();
+        if (refreshed) {
+          res = await expoFetch(url, withAuth(refreshed.accessToken) as Parameters<typeof expoFetch>[1]);
+        } else {
+          await signOut();
+        }
+      }
+      return res as unknown as Response;
+    },
+    [signOut],
+  );
+
   const value = React.useMemo(
-    () => ({ user, loading, sendCode, verifyCode, signOut, authedFetch, refreshSession: hydrate }),
-    [user, loading, sendCode, verifyCode, signOut, authedFetch, hydrate],
+    () => ({ user, loading, sendCode, verifyCode, signOut, authedFetch, streamingFetch, refreshSession: hydrate }),
+    [user, loading, sendCode, verifyCode, signOut, authedFetch, streamingFetch, hydrate],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

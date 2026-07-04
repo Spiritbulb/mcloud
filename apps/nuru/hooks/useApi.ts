@@ -5,9 +5,9 @@ import { createChatApi } from '@/services/chat';
 
 // Threads the auth-scoped fetch into the API service factories.
 export function useApi() {
-  const { authedFetch } = useAuth();
+  const { authedFetch, streamingFetch } = useAuth();
   return useMemo(
-    () => ({ notes: createNotesApi(authedFetch), chat: createChatApi(authedFetch) }),
-    [authedFetch],
+    () => ({ notes: createNotesApi(authedFetch), chat: createChatApi(authedFetch, streamingFetch) }),
+    [authedFetch, streamingFetch],
   );
 }

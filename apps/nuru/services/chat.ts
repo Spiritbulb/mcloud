@@ -2,7 +2,7 @@ import { Message, ChatSession } from '@/types';
 import { mapMessage } from './_map';
 import type { AuthedFetch } from './notes';
 
-export function createChatApi(authedFetch: AuthedFetch) {
+export function createChatApi(authedFetch: AuthedFetch, streamingFetch: AuthedFetch) {
   return {
     async listSessions(): Promise<ChatSession[]> {
       const res = await authedFetch('/api/mobile/chat/sessions');
@@ -25,14 +25,45 @@ export function createChatApi(authedFetch: AuthedFetch) {
       return messages.map(mapMessage);
     },
 
-    async send(text: string, contextNoteIds: string[], sessionId: string): Promise<Message> {
-      const res = await authedFetch('/api/mobile/chat', {
+    async send(
+      text: string,
+      contextNoteIds: string[],
+      sessionId: string,
+      opts?: { onStatus?: (status: string) => void },
+    ): Promise<Message> {
+      const res = await streamingFetch('/api/mobile/chat', {
         method: 'POST',
         body: JSON.stringify({ text, contextNoteIds, sessionId }),
       });
-      if (!res.ok) throw new Error('Could not send message');
-      const { message } = (await res.json()) as { message: Message };
-      return mapMessage(message);
+      if (!res.ok || !res.body) throw new Error('Could not send message');
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let message: Message | null = null;
+
+      // Parse newline-delimited JSON frames as they arrive.
+      // eslint-disable-next-line no-constant-condition
+      while (true) {
+        const { done, value } = await reader.read();
+        if (value) buffer += decoder.decode(value, { stream: true });
+        let nl: number;
+        while ((nl = buffer.indexOf('\n')) >= 0) {
+          const line = buffer.slice(0, nl).trim();
+          buffer = buffer.slice(nl + 1);
+          if (!line) continue;
+          const evt = JSON.parse(line) as
+            | { type: 'status'; value: string }
+            | { type: 'done'; message: Message }
+            | { type: 'error'; error: string };
+          if (evt.type === 'status') opts?.onStatus?.(evt.value);
+          else if (evt.type === 'done') message = mapMessage(evt.message);
+          else if (evt.type === 'error') throw new Error(evt.error);
+        }
+        if (done) break;
+      }
+      if (!message) throw new Error('Could not send message');
+      return message;
     },
   };
 }
