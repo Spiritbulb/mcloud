@@ -4,22 +4,27 @@
 # uploads and slow builds.
 #
 # Works like .gitignore but ONLY for `eas build`. When present, EAS uses this
-# instead of falling back to .gitignore, so heavy build/output dirs that a
-# prior `expo export` or install left behind never get uploaded.
+# instead of .gitignore.
+#
+# IMPORTANT: no trailing slashes on directory names. EAS's archiver walks the
+# tree and tests each entry; a pattern like "node_modules/" matches paths
+# *inside* the dir but NOT the dir entry itself, so the walker descends and
+# copies it anyway. Bare "node_modules" matches the dir and prunes it. This is
+# the difference between a ~1.7 MB upload and a 100 MB one.
 
 # Dependencies (reinstalled on the build server)
-node_modules/
+node_modules
 
 # Expo / prebuild output — regenerated during the build, never needed in upload
-dist/
-web-build/
-.expo/
-.expo-shared/
+dist
+web-build
+.expo
+.expo-shared
 
 # Generated native projects (managed workflow prebuilds these on the server)
-/android
-/ios
-.kotlin/
+android
+ios
+.kotlin
 
 # Local build artifacts
 *.aab
@@ -28,7 +33,7 @@ web-build/
 *.jks
 
 # VCS / tooling
-.git/
+.git
 *.log
 *.tsbuildinfo
 
