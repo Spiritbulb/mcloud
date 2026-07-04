@@ -53,7 +53,7 @@ export default function Login() {
   }
 
   return (
-    <Screen>
+    <Screen keyboardAvoiding>
       <View style={authStyles.wrap}>
         <View style={authStyles.hero}>
           <Brand size="lg" withLogo tagline={step === 'email' ? 'Talk to your notes.' : 'Check your email.'} />

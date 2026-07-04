@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FlatList, View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { Screen } from '@/components/Screen';
 import { ChatBubble } from '@/components/ChatBubble';
 import { ChatInputBar } from '@/components/ChatInputBar';
@@ -19,6 +20,7 @@ export default function Chat() {
   const [contextLabel, setContextLabel] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const listRef = useRef<FlatList<Message>>(null);
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => { chat.history().then(setMessages); }, []);
 
@@ -50,7 +52,7 @@ export default function Chat() {
   }
 
   return (
-    <Screen>
+    <Screen keyboardAvoiding keyboardOffset={headerHeight}>
       {contextLabel && (
         <View style={styles.ctx}>
           <Text style={styles.ctxText} numberOfLines={1}>

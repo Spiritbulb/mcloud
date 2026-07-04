@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { View, Text, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useHeaderHeight } from 'expo-router/react-navigation';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { useApi } from '@/hooks/useApi';
@@ -14,6 +15,7 @@ export default function NoteDetail() {
   const [loading, setLoading] = useState(true);
   const [content, setContent] = useState('');
   const router = useRouter();
+  const headerHeight = useHeaderHeight();
 
   useEffect(() => {
     if (!id) return;
@@ -32,7 +34,7 @@ export default function NoteDetail() {
   }
 
   return (
-    <Screen>
+    <Screen keyboardAvoiding keyboardOffset={headerHeight}>
       <Stack.Screen options={{ title: note.title }} />
       <Text style={theme.typography.title}>{note.title}</Text>
       <Text style={[theme.typography.muted, { marginBottom: theme.spacing.md }]}>{note.subject}</Text>
