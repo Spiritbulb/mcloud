@@ -39,3 +39,9 @@ export interface Message {
   contextNoteIds: string[];
   createdAt: string; // ISO
 }
+
+export interface ChatSession {
+  id: string;
+  title: string;
+  updatedAt: string; // ISO
+}
