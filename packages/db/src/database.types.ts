@@ -511,6 +511,7 @@ export type Database = {
           created_at: string
           id: string
           role: string
+          session_id: string | null
           text: string
           user_id: string
         }
@@ -519,6 +520,7 @@ export type Database = {
           created_at?: string
           id?: string
           role: string
+          session_id?: string | null
           text: string
           user_id: string
         }
@@ -527,12 +529,52 @@ export type Database = {
           created_at?: string
           id?: string
           role?: string
+          session_id?: string | null
           text?: string
           user_id?: string
         }
         Relationships: [
           {
+            foreignKeyName: "nuru_chat_messages_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "nuru_chat_sessions"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "nuru_chat_messages_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      nuru_chat_sessions: {
+        Row: {
+          created_at: string
+          id: string
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "nuru_chat_sessions_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
