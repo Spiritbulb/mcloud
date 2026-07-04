@@ -10,6 +10,14 @@ export function deriveTitle(firstUserMessage: string): string {
   return t.length > TITLE_MAX ? t.slice(0, TITLE_MAX) + '…' : t
 }
 
+// Guards a client-supplied sessionId before it reaches a uuid column. Without
+// this, a stray "undefined"/"null"/malformed string reaches Postgres and 500s
+// with "invalid input syntax for type uuid". Accepts canonical 8-4-4-4-12 hex.
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+export function isUuid(v: string | null | undefined): v is string {
+  return typeof v === 'string' && UUID_RE.test(v)
+}
+
 export type SessionRow = { id: string; title: string; updated_at: string }
 
 /** Raw session row → camelCase DTO returned to the app. */

@@ -34,7 +34,10 @@ export function DrawerContent(props: DrawerContentComponentProps) {
     try {
       const id = await chat.createSession();
       props.navigation.closeDrawer();
-      router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+      // navigate (not push): the chat tab is already mounted, so we update its
+      // sessionId param on the existing screen rather than stacking a duplicate
+      // that wouldn't re-run the resolve effect.
+      router.navigate({ pathname: '/(tabs)', params: { sessionId: id } });
     } catch {
       // Transient failure — leave the drawer open so the user can retry.
     }
@@ -42,7 +45,7 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 
   function openSession(id: string) {
     props.navigation.closeDrawer();
-    router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+    router.navigate({ pathname: '/(tabs)', params: { sessionId: id } });
   }
 
   return (

@@ -9,13 +9,18 @@ import { EmptyState } from '@/components/EmptyState';
 import { Logo } from '@/components/Logo';
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 import { useApi } from '@/hooks/useApi';
+import { cleanParam } from '@/services/_params';
 import { Message } from '@/types';
 import { theme } from '@/theme';
 
 export default function Chat() {
   const { chat, notes: notesService } = useApi();
   const params = useLocalSearchParams<{ noteId?: string; sessionId?: string }>();
-  const [sessionId, setSessionId] = useState<string | null>(params.sessionId ?? null);
+  // expo-router can hand back the literal string "undefined" for an absent param;
+  // cleanParam collapses it (and null/empty) so we only treat a real id as present.
+  const routedSessionId = cleanParam(params.sessionId);
+  const routedNoteId = cleanParam(params.noteId);
+  const [sessionId, setSessionId] = useState<string | null>(routedSessionId);
   const [messages, setMessages] = useState<Message[]>([]);
   const [contextNoteIds, setContextNoteIds] = useState<string[]>([]);
   const [contextLabel, setContextLabel] = useState<string | null>(null);
@@ -23,27 +28,35 @@ export default function Chat() {
   const listRef = useRef<FlatList<Message>>(null);
   const headerHeight = useHeaderHeight();
 
-  // Resolve a session: use the routed one, else start a fresh session.
+  const [loadError, setLoadError] = useState(false);
+
+  // Resolve a session: use the routed one, else start a fresh session. Any failure
+  // must surface (not leave the screen stuck on a loading flash), so it's caught.
   useEffect(() => {
     let cancelled = false;
     async function resolve() {
-      const sid = params.sessionId ?? (await chat.createSession());
-      if (cancelled) return;
-      const initial = await chat.history(sid);
-      if (cancelled) return;
-      setSessionId(sid);
-      setMessages(initial);
+      setLoadError(false);
+      try {
+        const sid = routedSessionId ?? (await chat.createSession());
+        if (cancelled) return;
+        const initial = await chat.history(sid);
+        if (cancelled) return;
+        setSessionId(sid);
+        setMessages(initial);
+      } catch {
+        if (!cancelled) setLoadError(true);
+      }
     }
     resolve();
     return () => { cancelled = true; };
-  }, [params.sessionId]);
+  }, [routedSessionId]);
 
   useEffect(() => {
-    if (!params.noteId) return;
+    if (!routedNoteId) return;
     setContextLabel(null);
-    setContextNoteIds([params.noteId]);
-    notesService.get(params.noteId).then((n) => setContextLabel(n ? n.title : null));
-  }, [params.noteId]);
+    setContextNoteIds([routedNoteId]);
+    notesService.get(routedNoteId).then((n) => setContextLabel(n ? n.title : null));
+  }, [routedNoteId]);
 
   function clearContext() {
     setContextNoteIds([]);
@@ -60,6 +73,11 @@ export default function Chat() {
     try {
       await chat.send(text, contextNoteIds, sessionId);
       setMessages(await chat.history(sessionId));
+    } catch {
+      // Roll back the optimistic bubble so a failed send doesn't leave a ghost
+      // message with no reply.
+      setMessages((m) => m.filter((msg) => msg.id !== 'tmp'));
+      setLoadError(true);
     } finally {
       setSending(false);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
@@ -78,7 +96,13 @@ export default function Chat() {
           </Pressable>
         </View>
       )}
-      {messages.length === 0 ? (
+      {loadError && messages.length === 0 ? (
+        <EmptyState
+          hero={<Logo size={80} />}
+          title="Couldn’t load this chat"
+          subtitle="Something went wrong. Pull to retry, or start a new chat from the menu."
+        />
+      ) : messages.length === 0 ? (
         <EmptyState
           hero={<Logo size={80} />}
           title="Chat with Nuru"

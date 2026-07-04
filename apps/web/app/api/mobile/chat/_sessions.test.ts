@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deriveTitle, toSessionDTO } from './_sessions.ts'
+import { deriveTitle, toSessionDTO, isUuid } from './_sessions.ts'
 
 test('deriveTitle trims and passes short messages through', () => {
   assert.equal(deriveTitle('  What is photosynthesis?  '), 'What is photosynthesis?')
@@ -21,4 +21,17 @@ test('deriveTitle falls back to "New chat" for empty input', () => {
 test('toSessionDTO maps snake_case row to camelCase DTO', () => {
   const dto = toSessionDTO({ id: 's1', title: 'Chat', updated_at: '2026-07-04T00:00:00.000Z' })
   assert.deepEqual(dto, { id: 's1', title: 'Chat', updatedAt: '2026-07-04T00:00:00.000Z' })
+})
+
+test('isUuid accepts a canonical uuid', () => {
+  assert.equal(isUuid('9f8b1a2c-0000-4444-8888-abcdef012345'), true)
+})
+
+test('isUuid rejects the "undefined" string, empty, and malformed ids', () => {
+  assert.equal(isUuid('undefined'), false)
+  assert.equal(isUuid('null'), false)
+  assert.equal(isUuid(''), false)
+  assert.equal(isUuid('not-a-uuid'), false)
+  assert.equal(isUuid(null), false)
+  assert.equal(isUuid(undefined), false)
 })

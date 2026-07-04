@@ -8,7 +8,7 @@ import { createClient } from '@mcloud/db/server'
 import { requireMobileUser } from '../_lib'
 import { embed } from '../notes/_ingest/embed'
 import { chatComplete } from './_chat/complete'
-import { deriveTitle } from './_sessions'
+import { deriveTitle, isUuid } from './_sessions'
 
 type ChatRow = {
     id: string
@@ -34,7 +34,10 @@ export async function GET(req: NextRequest) {
     const userId = auth.user.id
 
     const sessionId = req.nextUrl.searchParams.get('sessionId')
-    if (!sessionId) return NextResponse.json({ messages: [] })
+    // A missing or malformed sessionId (incl. the literal "undefined" the client
+    // can send) is simply "no such thread" — return empty, never let it hit the
+    // uuid column and 500.
+    if (!isUuid(sessionId)) return NextResponse.json({ messages: [] })
 
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -64,7 +67,7 @@ export async function POST(req: NextRequest) {
     const text = (body.text ?? '').trim()
     if (!text) return NextResponse.json({ error: 'Empty message' }, { status: 400 })
     const sessionId = body.sessionId
-    if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 })
+    if (!isUuid(sessionId)) return NextResponse.json({ error: 'Missing or invalid sessionId' }, { status: 400 })
 
     const supabase = await createClient()
 
