@@ -8,6 +8,7 @@ import { createClient } from '@mcloud/db/server'
 import { requireMobileUser } from '../_lib'
 import { embed } from '../notes/_ingest/embed'
 import { chatComplete } from './_chat/complete'
+import { deriveTitle } from './_sessions'
 
 type ChatRow = {
     id: string
@@ -32,11 +33,15 @@ export async function GET(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
     const userId = auth.user.id
 
+    const sessionId = req.nextUrl.searchParams.get('sessionId')
+    if (!sessionId) return NextResponse.json({ messages: [] })
+
     const supabase = await createClient()
     const { data, error } = await supabase
         .from('nuru_chat_messages')
         .select('id, role, text, context_note_ids, created_at')
-        .eq('user_id', userId)
+        .eq('user_id', userId)          // ownership
+        .eq('session_id', sessionId)    // thread scope
         .order('created_at', { ascending: true })
     if (error) {
         console.error('[nuru chat history]', error.message)
@@ -50,7 +55,7 @@ export async function POST(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
     const userId = auth.user.id
 
-    let body: { text?: string; contextNoteIds?: string[] }
+    let body: { text?: string; contextNoteIds?: string[]; sessionId?: string }
     try {
         body = await req.json()
     } catch {
@@ -58,8 +63,19 @@ export async function POST(req: NextRequest) {
     }
     const text = (body.text ?? '').trim()
     if (!text) return NextResponse.json({ error: 'Empty message' }, { status: 400 })
+    const sessionId = body.sessionId
+    if (!sessionId) return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 })
 
     const supabase = await createClient()
+
+    // Verify the session belongs to this user before doing any work.
+    const { data: sess } = await supabase
+        .from('nuru_chat_sessions')
+        .select('id, title')
+        .eq('id', sessionId)
+        .eq('user_id', userId)
+        .maybeSingle()
+    if (!sess) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
     // 1. Embed the question.
     let queryVec: number[]
@@ -92,8 +108,8 @@ export async function POST(req: NextRequest) {
 
     // 4. Persist user + assistant rows.
     const { error: insErr } = await supabase.from('nuru_chat_messages').insert([
-        { user_id: userId, role: 'user', text, context_note_ids: [] },
-        { user_id: userId, role: 'assistant', text: answer, context_note_ids: noteIds },
+        { user_id: userId, session_id: sessionId, role: 'user', text, context_note_ids: [] },
+        { user_id: userId, session_id: sessionId, role: 'assistant', text: answer, context_note_ids: noteIds },
     ])
     if (insErr) {
         console.error('[nuru chat insert]', insErr.message)
@@ -101,11 +117,17 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: 'Answered but could not save history' }, { status: 500 })
     }
 
+    // Auto-title on the first user message; always bump updated_at for ordering.
+    const patch: { updated_at: string; title?: string } = { updated_at: new Date().toISOString() }
+    if (!sess.title) patch.title = deriveTitle(text)
+    await supabase.from('nuru_chat_sessions').update(patch).eq('id', sessionId).eq('user_id', userId)
+
     // Return the assistant message (re-read to get server id/timestamp).
     const { data: saved } = await supabase
         .from('nuru_chat_messages')
         .select('id, role, text, context_note_ids, created_at')
         .eq('user_id', userId)
+        .eq('session_id', sessionId)
         .eq('role', 'assistant')
         .order('created_at', { ascending: false })
         .limit(1)
