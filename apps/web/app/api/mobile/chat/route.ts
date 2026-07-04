@@ -1,13 +1,17 @@
-// /api/mobile/chat — RAG chat over the student's notes + the approved community pool.
-// POST { text, contextNoteIds? }: embed question → match_nuru_chunks (me OR approved)
-//   → GPT-5 → persist user+assistant rows → return assistant message.
+// /api/mobile/chat — tool-calling chat over the student's notes + general knowledge.
+// POST { text, contextNoteIds? }: streams live status (thinking/searching_notes/
+//   writing) then a final message. The model calls search_notes on demand (Azure
+//   function-calling); retrieval is "me OR approved" via match_nuru_chunks. Persists
+//   user+assistant rows and keeps the sessions slice (title/updated_at) working.
 // GET: the student's chat history (own user_id only).
 // Auth: mobile bearer; every query scoped to auth.user.id.
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { requireMobileUser } from '../_lib'
-import { embed } from '../notes/_ingest/embed'
-import { chatComplete } from './_chat/complete'
+import { streamingResponse } from './_stream'
+import { runChat } from './_chat/loop'
+import { callModel } from './_chat/complete'
+import { searchNotes } from './_chat/searchNotes'
 import { deriveTitle, isUuid } from './_sessions'
 
 type ChatRow = {
@@ -80,64 +84,71 @@ export async function POST(req: NextRequest) {
         .maybeSingle()
     if (!sess) return NextResponse.json({ error: 'Session not found' }, { status: 404 })
 
-    // 1. Embed the question.
-    let queryVec: number[]
-    try {
-        ;[queryVec] = await embed([text])
-    } catch {
-        return NextResponse.json({ error: 'Could not process question' }, { status: 422 })
-    }
+    // If the student is chatting "about a note", pass its title so the model can
+    // bias its search toward it. Scoped to the owner so we never leak a title.
+    const focusNoteId =
+        Array.isArray(body.contextNoteIds) && body.contextNoteIds.length ? body.contextNoteIds[0] : undefined
+    const noteInFocus = focusNoteId
+        ? (
+              await supabase
+                  .from('nuru_notes')
+                  .select('title')
+                  .eq('id', focusNoteId)
+                  .eq('uploader_id', userId)
+                  .maybeSingle()
+          ).data?.title ?? undefined
+        : undefined
 
-    // 2. Retrieve chunks — "my notes OR approved" is enforced inside the RPC.
-    const { data: matches, error: matchErr } = await supabase.rpc('match_nuru_chunks', {
-        p_user_id: userId,
-        p_query_embedding: JSON.stringify(queryVec), // pgvector accepts the JSON array text form
-        p_match_count: 8,
+    return streamingResponse(async (emit) => {
+        let answer: string
+        let noteIds: string[]
+        try {
+            const out = await runChat({
+                userText: text,
+                noteInFocus,
+                callModel,
+                search: (q) => searchNotes(supabase, userId, q),
+                emit: (value) => emit({ type: 'status', value }),
+            })
+            answer = out.answer
+            noteIds = out.noteIds
+        } catch {
+            emit({ type: 'error', error: 'The assistant is unavailable' })
+            return
+        }
+
+        // Persist user + assistant rows (unchanged shape; sessions slice preserved).
+        const { error: insErr } = await supabase.from('nuru_chat_messages').insert([
+            { user_id: userId, session_id: sessionId, role: 'user', text, context_note_ids: [] },
+            { user_id: userId, session_id: sessionId, role: 'assistant', text: answer, context_note_ids: noteIds },
+        ])
+        if (insErr) {
+            console.error('[nuru chat insert]', insErr.message)
+            emit({ type: 'error', error: 'Answered but could not save history' })
+            return
+        }
+
+        // Auto-title on the first user message + bump updated_at (sessions slice).
+        const patch: { updated_at: string; title?: string } = { updated_at: new Date().toISOString() }
+        if (!sess.title) patch.title = deriveTitle(text)
+        await supabase.from('nuru_chat_sessions').update(patch).eq('id', sessionId).eq('user_id', userId)
+
+        // Re-read the saved assistant row for its server id/timestamp.
+        const { data: saved } = await supabase
+            .from('nuru_chat_messages')
+            .select('id, role, text, context_note_ids, created_at')
+            .eq('user_id', userId)
+            .eq('session_id', sessionId)
+            .eq('role', 'assistant')
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single()
+
+        emit({
+            type: 'done',
+            message: saved
+                ? toMessage(saved as ChatRow)
+                : { id: '', role: 'assistant', text: answer, contextNoteIds: noteIds, createdAt: new Date().toISOString() },
+        })
     })
-    if (matchErr) {
-        console.error('[nuru chat match]', matchErr.message)
-        return NextResponse.json({ error: 'Could not search notes' }, { status: 500 })
-    }
-    const chunks = (matches ?? []) as { note_id: string; content: string; similarity: number }[]
-    const noteIds = [...new Set(chunks.map((c) => c.note_id))]
-
-    // 3. Answer with GPT-5.
-    let answer: string
-    try {
-        answer = await chatComplete(text, chunks)
-    } catch {
-        return NextResponse.json({ error: 'The assistant is unavailable' }, { status: 502 })
-    }
-
-    // 4. Persist user + assistant rows.
-    const { error: insErr } = await supabase.from('nuru_chat_messages').insert([
-        { user_id: userId, session_id: sessionId, role: 'user', text, context_note_ids: [] },
-        { user_id: userId, session_id: sessionId, role: 'assistant', text: answer, context_note_ids: noteIds },
-    ])
-    if (insErr) {
-        console.error('[nuru chat insert]', insErr.message)
-        // Non-fatal for the reply, but surface it.
-        return NextResponse.json({ error: 'Answered but could not save history' }, { status: 500 })
-    }
-
-    // Auto-title on the first user message; always bump updated_at for ordering.
-    const patch: { updated_at: string; title?: string } = { updated_at: new Date().toISOString() }
-    if (!sess.title) patch.title = deriveTitle(text)
-    await supabase.from('nuru_chat_sessions').update(patch).eq('id', sessionId).eq('user_id', userId)
-
-    // Return the assistant message (re-read to get server id/timestamp).
-    const { data: saved } = await supabase
-        .from('nuru_chat_messages')
-        .select('id, role, text, context_note_ids, created_at')
-        .eq('user_id', userId)
-        .eq('session_id', sessionId)
-        .eq('role', 'assistant')
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single()
-
-    return NextResponse.json(
-        { message: saved ? toMessage(saved as ChatRow) : { id: '', role: 'assistant', text: answer, contextNoteIds: noteIds, createdAt: new Date().toISOString() } },
-        { status: 201 },
-    )
 }
