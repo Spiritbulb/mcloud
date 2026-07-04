@@ -31,9 +31,13 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   );
 
   async function newChat() {
-    const id = await chat.createSession();
-    props.navigation.closeDrawer();
-    router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+    try {
+      const id = await chat.createSession();
+      props.navigation.closeDrawer();
+      router.push({ pathname: '/(tabs)', params: { sessionId: id } });
+    } catch {
+      // Transient failure — leave the drawer open so the user can retry.
+    }
   }
 
   function openSession(id: string) {
