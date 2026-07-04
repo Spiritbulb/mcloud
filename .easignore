@@ -1,0 +1,30 @@
+# EAS Build archive ignore — MUST live at the git repository root.
+#
+# EAS copies the archive starting from the git root (this dir), NOT from the
+# app subdirectory. Without this file, `eas build` from apps/nuru uploads the
+# ENTIRE monorepo (all apps + .git = ~80 MB) instead of the ~1.7 MB nuru app.
+#
+# Nuru is a standalone Expo app (excluded from workspaces, no @mcloud/* deps),
+# so we ignore everything and re-include only apps/nuru. Any OTHER EAS app in
+# this repo would need its own include line added here.
+
+# Ignore everything by default...
+/*
+apps/*
+
+# ...then re-include only the nuru app.
+!apps
+!apps/nuru
+!apps/nuru/**
+
+# Even within nuru, never upload heavy/generated dirs.
+apps/nuru/node_modules
+apps/nuru/dist
+apps/nuru/web-build
+apps/nuru/.expo
+apps/nuru/.expo-shared
+apps/nuru/android
+apps/nuru/ios
+apps/nuru/.kotlin
+apps/nuru/*.aab
+apps/nuru/*.apk
