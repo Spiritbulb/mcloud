@@ -1,0 +1,37 @@
+# Files excluded from the EAS Build upload archive.
+# Nuru is a thin client (backend lives in apps/web), so the upload should be
+# just source + assets + config. Keep this lean — a bloated archive means slow
+# uploads and slow builds.
+#
+# Works like .gitignore but ONLY for `eas build`. When present, EAS uses this
+# instead of falling back to .gitignore, so heavy build/output dirs that a
+# prior `expo export` or install left behind never get uploaded.
+
+# Dependencies (reinstalled on the build server)
+node_modules/
+
+# Expo / prebuild output — regenerated during the build, never needed in upload
+dist/
+web-build/
+.expo/
+.expo-shared/
+
+# Generated native projects (managed workflow prebuilds these on the server)
+/android
+/ios
+.kotlin/
+
+# Local build artifacts
+*.aab
+*.apk
+*.keystore
+*.jks
+
+# VCS / tooling
+.git/
+*.log
+*.tsbuildinfo
+
+# OS cruft
+.DS_Store
+Thumbs.db
