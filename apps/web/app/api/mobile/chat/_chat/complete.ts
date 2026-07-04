@@ -1,46 +1,55 @@
-// GPT-5 via Azure OpenAI v1 API. Isolated so the chat model is swappable in one file.
-// v1 API (VERIFIED): POST {endpoint}/chat/completions, body { model: deployment, messages },
-// header api-key; NO api-version. Do NOT send temperature/max_tokens — the gpt-5 deployment
-// only accepts default temperature; defaults produce good answers.
-// The prompt constrains the model to answer from the provided note chunks.
-export async function chatComplete(
-  question: string,
-  chunks: { content: string }[],
-): Promise<string> {
+// Azure OpenAI adapter: one chat-completions call, normalized to ModelTurn for
+// the loop. v1 API (VERIFIED): POST {endpoint}/chat/completions, header api-key,
+// NO api-version, NO temperature/max_tokens. Passes tools when allowed.
+import { SEARCH_NOTES_TOOL } from './prompt'
+import type { ModelTurn } from './loop'
+
+export async function callModel(
+  messages: Record<string, unknown>[],
+  opts: { tools: boolean },
+): Promise<ModelTurn> {
   const endpoint = process.env.AZURE_OPENAI_ENDPOINT
   const key = process.env.AZURE_OPENAI_API_KEY
   const deployment = process.env.AZURE_OPENAI_CHAT_DEPLOYMENT
   if (!endpoint || !key || !deployment) throw new Error('chat_failed')
 
-  const context = chunks.map((c, i) => `[${i + 1}] ${c.content}`).join('\n\n')
-  const system =
-    'You are Nuru, a study assistant. Answer the student\'s question using ONLY the ' +
-    'note excerpts provided below. If the notes do not contain the answer, say so plainly ' +
-    'and do not invent facts. Be concise and clear.\n\nNOTES:\n' +
-    (context || '(no relevant notes found)')
+  const body: Record<string, unknown> = { model: deployment, messages }
+  if (opts.tools) {
+    body.tools = [SEARCH_NOTES_TOOL]
+    body.tool_choice = 'auto'
+  }
 
-  const url = `${endpoint.replace(/\/$/, '')}/chat/completions`
-  const res = await fetch(url, {
+  const res = await fetch(`${endpoint.replace(/\/$/, '')}/chat/completions`, {
     method: 'POST',
     headers: { 'api-key': key, 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: deployment,
-      messages: [
-        { role: 'system', content: system },
-        { role: 'user', content: question },
-      ],
-    }),
+    body: JSON.stringify(body),
   })
-
   if (!res.ok) {
     console.error('[nuru chat]', res.status, await res.text().catch(() => ''))
     throw new Error('chat_failed')
   }
 
   const json = (await res.json()) as {
-    choices?: { message?: { content?: string } }[]
+    choices?: {
+      message?: {
+        content?: string
+        tool_calls?: { id: string; function: { name: string; arguments: string } }[]
+      }
+    }[]
   }
-  const answer = json.choices?.[0]?.message?.content?.trim()
-  if (!answer) throw new Error('chat_failed')
-  return answer
+  const msg = json.choices?.[0]?.message
+  const rawCalls = msg?.tool_calls ?? []
+  const toolCalls = rawCalls
+    .filter((c) => c.function?.name === 'search_notes')
+    .map((c) => {
+      let query = ''
+      try {
+        query = (JSON.parse(c.function.arguments) as { query?: string }).query ?? ''
+      } catch {}
+      return { id: c.id, query }
+    })
+  return {
+    text: msg?.content ?? undefined,
+    toolCalls: toolCalls.length ? toolCalls : undefined,
+  }
 }
