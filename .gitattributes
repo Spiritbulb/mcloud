@@ -1,0 +1,3 @@
+# Ensure shell scripts always use LF so they run under WSL/Linux
+# (Windows CRLF breaks bash: `set -euo pipefail\r` etc.)
+*.sh text eol=lf
