@@ -29,8 +29,10 @@ export default function Chat() {
     async function resolve() {
       const sid = params.sessionId ?? (await chat.createSession());
       if (cancelled) return;
+      const initial = await chat.history(sid);
+      if (cancelled) return;
       setSessionId(sid);
-      chat.history(sid).then(setMessages);
+      setMessages(initial);
     }
     resolve();
     return () => { cancelled = true; };
