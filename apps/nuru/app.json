@@ -48,7 +48,10 @@
         "expo-build-properties",
         {
           "android": {
-            "buildArchs": ["arm64-v8a", "armeabi-v7a"]
+            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# Keep React Native / Hermes\n-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }\n# Keep Reanimated (uses JNI + reflection)\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.rnscreens.** { *; }\n# Keep Expo modules core (reflection-based module registry)\n-keep class expo.modules.** { *; }\n-keepclassmembers class * { @expo.modules.core.interfaces.ExpoProp *; }"
           }
         }
       ]
