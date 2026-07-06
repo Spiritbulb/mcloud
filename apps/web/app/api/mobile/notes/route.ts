@@ -9,10 +9,13 @@ import { createClient } from '@mcloud/db/server'
 import { requireMobileUser } from '../_lib'
 import { chunk } from './_ingest/chunk'
 import { extractText } from './_ingest/extract'
+import { extractPdfText } from './_ingest/extractPdfText'
 import { embed } from './_ingest/embed'
 
 const MAX_SIZE = 8 * 1024 * 1024 // 8 MB, matches existing upload route
-const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/heic', 'image/heif']
+// Azure OCR reads raster images only; HEIC/HEIF are converted to JPEG on-device
+// before upload, so they never need to be accepted here.
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 const FILE_TYPES = [...IMAGE_TYPES, 'application/pdf']
 
 export async function GET(req: NextRequest) {
@@ -86,14 +89,28 @@ export async function POST(req: NextRequest) {
         }
         fileUrl = path
 
-        // Extract text (OCR / PDF read).
+        // Extract text. PDFs are read with pure JS (text layer); images go through
+        // Azure OCR. Distinct messages so the user knows what to do next.
         try {
-            content = await extractText(bytes, file.type)
+            if (file.type === 'application/pdf') {
+                content = await extractPdfText(bytes)
+                if (!content) {
+                    return NextResponse.json(
+                        { error: 'This looks like a scanned PDF — import it as a photo instead.' },
+                        { status: 422 },
+                    )
+                }
+            } else {
+                content = await extractText(bytes, file.type)
+                if (!content) {
+                    return NextResponse.json(
+                        { error: 'No text found in this image — try a clearer photo.' },
+                        { status: 422 },
+                    )
+                }
+            }
         } catch {
-            return NextResponse.json({ error: 'Could not read the file' }, { status: 422 })
-        }
-        if (!content) {
-            return NextResponse.json({ error: 'No text found in file' }, { status: 422 })
+            return NextResponse.json({ error: 'Could not read the file.' }, { status: 422 })
         }
     }
 
