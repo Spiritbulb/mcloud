@@ -2,14 +2,17 @@ import { useEffect, useRef, useState } from 'react';
 import { FlatList, View, Text, StyleSheet, Pressable } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
+import * as DocumentPicker from 'expo-document-picker';
 import { Screen } from '@/components/Screen';
 import { ChatBubble } from '@/components/ChatBubble';
 import { ChatInputBar } from '@/components/ChatInputBar';
 import { EmptyState } from '@/components/EmptyState';
 import { Logo } from '@/components/Logo';
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
+import { AttachMenu } from '@/components/AttachMenu';
 import { useApi } from '@/hooks/useApi';
 import { cleanParam } from '@/services/_params';
+import { toUploadable } from '@/services/upload';
 import { Message } from '@/types';
 import { theme } from '@/theme';
 
@@ -30,6 +33,8 @@ export default function Chat() {
   const headerHeight = useHeaderHeight();
 
   const [loadError, setLoadError] = useState(false);
+  const [attachOpen, setAttachOpen] = useState(false);
+  const [attaching, setAttaching] = useState(false);
 
   // Resolve a session: use the routed one, else start a fresh session. Any failure
   // must surface (not leave the screen stuck on a loading flash), so it's caught.
@@ -87,6 +92,28 @@ export default function Chat() {
     }
   }
 
+  async function onPickFiles() {
+    const result = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', 'image/*'],
+      copyToCacheDirectory: true,
+    });
+    if (result.canceled || !result.assets?.[0]) return;
+    const a = result.assets[0];
+    setAttaching(true);
+    setLoadError(false);
+    try {
+      const file = await toUploadable({ uri: a.uri, name: a.name, mimeType: a.mimeType });
+      const note = await notesService.create({ title: a.name ?? 'Attachment', subject: '', source: 'file', file });
+      // Scope the chat to the new note so the next question is asked against it.
+      setContextNoteIds([note.id]);
+      setContextLabel(note.title);
+    } catch (e) {
+      setContextLabel((e as Error).message);
+    } finally {
+      setAttaching(false);
+    }
+  }
+
   return (
     <Screen keyboardAvoiding keyboardOffset={headerHeight}>
       {contextLabel && (
@@ -126,7 +153,18 @@ export default function Chat() {
           <ThinkingIndicator size={28} status={status} />
         </View>
       )}
-      <ChatInputBar onSend={onSend} disabled={sending} scopeLabel={contextLabel ?? undefined} />
+      <ChatInputBar
+        onSend={onSend}
+        disabled={sending}
+        scopeLabel={contextLabel ?? undefined}
+        onAttach={() => setAttachOpen(true)}
+        attaching={attaching}
+      />
+      <AttachMenu
+        visible={attachOpen}
+        onClose={() => setAttachOpen(false)}
+        onPickFiles={onPickFiles}
+      />
     </Screen>
   );
 }
