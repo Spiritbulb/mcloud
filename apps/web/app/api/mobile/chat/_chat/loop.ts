@@ -62,7 +62,19 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
     }
 
     // Record the assistant tool-call turn, then run each search and append results.
-    messages.push({ role: 'assistant', tool_calls: turn.toolCalls })
+    // The turn's toolCalls are the loop's normalized {id, query}; the model API
+    // requires the full wire shape (type + function.name + JSON-string arguments),
+    // so reconstruct it here. Omitting `type` makes the next completion 400 with
+    // "Missing required parameter: 'messages[N].tool_calls[0].type'".
+    messages.push({
+      role: 'assistant',
+      content: null,
+      tool_calls: turn.toolCalls!.map((c) => ({
+        id: c.id,
+        type: 'function',
+        function: { name: 'search_notes', arguments: JSON.stringify({ query: c.query }) },
+      })),
+    })
     for (const call of turn.toolCalls!) {
       emit('searching_notes')
       searches++
