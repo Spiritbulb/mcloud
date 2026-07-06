@@ -1,3 +1,7 @@
 # Ensure shell scripts always use LF so they run under WSL/Linux
 # (Windows CRLF breaks bash: `set -euo pipefail\r` etc.)
 *.sh text eol=lf
+
+# PDFs are binary; never let autocrlf touch them (byte-exact test fixtures
+# rely on precise /Length + xref byte offsets).
+*.pdf binary

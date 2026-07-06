@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, TextInput, Pressable, Text, StyleSheet } from 'react-native';
+import { View, TextInput, Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { theme } from '@/theme';
 
 /**
@@ -8,17 +8,21 @@ import { theme } from '@/theme';
  * current scope chip in the center (what the question is asked against), and the
  * round send control on the right.
  *
- * The (+) attach button is a styled placeholder for now — file upload lands in a
- * later slice. Its silhouette is finalized here so wiring it up is pure plumbing.
+ * The (+) attach button calls `onAttach` when provided; while `attaching` it is
+ * disabled and shows a spinner in place of the glyph.
  */
 export function ChatInputBar({
   onSend,
   disabled,
   scopeLabel,
+  onAttach,
+  attaching,
 }: {
   onSend: (t: string) => void;
   disabled?: boolean;
   scopeLabel?: string;
+  onAttach?: () => void;
+  attaching?: boolean;
 }) {
   const [text, setText] = useState('');
   const canSend = text.trim().length > 0 && !disabled;
@@ -41,9 +45,18 @@ export function ChatInputBar({
         multiline
       />
       <View style={styles.controls}>
-        <View style={styles.attach} accessibilityLabel="Attach (coming soon)">
-          <Text style={styles.attachGlyph}>＋</Text>
-        </View>
+        <Pressable
+          style={styles.attach}
+          onPress={onAttach}
+          disabled={!onAttach || attaching}
+          accessibilityLabel="Attach a file"
+        >
+          {attaching ? (
+            <ActivityIndicator size="small" color={theme.colors.textMuted} />
+          ) : (
+            <Text style={styles.attachGlyph}>＋</Text>
+          )}
+        </Pressable>
         <View style={styles.scope}>
           <View style={styles.scopeDot} />
           <Text style={styles.scopeText} numberOfLines={1}>
