@@ -6,6 +6,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '@/components/Button';
 import { theme } from '@/theme';
+import { toUploadable } from '@/services/upload';
 
 type Props = { visible: boolean; onClose: () => void; onCreated: (note: Note) => void };
 
@@ -39,11 +40,7 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
-    await upload('file', {
-      uri: asset.uri,
-      name: asset.name ?? 'document',
-      type: asset.mimeType ?? 'application/octet-stream',
-    });
+    await upload('file', await toUploadable({ uri: asset.uri, name: asset.name, mimeType: asset.mimeType }));
   }
 
   async function pickPhoto() {
@@ -56,8 +53,7 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
     });
     if (result.canceled || !result.assets?.[0]) return;
     const asset = result.assets[0];
-    const name = asset.fileName ?? `photo-${Date.now()}.jpg`;
-    await upload('photo', { uri: asset.uri, name, type: asset.mimeType ?? 'image/jpeg' });
+    await upload('photo', await toUploadable({ uri: asset.uri, name: asset.fileName, mimeType: asset.mimeType }));
   }
 
   async function upload(source: 'file' | 'photo', file: { uri: string; name: string; type: string }) {
