@@ -70,8 +70,8 @@ export async function callAnthropic(
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system,
-    messages: messages as Anthropic.MessageParam[],
-    ...(opts.tools ? { tools: tools as Anthropic.Tool[] } : {}),
+    messages: messages as unknown as Anthropic.MessageParam[],
+    ...(opts.tools ? { tools: tools as unknown as Anthropic.Tool[] } : {}),
   })
   let text: string | undefined
   const toolCalls: { id: string; query: string }[] = []
@@ -100,7 +100,7 @@ export async function* streamAnthropic(
     model: MODEL,
     max_tokens: MAX_TOKENS,
     system,
-    messages: messages as Anthropic.MessageParam[],
+    messages: messages as unknown as Anthropic.MessageParam[],
   })
   for await (const event of stream) {
     if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {

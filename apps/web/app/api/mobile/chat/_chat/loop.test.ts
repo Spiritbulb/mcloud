@@ -15,6 +15,11 @@ function harness(turns: ModelTurn[]) {
       return { chunks: [{ content: 'c' }], noteIds: ['n' + searches] }
     },
     emit: (v) => emitted.push(v),
+    streamAnswer: async function* () {
+      yield { token: turns[i - 1]?.text ?? '' }
+      yield { usage: { inputTokens: 0, outputTokens: 0 } }
+    },
+    onToken: () => {},
   }
   return { deps, emitted: () => emitted, searches: () => searches, calls: () => i }
 }
@@ -71,6 +76,11 @@ test('replayed assistant tool-call turn stays neutral {id, query} in loop histor
     },
     search: async () => ({ chunks: [{ content: 'c' }], noteIds: ['n1'] }),
     emit: () => {},
+    streamAnswer: async function* () {
+      yield { token: 'done' }
+      yield { usage: { inputTokens: 0, outputTokens: 0 } }
+    },
+    onToken: () => {},
   }
   await runChat(deps)
 
@@ -99,4 +109,26 @@ test('retrieval error: model still gets to answer (no throw)', async () => {
   const out = await runChat(h.deps)
   assert.equal(out.answer, 'From what I know, ...')
   assert.deepEqual(out.noteIds, [])
+})
+
+test('final answer streams tokens in order and accumulates to the full text', async () => {
+  const tokens: string[] = []
+  const deps: RunDeps = {
+    userText: 'q',
+    // No tool call → straight to the streamed final answer.
+    callModel: async () => ({ text: null as unknown as undefined }), // force the stream path
+    search: async () => ({ chunks: [], noteIds: [] }),
+    emit: () => {},
+    streamAnswer: async function* () {
+      yield { token: 'Hel' }
+      yield { token: 'lo ' }
+      yield { token: 'Nuru' }
+      yield { usage: { inputTokens: 3, outputTokens: 2 } }
+    },
+    onToken: (t) => tokens.push(t),
+  }
+  const out = await runChat(deps)
+  assert.deepEqual(tokens, ['Hel', 'lo ', 'Nuru'])
+  assert.equal(out.answer, 'Hello Nuru')
+  assert.deepEqual(out.usage, { inputTokens: 3, outputTokens: 2 })
 })

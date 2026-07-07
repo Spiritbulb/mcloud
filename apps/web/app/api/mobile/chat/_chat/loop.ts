@@ -5,9 +5,12 @@
 // only assembles messages and reacts to normalized ModelTurns.)
 import { buildSystemPrompt } from './prompt'
 
+export type Usage = { inputTokens: number; outputTokens: number }
+
 export type ModelTurn = {
   toolCalls?: { id: string; query: string }[]
   text?: string
+  usage?: Usage
 }
 
 type Msg = Record<string, unknown>
@@ -18,13 +21,16 @@ export type RunDeps = {
   callModel: (messages: Msg[], opts: { tools: boolean }) => Promise<ModelTurn>
   search: (query: string) => Promise<{ chunks: { content: string }[]; noteIds: string[] }>
   emit: (value: 'thinking' | 'searching_notes' | 'writing') => void
+  // Final-answer streaming: yields { token } deltas then a final { usage }.
+  streamAnswer: (messages: Msg[]) => AsyncIterable<{ token?: string; usage?: Usage }>
+  onToken: (token: string) => void
 }
 
 const MAX_SEARCHES = 3
 const MAX_CALLS = 4
 
-export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds: string[] }> {
-  const { userText, noteInFocus, callModel, search, emit } = deps
+export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds: string[]; usage?: Usage }> {
+  const { userText, noteInFocus, callModel, search, emit, streamAnswer, onToken } = deps
   const messages: Msg[] = [
     { role: 'system', content: buildSystemPrompt(noteInFocus ? { noteInFocus } : undefined) },
     { role: 'user', content: userText },
@@ -32,6 +38,22 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
   const noteIds = new Set<string>()
   let searches = 0
   let calls = 0
+
+  // Stream the final answer from the adapter, forwarding tokens to onToken and
+  // accumulating the full text (for persistence) + usage (for the done frame).
+  async function streamFinal(): Promise<{ answer: string; usage?: Usage }> {
+    emit('writing')
+    let answer = ''
+    let usage: Usage | undefined
+    for await (const part of streamAnswer(messages)) {
+      if (part.token) {
+        answer += part.token
+        onToken(part.token)
+      }
+      if (part.usage) usage = part.usage
+    }
+    return { answer, usage }
+  }
 
   while (true) {
     // Tools are offered only while there is budget for BOTH another search AND a
@@ -44,21 +66,12 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
 
     const wantsSearch = toolsAllowed && !!turn.toolCalls && turn.toolCalls.length > 0
     if (!wantsSearch) {
-      // Final answer. If the model returned text, use it. If it returned no text
-      // (e.g. it emitted a tool call we couldn't honor because tools were off),
-      // and we still have call budget, force one text-only call; otherwise answer
-      // with whatever text we have ('' at worst) — never exceed MAX_CALLS.
-      if (turn.text != null) {
-        emit('writing')
-        return { answer: turn.text, noteIds: [...noteIds] }
-      }
-      if (calls < MAX_CALLS) {
-        emit('writing')
-        const forced = await callModel(messages, { tools: false })
-        calls++
-        return { answer: forced.text ?? '', noteIds: [...noteIds] }
-      }
-      return { answer: '', noteIds: [...noteIds] }
+      // Final answer is always streamed. Whether the last non-streamed call
+      // returned text or not, we stream a fresh answer-only completion so the
+      // user sees tokens arrive. (The prior turn's text, if any, was a signal
+      // the model is done searching, not the answer to render.)
+      const { answer, usage } = await streamFinal()
+      return { answer, noteIds: [...noteIds], usage }
     }
 
     // Record the assistant tool-call turn in the loop's NEUTRAL shape. Each

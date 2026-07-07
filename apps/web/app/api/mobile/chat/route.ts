@@ -10,7 +10,7 @@ import { createClient } from '@mcloud/db/server'
 import { requireMobileUser } from '../_lib'
 import { streamingResponse } from './_stream'
 import { runChat } from './_chat/loop'
-import { callModel } from './_chat/complete'
+import { pickAdapter } from './_chat/adapters'
 import { searchNotes } from './_chat/searchNotes'
 import { deriveTitle, isUuid } from './_sessions'
 
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
     const userId = auth.user.id
 
-    let body: { text?: string; contextNoteIds?: string[]; sessionId?: string }
+    let body: { text?: string; contextNoteIds?: string[]; sessionId?: string; provider?: string }
     try {
         body = await req.json()
     } catch {
@@ -99,19 +99,25 @@ export async function POST(req: NextRequest) {
           ).data?.title ?? undefined
         : undefined
 
+    const { adapter, provider } = pickAdapter(body.provider)
+
     return streamingResponse(async (emit) => {
         let answer: string
         let noteIds: string[]
+        let usage: { inputTokens: number; outputTokens: number } | undefined
         try {
             const out = await runChat({
                 userText: text,
                 noteInFocus,
-                callModel,
+                callModel: adapter.callModel,
                 search: (q) => searchNotes(supabase, userId, q),
                 emit: (value) => emit({ type: 'status', value }),
+                streamAnswer: adapter.streamAnswer,
+                onToken: (token) => emit({ type: 'token', value: token }),
             })
             answer = out.answer
             noteIds = out.noteIds
+            usage = out.usage
         } catch {
             emit({ type: 'error', error: 'The assistant is unavailable' })
             return
@@ -149,6 +155,7 @@ export async function POST(req: NextRequest) {
             message: saved
                 ? toMessage(saved as ChatRow)
                 : { id: '', role: 'assistant', text: answer, contextNoteIds: noteIds, createdAt: new Date().toISOString() },
+            meta: { model: adapter.label, provider, usage: usage ?? { inputTokens: 0, outputTokens: 0 } },
         })
     })
 }
