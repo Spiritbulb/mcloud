@@ -132,3 +132,17 @@ test('final answer streams tokens in order and accumulates to the full text', as
   assert.equal(out.answer, 'Hello Nuru')
   assert.deepEqual(out.usage, { inputTokens: 3, outputTokens: 2 })
 })
+
+test('whole-turn usage: tool-phase callModel usage is accumulated with the streamed final usage', async () => {
+  const h = harness([
+    { toolCalls: [{ id: 't1', query: 'q' }], usage: { inputTokens: 10, outputTokens: 2 } },
+    { text: null as unknown as undefined, usage: { inputTokens: 20, outputTokens: 3 } },
+  ])
+  h.deps.streamAnswer = async function* () {
+    yield { token: 'ok' }
+    yield { usage: { inputTokens: 5, outputTokens: 8 } }
+  }
+  const out = await runChat(h.deps)
+  // Expected total: tool-phase (10+20 input, 2+3 output) + streamed (5 input, 8 output)
+  assert.deepEqual(out.usage, { inputTokens: 35, outputTokens: 13 })
+})

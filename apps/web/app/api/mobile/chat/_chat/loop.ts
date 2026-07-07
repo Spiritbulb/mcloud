@@ -38,6 +38,7 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
   const noteIds = new Set<string>()
   let searches = 0
   let calls = 0
+  const toolUsage: Usage = { inputTokens: 0, outputTokens: 0 }
 
   // Stream the final answer from the adapter, forwarding tokens to onToken and
   // accumulating the full text (for persistence) + usage (for the done frame).
@@ -63,6 +64,10 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
     emit(calls === 0 ? 'thinking' : 'writing')
     const turn = await callModel(messages, { tools: toolsAllowed })
     calls++
+    if (turn.usage) {
+      toolUsage.inputTokens += turn.usage.inputTokens
+      toolUsage.outputTokens += turn.usage.outputTokens
+    }
 
     const wantsSearch = toolsAllowed && !!turn.toolCalls && turn.toolCalls.length > 0
     if (!wantsSearch) {
@@ -70,7 +75,11 @@ export async function runChat(deps: RunDeps): Promise<{ answer: string; noteIds:
       // returned text or not, we stream a fresh answer-only completion so the
       // user sees tokens arrive. (The prior turn's text, if any, was a signal
       // the model is done searching, not the answer to render.)
-      const { answer, usage } = await streamFinal()
+      const { answer, usage: streamedUsage } = await streamFinal()
+      const usage: Usage = {
+        inputTokens: toolUsage.inputTokens + (streamedUsage?.inputTokens ?? 0),
+        outputTokens: toolUsage.outputTokens + (streamedUsage?.outputTokens ?? 0),
+      }
       return { answer, noteIds: [...noteIds], usage }
     }
 
