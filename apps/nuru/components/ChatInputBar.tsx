@@ -5,8 +5,8 @@ import { theme } from '@/theme';
 /**
  * The chat composer — a single raised card in the reference's shape. Text field
  * on top; a control row below carries the attach (+) affordance on the left, the
- * current scope chip in the center (what the question is asked against), and the
- * round send control on the right.
+ * ( model · context ) pill that opens ChatOptionsModal, a disabled mic affordance,
+ * and the round send control on the right.
  *
  * The (+) attach button calls `onAttach` when provided; while `attaching` it is
  * disabled and shows a spinner in place of the glyph.
@@ -14,15 +14,19 @@ import { theme } from '@/theme';
 export function ChatInputBar({
   onSend,
   disabled,
-  scopeLabel,
+  modelLabel,
+  contextLabel,
   onAttach,
   attaching,
+  onOpenOptions,
 }: {
   onSend: (t: string) => void;
   disabled?: boolean;
-  scopeLabel?: string;
+  modelLabel: string;
+  contextLabel?: string;
   onAttach?: () => void;
   attaching?: boolean;
+  onOpenOptions: () => void;
 }) {
   const [text, setText] = useState('');
   const canSend = text.trim().length > 0 && !disabled;
@@ -57,11 +61,18 @@ export function ChatInputBar({
             <Text style={styles.attachGlyph}>＋</Text>
           )}
         </Pressable>
-        <View style={styles.scope}>
-          <View style={styles.scopeDot} />
-          <Text style={styles.scopeText} numberOfLines={1}>
-            {scopeLabel ?? 'All notes'}
+        <Pressable
+          style={styles.pill}
+          onPress={onOpenOptions}
+          accessibilityLabel="Chat options"
+        >
+          <View style={styles.pillDot} />
+          <Text style={styles.pillText} numberOfLines={1}>
+            {modelLabel} · {contextLabel ?? 'All notes'} ▾
           </Text>
+        </Pressable>
+        <View style={styles.mic} accessibilityLabel="Voice input coming soon">
+          <Text style={styles.micGlyph}>🎙</Text>
         </View>
         <Pressable
           onPress={submit}
@@ -107,7 +118,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   attachGlyph: { color: theme.colors.textMuted, fontSize: 20, lineHeight: 22 },
-  scope: {
+  pill: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
@@ -116,16 +127,17 @@ const styles = StyleSheet.create({
     borderRadius: theme.radii.pill,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: 8,
-    alignSelf: 'stretch',
     justifyContent: 'center',
   },
-  scopeDot: {
-    width: 7,
-    height: 7,
-    borderRadius: 4,
-    backgroundColor: theme.colors.primary,
+  pillDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.primary },
+  pillText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
+  mic: {
+    width: 38, height: 38, borderRadius: 19,
+    backgroundColor: theme.colors.surfaceAlt,
+    alignItems: 'center', justifyContent: 'center',
+    opacity: 0.4,
   },
-  scopeText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
+  micGlyph: { fontSize: 16 },
   send: {
     width: 38,
     height: 38,
