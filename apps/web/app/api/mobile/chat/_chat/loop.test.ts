@@ -53,11 +53,10 @@ test('cap enforced: never exceeds 3 searches / 4 model calls', async () => {
   assert.equal(typeof out.answer, 'string') // still produced an answer (forced final)
 })
 
-test('replayed assistant tool_calls are API-shaped (type/function/arguments)', async () => {
-  // Regression: the loop must push the assistant tool-call turn back to the model
-  // in the OpenAI wire shape, NOT the loop's normalized {id, query}. A malformed
-  // replay makes the next chat-completions call 400 with
-  // "Missing required parameter: 'messages[N].tool_calls[0].type'".
+test('replayed assistant tool-call turn stays neutral {id, query} in loop history', async () => {
+  // The loop must NOT bake any provider wire shape into its history — each
+  // adapter translates. Here we capture the messages handed to the second
+  // model call and assert the assistant turn is the neutral shape.
   const seen: Record<string, unknown>[][] = []
   const turns: ModelTurn[] = [
     { toolCalls: [{ id: 't1', query: 'entropy' }] },
@@ -75,16 +74,18 @@ test('replayed assistant tool_calls are API-shaped (type/function/arguments)', a
   }
   await runChat(deps)
 
-  // The second model call carries the assistant tool-call turn in its history.
   const secondCallMessages = seen[1]
   const assistant = secondCallMessages.find((m) => m.role === 'assistant')
-  assert.ok(assistant, 'assistant tool-call turn must be replayed to the model')
-  const calls = assistant!.tool_calls as Record<string, unknown>[]
-  assert.equal(calls[0].type, 'function')
-  assert.equal(calls[0].id, 't1')
-  const fn = calls[0].function as { name: string; arguments: string }
-  assert.equal(fn.name, 'search_notes')
-  assert.deepEqual(JSON.parse(fn.arguments), { query: 'entropy' })
+  assert.ok(assistant, 'assistant tool-call turn must be in history')
+  assert.deepEqual(assistant!.toolCalls, [{ id: 't1', query: 'entropy' }])
+  // No provider wire shape leaked in:
+  assert.equal('tool_calls' in assistant!, false)
+  assert.equal('content' in assistant!, false)
+
+  const toolMsg = secondCallMessages.find((m) => m.role === 'tool')
+  assert.ok(toolMsg, 'tool result turn must be in history')
+  assert.equal(toolMsg!.id, 't1')
+  assert.equal('tool_call_id' in toolMsg!, false)
 })
 
 test('retrieval error: model still gets to answer (no throw)', async () => {
