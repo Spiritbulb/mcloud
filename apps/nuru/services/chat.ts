@@ -29,11 +29,12 @@ export function createChatApi(authedFetch: AuthedFetch, streamingFetch: AuthedFe
       text: string,
       contextNoteIds: string[],
       sessionId: string,
-      opts?: { onStatus?: (status: string) => void },
+      provider: 'azure' | 'anthropic',
+      opts?: { onStatus?: (status: string) => void; onToken?: (text: string) => void },
     ): Promise<Message> {
       const res = await streamingFetch('/api/mobile/chat', {
         method: 'POST',
-        body: JSON.stringify({ text, contextNoteIds, sessionId }),
+        body: JSON.stringify({ text, contextNoteIds, sessionId, provider }),
       });
       if (!res.ok || !res.body) throw new Error('Could not send message');
 
@@ -54,11 +55,19 @@ export function createChatApi(authedFetch: AuthedFetch, streamingFetch: AuthedFe
           if (!line) continue;
           const evt = JSON.parse(line) as
             | { type: 'status'; value: string }
-            | { type: 'done'; message: Message }
+            | { type: 'token'; value: string }
+            | { type: 'done'; message: Message; meta?: { model: string; provider: 'azure' | 'anthropic'; usage: { inputTokens: number; outputTokens: number } } }
             | { type: 'error'; error: string };
           if (evt.type === 'status') opts?.onStatus?.(evt.value);
-          else if (evt.type === 'done') message = mapMessage(evt.message);
-          else if (evt.type === 'error') throw new Error(evt.error);
+          else if (evt.type === 'token') opts?.onToken?.(evt.value);
+          else if (evt.type === 'done') {
+            message = mapMessage({
+              ...evt.message,
+              model: evt.meta?.model,
+              provider: evt.meta?.provider,
+              usage: evt.meta?.usage,
+            });
+          } else if (evt.type === 'error') throw new Error(evt.error);
         }
         if (done) break;
       }
