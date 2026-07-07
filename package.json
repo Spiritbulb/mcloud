@@ -13,7 +13,8 @@
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
-    "obsidian": "node scripts/obsidian-graph.js"
+    "obsidian": "node scripts/obsidian-graph.js",
+    "update-nuru": "cd apps/nuru && npx eas-cli update --branch production --environment production --message \"new stuff\""
   },
   "devDependencies": {
     "turbo": "^2.5.0"
