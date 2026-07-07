@@ -15,6 +15,7 @@
     "docs": "npx typedoc --entryPointStrategy expand --skipErrorChecking ./app ./components ./lib ./contexts ./hooks ./scripts ./src && start ./docs/index.html"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.110.0",
     "@auth0/nextjs-auth0": "^4.19.0",
     "@codemirror/lang-markdown": "^6.5.0",
     "@material/web": "^2.4.1",
