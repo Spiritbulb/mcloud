@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { FlatList, View, Text, StyleSheet, Pressable } from 'react-native';
+import { FlatList, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
 import * as DocumentPicker from 'expo-document-picker';
@@ -10,10 +10,12 @@ import { EmptyState } from '@/components/EmptyState';
 import { Logo } from '@/components/Logo';
 import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 import { AttachMenu } from '@/components/AttachMenu';
+import { ChatOptionsModal } from '@/components/ChatOptionsModal';
 import { useApi } from '@/hooks/useApi';
 import { cleanParam } from '@/services/_params';
 import { toUploadable } from '@/services/upload';
 import { Message } from '@/types';
+import type { Provider } from '@/types';
 import { theme } from '@/theme';
 
 export default function Chat() {
@@ -35,6 +37,10 @@ export default function Chat() {
   const [loadError, setLoadError] = useState(false);
   const [attachOpen, setAttachOpen] = useState(false);
   const [attaching, setAttaching] = useState(false);
+  const [provider, setProvider] = useState<Provider>('azure');
+  const [optionsOpen, setOptionsOpen] = useState(false);
+  const [streamingText, setStreamingText] = useState<string | null>(null);
+  const modelLabel = provider === 'anthropic' ? 'Haiku 4.5' : 'GPT-5';
 
   // Resolve a session: use the routed one, else start a fresh session. Any failure
   // must surface (not leave the screen stuck on a loading flash), so it's caught.
@@ -73,12 +79,16 @@ export default function Chat() {
     if (!sessionId) return;
     setSending(true);
     setStatus('thinking');
+    setStreamingText(null);
     const optimistic: Message = {
       id: 'tmp', role: 'user', text, contextNoteIds, createdAt: new Date().toISOString(),
     };
     setMessages((m) => [...m, optimistic]);
     try {
-      await chat.send(text, contextNoteIds, sessionId, { onStatus: setStatus });
+      await chat.send(text, contextNoteIds, sessionId, provider, {
+        onStatus: setStatus,
+        onToken: (t) => setStreamingText((prev) => (prev ?? '') + t),
+      });
       setMessages(await chat.history(sessionId));
     } catch {
       // Roll back the optimistic bubble so a failed send doesn't leave a ghost
@@ -88,6 +98,7 @@ export default function Chat() {
     } finally {
       setSending(false);
       setStatus(undefined);
+      setStreamingText(null);
       requestAnimationFrame(() => listRef.current?.scrollToEnd({ animated: true }));
     }
   }
@@ -116,16 +127,6 @@ export default function Chat() {
 
   return (
     <Screen keyboardAvoiding keyboardOffset={headerHeight}>
-      {contextLabel && (
-        <View style={styles.ctx}>
-          <Text style={styles.ctxText} numberOfLines={1}>
-            Scoped to <Text style={styles.ctxTitle}>{contextLabel}</Text>
-          </Text>
-          <Pressable onPress={clearContext} hitSlop={8} accessibilityLabel="Clear context">
-            <Text style={styles.ctxClear}>✕</Text>
-          </Pressable>
-        </View>
-      )}
       {loadError && messages.length === 0 ? (
         <EmptyState
           hero={<Logo size={80} />}
@@ -148,6 +149,16 @@ export default function Chat() {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         />
       )}
+      {streamingText != null && (
+        <View style={{ paddingHorizontal: theme.spacing.md }}>
+          <ChatBubble
+            message={{
+              id: 'streaming', role: 'assistant', text: streamingText,
+              contextNoteIds: [], createdAt: new Date().toISOString(),
+            }}
+          />
+        </View>
+      )}
       {sending && (
         <View style={styles.thinking}>
           <ThinkingIndicator size={28} status={status} />
@@ -156,26 +167,28 @@ export default function Chat() {
       <ChatInputBar
         onSend={onSend}
         disabled={sending}
-        scopeLabel={contextLabel ?? undefined}
+        modelLabel={modelLabel}
+        contextLabel={contextLabel ?? undefined}
         onAttach={() => setAttachOpen(true)}
         attaching={attaching}
+        onOpenOptions={() => setOptionsOpen(true)}
       />
       <AttachMenu
         visible={attachOpen}
         onClose={() => setAttachOpen(false)}
         onPickFiles={onPickFiles}
       />
+      <ChatOptionsModal
+        visible={optionsOpen}
+        onClose={() => setOptionsOpen(false)}
+        provider={provider}
+        onSelectProvider={setProvider}
+        contextLabel={contextLabel}
+        onClearContext={clearContext}
+      />
     </Screen>
   );
 }
 const styles = StyleSheet.create({
-  ctx: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: theme.colors.primarySoft, paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm, borderRadius: theme.radii.pill, marginBottom: theme.spacing.sm,
-  },
-  ctxText: { color: theme.colors.textMuted, fontSize: 13, flex: 1 },
-  ctxTitle: { color: theme.colors.text, fontWeight: '600' },
-  ctxClear: { fontSize: 14, color: theme.colors.textMuted, paddingHorizontal: theme.spacing.xs },
   thinking: { paddingVertical: theme.spacing.sm, paddingLeft: theme.spacing.xs },
 });
