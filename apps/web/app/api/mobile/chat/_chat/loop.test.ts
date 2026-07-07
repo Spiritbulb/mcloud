@@ -15,6 +15,11 @@ function harness(turns: ModelTurn[]) {
       return { chunks: [{ content: 'c' }], noteIds: ['n' + searches] }
     },
     emit: (v) => emitted.push(v),
+    streamAnswer: async function* () {
+      yield { token: turns[i - 1]?.text ?? '' }
+      yield { usage: { inputTokens: 0, outputTokens: 0 } }
+    },
+    onToken: () => {},
   }
   return { deps, emitted: () => emitted, searches: () => searches, calls: () => i }
 }
@@ -53,11 +58,10 @@ test('cap enforced: never exceeds 3 searches / 4 model calls', async () => {
   assert.equal(typeof out.answer, 'string') // still produced an answer (forced final)
 })
 
-test('replayed assistant tool_calls are API-shaped (type/function/arguments)', async () => {
-  // Regression: the loop must push the assistant tool-call turn back to the model
-  // in the OpenAI wire shape, NOT the loop's normalized {id, query}. A malformed
-  // replay makes the next chat-completions call 400 with
-  // "Missing required parameter: 'messages[N].tool_calls[0].type'".
+test('replayed assistant tool-call turn stays neutral {id, query} in loop history', async () => {
+  // The loop must NOT bake any provider wire shape into its history — each
+  // adapter translates. Here we capture the messages handed to the second
+  // model call and assert the assistant turn is the neutral shape.
   const seen: Record<string, unknown>[][] = []
   const turns: ModelTurn[] = [
     { toolCalls: [{ id: 't1', query: 'entropy' }] },
@@ -72,19 +76,26 @@ test('replayed assistant tool_calls are API-shaped (type/function/arguments)', a
     },
     search: async () => ({ chunks: [{ content: 'c' }], noteIds: ['n1'] }),
     emit: () => {},
+    streamAnswer: async function* () {
+      yield { token: 'done' }
+      yield { usage: { inputTokens: 0, outputTokens: 0 } }
+    },
+    onToken: () => {},
   }
   await runChat(deps)
 
-  // The second model call carries the assistant tool-call turn in its history.
   const secondCallMessages = seen[1]
   const assistant = secondCallMessages.find((m) => m.role === 'assistant')
-  assert.ok(assistant, 'assistant tool-call turn must be replayed to the model')
-  const calls = assistant!.tool_calls as Record<string, unknown>[]
-  assert.equal(calls[0].type, 'function')
-  assert.equal(calls[0].id, 't1')
-  const fn = calls[0].function as { name: string; arguments: string }
-  assert.equal(fn.name, 'search_notes')
-  assert.deepEqual(JSON.parse(fn.arguments), { query: 'entropy' })
+  assert.ok(assistant, 'assistant tool-call turn must be in history')
+  assert.deepEqual(assistant!.toolCalls, [{ id: 't1', query: 'entropy' }])
+  // No provider wire shape leaked in:
+  assert.equal('tool_calls' in assistant!, false)
+  assert.equal('content' in assistant!, false)
+
+  const toolMsg = secondCallMessages.find((m) => m.role === 'tool')
+  assert.ok(toolMsg, 'tool result turn must be in history')
+  assert.equal(toolMsg!.id, 't1')
+  assert.equal('tool_call_id' in toolMsg!, false)
 })
 
 test('retrieval error: model still gets to answer (no throw)', async () => {
@@ -98,4 +109,40 @@ test('retrieval error: model still gets to answer (no throw)', async () => {
   const out = await runChat(h.deps)
   assert.equal(out.answer, 'From what I know, ...')
   assert.deepEqual(out.noteIds, [])
+})
+
+test('final answer streams tokens in order and accumulates to the full text', async () => {
+  const tokens: string[] = []
+  const deps: RunDeps = {
+    userText: 'q',
+    // No tool call → straight to the streamed final answer.
+    callModel: async () => ({ text: null as unknown as undefined }), // force the stream path
+    search: async () => ({ chunks: [], noteIds: [] }),
+    emit: () => {},
+    streamAnswer: async function* () {
+      yield { token: 'Hel' }
+      yield { token: 'lo ' }
+      yield { token: 'Nuru' }
+      yield { usage: { inputTokens: 3, outputTokens: 2 } }
+    },
+    onToken: (t) => tokens.push(t),
+  }
+  const out = await runChat(deps)
+  assert.deepEqual(tokens, ['Hel', 'lo ', 'Nuru'])
+  assert.equal(out.answer, 'Hello Nuru')
+  assert.deepEqual(out.usage, { inputTokens: 3, outputTokens: 2 })
+})
+
+test('whole-turn usage: tool-phase callModel usage is accumulated with the streamed final usage', async () => {
+  const h = harness([
+    { toolCalls: [{ id: 't1', query: 'q' }], usage: { inputTokens: 10, outputTokens: 2 } },
+    { text: null as unknown as undefined, usage: { inputTokens: 20, outputTokens: 3 } },
+  ])
+  h.deps.streamAnswer = async function* () {
+    yield { token: 'ok' }
+    yield { usage: { inputTokens: 5, outputTokens: 8 } }
+  }
+  const out = await runChat(h.deps)
+  // Expected total: tool-phase (10+20 input, 2+3 output) + streamed (5 input, 8 output)
+  assert.deepEqual(out.usage, { inputTokens: 35, outputTokens: 13 })
 })

@@ -21,6 +21,12 @@ export function ChatBubble({ message }: { message: Message }) {
   return (
     <View style={styles.aiRow}>
       <Text style={styles.aiText}>{message.text}</Text>
+      {message.role === 'assistant' && message.model && (
+        <Text style={styles.meta}>
+          {message.model}
+          {message.usage ? ` · ${message.usage.inputTokens} in / ${message.usage.outputTokens} out` : ''}
+        </Text>
+      )}
     </View>
   );
 }
@@ -39,4 +45,5 @@ const styles = StyleSheet.create({
 
   aiRow: { marginVertical: theme.spacing.sm },
   aiText: { fontSize: 15, lineHeight: 22, color: theme.colors.text },
+  meta: { color: theme.colors.textMuted, fontSize: 11, marginTop: 4 },
 });

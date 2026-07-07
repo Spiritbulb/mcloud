@@ -32,12 +32,18 @@ export type NoteRow = {
   signedUrl?: string | null;
 };
 
+export type Provider = 'azure' | 'anthropic';
+
 export interface Message {
   id: string;
   role: 'user' | 'assistant';
   text: string;
   contextNoteIds: string[];
   createdAt: string; // ISO
+  // Present on assistant messages returned from a live send (A/B visibility).
+  model?: string;
+  provider?: Provider;
+  usage?: { inputTokens: number; outputTokens: number };
 }
 
 export interface ChatSession {

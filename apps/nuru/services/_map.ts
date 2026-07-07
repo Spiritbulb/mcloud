@@ -24,5 +24,8 @@ export function mapMessage(m: Message): Message {
     text: m.text,
     contextNoteIds: m.contextNoteIds ?? [],
     createdAt: m.createdAt,
+    model: m.model,
+    provider: m.provider,
+    usage: m.usage,
   };
 }
