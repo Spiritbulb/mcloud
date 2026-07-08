@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import {
   useFonts,
@@ -45,7 +46,7 @@ function Guard() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: theme.colors.bg },
+        contentStyle: { backgroundColor: theme.colors.bg, paddingBottom: 10 },
       }}
     >
       <Stack.Screen name="(auth)" />
@@ -68,12 +69,14 @@ export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Fraunces_500Medium, Fraunces_600SemiBold });
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <ThemeProvider>
-        <AuthProvider>
-          <ThemedStatusBar />
-          {fontsLoaded ? <Guard /> : <Loading />}
-        </AuthProvider>
-      </ThemeProvider>
+      <SafeAreaProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            <ThemedStatusBar />
+            {fontsLoaded ? <Guard /> : <Loading />}
+          </AuthProvider>
+        </ThemeProvider>
+      </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }

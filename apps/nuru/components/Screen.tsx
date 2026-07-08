@@ -1,4 +1,5 @@
-import { SafeAreaView, View, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { View, KeyboardAvoidingView, StyleSheet } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Theme } from '@/theme';
 import { useTheme } from '@/context/ThemeContext';
 import { PropsWithChildren, useMemo } from 'react';
