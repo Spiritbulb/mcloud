@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { FlatList, View, Text, TextInput, Pressable, ActivityIndicator, StyleSheet } from 'react-native';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { Screen } from '@/components/Screen';
@@ -7,9 +7,12 @@ import { AddNoteSheet } from '@/components/AddNoteSheet';
 import { EmptyState } from '@/components/EmptyState';
 import { useApi } from '@/hooks/useApi';
 import { Note } from '@/types';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Notes() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const { notes: notesService } = useApi();
   const [items, setItems] = useState<Note[]>([]);
   const [loading, setLoading] = useState(true);
@@ -56,13 +59,15 @@ export default function Notes() {
     </Screen>
   );
 }
-const styles = StyleSheet.create({
-  search: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
-    borderRadius: theme.radii.pill, paddingHorizontal: theme.spacing.md, paddingVertical: 12,
-    fontSize: 15, color: theme.colors.text, marginBottom: theme.spacing.md },
-  fab: { position: 'absolute', right: theme.spacing.lg, bottom: theme.spacing.lg,
-    width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.primary,
-    alignItems: 'center', justifyContent: 'center', elevation: 4,
-    shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
-  fabText: { color: theme.colors.onPrimary, fontSize: 28, lineHeight: 30 },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    search: { backgroundColor: theme.colors.surface, borderWidth: 1, borderColor: theme.colors.border,
+      borderRadius: theme.radii.pill, paddingHorizontal: theme.spacing.md, paddingVertical: 12,
+      fontSize: 15, color: theme.colors.text, marginBottom: theme.spacing.md },
+    fab: { position: 'absolute', right: theme.spacing.lg, bottom: theme.spacing.lg,
+      width: 56, height: 56, borderRadius: 28, backgroundColor: theme.colors.primary,
+      alignItems: 'center', justifyContent: 'center', elevation: 4,
+      shadowColor: '#000', shadowOpacity: 0.4, shadowRadius: 8, shadowOffset: { width: 0, height: 2 } },
+    fabText: { color: theme.colors.onPrimary, fontSize: 28, lineHeight: 30 },
+  });
+}

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, View, StyleSheet } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
@@ -8,7 +8,6 @@ import { ChatBubble } from '@/components/ChatBubble';
 import { ChatInputBar } from '@/components/ChatInputBar';
 import { EmptyState } from '@/components/EmptyState';
 import { Logo } from '@/components/Logo';
-import { ThinkingIndicator } from '@/components/ThinkingIndicator';
 import { AttachMenu } from '@/components/AttachMenu';
 import { ChatOptionsModal } from '@/components/ChatOptionsModal';
 import { useApi } from '@/hooks/useApi';
@@ -16,9 +15,12 @@ import { cleanParam } from '@/services/_params';
 import { toUploadable } from '@/services/upload';
 import { Message } from '@/types';
 import type { Provider } from '@/types';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function Chat() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const { chat, notes: notesService } = useApi();
   const params = useLocalSearchParams<{ noteId?: string; sessionId?: string }>();
   // expo-router can hand back the literal string "undefined" for an absent param;
@@ -149,19 +151,19 @@ export default function Chat() {
           onContentSizeChange={() => listRef.current?.scrollToEnd({ animated: false })}
         />
       )}
-      {streamingText != null && (
-        <View style={{ paddingHorizontal: theme.spacing.md }}>
+      {sending && (
+        // One assistant row carries the whole compose: the thinking indicator
+        // shows until the first token, then it's replaced in place by the
+        // streaming Markdown reply — no separate thinking row that jumps.
+        <View style={styles.pending}>
           <ChatBubble
+            thinking={streamingText == null}
+            status={status}
             message={{
-              id: 'streaming', role: 'assistant', text: streamingText,
+              id: 'streaming', role: 'assistant', text: streamingText ?? '',
               contextNoteIds: [], createdAt: new Date().toISOString(),
             }}
           />
-        </View>
-      )}
-      {sending && (
-        <View style={styles.thinking}>
-          <ThinkingIndicator size={28} status={status} />
         </View>
       )}
       <ChatInputBar
@@ -189,6 +191,8 @@ export default function Chat() {
     </Screen>
   );
 }
-const styles = StyleSheet.create({
-  thinking: { paddingVertical: theme.spacing.sm, paddingLeft: theme.spacing.xs },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    pending: { paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm },
+  });
+}

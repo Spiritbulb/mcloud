@@ -2,9 +2,10 @@ import { Drawer } from 'expo-router/drawer';
 import { Pressable, Text, Dimensions } from 'react-native';
 import { useNavigation } from 'expo-router';
 import { DrawerContent } from '@/components/DrawerContent';
-import { theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 function MenuButton() {
+  const { theme } = useTheme();
   const navigation = useNavigation() as unknown as { toggleDrawer: () => void };
   return (
     <Pressable
@@ -19,6 +20,7 @@ function MenuButton() {
 }
 
 export default function DrawerLayout() {
+  const { theme } = useTheme();
   return (
     <Drawer
       drawerContent={(props) => <DrawerContent {...props} />}

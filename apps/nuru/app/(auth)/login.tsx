@@ -1,15 +1,17 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Text, TextInput, View } from 'react-native';
 import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { Brand } from '@/components/Brand';
 import { useAuth } from '@/context/AuthContext';
-import { theme } from '@/theme';
-import { authStyles } from '@/components/authStyles';
+import { useTheme } from '@/context/ThemeContext';
+import { makeAuthStyles } from '@/components/authStyles';
 
 type Step = 'email' | 'code';
 
 export default function Login() {
+  const { theme } = useTheme();
+  const authStyles = useMemo(() => makeAuthStyles(theme), [theme]);
   const { sendCode, verifyCode } = useAuth();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');

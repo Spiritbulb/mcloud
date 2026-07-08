@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { View, Text, TextInput, ActivityIndicator, StyleSheet } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useHeaderHeight } from 'expo-router/react-navigation';
@@ -6,9 +6,12 @@ import { Screen } from '@/components/Screen';
 import { Button } from '@/components/Button';
 import { useApi } from '@/hooks/useApi';
 import { Note } from '@/types';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export default function NoteDetail() {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const { notes } = useApi();
   const { id } = useLocalSearchParams<{ id: string }>();
   const [note, setNote] = useState<Note | null>(null);
@@ -54,8 +57,10 @@ export default function NoteDetail() {
     </Screen>
   );
 }
-const styles = StyleSheet.create({
-  editor: { flex: 1, backgroundColor: theme.colors.surface, borderWidth: 1,
-    borderColor: theme.colors.border, borderRadius: theme.radii.md, padding: theme.spacing.md,
-    fontSize: 16, color: theme.colors.text, textAlignVertical: 'top' },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    editor: { flex: 1, backgroundColor: theme.colors.surface, borderWidth: 1,
+      borderColor: theme.colors.border, borderRadius: theme.radii.md, padding: theme.spacing.md,
+      fontSize: 16, color: theme.colors.text, textAlignVertical: 'top' },
+  });
+}
