@@ -36,7 +36,7 @@ export default function Notes() {
   }
 
   return (
-    <Screen>
+    <Screen edges={['bottom', 'left', 'right']}>
       <TextInput placeholder="Search notes…" value={query} onChangeText={setQuery}
         style={styles.search} placeholderTextColor={theme.colors.textMuted} />
       {loading ? (

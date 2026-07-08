@@ -30,14 +30,14 @@ export default function NoteDetail() {
   }, [id]);
 
   if (loading) {
-    return <Screen><ActivityIndicator color={theme.colors.primary} style={{ marginTop: 40 }} /></Screen>;
+    return <Screen edges={['bottom', 'left', 'right']}><ActivityIndicator color={theme.colors.primary} style={{ marginTop: 40 }} /></Screen>;
   }
   if (!note) {
-    return <Screen><Text style={theme.typography.body}>Note not found.</Text></Screen>;
+    return <Screen edges={['bottom', 'left', 'right']}><Text style={theme.typography.body}>Note not found.</Text></Screen>;
   }
 
   return (
-    <Screen keyboardAvoiding keyboardOffset={headerHeight}>
+    <Screen keyboardAvoiding keyboardOffset={headerHeight} edges={['bottom', 'left', 'right']}>
       <Stack.Screen options={{ title: note.title }} />
       <Text style={theme.typography.title}>{note.title}</Text>
       <Text style={[theme.typography.muted, { marginBottom: theme.spacing.md }]}>{note.subject}</Text>

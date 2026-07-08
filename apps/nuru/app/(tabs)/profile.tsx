@@ -25,7 +25,7 @@ export default function Profile() {
   }
 
   return (
-    <Screen>
+    <Screen edges={['bottom', 'left', 'right']}>
       <View style={styles.avatar}>
         <Text style={styles.avatarText}>{(user?.name?.[0] ?? 'S').toUpperCase()}</Text>
       </View>

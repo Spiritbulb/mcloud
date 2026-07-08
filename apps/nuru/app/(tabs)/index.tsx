@@ -128,7 +128,7 @@ export default function Chat() {
   }
 
   return (
-    <Screen keyboardAvoiding keyboardOffset={headerHeight}>
+    <Screen keyboardAvoiding keyboardOffset={headerHeight} edges={['bottom', 'left', 'right']}>
       {loadError && messages.length === 0 ? (
         <EmptyState
           hero={<Logo size={80} />}
