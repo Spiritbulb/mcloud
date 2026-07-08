@@ -143,8 +143,9 @@ test — optional.
 
 ## Out of scope
 
-- Per-widget dark/light custom illustrations or logo variants (single teal logo
-  works on both; provided asset is teal-on-transparent).
+- Per-widget dark/light custom illustrations. (The brand *logo* does vary by
+  scheme — teal mark in light, amber mark in dark — mirroring the palette; the
+  teal PNG is user-supplied as `assets/images/logo-teal.png`.)
 - Any backend/theme-sync across devices.
 - Marketing/web apps — this is `apps/nuru` only.
 - **Reward/completion UI itself.** This spec only *defines* the `success` token so
