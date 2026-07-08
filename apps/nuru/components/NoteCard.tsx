@@ -1,12 +1,16 @@
 import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
 import { Note } from '@/types';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 const sourceLabel: Record<Note['source'], string> = {
   text: 'Typed', file: 'File', photo: 'Photo', voice: 'Voice',
 };
 
 export function NoteCard({ note, onPress }: { note: Note; onPress: () => void }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   return (
     <Pressable
       onPress={onPress}
@@ -24,16 +28,18 @@ export function NoteCard({ note, onPress }: { note: Note; onPress: () => void })
     </Pressable>
   );
 }
-const styles = StyleSheet.create({
-  card: {
-    backgroundColor: theme.colors.surface, padding: theme.spacing.md,
-    borderRadius: theme.radii.md, borderWidth: 1, borderColor: theme.colors.border,
-    marginBottom: theme.spacing.sm,
-  },
-  title: { ...theme.typography.heading, marginBottom: 2 },
-  snippet: { ...theme.typography.muted, marginBottom: theme.spacing.sm },
-  metaRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  subject: { color: theme.colors.primary, fontSize: 12, fontWeight: '600' },
-  dot: { width: 3, height: 3, borderRadius: 2, backgroundColor: theme.colors.textMuted },
-  source: { color: theme.colors.textMuted, fontSize: 12 },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    card: {
+      backgroundColor: theme.colors.surface, padding: theme.spacing.md,
+      borderRadius: theme.radii.md, borderWidth: 1, borderColor: theme.colors.border,
+      marginBottom: theme.spacing.sm,
+    },
+    title: { ...theme.typography.heading, marginBottom: 2 },
+    snippet: { ...theme.typography.muted, marginBottom: theme.spacing.sm },
+    metaRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+    subject: { color: theme.colors.primary, fontSize: 12, fontWeight: '600' },
+    dot: { width: 3, height: 3, borderRadius: 2, backgroundColor: theme.colors.textMuted },
+    source: { color: theme.colors.textMuted, fontSize: 12 },
+  });
+}

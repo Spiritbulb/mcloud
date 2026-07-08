@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useMemo } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 export function EmptyState({
   title,
@@ -11,6 +12,8 @@ export function EmptyState({
   subtitle?: string;
   hero?: ReactNode;
 }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   return (
     <View style={styles.wrap}>
       {hero && <View style={styles.hero}>{hero}</View>}
@@ -19,9 +22,11 @@ export function EmptyState({
     </View>
   );
 }
-const styles = StyleSheet.create({
-  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm, padding: theme.spacing.lg },
-  hero: { marginBottom: theme.spacing.md },
-  title: { ...theme.typography.title, fontSize: 24, textAlign: 'center' },
-  subtitle: { ...theme.typography.muted, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: theme.spacing.sm, padding: theme.spacing.lg },
+    hero: { marginBottom: theme.spacing.md },
+    title: { ...theme.typography.title, fontSize: 24, textAlign: 'center' },
+    subtitle: { ...theme.typography.muted, textAlign: 'center', lineHeight: 20, maxWidth: 300 },
+  });
+}

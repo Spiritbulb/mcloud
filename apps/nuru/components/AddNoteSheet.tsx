@@ -1,16 +1,19 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Modal, View, Text, TextInput, Pressable, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
 import { Note, NoteSource } from '@/types';
 import { useApi } from '@/hooks/useApi';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Button } from '@/components/Button';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { toUploadable } from '@/services/upload';
 
 type Props = { visible: boolean; onClose: () => void; onCreated: (note: Note) => void };
 
 export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [mode, setMode] = useState<NoteSource | null>(null);
   const [title, setTitle] = useState('');
   const [subject, setSubject] = useState('');
@@ -115,16 +118,18 @@ export function AddNoteSheet({ visible, onClose, onCreated }: Props) {
     </Modal>
   );
 }
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
-  sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: theme.radii.lg,
-    borderTopRightRadius: theme.radii.lg, padding: theme.spacing.lg,
-    borderTopWidth: 1, borderColor: theme.colors.border },
-  grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2,
-    backgroundColor: theme.colors.border, marginBottom: theme.spacing.md },
-  sheetTitle: { ...theme.typography.title, fontSize: 22 },
-  option: { backgroundColor: theme.colors.surfaceAlt, padding: theme.spacing.md, borderRadius: theme.radii.md },
-  optionText: { fontSize: 16, color: theme.colors.text },
-  input: { backgroundColor: theme.colors.bg, borderWidth: 1, borderColor: theme.colors.border,
-    borderRadius: theme.radii.md, padding: 12, fontSize: 15, color: theme.colors.text },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    backdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'flex-end' },
+    sheet: { backgroundColor: theme.colors.surface, borderTopLeftRadius: theme.radii.lg,
+      borderTopRightRadius: theme.radii.lg, padding: theme.spacing.lg,
+      borderTopWidth: 1, borderColor: theme.colors.border },
+    grabber: { alignSelf: 'center', width: 36, height: 4, borderRadius: 2,
+      backgroundColor: theme.colors.border, marginBottom: theme.spacing.md },
+    sheetTitle: { ...theme.typography.title, fontSize: 22 },
+    option: { backgroundColor: theme.colors.surfaceAlt, padding: theme.spacing.md, borderRadius: theme.radii.md },
+    optionText: { fontSize: 16, color: theme.colors.text },
+    input: { backgroundColor: theme.colors.bg, borderWidth: 1, borderColor: theme.colors.border,
+      borderRadius: theme.radii.md, padding: 12, fontSize: 15, color: theme.colors.text },
+  });
+}

@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { DrawerContentComponentProps, DrawerContentScrollView } from 'expo-router/drawer';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,8 @@ import { Logo } from '@/components/Logo';
 import { useAuth } from '@/context/AuthContext';
 import { useApi } from '@/hooks/useApi';
 import { ChatSession } from '@/types';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 /**
  * The Nuru drawer — near-full-width Recents list in the Claude reference's shape:
@@ -20,6 +21,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   const { chat } = useApi();
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [sessions, setSessions] = useState<ChatSession[]>([]);
 
   // Refresh the list whenever the drawer regains focus (after a new message the
@@ -101,43 +104,45 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: theme.colors.bg },
-  scroll: { paddingTop: theme.spacing.sm },
-  brand: {
-    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm,
-    marginBottom: theme.spacing.sm,
-  },
-  brandText: { fontFamily: theme.fonts.display, fontSize: 24, color: theme.colors.text },
-  newChat: {
-    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
-    paddingVertical: 11, borderRadius: theme.radii.md, marginBottom: theme.spacing.sm,
-  },
-  newChatLabel: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
-  section: {
-    fontSize: 11, fontWeight: '700', color: theme.colors.textMuted, letterSpacing: 1,
-    paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm, paddingBottom: theme.spacing.xs,
-  },
-  row: {
-    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
-    marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
-    paddingVertical: 11, borderRadius: theme.radii.md,
-  },
-  rowLabel: { fontSize: 15, color: theme.colors.text, flex: 1 },
-  divider: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md, marginVertical: theme.spacing.sm },
-  footer: {
-    flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
-    paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md,
-    borderTopWidth: 1, borderTopColor: theme.colors.border,
-  },
-  avatar: {
-    width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primarySoft,
-    alignItems: 'center', justifyContent: 'center',
-  },
-  avatarText: { fontSize: 17, fontWeight: '700', color: theme.colors.primary },
-  userName: { color: theme.colors.text, fontSize: 15, fontWeight: '600' },
-  userEmail: { color: theme.colors.textMuted, fontSize: 13 },
-  gear: { padding: theme.spacing.xs },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: theme.colors.bg },
+    scroll: { paddingTop: theme.spacing.sm },
+    brand: {
+      flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md, paddingVertical: theme.spacing.sm,
+      marginBottom: theme.spacing.sm,
+    },
+    brandText: { fontFamily: theme.fonts.display, fontSize: 24, color: theme.colors.text },
+    newChat: {
+      flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
+      marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
+      paddingVertical: 11, borderRadius: theme.radii.md, marginBottom: theme.spacing.sm,
+    },
+    newChatLabel: { fontSize: 16, color: theme.colors.primary, fontWeight: '600' },
+    section: {
+      fontSize: 11, fontWeight: '700', color: theme.colors.textMuted, letterSpacing: 1,
+      paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.sm, paddingBottom: theme.spacing.xs,
+    },
+    row: {
+      flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md,
+      marginHorizontal: theme.spacing.sm, paddingHorizontal: theme.spacing.md,
+      paddingVertical: 11, borderRadius: theme.radii.md,
+    },
+    rowLabel: { fontSize: 15, color: theme.colors.text, flex: 1 },
+    divider: { height: 1, backgroundColor: theme.colors.border, marginHorizontal: theme.spacing.md, marginVertical: theme.spacing.sm },
+    footer: {
+      flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm,
+      paddingHorizontal: theme.spacing.md, paddingTop: theme.spacing.md,
+      borderTopWidth: 1, borderTopColor: theme.colors.border,
+    },
+    avatar: {
+      width: 40, height: 40, borderRadius: 20, backgroundColor: theme.colors.primarySoft,
+      alignItems: 'center', justifyContent: 'center',
+    },
+    avatarText: { fontSize: 17, fontWeight: '700', color: theme.colors.primary },
+    userName: { color: theme.colors.text, fontSize: 15, fontWeight: '600' },
+    userEmail: { color: theme.colors.textMuted, fontSize: 13 },
+    gear: { padding: theme.spacing.xs },
+  });
+}

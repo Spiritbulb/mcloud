@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Animated, Easing, StyleSheet, AccessibilityInfo } from 'react-native';
 import { Logo } from '@/components/Logo';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 // Live model status → human label. Driven by the real SSE status events from the
 // chat stream (thinking → searching_notes → writing), not a blind cycle.
@@ -17,6 +18,8 @@ const LABELS: Record<string, string> = {
  * assistant is composing a reply.
  */
 export function ThinkingIndicator({ size = 40, status }: { size?: number; status?: string }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const spin = useRef(new Animated.Value(0)).current;
   const [reduceMotion, setReduceMotion] = useState(false);
 
@@ -61,7 +64,9 @@ export function ThinkingIndicator({ size = 40, status }: { size?: number; status
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
-  phrase: { color: theme.colors.textMuted, fontSize: 14 },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    wrap: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.sm },
+    phrase: { color: theme.colors.textMuted, fontSize: 14 },
+  });
+}

@@ -1,48 +1,123 @@
 // apps/nuru/components/AttachMenu.tsx
-// Small anchored dropdown for the chat composer's "+". Files is active; Camera is
-// greyed ("coming soon"), mirroring the existing disabled-row pattern. A
-// transparent full-screen backdrop dismisses on outside tap (not a full Modal).
-import { Modal, Pressable, View, Text, StyleSheet } from 'react-native';
-import { theme } from '@/theme';
+import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
+import { Ionicons } from '@expo/vector-icons';
+import { BottomDrawer } from './BottomDrawer';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
-type Props = { visible: boolean; onClose: () => void; onPickFiles: () => void };
+type Props = {
+  visible: boolean;
+  onClose: () => void;
+  onPickFiles: () => void;
+};
 
 export function AttachMenu({ visible, onClose, onPickFiles }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   return (
-    <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={styles.backdrop} onPress={onClose}>
-        <View style={styles.card}>
-          <Pressable
-            style={styles.row}
-            onPress={() => { onClose(); onPickFiles(); }}
-            accessibilityLabel="Attach a file"
-          >
-            <Text style={styles.rowText}>📄  Files</Text>
-          </Pressable>
-          <View style={styles.divider} />
-          <View style={[styles.row, styles.rowDisabled]} accessibilityLabel="Camera coming soon">
-            <Text style={[styles.rowText, styles.rowTextDisabled]}>📷  Camera — coming soon</Text>
+    <BottomDrawer
+      visible={visible}
+      onClose={onClose}
+      title="Attach"
+      subtitle="Add something to your message"
+    >
+      <View style={styles.list}>
+        <Pressable
+          onPress={() => {
+            onClose();
+            onPickFiles();
+          }}
+          accessibilityLabel="Attach files"
+          style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
+        >
+          <View style={styles.iconWrap}>
+            <Ionicons name="document-outline" size={18} color={theme.colors.primary} />
+          </View>
+
+          <View style={styles.copy}>
+            <Text style={styles.label}>Files</Text>
+            <Text style={styles.meta}>PDFs, notes, and documents</Text>
+          </View>
+
+          <Ionicons name="chevron-forward" size={16} color={theme.colors.textMuted} />
+        </Pressable>
+
+        <View style={styles.divider} />
+
+        <View style={[styles.row, styles.rowDisabled]} accessibilityLabel="Camera coming soon">
+          <View style={styles.iconWrapMuted}>
+            <Ionicons name="camera-outline" size={18} color={theme.colors.textMuted} />
+          </View>
+
+          <View style={styles.copy}>
+            <Text style={styles.labelMuted}>Camera</Text>
+            <Text style={styles.meta}>Coming soon</Text>
           </View>
         </View>
-      </Pressable>
-    </Modal>
+      </View>
+    </BottomDrawer>
   );
 }
 
-const styles = StyleSheet.create({
-  backdrop: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.35)' },
-  card: {
-    backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.lg,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: 96, // sit above the composer
-    overflow: 'hidden',
-  },
-  row: { padding: theme.spacing.md },
-  rowDisabled: { opacity: 0.4 },
-  rowText: { fontSize: 16, color: theme.colors.text },
-  rowTextDisabled: { color: theme.colors.textMuted },
-  divider: { height: 1, backgroundColor: theme.colors.border },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    list: {
+      backgroundColor: theme.colors.surface,
+      borderRadius: theme.radii.lg,
+      overflow: 'hidden',
+    },
+    row: {
+      minHeight: 68,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: theme.spacing.md,
+      paddingVertical: theme.spacing.md,
+    },
+    rowPressed: {
+      opacity: 0.9,
+    },
+    rowDisabled: {
+      opacity: 0.48,
+    },
+    iconWrap: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.primarySoft,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    iconWrapMuted: {
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: theme.colors.surfaceAlt,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    copy: {
+      flex: 1,
+      gap: 2,
+    },
+    label: {
+      color: theme.colors.text,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    labelMuted: {
+      color: theme.colors.textMuted,
+      fontSize: 16,
+      fontWeight: '600',
+    },
+    meta: {
+      color: theme.colors.textMuted,
+      fontSize: 13,
+    },
+    divider: {
+      height: 1,
+      backgroundColor: theme.colors.border,
+      marginLeft: 56,
+    },
+  });
+}

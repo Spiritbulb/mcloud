@@ -1,6 +1,8 @@
 import { View, Text, StyleSheet } from 'react-native';
+import { useMemo } from 'react';
 import { Logo } from '@/components/Logo';
-import { theme } from '@/theme';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 /**
  * The Nuru wordmark, set in Fraunces. Optionally stacked above the sunburst
@@ -16,6 +18,8 @@ export function Brand({
   withLogo?: boolean;
   tagline?: string;
 }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const fontSize = size === 'lg' ? 44 : 28;
   return (
     <View style={styles.wrap}>
@@ -26,7 +30,9 @@ export function Brand({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', gap: theme.spacing.md },
-  tagline: { letterSpacing: 0.3 },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    wrap: { alignItems: 'center', gap: theme.spacing.md },
+    tagline: { letterSpacing: 0.3 },
+  });
+}

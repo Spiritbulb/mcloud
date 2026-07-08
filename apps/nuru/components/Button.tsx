@@ -1,5 +1,7 @@
 import { Pressable, Text, ActivityIndicator, StyleSheet } from 'react-native';
-import { theme } from '@/theme';
+import { useMemo } from 'react';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
 type Props = {
   title: string;
@@ -8,6 +10,8 @@ type Props = {
   loading?: boolean;
 };
 export function Button({ title, onPress, variant = 'primary', loading }: Props) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const ghost = variant === 'ghost';
   return (
     <Pressable
@@ -28,10 +32,12 @@ export function Button({ title, onPress, variant = 'primary', loading }: Props) 
     </Pressable>
   );
 }
-const styles = StyleSheet.create({
-  base: { paddingVertical: theme.spacing.md, borderRadius: theme.radii.pill, alignItems: 'center' },
-  primary: { backgroundColor: theme.colors.primary },
-  ghost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.border },
-  text: { color: theme.colors.onPrimary, fontSize: 16, fontWeight: '600' },
-  ghostText: { color: theme.colors.text },
-});
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
+    base: { paddingVertical: theme.spacing.md, borderRadius: theme.radii.pill, alignItems: 'center' },
+    primary: { backgroundColor: theme.colors.primary },
+    ghost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: theme.colors.border },
+    text: { color: theme.colors.onPrimary, fontSize: 16, fontWeight: '600' },
+    ghostText: { color: theme.colors.text },
+  });
+}

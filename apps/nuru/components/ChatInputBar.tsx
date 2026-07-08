@@ -1,16 +1,17 @@
-import { useState } from 'react';
-import { View, TextInput, Pressable, Text, StyleSheet, ActivityIndicator } from 'react-native';
-import { theme } from '@/theme';
+import { useMemo, useState } from 'react';
+import {
+  View,
+  TextInput,
+  Pressable,
+  Text,
+  StyleSheet,
+  ActivityIndicator,
+  Platform,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Theme } from '@/theme';
+import { useTheme } from '@/context/ThemeContext';
 
-/**
- * The chat composer — a single raised card in the reference's shape. Text field
- * on top; a control row below carries the attach (+) affordance on the left, the
- * ( model · context ) pill that opens ChatOptionsModal, a disabled mic affordance,
- * and the round send control on the right.
- *
- * The (+) attach button calls `onAttach` when provided; while `attaching` it is
- * disabled and shows a spinner in place of the glyph.
- */
 export function ChatInputBar({
   onSend,
   disabled,
@@ -28,124 +29,268 @@ export function ChatInputBar({
   attaching?: boolean;
   onOpenOptions: () => void;
 }) {
+  const { theme } = useTheme();
+  const styles = useMemo(() => makeStyles(theme), [theme]);
   const [text, setText] = useState('');
-  const canSend = text.trim().length > 0 && !disabled;
+  const [focused, setFocused] = useState(false);
+  const [inputHeight, setInputHeight] = useState(22);
+
+  const trimmed = text.trim();
+  const canSend = trimmed.length > 0 && !disabled;
+  const hasText = trimmed.length > 0;
 
   function submit() {
-    const t = text.trim();
-    if (!t) return;
-    onSend(t);
+    if (!canSend) return;
+    onSend(trimmed);
     setText('');
+    setInputHeight(22);
   }
 
   return (
-    <View style={styles.bar}>
+    <View style={[styles.bar, focused && styles.barFocused]}>
       <TextInput
         value={text}
         onChangeText={setText}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
+        onContentSizeChange={(e) => {
+          const h = e.nativeEvent.contentSize.height;
+          setInputHeight(Math.max(22, Math.min(110, h)));
+        }}
         placeholder="Ask about your notes…"
         placeholderTextColor={theme.colors.textMuted}
-        style={styles.input}
+        style={[styles.input, { height: inputHeight }]}
         multiline
+        textAlignVertical="top"
+        editable={!disabled}
+        selectionColor={theme.colors.primary}
+        accessibilityLabel="Message input"
       />
+
       <View style={styles.controls}>
-        <Pressable
-          style={styles.attach}
-          onPress={onAttach}
-          disabled={!onAttach || attaching}
-          accessibilityLabel="Attach a file"
-        >
-          {attaching ? (
-            <ActivityIndicator size="small" color={theme.colors.textMuted} />
-          ) : (
-            <Text style={styles.attachGlyph}>＋</Text>
-          )}
-        </Pressable>
-        <Pressable
-          style={styles.pill}
-          onPress={onOpenOptions}
-          accessibilityLabel="Chat options"
-        >
-          <View style={styles.pillDot} />
-          <Text style={styles.pillText} numberOfLines={1}>
-            {modelLabel} · {contextLabel ?? 'All notes'} ▾
-          </Text>
-        </Pressable>
-        <View style={styles.mic} accessibilityLabel="Voice input coming soon">
-          <Text style={styles.micGlyph}>🎙</Text>
+        <View style={styles.leftControls}>
+          <Pressable
+            onPress={onAttach}
+            disabled={!onAttach || attaching}
+            hitSlop={8}
+            accessibilityLabel="Attach a file"
+            accessibilityState={{ disabled: !onAttach || !!attaching, busy: !!attaching }}
+            style={({ pressed }) => [
+              styles.iconButton,
+              pressed && !attaching && onAttach && styles.iconButtonPressed,
+              (!onAttach || attaching) && styles.iconButtonDisabled,
+            ]}
+          >
+            {attaching ? (
+              <ActivityIndicator size="small" color={theme.colors.textMuted} />
+            ) : (
+              <Ionicons name="add" size={20} color={theme.colors.text} />
+            )}
+          </Pressable>
+
+          <Pressable
+            onPress={onOpenOptions}
+            hitSlop={6}
+            accessibilityLabel="Open chat options"
+            style={({ pressed }) => [
+              styles.optionsPill,
+              pressed && styles.optionsPillPressed,
+            ]}
+          >
+            <View style={styles.pillDot} />
+            <Text style={styles.modelText} numberOfLines={1}>
+              {modelLabel}
+            </Text>
+            <Text style={styles.contextText} numberOfLines={1}>
+              {contextLabel ?? 'All notes'}
+            </Text>
+            <Ionicons
+              name="chevron-down"
+              size={14}
+              color={theme.colors.textMuted}
+            />
+          </Pressable>
         </View>
-        <Pressable
-          onPress={submit}
-          disabled={!canSend}
-          style={[styles.send, !canSend && styles.sendDisabled]}
-          accessibilityLabel="Send message"
-        >
-          <Text style={styles.sendGlyph}>↑</Text>
-        </Pressable>
+
+        {!hasText ? (
+          <View
+            style={styles.iconButtonMuted}
+            accessibilityLabel="Voice input coming soon"
+            accessibilityState={{ disabled: true }}
+          >
+            <Ionicons
+              name="mic-outline"
+              size={18}
+              color={theme.colors.textMuted}
+            />
+          </View>
+        ) : (
+          <Pressable
+            onPress={submit}
+            disabled={!canSend}
+            hitSlop={8}
+            accessibilityLabel="Send message"
+            accessibilityState={{ disabled: !canSend }}
+            style={({ pressed }) => [
+              styles.sendButton,
+              pressed && canSend && styles.sendButtonPressed,
+              !canSend && styles.sendButtonDisabled,
+            ]}
+          >
+            <Ionicons
+              name="arrow-up"
+              size={18}
+              color={canSend ? theme.colors.onPrimary : theme.colors.textMuted}
+            />
+          </Pressable>
+        )}
       </View>
     </View>
   );
 }
-const styles = StyleSheet.create({
+
+function makeStyles(theme: Theme) {
+  return StyleSheet.create({
   bar: {
     backgroundColor: theme.colors.surface,
-    borderRadius: theme.radii.lg,
+    borderRadius: 24,
     borderWidth: 1,
     borderColor: theme.colors.border,
-    paddingHorizontal: theme.spacing.md,
-    paddingTop: theme.spacing.md,
-    paddingBottom: theme.spacing.sm,
+    padding: theme.spacing.sm,
     marginTop: theme.spacing.sm,
   },
-  input: {
-    maxHeight: 120,
-    fontSize: 16,
-    color: theme.colors.text,
-    paddingVertical: theme.spacing.xs,
+
+  // Focus ring: border-color only. Do NOT toggle Android `elevation` (or the
+  // shadow that implies it) on focus — changing elevation reparents this View's
+  // native layer, which detaches and blurs the focused TextInput, closing the
+  // keyboard the instant it opens. iOS shadow is safe (no reparent), so it's
+  // applied there only.
+  barFocused: {
+    borderColor: theme.colors.primary,
+    ...(Platform.OS === 'ios'
+      ? {
+          shadowColor: theme.colors.primary,
+          shadowOpacity: 0.08,
+          shadowRadius: 10,
+          shadowOffset: { width: 0, height: 2 },
+        }
+      : null),
   },
+
+  input: {
+    minHeight: 22,
+    maxHeight: 110,
+    fontSize: 16,
+    lineHeight: 22,
+    color: theme.colors.text,
+    paddingHorizontal: theme.spacing.xs,
+    paddingTop: theme.spacing.xs,
+    paddingBottom: theme.spacing.sm,
+  },
+
   controls: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     gap: theme.spacing.sm,
-    marginTop: theme.spacing.sm,
+    paddingTop: theme.spacing.xs,
   },
-  attach: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  attachGlyph: { color: theme.colors.textMuted, fontSize: 20, lineHeight: 22 },
-  pill: {
+
+  leftControls: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: theme.spacing.xs,
+    gap: theme.spacing.sm,
+  },
+
+  iconButton: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
     backgroundColor: theme.colors.surfaceAlt,
-    borderRadius: theme.radii.pill,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: 8,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
     justifyContent: 'center',
   },
-  pillDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: theme.colors.primary },
-  pillText: { color: theme.colors.textMuted, fontSize: 13, fontWeight: '500' },
-  mic: {
-    width: 38, height: 38, borderRadius: 19,
-    backgroundColor: theme.colors.surfaceAlt,
-    alignItems: 'center', justifyContent: 'center',
-    opacity: 0.4,
+
+  iconButtonPressed: {
+    opacity: 0.85,
+    transform: [{ scale: 0.96 }],
   },
-  micGlyph: { fontSize: 16 },
-  send: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+
+  iconButtonDisabled: {
+    opacity: 0.55,
+  },
+
+  iconButtonMuted: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    opacity: 0.45,
+  },
+
+  optionsPill: {
+    flex: 1,
+    minHeight: 42,
+    borderRadius: 21,
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    paddingHorizontal: theme.spacing.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  optionsPillPressed: {
+    opacity: 0.9,
+  },
+
+  pillDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 99,
+    backgroundColor: theme.colors.primary,
+  },
+
+  modelText: {
+    color: theme.colors.text,
+    fontSize: 13,
+    fontWeight: '700',
+    maxWidth: '38%',
+  },
+
+  contextText: {
+    flex: 1,
+    color: theme.colors.textMuted,
+    fontSize: 13,
+    fontWeight: '500',
+  },
+
+  sendButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
     backgroundColor: theme.colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  sendDisabled: { backgroundColor: theme.colors.surfaceAlt },
-  sendGlyph: { color: theme.colors.onPrimary, fontSize: 20, fontWeight: '700', lineHeight: 22 },
-});
+
+  sendButtonPressed: {
+    transform: [{ scale: 0.96 }],
+    opacity: 0.92,
+  },
+
+  sendButtonDisabled: {
+    backgroundColor: theme.colors.surfaceAlt,
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  });
+}
