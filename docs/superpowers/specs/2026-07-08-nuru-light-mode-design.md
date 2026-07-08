@@ -3,6 +3,14 @@
 Date: 2026-07-08
 App: `apps/nuru` (Expo SDK 56, expo-router, TypeScript)
 
+## Audience
+
+**CBC junior secondary, grades 10–12** (roughly ages 14–17). This sets the tone:
+old enough that a candy-bright palette reads as patronizing, young enough that
+clear reward/feedback still matters. The direction is therefore a **calm,
+credible base** (deep teal + warm paper) with energy delivered through reward
+states, not through cranked base-color saturation.
+
 ## Goal
 
 Add a **light theme as the default** for Nuru, a study-helper app, and adopt the
@@ -40,12 +48,22 @@ one. Values:
 | `textMuted`   | `#5E6E73`             | `#9B8F85`              | |
 | `border`      | `#E3E0DA`             | `#403F3C`              | hairline |
 | `danger`      | `#C4553B`             | `#E0876F`              | errors |
+| `success`     | `#3DAA6E` mint-green  | `#5CC98C` lighter mint | correct answers, completion, streaks — distinct from amber |
 | `onPrimary`   | `#FFFFFF`             | `#1A1204`              | text/icon on primary fills |
 | `bubbleUser`  | `#14505F` teal        | `#FF9800` amber        | user chat bubble |
-| `bubbleAi`    | `#FFFFFF`             | `#302F2D`              | assistant bubble |
+| `bubbleAi`    | `#FAFAF7` warm white  | `#302F2D`              | assistant bubble — warm off-white, not sterile pure white |
 
 Contrast (WCAG AA): teal on white ≈ 8:1, teal-ink on paper ≈ 11:1, white on teal
-≈ 8:1, amber-on-near-black in dark unchanged from today.
+≈ 8:1, success-green on white ≈ 3:1 (use for fills/icons + a label, not as body
+text on white), amber-on-near-black in dark unchanged from today.
+
+**Usage rule:** `textMuted` is for metadata only — timestamps, token counts,
+captions. **Never** use it for instructional or task-critical text; those use
+`text`. (Guards legibility for the target age at small sizes.)
+
+**Reward vs. accent:** `success` (green) means *completed / correct*. `accent`
+(amber) is a decorative secondary highlight only. Keep the two roles distinct so
+the app never says "you got it right" and "here's a link" in the same color.
 
 `spacing`, `radii`, `fonts`, `typography` are unchanged in value, but
 `typography` currently bakes `color` into its entries; those color fields will be
@@ -129,3 +147,8 @@ test — optional.
   works on both; provided asset is teal-on-transparent).
 - Any backend/theme-sync across devices.
 - Marketing/web apps — this is `apps/nuru` only.
+- **Reward/completion UI itself.** This spec only *defines* the `success` token so
+  the palette is complete and consistent; no streak/correct-answer UI is built
+  here. Those features consume the token when they land.
+- Lifting base-palette saturation for "energy" — deliberately declined for the
+  grades 10–12 audience; energy comes from reward states, not louder base colors.
