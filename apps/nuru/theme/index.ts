@@ -83,7 +83,3 @@ export function makeTheme(scheme: Scheme) {
 }
 
 export type Theme = ReturnType<typeof makeTheme>;
-
-// Transitional default: modules not yet migrated to useTheme() still resolve
-// against a valid (light) theme so the app type-checks during migration.
-export const theme: Theme = makeTheme('light');
