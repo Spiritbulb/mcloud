@@ -9,9 +9,10 @@ import {
   Fraunces_600SemiBold,
 } from '@expo-google-fonts/fraunces';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { theme } from '@/theme';
+import { ThemeProvider, useTheme } from '@/context/ThemeContext';
 
 function Loading() {
+  const { theme } = useTheme();
   return (
     <View style={{ flex: 1, justifyContent: 'center', backgroundColor: theme.colors.bg }}>
       <ActivityIndicator color={theme.colors.primary} />
@@ -19,8 +20,15 @@ function Loading() {
   );
 }
 
+function ThemedStatusBar() {
+  const { scheme } = useTheme();
+  // Light UI → dark status-bar content; dark UI → light content.
+  return <StatusBar style={scheme === 'dark' ? 'light' : 'dark'} />;
+}
+
 function Guard() {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
   const segments = useSegments();
   const router = useRouter();
 
@@ -58,13 +66,14 @@ function Guard() {
 
 export default function RootLayout() {
   const [fontsLoaded] = useFonts({ Fraunces_500Medium, Fraunces_600SemiBold });
-  if (!fontsLoaded) return <Loading />;
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <AuthProvider>
-        <StatusBar style="light" />
-        <Guard />
-      </AuthProvider>
+      <ThemeProvider>
+        <AuthProvider>
+          <ThemedStatusBar />
+          {fontsLoaded ? <Guard /> : <Loading />}
+        </AuthProvider>
+      </ThemeProvider>
     </GestureHandlerRootView>
   );
 }
