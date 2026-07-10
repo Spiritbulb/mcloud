@@ -46,7 +46,7 @@ function Guard() {
     <Stack
       screenOptions={{
         headerShown: false,
-        contentStyle: { backgroundColor: theme.colors.bg, paddingBottom: 10 },
+        contentStyle: { backgroundColor: theme.colors.bg},
       }}
     >
       <Stack.Screen name="(auth)" />

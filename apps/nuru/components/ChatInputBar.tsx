@@ -57,7 +57,7 @@ export function ChatInputBar({
           const h = e.nativeEvent.contentSize.height;
           setInputHeight(Math.max(22, Math.min(110, h)));
         }}
-        placeholder="Ask about your notes…"
+        placeholder="Chat with Nuru..."
         placeholderTextColor={theme.colors.textMuted}
         style={[styles.input, { height: inputHeight }]}
         multiline
@@ -180,7 +180,7 @@ function makeStyles(theme: Theme) {
   input: {
     minHeight: 22,
     maxHeight: 110,
-    fontSize: 16,
+    fontSize: 17,
     lineHeight: 22,
     color: theme.colors.text,
     paddingHorizontal: theme.spacing.xs,
