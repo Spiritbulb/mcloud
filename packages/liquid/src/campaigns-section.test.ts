@@ -28,6 +28,11 @@ assert.ok(html.includes('data-allow-custom="true"'), 'water allows custom')
 assert.ok(html.includes('data-allow-custom="false"'), 'school disallows custom')
 assert.ok(html.includes('sf-donate'), 'donate action present')
 
+// data-presets renders the comma-joined preset list (the donate island parses this)
+assert.ok(html.includes('data-presets="500,1000"'), 'water presets joined for the island')
+// no progress bar for a campaign without a goal (hasGoal:false)
+assert.ok((html.match(/sf-campaign-progress/g) || []).length === 1, 'only the goaled campaign has a progress block')
+
 // empty guard: no campaigns -> nothing
 const empty = await renderTemplate('classic/sections/campaigns', { store, campaigns: [] })
 assert.ok(!empty.includes('sf-campaigns'), 'empty campaigns renders nothing')
