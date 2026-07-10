@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import ClassicCartPage from '@mcloud/themes/classic/CartPage'
 import type { MpesaConfig, GuestDetails } from '@mcloud/themes/types'
 import { trackCheckout, trackOrderPlaced } from '../lib/analytics'
+import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
 
 const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
     classic: ClassicCartPage,
@@ -118,14 +119,7 @@ export default function CartPageContainer() {
         try {
             const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
 
-            const code = guest.mpesaCode.trim()
-            if (code) {
-                await fetch(`/api/store/${storeSlug}/checkout/mpesa-code`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ orderNumber, code }),
-                })
-            }
+            await submitMpesaCode(storeSlug ?? '', orderNumber, guest.mpesaCode)
 
             await clearCart()
             router.push(`/orders/${orderNumber}`)
@@ -151,16 +145,8 @@ export default function CartPageContainer() {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'paypal', crypto.randomUUID())
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/paypal/create-order`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: orderNumber, items: validItems, totalKES: Number(totalKES.toFixed(2)) }),
-            })
-
-            const data = await res.json()
-            if (!data.success) throw new Error(data.error || 'PayPal setup failed')
-            window.location.href = data.approvalUrl
+            const approvalUrl = await triggerPaypalOrder(orderNumber, validItems, totalKES)
+            window.location.href = approvalUrl
         } finally {
             setIsProcessing(false)
         }
@@ -191,15 +177,7 @@ export default function CartPageContainer() {
             const guest: GuestDetails = { mpesaPhone: phone, mpesaCode: '', whatsapp: '', email: '' }
             const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
 
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/mpesa/stk-push`, {
-                method: 'POST',
-                credentials: 'include',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ storeSlug, phone, orderId: orderNumber, amount }),
-            })
-            const data = await res.json()
-            if (!data.success) throw new Error(data.error || 'STK push failed')
-            return { checkoutRequestId: data.checkoutRequestId, orderId: orderNumber }
+            return await triggerDarajaStkPush(storeSlug ?? '', orderNumber, phone, amount)
         } finally {
             setIsProcessing(false)
         }

@@ -9,6 +9,8 @@ import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { defaultHomeSections } from '@/lib/sections'
+import { getVertical } from '@mcloud/verticals'
+import { DonateIsland } from './DonateIsland'
 
 export const revalidate = 60
 
@@ -149,7 +151,13 @@ export default async function StorePage({ params }: Props) {
             ? homePage.sections
             : defaultHomeSections(rawStore.type as string | null | undefined)
         const html = await renderPage(sections, context)
-        return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
+        const isNgo = getVertical(rawStore.type as string | null | undefined).id === 'ngo'
+        return (
+            <>
+                <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
+                {isNgo ? <DonateIsland slug={slug} /> : null}
+            </>
+        )
     } catch (err) {
         console.error('[storefront] Liquid home render failed, falling back to React:', err)
         const { StoreFront } = await resolveTheme(themeId)
