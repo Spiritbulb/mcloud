@@ -1,0 +1,49 @@
+{%- if campaigns and campaigns.size > 0 -%}
+<section class="sf-campaigns py-16 md:py-24">
+  <div class="container mx-auto max-w-5xl px-6">
+    <div class="mb-10 md:mb-14 text-center">
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
+        Campaigns
+      </span>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">Support a Cause</h2>
+    </div>
+    <div class="space-y-8">
+      {%- for c in campaigns -%}
+        <article class="sf-card sf-campaign-card overflow-hidden md:flex">
+          {%- if c.image -%}
+            <div class="relative sf-bg-muted md:w-2/5" style="aspect-ratio: 16/9">
+              <img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
+            </div>
+          {%- endif -%}
+          <div class="p-5 md:flex-1 space-y-3">
+            <h3 class="sf-heading text-2xl font-light">{{ c.title }}</h3>
+            {%- if c.description -%}
+              <p class="text-sm" style="color: var(--sf-foreground-subtle)">{{ c.description }}</p>
+            {%- endif -%}
+            {%- if c.hasGoal -%}
+              <div class="sf-campaign-progress space-y-1">
+                <div class="w-full h-2 sf-bg-muted overflow-hidden">
+                  <div class="sf-campaign-bar h-full" style="width: {{ c.percent }}%"></div>
+                </div>
+                <div class="flex justify-between text-xs" style="color: var(--sf-foreground-subtle)">
+                  <span>{{ c.raisedLabel }} raised</span>
+                  <span>of {{ c.goalLabel }}</span>
+                </div>
+              </div>
+            {%- endif -%}
+            <button
+              class="sf-btn-primary sf-donate border rounded-none px-6 py-2.5 text-sm font-medium"
+              data-campaign-id="{{ c.id }}"
+              data-campaign-title="{{ c.title }}"
+              data-presets="{{ c.presets | join: ',' }}"
+              data-allow-custom="{% if c.allowCustomAmount == false %}false{% else %}true{% endif %}"
+            >
+              Donate
+            </button>
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}

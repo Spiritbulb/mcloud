@@ -209,6 +209,11 @@
     color: var(--sf-accent);
 }
 
+/* Campaign goal progress bar fill */
+.sf-campaign-bar {
+    background-color: var(--sf-primary);
+}
+
 /* The frosted card overlaid on hero images */
 .sf-hero-card {
     background-color: var(--sf-background);
