@@ -40,4 +40,26 @@ assert.equal(cleanDedication('   '), undefined)
 assert.equal(cleanDedication(42), undefined)
 assert.equal(cleanDedication('x'.repeat(400))!.length, 280, 'capped at 280')
 
+import { augmentCampaigns } from './campaigns'
+
+// augmentCampaigns: computes percent + formatted labels; caps percent at 100
+const aug = augmentCampaigns(
+  [
+    { id: 'water', title: 'Clean Water', goalAmount: 100000, presets: [500], allowCustomAmount: true },
+    { id: 'over', title: 'Over', goalAmount: 1000 },
+    { id: 'nogoal', title: 'No Goal' },
+  ],
+  { water: 52000, over: 5000, nogoal: 999 },
+)
+const waterAug = aug.find((c) => c.id === 'water')!
+assert.equal(waterAug.hasGoal, true)
+assert.equal(waterAug.percent, 52, 'percent = round(raised/goal*100)')
+assert.equal(waterAug.raisedLabel, 'KSh 52,000.00')
+assert.equal(waterAug.goalLabel, 'KSh 100,000.00')
+const overAug = aug.find((c) => c.id === 'over')!
+assert.equal(overAug.percent, 100, 'percent capped at 100 when raised exceeds goal')
+const nogoalAug = aug.find((c) => c.id === 'nogoal')!
+assert.equal(nogoalAug.hasGoal, false, 'no goalAmount -> no progress bar')
+assert.equal(nogoalAug.percent, 0)
+
 console.log('campaigns.test.ts: all assertions passed')

@@ -59,3 +59,76 @@ export function cleanDedication(raw: unknown): string | undefined {
   if (!trimmed) return undefined
   return trimmed.slice(0, 280)
 }
+
+import { formatKES } from './currency'
+import { createClient } from '@mcloud/db/server'
+
+export interface AugmentedCampaign {
+  id: string
+  title: string
+  description?: string
+  image?: string
+  presets?: number[]
+  allowCustomAmount?: boolean
+  hasGoal: boolean
+  percent: number
+  raisedLabel: string
+  goalLabel: string
+}
+
+/** Attach progress display fields to campaigns from a raised-by-id map. Pure. */
+export function augmentCampaigns(
+  campaigns: Campaign[],
+  raisedById: Record<string, number>,
+): AugmentedCampaign[] {
+  return campaigns.map((c) => {
+    const raised = raisedById[c.id] ?? 0
+    const goal = typeof c.goalAmount === 'number' && c.goalAmount > 0 ? c.goalAmount : 0
+    const hasGoal = goal > 0
+    const percent = hasGoal ? Math.min(100, Math.round((raised / goal) * 100)) : 0
+    return {
+      id: c.id,
+      title: c.title,
+      description: c.description,
+      image: c.image,
+      presets: c.presets,
+      allowCustomAmount: c.allowCustomAmount,
+      hasGoal,
+      percent,
+      raisedLabel: hasGoal ? formatKES(raised) : '',
+      goalLabel: hasGoal ? formatKES(goal) : '',
+    }
+  })
+}
+
+/**
+ * Load a store's campaigns augmented with each one's raised total. Sums the
+ * `total` of orders tagged with the campaignId whose payment completed. A read
+ * failure defaults raised to 0 (the home render must never break on reporting).
+ */
+export async function loadCampaignsWithProgress(
+  storeId: string,
+  settings: unknown,
+): Promise<AugmentedCampaign[]> {
+  const campaigns = readCampaigns(settings)
+  if (campaigns.length === 0) return []
+
+  const raisedById: Record<string, number> = {}
+  try {
+    const admin = await createClient()
+    const { data } = await admin
+      .from('orders')
+      .select('total, metadata')
+      .eq('store_id', storeId)
+      .eq('metadata->>isDonation', 'true')
+      .eq('metadata->>payment_status', 'completed')
+    for (const row of data ?? []) {
+      const md = (row.metadata ?? {}) as Record<string, unknown>
+      const id = typeof md.campaignId === 'string' ? md.campaignId : null
+      if (id) raisedById[id] = (raisedById[id] ?? 0) + Number(row.total ?? 0)
+    }
+  } catch (err) {
+    console.error('[storefront] campaign progress read failed (defaulting to 0):', err)
+  }
+  return augmentCampaigns(campaigns, raisedById)
+}
