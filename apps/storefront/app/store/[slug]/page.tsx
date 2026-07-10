@@ -5,6 +5,7 @@ import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import { buildHomeContext } from '@/lib/liquid-context'
+import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { defaultHomeSections } from '@/lib/sections'
@@ -133,12 +134,16 @@ export default async function StorePage({ params }: Props) {
     // React theme so a template bug can never take a live store down. (The
     // fallback is a sub-project-1 safety net; removed when React is retired.)
     try {
-        const context = buildHomeContext({
-            store,
-            products,
-            collections,
-            featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
-        })
+        const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
+        const context = {
+            ...buildHomeContext({
+                store,
+                products,
+                collections,
+                featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+            }),
+            campaigns,
+        }
         const homePage = await getPublishedPage(store.id, '')
         const sections = homePage?.sections?.length
             ? homePage.sections

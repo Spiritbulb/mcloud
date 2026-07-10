@@ -45,7 +45,7 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
         slug: '',
         title: 'Home',
         position: 0,
-        sections: [{ type: 'mission' }, { type: 'programs' }, { type: 'impact' }, { type: 'contact' }],
+        sections: [{ type: 'mission' }, { type: 'programs' }, { type: 'impact' }, { type: 'campaigns' }, { type: 'contact' }],
       },
     ],
   },

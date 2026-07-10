@@ -6,6 +6,7 @@ const ctx = {
   products: [{ id: 'p1', name: 'Alpha', slug: 'alpha', price: 100, images: [], compare_at_price: null }],
   collections: [{ id: 'c1', name: 'Coll', slug: 'coll', image_url: null, description: null }],
   featuredProducts: [{ id: 'p1', name: 'Alpha', slug: 'alpha', price: 100, images: [], compare_at_price: null }],
+  campaigns: [],
 }
 
 // renders listed sections in order, wrapped in min-h-screen

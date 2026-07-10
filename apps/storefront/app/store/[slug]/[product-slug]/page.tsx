@@ -60,6 +60,7 @@ export default async function ProductDetailPage({ params }: Props) {
             products: pageProducts,
             collections,
             featuredProducts: pageProducts.slice(0, 8),
+            campaigns: [],
         })
         return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
     }

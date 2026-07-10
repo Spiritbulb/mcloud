@@ -6,6 +6,7 @@ const ctx = {
   products: [{ id: 'p1' }],
   collections: [{ id: 'c1' }],
   featuredProducts: [{ id: 'p1' }],
+  campaigns: [],
 }
 
 // every known type maps to an existing classic section template key
@@ -34,9 +35,14 @@ assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps fe
 const all = SECTION_REGISTRY['all-products'].pickContext(ctx)
 assert.deepEqual((all as any).products, ctx.products, 'all-products maps products -> products')
 
+assert.equal(SECTION_REGISTRY.campaigns.templateKey, 'classic/sections/campaigns')
+assert.deepEqual(Object.keys(SECTION_REGISTRY.campaigns.pickContext({
+  store: { slug: 's' }, products: [], collections: [], featuredProducts: [], campaigns: [{ id: 'c1' }],
+} as any)).sort(), ['campaigns', 'store'])
+assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['mission', 'programs', 'impact', 'campaigns', 'contact'])
+
 // defaultHomeSections is vertical-aware
 assert.deepEqual(defaultHomeSections('shop').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
-assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['mission', 'programs', 'impact', 'contact'])
 assert.deepEqual(defaultHomeSections('bogus').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'unknown -> shop')
 assert.deepEqual(defaultHomeSections(null).map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'null -> shop')
 assert.deepEqual(defaultHomeSections(undefined).map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'undefined -> shop')

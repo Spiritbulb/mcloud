@@ -16,6 +16,7 @@ export type SectionType =
   | 'programs'
   | 'impact'
   | 'contact'
+  | 'campaigns'
 
 export interface PageSection {
   type: string
@@ -27,6 +28,7 @@ export interface PageRenderContext {
   products: unknown[]
   collections: unknown[]
   featuredProducts: unknown[]
+  campaigns: unknown[]
 }
 
 export interface SectionDef {
@@ -66,6 +68,10 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   contact: {
     templateKey: 'classic/sections/contact',
     pickContext: (ctx) => ({ store: ctx.store }),
+  },
+  campaigns: {
+    templateKey: 'classic/sections/campaigns',
+    pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
   },
 }
 

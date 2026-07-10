@@ -30,6 +30,6 @@ const ngoHome = VERTICALS.ngo.defaultPages.find(p => p.slug === '')
 assert.ok(ngoHome, 'ngo has a home page (slug "")')
 assert.equal(ngoHome.title, 'Home')
 assert.equal(ngoHome.position, 0)
-assert.deepEqual(ngoHome.sections.map(s => s.type), ['mission', 'programs', 'impact', 'contact'])
+assert.deepEqual(ngoHome.sections.map(s => s.type), ['mission', 'programs', 'impact', 'campaigns', 'contact'])
 
 console.log('verticals/index.test.ts: all assertions passed')
