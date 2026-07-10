@@ -116,12 +116,13 @@ export async function loadCampaignsWithProgress(
   const raisedById: Record<string, number> = {}
   try {
     const admin = await createClient()
-    const { data } = await admin
+    const { data, error } = await admin
       .from('orders')
       .select('total, metadata')
       .eq('store_id', storeId)
       .eq('metadata->>isDonation', 'true')
       .eq('metadata->>payment_status', 'completed')
+    if (error) throw error
     for (const row of data ?? []) {
       const md = (row.metadata ?? {}) as Record<string, unknown>
       const id = typeof md.campaignId === 'string' ? md.campaignId : null
