@@ -16,6 +16,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getActiveStoreId } from '@/lib/customer-auth'
+import { createOrderWithPayment, type OrderLineInput } from '@/lib/orders'
 
 const noStore = { 'Cache-Control': 'no-store' }
 
@@ -57,17 +58,6 @@ export async function POST(
     if (!storeId) return NextResponse.json({ error: 'Store not found' }, { status: 404, headers: noStore })
 
     const admin = await createClient()
-
-    // ── Idempotency: if this key already produced an order, return it unchanged. ──
-    const { data: prior } = await admin
-        .from('orders')
-        .select('id, order_number')
-        .eq('store_id', storeId)
-        .eq('metadata->>idempotency_key', idempotencyKey)
-        .maybeSingle()
-    if (prior) {
-        return NextResponse.json({ orderNumber: prior.order_number }, { headers: noStore })
-    }
 
     // ── Price authority: recompute every line from the real product/variant rows. ──
     // Fetch the products + variants referenced, scoped to this store, then price the
@@ -137,91 +127,29 @@ export async function POST(
         })
     }
 
-    const subtotal = items.reduce((s, i) => s + i.total, 0)
-    const total = subtotal // tax/shipping/discount are 0 today, matching prior behaviour
+    const orderLines: OrderLineInput[] = items.map((i) => ({
+        product_id: i.product_id,
+        variant_id: i.variant_id,
+        quantity: i.quantity,
+        price: i.price,
+        title: i.title,
+        variant_title: i.variant_title,
+        image_url: i.image_url,
+    }))
 
-    // ── Customer upsert (guest, matched by mpesa_phone within the store). ─────────
-    const phoneKey = guest.mpesaPhone?.trim() || null
-    const emailKey = guest.email?.trim() || null
-    const whatsapp = guest.whatsapp?.trim() || phoneKey
-
-    let customerId: string
-    // Match the guest by mpesa_phone within the store. .eq() can't take null, so
-    // for a null phone (e.g. PayPal with no phone) match the null-phone row via
-    // .is() — mirroring the prior maybeSingle lookup behaviour.
-    const customerLookup = admin.from('customers').select('id').eq('store_id', storeId)
-    const { data: existing } = await (
-        phoneKey ? customerLookup.eq('mpesa_phone', phoneKey) : customerLookup.is('mpesa_phone', null)
-    ).maybeSingle()
-
-    if (existing) {
-        customerId = existing.id
-        await admin
-            .from('customers')
-            .update({ ...(emailKey && { email: emailKey }), whatsapp_number: whatsapp })
-            .eq('id', customerId)
-    } else {
-        const { data: created, error: ce } = await admin
-            .from('customers')
-            .insert({
-                store_id: storeId,
-                mpesa_phone: phoneKey,
-                email: emailKey,
-                whatsapp_number: whatsapp,
-                first_name: 'Guest',
-                last_name: '',
-            })
-            .select('id')
-            .single()
-        if (ce || !created) {
-            return NextResponse.json({ error: 'Could not start checkout' }, { status: 500, headers: noStore })
-        }
-        customerId = created.id
+    const result = await createOrderWithPayment({
+        storeId,
+        guest: { mpesaPhone: guest.mpesaPhone, email: guest.email, whatsapp: guest.whatsapp },
+        lines: orderLines,
+        paymentMethod: method,
+        idempotencyKey,
+        source: 'storefront',
+    })
+    if (result.error !== null) {
+        return NextResponse.json({ error: result.error }, { status: result.status, headers: noStore })
     }
-
-    // ── Create the order (server-generated number, server-computed total). ────────
-    const orderNumber = `ORD-${Date.now()}-${Math.random().toString(36).slice(2, 11).toUpperCase()}`
-    const { data: order, error: orderError } = await admin
-        .from('orders')
-        .insert({
-            store_id: storeId,
-            customer_id: customerId,
-            order_number: orderNumber,
-            status: 'pending',
-            fulfillment_status: 'unfulfilled',
-            subtotal,
-            tax: 0,
-            shipping: 0,
-            discount: 0,
-            total,
-            currency: 'KES',
-            customer_email: emailKey,
-            customer_phone: phoneKey,
-            source: 'storefront',
-            metadata: {
-                idempotency_key: idempotencyKey,
-                payment_method: method === 'mpesa' ? 'MPESA' : 'PayPal',
-                payment_status: 'pending',
-                mpesa_phone: phoneKey,
-                whatsapp_number: whatsapp,
-            },
-        })
-        .select('id, order_number')
-        .single()
-
-    if (orderError || !order) {
-        return NextResponse.json({ error: 'Could not create order' }, { status: 500, headers: noStore })
-    }
-
-    const { error: itemsError } = await admin.from('order_items').insert(
-        items.map((i) => ({ order_id: order.id, ...i })),
-    )
-    if (itemsError) {
-        return NextResponse.json({ error: 'Could not create order items' }, { status: 500, headers: noStore })
-    }
-
     return NextResponse.json(
-        { orderNumber: order.order_number, total },
+        { orderNumber: result.orderNumber, total: result.total },
         { status: 201, headers: noStore },
     )
 }
