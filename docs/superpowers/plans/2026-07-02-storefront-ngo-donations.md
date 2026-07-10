@@ -29,7 +29,7 @@ Pull the provider-agnostic tail (idempotency, guest-customer upsert, order + ord
 **Files:**
 - Create: `apps/storefront/lib/orders.ts`
 - Create (test): `apps/storefront/lib/orders.test.ts`
-- Modify: `apps/storefront/app/store/[slug]/checkout/route.ts`
+- Modify: `apps/storefront/app/api/store/[slug]/checkout/route.ts`
 
 **Interfaces:**
 - Consumes: `createClient` from `@mcloud/db/server`.
@@ -254,7 +254,7 @@ Expected: PASS — prints `orders.test.ts: all assertions passed`.
 
 - [ ] **Step 5: Refactor checkout to call the core**
 
-Edit `apps/storefront/app/store/[slug]/checkout/route.ts`. Keep the price-authority block (the product/variant fetch + the per-line loop that builds `items` from real rows, currently lines ~72–138) exactly as-is. Add the import at the top (next to the existing imports):
+Edit `apps/storefront/app/api/store/[slug]/checkout/route.ts`. Keep the price-authority block (the product/variant fetch + the per-line loop that builds `items` from real rows, currently lines ~72–138) exactly as-is. Add the import at the top (next to the existing imports):
 
 ```ts
 import { createOrderWithPayment, type OrderLineInput } from '@/lib/orders'
@@ -303,7 +303,7 @@ Expected: build succeeds. (This is the byte-behavior safety net — the route mu
 - [ ] **Step 7: Commit**
 
 ```bash
-git add apps/storefront/lib/orders.ts apps/storefront/lib/orders.test.ts "apps/storefront/app/store/[slug]/checkout/route.ts"
+git add apps/storefront/lib/orders.ts apps/storefront/lib/orders.test.ts "apps/storefront/app/api/store/[slug]/checkout/route.ts"
 git commit -m "refactor(storefront): extract createOrderWithPayment core from checkout
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -484,8 +484,8 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 A route handler that validates the campaign + donor amount (via Task 2), builds one donation line, and creates a tagged donation order (via Task 1's core).
 
 **Files:**
-- Create: `apps/storefront/app/store/[slug]/donate/route.ts`
-- Create (test): `apps/storefront/app/store/[slug]/donate/donate-logic.test.ts` (pure validation-flow test — see Step 1)
+- Create: `apps/storefront/app/api/store/[slug]/donate/route.ts`
+- Create (test): `apps/storefront/app/api/store/[slug]/donate/donate-logic.test.ts` (pure validation-flow test — see Step 1)
 
 **Interfaces:**
 - Consumes: `getActiveStoreId` (from `@/lib/customer-auth`), `createClient` (`@mcloud/db/server`), `findCampaign`/`validateDonationAmount`/`cleanDedication` (Task 2), `createOrderWithPayment`/`OrderLineInput` (Task 1).
@@ -493,7 +493,7 @@ A route handler that validates the campaign + donor amount (via Task 2), builds 
 
 - [ ] **Step 1: Write the failing test for the pure request-shaping logic**
 
-The route's DB calls are covered by Task 7 smoke; unit-test the pure logic that turns a validated campaign+amount into the donation line + metadata, so its shape is locked. Create `apps/storefront/app/store/[slug]/donate/donate-logic.test.ts`:
+The route's DB calls are covered by Task 7 smoke; unit-test the pure logic that turns a validated campaign+amount into the donation line + metadata, so its shape is locked. Create `apps/storefront/app/api/store/[slug]/donate/donate-logic.test.ts`:
 
 ```ts
 import assert from 'node:assert/strict'
@@ -522,12 +522,12 @@ console.log('donate-logic.test.ts: all assertions passed')
 
 - [ ] **Step 2: Run the test to verify it fails**
 
-Run: `cd apps/storefront && npx tsx "app/store/[slug]/donate/donate-logic.test.ts"`
+Run: `cd apps/storefront && npx tsx "app/api/store/[slug]/donate/donate-logic.test.ts"`
 Expected: FAIL — cannot find module `./donate-logic`.
 
 - [ ] **Step 3: Implement the pure logic module**
 
-Create `apps/storefront/app/store/[slug]/donate/donate-logic.ts`:
+Create `apps/storefront/app/api/store/[slug]/donate/donate-logic.ts`:
 
 ```ts
 // Pure request-shaping for /donate: turn a validated campaign + amount into the
@@ -562,15 +562,15 @@ export function buildDonationMetadata(
 
 - [ ] **Step 4: Run the test to verify it passes**
 
-Run: `cd apps/storefront && npx tsx "app/store/[slug]/donate/donate-logic.test.ts"`
+Run: `cd apps/storefront && npx tsx "app/api/store/[slug]/donate/donate-logic.test.ts"`
 Expected: PASS — prints `donate-logic.test.ts: all assertions passed`.
 
 - [ ] **Step 5: Implement the route**
 
-Create `apps/storefront/app/store/[slug]/donate/route.ts`:
+Create `apps/storefront/app/api/store/[slug]/donate/route.ts`:
 
 ```ts
-// app/store/[slug]/donate/route.ts
+// app/api/store/[slug]/donate/route.ts
 // Server-authoritative donation. A donation is a checkout with ONE synthetic
 // line at the donor-chosen amount, validated against the campaign (which lives
 // in stores.settings.campaigns). Reuses the shared order core; the order is
@@ -653,7 +653,7 @@ Expected: build succeeds (the new route compiles).
 - [ ] **Step 7: Commit**
 
 ```bash
-git add "apps/storefront/app/store/[slug]/donate/"
+git add "apps/storefront/app/api/store/[slug]/donate/"
 git commit -m "feat(storefront): /donate endpoint (validated campaign + amount, tagged order)
 
 Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
@@ -1239,7 +1239,7 @@ Runs every SP4 + SP3 test, a full build, and a manual smoke: a campaign renders 
 
 Run:
 ```bash
-cd apps/storefront && npx tsx lib/orders.test.ts && npx tsx lib/campaigns.test.ts && npx tsx lib/sections.test.ts && npx tsx "app/store/[slug]/donate/donate-logic.test.ts" && npx tsx "app/store/[slug]/donate-island-logic.test.ts"
+cd apps/storefront && npx tsx lib/orders.test.ts && npx tsx lib/campaigns.test.ts && npx tsx lib/sections.test.ts && npx tsx "app/api/store/[slug]/donate/donate-logic.test.ts" && npx tsx "app/store/[slug]/donate-island-logic.test.ts"
 cd ../../packages/liquid && npx tsx src/campaigns-section.test.ts && npx tsx src/ngo-sections.test.ts && npx tsx src/sections-parity.test.ts && npx tsx src/index.test.ts
 cd ../verticals && npx tsx src/index.test.ts
 ```
