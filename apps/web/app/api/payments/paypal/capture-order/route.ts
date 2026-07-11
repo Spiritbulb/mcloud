@@ -75,8 +75,8 @@ export async function GET(req: NextRequest) {
       const { error } = await supabase
         .from('orders')
         .update({
-          fulfillment_status: 'paid',
-          status: 'confirmed',
+          fulfillment_status: 'unfulfilled',
+          status: 'paid',
           metadata: {
             payment_method: 'PayPal',
             payment_status: 'completed',
