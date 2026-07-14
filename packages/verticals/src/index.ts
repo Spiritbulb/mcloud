@@ -68,3 +68,6 @@ export function getVertical(type: string | null | undefined): Vertical {
   if (type && isVerticalId(type)) return VERTICALS[type]
   return VERTICALS.shop
 }
+
+export { sectionsFor, ALL_TAB_IDS } from './nav'
+export type { NavSection, NavTab, NavSubTab, TabId } from './nav'
