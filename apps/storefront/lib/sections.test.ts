@@ -53,3 +53,40 @@ assert.deepEqual(defaultHomeSections(undefined).map(s => s.type), ['hero', 'coll
 assert.deepEqual(DEFAULT_HOME_SECTIONS.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
 
 console.log('sections.test.ts: all assertions passed')
+
+// ── SP6: every section declares a label and a schema ──
+import type { SettingField } from '@mcloud/verticals'
+
+const EXPECTED_DEFAULTS: Record<string, { heading?: string; eyebrow?: string }> = {
+  collections:     { heading: 'Shop by Category',  eyebrow: 'Collections' },
+  featured:        { heading: 'Top Picks',         eyebrow: 'Featured Collection' },
+  'all-products':  { heading: 'Browse Everything', eyebrow: 'All Products' },
+  programs:        { heading: 'What We Do',        eyebrow: 'Programs' },
+  impact:          { heading: 'Our Impact',        eyebrow: 'Impact' },
+  contact:         { heading: 'Contact Us',        eyebrow: 'Get in Touch' },
+  campaigns:       { heading: 'Support a Cause',   eyebrow: 'Campaigns' },
+  mission:         { eyebrow: 'Our Mission' },
+}
+
+for (const [type, def] of Object.entries(SECTION_REGISTRY)) {
+  assert.ok(def.label && def.label.length > 0, `${type} has a human label for the rail`)
+
+  const ids = (def.schema ?? []).map((f: SettingField) => f.id)
+  assert.equal(new Set(ids).size, ids.length, `${type} field ids are unique`)
+
+  const expected = EXPECTED_DEFAULTS[type]
+  if (!expected) continue
+
+  for (const [fieldId, want] of Object.entries(expected)) {
+    const field = (def.schema ?? []).find((f: SettingField) => f.id === fieldId)
+    assert.ok(field, `${type} declares a "${fieldId}" field`)
+    // This is the guard that stops every existing store's headings changing:
+    // the schema default MUST equal what the template hardcodes today.
+    assert.equal(
+      (field as any).default, want,
+      `${type}.${fieldId} default must equal the template's current string`,
+    )
+  }
+}
+
+console.log('sections.test.ts: SP6 schema assertions passed')
