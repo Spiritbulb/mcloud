@@ -65,6 +65,38 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     font-style: italic;
                 }
 
+                /* THE HERO PROBLEM: its content layer is absolutely positioned across
+                   the whole section, so it ate every click before one could reach the
+                   background image behind it. The image was correctly marked, and
+                   completely unclickable — markup alone does not make a feature.
+
+                   So in the editor the overlay stops taking pointer events and hands
+                   them through to the image, while the things a merchant ACTUALLY
+                   clicks (the text, the button) take them back. Clicking empty space
+                   in the hero now reaches the background. */
+                /* Everything layered over the hero's background stops intercepting
+                   clicks... */
+                .sf-hero > div,
+                .sf-hero__content,
+                .sf-hero__slide > div:not([data-mcloud-image]) {
+                    pointer-events: none;
+                }
+                /* ...the background itself takes them... */
+                .sf-hero [data-mcloud-image] {
+                    pointer-events: auto;
+                }
+                /* ...and so do the things a merchant actually clicks. Without this the
+                   headline would become unselectable in the very act of making the
+                   image clickable. */
+                .sf-hero [data-mcloud-field],
+                .sf-hero [data-mcloud-setting],
+                .sf-hero [data-mcloud-key],
+                .sf-hero button,
+                .sf-hero a,
+                .sf-hero .sf-hero__dot {
+                    pointer-events: auto;
+                }
+
                 /* An image gets a picker, not a caret, so it must not look typeable. */
                 [data-mcloud-image] {
                     cursor: pointer;
