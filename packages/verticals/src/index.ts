@@ -73,3 +73,6 @@ export function getVertical(type: string | null | undefined): Vertical {
 
 export { sectionsFor, ALL_TAB_IDS } from './nav'
 export type { NavSection, NavTab, NavSubTab, TabId } from './nav'
+
+export { defaultsFor } from './schema'
+export type { SettingField, SettingValues } from './schema'
