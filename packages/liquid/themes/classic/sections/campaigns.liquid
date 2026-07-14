@@ -10,7 +10,11 @@
     <div class="space-y-8">
       {%- for c in campaigns -%}
         <article class="sf-card sf-campaign-card overflow-hidden md:flex">
-          {%- if c.image -%}
+          {%- comment -%}
+            Liquid treats "" as truthy, so a blank image field would render
+            <img src=""> and the browser draws a broken image.
+          {%- endcomment -%}
+          {%- if c.image and c.image != '' -%}
             <div class="relative sf-bg-muted md:w-2/5" style="aspect-ratio: 16/9">
               <img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
             </div>

@@ -13,7 +13,12 @@
     <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       {%- for program in programs -%}
         <article class="sf-card sf-program-card overflow-hidden">
-          {%- if program.image -%}
+          {%- comment -%}
+            Liquid treats "" as truthy, so a blank image field would render
+            <img src=""> and the browser draws a broken image. Compare against
+            empty explicitly.
+          {%- endcomment -%}
+          {%- if program.image and program.image != '' -%}
             <div class="relative overflow-hidden sf-bg-muted" style="aspect-ratio: 16/9">
               <img src="{{ program.image }}" alt="{{ program.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
             </div>
