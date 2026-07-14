@@ -21,6 +21,12 @@ export interface SeedPage {
 export interface Vertical {
   id: VerticalId
   label: string
+  /**
+   * Whether this vertical sells products. Gates the storefront's commerce
+   * chrome (cart, wishlist, customer account) — an NGO takes donations via the
+   * campaigns section and has no basket to check out.
+   */
+  commerce: boolean
   defaultPages: SeedPage[]
 }
 
@@ -28,6 +34,7 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
   shop: {
     id: 'shop',
     label: 'Shop',
+    commerce: true,
     defaultPages: [
       {
         slug: '',
@@ -40,6 +47,7 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
   ngo: {
     id: 'ngo',
     label: 'NGO',
+    commerce: false,
     defaultPages: [
       {
         slug: '',
