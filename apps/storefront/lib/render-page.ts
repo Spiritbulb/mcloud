@@ -13,7 +13,14 @@ export async function renderPage(sections: PageSection[], ctx: PageRenderContext
       console.warn(`[storefront] unknown section type skipped: ${s.type}`)
       continue
     }
-    body += await renderTemplate(def.templateKey, { ...def.pickContext(ctx), settings: s.settings ?? {} })
+    body += await renderTemplate(def.templateKey, {
+      ...def.pickContext(ctx),
+      // `settings` is kept as-is: five templates reassign it to store.settings and
+      // rely on that. The section's OWN config therefore needs an unambiguous name,
+      // or it is silently shadowed in exactly those five.
+      settings: s.settings ?? {},
+      section: s.settings ?? {},
+    })
   }
   return `<div class="min-h-screen">${body}</div>`
 }

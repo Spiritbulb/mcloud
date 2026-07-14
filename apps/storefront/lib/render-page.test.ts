@@ -27,3 +27,52 @@ const empty = await renderPage([], ctx)
 assert.ok(empty.includes('min-h-screen'), 'empty page still has wrapper')
 
 console.log('render-page.test.ts: all assertions passed')
+
+// ── SP6: section config arrives as `section`, and does NOT clobber `settings` ──
+//
+// Five templates open with `assign settings = store.settings`, which shadows any
+// section-level `settings`. Verified by running this pipeline: a section-level
+// `settings.heading` in programs.liquid is INVISIBLE. So section config must
+// arrive under its own name, and the store's settings must keep working.
+
+const ctxSp6: any = {
+  store: {
+    slug: 's', name: 'N',
+    settings: { programs: [{ title: 'FROM_STORE_SETTINGS', description: 'd' }] },
+  },
+  products: [], collections: [], featuredProducts: [], campaigns: [],
+}
+
+// programs.liquid SHADOWS `settings`. Its heading must still be overridable.
+const overridden = await renderPage(
+  [{ type: 'programs', settings: { heading: 'OUR_PROGRAMMES', eyebrow: 'WHAT_WE_DO' } }],
+  ctxSp6,
+)
+assert.ok(overridden.includes('OUR_PROGRAMMES'), 'section heading reaches a shadowing template')
+assert.ok(overridden.includes('WHAT_WE_DO'), 'section eyebrow reaches a shadowing template')
+assert.ok(!overridden.includes('What We Do'), 'the default is replaced, not appended')
+assert.ok(
+  overridden.includes('FROM_STORE_SETTINGS'),
+  'the store settings still resolve — `section` must not break `settings`',
+)
+
+// No section config: the template renders exactly what it does today.
+const bare = await renderPage([{ type: 'programs' }], ctxSp6)
+assert.ok(bare.includes('What We Do'), 'falls back to the hardcoded default')
+assert.ok(bare.includes('FROM_STORE_SETTINGS'), 'store settings unaffected')
+
+// campaigns.liquid does NOT shadow settings — it must work the same way.
+const camp = await renderPage(
+  [{ type: 'campaigns', settings: { heading: 'GIVE' } }],
+  { ...ctxSp6, campaigns: [{ id: 'c', title: 'T', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }] },
+)
+assert.ok(camp.includes('GIVE'), 'works in a non-shadowing template too')
+assert.ok(!camp.includes('Support a Cause'), 'default replaced')
+
+// An empty string means "use the default", never "render an empty heading".
+const blank = await renderPage([{ type: 'campaigns', settings: { heading: '' } }], {
+  ...ctxSp6, campaigns: [{ id: 'c', title: 'T', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }],
+})
+assert.ok(blank.includes('Support a Cause'), 'blank falls back to the default')
+
+console.log('render-page.test.ts: SP6 section-namespace assertions passed')

@@ -1,3 +1,5 @@
+{%- assign heading = section.heading | default: 'Browse Everything' -%}
+{%- assign eyebrow = section.eyebrow | default: 'All Products' -%}
 {{- - ALL PRODUCTS - -}}
 <section id="products" class="py-12 md:py-20">
   <div class="container mx-auto max-w-6xl px-6">
@@ -5,11 +7,11 @@
       <div class="flex items-center gap-4 mb-3">
         <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
         <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
-          All Products
+          {{ eyebrow }}
         </span>
         <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
       </div>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Browse Everything</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">{{ heading }}</h2>
     </div>
 
     {%- if products and products.size > 0 -%}

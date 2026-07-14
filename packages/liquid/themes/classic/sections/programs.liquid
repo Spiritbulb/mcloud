@@ -1,3 +1,5 @@
+{%- assign heading = section.heading | default: 'What We Do' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Programs' -%}
 {%- assign settings = store.settings -%}
 {%- assign programs = null -%}
 {%- if settings -%}{%- assign programs = settings.programs -%}{%- endif -%}
@@ -6,9 +8,9 @@
   <div class="container mx-auto max-w-6xl px-6">
     <div class="mb-10 md:mb-14 text-center">
       <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
-        Programs
+        {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">What We Do</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">{{ heading }}</h2>
     </div>
     <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       {%- for program in programs -%}

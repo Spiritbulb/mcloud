@@ -1,3 +1,5 @@
+{%- assign heading = section.heading | default: 'Our Impact' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Impact' -%}
 {%- assign settings = store.settings -%}
 {%- assign stats = null -%}
 {%- if settings -%}{%- assign stats = settings.impactStats -%}{%- endif -%}
@@ -6,9 +8,9 @@
   <div class="container mx-auto max-w-5xl px-6">
     <div class="mb-10 md:mb-14 text-center">
       <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
-        Impact
+        {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">Our Impact</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">{{ heading }}</h2>
     </div>
     <div class="grid gap-8 text-center" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))">
       {%- for stat in stats -%}
