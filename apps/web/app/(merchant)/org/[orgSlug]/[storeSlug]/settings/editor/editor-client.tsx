@@ -101,6 +101,10 @@ export default function EditorClient({
     storeSettings: Record<string, unknown>
 }) {
     const [selection, setSelection] = useState<Selection>(null)
+    // Which section the preview is showing as selected. Separate from `selection`,
+    // because clicking a section in the page should HIGHLIGHT it in the rail without
+    // opening the drawer over the very page the merchant is editing.
+    const [railFocus, setRailFocus] = useState<number | null>(null)
     const [themeValues, setThemeValues] = useState<SettingValues>(() => ({ ...theme }))
     const [sections, setSections] = useState<Section[]>(() => initialSections)
     // stores.settings edited FROM THE PREVIEW (hero title, mission, programme
@@ -123,6 +127,8 @@ export default function EditorClient({
     themeRef.current = themeValues
     const selectionRef = useRef(selection)
     selectionRef.current = selection
+    const railFocusRef = useRef(railFocus)
+    railFocusRef.current = railFocus
 
     const postTheme = useCallback(() => {
         const win = iframeRef.current?.contentWindow
@@ -171,16 +177,24 @@ export default function EditorClient({
 
             if (data.type === 'mcloud:preview-ready') {
                 postTheme()
-                const sel = selectionRef.current
-                if (sel?.kind === 'section') postSelect(sel.index)
+                // Replay the outline, or a copy edit (which reloads the frame) would
+                // silently drop the selection mid-edit. railFocus is the truth here:
+                // it is set by a rail click AND by a preview click.
+                const i = railFocusRef.current
+                if (i !== null) postSelect(i)
                 return
             }
 
             if (data.type === 'mcloud:section-click' && Number.isInteger(data.index)) {
                 // Trust the index only as far as it goes: one the rail does not have
-                // is ignored rather than opening an empty drawer.
+                // is ignored.
                 if (data.index < 0 || data.index >= sections.length) return
-                setSelection({ kind: 'section', index: data.index })
+
+                // Highlight it in the rail, but do NOT open the drawer. The merchant
+                // clicked into the page to edit it THERE, and a panel sliding over the
+                // preview is the thing they were avoiding by doing so. The drawer is
+                // opened from the rail, for what the page cannot show.
+                setRailFocus(data.index)
             }
 
             // ── The merchant typed into the preview itself ────────────────────────
@@ -268,7 +282,10 @@ export default function EditorClient({
 
     /** Rail -> preview. */
     function selectSection(index: number) {
+        // From the RAIL: open the drawer and outline it in the preview. (A click in
+        // the preview does the opposite — it outlines without opening the drawer.)
         setSelection({ kind: 'section', index })
+        setRailFocus(index)
         postSelect(index)
     }
 
@@ -411,7 +428,10 @@ export default function EditorClient({
                             <RailItem
                                 key={i}
                                 label={sectionDef(s.type)?.label ?? s.type}
-                                active={selection?.kind === 'section' && selection.index === i}
+                                // Highlighted by a click in EITHER surface. A preview
+                                // click sets railFocus alone (no drawer); a rail click
+                                // sets both.
+                                active={railFocus === i || (selection?.kind === 'section' && selection.index === i)}
                                 onClick={() => selectSection(i)}
                             />
                         ))}
