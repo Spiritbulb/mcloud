@@ -3,6 +3,8 @@
 /* Scan shared packages so their Tailwind classes aren't purged. */
 @source "../../../packages/ui/src";
 @source "../../../packages/themes/src";
+/* .liquid is not a default-detected extension, so glob it explicitly. */
+@source "../../../packages/liquid/themes/**/*.liquid";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
