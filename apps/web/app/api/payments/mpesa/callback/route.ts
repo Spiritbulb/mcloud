@@ -42,8 +42,8 @@ export async function POST(req: NextRequest) {
             const phone = get('PhoneNumber')
 
             await supabase.from('orders').update({
-                status: 'confirmed',
-                fulfillment_status: 'paid',
+                status: 'paid',
+                fulfillment_status: 'unfulfilled',
                 metadata: {
                     ...(typeof order.metadata === 'object' && order.metadata ? order.metadata : {}),
                     payment_status: 'completed',
