@@ -124,8 +124,8 @@ export default async function OrgHomePage({
                         </h1>
                         <p className="text-[14px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md mx-auto sm:mx-0">
                             {hasStores
-                                ? `You're running ${storeList.length} ${storeList.length === 1 ? 'store' : 'stores'} here. Hosting, SSL, and uptime are handled — you focus on selling.`
-                                : 'Your organisation is ready. Spin up your first storefront and start taking real orders this afternoon — no servers, no setup tickets.'}
+                                ? `You're running ${storeList.length} ${storeList.length === 1 ? 'site' : 'sites'} here. Hosting, SSL, and uptime are handled, so you can focus on the work.`
+                                : 'Your organisation is ready. Spin up your first site and put it in front of people this afternoon. No servers, no setup tickets.'}
                         </p>
                         {canManage && (
                             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3 pt-1">
@@ -134,7 +134,7 @@ export default async function OrgHomePage({
                                     className="inline-flex items-center gap-2 h-10 px-5 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold hover:opacity-90 transition-opacity"
                                 >
                                     <MSO icon="add" className="text-[18px]" />
-                                    {hasStores ? 'New store' : 'Create your first store'}
+                                    {hasStores ? 'New site' : 'Create your first site'}
                                 </Link>
                                 {!isPro && (
                                     <Link
@@ -208,7 +208,7 @@ export default async function OrgHomePage({
                                 className="snap-start shrink-0 w-40 rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] p-4 flex flex-col items-center justify-center gap-1.5 text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-primary)] hover:border-[var(--md-sys-color-primary)] transition-colors"
                             >
                                 <MSO icon="add_circle" className="text-[24px]" />
-                                <span className="text-[12px] font-medium">New store</span>
+                                <span className="text-[12px] font-medium">New site</span>
                             </Link>
                         )}
                     </div>
@@ -218,7 +218,7 @@ export default async function OrgHomePage({
             {/* Stats row */}
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {[
-                    { label: 'Stores', value: storeList.length, icon: 'storefront' },
+                    { label: 'Sites', value: storeList.length, icon: 'storefront' },
                     { label: 'Members', value: memberList.length, icon: 'group' },
                     { label: 'Plan', value: org.type === 'pro' ? 'Pro' : 'Free', icon: 'workspace_premium' },
                 ].map((stat) => (

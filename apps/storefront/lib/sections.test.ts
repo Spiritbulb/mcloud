@@ -27,8 +27,24 @@ for (const t of ['mission', 'programs', 'impact', 'contact'] as const) {
   assert.deepEqual(Object.keys(SECTION_REGISTRY[t].pickContext(ctx)), ['store'], `${t} picks only store`)
 }
 
-// pickContext returns the right keys for commerce sections
-assert.deepEqual(Object.keys(SECTION_REGISTRY.hero.pickContext(ctx)), ['store'])
+// The hero needs campaigns as well as the store: on a non-commerce site its CTA
+// opens the donate flow for the lead campaign rather than scrolling to products.
+// Without campaigns in its context that button silently never renders.
+//
+// It also gets `slides` and `authored`, which are the whole hero model:
+//   slides   — what the visitor SEES (defaults substituted in)
+//   authored — what is actually STORED (no defaults)
+// The two MUST stay separate. A hero with no title displays the store's name, so
+// reporting the rendered value to the Editor would save "Test Store" as though the
+// merchant had typed it, freezing the fallback into their record.
+const heroCtx = SECTION_REGISTRY.hero.pickContext({
+  ...ctx,
+  store: { slug: 's', name: 'Test Store', settings: {} },
+} as any) as any
+assert.deepEqual(Object.keys(heroCtx).sort(), ['authored', 'campaigns', 'slides', 'store'])
+assert.equal(heroCtx.slides.length, 1, 'a store with no heroSlides still gets one slide')
+assert.equal(heroCtx.slides[0].title, 'Test Store', 'which DISPLAYS the store name')
+assert.equal(heroCtx.authored[0].title, '', 'but reports nothing stored — the trap')
 assert.deepEqual(Object.keys(SECTION_REGISTRY.collections.pickContext(ctx)).sort(), ['collections', 'store'])
 const feat = SECTION_REGISTRY.featured.pickContext(ctx)
 assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps featuredProducts -> products')
@@ -39,7 +55,7 @@ assert.equal(SECTION_REGISTRY.campaigns.templateKey, 'classic/sections/campaigns
 assert.deepEqual(Object.keys(SECTION_REGISTRY.campaigns.pickContext({
   store: { slug: 's' }, products: [], collections: [], featuredProducts: [], campaigns: [{ id: 'c1' }],
 } as any)).sort(), ['campaigns', 'store'])
-assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['mission', 'programs', 'impact', 'campaigns', 'contact'])
+assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['hero', 'programs', 'impact', 'campaigns', 'contact'])
 
 // defaultHomeSections is vertical-aware
 assert.deepEqual(defaultHomeSections('shop').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
@@ -51,3 +67,40 @@ assert.deepEqual(defaultHomeSections(undefined).map(s => s.type), ['hero', 'coll
 assert.deepEqual(DEFAULT_HOME_SECTIONS.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
 
 console.log('sections.test.ts: all assertions passed')
+
+// ── SP6: every section declares a label and a schema ──
+import type { SettingField } from '@mcloud/verticals'
+
+const EXPECTED_DEFAULTS: Record<string, { heading?: string; eyebrow?: string }> = {
+  collections:     { heading: 'Shop by Category',  eyebrow: 'Collections' },
+  featured:        { heading: 'Top Picks',         eyebrow: 'Featured Collection' },
+  'all-products':  { heading: 'Browse Everything', eyebrow: 'All Products' },
+  programs:        { heading: 'What We Do',        eyebrow: 'Programs' },
+  impact:          { heading: 'Our Impact',        eyebrow: 'Impact' },
+  contact:         { heading: 'Contact Us',        eyebrow: 'Get in Touch' },
+  campaigns:       { heading: 'Support a Cause',   eyebrow: 'Campaigns' },
+  mission:         { eyebrow: 'Our Mission' },
+}
+
+for (const [type, def] of Object.entries(SECTION_REGISTRY)) {
+  assert.ok(def.label && def.label.length > 0, `${type} has a human label for the rail`)
+
+  const ids = (def.schema ?? []).map((f: SettingField) => f.id)
+  assert.equal(new Set(ids).size, ids.length, `${type} field ids are unique`)
+
+  const expected = EXPECTED_DEFAULTS[type]
+  if (!expected) continue
+
+  for (const [fieldId, want] of Object.entries(expected)) {
+    const field = (def.schema ?? []).find((f: SettingField) => f.id === fieldId)
+    assert.ok(field, `${type} declares a "${fieldId}" field`)
+    // This is the guard that stops every existing store's headings changing:
+    // the schema default MUST equal what the template hardcodes today.
+    assert.equal(
+      (field as any).default, want,
+      `${type}.${fieldId} default must equal the template's current string`,
+    )
+  }
+}
+
+console.log('sections.test.ts: SP6 schema assertions passed')

@@ -1,188 +1,155 @@
-{%- assign settings = store.settings -%}
-{%- assign slides = null -%}
+{%- comment -%}
+  ONE shape: the hero is always a list of slides, and a single-image hero is a list
+  of one. `slides` is normalised in lib/hero.ts, which is the only place that still
+  knows the legacy flat keys (heroTitle/heroImage/…) exist.
 
-{%- if settings -%}
-  {%- assign slides = settings.heroSlides -%}
+  It used to branch: a carousel path and a single-slide path, with duplicated card
+  markup. That meant the hero was editable in one shape and not the other, and any
+  hero feature had to be built twice. Now there is one loop, so a slide is editable
+  exactly like a program or a campaign — the same editable-item channel.
+
+  The CTA still asks two SEPARATE questions, which an earlier version conflated:
+    store.commerce      does this site sell?        (the vertical -> the copy)
+    campaigns.size > 0  is there something to fund? (the data     -> the behaviour)
+  An NGO with no campaign yet is still an NGO, and must not be sold "New Arrivals".
+{%- endcomment -%}
+{%- assign is_giving = false -%}
+{%- if campaigns and campaigns.size > 0 -%}
+  {%- assign is_giving = true -%}
+  {%- assign lead_campaign = campaigns[0] -%}
 {%- endif -%}
 
-{%- assign has_slides = false -%}
-{%- if slides and slides.size > 0 -%}
-  {%- assign has_slides = true -%}
-{%- endif -%}
-
-{%- unless has_slides -%}
-  {%- assign slide_title = store.name -%}
-  {%- assign slide_subtitle = store.description -%}
-  {%- assign slide_image = null -%}
-  {%- assign slide_accent = 'New Arrivals' -%}
-  {%- assign slide_btn = 'Shop now' -%}
-  {%- if settings -%}
-    {%- if settings.heroTitle -%}{%- assign slide_title = settings.heroTitle -%}{%- endif -%}
-    {%- if settings.heroSubtitle -%}{%- assign slide_subtitle = settings.heroSubtitle -%}{%- endif -%}
-    {%- if settings.heroImage -%}{%- assign slide_image = settings.heroImage -%}{%- endif -%}
-    {%- if settings.heroAccent -%}{%- assign slide_accent = settings.heroAccent -%}{%- endif -%}
-    {%- if settings.heroButtonText -%}{%- assign slide_btn = settings.heroButtonText -%}{%- endif -%}
-  {%- endif -%}
-{%- endunless -%}
+{%- comment -%}
+  `slides` and `authored` come from SECTION_REGISTRY.hero.pickContext (lib/hero.ts),
+  which is the only place that knows how a hero is stored. A caller that renders this
+  template without them gets an empty <section> rather than a broken one — the loop
+  simply runs zero times. That is a contract, and lib/sections.test.ts pins it.
+{%- endcomment -%}
+{%- assign multi = false -%}
+{%- if slides.size > 1 -%}{%- assign multi = true -%}{%- endif -%}
 
 <section class="sf-hero relative w-full overflow-hidden" style="height: 70vh; min-height: 480px">
-  {%- if has_slides -%}
-    {{- - MULTI-SLIDE CAROUSEL - -}}
-    <div class="sf-hero__track" id="sf-hero-track">
-      {%- for slide in slides -%}
-        <div
-          class="
-            sf-hero__slide absolute inset-0 transition-opacity duration-700
-            {%- if forloop.first %} opacity-100{% else %} opacity-0 pointer-events-none{% endif %}
-          "
-          data-index="{{ forloop.index0 }}"
-        >
-          {%- if slide.image -%}
-            <img
-              src="{{ slide.image }}"
-              alt="{{ slide.title }}"
-              class="w-full h-full object-cover"
-            >
-            <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
-          {%- else -%}
-            <div class="sf-hero-fallback absolute inset-0"></div>
-          {%- endif -%}
+  <div class="sf-hero__track" id="sf-hero-track">
+    {%- for slide in slides -%}
+      {%- comment -%}
+        `slide` is what the visitor SEES (defaults substituted in). `authored_slide`
+        is what is actually STORED (no defaults). They are different, and the editable
+        snippets must report the STORED one: a hero with no title displays the store's
+        name, so reporting the rendered value would save "KFS" as though the merchant
+        had typed it, and "Donate" as their button text.
+      {%- endcomment -%}
+      {%- assign authored_slide = authored[forloop.index0] -%}
+      <div
+        class="sf-hero__slide absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
+        data-index="{{ forloop.index0 }}"
+      >
+        {%- comment -%}
+          The image is a BACKGROUND, so the click target is the backdrop itself
+          rather than an <img>. Both branches fill the slide, so the fallback is
+          equally clickable: that is how a hero with no image ever gets one.
+        {%- endcomment -%}
+        {%- if slide.image and slide.image != '' -%}
+          <img
+            src="{{ slide.image }}"
+            alt="{{ slide.title }}"
+            class="w-full h-full object-cover"
+            {% render 'classic/snippets/editable-image', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'image', value: authored_slide.image %}
+          >
+          <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
+        {%- else -%}
+          <div class="sf-hero-fallback absolute inset-0"
+            {% render 'classic/snippets/editable-image', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'image', value: authored_slide.image %}></div>
+        {%- endif -%}
 
-          <div class="absolute inset-0 flex items-end md:items-center">
-            <div
-              class="sf-hero__content w-full px-4 pb-16 md:pb-0"
-              style="padding-left: clamp(1rem, 5vw, 3rem)"
-            >
-              <div class="sf-hero-card max-w-xl space-y-4 p-5 sf-hero__card-animate">
-                {%- if slide.accent -%}
-                  <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
-                    {{ slide.accent }}
-                  </span>
-                {%- endif -%}
-                <h1
-                  class="sf-heading font-bold tracking-tight"
-                  style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1"
+        <div class="absolute inset-0 flex items-end md:items-center">
+          <div class="sf-hero__content w-full px-4 pb-16 md:pb-0" style="padding-left: clamp(1rem, 5vw, 3rem)">
+            <div class="sf-hero-card max-w-xl space-y-4 p-5 sf-hero__card-animate{% if forloop.first %} sf-hero__card-animate--load{% endif %}">
+              {%- if slide.accent and slide.accent != '' or store.editing -%}
+                <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium"
+                  {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'accent', value: authored_slide.accent %}>{{ slide.accent }}</span>
+              {%- endif -%}
+
+              <h1
+                class="sf-heading font-bold tracking-tight"
+                style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1"
+                {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'title', value: authored_slide.title %}
+              >{{ slide.title }}</h1>
+
+              {%- if slide.subtitle and slide.subtitle != '' or store.editing -%}
+                <p class="font-light" style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)"
+                  {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'subtitle', value: authored_slide.subtitle %}>{{ slide.subtitle }}</p>
+              {%- endif -%}
+
+              {%- if is_giving -%}
+                {%- comment -%} There IS a campaign: the CTA opens the donate flow. {%- endcomment -%}
+                <button
+                  class="sf-btn-primary sf-donate sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
+                  data-campaign-id="{{ lead_campaign.id }}"
+                  data-campaign-title="{{ lead_campaign.title }}"
+                  data-presets="{{ lead_campaign.presets | join: ',' }}"
+                  data-allow-custom="{% if lead_campaign.allowCustomAmount == false %}false{% else %}true{% endif %}"
                 >
-                  {{ slide.title }}
-                </h1>
-                {%- if slide.subtitle -%}
-                  <p
-                    class="font-light"
-                    style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)"
-                  >
-                    {{ slide.subtitle }}
-                  </p>
-                {%- endif -%}
+                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </button>
+              {%- elsif store.commerce -%}
+                {%- comment -%} A shop: scroll to the products on this page. {%- endcomment -%}
                 <a
                   href="#products"
                   class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
                   onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
                 >
-                  {{ slide.buttonText | default: 'Shop now' }}
-                  <svg
-                    width="14"
-                    height="14"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  >
+                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
                 </a>
-              </div>
+              {%- else -%}
+                {%- comment -%}
+                  A giving site with no campaign yet. Scrolling to #products would be a
+                  dead click (no such section), so send them to what this site DOES have.
+                {%- endcomment -%}
+                <a
+                  href="#contact"
+                  class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
+                  onclick="document.querySelector('.sf-contact')?.scrollIntoView({behavior:'smooth'}); return false;"
+                >
+                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M5 12h14M12 5l7 7-7 7"/>
+                  </svg>
+                </a>
+              {%- endif -%}
             </div>
           </div>
         </div>
-      {%- endfor -%}
-    </div>
+      </div>
+    {%- endfor -%}
+  </div>
 
-    {{- - DOT INDICATORS - -}}
-    <div
-      class="absolute bottom-6 flex gap-2 z-30"
-      style="left: 50%; transform: translateX(-50%)"
-    >
+  {%- if multi -%}
+    {{- - DOT INDICATORS — only meaningful with more than one slide - -}}
+    <div class="absolute bottom-6 flex gap-2 z-30" style="left: 50%; transform: translateX(-50%)">
       {%- for slide in slides -%}
         <button
-          class="
-            sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer
-            {%- if forloop.first %} sf-hero__dot--active{% endif %}
-          "
+          class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
           data-index="{{ forloop.index0 }}"
           aria-label="Go to slide {{ forloop.index }}"
-          style="height: 2px; background: {%- if forloop.first %}#fff{%- else %}rgba(255,255,255,0.35){%- endif %}; width: {%- if forloop.first %}3rem{%- else %}1.5rem{%- endif %}"
+          style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
         ></button>
       {%- endfor -%}
-    </div>
-
-  {%- else -%}
-    {{- - SINGLE SLIDE - -}}
-    {%- if slide_image -%}
-      <img
-        src="{{ slide_image }}"
-        alt="{{ slide_title }}"
-        class="w-full h-full object-cover"
-      >
-      <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
-    {%- else -%}
-      <div class="sf-hero-fallback absolute inset-0"></div>
-    {%- endif -%}
-
-    <div class="absolute inset-0 flex items-end md:items-center">
-      <div
-        class="w-full px-4 pb-16 md:pb-0"
-        style="padding-left: clamp(1rem, 5vw, 3rem)"
-      >
-        <div class="sf-hero-card max-w-xl space-y-4 p-5 sf-hero__card-animate sf-hero__card-animate--load">
-          {%- if slide_accent -%}
-            <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
-              {{ slide_accent }}
-            </span>
-          {%- endif -%}
-          <h1
-            class="sf-heading font-bold tracking-tight"
-            style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1"
-          >
-            {{ slide_title }}
-          </h1>
-          {%- if slide_subtitle -%}
-            <p class="font-light" style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)">
-              {{ slide_subtitle }}
-            </p>
-          {%- endif -%}
-          <a
-            href="#products"
-            class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
-            onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
-          >
-            {{ slide_btn }}
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            >
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </a>
-        </div>
-      </div>
     </div>
   {%- endif -%}
 </section>
 
-{%- if has_slides -%}
+{%- if multi -%}
   <script>
     (function () {
       var slides = document.querySelectorAll('.sf-hero__slide');
       var dots = document.querySelectorAll('.sf-hero__dot');
-      if (!slides.length) return;
+      if (slides.length < 2) return;
 
       var current = 0;
 
@@ -199,7 +166,6 @@
         dots[current].style.width = '3rem';
         dots[current].style.background = '#fff';
 
-        // re-trigger card animation
         var card = slides[current].querySelector('.sf-hero__card-animate');
         if (card) {
           card.classList.remove('sf-hero__card-animate--in');
@@ -215,24 +181,20 @@
         });
       });
 
-      // trigger initial animation
-      // trigger initial animation on first slide
       var firstCard = slides[0].querySelector('.sf-hero__card-animate');
       if (firstCard) {
-        setTimeout(function () {
-          firstCard.classList.add('sf-hero__card-animate--in');
-        }, 80); // slight delay so transition is visible on first paint
+        setTimeout(function () { firstCard.classList.add('sf-hero__card-animate--in'); }, 80);
       }
 
-      var timer = setInterval(function () {
-        goTo((current + 1) % slides.length);
-      }, 5000);
+      // In the Editor the carousel must HOLD STILL: auto-advancing would slide the
+      // text out from under a merchant halfway through typing it.
+      var editing = {% if store.editing %}true{% else %}false{% endif %};
+      var timer = editing ? null : setInterval(function () { goTo((current + 1) % slides.length); }, 5000);
 
       function resetTimer() {
+        if (editing) return;
         clearInterval(timer);
-        timer = setInterval(function () {
-          goTo((current + 1) % slides.length);
-        }, 5000);
+        timer = setInterval(function () { goTo((current + 1) % slides.length); }, 5000);
       }
     })();
   </script>

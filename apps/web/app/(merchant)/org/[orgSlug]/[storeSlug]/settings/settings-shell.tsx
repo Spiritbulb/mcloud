@@ -5,74 +5,18 @@ import { usePathname, useRouter } from 'next/navigation'
 import { SidebarProvider } from '@mcloud/ui/sidebar'
 import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
 import { SettingsNav, MobileSettingsNav } from './settings-nav'
-import type { NavSection, NavStore } from './settings-nav'
+import type { NavStore } from './settings-nav'
 import { SettingsHeader } from './settings-header'
 import { GettingStartedDrawer } from './notifications-drawer'
+import { getVertical, sectionsFor } from '@mcloud/verticals'
+import type { NavSection, TabId } from '@mcloud/verticals'
 
 import { cn } from '@mcloud/ui/utils'
 import { useOrgContext } from '@/app/(merchant)/org/[orgSlug]/org-context'
 
-// ─── Sections ────────────────────────────────────────────────────────────────
-
-export const SECTIONS: readonly NavSection[] = [
-    {
-        id: 'store',
-        label: 'Store',
-        tabs: [
-            { id: 'home', label: 'Overview', icon: 'home' },
-            { id: 'general', label: 'General', icon: 'storefront' },
-            { id: 'appearance', label: 'Design', icon: 'dashboard_customize' },
-        ],
-    },
-    {
-        id: 'catalog',
-        label: 'Catalog',
-        tabs: [
-            { id: 'products', label: 'Products', icon: 'inventory_2' },
-            { id: 'services', label: 'Services', icon: 'home_repair_service' },
-        ],
-    },
-    {
-        id: 'commerce',
-        label: 'Commerce',
-        tabs: [
-            { id: 'orders', label: 'Orders', icon: 'receipt_long' },
-            { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
-            { id: 'customers', label: 'Customers', icon: 'person', beta: true, pro: true },
-            { id: 'blog', label: 'Blog', icon: 'article' },
-        ],
-    },
-    {
-        id: 'advanced',
-        label: 'Advanced',
-        tabs: [
-            { id: 'members', label: 'Members', icon: 'group', pro: true },
-            { id: 'domain', label: 'Domain', icon: 'language', pro: true },
-            {
-                id: 'integrations',
-                label: 'Integrations',
-                icon: 'link',
-                pro: true,
-                subTabs: [
-                    { id: 'payments', label: 'Payments' },
-                    { id: 'notifications', label: 'Notifications' },
-                    { id: 'social', label: 'Socials' },
-                ],
-            },
-        ],
-    },
-    {
-        id: 'account',
-        label: 'Account',
-        tabs: [
-            { id: 'billing', label: 'Billing', icon: 'credit_card' },
-        ],
-    },
-] as const
-
-const ALL_TABS = SECTIONS.flatMap((s) => s.tabs)
-
-export type TabId = (typeof ALL_TABS)[number]['id']
+// The nav model now lives in @mcloud/verticals (it is data about the vertical,
+// not about React). Re-exported here so existing consumers keep their import.
+export type { TabId }
 
 // ─── Shell ────────────────────────────────────────────────────────────────────
 
@@ -92,6 +36,13 @@ export default function SettingsShell({
     const store = initialStore
     const error = initialError
     const { stores: pickerStores, orgSlug: ctxOrgSlug } = useOrgContext()
+
+    // The nav is a function of the vertical: an NGO has no catalog or customer
+    // accounts, but does have Content and Donations. store.type comes through
+    // because getStoreSettingsData selects stores.*.
+    const vertical = getVertical(store?.type)
+    const SECTIONS: NavSection[] = sectionsFor(vertical)
+    const ALL_TABS = SECTIONS.flatMap((s) => s.tabs)
 
     const user = store ? {
         name: store.user?.name ?? 'Account',
@@ -218,7 +169,10 @@ export default function SettingsShell({
                     </div>
                     <main className={cn(
                         'flex-1 min-h-0',
-                        activeId === 'design'
+                        // The Editor (rail + preview iframe) and the Design tab (id
+                        // 'appearance'; /settings/design is only a redirect alias)
+                        // manage their own scrolling and bleed to the edge.
+                        activeId === 'appearance' || activeId === 'editor'
                             ? 'overflow-hidden'
                             : 'overflow-y-auto px-6 md:px-10 py-8'
                     )}>

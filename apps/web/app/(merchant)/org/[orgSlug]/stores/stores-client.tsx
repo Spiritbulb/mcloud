@@ -1,5 +1,6 @@
 'use client'
 
+import { storefrontDisplayUrl } from '@/lib/storefront-url'
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -74,7 +75,7 @@ function CreateStoreDialog({ orgId, orgSlug, onCreated, onClose }: {
             <div className="absolute inset-0 bg-black/40" onClick={onClose} />
             <div className="relative z-10 w-full max-w-md rounded-2xl bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] p-6 shadow-xl space-y-5 mx-4">
                 <div className="flex items-center justify-between">
-                    <h2 className="text-[15px] font-semibold text-[var(--md-sys-color-on-surface)]">Create store</h2>
+                    <h2 className="text-[15px] font-semibold text-[var(--md-sys-color-on-surface)]">Create site</h2>
                     <button onClick={onClose} className="text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]">
                         <MSO icon="close" className="text-[20px]" />
                     </button>
@@ -82,12 +83,12 @@ function CreateStoreDialog({ orgId, orgSlug, onCreated, onClose }: {
 
                 <form onSubmit={submit} className="space-y-4">
                     <div className="space-y-1.5">
-                        <label className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">Store name</label>
+                        <label className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">Site name</label>
                         <input
                             autoFocus
                             value={name}
                             onChange={e => handleNameChange(e.target.value)}
-                            placeholder="My Awesome Store"
+                            placeholder="My Awesome Site"
                             required
                             className="w-full h-11 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/30 px-4 text-[14px] text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)]/40 focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15 transition-all"
                         />
@@ -97,11 +98,11 @@ function CreateStoreDialog({ orgId, orgSlug, onCreated, onClose }: {
                         <input
                             value={slug}
                             onChange={e => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, ''))}
-                            placeholder="my-awesome-store"
+                            placeholder="my-awesome-site"
                             required
                             className="w-full h-11 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/30 px-4 text-[14px] text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)]/40 focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15 transition-all"
                         />
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">shop.mcloud.co.ke/{slug || '…'}</p>
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{storefrontDisplayUrl(slug || '…')}</p>
                     </div>
 
                     {error && (
@@ -152,7 +153,7 @@ function DeleteDialog({ store, orgSlug, onDeleted, onClose }: {
             <div className="absolute inset-0 bg-black/40" onClick={onClose} />
             <div className="relative z-10 w-full max-w-sm rounded-2xl bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] p-6 shadow-xl space-y-4 mx-4">
                 <h2 className="text-[15px] font-semibold text-[var(--md-sys-color-on-surface)]">Delete {store.name}?</h2>
-                <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">This will permanently delete the store and all its data. This cannot be undone.</p>
+                <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">This will permanently delete the site and all its data. This cannot be undone.</p>
                 {error && <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>}
                 <div className="flex gap-3">
                     <button onClick={onClose} className="flex-1 h-10 rounded-full border border-[var(--md-sys-color-outline-variant)] text-[13px] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">
@@ -193,7 +194,7 @@ function StoreCard({ store, orgSlug, canDelete, onDeleteClick }: {
                     <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
                     {store.is_pro && <MSO icon="workspace_premium" className="text-[14px] text-[var(--md-sys-color-primary)] shrink-0" fill={1} />}
                 </div>
-                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">shop.mcloud.co.ke/{store.slug}</p>
+                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{storefrontDisplayUrl(store.slug)}</p>
             </div>
             <div className="flex items-center gap-1">
                 <Link
@@ -207,7 +208,7 @@ function StoreCard({ store, orgSlug, canDelete, onDeleteClick }: {
                     <button
                         onClick={onDeleteClick}
                         className="flex items-center justify-center w-8 h-8 rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-error)]/10 transition-colors opacity-0 group-hover:opacity-100"
-                        aria-label="Delete store"
+                        aria-label="Delete site"
                     >
                         <MSO icon="delete" className="text-[16px]" />
                     </button>
@@ -236,8 +237,8 @@ export default function StoresClient({ orgId, orgSlug, stores: initial, role }: 
         <div className="max-w-3xl mx-auto space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h1 className="text-[16px] font-semibold text-[var(--md-sys-color-on-surface)]">Stores</h1>
-                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">{stores.length} {stores.length === 1 ? 'store' : 'stores'}</p>
+                    <h1 className="text-[16px] font-semibold text-[var(--md-sys-color-on-surface)]">Sites</h1>
+                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">{stores.length} {stores.length === 1 ? 'site' : 'sites'}</p>
                 </div>
                 {canManage && (
                     <button

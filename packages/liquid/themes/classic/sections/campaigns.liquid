@@ -1,24 +1,37 @@
+{%- assign heading = section.heading | default: 'Support a Cause' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Campaigns' -%}
 {%- if campaigns and campaigns.size > 0 -%}
 <section class="sf-campaigns py-16 md:py-24">
   <div class="container mx-auto max-w-5xl px-6">
     <div class="mb-10 md:mb-14 text-center">
-      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
-        Campaigns
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', editing: store.editing, field: 'eyebrow', value: section.eyebrow %}>
+        {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">Support a Cause</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', editing: store.editing, field: 'heading', value: section.heading %}>{{ heading }}</h2>
     </div>
     <div class="space-y-8">
       {%- for c in campaigns -%}
         <article class="sf-card sf-campaign-card overflow-hidden md:flex">
-          {%- if c.image -%}
-            <div class="relative sf-bg-muted md:w-2/5" style="aspect-ratio: 16/9">
+          {%- comment -%}
+            Liquid treats "" as truthy, so a blank image field would render
+            <img src=""> and the browser draws a broken image.
+          {%- endcomment -%}
+          {%- if c.image and c.image != '' -%}
+            <div class="relative sf-bg-muted md:w-2/5" style="aspect-ratio: 16/9"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'campaigns', index: forloop.index0, key: 'image', value: c.image %}>
               <img src="{{ c.image }}" alt="{{ c.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
             </div>
+          {%- elsif store.editing -%}
+            {%- comment -%}
+              No image yet: a visitor sees nothing, the editor gets a target to click.
+            {%- endcomment -%}
+            <div class="relative sf-bg-muted md:w-2/5" style="aspect-ratio: 16/9"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'campaigns', index: forloop.index0, key: 'image', value: c.image %}></div>
           {%- endif -%}
           <div class="p-5 md:flex-1 space-y-3">
-            <h3 class="sf-heading text-2xl font-light">{{ c.title }}</h3>
-            {%- if c.description -%}
-              <p class="text-sm" style="color: var(--sf-foreground-subtle)">{{ c.description }}</p>
+            <h3 class="sf-heading text-2xl font-light" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'campaigns', index: forloop.index0, key: 'title', value: c.title %}>{{ c.title }}</h3>
+            {%- if c.description or store.editing -%}
+              <p class="text-sm" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'campaigns', index: forloop.index0, key: 'description', value: c.description %}>{{ c.description }}</p>
             {%- endif -%}
             {%- if c.hasGoal -%}
               <div class="sf-campaign-progress space-y-1">

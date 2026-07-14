@@ -4,8 +4,12 @@ import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
 import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import { createClient } from '@mcloud/db/server'
+import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
+import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
+import PreviewListener from '@/components/store/preview-listener'
+import EditorBridge from '@/components/store/editor-bridge'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 
@@ -75,6 +79,10 @@ export default async function StoreLayout({
 
     const theme = await getStoreTheme(slug)
     const store = await getStore(slug)
+
+    // The store's own published pages, linked from the nav. Without this an
+    // authored page (About, Contact) is reachable only by typing its URL.
+    const navPages = store?.id ? await getNavPages(store.id) : []
     const headersList = await headers()
     const bannerScriptB64 = headersList.get('x-inject-owner-banner')
     const bannerScript = bannerScriptB64
@@ -108,14 +116,31 @@ export default async function StoreLayout({
     const onCustomDomain = isCustomDomainHost(host)
     const basePath = onCustomDomain ? '' : `/store/${slug}`
 
+    // A theme names its fonts, but naming one does not make it render: without a
+    // webfont the browser silently falls back (a store asking for Quicksand got
+    // serif). Pull whatever the theme names from Google Fonts so the choice is
+    // real. System stacks are skipped since they need no fetch.
+    const fontHref = googleFontsHref([theme?.heading_font, theme?.body_font])
+
     return (
         // CustomerAuthProvider has no server deps — sits at the top
         <CustomerAuthProvider>
+            {fontHref && (
+                <link rel="stylesheet" href={fontHref} />
+            )}
+            {/* Applies unsaved theme values from the Editor. Inert unless framed by
+                the admin origin: a real visitor is never framed, so for them this
+                listener never activates. */}
+            <PreviewListener adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
+            {/* Click a section here -> the Editor opens its drawer; select one there
+                -> this scrolls to it. Same containment as PreviewListener, and it
+                never writes to the page. */}
+            <EditorBridge adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
             <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>
                     <CartProvider storeSlug={slug}>
-                        <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
+                        <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars} pages={navPages}>
                             {bannerScript && (
                                 <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
                             )}

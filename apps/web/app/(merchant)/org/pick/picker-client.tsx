@@ -1,5 +1,6 @@
 'use client'
 
+import { storefrontDisplayUrl } from '@/lib/storefront-url'
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'
@@ -120,7 +121,7 @@ function HeroStoreCard({ store, picking, onPick }: {
                     </span>
                 </div>
                 <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-                    shop.mcloud.co.ke/{store.slug}{ago && <span className="opacity-60"> · {ago}</span>}
+                    {storefrontDisplayUrl(store.slug)}{ago && <span className="opacity-60"> · {ago}</span>}
                 </p>
             </div>
             <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-1')}>
@@ -166,7 +167,7 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
                 <Avatar name={store.name} logo_url={store.logo_url} size={32} rounded="rounded-lg" />
                 <div className="flex-1 min-w-0">
                     <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
-                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">shop.mcloud.co.ke/{store.slug}</p>
+                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{storefrontDisplayUrl(store.slug)}</p>
                 </div>
                 {isPicking && <M3CircularIndicator size={18} />}
             </button>
@@ -176,7 +177,7 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
                     <DropdownMenuTrigger asChild>
                         <button
                             className="shrink-0 mr-2 flex items-center justify-center w-7 h-7 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
-                            aria-label="Store options"
+                            aria-label="Site options"
                         >
                             <MSO icon="more_vert" className="text-[18px]" />
                         </button>
@@ -340,7 +341,7 @@ function DeleteStoreDialog({ store, onClose }: { store: PickerStore | null; onCl
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
                     <DialogTitle>Delete {store?.name}?</DialogTitle>
-                    <DialogDescription>This permanently removes the store and its data. This can’t be undone.</DialogDescription>
+                    <DialogDescription>This permanently removes the site and its data. This can’t be undone.</DialogDescription>
                 </DialogHeader>
                 {error && <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>}
                 <DialogFooter>
@@ -431,7 +432,7 @@ export default function PickerClient({ stores, orgs, userName }: {
                                 />
                             ))}
                             {org.canManage && (
-                                <AddTile label="Add store" sub="In this org" onClick={() => router.push(`/onboarding?org=${org.id}`)} />
+                                <AddTile label="Add site" sub="In this org" onClick={() => router.push(`/onboarding?org=${org.id}`)} />
                             )}
                         </Section>
                     )
@@ -446,7 +447,7 @@ export default function PickerClient({ stores, orgs, userName }: {
                                 orgs={orgs} onPick={handlePick} onMove={handleMove} onDelete={setDeleteTarget}
                             />
                         ))}
-                        <AddTile label="New shop" sub="Free forever" onClick={() => router.push('/onboarding')} />
+                        <AddTile label="New site" sub="Free forever" onClick={() => router.push('/onboarding')} />
                     </Section>
                 )}
 

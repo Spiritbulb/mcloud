@@ -1,0 +1,25 @@
+{%- comment -%}
+  Marks a value that lives in stores.settings (NOT in the section's own config) as
+  click-to-editable.
+
+  Usage:
+    <h1 {% render 'classic/snippets/editable-setting', key: 'heroTitle', value: settings.heroTitle %}>
+      {{ slide_title }}
+    </h1>
+
+  Two editable channels exist because there are two places copy is stored, and they
+  save through different actions:
+
+    editable          -> pages.sections[i].settings   -> updatePageSections
+    editable-setting  -> stores.settings              -> updateStoreSettings
+
+  Same rule as `editable`: it emits the STORED value, never the rendered one. A
+  hero with no heroTitle falls back to store.name, so the DOM shows a title while
+  the setting is empty. Reporting the rendered text would silently freeze that
+  fallback into the record the first time anyone clicked it.
+{%- endcomment -%}
+{%- comment -%}
+  Emits NOTHING outside the editor: these attributes carry the merchant's stored
+  copy, and a visitor has no business receiving it.
+{%- endcomment -%}
+{%- if editing -%}data-mcloud-setting="{{ key }}" data-mcloud-stored="{{ value | escape }}"{%- endif -%}

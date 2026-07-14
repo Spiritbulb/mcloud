@@ -118,7 +118,7 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
                                 <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">Delete organization</p>
                                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
                                     {storeCount > 0
-                                        ? `Its ${storeCount} ${storeCount === 1 ? 'store' : 'stores'} will be moved to Personal.`
+                                        ? `Its ${storeCount} ${storeCount === 1 ? 'site' : 'sites'} will be moved to Personal.`
                                         : 'This organization has no stores.'}
                                 </p>
                             </div>
@@ -162,7 +162,7 @@ function DeleteOrgDialog({ open, onOpenChange, org, storeCount }: {
                     <DialogTitle>Delete {org.name}?</DialogTitle>
                     <DialogDescription>
                         {storeCount > 0
-                            ? `The ${storeCount} ${storeCount === 1 ? 'store' : 'stores'} in this organization will be moved to Personal. The organization itself will be permanently deleted.`
+                            ? `The ${storeCount} ${storeCount === 1 ? 'site' : 'sites'} in this organization will be moved to Personal. The organization itself will be permanently deleted.`
                             : "This organization will be permanently deleted. This can't be undone."}
                     </DialogDescription>
                 </DialogHeader>

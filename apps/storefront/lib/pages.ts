@@ -12,6 +12,35 @@ export interface PageRow {
   sections: PageSection[]
 }
 
+/** Just enough of a page to link to it from the nav. */
+export interface NavPage {
+  slug: string
+  title: string
+}
+
+/**
+ * A store's published pages, in author order, for the nav. Home ('') is excluded:
+ * the logo already links there. Never throws. A read failure yields no links
+ * rather than taking the storefront down.
+ */
+export async function getNavPages(storeId: string): Promise<NavPage[]> {
+  try {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+      .from('pages')
+      .select('slug, title, position')
+      .eq('store_id', storeId)
+      .eq('is_published', true)
+      .neq('slug', '')
+      .order('position', { ascending: true })
+    if (error) throw error
+    return (data ?? []).map((p) => ({ slug: p.slug, title: p.title }))
+  } catch (err) {
+    console.error('[storefront] nav pages read failed (rendering none):', err)
+    return []
+  }
+}
+
 /** A store's published page for `slug`, or null. Pass '' for the home page. */
 export async function getPublishedPage(storeId: string, slug: string): Promise<PageRow | null> {
   const supabase = await createClient()

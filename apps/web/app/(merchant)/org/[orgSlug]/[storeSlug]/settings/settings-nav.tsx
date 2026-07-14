@@ -3,29 +3,16 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { cn } from '@mcloud/ui/utils'
+import { storefrontDisplayUrl } from '@/lib/storefront-url'
 import Link from 'next/link'
-import type { TabId } from './settings-shell'
 import { useRouter } from 'next/navigation'
+
+// The nav model (sections, tabs, tab ids) is data about the vertical and lives
+// in @mcloud/verticals so it has one home and is unit-testable.
+import type { NavSection, NavTab as Tab, NavSubTab as SubTab, TabId } from '@mcloud/verticals'
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
-
-type SubTab = { readonly id: string; readonly label: string }
-
-type Tab = {
-    readonly id: string
-    readonly label: string
-    readonly icon: string
-    readonly beta?: boolean
-    readonly pro?: boolean
-    readonly subTabs?: readonly SubTab[]
-}
-
-type NavSection = {
-    readonly id: string
-    readonly label: string
-    readonly tabs: readonly Tab[]
-}
 
 type NavUser = {
     name: string
@@ -370,7 +357,7 @@ function StoreSwitcher({
                         {store.name}
                     </span>
                     <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
-                        {store.custom_domain ? `www.${store.custom_domain}` : `shop.mcloud.co.ke/${store.slug}`}
+                        {store.custom_domain ? `www.${store.custom_domain}` : storefrontDisplayUrl(store.slug)}
                     </span>
                 </div>
                 {hasMultiple && (
@@ -885,4 +872,6 @@ export function MobileSettingsNav({
 }
 
 // ─── Re-export types ──────────────────────────────────────────────────────────
-export type { NavSection, NavStore, NavUser, Tab, SubTab }
+// NavStore/NavUser are nav-component concerns and are owned here. NavSection/
+// Tab/SubTab are re-exported so nothing that imported them from this file breaks.
+export type { NavStore, NavUser, NavSection, Tab, SubTab }

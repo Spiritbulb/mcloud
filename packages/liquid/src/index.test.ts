@@ -14,9 +14,16 @@ const products = [
     { id: 'p2', name: '<script>alert(1)</script>', slug: 'x', price: 500, images: [], compare_at_price: null },
 ]
 
-// hero renders the store name
-const hero = await renderTemplate('classic/sections/hero', { store })
-assert.ok(hero.includes('Test Store'), 'hero renders store name')
+// The hero renders a LIST of slides. It has one shape now (a single-image hero is a
+// list of one), and the storefront's lib/hero.ts normalises whatever a store has —
+// including the legacy flat heroTitle/heroImage keys — into that list. This package
+// is a dumb renderer, so the caller supplies them.
+const hero = await renderTemplate('classic/sections/hero', {
+    store,
+    slides: [{ title: 'Test Store', subtitle: '', image: '', accent: '', buttonText: 'Shop now' }],
+    authored: [{ title: '', subtitle: '', image: '', accent: '', buttonText: '' }],
+})
+assert.ok(hero.includes('Test Store'), 'hero renders its slide')
 
 // collections-grid renders the collection name
 const coll = await renderTemplate('classic/sections/collections-grid', { store, collections })

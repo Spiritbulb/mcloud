@@ -5,6 +5,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@mcloud/ui/utils'
+import { getVertical } from '@mcloud/verticals'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@/lib/storefront-url'
 import type { TabId } from './settings-shell'
 
@@ -22,6 +23,9 @@ type StoreOverview = {
     name: string
     slug: string
     logo_url?: string
+    // The vertical. Drives which tiles this dashboard shows: a non-commerce site
+    // has no products, revenue, or cart funnel to report on.
+    type?: string | null
     active: boolean
     product_count: number
     order_count: number
@@ -35,6 +39,14 @@ type StoreOverview = {
     primary_color?: string | null
     theme?: string | null
     notifications_enabled?: boolean
+}
+
+type CampaignProgress = {
+    id: string
+    title: string
+    raised: number
+    goal: number
+    percent: number
 }
 
 type Funnel = {
@@ -57,6 +69,9 @@ type OverviewData = {
     recent_orders: Order[]
     funnel?: Funnel
     top_product?: TopProduct
+    total_raised?: number
+    donation_count?: number
+    campaign_progress?: CampaignProgress[]
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
@@ -175,7 +190,7 @@ function StatusBadge({ status }: { status: Order['status'] }) {
 
 // ─── Payments callout ─────────────────────────────────────────────────────────
 
-function PaymentsCallout({ onNavigate }: { onNavigate: () => void }) {
+function PaymentsCallout({ onNavigate, commerce }: { onNavigate: () => void; commerce: boolean }) {
     return (
         <button
             onClick={onNavigate}
@@ -192,7 +207,9 @@ function PaymentsCallout({ onNavigate }: { onNavigate: () => void }) {
             <div className="flex-1 min-w-0">
                 <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">Set up payments</p>
                 <p className="text-[12px] text-[var(--md-sys-color-on-secondary-container)]/70 mt-0.5 leading-relaxed">
-                    Connect M-Pesa or PayPal so customers can checkout. Takes about 2 minutes.
+                    {commerce
+                        ? 'Connect M-Pesa or PayPal so customers can checkout. Takes about 2 minutes.'
+                        : 'Connect M-Pesa or PayPal so people can donate. Takes about 2 minutes.'}
                 </p>
             </div>
             <MSO
@@ -255,7 +272,7 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
             {/* Footer — period label + analytics link */}
             <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
-                    Last 7 days · store visits → purchases
+                    Last 7 days · site visits to purchases
                 </p>
                 <button
                     onClick={onViewAnalytics}
@@ -324,24 +341,105 @@ function TopProductCard({ product, currency, loading, onNavigate }: {
     )
 }
 
+// ─── TopCampaignCard ──────────────────────────────────────────────────────────
+// The non-commerce counterpart of TopProductCard: same card shape and classes,
+// but reports the campaign that has raised the most, with its goal progress.
+
+function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
+    campaign?: CampaignProgress; currency: string; loading: boolean; onNavigate: () => void
+}) {
+    if (!loading && !campaign) return null
+
+    return (
+        <button
+            onClick={onNavigate}
+            className={cn(
+                'w-full flex flex-col gap-3 text-left group',
+                'rounded-2xl border border-[var(--md-sys-color-outline-variant)]',
+                'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
+                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
+            )}
+        >
+            <div className="w-full flex items-center gap-4">
+                <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
+                    {loading
+                        ? <Sk className="w-full h-full rounded-none" />
+                        : <MSO icon="volunteer_activism" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
+                    }
+                </div>
+                <div className="flex-1 min-w-0">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
+                        Top campaign
+                    </span>
+                    {loading
+                        ? <Sk className="h-4 w-32 mt-0.5" />
+                        : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{campaign!.title}</p>
+                    }
+                    {!loading && campaign && (
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                            {campaign.goal > 0
+                                ? `${campaign.percent}% of ${fmt(campaign.goal, currency)} goal`
+                                : 'No goal set'}
+                        </p>
+                    )}
+                </div>
+                <div className="shrink-0 text-right">
+                    {loading
+                        ? <Sk className="h-5 w-16" />
+                        : <p className="text-[14px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)]">
+                            {fmt(campaign!.raised, currency)}
+                        </p>
+                    }
+                    <MSO
+                        icon="chevron_right"
+                        className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors mt-0.5 ml-auto"
+                    />
+                </div>
+            </div>
+
+            {/* Goal progress. Only meaningful when the campaign has a goal. */}
+            {!loading && campaign && campaign.goal > 0 && (
+                <div className="h-1 w-full rounded-full bg-[var(--md-sys-color-surface-variant)] overflow-hidden">
+                    <div
+                        className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
+                        style={{ width: `${campaign.percent}%` }}
+                    />
+                </div>
+            )}
+        </button>
+    )
+}
+
 // ─── Welcome hero ─────────────────────────────────────────────────────────────
 
-function WelcomeHero({ store, loading, onVisit }: {
-    store?: StoreOverview; loading: boolean; onVisit: () => void
+function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
+    // totalRaised lives on the OverviewData payload, not on the store row, so it
+    // is passed in rather than read off `store`.
+    store?: StoreOverview; totalRaised?: number; loading: boolean; onVisit: () => void
 }) {
+    // A non-commerce site does not sell or earn. It raises.
+    const commerce = getVertical(store?.type).commerce
+    const raised = totalRaised > 0
     const hasRevenue = !!store && store.revenue_total > 0
+    const hasMoney = commerce ? hasRevenue : raised
+
     const headline = loading
         ? null
         : !store
-            ? 'Your store'
-            : hasRevenue
-                ? `${store.name} is making money.`
-                : `${store.name} is ready to sell.`
+            ? 'Your site'
+            : commerce
+                ? (hasRevenue ? `${store.name} is making money.` : `${store.name} is ready to sell.`)
+                : (raised ? `${store.name} is raising money.` : `${store.name} is ready for donations.`)
+
     const sub = loading
         ? null
-        : hasRevenue
-            ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
-            : 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
+        : hasMoney
+            ? commerce
+                ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
+                : `You've raised ${fmt(totalRaised, store!.currency)} so far. Keep the momentum going.`
+            : commerce
+                ? 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
+                : 'Add a campaign, share your link, and take your first donation today. We handle the hosting, SSL, and uptime.'
 
     return (
         <div className="relative overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
@@ -402,7 +500,7 @@ function WelcomeHero({ store, loading, onVisit }: {
                             'text-[12px] font-semibold hover:opacity-90 transition-opacity'
                         )}
                     >
-                        Visit store
+                        Visit site
                         <MSO icon="open_in_new" className="text-[15px]" />
                     </a>
                 )}
@@ -430,7 +528,7 @@ function ShareStore({ slug }: { slug: string }) {
                 <MSO icon="share" className="text-[18px] text-[var(--md-sys-color-primary)]" fill={1} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your store</p>
+                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your site</p>
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{url}</p>
             </div>
             <button
@@ -495,6 +593,23 @@ const QUICK_LINKS: QuickLink[] = [
     { tab: 'domain', label: 'Custom domain', icon: 'language', beta: true },
 ]
 
+/**
+ * A non-commerce site has no Products tab (the route redirects away), and its
+ * Orders tab is presented as Donations. Swap the two rather than linking the
+ * merchant at a page that bounces them straight back here.
+ */
+function quickLinksFor(commerce: boolean): QuickLink[] {
+    if (commerce) return QUICK_LINKS
+    return QUICK_LINKS
+        .filter((l) => l.tab !== 'products')
+        .map((l) =>
+            l.tab === 'orders'
+                ? { ...l, label: 'Donations', icon: 'volunteer_activism' }
+                : l
+        )
+        .concat([{ tab: 'content', label: 'Content', icon: 'edit_note' }])
+}
+
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
 export default function SettingsHomeClient({ slug, orgSlug, initialData = null }: {
@@ -527,51 +642,98 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
     // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
     const paymentsNeeded = !loading && store && !store.payments_enabled
 
+    // Gate on the vertical's `commerce` flag, never on a specific id: a future
+    // non-commerce vertical must inherit the donation dashboard for free. An NGO
+    // has no products, no revenue, and no cart, so the product/revenue tiles and
+    // the add-to-cart funnel measure a journey its visitors never take.
+    const commerce = getVertical(store?.type).commerce
+
+    const campaigns = data?.campaign_progress ?? []
+    const topCampaign = campaigns[0]
+
     return (
         <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
 
             {/* ── Welcome hero ─────────────────────────────────────────────── */}
             <div className="animate-rise">
-                <WelcomeHero store={store} loading={loading} onVisit={() => { }} />
+                <WelcomeHero store={store} totalRaised={data?.total_raised ?? 0} loading={loading} onVisit={() => { }} />
             </div>
 
             {/* ── KPIs ─────────────────────────────────────────────────────── */}
             <div className="animate-rise-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <KpiCard
-                    label="Revenue"
-                    value={store ? fmt(store.revenue_total, store.currency) : '—'}
-                    sub="all time"
-                    icon="payments"
-                    loading={loading}
-                    featured
-                />
-                <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} icon="receipt_long" loading={loading} />
-                <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} icon="inventory_2" loading={loading} />
+                {commerce ? (
+                    <>
+                        <KpiCard
+                            label="Revenue"
+                            value={store ? fmt(store.revenue_total, store.currency) : '—'}
+                            sub="all time"
+                            icon="payments"
+                            loading={loading}
+                            featured
+                        />
+                        <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} icon="receipt_long" loading={loading} />
+                        <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} icon="inventory_2" loading={loading} />
+                    </>
+                ) : (
+                    <>
+                        <KpiCard
+                            label="Total raised"
+                            value={store ? fmt(data?.total_raised ?? 0, store.currency) : '—'}
+                            sub="all time"
+                            icon="volunteer_activism"
+                            loading={loading}
+                            featured
+                        />
+                        <KpiCard
+                            label="Donations"
+                            value={data?.donation_count?.toString() ?? '—'}
+                            icon="favorite"
+                            loading={loading}
+                        />
+                        <KpiCard
+                            label="Campaigns"
+                            value={loading ? '—' : campaigns.length.toString()}
+                            icon="campaign"
+                            loading={loading}
+                        />
+                    </>
+                )}
             </div>
 
-            {/* ── Funnel ───────────────────────────────────────────────────── */}
-            <div className="animate-rise-2">
-                <FunnelRow
-                    funnel={data?.funnel}
-                    loading={loading}
-                    onViewAnalytics={() => navigate('analytics')}
-                />
-            </div>
+            {/* ── Funnel (commerce only: an NGO's visitors never add to cart) ─ */}
+            {commerce && (
+                <div className="animate-rise-2">
+                    <FunnelRow
+                        funnel={data?.funnel}
+                        loading={loading}
+                        onViewAnalytics={() => navigate('analytics')}
+                    />
+                </div>
+            )}
 
-            {/* ── Top product ──────────────────────────────────────────────── */}
+            {/* ── Top product / Top campaign ───────────────────────────────── */}
             <div className="animate-rise-3">
-                <TopProductCard
-                    product={data?.top_product}
-                    currency={store?.currency ?? 'KES'}
-                    loading={loading}
-                    onNavigate={() => navigate('products')}
-                />
+                {commerce ? (
+                    <TopProductCard
+                        product={data?.top_product}
+                        currency={store?.currency ?? 'KES'}
+                        loading={loading}
+                        onNavigate={() => navigate('products')}
+                    />
+                ) : (
+                    <TopCampaignCard
+                        campaign={topCampaign}
+                        currency={store?.currency ?? 'KES'}
+                        loading={loading}
+                        onNavigate={() => navigate('content')}
+                    />
+                )}
             </div>
 
             {/* ── Payments callout ─────────────────────────────────────────── */}
             {paymentsNeeded && (
                 <div className="animate-rise">
-                    <PaymentsCallout onNavigate={() => navigate('integrations')} />
+                    <PaymentsCallout onNavigate={() => navigate('integrations')} commerce={commerce} />
                 </div>
             )}
 
@@ -585,7 +747,9 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             {/* ── Recent orders ─────────────────────────────────────────────── */}
             <div className="animate-rise-4">
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Recent orders</p>
+                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                        {commerce ? 'Recent orders' : 'Recent donations'}
+                    </p>
                     <button
                         onClick={() => navigate('orders')}
                         className="flex items-center gap-0.5 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
@@ -607,7 +771,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                     ) : error ? (
                         <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
                             <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
-                            Could not load orders.{' '}
+                            {commerce ? 'Could not load orders.' : 'Could not load donations.'}{' '}
                             <button onClick={() => window.location.reload()} className="text-[var(--md-sys-color-primary)] hover:underline">
                                 Retry
                             </button>
@@ -615,22 +779,40 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                     ) : orders.length === 0 ? (
                         <div className="flex flex-col items-center gap-4 px-5 py-12 text-center">
                             <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--md-sys-color-primary-container)]">
-                                <MSO icon="rocket_launch" className="text-[26px] text-[var(--md-sys-color-primary)]" fill={1} />
+                                <MSO
+                                    icon={commerce ? 'rocket_launch' : 'volunteer_activism'}
+                                    className="text-[26px] text-[var(--md-sys-color-primary)]"
+                                    fill={1}
+                                />
                             </div>
                             <div className="max-w-xs">
-                                <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">Your first sale is close</p>
+                                <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                                    {commerce ? 'Your first sale is close' : 'Your first donation is close'}
+                                </p>
                                 <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-1 leading-relaxed">
-                                    {store && store.product_count > 0
-                                        ? 'Your products are live. Share your store link and watch the orders roll in.'
-                                        : 'Add a product, then share your link. Orders show up here the moment a customer checks out.'}
+                                    {commerce
+                                        ? (store && store.product_count > 0
+                                            ? 'Your products are live. Share your store link and watch the orders roll in.'
+                                            : 'Add a product, then share your link. Orders show up here the moment a customer checks out.')
+                                        : (campaigns.length > 0
+                                            ? 'Your campaigns are live. Share your link and donations show up here.'
+                                            : 'Add a campaign, then share your link. Donations show up here the moment someone gives.')}
                                 </p>
                             </div>
                             <button
-                                onClick={() => navigate(store && store.product_count > 0 ? 'orders' : 'products')}
+                                onClick={() => {
+                                    if (commerce) {
+                                        navigate(store && store.product_count > 0 ? 'orders' : 'products')
+                                    } else {
+                                        navigate(campaigns.length > 0 ? 'orders' : 'content')
+                                    }
+                                }}
                                 className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[12px] font-semibold hover:opacity-90 transition-opacity"
                             >
                                 <MSO icon="add" className="text-[16px]" />
-                                {store && store.product_count > 0 ? 'View orders' : 'Add your first product'}
+                                {commerce
+                                    ? (store && store.product_count > 0 ? 'View orders' : 'Add your first product')
+                                    : (campaigns.length > 0 ? 'View donations' : 'Add your first campaign')}
                             </button>
                         </div>
                     ) : (
@@ -669,7 +851,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             <div className="animate-rise-6">
                 <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">Settings</p>
                 <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
-                    {QUICK_LINKS.map((link) => (
+                    {quickLinksFor(commerce).map((link) => (
                         <button
                             key={link.tab}
                             onClick={() => navigate(link.tab)}

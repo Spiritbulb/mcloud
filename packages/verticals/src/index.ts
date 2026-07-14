@@ -53,7 +53,9 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
         slug: '',
         title: 'Home',
         position: 0,
-        sections: [{ type: 'mission' }, { type: 'programs' }, { type: 'impact' }, { type: 'campaigns' }, { type: 'contact' }],
+        // The hero leads with the mission headline over the site's image and a
+        // Donate CTA, so a separate `mission` section would just repeat it.
+        sections: [{ type: 'hero' }, { type: 'programs' }, { type: 'impact' }, { type: 'campaigns' }, { type: 'contact' }],
       },
     ],
   },
@@ -68,3 +70,9 @@ export function getVertical(type: string | null | undefined): Vertical {
   if (type && isVerticalId(type)) return VERTICALS[type]
   return VERTICALS.shop
 }
+
+export { sectionsFor, ALL_TAB_IDS } from './nav'
+export type { NavSection, NavTab, NavSubTab, TabId } from './nav'
+
+export { defaultsFor } from './schema'
+export type { SettingField, SettingValues } from './schema'

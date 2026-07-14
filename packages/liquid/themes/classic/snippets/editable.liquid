@@ -1,0 +1,29 @@
+{%- comment -%}
+  Marks a rendered value as click-to-editable in the Editor's preview.
+
+  Usage:
+    <h2 {% render 'classic/snippets/editable', field: 'heading', value: section.heading %}>
+      {{ heading }}
+    </h2>
+
+  It emits the STORED value, not the rendered one, and that distinction is the
+  whole point.
+
+  Every heading renders through `| default: 'Support a Cause'`, so a section with
+  no stored heading still SHOWS one. If the Editor read the rendered text back out
+  of the DOM, then merely clicking into a heading and clicking away would save
+  "Support a Cause" as if the merchant had typed it: the default would be baked in
+  permanently and the fallback would be dead. The merchant would have no way to get
+  it back.
+
+  So the element carries data-mcloud-stored="" for an unset field, and the Editor
+  diffs against THAT, never against textContent. Blank means blank.
+
+  Inert outside the preview: nothing styles or scripts these attributes on the
+  public site.
+{%- endcomment -%}
+{%- comment -%}
+  Emits NOTHING outside the editor: these attributes carry the merchant's stored
+  copy, and a visitor has no business receiving it.
+{%- endcomment -%}
+{%- if editing -%}data-mcloud-field="{{ field }}" data-mcloud-stored="{{ value | escape }}"{%- endif -%}

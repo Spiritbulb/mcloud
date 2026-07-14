@@ -3,6 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { Tables } from '@mcloud/db/types'
 import { updateStoreSettings } from '../actions'
+import { storefrontUrl, storefrontDisplayUrl } from '@/lib/storefront-url'
 import { Switch } from '@mcloud/ui/switch'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -296,17 +297,17 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
             <Section title="Store identity" description="Basic information shown to your customers">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <FieldLabel>Store name</FieldLabel>
+                        <FieldLabel>Site name</FieldLabel>
                         <FieldInput
                             value={name}
                             onChange={e => setName(e.target.value)}
-                            placeholder="My Store"
+                            placeholder="My Site"
                         />
                     </div>
                     <div>
-                        <FieldLabel>Store URL</FieldLabel>
+                        <FieldLabel>Site URL</FieldLabel>
                         <div className="relative">
-                            <FieldInput value={`shop.mcloud.co.ke/${store.slug}`} disabled />
+                            <FieldInput value={storefrontDisplayUrl(store.slug)} disabled />
                             <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--md-sys-color-on-surface-variant)]/40" />
                         </div>
                     </div>
@@ -352,7 +353,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
             <Section title="Visibility" description="Control whether your store is open for business">
                 <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
                     <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">Store active</p>
+                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">Site active</p>
                         <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-snug">
                             When off, visitors see a coming soon page
                         </p>
@@ -380,12 +381,12 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         <>
                             Live at{' '}
                             <a
-                                href={`https://shop.mcloud.co.ke/${store.slug}`}
+                                href={storefrontUrl(store.slug)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="underline underline-offset-2 hover:opacity-80 transition-opacity"
                             >
-                                shop.mcloud.co.ke/{store.slug}
+                                {storefrontDisplayUrl(store.slug)}
                             </a>
                             <MSO icon="open_in_new" className="text-[13px] opacity-60" />
                         </>

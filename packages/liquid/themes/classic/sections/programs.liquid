@@ -1,3 +1,5 @@
+{%- assign heading = section.heading | default: 'What We Do' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Programs' -%}
 {%- assign settings = store.settings -%}
 {%- assign programs = null -%}
 {%- if settings -%}{%- assign programs = settings.programs -%}{%- endif -%}
@@ -5,23 +7,36 @@
 <section class="sf-programs py-16 md:py-24">
   <div class="container mx-auto max-w-6xl px-6">
     <div class="mb-10 md:mb-14 text-center">
-      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
-        Programs
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', editing: store.editing, field: 'eyebrow', value: section.eyebrow %}>
+        {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">What We Do</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', editing: store.editing, field: 'heading', value: section.heading %}>{{ heading }}</h2>
     </div>
     <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       {%- for program in programs -%}
         <article class="sf-card sf-program-card overflow-hidden">
-          {%- if program.image -%}
-            <div class="relative overflow-hidden sf-bg-muted" style="aspect-ratio: 16/9">
+          {%- comment -%}
+            Liquid treats "" as truthy, so a blank image field would render
+            <img src=""> and the browser draws a broken image. Compare against
+            empty explicitly.
+          {%- endcomment -%}
+          {%- if program.image and program.image != '' -%}
+            <div class="relative overflow-hidden sf-bg-muted" style="aspect-ratio: 16/9"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'programs', index: forloop.index0, key: 'image', value: program.image %}>
               <img src="{{ program.image }}" alt="{{ program.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
             </div>
+          {%- elsif store.editing -%}
+            {%- comment -%}
+              No image yet. A visitor sees nothing at all (as before), but the editor
+              needs a real, sized target to click, or there is no way to ADD one.
+            {%- endcomment -%}
+            <div class="relative overflow-hidden sf-bg-muted" style="aspect-ratio: 16/9"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'programs', index: forloop.index0, key: 'image', value: program.image %}></div>
           {%- endif -%}
           <div class="px-4 pt-4 pb-4 space-y-1">
-            <h3 class="sf-heading text-xl font-light">{{ program.title }}</h3>
-            {%- if program.description -%}
-              <p class="text-sm" style="color: var(--sf-foreground-subtle)">{{ program.description }}</p>
+            <h3 class="sf-heading text-xl font-light" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'programs', index: forloop.index0, key: 'title', value: program.title %}>{{ program.title }}</h3>
+            {%- if program.description or store.editing -%}
+              <p class="text-sm" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'programs', index: forloop.index0, key: 'description', value: program.description %}>{{ program.description }}</p>
             {%- endif -%}
           </div>
         </article>

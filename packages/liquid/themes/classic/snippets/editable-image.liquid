@@ -1,0 +1,32 @@
+{%- comment -%}
+  Marks an image as click-to-replace in the Editor's preview.
+
+  Usage (a store setting):
+    {% render 'classic/snippets/editable-image', setting: 'heroImage', value: settings.heroImage %}
+
+  Usage (a field on a repeated record):
+    {% render 'classic/snippets/editable-image',
+       list: 'programs', index: forloop.index0, key: 'image', value: program.image %}
+
+  Emits the same addressing attributes the TEXT snippets do, so the bridge routes an
+  image change through the exact channels that already exist (setting-edit /
+  item-edit). An image is just a string field whose editor is a picker rather than a
+  caret — no new save path, no new server action.
+
+  data-mcloud-image is what tells the bridge to open a picker instead of making the
+  element contentEditable. Editing text in an <img> is meaningless; the two
+  affordances have to differ even though the storage does not.
+{%- endcomment -%}
+{%- comment -%}
+  Emits NOTHING outside the editor. The hero's background always renders (it is the
+  page's backdrop, not an optional affordance), so without this guard every visitor
+  would be served editor scaffolding on the live site. Inert, but it has no business
+  being there — and the text snippets are already effectively gated, because the
+  elements they mark only render for a visitor when they have content.
+{%- endcomment -%}
+{%- if editing -%}
+data-mcloud-image="1"
+{%- if setting %} data-mcloud-setting="{{ setting }}"{% endif -%}
+{%- if list %} data-mcloud-list="{{ list }}" data-mcloud-index="{{ index }}" data-mcloud-key="{{ key }}"{% endif -%}
+{{ ' ' }}data-mcloud-stored="{{ value | escape }}"
+{%- endif -%}

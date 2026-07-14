@@ -9,6 +9,7 @@ import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { defaultHomeSections } from '@/lib/sections'
+import { verifyPreview } from '@/lib/preview'
 import { getVertical } from '@mcloud/verticals'
 import { DonateIsland } from './DonateIsland'
 
@@ -16,6 +17,7 @@ export const revalidate = 60
 
 interface Props {
     params: Promise<{ slug: string }>
+    searchParams: Promise<{ preview?: string; token?: string }>
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -53,8 +55,9 @@ async function incrementViews(storeId: string) {
     await supabase.rpc('increment_store_views', { store_id: storeId })
 }
 
-export default async function StorePage({ params }: Props) {
+export default async function StorePage({ params, searchParams }: Props) {
     const { slug } = await params
+    const { preview, token } = await searchParams
     const supabase = await createClient()
 
     const { data: rawStore } = await supabase
@@ -136,20 +139,44 @@ export default async function StorePage({ params }: Props) {
     // React theme so a template bug can never take a live store down. (The
     // fallback is a sub-project-1 safety net; removed when React is retired.)
     try {
+        const homePage = await getPublishedPage(store.id, '')
+        let sections = homePage?.sections?.length
+            ? homePage.sections
+            : defaultHomeSections(rawStore.type as string | null | undefined)
+
+        // Is this the Editor's preview? A VALID token is the only way to be one.
+        // This gates both the unsaved-copy override and the `editing` render flag,
+        // so a visitor cannot get edit affordances by guessing a query parameter.
+        const editing =
+            !!token &&
+            !!process.env.PREVIEW_SECRET &&
+            verifyPreview(token, store.id, process.env.PREVIEW_SECRET)
+
+        // The Editor previews UNSAVED copy. Honoured only with that same token:
+        // otherwise a crafted URL would let anyone serve a merchant's customers a
+        // re-worded version of their own site.
+        if (editing && preview) {
+            try {
+                const parsed = JSON.parse(Buffer.from(preview, 'base64url').toString('utf-8'))
+                if (Array.isArray(parsed)) sections = parsed
+            } catch {
+                // A malformed preview payload falls through to the real page.
+            }
+        }
+
         const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
         const context = {
             ...buildHomeContext({
                 store,
+                storeType: rawStore.type as string | null | undefined,
+                editing,
                 products,
                 collections,
                 featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
             }),
             campaigns,
         }
-        const homePage = await getPublishedPage(store.id, '')
-        const sections = homePage?.sections?.length
-            ? homePage.sections
-            : defaultHomeSections(rawStore.type as string | null | undefined)
+
         const html = await renderPage(sections, context)
         const isNgo = getVertical(rawStore.type as string | null | undefined).id === 'ngo'
         return (

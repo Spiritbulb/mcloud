@@ -1,8 +1,9 @@
 'use client'
 
 import { getVertical } from '@mcloud/verticals'
-import { ShoppingBag, Heart, User } from 'lucide-react'
+import { ShoppingBag, Heart, User, Menu, X } from 'lucide-react'
 import Link from 'next/link'
+import { useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
@@ -14,6 +15,12 @@ interface Store {
     slug: string
     logo_url: string | null
     type?: string | null
+}
+
+/** A published page of this store, linked from the nav. */
+interface NavPage {
+    slug: string
+    title: string
 }
 
 function WishlistBadge({ count }: { count: number }) {
@@ -28,11 +35,12 @@ function WishlistBadge({ count }: { count: number }) {
     )
 }
 
-export default function StoreNav({ store }: { store: Store }) {
+export default function StoreNav({ store, pages = [] }: { store: Store; pages?: NavPage[] }) {
     const { cartItems } = useCart()
     const { user } = useCustomerAuth()
     const { wishlistIds } = useWishlist()
     const href = useStoreHref()
+    const [menuOpen, setMenuOpen] = useState(false)
     // Non-commerce verticals (NGO) have no basket or customer account — donations
     // go through the campaigns section, so the shop chrome is dead weight there.
     const commerce = getVertical(store.type).commerce
@@ -58,6 +66,41 @@ export default function StoreNav({ store }: { store: Store }) {
                         </div>
                     )}
                 </Link>
+
+                {/* The store's own published pages (About, Contact, ...). Without
+                    these, an authored page is reachable only by typing its URL.
+                    On phones they move into the drawer below: most of this
+                    audience is on mobile, so they must not simply vanish. */}
+                {pages.length > 0 && (
+                    <div className="hidden md:flex items-center gap-6 mr-auto ml-8">
+                        {pages.map((p) => (
+                            <Link
+                                key={p.slug}
+                                href={href(`/p/${p.slug}`)}
+                                className="text-sm transition-opacity hover:opacity-70"
+                                style={{ color: 'var(--sf-foreground)' }}
+                            >
+                                {p.title}
+                            </Link>
+                        ))}
+                    </div>
+                )}
+
+                {pages.length > 0 && (
+                    <button
+                        type="button"
+                        onClick={() => setMenuOpen((o) => !o)}
+                        className="md:hidden w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70 mr-auto ml-2 bg-transparent border-0 p-0 appearance-none cursor-pointer"
+                        // A control, not a call to action: it must not compete with
+                        // the Donate CTA. Without an explicit transparent background
+                        // the button picks up the theme accent and reads as primary.
+                        style={{ color: 'var(--sf-foreground)', background: 'transparent' }}
+                        aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+                        aria-expanded={menuOpen}
+                    >
+                        {menuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+                    </button>
+                )}
 
                 {commerce && (
                     <div className="flex items-center gap-1">
@@ -100,6 +143,32 @@ export default function StoreNav({ store }: { store: Store }) {
                 )}
 
             </div>
+
+            {/* Mobile drawer. This is the only way to reach an authored page on a
+                phone, so it is not optional chrome. */}
+            {menuOpen && pages.length > 0 && (
+                <div
+                    className="md:hidden border-t"
+                    style={{
+                        borderColor: 'var(--sf-border)',
+                        backgroundColor: 'var(--sf-background)',
+                    }}
+                >
+                    <div className="container mx-auto px-4 py-2 flex flex-col">
+                        {pages.map((p) => (
+                            <Link
+                                key={p.slug}
+                                href={href(`/p/${p.slug}`)}
+                                onClick={() => setMenuOpen(false)}
+                                className="py-3 text-sm transition-opacity hover:opacity-70"
+                                style={{ color: 'var(--sf-foreground)' }}
+                            >
+                                {p.title}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )}
         </nav>
     )
 }
