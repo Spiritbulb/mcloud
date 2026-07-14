@@ -169,9 +169,10 @@ export default function SettingsShell({
                     </div>
                     <main className={cn(
                         'flex-1 min-h-0',
-                        // The Design tab (id 'appearance'; /settings/design is only a
-                        // redirect alias) manages its own scrolling and bleeds to the edge.
-                        activeId === 'appearance'
+                        // The Editor (rail + preview iframe) and the Design tab (id
+                        // 'appearance'; /settings/design is only a redirect alias)
+                        // manage their own scrolling and bleed to the edge.
+                        activeId === 'appearance' || activeId === 'editor'
                             ? 'overflow-hidden'
                             : 'overflow-y-auto px-6 md:px-10 py-8'
                     )}>

@@ -30,7 +30,9 @@ const SITE: NavSection = {
   tabs: [
     { id: 'home', label: 'Overview', icon: 'home' },
     { id: 'general', label: 'General', icon: 'storefront' },
-    { id: 'appearance', label: 'Design', icon: 'dashboard_customize' },
+    // One Editor: theme and content are the same job ("make my site look right").
+    // Future customisation surfaces land here as rail entries, not as new nav tabs.
+    { id: 'editor', label: 'Editor', icon: 'edit_note' },
   ],
 }
 
@@ -84,13 +86,11 @@ const COMMERCE: NavSection = {
 /**
  * Non-commerce verticals: no catalog, no customer accounts. Donations ARE
  * orders (tagged metadata.isDonation), so the orders tab stays, relabelled.
+ *
+ * There is no separate Content group: content authoring is a rail entry inside
+ * the Editor, because "write my mission" and "pick my colours" are one job to a
+ * merchant, and splitting them across two tabs made them two.
  */
-const CONTENT: NavSection = {
-  id: 'content',
-  label: 'Content',
-  tabs: [{ id: 'content', label: 'Content', icon: 'edit_note' }],
-}
-
 const DONATIONS: NavSection = {
   id: 'donations',
   label: 'Donations',
@@ -105,12 +105,18 @@ const DONATIONS: NavSection = {
 export function sectionsFor(vertical: Vertical): NavSection[] {
   return vertical.commerce
     ? [SITE, CATALOG, COMMERCE, ADVANCED, ACCOUNT]
-    : [SITE, CONTENT, DONATIONS, ADVANCED, ACCOUNT]
+    : [SITE, DONATIONS, ADVANCED, ACCOUNT]
 }
 
-/** Every tab id any vertical can show. Keeps routing/active-tab exhaustive. */
+/**
+ * Every tab id any vertical can show. Keeps routing/active-tab exhaustive.
+ *
+ * `appearance` and `content` are no longer in any nav group, but their routes
+ * still exist and are still reachable by URL. They stay listed until those pages
+ * are retired, so nothing that resolves a tab id from a path falls off the type.
+ */
 export const ALL_TAB_IDS = [
-  'home', 'general', 'appearance',
+  'home', 'general', 'appearance', 'editor',
   'products', 'services',
   'orders', 'analytics', 'customers', 'blog',
   'content',
