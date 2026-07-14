@@ -28,12 +28,14 @@ export default function LayoutWrapper({
     children,
     store,
     cssVars,
-    settings
+    settings,
+    pages = [],
 }: {
     children: React.ReactNode
     store: any
     cssVars: React.CSSProperties
     settings: any
+    pages?: { slug: string; title: string }[]
 }) {
     const pathname = usePathname()
 
@@ -52,7 +54,7 @@ export default function LayoutWrapper({
             data-sf-css
             style={cssVars}
         >
-            <StoreNav store={store} />
+            <StoreNav store={store} pages={pages} />
             {children}
             <StoreFooter store={store} settings={settings} />
             {commerce && (

@@ -6,6 +6,7 @@ import { WishlistProvider } from '@/contexts/WishlistContext'
 import { createClient } from '@mcloud/db/server'
 import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
+import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
@@ -76,6 +77,10 @@ export default async function StoreLayout({
 
     const theme = await getStoreTheme(slug)
     const store = await getStore(slug)
+
+    // The store's own published pages, linked from the nav. Without this an
+    // authored page (About, Contact) is reachable only by typing its URL.
+    const navPages = store?.id ? await getNavPages(store.id) : []
     const headersList = await headers()
     const bannerScriptB64 = headersList.get('x-inject-owner-banner')
     const bannerScript = bannerScriptB64
@@ -125,7 +130,7 @@ export default async function StoreLayout({
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>
                     <CartProvider storeSlug={slug}>
-                        <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars}>
+                        <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars} pages={navPages}>
                             {bannerScript && (
                                 <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
                             )}

@@ -10,13 +10,32 @@
   {%- assign has_slides = true -%}
 {%- endif -%}
 
+{%- comment -%}
+  A non-commerce site has no products to scroll to and nothing to "shop". When
+  campaigns are present the hero CTA opens the donate flow instead, reusing the
+  same .sf-donate hook the campaign cards use. `campaigns` is only in the
+  context for verticals that have them, so this is self-gating.
+{%- endcomment -%}
+{%- assign is_giving = false -%}
+{%- if campaigns and campaigns.size > 0 -%}
+  {%- assign is_giving = true -%}
+  {%- assign lead_campaign = campaigns[0] -%}
+{%- endif -%}
+
 {%- unless has_slides -%}
   {%- assign slide_title = store.name -%}
   {%- assign slide_subtitle = store.description -%}
   {%- assign slide_image = null -%}
-  {%- assign slide_accent = 'New Arrivals' -%}
-  {%- assign slide_btn = 'Shop now' -%}
+  {%- if is_giving -%}
+    {%- assign slide_accent = null -%}
+    {%- assign slide_btn = 'Donate' -%}
+  {%- else -%}
+    {%- assign slide_accent = 'New Arrivals' -%}
+    {%- assign slide_btn = 'Shop now' -%}
+  {%- endif -%}
   {%- if settings -%}
+    {%- if settings.missionHeadline -%}{%- assign slide_title = settings.missionHeadline -%}{%- endif -%}
+    {%- if settings.mission -%}{%- assign slide_subtitle = settings.mission -%}{%- endif -%}
     {%- if settings.heroTitle -%}{%- assign slide_title = settings.heroTitle -%}{%- endif -%}
     {%- if settings.heroSubtitle -%}{%- assign slide_subtitle = settings.heroSubtitle -%}{%- endif -%}
     {%- if settings.heroImage -%}{%- assign slide_image = settings.heroImage -%}{%- endif -%}
@@ -152,25 +171,39 @@
               {{ slide_subtitle }}
             </p>
           {%- endif -%}
-          <a
-            href="#products"
-            class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
-            onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
-          >
-            {{ slide_btn }}
-            <svg
-              width="14"
-              height="14"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              stroke-linejoin="round"
+          {%- if is_giving -%}
+            <button
+              class="sf-btn-primary sf-donate sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
+              data-campaign-id="{{ lead_campaign.id }}"
+              data-campaign-title="{{ lead_campaign.title }}"
+              data-presets="{{ lead_campaign.presets | join: ',' }}"
+              data-allow-custom="{% if lead_campaign.allowCustomAmount == false %}false{% else %}true{% endif %}"
             >
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </a>
+              {{ slide_btn }}
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </button>
+          {%- else -%}
+            <a
+              href="#products"
+              class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
+              onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
+            >
+              {{ slide_btn }}
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          {%- endif -%}
         </div>
       </div>
     </div>

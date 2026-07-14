@@ -25,11 +25,13 @@ assert.equal(shopHome.title, 'Home')
 assert.equal(shopHome.position, 0)
 assert.deepEqual(shopHome.sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
 
-// ngo default pages: one Home page with the four NGO sections in order
+// ngo default pages: one Home page with the NGO sections in order. The hero
+// leads (mission headline over the site image, with a Donate CTA), so there is
+// no separate `mission` section repeating it underneath.
 const ngoHome = VERTICALS.ngo.defaultPages.find(p => p.slug === '')
 assert.ok(ngoHome, 'ngo has a home page (slug "")')
 assert.equal(ngoHome.title, 'Home')
 assert.equal(ngoHome.position, 0)
-assert.deepEqual(ngoHome.sections.map(s => s.type), ['mission', 'programs', 'impact', 'campaigns', 'contact'])
+assert.deepEqual(ngoHome.sections.map(s => s.type), ['hero', 'programs', 'impact', 'campaigns', 'contact'])
 
 console.log('verticals/index.test.ts: all assertions passed')

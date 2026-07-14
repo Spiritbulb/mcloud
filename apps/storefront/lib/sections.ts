@@ -39,7 +39,9 @@ export interface SectionDef {
 export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   hero: {
     templateKey: 'classic/sections/hero',
-    pickContext: (ctx) => ({ store: ctx.store }),
+    // Campaigns too: on a non-commerce site the hero CTA opens the donate flow
+    // for the lead campaign instead of scrolling to products.
+    pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
   },
   collections: {
     templateKey: 'classic/sections/collections-grid',

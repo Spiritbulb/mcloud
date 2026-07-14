@@ -27,8 +27,10 @@ for (const t of ['mission', 'programs', 'impact', 'contact'] as const) {
   assert.deepEqual(Object.keys(SECTION_REGISTRY[t].pickContext(ctx)), ['store'], `${t} picks only store`)
 }
 
-// pickContext returns the right keys for commerce sections
-assert.deepEqual(Object.keys(SECTION_REGISTRY.hero.pickContext(ctx)), ['store'])
+// The hero needs campaigns as well as the store: on a non-commerce site its CTA
+// opens the donate flow for the lead campaign rather than scrolling to products.
+// Without campaigns in its context that button silently never renders.
+assert.deepEqual(Object.keys(SECTION_REGISTRY.hero.pickContext(ctx)).sort(), ['campaigns', 'store'])
 assert.deepEqual(Object.keys(SECTION_REGISTRY.collections.pickContext(ctx)).sort(), ['collections', 'store'])
 const feat = SECTION_REGISTRY.featured.pickContext(ctx)
 assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps featuredProducts -> products')
@@ -39,7 +41,7 @@ assert.equal(SECTION_REGISTRY.campaigns.templateKey, 'classic/sections/campaigns
 assert.deepEqual(Object.keys(SECTION_REGISTRY.campaigns.pickContext({
   store: { slug: 's' }, products: [], collections: [], featuredProducts: [], campaigns: [{ id: 'c1' }],
 } as any)).sort(), ['campaigns', 'store'])
-assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['mission', 'programs', 'impact', 'campaigns', 'contact'])
+assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['hero', 'programs', 'impact', 'campaigns', 'contact'])
 
 // defaultHomeSections is vertical-aware
 assert.deepEqual(defaultHomeSections('shop').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
