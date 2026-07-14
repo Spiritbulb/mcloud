@@ -272,7 +272,7 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
             {/* Footer — period label + analytics link */}
             <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
-                    Last 7 days · store visits → purchases
+                    Last 7 days · site visits to purchases
                 </p>
                 <button
                     onClick={onViewAnalytics}
@@ -412,22 +412,34 @@ function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
 
 // ─── Welcome hero ─────────────────────────────────────────────────────────────
 
-function WelcomeHero({ store, loading, onVisit }: {
-    store?: StoreOverview; loading: boolean; onVisit: () => void
+function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
+    // totalRaised lives on the OverviewData payload, not on the store row, so it
+    // is passed in rather than read off `store`.
+    store?: StoreOverview; totalRaised?: number; loading: boolean; onVisit: () => void
 }) {
+    // A non-commerce site does not sell or earn. It raises.
+    const commerce = getVertical(store?.type).commerce
+    const raised = totalRaised > 0
     const hasRevenue = !!store && store.revenue_total > 0
+    const hasMoney = commerce ? hasRevenue : raised
+
     const headline = loading
         ? null
         : !store
-            ? 'Your store'
-            : hasRevenue
-                ? `${store.name} is making money.`
-                : `${store.name} is ready to sell.`
+            ? 'Your site'
+            : commerce
+                ? (hasRevenue ? `${store.name} is making money.` : `${store.name} is ready to sell.`)
+                : (raised ? `${store.name} is raising money.` : `${store.name} is ready for donations.`)
+
     const sub = loading
         ? null
-        : hasRevenue
-            ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
-            : 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
+        : hasMoney
+            ? commerce
+                ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
+                : `You've raised ${fmt(totalRaised, store!.currency)} so far. Keep the momentum going.`
+            : commerce
+                ? 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
+                : 'Add a campaign, share your link, and take your first donation today. We handle the hosting, SSL, and uptime.'
 
     return (
         <div className="relative overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
@@ -488,7 +500,7 @@ function WelcomeHero({ store, loading, onVisit }: {
                             'text-[12px] font-semibold hover:opacity-90 transition-opacity'
                         )}
                     >
-                        Visit store
+                        Visit site
                         <MSO icon="open_in_new" className="text-[15px]" />
                     </a>
                 )}
@@ -516,7 +528,7 @@ function ShareStore({ slug }: { slug: string }) {
                 <MSO icon="share" className="text-[18px] text-[var(--md-sys-color-primary)]" fill={1} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your store</p>
+                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your site</p>
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{url}</p>
             </div>
             <button
@@ -644,7 +656,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
 
             {/* ── Welcome hero ─────────────────────────────────────────────── */}
             <div className="animate-rise">
-                <WelcomeHero store={store} loading={loading} onVisit={() => { }} />
+                <WelcomeHero store={store} totalRaised={data?.total_raised ?? 0} loading={loading} onVisit={() => { }} />
             </div>
 
             {/* ── KPIs ─────────────────────────────────────────────────────── */}

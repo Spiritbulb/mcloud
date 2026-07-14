@@ -16,7 +16,7 @@ export type OrgNavTab = {
 
 export const ORG_TABS: readonly OrgNavTab[] = [
     { id: 'home',         label: 'Overview',     icon: 'home' },
-    { id: 'stores',       label: 'Stores',        icon: 'storefront' },
+    { id: 'stores',       label: 'Sites',         icon: 'storefront' },
     { id: 'trading',      label: 'Trading Apps',  icon: 'candlestick_chart' },
     { id: 'members',      label: 'Members',       icon: 'group' },
     { id: 'integrations', label: 'Integrations',  icon: 'link' },
