@@ -76,13 +76,27 @@ export function heroSlides(ctx: Ctx): HeroSlide[] {
 }
 
 /**
- * The slides a merchant has actually AUTHORED, for the Editor to write back.
+ * The slides a merchant has actually AUTHORED — what the Editor reports, and what
+ * it writes back.
  *
- * This is what makes the legacy shape disappear: the first time a merchant edits
- * their hero, the Editor saves this list as heroSlides, and the flat keys stop
- * being consulted. It differs from heroSlides() in that it never substitutes a
- * default — saving "Shop now" as though the merchant typed it would freeze a
- * default into their record, the same trap the text editor guards against.
+ * This is the seam where the legacy shape disappears: the first time a merchant
+ * edits their hero, the Editor saves this list as heroSlides and the flat keys stop
+ * being consulted. Which is exactly why it must carry EVERYTHING the merchant
+ * wrote, through the whole fallback chain the renderer uses.
+ *
+ * It did not, and it cost a real store its hero copy. KFS's hero text lives in
+ * missionHeadline/mission (the renderer falls back to those), but this function
+ * only looked at heroTitle/heroSubtitle. So saving an image wrote
+ * heroSlides[0] = { image, title: '', subtitle: '' } — and because heroSlides now
+ * EXISTED, the renderer stopped consulting mission. The text vanished, and an empty
+ * field has nothing to click, so it could not be typed back.
+ *
+ * It still differs from heroSlides() in the one way that matters: it never
+ * substitutes a DEFAULT. Saving "Shop now" or the store's name as though the
+ * merchant had typed it would freeze a fallback into their record — the same trap
+ * the text editor guards against. A fallback the merchant WROTE (mission) is their
+ * content and must be carried; a fallback the THEME invented (store.name, "Donate")
+ * is not.
  */
 export function authoredSlides(settings: Record<string, unknown> | null | undefined): HeroSlide[] {
     const s = settings ?? {}
@@ -98,10 +112,14 @@ export function authoredSlides(settings: Record<string, unknown> | null | undefi
                 buttonText: str(x.buttonText),
             }))
     }
+    // The legacy shape. Mirrors the renderer's precedence exactly:
+    //   heroTitle    > missionHeadline
+    //   heroSubtitle > mission
+    // Both are the merchant's own words, so both must survive the migration.
     return [{
         image: str(s.heroImage),
-        title: str(s.heroTitle),
-        subtitle: str(s.heroSubtitle),
+        title: str(s.heroTitle) || str(s.missionHeadline),
+        subtitle: str(s.heroSubtitle) || str(s.mission),
         accent: str(s.heroAccent),
         buttonText: str(s.heroButtonText),
     }]

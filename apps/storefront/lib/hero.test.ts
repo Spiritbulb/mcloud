@@ -78,6 +78,53 @@ const authoredReal = authoredSlides({ heroTitle: 'Mine', heroImage: 'i.jpg' })
 assert.equal(authoredReal[0].title, 'Mine')
 assert.equal(authoredReal[0].image, 'i.jpg')
 
+// ── THE DATA-LOSS BUG ─────────────────────────────────────────────────────────
+//
+// authoredSlides is what the Editor WRITES BACK, so it must carry everything the
+// merchant wrote — through the WHOLE fallback chain the renderer uses.
+//
+// It did not, and a real store lost its hero copy. KFS's hero text lives in
+// missionHeadline/mission (the renderer falls back to those). This function only
+// read heroTitle/heroSubtitle, so saving an image wrote
+//   heroSlides[0] = { image, title: '', subtitle: '' }
+// and because heroSlides now EXISTED, the renderer stopped consulting mission. The
+// copy vanished — and an empty field has nothing to click, so it could not be typed
+// back either.
+const fromMission = authoredSlides({
+  missionHeadline: 'Our Voices, Our Stories',
+  mission: 'Redefining feminism for African women.',
+})
+assert.equal(
+  fromMission[0].title, 'Our Voices, Our Stories',
+  'hero copy stored as missionHeadline SURVIVES the migration to heroSlides',
+)
+assert.equal(
+  fromMission[0].subtitle, 'Redefining feminism for African women.',
+  'and so does the mission statement — this is the bug that ate a real hero',
+)
+
+// The explicit hero keys still win over the mission ones, matching the renderer.
+const bothSet = authoredSlides({
+  heroTitle: 'Explicit', missionHeadline: 'Mission',
+  heroSubtitle: 'Sub', mission: 'Statement',
+})
+assert.equal(bothSet[0].title, 'Explicit', 'heroTitle beats missionHeadline')
+assert.equal(bothSet[0].subtitle, 'Sub', 'heroSubtitle beats mission')
+
+// But a THEME default is still never written back. The distinction is the point:
+// a fallback the MERCHANT wrote (mission) is their content and must be carried;
+// one the THEME invented (the store's name, "Donate") is not.
+const noContent = authoredSlides({})
+assert.equal(noContent[0].title, '', 'the store name is not the merchant\'s title')
+assert.equal(noContent[0].buttonText, '', 'and "Donate" is not their button text')
+
+// authoredSlides and heroSlides must agree on WHICH FIELD they read, or the Editor
+// reports one thing and the page shows another.
+const rendered2 = heroSlides({ ...base, settings: { missionHeadline: 'H', mission: 'M' } })
+const authored2 = authoredSlides({ missionHeadline: 'H', mission: 'M' })
+assert.equal(rendered2[0].title, authored2[0].title, 'renderer and editor read the same title')
+assert.equal(rendered2[0].subtitle, authored2[0].subtitle, 'and the same subtitle')
+
 // ── Junk in the array does not crash the hero ────────────────────────────────
 const junk = heroSlides({ ...base, settings: { heroSlides: [null, 'nope', { title: 'Real' }] } })
 assert.equal(junk.length, 1, 'non-object slides are dropped, not rendered')

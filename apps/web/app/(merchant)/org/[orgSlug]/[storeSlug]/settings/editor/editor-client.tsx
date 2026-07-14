@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X, Palette, FileText, Layers } from 'lucide-react'
 import { SECTION_REGISTRY } from '../../../../../../../../storefront/lib/sections'
+import { authoredSlides } from '../../../../../../../../storefront/lib/hero'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
 import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../actions'
 import SettingsFields from './settings-fields'
@@ -50,16 +51,17 @@ type PickTarget =
 /**
  * The current value of a repeated list, ready to be edited.
  *
- * heroSlides is the special one, and it is the whole point of this function. The
- * hero used to be stored TWO ways — a heroSlides array, or flat heroTitle /
- * heroSubtitle / heroImage keys — and the template branched between them. A store
- * on the legacy shape has NO heroSlides, so an edit to heroSlides[0] would land in
- * an empty array and be dropped.
+ * heroSlides is the special one. The hero used to be stored TWO ways — a heroSlides
+ * array, or flat keys the renderer falls back through — so a legacy store has NO
+ * heroSlides and an edit to heroSlides[0] would land in an empty array and vanish.
+ * It is therefore normalised into a one-slide list the first time it is touched.
  *
- * So a legacy hero is normalised into a one-slide list the first time it is
- * touched. That is the seam where the old shape disappears: the storefront still
- * READS the flat keys (nothing breaks), but the moment a merchant edits, the store
- * is written in the new shape and the flat keys stop mattering.
+ * That normalisation is authoredSlides(), NOT a copy of it. This function used to
+ * re-implement the fallback chain and got it wrong: it read heroTitle/heroSubtitle
+ * but not missionHeadline/mission, so a store whose hero text came from the mission
+ * fields had it silently dropped the moment an image was saved — and because
+ * heroSlides then existed, the renderer stopped falling back, so the copy was gone
+ * with nothing left to click. One owner for that chain, in lib/hero.ts.
  */
 function listFor(
     list: string,
@@ -70,18 +72,8 @@ function listFor(
     if (Array.isArray(draft[list])) return [...(draft[list] as unknown[])]
     // Saved in the modern shape.
     if (Array.isArray(saved[list])) return [...(saved[list] as unknown[])]
-
-    // A legacy hero: fold the flat keys into a single slide.
-    if (list === 'heroSlides') {
-        const s = (k: string) => (typeof saved[k] === 'string' ? (saved[k] as string) : '')
-        return [{
-            image: s('heroImage'),
-            title: s('heroTitle'),
-            subtitle: s('heroSubtitle'),
-            accent: s('heroAccent'),
-            buttonText: s('heroButtonText'),
-        }]
-    }
+    // A legacy hero: the renderer's own normalisation, so nothing is lost.
+    if (list === 'heroSlides') return authoredSlides(saved)
     return []
 }
 
