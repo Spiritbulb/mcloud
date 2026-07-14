@@ -11,10 +11,20 @@
 {%- endif -%}
 
 {%- comment -%}
-  A non-commerce site has no products to scroll to and nothing to "shop". When
-  campaigns are present the hero CTA opens the donate flow instead, reusing the
-  same .sf-donate hook the campaign cards use. `campaigns` is only in the
-  context for verticals that have them, so this is self-gating.
+  Two SEPARATE questions, which an earlier version conflated:
+
+    store.commerce      does this site sell? (the vertical)
+    campaigns.size > 0  is there a campaign to donate to? (the data)
+
+  Inferring the first from the second is wrong: an NGO that has not added a
+  campaign yet is still an NGO, and inferring "no campaigns, therefore a shop"
+  showed it "New Arrivals" and a "Shop now" button scrolling to a #products
+  section it does not have.
+
+  So the vertical decides the COPY, and the data decides the CTA's BEHAVIOUR:
+  with a campaign the button opens the donate flow (reusing the same .sf-donate
+  hook the campaign cards use); without one it falls back to a link to the
+  giving page rather than a dead scroll.
 {%- endcomment -%}
 {%- assign is_giving = false -%}
 {%- if campaigns and campaigns.size > 0 -%}
@@ -26,12 +36,20 @@
   {%- assign slide_title = store.name -%}
   {%- assign slide_subtitle = store.description -%}
   {%- assign slide_image = null -%}
-  {%- if is_giving -%}
+  {%- if store.commerce -%}
+    {%- assign slide_accent = 'New Arrivals' -%}
+    {%- assign slide_btn = 'Shop now' -%}
+  {%- elsif is_giving -%}
     {%- assign slide_accent = null -%}
     {%- assign slide_btn = 'Donate' -%}
   {%- else -%}
-    {%- assign slide_accent = 'New Arrivals' -%}
-    {%- assign slide_btn = 'Shop now' -%}
+    {%- comment -%}
+      A giving site with no campaign yet: "Donate" would be a promise the site
+      cannot keep, so ask for contact instead. The merchant can override this
+      with the section's own Button text.
+    {%- endcomment -%}
+    {%- assign slide_accent = null -%}
+    {%- assign slide_btn = 'Get in touch' -%}
   {%- endif -%}
   {%- if settings -%}
     {%- if settings.missionHeadline -%}{%- assign slide_title = settings.missionHeadline -%}{%- endif -%}
@@ -172,6 +190,7 @@
             </p>
           {%- endif -%}
           {%- if is_giving -%}
+            {%- comment -%} There IS a campaign: the CTA opens the donate flow. {%- endcomment -%}
             <button
               class="sf-btn-primary sf-donate sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
               data-campaign-id="{{ lead_campaign.id }}"
@@ -188,13 +207,34 @@
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
             </button>
-          {%- else -%}
+          {%- elsif store.commerce -%}
+            {%- comment -%} A shop: scroll to the products on this page. {%- endcomment -%}
             <a
               href="#products"
               class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
               onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
             >
               {{ slide_btn }}
+              <svg
+                width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round"
+              >
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </a>
+          {%- else -%}
+            {%- comment -%}
+              A giving site with no campaign yet. Scrolling to #products would be a
+              dead click (there is no such section), so send them to what this site
+              DOES have: the rest of the page.
+            {%- endcomment -%}
+            <a
+              href="#contact"
+              class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
+              onclick="document.querySelector('.sf-contact')?.scrollIntoView({behavior:'smooth'}); return false;"
+            >
+              {{ slide_btn | default: 'Get in touch' }}
               <svg
                 width="14" height="14" viewBox="0 0 24 24" fill="none"
                 stroke="currentColor" stroke-width="2"

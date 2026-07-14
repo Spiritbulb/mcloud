@@ -106,3 +106,46 @@ assert.ok(
 )
 
 console.log('render-page.test.ts: editor anchor assertions passed')
+
+// ── The hero asks the VERTICAL, not the data ──────────────────────────────────
+//
+// It used to infer "is this a giving site?" from `campaigns.size > 0`. That is a
+// different question, and it got the answer wrong for the commonest NGO state:
+// signed up, no campaign yet. Kisumu Feminists Society rendered "New Arrivals"
+// and a "Shop now" button scrolling to a #products section it does not have.
+//
+// So: store.commerce decides the COPY, campaigns decide the CTA's BEHAVIOUR.
+// All four combinations are pinned, because collapsing them is what broke it.
+
+const heroCtx = (commerce: boolean, campaigns: any[] = []) => ({
+  store: { id: 's', name: 'N', slug: 's', currency: 'KES', settings: {}, commerce },
+  products: [], collections: [], featuredProducts: [], campaigns,
+})
+const CAMPAIGN = [{ id: 'c', title: 'T', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }]
+
+// 1. NGO, no campaign yet — THE BUG. No retail copy, no dead scroll target.
+const ngoBare = await renderPage([{ type: 'hero' }], heroCtx(false))
+assert.ok(!ngoBare.includes('New Arrivals'), 'NGO with no campaign is not sold "New Arrivals"')
+assert.ok(!ngoBare.includes('Shop now'), 'NGO with no campaign is not told to "Shop now"')
+assert.ok(!ngoBare.includes('#products'), 'no dead scroll to a #products section it lacks')
+assert.ok(ngoBare.includes('Get in touch'), 'it asks for contact instead')
+assert.ok(!ngoBare.includes('sf-donate'), 'and does not offer a donate flow it cannot fulfil')
+
+// 2. NGO with a campaign — the donate flow.
+const ngoGiving = await renderPage([{ type: 'hero' }], heroCtx(false, CAMPAIGN))
+assert.ok(ngoGiving.includes('Donate'), 'NGO with a campaign gets Donate')
+assert.ok(ngoGiving.includes('sf-donate'), 'wired to the donate flow')
+assert.ok(!ngoGiving.includes('New Arrivals'), 'still no retail copy')
+
+// 3. Shop — unregressed.
+const shop = await renderPage([{ type: 'hero' }], heroCtx(true))
+assert.ok(shop.includes('New Arrivals'), 'a shop still gets New Arrivals')
+assert.ok(shop.includes('Shop now'), 'a shop still gets Shop now')
+assert.ok(shop.includes('#products'), 'a shop still scrolls to its products')
+
+// 4. A shop is a shop even if some campaign data exists: the VERTICAL decides
+//    the copy. (Guards the inverse of the original bug.)
+const shopWithData = await renderPage([{ type: 'hero' }], heroCtx(true, CAMPAIGN))
+assert.ok(shopWithData.includes('New Arrivals'), 'commerce copy is not overridden by campaign data')
+
+console.log('render-page.test.ts: hero vertical-gating assertions passed')

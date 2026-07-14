@@ -143,6 +143,7 @@ export default async function StorePage({ params, searchParams }: Props) {
         const context = {
             ...buildHomeContext({
                 store,
+                storeType: rawStore.type as string | null | undefined,
                 products,
                 collections,
                 featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
