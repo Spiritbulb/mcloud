@@ -8,6 +8,7 @@ import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
 import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
+import PreviewListener from '@/components/store/preview-listener'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 
@@ -126,6 +127,10 @@ export default async function StoreLayout({
             {fontHref && (
                 <link rel="stylesheet" href={fontHref} />
             )}
+            {/* Applies unsaved theme values from the Editor. Inert unless framed by
+                the admin origin: a real visitor is never framed, so for them this
+                listener never activates. */}
+            <PreviewListener adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
             <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>

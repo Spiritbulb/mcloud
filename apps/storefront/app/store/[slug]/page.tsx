@@ -9,6 +9,7 @@ import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { defaultHomeSections } from '@/lib/sections'
+import { verifyPreview } from '@/lib/preview'
 import { getVertical } from '@mcloud/verticals'
 import { DonateIsland } from './DonateIsland'
 
@@ -16,6 +17,7 @@ export const revalidate = 60
 
 interface Props {
     params: Promise<{ slug: string }>
+    searchParams: Promise<{ preview?: string; token?: string }>
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -53,8 +55,9 @@ async function incrementViews(storeId: string) {
     await supabase.rpc('increment_store_views', { store_id: storeId })
 }
 
-export default async function StorePage({ params }: Props) {
+export default async function StorePage({ params, searchParams }: Props) {
     const { slug } = await params
+    const { preview, token } = await searchParams
     const supabase = await createClient()
 
     const { data: rawStore } = await supabase
@@ -147,9 +150,25 @@ export default async function StorePage({ params }: Props) {
             campaigns,
         }
         const homePage = await getPublishedPage(store.id, '')
-        const sections = homePage?.sections?.length
+        let sections = homePage?.sections?.length
             ? homePage.sections
             : defaultHomeSections(rawStore.type as string | null | undefined)
+
+        // The Editor previews UNSAVED copy. Honoured only with a token proving the
+        // caller may preview THIS store: otherwise a crafted URL would let anyone
+        // serve a merchant's customers a re-worded version of their own site.
+        if (preview && token) {
+            const secret = process.env.PREVIEW_SECRET
+            if (secret && verifyPreview(token, store.id, secret)) {
+                try {
+                    const parsed = JSON.parse(Buffer.from(preview, 'base64url').toString('utf-8'))
+                    if (Array.isArray(parsed)) sections = parsed
+                } catch {
+                    // A malformed preview payload falls through to the real page.
+                }
+            }
+        }
+
         const html = await renderPage(sections, context)
         const isNgo = getVertical(rawStore.type as string | null | undefined).id === 'ngo'
         return (
