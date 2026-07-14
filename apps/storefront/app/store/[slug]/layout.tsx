@@ -4,6 +4,7 @@ import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
 import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import { createClient } from '@mcloud/db/server'
+import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import type { Metadata } from 'next'
@@ -108,9 +109,18 @@ export default async function StoreLayout({
     const onCustomDomain = isCustomDomainHost(host)
     const basePath = onCustomDomain ? '' : `/store/${slug}`
 
+    // A theme names its fonts, but naming one does not make it render: without a
+    // webfont the browser silently falls back (a store asking for Quicksand got
+    // serif). Pull whatever the theme names from Google Fonts so the choice is
+    // real. System stacks are skipped since they need no fetch.
+    const fontHref = googleFontsHref([theme?.heading_font, theme?.body_font])
+
     return (
         // CustomerAuthProvider has no server deps — sits at the top
         <CustomerAuthProvider>
+            {fontHref && (
+                <link rel="stylesheet" href={fontHref} />
+            )}
             <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>
