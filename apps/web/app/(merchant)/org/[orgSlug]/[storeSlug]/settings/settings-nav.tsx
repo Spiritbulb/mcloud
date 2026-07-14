@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { cn } from '@mcloud/ui/utils'
+import { storefrontDisplayUrl } from '@/lib/storefront-url'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -356,7 +357,7 @@ function StoreSwitcher({
                         {store.name}
                     </span>
                     <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
-                        {store.custom_domain ? `www.${store.custom_domain}` : `shop.mcloud.co.ke/${store.slug}`}
+                        {store.custom_domain ? `www.${store.custom_domain}` : storefrontDisplayUrl(store.slug)}
                     </span>
                 </div>
                 {hasMultiple && (

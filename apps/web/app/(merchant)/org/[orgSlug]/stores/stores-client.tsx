@@ -1,5 +1,6 @@
 'use client'
 
+import { storefrontDisplayUrl } from '@/lib/storefront-url'
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
@@ -101,7 +102,7 @@ function CreateStoreDialog({ orgId, orgSlug, onCreated, onClose }: {
                             required
                             className="w-full h-11 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/30 px-4 text-[14px] text-[var(--md-sys-color-on-surface)] placeholder:text-[var(--md-sys-color-on-surface-variant)]/40 focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15 transition-all"
                         />
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">shop.mcloud.co.ke/{slug || '…'}</p>
+                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{storefrontDisplayUrl(slug || '…')}</p>
                     </div>
 
                     {error && (
@@ -193,7 +194,7 @@ function StoreCard({ store, orgSlug, canDelete, onDeleteClick }: {
                     <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
                     {store.is_pro && <MSO icon="workspace_premium" className="text-[14px] text-[var(--md-sys-color-primary)] shrink-0" fill={1} />}
                 </div>
-                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">shop.mcloud.co.ke/{store.slug}</p>
+                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{storefrontDisplayUrl(store.slug)}</p>
             </div>
             <div className="flex items-center gap-1">
                 <Link

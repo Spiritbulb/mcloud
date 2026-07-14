@@ -1,5 +1,7 @@
 'use client'
 
+import { siteHost } from '@/lib/storefront-url'
+
 // components/getting-started-drawer.tsx
 // Fixed overlay drawer — lives outside the shell's flex layout intentionally.
 // Triggered from SettingsHeader via onOpen prop passed down from SettingsShell.
@@ -51,7 +53,7 @@ export const WIZARD_STEPS: WizardStep[] = [
     {
         id: 'domain',
         title: 'Connect your domain',
-        description: 'Replace your shop.mcloud.co.ke/ URL with your own branded domain.',
+        description: `Replace your ${siteHost()}/ URL with your own branded domain.`,
         tab: 'domain',
         isDone: (s) => !!(s?.custom_domain_set || s?.custom_domain_verified),
     },

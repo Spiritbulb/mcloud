@@ -6,21 +6,38 @@
  * inside the app's verified scope). These helpers produce the canonical public
  * URL and force the link to open in the real browser / Custom Tab instead.
  *
- * Storefront URLs use the shop.mcloud.co.ke/{slug} structure. The /s/{slug}
- * form is kept as the TWA shortlink because it's out-of-scope for the Android
- * shell, causing it to open in the real browser, which then lands on shop.*.
+ * Sites live at app.mcloud.co.ke/{slug}. The /s/{slug} form is kept as the TWA
+ * shortlink because it's out-of-scope for the Android shell, causing it to open
+ * in the real browser, which then lands on the canonical host.
+ *
+ * It used to be shop.mcloud.co.ke — retail-flavoured, and wrong for the NGOs and
+ * portfolios the platform now hosts. `shop.` STILL RESOLVES and must keep doing
+ * so: it is a live production origin, and every merchant link, QR code and shared
+ * URL already out in the world points at it. Nothing is being turned off; `app.`
+ * is simply what we mint and display from now on.
+ *
+ * THIS IS THE ONLY PLACE THE HOST IS NAMED. It was hardcoded in eight files, which
+ * is how a rename becomes a search-and-replace across the UI with a decent chance
+ * of breaking a merchant's link to their own site. Import from here.
  */
 
-const SHOP_ORIGIN = "https://shop.mcloud.co.ke"
+/** Canonical public origin for merchant sites. Env-overridable per environment. */
+const SITE_ORIGIN =
+  process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://app.mcloud.co.ke"
 
-/** Absolute, canonical public URL for a store's storefront. */
+/** Absolute, canonical public URL for a site. */
 export function storefrontUrl(slug: string): string {
-  return `${SHOP_ORIGIN}/${slug}`
+  return `${SITE_ORIGIN}/${slug}`
 }
 
 /** Display form (no scheme) for showing the link in the UI. */
 export function storefrontDisplayUrl(slug: string): string {
-  return `shop.mcloud.co.ke/${slug}`
+  return `${SITE_ORIGIN.replace(/^https?:\/\//, "")}/${slug}`
+}
+
+/** Display form for the host alone, e.g. in placeholder or prefix text. */
+export function siteHost(): string {
+  return SITE_ORIGIN.replace(/^https?:\/\//, "")
 }
 
 /**
