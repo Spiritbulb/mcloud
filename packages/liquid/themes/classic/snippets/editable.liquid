@@ -22,4 +22,8 @@
   Inert outside the preview: nothing styles or scripts these attributes on the
   public site.
 {%- endcomment -%}
-data-mcloud-field="{{ field }}" data-mcloud-stored="{{ value | escape }}"
+{%- comment -%}
+  Emits NOTHING outside the editor: these attributes carry the merchant's stored
+  copy, and a visitor has no business receiving it.
+{%- endcomment -%}
+{%- if editing -%}data-mcloud-field="{{ field }}" data-mcloud-stored="{{ value | escape }}"{%- endif -%}

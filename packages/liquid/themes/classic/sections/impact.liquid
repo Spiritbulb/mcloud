@@ -7,16 +7,16 @@
 <section class="sf-impact sf-section-muted py-16 md:py-24">
   <div class="container mx-auto max-w-5xl px-6">
     <div class="mb-10 md:mb-14 text-center">
-      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', field: 'eyebrow', value: section.eyebrow %}>
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', editing: store.editing, field: 'eyebrow', value: section.eyebrow %}>
         {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', field: 'heading', value: section.heading %}>{{ heading }}</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', editing: store.editing, field: 'heading', value: section.heading %}>{{ heading }}</h2>
     </div>
     <div class="grid gap-8 text-center" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))">
       {%- for stat in stats -%}
         <div class="sf-impact-stat space-y-1">
-          <div class="sf-heading font-bold" style="font-size: clamp(2rem, 5vw, 3rem); line-height: 1" {% render 'classic/snippets/editable-item', list: 'impactStats', index: forloop.index0, key: 'value', value: stat.value %}>{{ stat.value }}</div>
-          <div class="text-sm uppercase tracking-widest" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', list: 'impactStats', index: forloop.index0, key: 'label', value: stat.label %}>{{ stat.label }}</div>
+          <div class="sf-heading font-bold" style="font-size: clamp(2rem, 5vw, 3rem); line-height: 1" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'impactStats', index: forloop.index0, key: 'value', value: stat.value %}>{{ stat.value }}</div>
+          <div class="text-sm uppercase tracking-widest" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'impactStats', index: forloop.index0, key: 'label', value: stat.label %}>{{ stat.label }}</div>
         </div>
       {%- endfor -%}
     </div>

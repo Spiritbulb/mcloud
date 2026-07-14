@@ -30,7 +30,21 @@ for (const t of ['mission', 'programs', 'impact', 'contact'] as const) {
 // The hero needs campaigns as well as the store: on a non-commerce site its CTA
 // opens the donate flow for the lead campaign rather than scrolling to products.
 // Without campaigns in its context that button silently never renders.
-assert.deepEqual(Object.keys(SECTION_REGISTRY.hero.pickContext(ctx)).sort(), ['campaigns', 'store'])
+//
+// It also gets `slides` and `authored`, which are the whole hero model:
+//   slides   — what the visitor SEES (defaults substituted in)
+//   authored — what is actually STORED (no defaults)
+// The two MUST stay separate. A hero with no title displays the store's name, so
+// reporting the rendered value to the Editor would save "Test Store" as though the
+// merchant had typed it, freezing the fallback into their record.
+const heroCtx = SECTION_REGISTRY.hero.pickContext({
+  ...ctx,
+  store: { slug: 's', name: 'Test Store', settings: {} },
+} as any) as any
+assert.deepEqual(Object.keys(heroCtx).sort(), ['authored', 'campaigns', 'slides', 'store'])
+assert.equal(heroCtx.slides.length, 1, 'a store with no heroSlides still gets one slide')
+assert.equal(heroCtx.slides[0].title, 'Test Store', 'which DISPLAYS the store name')
+assert.equal(heroCtx.authored[0].title, '', 'but reports nothing stored — the trap')
 assert.deepEqual(Object.keys(SECTION_REGISTRY.collections.pickContext(ctx)).sort(), ['collections', 'store'])
 const feat = SECTION_REGISTRY.featured.pickContext(ctx)
 assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps featuredProducts -> products')

@@ -160,8 +160,11 @@ console.log('render-page.test.ts: hero vertical-gating assertions passed')
 // So each editable node carries data-mcloud-stored — the value as STORED, empty
 // when unset — and the editor diffs against that, never against textContent.
 
+// editing: true — these assertions are about the EDITOR's render. The markers are
+// gated on it, so a visitor's page carries none of them (pinned further down).
 const campaignCtx = {
   ...ctxSp6,
+  store: { ...ctxSp6.store, editing: true },
   campaigns: [{ id: 'c', title: 'T', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }],
 }
 
@@ -201,7 +204,11 @@ assert.ok(nasty.includes('&lt;script&gt;'), 'it is escaped instead')
 // must be marked for that and nothing else.
 const mission = await renderPage([{ type: 'mission' }], {
   ...ctxSp6,
-  store: { ...ctxSp6.store, settings: { ...ctxSp6.store.settings, mission: 'M', missionHeadline: 'H' } },
+  store: {
+    ...ctxSp6.store,
+    editing: true,
+    settings: { ...ctxSp6.store.settings, mission: 'M', missionHeadline: 'H' },
+  },
 })
 assert.ok(mission.includes('data-mcloud-field="eyebrow"'), 'mission marks its eyebrow')
 assert.ok(!mission.includes('data-mcloud-field="heading"'), 'and does not claim a heading it does not own')
@@ -211,9 +218,9 @@ console.log('render-page.test.ts: click-to-edit anchor assertions passed')
 // ── Store settings + repeated records are editable too ─────────────────────────
 //
 // Copy lives in three places, and the drawer must not be the only way to reach any
-// of them. The hero's title is stores.settings.heroTitle; a programme's title is
-// stores.settings.programs[i].title. Neither is section config, so both need their
-// own channel — and both have the same default-trap.
+// of them. A programme's title is stores.settings.programs[i].title; a hero's is
+// stores.settings.heroSlides[i].title. Neither is section config, so both need
+// their own channel — and both have the same default-trap.
 
 const ngoStore = (settings: Record<string, unknown>, editing = false) => ({
   store: { id: 's', name: 'KFS', slug: 's', currency: 'KES', settings, commerce: false, editing },
@@ -221,27 +228,46 @@ const ngoStore = (settings: Record<string, unknown>, editing = false) => ({
   campaigns: [{ id: 'c', title: 'Support Us', description: 'd', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }],
 })
 
-// The hero's title is a STORE SETTING, not section config.
-const heroSet = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'Our Voices' }))
+// The hero is ONE shape: a list of slides. A store on the LEGACY flat keys is
+// normalised into slide 0, so it is editable through the same channel as any other
+// repeated record — which is how the old shape dies the first time it is touched.
+const heroLegacy = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'Our Voices' }, true))
 assert.ok(
-  heroSet.includes('data-mcloud-setting="heroTitle" data-mcloud-stored="Our Voices"'),
-  'the hero title is editable and reports its stored value',
+  heroLegacy.includes('data-mcloud-list="heroSlides" data-mcloud-index="0" data-mcloud-key="title" data-mcloud-stored="Our Voices"'),
+  'a legacy hero is editable as heroSlides[0]',
+)
+
+// A real carousel: every slide is independently addressable.
+const heroCarousel = await renderPage([{ type: 'hero' }], ngoStore({
+  heroSlides: [{ title: 'One', image: 'a.jpg' }, { title: 'Two', image: 'b.jpg' }],
+}, true))
+assert.ok(
+  heroCarousel.includes('data-mcloud-list="heroSlides" data-mcloud-index="0" data-mcloud-key="title" data-mcloud-stored="One"'),
+  'slide 0 is addressable',
+)
+assert.ok(
+  heroCarousel.includes('data-mcloud-list="heroSlides" data-mcloud-index="1" data-mcloud-key="title" data-mcloud-stored="Two"'),
+  'slide 1 is addressable, and distinct from slide 0',
+)
+assert.ok(
+  heroCarousel.includes('data-mcloud-list="heroSlides" data-mcloud-index="1" data-mcloud-key="image"'),
+  'and so is its IMAGE — the carousel is where images matter most',
 )
 
 // THE TRAP AGAIN: with no heroTitle the hero falls back to store.name, so it
-// DISPLAYS "KFS" while the setting is empty. It must report empty.
-const heroBare = await renderPage([{ type: 'hero' }], ngoStore({}))
+// DISPLAYS "KFS" while nothing is stored. It must report empty.
+const heroBare = await renderPage([{ type: 'hero' }], ngoStore({}, true))
 assert.ok(heroBare.includes('KFS'), 'falls back to the store name')
 assert.ok(
-  heroBare.includes('data-mcloud-setting="heroTitle" data-mcloud-stored=""'),
-  'but reports the SETTING as empty, so clicking it cannot freeze the fallback in',
+  heroBare.includes('data-mcloud-key="title" data-mcloud-stored=""'),
+  'but reports the slide as empty, so clicking it cannot freeze the fallback in',
 )
 
 // A repeated record carries its list AND its index: an edit that cannot say which
 // record it belongs to would overwrite the wrong programme.
 const programs = await renderPage([{ type: 'programs' }], ngoStore({
   programs: [{ title: 'Advocacy', description: 'a' }, { title: 'Care', description: 'b' }],
-}))
+}, true))
 assert.ok(
   programs.includes('data-mcloud-list="programs" data-mcloud-index="0" data-mcloud-key="title" data-mcloud-stored="Advocacy"'),
   'programme 0 is addressable',
@@ -255,13 +281,72 @@ assert.ok(
 //
 // The editor renders empty fields so they can be clicked and filled. A visitor must
 // see none of that: an empty subtitle stays absent from their page entirely.
+// A hero with a title but no subtitle: the visitor's page has no subtitle element
+// at all, and no editor attributes anywhere.
 const visitor = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'T' }, false))
-assert.ok(!visitor.includes('heroSubtitle'), 'a visitor gets no empty subtitle element')
+assert.ok(!visitor.includes('data-mcloud-key="subtitle"'), 'a visitor gets no empty subtitle element')
+assert.ok(!visitor.includes('data-mcloud-image'), 'and no image affordance')
 
 const editor = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'T' }, true))
 assert.ok(
-  editor.includes('data-mcloud-setting="heroSubtitle"'),
+  editor.includes('data-mcloud-key="subtitle" data-mcloud-stored=""'),
   'the editor DOES get the empty subtitle, so there is something to click',
 )
 
 console.log('render-page.test.ts: store-setting + repeated-record assertions passed')
+
+// ── Images are click-to-replace, and an EMPTY slot is click-to-add ─────────────
+//
+// An image has no text to type into, so it routes through the same addressing as
+// the text channels but opens a picker instead of a caret. The empty case is the
+// one that needs care: a record with no image renders no <img> at all, so without
+// a target in the editor there is no way to ADD one.
+
+// A programme WITH an image: the slot is addressable and carries its stored URL.
+const withImg = await renderPage([{ type: 'programs' }], ngoStore({
+  programs: [{ title: 'Advocacy', image: 'https://x.test/a.jpg' }],
+}, true))
+assert.ok(withImg.includes('data-mcloud-image="1"'), 'the image slot is marked')
+assert.ok(
+  withImg.includes('data-mcloud-list="programs" data-mcloud-index="0" data-mcloud-key="image"'),
+  'and is addressed exactly like a text field on the same record',
+)
+assert.ok(withImg.includes('data-mcloud-stored="https://x.test/a.jpg"'), 'reporting its stored URL')
+
+// A programme with NO image, in the EDITOR: an empty, clickable slot.
+const noImgEditing = await renderPage([{ type: 'programs' }], ngoStore({
+  programs: [{ title: 'Advocacy' }],
+}, true))
+assert.ok(
+  noImgEditing.includes('data-mcloud-image="1"'),
+  'an empty slot still renders in the editor, so an image can be ADDED',
+)
+assert.ok(noImgEditing.includes('data-mcloud-stored=""'), 'and reports itself as empty')
+assert.ok(!noImgEditing.includes('<img'), 'without emitting a broken <img src="">')
+
+// The SAME programme for a VISITOR: nothing at all. An empty editor affordance must
+// never leak onto the live site.
+const noImgVisitor = await renderPage([{ type: 'programs' }], ngoStore({
+  programs: [{ title: 'Advocacy' }],
+}, false))
+assert.ok(!noImgVisitor.includes('data-mcloud-image'), 'a visitor gets no empty image slot')
+assert.ok(!noImgVisitor.includes('<img'), 'and no broken image')
+
+// The hero's image is a field on a SLIDE, exactly like a programme's — the whole
+// point of collapsing the hero into one shape.
+const heroImg = await renderPage([{ type: 'hero' }], ngoStore({ heroImage: 'https://x.test/h.jpg' }, true))
+assert.ok(
+  heroImg.includes('data-mcloud-image="1"') &&
+  heroImg.includes('data-mcloud-list="heroSlides" data-mcloud-index="0" data-mcloud-key="image" data-mcloud-stored="https://x.test/h.jpg"'),
+  'a legacy hero image is editable as heroSlides[0].image',
+)
+
+// With no hero image the gradient fallback renders — and IT is the click target,
+// or the hero could never get an image at all.
+const heroBareImg = await renderPage([{ type: 'hero' }], ngoStore({}, true))
+assert.ok(
+  heroBareImg.includes('sf-hero-fallback') && heroBareImg.includes('data-mcloud-image="1"'),
+  'the hero fallback is itself the click target',
+)
+
+console.log('render-page.test.ts: image assertions passed')

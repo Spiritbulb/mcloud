@@ -7,6 +7,7 @@
 
 import { getVertical } from '@mcloud/verticals'
 import type { SettingField } from '@mcloud/verticals'
+import { heroSlides, authoredSlides } from './hero'
 
 export type SectionType =
   | 'hero'
@@ -57,14 +58,39 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   hero: {
     templateKey: 'classic/sections/hero',
     label: 'Hero',
-    // Campaigns too: on a non-commerce site the hero CTA opens the donate flow
-    // for the lead campaign instead of scrolling to products.
-    pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
-    // The hero's copy lives in store settings (heroTitle/heroSubtitle/heroImage),
-    // not per-section, so it declares no heading/eyebrow.
-    schema: [
-      { id: 'buttonText', type: 'text', label: 'Button text' },
-    ],
+    // The hero is ONE shape: a list of slides (a single-image hero is a list of
+    // one). heroSlides() normalises whatever a store actually has — including the
+    // legacy flat keys — so the template has no branch to get wrong. Campaigns come
+    // too: on a non-commerce site the CTA opens the donate flow.
+    pickContext: (ctx) => {
+      const store = ctx.store as {
+        settings?: Record<string, unknown> | null
+        name?: string
+        description?: string | null
+        commerce?: boolean
+      }
+      return {
+        store: ctx.store,
+        campaigns: ctx.campaigns,
+        // What the visitor SEES: defaults substituted in.
+        slides: heroSlides({
+          settings: store?.settings,
+          storeName: store?.name ?? '',
+          storeDescription: store?.description,
+          commerce: !!store?.commerce,
+          hasCampaign: Array.isArray(ctx.campaigns) && ctx.campaigns.length > 0,
+        }),
+        // What is actually STORED: no defaults. The two differ, and conflating them
+        // is the trap — a hero with no title DISPLAYS the store's name, so reporting
+        // the rendered value would save "KFS" as though the merchant had typed it,
+        // and "Donate" as their button text. The template renders `slides` and
+        // reports `authored`.
+        authored: authoredSlides(store?.settings),
+      }
+    },
+    // The hero's copy lives in the slides, not in section config, so it declares no
+    // heading/eyebrow. Everything on it is edited in the preview.
+    schema: [],
   },
   collections: {
     templateKey: 'classic/sections/collections-grid',

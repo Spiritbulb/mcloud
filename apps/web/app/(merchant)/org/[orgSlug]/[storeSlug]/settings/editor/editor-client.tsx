@@ -6,6 +6,7 @@ import { SECTION_REGISTRY } from '../../../../../../../../storefront/lib/section
 import { THEME_SCHEMA } from '@/lib/theme-schema'
 import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../actions'
 import SettingsFields from './settings-fields'
+import ImagePicker from './image-picker'
 import ContentClient from '../content/content-client'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 
@@ -36,8 +37,53 @@ type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; in
  * key is dropped instead of being written blindly into the merchant's settings.
  * Must match the keys passed to the `editable-setting` / `editable-item` snippets.
  */
-const EDITABLE_SETTINGS = new Set(['heroTitle', 'heroSubtitle', 'missionHeadline', 'mission'])
-const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats'])
+const EDITABLE_SETTINGS = new Set(['missionHeadline', 'mission'])
+const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats', 'heroSlides'])
+/** Store settings that hold an IMAGE, so a click opens the picker. */
+const EDITABLE_SETTINGS_IMAGE = new Set<string>([])
+
+/** Where a picked image belongs: a store setting, or a field on a repeated record. */
+type PickTarget =
+    | { kind: 'setting'; key: string }
+    | { kind: 'item'; list: string; index: number; key: string }
+
+/**
+ * The current value of a repeated list, ready to be edited.
+ *
+ * heroSlides is the special one, and it is the whole point of this function. The
+ * hero used to be stored TWO ways — a heroSlides array, or flat heroTitle /
+ * heroSubtitle / heroImage keys — and the template branched between them. A store
+ * on the legacy shape has NO heroSlides, so an edit to heroSlides[0] would land in
+ * an empty array and be dropped.
+ *
+ * So a legacy hero is normalised into a one-slide list the first time it is
+ * touched. That is the seam where the old shape disappears: the storefront still
+ * READS the flat keys (nothing breaks), but the moment a merchant edits, the store
+ * is written in the new shape and the flat keys stop mattering.
+ */
+function listFor(
+    list: string,
+    draft: Record<string, unknown>,
+    saved: Record<string, unknown>,
+): unknown[] {
+    // Already being edited in this session: that is the truth.
+    if (Array.isArray(draft[list])) return [...(draft[list] as unknown[])]
+    // Saved in the modern shape.
+    if (Array.isArray(saved[list])) return [...(saved[list] as unknown[])]
+
+    // A legacy hero: fold the flat keys into a single slide.
+    if (list === 'heroSlides') {
+        const s = (k: string) => (typeof saved[k] === 'string' ? (saved[k] as string) : '')
+        return [{
+            image: s('heroImage'),
+            title: s('heroTitle'),
+            subtitle: s('heroSubtitle'),
+            accent: s('heroAccent'),
+            buttonText: s('heroButtonText'),
+        }]
+    }
+    return []
+}
 
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
@@ -61,6 +107,8 @@ export default function EditorClient({
     // copy). The Content drawer writes the same table through its own action, so
     // this holds only what the preview changed and merges on save.
     const [storeDraft, setStoreDraft] = useState<Record<string, unknown>>({})
+    // The image slot the merchant clicked in the preview, if any.
+    const [picker, setPicker] = useState<{ target: PickTarget; value: string } | null>(null)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [saved, setSaved] = useState(false)
@@ -173,6 +221,22 @@ export default function EditorClient({
                 setSaved(false)
             }
 
+            // An image slot was clicked. It has no text to type into, so the admin
+            // opens a picker: the storefront never prompts for or receives a file.
+            if (data.type === 'mcloud:image-click') {
+                const { setting, list, index, key, value } = data
+                if (setting && EDITABLE_SETTINGS_IMAGE.has(setting)) {
+                    setPicker({ target: { kind: 'setting', key: setting }, value: String(value ?? '') })
+                } else if (list && key && EDITABLE_LISTS.has(list)) {
+                    const i = Number(index)
+                    if (!Number.isInteger(i) || i < 0) return
+                    setPicker({
+                        target: { kind: 'item', list, index: i, key },
+                        value: String(value ?? ''),
+                    })
+                }
+            }
+
             // 3. A repeated record -> stores.settings[list][i][key]  (programs …)
             if (data.type === 'mcloud:item-edit') {
                 const { list, index, key, value } = data
@@ -181,7 +245,11 @@ export default function EditorClient({
                 if (!EDITABLE_LISTS.has(list)) return
 
                 setStoreDraft((prev) => {
-                    const arr = Array.isArray(prev[list]) ? [...(prev[list] as unknown[])] : []
+                    // Reads the draft, else what was SAVED, else (for a legacy hero)
+                    // normalises the flat keys into a slide. Reading only the draft would
+                    // make the first edit to a list start from an empty array, dropping
+                    // every other record in it on save.
+                    const arr = listFor(list, prev, storeSettings)
                     // An index past the end means the preview and the draft have drifted
                     // (a record was removed in the drawer). Drop the edit rather than
                     // growing the array with a hole.
@@ -196,12 +264,40 @@ export default function EditorClient({
         }
         window.addEventListener('message', onMessage)
         return () => window.removeEventListener('message', onMessage)
-    }, [storefrontOrigin, postTheme, postSelect, sections.length])
+    }, [storefrontOrigin, postTheme, postSelect, sections.length, storeSettings])
 
     /** Rail -> preview. */
     function selectSection(index: number) {
         setSelection({ kind: 'section', index })
         postSelect(index)
+    }
+
+    /**
+     * Apply a picked image. It writes through the SAME store-settings draft the text
+     * edits use — an image is just a string field whose editor is a picker rather
+     * than a caret, so it needs no new save path.
+     *
+     * Unlike a text edit, this DOES let the iframe reload: the preview is not already
+     * showing the new image, and there is no caret to protect.
+     */
+    function applyImage(url: string) {
+        if (!picker) return
+        const t = picker.target
+
+        if (t.kind === 'setting') {
+            setStoreDraft((prev) => ({ ...prev, [t.key]: url }))
+        } else {
+            setStoreDraft((prev) => {
+                const arr = listFor(t.list, prev, storeSettings)
+                if (t.index >= arr.length) return prev
+                const item = arr[t.index]
+                if (typeof item !== 'object' || item === null) return prev
+                arr[t.index] = { ...(item as Record<string, unknown>), [t.key]: url }
+                return { ...prev, [t.list]: arr }
+            })
+        }
+        setSaved(false)
+        setPicker(null)
     }
 
     // Is there anything to save? Compared against what the page loaded, so undoing an
@@ -352,6 +448,18 @@ export default function EditorClient({
                         </button>
                     </div>
                 )}
+                {/* Clicking an image in the preview opens this. URL first, upload
+                    second: a merchant migrating a site already has their images
+                    hosted somewhere. */}
+                <ImagePicker
+                    open={!!picker}
+                    value={picker?.value ?? ''}
+                    storeId={storeId}
+                    pathPrefix={`${storeId}/editor`}
+                    onPick={applyImage}
+                    onClose={() => setPicker(null)}
+                />
+
                 {previewToken ? (
                     <iframe
                         ref={iframeRef}

@@ -16,4 +16,8 @@
   reordering records stay in the drawer, because there is no text on the page to
   click for a record that does not exist yet.
 {%- endcomment -%}
-data-mcloud-list="{{ list }}" data-mcloud-index="{{ index }}" data-mcloud-key="{{ key }}" data-mcloud-stored="{{ value | escape }}"
+{%- comment -%}
+  Emits NOTHING outside the editor: these attributes carry the merchant's stored
+  copy, and a visitor has no business receiving it.
+{%- endcomment -%}
+{%- if editing -%}data-mcloud-list="{{ list }}" data-mcloud-index="{{ index }}" data-mcloud-key="{{ key }}" data-mcloud-stored="{{ value | escape }}"{%- endif -%}

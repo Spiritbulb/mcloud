@@ -64,6 +64,38 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     opacity: .45;
                     font-style: italic;
                 }
+
+                /* An image gets a picker, not a caret, so it must not look typeable. */
+                [data-mcloud-image] {
+                    cursor: pointer;
+                    position: relative;
+                }
+                [data-mcloud-image]:hover {
+                    outline: 2px solid #6366f1;
+                    outline-offset: -2px;
+                }
+                [data-mcloud-image]:hover::after {
+                    content: 'Change image';
+                    position: absolute;
+                    inset: auto 0 0 0;
+                    padding: 6px 10px;
+                    font: 500 12px/1.2 system-ui, sans-serif;
+                    color: #fff;
+                    background: rgba(17,17,27,.75);
+                    text-align: center;
+                }
+                /* An empty image slot has nothing to show, so it must announce itself
+                   or the merchant cannot tell there is anything there to click. */
+                [data-mcloud-image][data-mcloud-stored=""]::before {
+                    content: 'Add an image';
+                    position: absolute;
+                    inset: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    font: 500 13px/1.2 system-ui, sans-serif;
+                    opacity: .5;
+                }
             `
             document.head.appendChild(style)
         }
@@ -185,7 +217,8 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         function onClick(e: MouseEvent) {
             if (!(e.target instanceof Element)) return
 
-            const field = e.target.closest<HTMLElement>(EDITABLE)
+            const image = e.target.closest<HTMLElement>('[data-mcloud-image]')
+            const field = image ? null : e.target.closest<HTMLElement>(EDITABLE)
             const index = sectionIndexOf(e.target)
             if (index === null) return
 
@@ -197,6 +230,27 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
             select(index)
             window.parent.postMessage({ type: 'mcloud:section-click', index }, adminOrigin)
+
+            // An image has no text to type into, so it gets a picker rather than a
+            // caret. The ADMIN owns that UI: it holds the merchant's session and the
+            // upload credentials, and the public storefront must never be the thing
+            // prompting for or uploading a file. So this only REPORTS the click, and
+            // the admin decides what to ask for.
+            if (image) {
+                window.parent.postMessage(
+                    {
+                        type: 'mcloud:image-click',
+                        // Whichever addressing the snippet emitted; the admin routes on it.
+                        setting: image.getAttribute('data-mcloud-setting'),
+                        list: image.getAttribute('data-mcloud-list'),
+                        index: image.getAttribute('data-mcloud-index'),
+                        key: image.getAttribute('data-mcloud-key'),
+                        value: image.getAttribute('data-mcloud-stored') ?? '',
+                    },
+                    adminOrigin,
+                )
+                return
+            }
 
             if (field) beginEdit(field)
         }
