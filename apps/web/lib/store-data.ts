@@ -158,7 +158,10 @@ export async function getStoreOverview(
     ] = await Promise.all([
         supabase
             .from('stores')
-            .select('id, name, slug, logo_url, is_active, currency, custom_domain, settings, is_pro, views')
+            // `type` carries the vertical through to the Overview. Without it the
+            // dashboard cannot tell a shop from an NGO and shows commerce tiles to
+            // everyone.
+            .select('id, name, slug, logo_url, is_active, currency, custom_domain, settings, is_pro, views, type')
             .eq('id', storeId)
             .single(),
         supabase
@@ -168,7 +171,9 @@ export async function getStoreOverview(
             .eq('is_active', true),
         supabase
             .from('orders')
-            .select('total, status')
+            // `metadata` is needed to identify donations (isDonation) and attribute
+            // them to a campaign (campaignId). See the donation aggregation below.
+            .select('total, status, metadata')
             .eq('store_id', storeId),
         supabase
             .from('orders')
@@ -241,6 +246,52 @@ export async function getStoreOverview(
         ? [...productMap.values()].sort((a, b) => b.revenue - a.revenue)[0]
         : null
 
+    // ── Donations ────────────────────────────────────────────────────────────
+    // Donations are orders tagged in metadata, not a separate table. This mirrors
+    // apps/storefront/lib/campaigns.ts:loadCampaignsWithProgress exactly, which
+    // filters at the DB with `metadata->>isDonation = 'true'` and
+    // `metadata->>payment_status = 'completed'`, then sums `total` by campaignId.
+    // `->>` renders JSON to text, so the boolean `true` written by
+    // buildDonationMetadata matches the string 'true'; the in-memory check below
+    // accepts both so the two readers can never disagree on what counts as a
+    // completed donation. If they diverged, the Overview and the storefront
+    // progress bars would show different numbers.
+    const campaigns = Array.isArray((settings as any).campaigns)
+        ? ((settings as any).campaigns as any[])
+        : []
+
+    const raisedById: Record<string, number> = {}
+    let totalRaised = 0
+    let donationCount = 0
+
+    for (const o of orderAgg ?? []) {
+        const md = ((o as any).metadata ?? {}) as Record<string, unknown>
+        if (md.isDonation !== 'true' && md.isDonation !== true) continue
+        if (md.payment_status !== 'completed') continue
+        const amount = Number(o.total ?? 0)
+        totalRaised += amount
+        donationCount++
+        const cid = typeof md.campaignId === 'string' ? md.campaignId : null
+        if (cid) raisedById[cid] = (raisedById[cid] ?? 0) + amount
+    }
+
+    // Same tolerance as readCampaigns(): a campaign without a string id AND title
+    // is not a campaign the storefront would render, so do not report on it.
+    const campaignProgress = campaigns
+        .filter((c) => c && typeof c.id === 'string' && typeof c.title === 'string')
+        .map((c) => {
+            const raised = raisedById[c.id] ?? 0
+            const goal = typeof c.goalAmount === 'number' && c.goalAmount > 0 ? c.goalAmount : 0
+            return {
+                id: c.id as string,
+                title: c.title as string,
+                raised,
+                goal,
+                percent: goal > 0 ? Math.min(100, Math.round((raised / goal) * 100)) : 0,
+            }
+        })
+        .sort((a, b) => b.raised - a.raised)
+
     return {
         error: null,
         data: {
@@ -248,6 +299,7 @@ export async function getStoreOverview(
                 name: store.name,
                 slug: store.slug,
                 logo_url: store.logo_url,
+                type: store.type ?? null,
                 active: store.is_active ?? false,
                 product_count: productCount ?? 0,
                 order_count: orderCount,
@@ -271,6 +323,9 @@ export async function getStoreOverview(
             })),
             funnel,
             top_product: topProduct,
+            total_raised: totalRaised,
+            donation_count: donationCount,
+            campaign_progress: campaignProgress,
         },
     }
 }
