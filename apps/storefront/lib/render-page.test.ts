@@ -76,3 +76,33 @@ const blank = await renderPage([{ type: 'campaigns', settings: { heading: '' } }
 assert.ok(blank.includes('Support a Cause'), 'blank falls back to the default')
 
 console.log('render-page.test.ts: SP6 section-namespace assertions passed')
+
+// ── Editor anchors: every section is addressable by its INDEX ──────────────────
+//
+// The Editor's rail addresses a section as sections[i], and the preview reports
+// clicks as that same i. If the two ever disagree, the merchant edits one section
+// and a different one changes. So the rendered index must be the index in the
+// STORED list.
+
+const anchored = await renderPage([{ type: 'hero' }, { type: 'all-products' }], ctx)
+assert.ok(anchored.includes('data-mcloud-section="0"'), 'first section is anchored at 0')
+assert.ok(anchored.includes('data-mcloud-section="1"'), 'second section is anchored at 1')
+
+// THE DRIFT BUG: a skipped section must still CONSUME its index. If it did not,
+// `hero` here would render as 0 while the rail calls it 1, and clicking the hero
+// in the preview would open a section that is not the hero.
+const drift = await renderPage([{ type: 'bogus' }, { type: 'hero' }], ctx)
+assert.ok(
+  drift.includes('data-mcloud-section="1"'),
+  'a skipped section still consumes its index — hero is 1, as the rail sees it',
+)
+assert.ok(!drift.includes('data-mcloud-section="0"'), 'the skipped section emits no anchor')
+
+// The anchor wraps the section, so a click anywhere inside it resolves via
+// closest('[data-mcloud-section]').
+assert.ok(
+  /<div data-mcloud-section="0">\s*<section/.test(anchored),
+  'the anchor wraps the section element',
+)
+
+console.log('render-page.test.ts: editor anchor assertions passed')

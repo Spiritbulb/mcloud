@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { X, Palette, FileText, Layers } from 'lucide-react'
 import { SECTION_REGISTRY } from '../../../../../../../../storefront/lib/sections'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
 import { updateStoreTheme, updatePageSections } from '../actions'
@@ -26,7 +27,8 @@ function sectionDef(type: string | undefined) {
 //   content -> stores.settings (mission, programs, campaigns). SP5's editor,
 //              mounted here rather than living on its own nav tab.
 //   section -> that section's own config (heading, eyebrow) in pages.sections
-type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; index: number }
+// `null` = drawer closed, preview at full width.
+type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; index: number } | null
 
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
@@ -43,7 +45,7 @@ export default function EditorClient({
     /** stores.settings, for the Content rail (SP5's editor). */
     storeSettings: Record<string, unknown>
 }) {
-    const [selection, setSelection] = useState<Selection>({ kind: 'theme' })
+    const [selection, setSelection] = useState<Selection>(null)
     const [themeValues, setThemeValues] = useState<SettingValues>(() => ({ ...theme }))
     const [sections, setSections] = useState<Section[]>(() => initialSections)
     const [saving, setSaving] = useState(false)
@@ -52,51 +54,83 @@ export default function EditorClient({
 
     const iframeRef = useRef<HTMLIFrameElement>(null)
 
-    // Theme -> instant. These are CSS custom properties, so the preview needs no
-    // re-render: post them and the listener sets them on documentElement.
-    useEffect(() => {
+    // The message handler must NOT be torn down and rebuilt on every keystroke: a
+    // preview reload landing between teardown and rebuild would miss its handshake,
+    // and the merchant's unsaved theme would silently vanish. Refs let one stable
+    // handler see current values.
+    const themeRef = useRef(themeValues)
+    themeRef.current = themeValues
+    const selectionRef = useRef(selection)
+    selectionRef.current = selection
+
+    const postTheme = useCallback(() => {
         const win = iframeRef.current?.contentWindow
         if (!win) return
         const values: Record<string, string> = {}
         for (const f of THEME_SCHEMA) {
-            const v = themeValues[f.id]
+            const v = themeRef.current[f.id]
             if (typeof v === 'string' && v) values[cssVarName(f.id)] = v
             else if (typeof v === 'number') values[cssVarName(f.id)] = String(v)
         }
         // A cross-origin post to a frame that has not loaded yet simply lands
-        // nowhere. That is fine: the listener announces itself when it mounts and
-        // the next keystroke re-posts. A preview failure never blocks saving.
+        // nowhere. That is fine: the preview announces itself when it mounts and we
+        // replay on that handshake. A preview failure never blocks saving.
         try {
             win.postMessage({ type: 'mcloud:theme', values }, storefrontOrigin)
         } catch {
             // Preview is an aid, not a gate.
         }
-    }, [themeValues, storefrontOrigin])
+    }, [storefrontOrigin])
 
-    // The listener posts `mcloud:preview-ready` when it mounts (including after a
-    // debounced reload). Without replaying the theme there, an unsaved colour
-    // would vanish the moment a copy edit reloaded the frame.
+    /** Tell the preview which section the rail is editing: scroll to it, outline it. */
+    const postSelect = useCallback((index: number) => {
+        const win = iframeRef.current?.contentWindow
+        if (!win) return
+        try {
+            win.postMessage({ type: 'mcloud:select-section', index }, storefrontOrigin)
+        } catch {
+            // Preview is an aid, not a gate.
+        }
+    }, [storefrontOrigin])
+
+    // Theme -> instant. These are CSS custom properties, so the preview needs no
+    // re-render: post them and the listener sets them on documentElement.
+    useEffect(() => { postTheme() }, [themeValues, postTheme])
+
+    // The preview announces itself on mount (including after a debounced reload).
+    // Two things must be replayed there, or a copy edit silently undoes them:
+    //   - the unsaved theme (an in-progress colour would revert)
+    //   - the selected section (its outline would vanish mid-edit)
+    // It also reports clicks, which is the inbound half of the two-way sync.
     useEffect(() => {
-        function onReady(e: MessageEvent) {
+        function onMessage(e: MessageEvent) {
             if (e.origin !== storefrontOrigin) return
-            if (!e.data || e.data.type !== 'mcloud:preview-ready') return
-            const win = iframeRef.current?.contentWindow
-            if (!win) return
-            const values: Record<string, string> = {}
-            for (const f of THEME_SCHEMA) {
-                const v = themeValues[f.id]
-                if (typeof v === 'string' && v) values[cssVarName(f.id)] = v
-                else if (typeof v === 'number') values[cssVarName(f.id)] = String(v)
+            const data = e.data
+            if (!data) return
+
+            if (data.type === 'mcloud:preview-ready') {
+                postTheme()
+                const sel = selectionRef.current
+                if (sel?.kind === 'section') postSelect(sel.index)
+                return
             }
-            try {
-                win.postMessage({ type: 'mcloud:theme', values }, storefrontOrigin)
-            } catch {
-                // Preview is an aid, not a gate.
+
+            if (data.type === 'mcloud:section-click' && Number.isInteger(data.index)) {
+                // Trust the index only as far as it goes: one the rail does not have
+                // is ignored rather than opening an empty drawer.
+                if (data.index < 0 || data.index >= sections.length) return
+                setSelection({ kind: 'section', index: data.index })
             }
         }
-        window.addEventListener('message', onReady)
-        return () => window.removeEventListener('message', onReady)
-    }, [themeValues, storefrontOrigin])
+        window.addEventListener('message', onMessage)
+        return () => window.removeEventListener('message', onMessage)
+    }, [storefrontOrigin, postTheme, postSelect, sections.length])
+
+    /** Rail -> preview. */
+    function selectSection(index: number) {
+        setSelection({ kind: 'section', index })
+        postSelect(index)
+    }
 
     // Copy -> debounced reload. A copy change needs Liquid re-run server-side
     // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
@@ -137,9 +171,9 @@ export default function EditorClient({
     // `content` renders SP5's ContentClient instead of a schema form, so it needs
     // no schema here.
     const active =
-        selection.kind === 'theme'
+        selection?.kind === 'theme'
             ? { label: 'Theme', schema: THEME_SCHEMA, values: themeValues as SettingValues }
-            : selection.kind === 'section'
+            : selection?.kind === 'section'
                 ? {
                     label: sectionDef(sections[selection.index]?.type)?.label ?? 'Section',
                     schema: sectionDef(sections[selection.index]?.type)?.schema ?? ([] as readonly SettingField[]),
@@ -148,66 +182,112 @@ export default function EditorClient({
                 : { label: 'Content', schema: [] as readonly SettingField[], values: {} as SettingValues }
 
     return (
-        <div className="flex h-full min-h-0">
-            {/* Rail */}
-            <aside className="w-72 shrink-0 border-r border-[var(--md-sys-color-outline-variant)] overflow-y-auto p-4 space-y-4">
-                <button
-                    onClick={() => setSelection({ kind: 'theme' })}
-                    className={railCls(selection.kind === 'theme')}
-                >
-                    Theme
-                </button>
+        <div className="relative flex h-full min-h-0">
 
-                {/* SP5's store-settings content (mission, programs, impact stats,
-                    contact, campaigns) lives in stores.settings, not in a section's
-                    config, so no section schema covers it. It gets its own rail
-                    entry rather than its own nav tab. */}
-                {!commerce && (
-                    <button
-                        onClick={() => setSelection({ kind: 'content' })}
-                        className={railCls(selection.kind === 'content')}
-                    >
-                        Content
-                    </button>
-                )}
+            {/* ── Rail: a list, nothing more. Picking something opens the drawer. ── */}
+            <aside className="w-56 shrink-0 border-r border-[var(--md-sys-color-outline-variant)] overflow-y-auto p-3 space-y-4">
+                <div className="space-y-1">
+                    <RailItem
+                        icon={<Palette className="w-4 h-4 shrink-0" />}
+                        label="Theme"
+                        active={selection?.kind === 'theme'}
+                        onClick={() => setSelection({ kind: 'theme' })}
+                    />
+                    {/* SP5's store-settings content (mission, programs, impact stats,
+                        contact, campaigns) lives in stores.settings, not in a section's
+                        config, so no section schema covers it. It gets a rail entry
+                        rather than its own nav tab. */}
+                    {!commerce && (
+                        <RailItem
+                            icon={<FileText className="w-4 h-4 shrink-0" />}
+                            label="Content"
+                            active={selection?.kind === 'content'}
+                            onClick={() => setSelection({ kind: 'content' })}
+                        />
+                    )}
+                </div>
 
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-2">
+                    <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-2 px-2">
+                        <Layers className="w-3.5 h-3.5" />
                         Sections
                     </p>
                     <div className="space-y-1">
                         {sections.length === 0 && (
-                            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+                            <p className="px-2 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
                                 This site uses the default layout. Nothing to configure yet.
                             </p>
                         )}
                         {sections.map((s, i) => (
-                            <button
+                            <RailItem
                                 key={i}
-                                onClick={() => setSelection({ kind: 'section', index: i })}
-                                className={railCls(selection.kind === 'section' && selection.index === i)}
-                            >
-                                {sectionDef(s.type)?.label ?? s.type}
-                            </button>
+                                label={sectionDef(s.type)?.label ?? s.type}
+                                active={selection?.kind === 'section' && selection.index === i}
+                                onClick={() => selectSection(i)}
+                            />
                         ))}
                     </div>
                 </div>
 
-                <div className="pt-4 border-t border-[var(--md-sys-color-outline-variant)] space-y-3">
-                    {selection.kind === 'content' ? (
-                        // SP5's editor, reused wholesale. It owns its own save (it
-                        // writes stores.settings through updateStoreSettings), so it
-                        // is mounted as-is rather than folded into this page's Save.
-                        <ContentClient
-                            slug={slug}
-                            storeId={storeId}
-                            initialSettings={storeSettings}
-                        />
-                    ) : (
-                        <>
-                            <p className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">
-                                {active.label}
-                            </p>
+                {sections.length > 0 && (
+                    <p className="px-2 pt-1 text-[11px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                        Or click a section in the preview.
+                    </p>
+                )}
+            </aside>
+
+            {/* Preview. A preview failure must never block saving, so a missing
+                token degrades to a message rather than an error state. */}
+            <div className="flex-1 min-w-0 bg-[var(--md-sys-color-surface-variant)] p-0.5">
+                {previewToken ? (
+                    <iframe
+                        ref={iframeRef}
+                        src={debouncedSrc}
+                        className="w-full h-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]"
+                        title="Site preview"
+                    />
+                ) : (
+                    <div className="w-full h-full rounded-xl border border-[var(--md-sys-color-outline-variant)] flex items-center justify-center">
+                        <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+                            The preview is unavailable. Your changes still save normally.
+                        </p>
+                    </div>
+                )}
+            </div>
+
+            {/* ── Drawer: slides over the preview. Wide enough for the Content form,
+                   which was the thing actually suffering in a narrow rail. ── */}
+            {selection && (
+                <div
+                    className="absolute inset-y-0 left-56 z-20 w-[26rem] flex flex-col
+                               bg-[var(--md-sys-color-surface)]
+                               border-r border-[var(--md-sys-color-outline-variant)]
+                               shadow-xl"
+                >
+                    <header className="shrink-0 flex items-center justify-between gap-2 px-4 h-14 border-b border-[var(--md-sys-color-outline-variant)]">
+                        <h2 className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">
+                            {active.label}
+                        </h2>
+                        <button
+                            onClick={() => setSelection(null)}
+                            aria-label="Close"
+                            className="shrink-0 w-8 h-8 grid place-items-center rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]"
+                        >
+                            <X className="w-4 h-4" />
+                        </button>
+                    </header>
+
+                    <div className="flex-1 min-h-0 overflow-y-auto p-4">
+                        {selection.kind === 'content' ? (
+                            // SP5's editor, reused wholesale. It owns its own save (it
+                            // writes stores.settings through updateStoreSettings), so it
+                            // is mounted as-is rather than folded into this page's Save.
+                            <ContentClient
+                                slug={slug}
+                                storeId={storeId}
+                                initialSettings={storeSettings}
+                            />
+                        ) : (
                             <SettingsFields
                                 schema={active.schema}
                                 values={active.values}
@@ -229,46 +309,52 @@ export default function EditorClient({
                                     setSaved(false)
                                 }}
                             />
-                        </>
+                        )}
+                    </div>
+
+                    {/* The Content drawer saves itself (updateStoreSettings), so this
+                        Save belongs to the theme and the section copy only. */}
+                    {selection.kind !== 'content' && (
+                        <footer className="shrink-0 border-t border-[var(--md-sys-color-outline-variant)] p-4 space-y-2">
+                            {error && (
+                                <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>
+                            )}
+                            <button
+                                onClick={onSave}
+                                disabled={saving}
+                                className="w-full h-9 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold disabled:opacity-50"
+                            >
+                                {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
+                            </button>
+                        </footer>
                     )}
                 </div>
-
-                {error && (
-                    <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>
-                )}
-
-                {/* The Content rail saves itself (updateStoreSettings), so this Save
-                    belongs to the theme and the section copy only. */}
-                {selection.kind !== 'content' && (
-                    <button
-                        onClick={onSave}
-                        disabled={saving}
-                        className="w-full h-9 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold disabled:opacity-50"
-                    >
-                        {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
-                    </button>
-                )}
-            </aside>
-
-            {/* Preview. A preview failure must never block saving, so a missing
-                token degrades to a message rather than an error state. */}
-            <div className="flex-1 min-w-0 bg-[var(--md-sys-color-surface-variant)] p-4">
-                {previewToken ? (
-                    <iframe
-                        ref={iframeRef}
-                        src={debouncedSrc}
-                        className="w-full h-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]"
-                        title="Site preview"
-                    />
-                ) : (
-                    <div className="w-full h-full rounded-xl border border-[var(--md-sys-color-outline-variant)] flex items-center justify-center">
-                        <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
-                            The preview is unavailable. Your changes still save normally.
-                        </p>
-                    </div>
-                )}
-            </div>
+            )}
         </div>
+    )
+}
+
+function RailItem({
+    label, active, onClick, icon,
+}: {
+    label: string
+    active: boolean
+    onClick: () => void
+    icon?: React.ReactNode
+}) {
+    return (
+        <button
+            onClick={onClick}
+            className={[
+                'w-full flex items-center gap-2 text-left px-3 h-9 rounded-lg text-[13px] transition-colors',
+                active
+                    ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-medium'
+                    : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]',
+            ].join(' ')}
+        >
+            {icon}
+            <span className="truncate">{label}</span>
+        </button>
     )
 }
 
@@ -285,15 +371,6 @@ function toBase64Url(input: string): string {
     let binary = ''
     for (const b of bytes) binary += String.fromCharCode(b)
     return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
-}
-
-function railCls(active: boolean) {
-    return [
-        'w-full text-left px-3 h-9 rounded-lg text-[13px] transition-colors',
-        active
-            ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-medium'
-            : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]',
-    ].join(' ')
 }
 
 /**

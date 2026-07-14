@@ -9,6 +9,7 @@ import { isCustomDomainHost } from '@/lib/host'
 import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import PreviewListener from '@/components/store/preview-listener'
+import EditorBridge from '@/components/store/editor-bridge'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
 
@@ -131,6 +132,10 @@ export default async function StoreLayout({
                 the admin origin: a real visitor is never framed, so for them this
                 listener never activates. */}
             <PreviewListener adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
+            {/* Click a section here -> the Editor opens its drawer; select one there
+                -> this scrolls to it. Same containment as PreviewListener, and it
+                never writes to the page. */}
+            <EditorBridge adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
             <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>
