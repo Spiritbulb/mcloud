@@ -1,0 +1,79 @@
+{
+  "expo": {
+    "name": "Nuru",
+    "slug": "nuru",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "nuru",
+    "userInterfaceStyle": "automatic",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "package": "co.ke.mcloud.nuru",
+      "adaptiveIcon": {
+        "backgroundColor": "#14110F",
+        "foregroundImage": "./assets/images/android-icon-foreground.png",
+        "backgroundImage": "./assets/images/android-icon-background.png",
+        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#262624"
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Nuru needs access to your photos so you can add them as notes.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "buildArchs": ["arm64-v8a", "armeabi-v7a"],
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "extraProguardRules": "# Keep React Native / Hermes\n-keep class com.facebook.hermes.** { *; }\n-keep class com.facebook.jni.** { *; }\n# Keep Reanimated (uses JNI + reflection)\n-keep class com.swmansion.reanimated.** { *; }\n-keep class com.swmansion.rnscreens.** { *; }\n# Keep Expo modules core (reflection-based module registry)\n-keep class expo.modules.** { *; }\n-keepclassmembers class * { @expo.modules.core.interfaces.ExpoProp *; }"
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
+    "extra": {
+      "apiBaseUrl": "https://www.mcloud.co.ke",
+      "webBaseUrl": "https://www.mcloud.co.ke",
+      "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",
+      "workosDomain": "https://api.workos.com",
+      "router": {},
+      "eas": {
+        "projectId": "30fded4d-580d-4e7b-9f80-bc75cac30992"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/30fded4d-580d-4e7b-9f80-bc75cac30992"
+    }
+  }
+}

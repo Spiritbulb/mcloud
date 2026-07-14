@@ -1,0 +1,47 @@
+# EAS Build archive ignore — MUST live at the git repository root.
+#
+# EAS copies the archive starting from the git root (this dir), NOT from the
+# app subdirectory you run `eas build` in. Without this file, a build uploads
+# the ENTIRE monorepo (all apps + a ~40 MB .git) instead of just the app.
+#
+# Both EAS apps here (apps/nuru, apps/mobile) are standalone Expo apps with no
+# @mcloud/* / workspace deps, so we ignore everything and re-include only those
+# two app dirs (minus their heavy/generated subdirs). A build from either app
+# carries both apps' source, which is tiny (~1 MB each) and harmless.
+#
+# Adding a NEW EAS app? Add a matching `!apps/<name>` + `!apps/<name>/**` pair
+# and its heavy-dir excludes below.
+
+# Ignore everything by default...
+/*
+apps/*
+
+# ...then re-include only the EAS app dirs.
+!apps
+!apps/nuru
+!apps/nuru/**
+!apps/mobile
+!apps/mobile/**
+
+# Even within the apps, never upload heavy/generated dirs.
+apps/nuru/node_modules
+apps/nuru/dist
+apps/nuru/web-build
+apps/nuru/.expo
+apps/nuru/.expo-shared
+apps/nuru/android
+apps/nuru/ios
+apps/nuru/.kotlin
+apps/nuru/*.aab
+apps/nuru/*.apk
+
+apps/mobile/node_modules
+apps/mobile/dist
+apps/mobile/web-build
+apps/mobile/.expo
+apps/mobile/.expo-shared
+apps/mobile/android
+apps/mobile/ios
+apps/mobile/.kotlin
+apps/mobile/*.aab
+apps/mobile/*.apk
