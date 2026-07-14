@@ -1,0 +1,32 @@
+{%- assign settings = store.settings -%}
+{%- assign programs = null -%}
+{%- if settings -%}{%- assign programs = settings.programs -%}{%- endif -%}
+{%- if programs and programs.size > 0 -%}
+<section class="sf-programs py-16 md:py-24">
+  <div class="container mx-auto max-w-6xl px-6">
+    <div class="mb-10 md:mb-14 text-center">
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
+        Programs
+      </span>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">What We Do</h2>
+    </div>
+    <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
+      {%- for program in programs -%}
+        <article class="sf-card sf-program-card overflow-hidden">
+          {%- if program.image -%}
+            <div class="relative overflow-hidden sf-bg-muted" style="aspect-ratio: 16/9">
+              <img src="{{ program.image }}" alt="{{ program.title }}" loading="lazy" class="absolute inset-0 w-full h-full object-cover">
+            </div>
+          {%- endif -%}
+          <div class="px-4 pt-4 pb-4 space-y-1">
+            <h3 class="sf-heading text-xl font-light">{{ program.title }}</h3>
+            {%- if program.description -%}
+              <p class="text-sm" style="color: var(--sf-foreground-subtle)">{{ program.description }}</p>
+            {%- endif -%}
+          </div>
+        </article>
+      {%- endfor -%}
+    </div>
+  </div>
+</section>
+{%- endif -%}

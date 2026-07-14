@@ -27,13 +27,4 @@
 		"NEXT_PUBLIC_API_BASE_URL": "https://menengai.cloud/api",
 		"NEXT_PUBLIC_GA_ID": "G-P7RJ7JW0BM"
 	},
-	"rules": [
-		{
-			"type": "Text",
-			"globs": [
-				"src/liquid-themes/**/*.liquid"
-			],
-			"fallthrough": true
-		}
-	]
 }

@@ -10,7 +10,9 @@
   },
   "dependencies": {
     "@mcloud/db": "*",
+    "@mcloud/liquid": "*",
     "@mcloud/themes": "*",
+    "@mcloud/verticals": "*",
     "@mcloud/ui": "*",
     "framer-motion": "^12.15.0",
     "lucide-react": "^0.511.0",
@@ -31,5 +33,6 @@
     "@types/react-dom": "^19",
     "tailwindcss": "^4",
     "typescript": "^5"
-  }
+  },
+  "type": "module"
 }

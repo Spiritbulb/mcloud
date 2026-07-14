@@ -4,6 +4,9 @@ import { notFound } from 'next/navigation'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import type { ProductDetailData, ProductVariant } from '@mcloud/themes/types'
 import ProductDetailClient from './product-detail-client'
+import { getPublishedPage } from '@/lib/pages'
+import { renderPage } from '@/lib/render-page'
+import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 
 interface Props {
     params: Promise<{ slug: string; 'product-slug': string }>
@@ -28,7 +31,39 @@ export default async function ProductDetailPage({ params }: Props) {
         .eq('slug', productSlug)
         .eq('is_active', true)
         .single()
-    if (!productData) notFound()
+    if (!productData) {
+        // No product with this slug — try a published content page of the same slug.
+        const page = await getPublishedPage(rawStore.id, productSlug)
+        if (!page) notFound()
+
+        // Build the same render context the home page uses, then render the page.
+        const [{ data: rawProducts }, { data: rawCollections }] = await Promise.all([
+            supabase
+                .from('products')
+                .select('id, name, slug, description, price, compare_at_price, images, inventory_quantity, track_inventory')
+                .eq('store_id', rawStore.id)
+                .eq('is_active', true)
+                .order('created_at', { ascending: false }),
+            supabase
+                .from('collections')
+                .select('id, name, slug, description, image_url, position')
+                .eq('store_id', rawStore.id)
+                .eq('is_active', true)
+                .neq('slug', 'featured')
+                .order('position', { ascending: true }),
+        ])
+        const store = castStore(rawStore)
+        const pageProducts = castProducts(rawProducts ?? [])
+        const collections = castCollections(rawCollections ?? [])
+        const html = await renderPage(page.sections, {
+            store,
+            products: pageProducts,
+            collections,
+            featuredProducts: pageProducts.slice(0, 8),
+            campaigns: [],
+        })
+        return <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
+    }
 
     const [{ data: variantsData }, { data: reviewStats }] = await Promise.all([
         supabase

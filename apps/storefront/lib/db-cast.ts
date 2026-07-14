@@ -32,6 +32,12 @@ export function castStore(raw: RawStore): Store {
         currency: raw.currency,
         item_type: 'store',
         settings: {
+            // Carry the full raw settings object so vertical-specific keys
+            // (NGO mission/programs/impactStats/contact, and any future
+            // vertical's content) reach the Liquid sections that read them.
+            // The typed shop keys below are re-listed for TS consumers; the
+            // spread and the explicit keys resolve to the same values.
+            ...settings,
             themeId: settings.themeId as string | undefined,
             heroTitle: settings.heroTitle as string | undefined,
             heroSubtitle: settings.heroSubtitle as string | undefined,

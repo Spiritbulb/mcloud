@@ -1,0 +1,68 @@
+{{- - ALL PRODUCTS - -}}
+<section id="products" class="py-12 md:py-20">
+  <div class="container mx-auto max-w-6xl px-6">
+    <div class="mb-10 md:mb-14">
+      <div class="flex items-center gap-4 mb-3">
+        <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
+        <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+          All Products
+        </span>
+        <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
+      </div>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">Browse Everything</h2>
+    </div>
+
+    {%- if products and products.size > 0 -%}
+      <div
+        class="grid gap-4 md:gap-6"
+        style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"
+      >
+        {%- for product in products -%}
+          {%- render 'classic/sections/product-card', store: store, product: product -%}
+        {%- endfor -%}
+      </div>
+    {%- else -%}
+      <div class="text-center py-24 space-y-3">
+        <svg
+          class="mx-auto"
+          width="40"
+          height="40"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.5"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          style="color: var(--sf-foreground); opacity: 0.2"
+        >
+          <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z"/>
+          <path d="M3 6h18"/>
+          <path d="M16 10a4 4 0 0 1-8 0"/>
+        </svg>
+        <p class="text-sm" style="color: var(--sf-foreground-subtle)">No products yet</p>
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+
+{{- - SCROLL FADE-IN OBSERVER - -}}
+<script>
+  (function () {
+    var els = document.querySelectorAll('.sf-animate-fadein');
+    if (!els.length) return;
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('sf-visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.08 }
+    );
+    els.forEach(function (el) {
+      io.observe(el);
+    });
+  })();
+</script>

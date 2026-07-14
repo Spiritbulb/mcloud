@@ -1,5 +1,6 @@
 'use client'
 
+import { getVertical } from '@mcloud/verticals'
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
 import StoreNav from './store-nav'
@@ -40,6 +41,11 @@ export default function LayoutWrapper({
         return <>{children}</>
     }
 
+    // The cart/wishlist islands hydrate commerce controls inside the Liquid
+    // markup. A non-commerce vertical (NGO) never emits those controls, so
+    // mounting the islands there is dead weight.
+    const commerce = getVertical(store?.type).commerce
+
     return (
         <div
             className="storefront-root"
@@ -49,8 +55,12 @@ export default function LayoutWrapper({
             <StoreNav store={store} />
             {children}
             <StoreFooter store={store} settings={settings} />
-            <CartIsland />
-            <WishlistIsland />
+            {commerce && (
+                <>
+                    <CartIsland />
+                    <WishlistIsland />
+                </>
+            )}
             <LiquidScriptRunner />
         </div>
     )

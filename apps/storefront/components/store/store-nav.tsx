@@ -1,5 +1,6 @@
 'use client'
 
+import { getVertical } from '@mcloud/verticals'
 import { ShoppingBag, Heart, User } from 'lucide-react'
 import Link from 'next/link'
 import { useCart } from '@/contexts/CartContext'
@@ -12,6 +13,7 @@ interface Store {
     name: string
     slug: string
     logo_url: string | null
+    type?: string | null
 }
 
 function WishlistBadge({ count }: { count: number }) {
@@ -31,6 +33,9 @@ export default function StoreNav({ store }: { store: Store }) {
     const { user } = useCustomerAuth()
     const { wishlistIds } = useWishlist()
     const href = useStoreHref()
+    // Non-commerce verticals (NGO) have no basket or customer account — donations
+    // go through the campaigns section, so the shop chrome is dead weight there.
+    const commerce = getVertical(store.type).commerce
 
     return (
         <nav className="sf-nav sticky top-0 z-40">
@@ -54,43 +59,45 @@ export default function StoreNav({ store }: { store: Store }) {
                     )}
                 </Link>
 
-                <div className="flex items-center gap-1">
-                    <Link
-                        href={href('/account/dashboard')}
-                        className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
-                        style={{ color: 'var(--sf-foreground)' }}
-                        aria-label="Wishlist"
-                    >
-                        <Heart className="w-4 h-4" />
-                        <WishlistBadge count={wishlistIds.size} />
-                    </Link>
+                {commerce && (
+                    <div className="flex items-center gap-1">
+                        <Link
+                            href={href('/account/dashboard')}
+                            className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
+                            style={{ color: 'var(--sf-foreground)' }}
+                            aria-label="Wishlist"
+                        >
+                            <Heart className="w-4 h-4" />
+                            <WishlistBadge count={wishlistIds.size} />
+                        </Link>
 
-                    <Link
-                        href={href(`/account/${user ? 'dashboard' : 'login'}`)}
-                        className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
-                        style={{ color: 'var(--sf-foreground)' }}
-                        aria-label={user ? 'My account' : 'Sign in'}
-                    >
-                        <User className="w-4 h-4" />
-                        {user && (
-                            <span className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-green-500" />
-                        )}
-                    </Link>
+                        <Link
+                            href={href(`/account/${user ? 'dashboard' : 'login'}`)}
+                            className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
+                            style={{ color: 'var(--sf-foreground)' }}
+                            aria-label={user ? 'My account' : 'Sign in'}
+                        >
+                            <User className="w-4 h-4" />
+                            {user && (
+                                <span className="absolute bottom-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-green-500" />
+                            )}
+                        </Link>
 
-                    <Link
-                        href={href('/cart')}
-                        className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
-                        style={{ color: 'var(--sf-foreground)' }}
-                        aria-label="Cart"
-                    >
-                        <ShoppingBag className="w-4 h-4" />
-                        {cartItems.length > 0 && (
-                            <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center text-xs font-medium text-white" >
-                                {cartItems.length}
-                            </span>
-                        )}
-                    </Link>
-                </div>
+                        <Link
+                            href={href('/cart')}
+                            className="relative w-9 h-9 flex items-center justify-center transition-opacity hover:opacity-70"
+                            style={{ color: 'var(--sf-foreground)' }}
+                            aria-label="Cart"
+                        >
+                            <ShoppingBag className="w-4 h-4" />
+                            {cartItems.length > 0 && (
+                                <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full flex items-center justify-center text-xs font-medium text-white" >
+                                    {cartItems.length}
+                                </span>
+                            )}
+                        </Link>
+                    </div>
+                )}
 
             </div>
         </nav>

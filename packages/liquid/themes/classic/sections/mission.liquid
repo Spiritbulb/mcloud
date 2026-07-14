@@ -1,0 +1,24 @@
+{%- assign settings = store.settings -%}
+{%- assign headline = store.name -%}
+{%- assign statement = store.description -%}
+{%- if settings -%}
+  {%- if settings.missionHeadline -%}{%- assign headline = settings.missionHeadline -%}{%- endif -%}
+  {%- if settings.mission -%}{%- assign statement = settings.mission -%}{%- endif -%}
+{%- endif -%}
+
+<section class="sf-mission relative w-full overflow-hidden py-20 md:py-28">
+  <div class="sf-mission-fallback absolute inset-0"></div>
+  <div class="relative container mx-auto max-w-4xl px-6 text-center">
+    <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-4">
+      Our Mission
+    </span>
+    <h1 class="sf-heading font-bold tracking-tight" style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1">
+      {{ headline }}
+    </h1>
+    {%- if statement -%}
+      <p class="font-light mt-4 mx-auto max-w-2xl" style="color: var(--sf-foreground-subtle); font-size: clamp(1rem, 2vw, 1.25rem)">
+        {{ statement }}
+      </p>
+    {%- endif -%}
+  </div>
+</section>

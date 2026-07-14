@@ -4,6 +4,13 @@ import { notFound } from 'next/navigation'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
+import { buildHomeContext } from '@/lib/liquid-context'
+import { loadCampaignsWithProgress } from '@/lib/campaigns'
+import { getPublishedPage } from '@/lib/pages'
+import { renderPage } from '@/lib/render-page'
+import { defaultHomeSections } from '@/lib/sections'
+import { getVertical } from '@mcloud/verticals'
+import { DonateIsland } from './DonateIsland'
 
 export const revalidate = 60
 
@@ -124,15 +131,44 @@ export default async function StorePage({ params }: Props) {
     }
 
     const themeId = (store?.settings?.themeId as string) ?? 'classic'
-    const { StoreFront } = await resolveTheme(themeId)
 
-    return (
-        <StoreFront
-            store={store}
-            products={products}
-            collections={collections}
-            featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
-            services={services}
-        />
-    )
+    // Render the home via Liquid. On any template/render error, fall back to the
+    // React theme so a template bug can never take a live store down. (The
+    // fallback is a sub-project-1 safety net; removed when React is retired.)
+    try {
+        const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
+        const context = {
+            ...buildHomeContext({
+                store,
+                products,
+                collections,
+                featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+            }),
+            campaigns,
+        }
+        const homePage = await getPublishedPage(store.id, '')
+        const sections = homePage?.sections?.length
+            ? homePage.sections
+            : defaultHomeSections(rawStore.type as string | null | undefined)
+        const html = await renderPage(sections, context)
+        const isNgo = getVertical(rawStore.type as string | null | undefined).id === 'ngo'
+        return (
+            <>
+                <div data-liquid suppressHydrationWarning dangerouslySetInnerHTML={{ __html: html }} />
+                {isNgo ? <DonateIsland slug={slug} /> : null}
+            </>
+        )
+    } catch (err) {
+        console.error('[storefront] Liquid home render failed, falling back to React:', err)
+        const { StoreFront } = await resolveTheme(themeId)
+        return (
+            <StoreFront
+                store={store}
+                products={products}
+                collections={collections}
+                featuredProducts={featured.length > 0 ? featured : products.slice(0, 8)}
+                services={services}
+            />
+        )
+    }
 }
