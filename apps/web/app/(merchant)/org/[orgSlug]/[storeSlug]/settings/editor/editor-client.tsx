@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X, Palette, FileText, Layers } from 'lucide-react'
 import { SECTION_REGISTRY } from '../../../../../../../../storefront/lib/sections'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
-import { updateStoreTheme, updatePageSections } from '../actions'
+import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../actions'
 import SettingsFields from './settings-fields'
 import ContentClient from '../content/content-client'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
@@ -30,6 +30,15 @@ function sectionDef(type: string | undefined) {
 // `null` = drawer closed, preview at full width.
 type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; index: number } | null
 
+/**
+ * What a template may edit in stores.settings from the preview. The message comes
+ * from the framed storefront, so it is checked rather than trusted: an unexpected
+ * key is dropped instead of being written blindly into the merchant's settings.
+ * Must match the keys passed to the `editable-setting` / `editable-item` snippets.
+ */
+const EDITABLE_SETTINGS = new Set(['heroTitle', 'heroSubtitle', 'missionHeadline', 'mission'])
+const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats'])
+
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
     commerce, storeSettings,
@@ -48,6 +57,10 @@ export default function EditorClient({
     const [selection, setSelection] = useState<Selection>(null)
     const [themeValues, setThemeValues] = useState<SettingValues>(() => ({ ...theme }))
     const [sections, setSections] = useState<Section[]>(() => initialSections)
+    // stores.settings edited FROM THE PREVIEW (hero title, mission, programme
+    // copy). The Content drawer writes the same table through its own action, so
+    // this holds only what the preview changed and merges on save.
+    const [storeDraft, setStoreDraft] = useState<Record<string, unknown>>({})
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [saved, setSaved] = useState(false)
@@ -121,6 +134,65 @@ export default function EditorClient({
                 if (data.index < 0 || data.index >= sections.length) return
                 setSelection({ kind: 'section', index: data.index })
             }
+
+            // ── The merchant typed into the preview itself ────────────────────────
+            // Three channels, because copy lives in three places. Each folds into the
+            // same state the drawer writes, so the two surfaces always agree.
+
+            // 1. A section's own config -> pages.sections[i].settings
+            if (data.type === 'mcloud:field-edit') {
+                const { index, field, value } = data
+                if (!Number.isInteger(index) || index < 0 || index >= sections.length) return
+                if (typeof field !== 'string' || typeof value !== 'string') return
+
+                // The edit came FROM the preview, which is already showing it. Reloading
+                // the iframe would destroy the node being typed into and throw the caret
+                // away mid-word, so this edit must not re-render the frame it came from.
+                skipReloadRef.current = true
+
+                setSections((prev) => {
+                    const next = [...prev]
+                    next[index] = {
+                        ...next[index],
+                        settings: { ...next[index].settings, [field]: value },
+                    }
+                    return next
+                })
+                setSaved(false)
+            }
+
+            // 2. A store setting -> stores.settings[key]  (hero title, mission …)
+            if (data.type === 'mcloud:setting-edit') {
+                const { key, value } = data
+                if (typeof key !== 'string' || typeof value !== 'string') return
+                // Only keys a template actually marked editable. An unexpected key is
+                // ignored rather than written blindly into the merchant's settings.
+                if (!EDITABLE_SETTINGS.has(key)) return
+
+                setStoreDraft((prev) => ({ ...prev, [key]: value }))
+                setSaved(false)
+            }
+
+            // 3. A repeated record -> stores.settings[list][i][key]  (programs …)
+            if (data.type === 'mcloud:item-edit') {
+                const { list, index, key, value } = data
+                if (typeof list !== 'string' || typeof key !== 'string') return
+                if (typeof value !== 'string' || !Number.isInteger(index) || index < 0) return
+                if (!EDITABLE_LISTS.has(list)) return
+
+                setStoreDraft((prev) => {
+                    const arr = Array.isArray(prev[list]) ? [...(prev[list] as unknown[])] : []
+                    // An index past the end means the preview and the draft have drifted
+                    // (a record was removed in the drawer). Drop the edit rather than
+                    // growing the array with a hole.
+                    if (index >= arr.length) return prev
+                    const item = arr[index]
+                    if (typeof item !== 'object' || item === null) return prev
+                    arr[index] = { ...(item as Record<string, unknown>), [key]: value }
+                    return { ...prev, [list]: arr }
+                })
+                setSaved(false)
+            }
         }
         window.addEventListener('message', onMessage)
         return () => window.removeEventListener('message', onMessage)
@@ -132,6 +204,13 @@ export default function EditorClient({
         postSelect(index)
     }
 
+    // Is there anything to save? Compared against what the page loaded, so undoing an
+    // edit by hand correctly makes the button go away again.
+    const dirty =
+        Object.keys(storeDraft).length > 0 ||
+        JSON.stringify(sections) !== JSON.stringify(initialSections) ||
+        THEME_SCHEMA.some((f) => (themeValues[f.id] ?? '') !== (theme[f.id] ?? ''))
+
     // Copy -> debounced reload. A copy change needs Liquid re-run server-side
     // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
     const previewSrc = useMemo(() => {
@@ -139,8 +218,16 @@ export default function EditorClient({
         return `${storefrontOrigin}/store/${slug}?preview=${encodeURIComponent(payload)}&token=${encodeURIComponent(previewToken)}`
     }, [sections, slug, previewToken, storefrontOrigin])
 
+    // An edit made IN the preview is already visible there, so it must not reload
+    // the frame; an edit made in the DRAWER must. Same state, two origins, and only
+    // one of them needs a re-render.
+    const skipReloadRef = useRef(false)
     const [debouncedSrc, setDebouncedSrc] = useState(previewSrc)
     useEffect(() => {
+        if (skipReloadRef.current) {
+            skipReloadRef.current = false
+            return
+        }
         const t = setTimeout(() => setDebouncedSrc(previewSrc), 400)
         return () => clearTimeout(t)
     }, [previewSrc])
@@ -158,8 +245,14 @@ export default function EditorClient({
         const a = await updateStoreTheme(slug, themePatch)
         const b = sections.length ? await updatePageSections(slug, '', sections) : { error: null }
 
+        // Copy edited in the preview that lives in stores.settings. Merged onto the
+        // settings this page loaded, so keys the Editor never touched survive.
+        const c = Object.keys(storeDraft).length
+            ? await updateStoreSettings(slug, { settings: { ...storeSettings, ...storeDraft } as never })
+            : { error: null }
+
         setSaving(false)
-        const err = a.error ?? b.error
+        const err = a.error ?? b.error ?? c.error
         // The draft is retained on failure: the merchant never loses typed copy.
         if (err) setError(err)
         else {
@@ -231,14 +324,34 @@ export default function EditorClient({
 
                 {sections.length > 0 && (
                     <p className="px-2 pt-1 text-[11px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
-                        Or click a section in the preview.
+                        Click any heading in the preview to edit it directly.
                     </p>
                 )}
             </aside>
 
             {/* Preview. A preview failure must never block saving, so a missing
                 token degrades to a message rather than an error state. */}
-            <div className="flex-1 min-w-0 bg-[var(--md-sys-color-surface-variant)] p-0.5">
+            <div className="relative flex-1 min-w-0 bg-[var(--md-sys-color-surface-variant)] p-0.5">
+                {/* Editing happens IN the preview now, so Save cannot live only in the
+                    drawer: a merchant who never opens one would have no way to keep
+                    their work. It floats over the preview whenever there is something
+                    unsaved. */}
+                {dirty && selection?.kind !== 'content' && (
+                    <div className="absolute bottom-5 right-5 z-30 flex items-center gap-3">
+                        {error && (
+                            <span className="rounded-lg bg-[var(--md-sys-color-error-container)] px-3 py-1.5 text-[12px] text-[var(--md-sys-color-on-error-container)] shadow">
+                                {error}
+                            </span>
+                        )}
+                        <button
+                            onClick={onSave}
+                            disabled={saving}
+                            className="h-10 rounded-full bg-[var(--md-sys-color-primary)] px-5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] shadow-lg disabled:opacity-50"
+                        >
+                            {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
+                        </button>
+                    </div>
+                )}
                 {previewToken ? (
                     <iframe
                         ref={iframeRef}
@@ -312,22 +425,9 @@ export default function EditorClient({
                         )}
                     </div>
 
-                    {/* The Content drawer saves itself (updateStoreSettings), so this
-                        Save belongs to the theme and the section copy only. */}
-                    {selection.kind !== 'content' && (
-                        <footer className="shrink-0 border-t border-[var(--md-sys-color-outline-variant)] p-4 space-y-2">
-                            {error && (
-                                <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>
-                            )}
-                            <button
-                                onClick={onSave}
-                                disabled={saving}
-                                className="w-full h-9 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold disabled:opacity-50"
-                            >
-                                {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
-                            </button>
-                        </footer>
-                    )}
+                    {/* Save floats over the preview instead of living here, so that a
+                        merchant editing directly in the page (never opening a drawer)
+                        still has one. The Content drawer saves itself. */}
                 </div>
             )}
         </div>

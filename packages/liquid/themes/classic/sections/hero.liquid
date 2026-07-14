@@ -181,11 +181,21 @@
           <h1
             class="sf-heading font-bold tracking-tight"
             style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1"
+            {% render 'classic/snippets/editable-setting', key: 'heroTitle', value: store.settings.heroTitle %}
           >
             {{ slide_title }}
           </h1>
-          {%- if slide_subtitle -%}
-            <p class="font-light" style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)">
+          {%- comment -%}
+            Rendered even when empty IN THE EDITOR, so there is something to click
+            in order to write one. On the live site an empty subtitle still emits
+            nothing, exactly as before.
+          {%- endcomment -%}
+          {%- if slide_subtitle or store.editing -%}
+            <p
+              class="font-light"
+              style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)"
+              {% render 'classic/snippets/editable-setting', key: 'heroSubtitle', value: store.settings.heroSubtitle %}
+            >
               {{ slide_subtitle }}
             </p>
           {%- endif -%}

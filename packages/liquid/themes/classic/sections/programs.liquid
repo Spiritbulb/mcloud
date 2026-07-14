@@ -7,10 +7,10 @@
 <section class="sf-programs py-16 md:py-24">
   <div class="container mx-auto max-w-6xl px-6">
     <div class="mb-10 md:mb-14 text-center">
-      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3">
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', field: 'eyebrow', value: section.eyebrow %}>
         {{ eyebrow }}
       </span>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight">{{ heading }}</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', field: 'heading', value: section.heading %}>{{ heading }}</h2>
     </div>
     <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       {%- for program in programs -%}
@@ -26,9 +26,9 @@
             </div>
           {%- endif -%}
           <div class="px-4 pt-4 pb-4 space-y-1">
-            <h3 class="sf-heading text-xl font-light">{{ program.title }}</h3>
-            {%- if program.description -%}
-              <p class="text-sm" style="color: var(--sf-foreground-subtle)">{{ program.description }}</p>
+            <h3 class="sf-heading text-xl font-light" {% render 'classic/snippets/editable-item', list: 'programs', index: forloop.index0, key: 'title', value: program.title %}>{{ program.title }}</h3>
+            {%- if program.description or store.editing -%}
+              <p class="text-sm" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', list: 'programs', index: forloop.index0, key: 'description', value: program.description %}>{{ program.description }}</p>
             {%- endif -%}
           </div>
         </article>

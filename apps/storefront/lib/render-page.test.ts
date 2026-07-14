@@ -149,3 +149,119 @@ const shopWithData = await renderPage([{ type: 'hero' }], heroCtx(true, CAMPAIGN
 assert.ok(shopWithData.includes('New Arrivals'), 'commerce copy is not overridden by campaign data')
 
 console.log('render-page.test.ts: hero vertical-gating assertions passed')
+
+// ── Click-to-edit: the rendered value and the STORED value are different things ─
+//
+// Every heading renders through `| default: 'Support a Cause'`, so an unset field
+// still SHOWS text. If the editor read the heading back out of the DOM, clicking
+// into it and clicking away would save the default as though the merchant had
+// typed it: the default gets baked in, the fallback dies, and there is no undo.
+//
+// So each editable node carries data-mcloud-stored — the value as STORED, empty
+// when unset — and the editor diffs against that, never against textContent.
+
+const campaignCtx = {
+  ...ctxSp6,
+  campaigns: [{ id: 'c', title: 'T', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }],
+}
+
+// UNSET: shows the default, but reports itself as empty.
+const unset = await renderPage([{ type: 'campaigns' }], campaignCtx)
+assert.ok(unset.includes('Support a Cause'), 'renders the default text')
+assert.ok(
+  unset.includes('data-mcloud-stored=""'),
+  'THE TRAP: an unset field must report EMPTY, not the default it happens to display',
+)
+assert.ok(unset.includes('data-mcloud-field="heading"'), 'the heading is marked editable')
+assert.ok(unset.includes('data-mcloud-field="eyebrow"'), 'the eyebrow is marked editable')
+
+// SET: reports what is actually stored. Note the eyebrow here is still unset, so
+// it must STILL report empty: the two fields are tracked independently, and
+// setting one must not make the other look set.
+const set = await renderPage([{ type: 'campaigns', settings: { heading: 'Give Today' } }], campaignCtx)
+assert.ok(
+  set.includes('data-mcloud-field="heading" data-mcloud-stored="Give Today"'),
+  'a set field reports its stored value',
+)
+assert.ok(
+  set.includes('data-mcloud-field="eyebrow" data-mcloud-stored=""'),
+  'a sibling field that is still unset keeps reporting empty',
+)
+
+// The stored value is ESCAPED into the attribute: a merchant typing a quote must
+// not be able to break out of it and inject markup into their own page.
+const nasty = await renderPage(
+  [{ type: 'campaigns', settings: { heading: '"><script>alert(1)</script>' } }],
+  campaignCtx,
+)
+assert.ok(!nasty.includes('<script>'), 'a quote in the copy cannot break out of the attribute')
+assert.ok(nasty.includes('&lt;script&gt;'), 'it is escaped instead')
+
+// Mission declares only an eyebrow (its headline comes from store settings), so it
+// must be marked for that and nothing else.
+const mission = await renderPage([{ type: 'mission' }], {
+  ...ctxSp6,
+  store: { ...ctxSp6.store, settings: { ...ctxSp6.store.settings, mission: 'M', missionHeadline: 'H' } },
+})
+assert.ok(mission.includes('data-mcloud-field="eyebrow"'), 'mission marks its eyebrow')
+assert.ok(!mission.includes('data-mcloud-field="heading"'), 'and does not claim a heading it does not own')
+
+console.log('render-page.test.ts: click-to-edit anchor assertions passed')
+
+// ── Store settings + repeated records are editable too ─────────────────────────
+//
+// Copy lives in three places, and the drawer must not be the only way to reach any
+// of them. The hero's title is stores.settings.heroTitle; a programme's title is
+// stores.settings.programs[i].title. Neither is section config, so both need their
+// own channel — and both have the same default-trap.
+
+const ngoStore = (settings: Record<string, unknown>, editing = false) => ({
+  store: { id: 's', name: 'KFS', slug: 's', currency: 'KES', settings, commerce: false, editing },
+  products: [], collections: [], featuredProducts: [],
+  campaigns: [{ id: 'c', title: 'Support Us', description: 'd', hasGoal: false, percent: 0, raisedLabel: '', goalLabel: '' }],
+})
+
+// The hero's title is a STORE SETTING, not section config.
+const heroSet = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'Our Voices' }))
+assert.ok(
+  heroSet.includes('data-mcloud-setting="heroTitle" data-mcloud-stored="Our Voices"'),
+  'the hero title is editable and reports its stored value',
+)
+
+// THE TRAP AGAIN: with no heroTitle the hero falls back to store.name, so it
+// DISPLAYS "KFS" while the setting is empty. It must report empty.
+const heroBare = await renderPage([{ type: 'hero' }], ngoStore({}))
+assert.ok(heroBare.includes('KFS'), 'falls back to the store name')
+assert.ok(
+  heroBare.includes('data-mcloud-setting="heroTitle" data-mcloud-stored=""'),
+  'but reports the SETTING as empty, so clicking it cannot freeze the fallback in',
+)
+
+// A repeated record carries its list AND its index: an edit that cannot say which
+// record it belongs to would overwrite the wrong programme.
+const programs = await renderPage([{ type: 'programs' }], ngoStore({
+  programs: [{ title: 'Advocacy', description: 'a' }, { title: 'Care', description: 'b' }],
+}))
+assert.ok(
+  programs.includes('data-mcloud-list="programs" data-mcloud-index="0" data-mcloud-key="title" data-mcloud-stored="Advocacy"'),
+  'programme 0 is addressable',
+)
+assert.ok(
+  programs.includes('data-mcloud-list="programs" data-mcloud-index="1" data-mcloud-key="title" data-mcloud-stored="Care"'),
+  'programme 1 is addressable, and distinct from 0',
+)
+
+// ── store.editing must NEVER leak to a visitor ────────────────────────────────
+//
+// The editor renders empty fields so they can be clicked and filled. A visitor must
+// see none of that: an empty subtitle stays absent from their page entirely.
+const visitor = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'T' }, false))
+assert.ok(!visitor.includes('heroSubtitle'), 'a visitor gets no empty subtitle element')
+
+const editor = await renderPage([{ type: 'hero' }], ngoStore({ heroTitle: 'T' }, true))
+assert.ok(
+  editor.includes('data-mcloud-setting="heroSubtitle"'),
+  'the editor DOES get the empty subtitle, so there is something to click',
+)
+
+console.log('render-page.test.ts: store-setting + repeated-record assertions passed')

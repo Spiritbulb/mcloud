@@ -1,0 +1,19 @@
+{%- comment -%}
+  Marks a field inside a REPEATED record in stores.settings (programs[2].title,
+  campaigns[0].description, impactStats[1].value …) as click-to-editable.
+
+  Usage, inside a {% for %} with forloop available:
+    <h3 {% render 'classic/snippets/editable-item',
+          list: 'programs', index: forloop.index0, key: 'title', value: program.title %}>
+      {{ program.title }}
+    </h3>
+
+  The list name and the index are BOTH required: without them an edit cannot say
+  which record it belongs to, and the admin would have to guess — which is how you
+  overwrite the wrong programme.
+
+  Editing an existing record's text is all this covers. Adding, removing and
+  reordering records stay in the drawer, because there is no text on the page to
+  click for a record that does not exist yet.
+{%- endcomment -%}
+data-mcloud-list="{{ list }}" data-mcloud-index="{{ index }}" data-mcloud-key="{{ key }}" data-mcloud-stored="{{ value | escape }}"

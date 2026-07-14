@@ -6,12 +6,12 @@
     <div class="mb-10 md:mb-14">
       <div class="flex items-center gap-4 mb-3">
         <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
-        <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">
+        <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium" {% render 'classic/snippets/editable', field: 'eyebrow', value: section.eyebrow %}>
           {{ eyebrow }}
         </span>
         <div class="h-px flex-1" style="background-color: var(--sf-border)"></div>
       </div>
-      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight">{{ heading }}</h2>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light text-center tracking-tight" {% render 'classic/snippets/editable', field: 'heading', value: section.heading %}>{{ heading }}</h2>
     </div>
 
     {%- if products and products.size > 0 -%}

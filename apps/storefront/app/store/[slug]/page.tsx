@@ -139,35 +139,42 @@ export default async function StorePage({ params, searchParams }: Props) {
     // React theme so a template bug can never take a live store down. (The
     // fallback is a sub-project-1 safety net; removed when React is retired.)
     try {
-        const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
-        const context = {
-            ...buildHomeContext({
-                store,
-                storeType: rawStore.type as string | null | undefined,
-                products,
-                collections,
-                featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
-            }),
-            campaigns,
-        }
         const homePage = await getPublishedPage(store.id, '')
         let sections = homePage?.sections?.length
             ? homePage.sections
             : defaultHomeSections(rawStore.type as string | null | undefined)
 
-        // The Editor previews UNSAVED copy. Honoured only with a token proving the
-        // caller may preview THIS store: otherwise a crafted URL would let anyone
-        // serve a merchant's customers a re-worded version of their own site.
-        if (preview && token) {
-            const secret = process.env.PREVIEW_SECRET
-            if (secret && verifyPreview(token, store.id, secret)) {
-                try {
-                    const parsed = JSON.parse(Buffer.from(preview, 'base64url').toString('utf-8'))
-                    if (Array.isArray(parsed)) sections = parsed
-                } catch {
-                    // A malformed preview payload falls through to the real page.
-                }
+        // Is this the Editor's preview? A VALID token is the only way to be one.
+        // This gates both the unsaved-copy override and the `editing` render flag,
+        // so a visitor cannot get edit affordances by guessing a query parameter.
+        const editing =
+            !!token &&
+            !!process.env.PREVIEW_SECRET &&
+            verifyPreview(token, store.id, process.env.PREVIEW_SECRET)
+
+        // The Editor previews UNSAVED copy. Honoured only with that same token:
+        // otherwise a crafted URL would let anyone serve a merchant's customers a
+        // re-worded version of their own site.
+        if (editing && preview) {
+            try {
+                const parsed = JSON.parse(Buffer.from(preview, 'base64url').toString('utf-8'))
+                if (Array.isArray(parsed)) sections = parsed
+            } catch {
+                // A malformed preview payload falls through to the real page.
             }
+        }
+
+        const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
+        const context = {
+            ...buildHomeContext({
+                store,
+                storeType: rawStore.type as string | null | undefined,
+                editing,
+                products,
+                collections,
+                featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+            }),
+            campaigns,
         }
 
         const html = await renderPage(sections, context)
