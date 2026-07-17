@@ -10,7 +10,9 @@ import { createClient } from '@mcloud/db/server'
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser, fail } from '../../../_lib'
 import { verifyPlaySubscription } from '../../../_google-play'
+import { planForSku } from '@/lib/plan-skus'
 
+const HOBBY_SKU = process.env.GOOGLE_PLAY_HOBBY_SKU
 const PRO_SKU = process.env.GOOGLE_PLAY_PRO_SKU
 
 export async function POST(
@@ -33,7 +35,7 @@ export async function POST(
         // fall through to validation
     }
     if (!purchaseToken) return fail(400, 'purchaseToken required')
-    if (!PRO_SKU) return fail(500, 'GOOGLE_PLAY_PRO_SKU not configured')
+    if (!HOBBY_SKU && !PRO_SKU) return fail(500, 'No Google Play SKUs configured')
 
     const supabase = await createClient()
 
@@ -70,7 +72,9 @@ export async function POST(
     const result = await verifyPlaySubscription(purchaseToken)
     if (!result.ok) return fail(502, result.error)
     if (!result.active) return fail(400, 'Subscription is not active')
-    if (result.productId !== PRO_SKU) return fail(400, 'Unexpected product')
+
+    const plan = planForSku(result.productId ?? '', { hobby: HOBBY_SKU, pro: PRO_SKU })
+    if (!plan) return fail(400, 'Unexpected product')
 
     // Idempotent upsert keyed on the unique purchase token — safe to call twice
     // (covers a retry of an interrupted acknowledgement).
@@ -83,7 +87,7 @@ export async function POST(
                 google_play_purchase_token: purchaseToken,
                 google_play_order_id: result.orderId,
                 google_play_product_id: result.productId,
-                plan: 'pro',
+                plan,
                 amount: 0,
                 currency: 'KES',
                 status: 'active',
@@ -94,5 +98,5 @@ export async function POST(
 
     await supabase.from('stores').update({ is_pro: true }).eq('id', store.id)
 
-    return NextResponse.json({ ok: true, pro: true, expiresAt: result.expiryTime })
+    return NextResponse.json({ ok: true, pro: true, plan, expiresAt: result.expiryTime })
 }
