@@ -155,6 +155,7 @@ export async function getStoreOverview(
         { data: integrations },
         { data: funnelRows },
         { data: topProductRows },
+        { count: orders7dCount },
     ] = await Promise.all([
         supabase
             .from('stores')
@@ -195,6 +196,15 @@ export async function getStoreOverview(
             .select(`quantity, price, total, product:products ( id, name, images )`)
             .gte('created_at', monthStart)
             .in('order_id', monthOrderIds?.map(o => o.id) ?? []),
+        // Real 7-day order count for the funnel's Orders step. Sourced from the
+        // orders table, not order_placed events (which are unreliable), and
+        // windowed to match the 7-day event slice above.
+        supabase
+            .from('orders')
+            .select('*', { count: 'exact', head: true })
+            .eq('store_id', storeId)
+            .gte('created_at', since7d)
+            .not('status', 'in', '(cancelled,refunded)'),
     ])
 
     if (!store) return { error: 'not_found', data: null }
@@ -215,11 +225,14 @@ export async function getStoreOverview(
         { view: 0, add_to_cart: 0, checkout_started: 0, order_placed: 0 }
     )
 
+    // Funnel — every step from the SAME 7-day window so rates are comparable.
+    // Views use 7-day view events (not the lifetime store.views counter), and
+    // orders use the real 7-day order count (not the unreliable order_placed event).
     const funnel = {
-        views: store.views ?? 0,
+        views: eventCounts.view,
         add_to_carts: eventCounts.add_to_cart,
         checkouts: eventCounts.checkout_started,
-        orders: eventCounts.order_placed,
+        orders: orders7dCount ?? 0,
     }
 
     type ProductAgg = { id: string; name: string; image_url?: string; revenue: number; units_sold: number }

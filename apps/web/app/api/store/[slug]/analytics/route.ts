@@ -76,6 +76,14 @@ export async function POST(
         // browser can't be trusted to report it. Two-letter ISO code, e.g. "KE".
         const countryCode = request.headers.get('x-vercel-ip-country') || null
 
+        // order_id is a uuid column, but the storefront sends the human-readable
+        // order NUMBER (e.g. "ORD-1772...-322P98U5M"). Inserting that throws
+        // "invalid input syntax for type uuid", which the catch below swallowed —
+        // so every order_placed event was silently dropped. Only keep order_id
+        // when it's actually a uuid; otherwise store null (the event still counts).
+        const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+        const orderIdValue = typeof order_id === 'string' && UUID_RE.test(order_id) ? order_id : null
+
         const supabase = await createClient()
 
         // resolve store_id from slug — no auth needed, this is a public endpoint
@@ -91,7 +99,7 @@ export async function POST(
             store_id: store.id,
             event,
             product_id: product_id ?? null,
-            order_id: order_id ?? null,
+            order_id: orderIdValue,
             session_id: session_id ?? null,
             device_type: device_type ?? null,
             referrer: referrer ?? null,

@@ -15,7 +15,8 @@
       "android": { "buildType": "apk" },
       "env": {
         "EXPO_PUBLIC_ENV": "preview",
-        "EXPO_PUBLIC_PLAY_PRO_SKU": "mcloud_pro"
+        "EXPO_PUBLIC_PLAY_PRO_SKU": "mcloud_pro",
+        "EXPO_PUBLIC_PLAY_HOBBY_SKU": "mcloud_hobby"
       }
     },
     "production": {
@@ -27,7 +28,8 @@
       "autoIncrement": true,
       "env": {
         "SENTRY_DISABLE_AUTO_UPLOAD": "true",
-        "EXPO_PUBLIC_PLAY_PRO_SKU": "mcloud_pro"
+        "EXPO_PUBLIC_PLAY_PRO_SKU": "mcloud_pro",
+        "EXPO_PUBLIC_PLAY_HOBBY_SKU": "mcloud_hobby"
       }
     }
   },

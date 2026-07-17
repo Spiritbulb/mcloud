@@ -58,27 +58,40 @@ interface TrackOptions {
     orderId?: string
 }
 
-async function track(opts: TrackOptions) {
+function track(opts: TrackOptions) {
     if (typeof window === 'undefined') return  // no SSR tracking
 
+    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${opts.storeSlug}/analytics`
+    const payload = JSON.stringify({
+        event: opts.event,
+        product_id: opts.productId,
+        order_id: opts.orderId,
+        session_id: getSessionId(),
+        device_type: getDeviceType(),
+        referrer: document.referrer || null,
+        ...getUtm(),
+    })
+
+    // checkout_started / order_placed fire right before the cart navigates away
+    // (router.push, or window.location = <payment redirect>). A normal fetch —
+    // even keepalive — can be aborted by that navigation, which is why order_placed
+    // was chronically undercounted. sendBeacon is built for exactly this: the
+    // browser guarantees delivery as the page tears down. A Blob typed as
+    // application/json keeps the route's request.json() working.
     try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${opts.storeSlug}/analytics`, {
+        if (typeof navigator !== 'undefined' && typeof navigator.sendBeacon === 'function') {
+            const blob = new Blob([payload], { type: 'application/json' })
+            if (navigator.sendBeacon(url, blob)) return
+        }
+        // Fallback: keepalive fetch (older browsers / sendBeacon refused the payload).
+        void fetch(url, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // fire-and-forget — don't block the UI
             keepalive: true,
-            body: JSON.stringify({
-                event: opts.event,
-                product_id: opts.productId,
-                order_id: opts.orderId,
-                session_id: getSessionId(),
-                device_type: getDeviceType(),
-                referrer: document.referrer || null,
-                ...getUtm(),
-            }),
-        })
+            body: payload,
+        }).catch(() => { /* analytics must never crash the storefront */ })
     } catch {
-        // analytics should never crash the storefront
+        // analytics must never crash the storefront
     }
 }
 
@@ -96,6 +109,6 @@ export function trackCheckout(storeSlug: string) {
     return track({ storeSlug, event: 'checkout_started' })
 }
 
-export function trackOrderPlaced(storeSlug: string, productId: string, orderId: string) {
+export function trackOrderPlaced(storeSlug: string, productId: string | undefined, orderId: string) {
     return track({ storeSlug, event: 'order_placed', productId, orderId })
 }

@@ -222,19 +222,24 @@ function PaymentsCallout({ onNavigate, commerce }: { onNavigate: () => void; com
 
 // ─── FunnelRow ────────────────────────────────────────────────────────────────
 
+// Share of Views that reached this step. Rebased against the top of the funnel
+// (not the prior step) so a later step being larger than an earlier one can't
+// yield a nonsensical >100% rate; clamped as a final guard.
 function pct(a: number, b: number) {
     if (!b) return null
-    return `${((a / b) * 100).toFixed(1)}%`
+    const p = Math.min(100, (a / b) * 100)
+    return `${p.toFixed(1)}%`
 }
 
 function FunnelRow({ funnel, loading, onViewAnalytics }: {
     funnel?: Funnel; loading: boolean; onViewAnalytics: () => void
 }) {
+    const views = funnel?.views ?? 0
     const steps = [
         { label: 'Views', value: funnel?.views, rate: null },
-        { label: 'Add to cart', value: funnel?.add_to_carts, rate: pct(funnel?.add_to_carts ?? 0, funnel?.views ?? 0) },
-        { label: 'Checkouts Started', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, funnel?.add_to_carts ?? 0) },
-        { label: 'Orders Placed', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, funnel?.checkouts ?? 0) },
+        { label: 'Add to cart', value: funnel?.add_to_carts, rate: pct(funnel?.add_to_carts ?? 0, views) },
+        { label: 'Checkouts Started', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, views) },
+        { label: 'Orders Placed', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, views) },
     ]
 
     return (

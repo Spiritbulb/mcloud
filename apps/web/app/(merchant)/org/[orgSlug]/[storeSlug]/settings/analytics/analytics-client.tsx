@@ -59,7 +59,9 @@ function delta(current: number, previous: number): { pct: number; dir: 'up' | 'd
 
 function pct(a: number, b: number) {
     if (!b) return null
-    return `${((a / b) * 100).toFixed(1)}%`
+    // Clamp: a conversion rate can never exceed 100%. Guards against event-count
+    // quirks where a downstream step out-counts the reference step.
+    return `${Math.min(100, (a / b) * 100).toFixed(1)}%`
 }
 
 // ─── Delta badge ──────────────────────────────────────────────────────────────
@@ -184,11 +186,13 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
 // ─── Funnel ───────────────────────────────────────────────────────────────────
 
 function Funnel({ funnel }: { funnel: Analytics['funnel'] }) {
+    // Each rate is share-of-Views (top of funnel), not step-over-step, so a step
+    // larger than the one above it can't produce a >100% rate.
     const steps = [
         { label: 'Views', value: funnel.views, rate: null },
         { label: 'Add to cart', value: funnel.add_to_carts, rate: pct(funnel.add_to_carts, funnel.views) },
-        { label: 'Checkout', value: funnel.checkouts, rate: pct(funnel.checkouts, funnel.add_to_carts) },
-        { label: 'Ordered', value: funnel.orders, rate: pct(funnel.orders, funnel.checkouts) },
+        { label: 'Checkout', value: funnel.checkouts, rate: pct(funnel.checkouts, funnel.views) },
+        { label: 'Ordered', value: funnel.orders, rate: pct(funnel.orders, funnel.views) },
     ]
     const max = Math.max(1, funnel.views)
     return (

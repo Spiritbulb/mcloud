@@ -106,10 +106,11 @@ export default function CartPageContainer() {
             throw new Error(data.error ?? 'Failed to create order')
         }
 
+        // One order_placed event per order (not per line item — that inflated the
+        // count). The funnel's authoritative order count comes from the orders
+        // table server-side; this event is only for event-level funnel context.
         if (storeSlug) {
-            for (const item of safeCartItems) {
-                trackOrderPlaced(storeSlug, item.productId, data.orderNumber)
-            }
+            trackOrderPlaced(storeSlug, safeCartItems[0]?.productId, data.orderNumber)
         }
         return data.orderNumber
     }
