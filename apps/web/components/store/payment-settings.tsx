@@ -45,7 +45,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/integrations`, {
+                const res = await fetch(`/api/store/${slug}/integrations`, {
                     credentials: 'include',
                 })
                 if (res.ok) {
@@ -75,7 +75,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
         setError(null)
         setSaved(null)
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/integrations`, {
+            const res = await fetch(`/api/store/${slug}/integrations`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -115,7 +115,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
         setDarajaTestStatus('testing')
         setDarajaTestError('')
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/mpesa/test-credentials`, {
+            const res = await fetch(`/api/payments/mpesa/test-credentials`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },

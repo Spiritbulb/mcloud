@@ -28,7 +28,7 @@ export default function CustomersPage({ slug }: { slug: string }) {
         setLoading(true)
         const params = new URLSearchParams({ page: String(page) })
         if (q) params.set('q', q)
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/customers?${params}`, {
+        const res = await fetch(`/api/store/${slug}/customers?${params}`, {
             credentials: 'include',
         })
         const data = await res.json()

@@ -258,7 +258,9 @@ export default function AnalyticsClient({ slug, storeName }: { slug: string; sto
     useEffect(() => {
         setLoading(true)
         setError(false)
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/analytics?range=${range}`, { credentials: 'include' })
+        // Same-origin call: this route lives in this app, and the auth cookie is
+        // scoped to this domain — a cross-domain absolute URL would drop it and 401.
+        fetch(`/api/store/${slug}/analytics?range=${range}`, { credentials: 'include' })
             .then(r => r.ok ? r.json() : Promise.reject())
             .then(setData)
             .catch(() => setError(true))
