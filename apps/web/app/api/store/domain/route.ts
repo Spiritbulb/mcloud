@@ -1,5 +1,6 @@
 import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { storeHasFeature } from '@/lib/plans-server'
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN!
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID!
@@ -51,6 +52,15 @@ export async function POST(req: NextRequest) {
 
     if (!member || !['owner', 'admin'].includes(member.role)) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
+    // Custom domain is a paid feature (Hobby+). Gate server-side; the UI lock is
+    // cosmetic and bypassable by calling this route directly.
+    if (!(await storeHasFeature(storeId, 'customDomain'))) {
+        return NextResponse.json(
+            { error: 'Custom domains require the Hobby plan or higher. Upgrade to connect your own domain.' },
+            { status: 403 },
+        )
     }
 
     // Register on Vercel
