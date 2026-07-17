@@ -4,6 +4,7 @@ import { getVertical } from '@mcloud/verticals'
 import { signPreview } from '@mcloud/verticals/preview'
 import { getStoreSettingsData } from '@/lib/store-data'
 import { createClient } from '@mcloud/db/server'
+import { getStorePlan } from '@/lib/plans-server'
 import EditorClient from './editor-client'
 
 /**
@@ -62,6 +63,8 @@ export default async function EditorPage({
         ? (page.sections as unknown as { type: string; settings?: Record<string, unknown> }[])
         : []
 
+    const plan = await getStorePlan(store.id)
+
     return (
         <EditorClient
             slug={storeSlug}
@@ -72,6 +75,7 @@ export default async function EditorPage({
             storefrontOrigin={process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'}
             commerce={getVertical(store.type).commerce}
             storeSettings={settings}
+            plan={plan}
         />
     )
 }

@@ -10,6 +10,7 @@ import SettingsFields from './settings-fields'
 import ImagePicker from './image-picker'
 import ContentClient from '../content/content-client'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
+import type { Plan } from '@/lib/plans'
 
 type Section = { type: string; settings?: SettingValues }
 
@@ -79,7 +80,7 @@ function listFor(
 
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
-    commerce, storeSettings,
+    commerce, storeSettings, plan,
 }: {
     slug: string
     storeId: string
@@ -91,6 +92,8 @@ export default function EditorClient({
     commerce: boolean
     /** stores.settings, for the Content rail (SP5's editor). */
     storeSettings: Record<string, unknown>
+    /** Threaded to ContentClient's ProGateInline (Content rail is Hobby+). */
+    plan: Plan
 }) {
     const [selection, setSelection] = useState<Selection>(null)
     // Which section the preview is showing as selected. Separate from `selection`,
@@ -519,6 +522,7 @@ export default function EditorClient({
                                 slug={slug}
                                 storeId={storeId}
                                 initialSettings={storeSettings}
+                                plan={plan}
                             />
                         ) : (
                             <SettingsFields

@@ -4,6 +4,7 @@ import { createClient, getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { BlogSettingsClient } from './blog-client'
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
+import { getStorePlan } from '@/lib/plans-server'
 
 interface Props {
     params: Promise<{ orgSlug: string; storeSlug: string }>
@@ -15,6 +16,7 @@ export default async function BlogSettingsPage({ params }: Props) {
     if (!store) notFound()
 
     const supabase = await createClient()
+    const plan = await getStorePlan(store.id)
 
     // Fetch posts (all, including drafts) + authors in parallel.
     // RLS on blog_posts has a member-write policy so only store members
@@ -45,6 +47,7 @@ export default async function BlogSettingsPage({ params }: Props) {
             storeSlug={store.slug}
             posts={(posts ?? []) as BlogPost[]}
             authors={(authors ?? []) as BlogAuthor[]}
+            plan={plan}
         />
     )
 }

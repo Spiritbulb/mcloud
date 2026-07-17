@@ -4,6 +4,12 @@
 
 import { createClient } from '@mcloud/db/client'   // adjust to your path
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
+// Plain './plans' only (not './plans-server'): plans-server.ts pulls in
+// next/headers via @mcloud/db/server, which would break the client bundle —
+// this file is imported by hooks/use-blog.ts, a 'use client' module. So the
+// feature check below queries store_subscriptions directly with the browser
+// client already in scope and runs the pure decision helpers on the result.
+import { planFromActiveRow, planHasFeature } from './plans'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -159,6 +165,19 @@ export async function upsertPost(
     post: Partial<BlogPost> & { title: string; slug: string; content: string }
 ): Promise<BlogPost> {
     const supabase = createClient()
+
+    const { data: subRow } = await supabase
+        .from('store_subscriptions')
+        .select('plan, status')
+        .eq('store_id', storeId)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    const plan = planFromActiveRow(subRow)
+    if (!planHasFeature(plan, 'blogPages')) {
+        throw new Error('Blog and content pages require the Hobby plan or higher.')
+    }
 
     const reading_time_minutes = estimateReadingTime(post.content)
     const payload = {

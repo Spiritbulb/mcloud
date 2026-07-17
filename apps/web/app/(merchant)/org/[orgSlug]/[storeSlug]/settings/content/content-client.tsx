@@ -20,6 +20,8 @@ import {
     type NgoDraft,
 } from '@/lib/content-draft'
 import CampaignCard from './campaign-card'
+import { ProGateInline } from '@/components/pro'
+import type { Plan } from '@/lib/plans'
 
 const inputClass =
     'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
@@ -37,10 +39,12 @@ export default function ContentClient({
     slug,
     storeId,
     initialSettings,
+    plan,
 }: {
     slug: string
     storeId: string
     initialSettings: Record<string, unknown>
+    plan: Plan
 }) {
     const [draft, setDraft] = useState<NgoDraft>(() => draftFromSettings(initialSettings))
     const [errors, setErrors] = useState<string[]>([])
@@ -76,6 +80,12 @@ export default function ContentClient({
     }
 
     return (
+        <ProGateInline
+            plan={plan}
+            requires="hobby"
+            feature="Blog & content pages"
+            description="Publish blog posts and custom content pages on the Hobby plan and higher."
+        >
         <div className="max-w-3xl mx-auto space-y-6 pb-24">
             {/* ── Mission ───────────────────────────────────────────────── */}
             <SettingsSection
@@ -300,5 +310,6 @@ export default function ContentClient({
             <SaveBar onSave={handleSave} saving={saving} />
             <SaveToast saving={saving} saved={saved} />
         </div>
+        </ProGateInline>
     )
 }
