@@ -125,13 +125,47 @@ order count for the store exceeds `PLAN_LIMITS[plan].monthlyOrders`. The count r
 same order-counting the analytics RPC already does for the store; surfaced in the
 billing/settings area, not the storefront.
 
-### 3. Feature flags — plan-aware gating
+### 3. Feature flags — plan-aware gating (gate ALL features this project)
 
-Today `ProGate`/`ProGateInline`/`ProLockRow` take a boolean `isPro`. Extend them so a
-feature can require a **specific tier** (e.g. `requires: 'hobby'` means hobby-or-better,
-`requires: 'pro'` means pro-only). Existing call sites keep working: `isPro` maps to
-`requires: 'hobby'` (any paid tier) semantics. Remove-branding and priority-support
-become `requires: 'pro'`.
+**Reality check:** only ONE feature is actually gated in the codebase today — WhatsApp
+order notifications (`settings/integrations/notifications/page.tsx`, the single real
+`<ProGate>`). The other four features in the tier table are advertised in the
+`PRO_FEATURES` marketing array but **have no enforcement**. This project adds the missing
+gates. Each gate needs a **server-side** check where the feature is actually actioned;
+UI-only blur/lock is bypassable via the API and is presentation, not enforcement.
+
+The shared plumbing: extend `ProGate`/`ProGateInline`/`ProLockRow` from a boolean `isPro`
+to a `requires: 'hobby' | 'pro'` prop (`'hobby'` = hobby-or-better, `'pro'` = pro-only).
+Existing `isPro` call sites map to `requires: 'hobby'`. A server helper
+`storeHasFeature(storeId, feature)` resolves the plan and reads `PLAN_LIMITS[plan].features`.
+
+Per feature:
+
+- **WhatsApp order notifications** — already gated (UI). Reassign to `requires: 'hobby'`.
+  Confirm the notification-send path is also guarded server-side, not just the settings UI.
+- **Custom domain** — UI: `requires: 'hobby'` on the domain settings.
+  **Server (required):** `apps/web/app/api/store/domain/route.ts` POST currently writes
+  `custom_domain` with no plan check — add a `storeHasFeature(store, 'customDomain')`
+  guard, 403 below Hobby. This is the load-bearing gate; the UI lock is cosmetic.
+- **Advanced analytics / funnel** — UI: gate the analytics settings page /
+  `analytics-client.tsx` with `requires: 'hobby'`.
+  **Server:** the analytics route (`apps/web/app/api/store/[slug]/analytics/route.ts`)
+  should refuse (or return a restricted payload) for below-Hobby stores so the funnel/
+  advanced breakdowns aren't fetchable directly. Decide during implementation whether
+  Free gets a basic subset (views/orders) vs. nothing — default: basic subset, advanced
+  blocks (funnel, by_source/by_country/top_products) require Hobby.
+- **Blog / content pages** — UI: `requires: 'hobby'` on `settings/blog` and
+  `settings/content`. **Server:** guard the blog/content create/publish mutation so pages
+  can't be authored below Hobby. (No existing plan check found in these routes.)
+- **Remove branding** — `requires: 'pro'` (Pro only, per the tier table).
+  **Reality:** `apps/storefront/components/store/store-footer.tsx` today hides only the
+  "Made for free on…" banner when `!is_pro`, but every theme *also* renders an
+  unconditional "Powered by Menengai Cloud" line. To make "remove branding" real: (a)
+  change the banner condition from `!is_pro` to `plan !== 'pro'`, and (b) make the
+  "Powered by" line conditional on `plan !== 'pro'` too. Storefront reads plan via the
+  store payload (`store-data.ts`), which must now expose the tier, not just `is_pro`.
+- **Priority support** — not a code feature; it is an ops/SLA promise surfaced as a
+  billing-page line item for Pro. No gate to build.
 
 ## Google Play / purchase flow
 
@@ -157,16 +191,36 @@ Revoke unchanged (cancels active row, `is_pro=false` → Free).
 
 ## Surfaces to update
 
-- `apps/web/lib/plans.ts` — **new**: `Plan`, `PlanLimits`, `PLAN_LIMITS`, `getStorePlan()`.
+**Plan plumbing**
+- `apps/web/lib/plans.ts` — **new**: `Plan`, `PlanLimits`, `PLAN_LIMITS`, `getStorePlan()`,
+  `storeHasFeature(storeId, feature)`.
+- `apps/web/components/pro/index.tsx` — plan-aware gating (`requires: 'hobby' | 'pro'`).
+
+**Numeric limits (hard, create-time)**
 - `apps/web/lib/merchant/products.ts` — product create-time limit check.
 - `apps/web/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/members/actions.ts` —
   member add-time limit check.
+
+**Feature gates (UI + server)**
+- WhatsApp: `settings/integrations/notifications/page.tsx` → `requires: 'hobby'`; confirm
+  the notification-send path is server-guarded.
+- Custom domain: `apps/web/app/api/store/domain/route.ts` POST server guard + UI lock on
+  domain settings.
+- Analytics: `apps/web/app/api/store/[slug]/analytics/route.ts` restricted payload below
+  Hobby + UI gate on `analytics-client.tsx`.
+- Blog/content: server guard on the blog/content publish mutation + UI gate on
+  `settings/blog` and `settings/content`.
+- Remove branding: `apps/storefront/components/store/store-footer.tsx` (banner +
+  "Powered by" conditional on `plan !== 'pro'`); `apps/web/lib/store-data.ts` must expose
+  the tier to the storefront payload, not just `is_pro`.
+
+**Purchase / admin**
 - `apps/web/app/api/mobile/stores/[slug]/subscribe/route.ts` — two-SKU → plan mapping.
 - `apps/web/app/api/admin/stores/[id]/plan/route.ts` — grant named plan.
-- `apps/web/components/pro/index.tsx` — plan-aware gating (`requires: 'hobby' | 'pro'`).
 - `apps/mobile/src/lib/iap.ts` + `apps/mobile/src/components/ProSheet.tsx` — two tiers.
-- Billing/settings dashboard — show current plan, its limits, and the monthly-order
-  usage nudge banner.
+
+**Dashboard**
+- Billing/settings — show current plan, its limits, and the monthly-order usage nudge banner.
 
 ## Migration / data
 
@@ -186,6 +240,10 @@ Revoke unchanged (cancels active row, `is_pro=false` → Free).
 - Monthly-order nudge: banner threshold logic (over/under/unlimited), no checkout block.
 - Subscribe route: hobby SKU → plan hobby, pro SKU → plan pro, unknown SKU → 400.
 - Admin route: grant hobby, grant pro, revoke → free.
+- Feature gates (server-side, the load-bearing checks): domain POST 403 below Hobby;
+  analytics route returns restricted payload below Hobby; blog/content publish blocked
+  below Hobby; storefront omits branding for `plan === 'pro'`. Each verified by hitting the
+  route/render directly, not just the UI lock.
 
 ## Out of scope (YAGNI)
 
