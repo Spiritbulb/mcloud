@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
+import { getStorePlan } from '@/lib/plans-server'
 import AnalyticsClient from './analytics-client'
 
 export const metadata: Metadata = {
@@ -16,5 +17,7 @@ export default async function AnalyticsPage({
     const store = await getStore(slug)
     if (!store) notFound()
 
-    return <AnalyticsClient slug={slug} storeName={store.name} />
+    const plan = await getStorePlan(store.id)
+
+    return <AnalyticsClient slug={slug} storeName={store.name} plan={plan} />
 }
