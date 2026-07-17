@@ -127,7 +127,7 @@ export function useDemoApi(authedFetch: Fetch): ReturnType<typeof api> {
       // These are no-ops in demo mode — silently succeed
       async deleteStore(_slug: string, _confirm: string) {},
       async uploadImage(_uri: string, _bucket: 'store-assets' | 'product-images', _path: string) { return '' },
-      async subscribePro(_slug: string, _input: Parameters<typeof real.subscribePro>[1]) { return { ok: true, pro: true, expiresAt: null } },
+      async subscribePro(_slug: string, _input: Parameters<typeof real.subscribePro>[1]) { return { ok: true, pro: true, plan: 'pro' as const, expiresAt: null } },
       async registerPushToken(_token: string, _platform: string) {},
       async updateProductImages(_slug: string, id: string, images: string[]) {
         const existing = demo.products.find((p) => p.id === id)
