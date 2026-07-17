@@ -61,13 +61,20 @@ export async function POST(
         const { slug } = await params
         const body = await request.json()
 
-        const { event, product_id, order_id, session_id, device_type, referrer } = body
+        const {
+            event, product_id, order_id, session_id, device_type, referrer,
+            utm_source, utm_medium, utm_campaign,
+        } = body
 
         // validate event type
         const validEvents = ['view', 'add_to_cart', 'checkout_started', 'order_placed']
         if (!validEvents.includes(event)) {
             return NextResponse.json({ error: 'Invalid event' }, { status: 400 })
         }
+
+        // Country comes from the edge (Vercel sets this header per request); the
+        // browser can't be trusted to report it. Two-letter ISO code, e.g. "KE".
+        const countryCode = request.headers.get('x-vercel-ip-country') || null
 
         const supabase = await createClient()
 
@@ -88,6 +95,10 @@ export async function POST(
             session_id: session_id ?? null,
             device_type: device_type ?? null,
             referrer: referrer ?? null,
+            country_code: countryCode,
+            utm_source: utm_source ?? null,
+            utm_medium: utm_medium ?? null,
+            utm_campaign: utm_campaign ?? null,
         })
 
         return NextResponse.json({ ok: true })

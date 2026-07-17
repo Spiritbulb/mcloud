@@ -1,6 +1,7 @@
 // lib/analytics.ts
 
 const SESSION_KEY = 'mc_session_id'
+const UTM_KEY = 'mc_utm'
 
 function getSessionId(): string {
     if (typeof window === 'undefined') return ''
@@ -10,6 +11,35 @@ function getSessionId(): string {
         sessionStorage.setItem(SESSION_KEY, id)
     }
     return id
+}
+
+type Utm = { utm_source?: string; utm_medium?: string; utm_campaign?: string }
+
+// Capture UTM params from the LANDING url and remember them for the whole
+// session. By the time a user reaches a product/cart page the original
+// query string is gone, so the first read is the only chance to attribute
+// the visit to its campaign.
+function getUtm(): Utm {
+    if (typeof window === 'undefined') return {}
+
+    const stored = sessionStorage.getItem(UTM_KEY)
+    if (stored) {
+        try { return JSON.parse(stored) as Utm } catch { /* fall through */ }
+    }
+
+    const params = new URLSearchParams(window.location.search)
+    const utm: Utm = {}
+    const source = params.get('utm_source')
+    const medium = params.get('utm_medium')
+    const campaign = params.get('utm_campaign')
+    if (source) utm.utm_source = source
+    if (medium) utm.utm_medium = medium
+    if (campaign) utm.utm_campaign = campaign
+
+    // Persist even when empty so we don't re-parse (and don't let a later
+    // in-session navigation with fresh utm params overwrite the real source).
+    sessionStorage.setItem(UTM_KEY, JSON.stringify(utm))
+    return utm
 }
 
 function getDeviceType(): 'mobile' | 'tablet' | 'desktop' {
@@ -44,6 +74,7 @@ async function track(opts: TrackOptions) {
                 session_id: getSessionId(),
                 device_type: getDeviceType(),
                 referrer: document.referrer || null,
+                ...getUtm(),
             }),
         })
     } catch {
