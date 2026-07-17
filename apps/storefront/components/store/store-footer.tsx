@@ -5,6 +5,7 @@ interface Store {
     name: string
     slug: string
     is_pro: boolean
+    hideBranding?: boolean
     description: string | null
     logo_url: string | null
     currency: string
@@ -80,7 +81,7 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
                     </div>
                 )}
 
-                {!store.is_pro && (
+                {!store.hideBranding && (
                     <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
                         Made for free on{' '}
                         <a
@@ -137,15 +138,17 @@ function NoirFooter({ store, settings }: { store: Store; settings: Store['settin
                 )}
 
                 {/* Powered by */}
-                <p className="text-[9px] tracking-[0.3em] uppercase text-[#252525]">
-                    Powered by{' '}
-                    <a
-                        href="https://menengai.cloud"
-                        className="hover:text-[#c9a96e] transition-colors duration-300"
-                    >
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-[9px] tracking-[0.3em] uppercase text-[#252525]">
+                        Powered by{' '}
+                        <a
+                            href="https://menengai.cloud"
+                            className="hover:text-[#c9a96e] transition-colors duration-300"
+                        >
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
@@ -185,15 +188,17 @@ function MinimalFooter({ store, settings }: { store: Store; settings: Store['set
                 )}
 
                 {/* Powered by */}
-                <p className="text-xs text-[#c8c0b6]">
-                    Powered by{' '}
-                    <a
-                        href="https://menengai.cloud"
-                        className="hover:text-[#5c5650] transition-colors"
-                    >
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-xs text-[#c8c0b6]">
+                        Powered by{' '}
+                        <a
+                            href="https://menengai.cloud"
+                            className="hover:text-[#5c5650] transition-colors"
+                        >
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
@@ -238,12 +243,14 @@ function PhotographyFooter({ store, settings }: { store: Store; settings: Store[
                     </div>
                 )}
 
-                <p className="text-[10px] tracking-[0.2em] uppercase text-[#333]">
-                    Powered by{' '}
-                    <a href="https://menengai.cloud" className="hover:text-[#c8965a] transition-colors">
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-[10px] tracking-[0.2em] uppercase text-[#333]">
+                        Powered by{' '}
+                        <a href="https://menengai.cloud" className="hover:text-[#c8965a] transition-colors">
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
@@ -281,12 +288,14 @@ function PortfolioFooter({ store, settings }: { store: Store; settings: Store['s
                     </div>
                 )}
 
-                <p className="text-xs text-gray-400">
-                    Powered by{' '}
-                    <a href="https://menengai.cloud" className="text-gray-500 hover:text-gray-900 transition-colors">
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-xs text-gray-400">
+                        Powered by{' '}
+                        <a href="https://menengai.cloud" className="text-gray-500 hover:text-gray-900 transition-colors">
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
@@ -324,12 +333,14 @@ function ServicesFooter({ store, settings }: { store: Store; settings: Store['se
                     </div>
                 )}
 
-                <p className="text-xs text-slate-400">
-                    Powered by{' '}
-                    <a href="https://menengai.cloud" className="text-slate-500 hover:text-slate-900 transition-colors">
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-xs text-slate-400">
+                        Powered by{' '}
+                        <a href="https://menengai.cloud" className="text-slate-500 hover:text-slate-900 transition-colors">
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
@@ -367,12 +378,14 @@ function RestaurantFooter({ store, settings }: { store: Store; settings: Store['
                     </div>
                 )}
 
-                <p className="text-xs text-[#c8beb6]">
-                    Powered by{' '}
-                    <a href="https://menengai.cloud" className="text-[#8b6f5c] hover:text-[#c8622a] transition-colors">
-                        Menengai Cloud
-                    </a>
-                </p>
+                {!store.hideBranding && (
+                    <p className="text-xs text-[#c8beb6]">
+                        Powered by{' '}
+                        <a href="https://menengai.cloud" className="text-[#8b6f5c] hover:text-[#c8622a] transition-colors">
+                            Menengai Cloud
+                        </a>
+                    </p>
+                )}
             </div>
         </footer>
     )
