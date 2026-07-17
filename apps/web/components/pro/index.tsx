@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
+import { planAllowsRequired, type Plan } from '@/lib/plans'
 
 // Where merchants go to get on Pro now: subscription happens in the mobile app,
 // and the beta is the entry point. Absolute so it works from any merchant origin.
@@ -232,16 +233,19 @@ export function UpgradeChip() {
 // ─── ProGate ─────────────────────────────────────────────────────────────────
 
 export function ProGate({
-    isPro, feature, description, children,
+    isPro, plan, requires = 'hobby', feature, description, children,
 }: {
-    isPro: boolean
+    isPro?: boolean
+    plan?: Plan
+    requires?: 'hobby' | 'pro'
     feature: string
     description?: string
     children: React.ReactNode
 }) {
     const [modalOpen, setModalOpen] = useState(false)
 
-    if (isPro) return <>{children}</>
+    const unlocked = plan !== undefined ? planAllowsRequired(plan, requires) : !!isPro
+    if (unlocked) return <>{children}</>
 
     return (
         <>
@@ -285,16 +289,19 @@ export function ProGate({
 // ─── ProGateInline ────────────────────────────────────────────────────────────
 
 export function ProGateInline({
-    isPro, feature, description, children,
+    isPro, plan, requires = 'hobby', feature, description, children,
 }: {
-    isPro: boolean
+    isPro?: boolean
+    plan?: Plan
+    requires?: 'hobby' | 'pro'
     feature: string
     description?: string
     children?: React.ReactNode
 }) {
     const [modalOpen, setModalOpen] = useState(false)
 
-    if (isPro) return <>{children}</>
+    const unlocked = plan !== undefined ? planAllowsRequired(plan, requires) : !!isPro
+    if (unlocked) return <>{children}</>
 
     return (
         <>
@@ -333,15 +340,18 @@ export function ProGateInline({
 // ─── ProLockRow ───────────────────────────────────────────────────────────────
 
 export function ProLockRow({
-    isPro, label, children,
+    isPro, plan, requires = 'hobby', label, children,
 }: {
-    isPro: boolean
+    isPro?: boolean
+    plan?: Plan
+    requires?: 'hobby' | 'pro'
     label: string
     children?: React.ReactNode
 }) {
     const [modalOpen, setModalOpen] = useState(false)
 
-    if (isPro) return <>{children}</>
+    const unlocked = plan !== undefined ? planAllowsRequired(plan, requires) : !!isPro
+    if (unlocked) return <>{children}</>
 
     return (
         <>
