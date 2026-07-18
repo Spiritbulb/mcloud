@@ -14,7 +14,7 @@
     </div>
     <div class="grid gap-6 md:gap-8" style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))">
       {%- for program in programs -%}
-        <article class="sf-card sf-program-card overflow-hidden">
+        <article class="sf-card sf-program-card overflow-hidden" {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'programs', index: forloop.index0 %}>
           {%- comment -%}
             Liquid treats "" as truthy, so a blank image field would render
             <img src=""> and the browser draws a broken image. Compare against

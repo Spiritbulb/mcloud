@@ -1,0 +1,9 @@
+{%- comment -%}
+  Marks a repeated record's CONTAINER element as a hover target for the Editor's
+  structural overlay (add/delete/reorder/duplicate). Field-level editability is
+  handled separately by editable-item; this marks the record as a whole.
+  Editor-only: a visitor receives none of these attributes.
+  Usage on the record's outer element inside a {% for %}:
+    <article {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'programs', index: forloop.index0 %}>
+{%- endcomment -%}
+{%- if editing -%}data-mcloud-record="1" data-mcloud-list="{{ list }}" data-mcloud-index="{{ index }}"{%- endif -%}

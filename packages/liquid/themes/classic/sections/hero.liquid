@@ -42,6 +42,7 @@
       <div
         class="sf-hero__slide absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
         data-index="{{ forloop.index0 }}"
+        {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'heroSlides', index: forloop.index0 %}
       >
         {%- comment -%}
           The image is a BACKGROUND, so the click target is the backdrop itself

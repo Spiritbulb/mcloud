@@ -14,7 +14,7 @@
     </div>
     <div class="grid gap-8 text-center" style="grid-template-columns: repeat(auto-fit, minmax(160px, 1fr))">
       {%- for stat in stats -%}
-        <div class="sf-impact-stat space-y-1">
+        <div class="sf-impact-stat space-y-1" {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'impactStats', index: forloop.index0 %}>
           <div class="sf-heading font-bold" style="font-size: clamp(2rem, 5vw, 3rem); line-height: 1" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'impactStats', index: forloop.index0, key: 'value', value: stat.value %}>{{ stat.value }}</div>
           <div class="text-sm uppercase tracking-widest" style="color: var(--sf-foreground-subtle)" {% render 'classic/snippets/editable-item', editing: store.editing, list: 'impactStats', index: forloop.index0, key: 'label', value: stat.label %}>{{ stat.label }}</div>
         </div>
