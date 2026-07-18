@@ -104,9 +104,11 @@ case for CRUD to handle.
   same source both sides use today), so no store's rendered home changes.
 - Idempotent: only inserts where no `(store_id, slug='')` row exists; safe to
   re-run. Respects the existing `unique(store_id, slug)` constraint.
-- New stores created after the migration must ALSO get a home page row at creation
-  time (store-provisioning path), or the divergence returns for them. This is part
-  of sub-project 0, not an afterthought.
+- New stores are ALREADY covered: `createStoreForUser` (apps/web/lib/merchant/
+  stores.ts) seeds default pages at creation via `seedPageRows(store.id, type)`
+  (best-effort), derived from `getVertical(type).defaultPages`. The 20 missing
+  rows were pre-existing stores created before that seeding existed; the backfill
+  caught exactly that historical cohort. No provisioning change is needed.
 - The storefront's `defaultHomeSections` fallback and the Editor's empty-array
   fallback both STAY as defence in depth (a future new vertical, a failed insert),
   but are no longer the normal path.
