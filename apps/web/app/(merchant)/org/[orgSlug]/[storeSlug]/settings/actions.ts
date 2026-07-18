@@ -10,6 +10,7 @@ import { createClient } from '@mcloud/db/server'
 import type { TablesUpdate } from '@mcloud/db/types'
 import { canManage, requireStoreAccess } from '@/lib/merchant/stores'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
+import { SECTION_REGISTRY } from '../../../../../../../storefront/lib/sections'
 import { validateSectionTypes } from './section-validate'
 
 type ActionResult = { error: string | null }
@@ -119,7 +120,7 @@ export async function updatePageSections(
     if (!page) return { error: 'Page not found' }
 
     const stored = (Array.isArray(page.sections) ? page.sections : []) as { type: string }[]
-    if (!validateSectionTypes(sections, stored)) {
+    if (!validateSectionTypes(sections, stored, Object.keys(SECTION_REGISTRY))) {
       return { error: 'That section type is not allowed. Reload and try again.' }
     }
 
