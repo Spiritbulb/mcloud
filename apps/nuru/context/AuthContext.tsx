@@ -34,6 +34,8 @@ type AuthState = {
   loading: boolean;
   sendCode: (email: string) => Promise<void>;
   verifyCode: (email: string, code: string) => Promise<void>;
+  /** Review-account-only password sign-in (reviewers can't get the magic code). */
+  verifyPassword: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>;
   // Like authedFetch but via expo/fetch so the response body is streamable.
@@ -184,6 +186,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await hydrate();
   }, [hydrate]);
 
+  // Password sign-in for the app-store review account only. Same endpoint and
+  // downstream as verifyCode; server gates it to the one review email by env.
+  const verifyPassword = React.useCallback(async (email: string, password: string) => {
+    const res = await fetch(`${config.apiBaseUrl}/api/mobile/auth/verify`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    });
+    const data = (await res.json().catch(() => ({}))) as {
+      accessToken?: string; refreshToken?: string; expiresIn?: number; error?: string;
+    };
+    if (!res.ok || !data.accessToken) {
+      throw new Error(data.error ?? 'Invalid credentials.');
+    }
+    await saveTokens({
+      accessToken: data.accessToken,
+      refreshToken: data.refreshToken,
+      expiresAt: data.expiresIn ? Date.now() + data.expiresIn * 1000 : undefined,
+    });
+    await hydrate();
+  }, [hydrate]);
+
   const signOut = React.useCallback(async () => {
     await clearTokens();
     setUser(null);
@@ -244,8 +268,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const value = React.useMemo(
-    () => ({ user, loading, sendCode, verifyCode, signOut, authedFetch, streamingFetch, refreshSession: hydrate }),
-    [user, loading, sendCode, verifyCode, signOut, authedFetch, streamingFetch, hydrate],
+    () => ({ user, loading, sendCode, verifyCode, verifyPassword, signOut, authedFetch, streamingFetch, refreshSession: hydrate }),
+    [user, loading, sendCode, verifyCode, verifyPassword, signOut, authedFetch, streamingFetch, hydrate],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

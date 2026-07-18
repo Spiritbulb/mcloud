@@ -195,6 +195,9 @@ export const auth0Provider: AuthProviderAdapter = {
     async verifyMagicCodeWeb() {
         throw new Error('Magic-code auth is not supported by the Auth0 provider.')
     },
+    async verifyPassword() {
+        throw new Error('Password auth is not supported by the Auth0 provider.')
+    },
 }
 
 // Real per-device session revocation requires Auth0's Sessions API (paywalled —

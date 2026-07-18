@@ -260,6 +260,30 @@ export const workosProvider: AuthProviderAdapter = {
             return null
         }
     },
+
+    async verifyPassword(email: string, password: string): Promise<NativeAuthTokens | null> {
+        try {
+            const res = await getWorkOS().userManagement.authenticateWithPassword({
+                clientId: process.env.WORKOS_CLIENT_ID,
+                email,
+                password,
+            })
+            // Mirror verifyMagicCode exactly: link identity, derive expiry from the
+            // JWT, return the same token shape the app already stores.
+            const user = await ensureLinked(res.user as WorkOSUserish)
+            const exp = decodeJwt(res.accessToken).exp
+            const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
+            return {
+                accessToken: res.accessToken,
+                refreshToken: res.refreshToken,
+                expiresIn,
+                user: mapUser(user),
+            }
+        } catch {
+            // Wrong password, or WorkOS rejected the request.
+            return null
+        }
+    },
 }
 
 // Real per-device session revocation is now possible via

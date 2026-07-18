@@ -6,21 +6,27 @@ import { Brand } from '@/components/Brand';
 import { useAuth } from '@/context/AuthContext';
 import { useTheme } from '@/context/ThemeContext';
 import { makeAuthStyles } from '@/components/authStyles';
+import { config } from '@/lib/config';
 
 type Step = 'email' | 'code';
 
 export default function Login() {
   const { theme } = useTheme();
   const authStyles = useMemo(() => makeAuthStyles(theme), [theme]);
-  const { sendCode, verifyCode } = useAuth();
+  const { sendCode, verifyCode, verifyPassword } = useAuth();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
+  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const codeValid = code.trim().length >= 6;
+  // Reveal a password field only for the app-store review email (reviewers can't
+  // get the magic code). Empty config.reviewEmail => never shows.
+  const isReviewEmail =
+    config.reviewEmail !== '' && email.trim().toLowerCase() === config.reviewEmail;
 
   async function onSendCode() {
     setError(null);
@@ -40,6 +46,19 @@ export default function Login() {
     setBusy(true);
     try {
       await verifyCode(email.trim(), code.trim());
+      // Success flips auth state; the root guard redirects to (tabs).
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function onPasswordSignIn() {
+    setError(null);
+    setBusy(true);
+    try {
+      await verifyPassword(email.trim(), password);
       // Success flips auth state; the root guard redirects to (tabs).
     } catch (e) {
       setError((e as Error).message);
@@ -72,12 +91,30 @@ export default function Login() {
               value={email}
               onChangeText={setEmail}
               editable={!busy}
-              onSubmitEditing={() => emailValid && onSendCode()}
+              onSubmitEditing={() => emailValid && !isReviewEmail && onSendCode()}
               style={authStyles.input}
               placeholderTextColor={theme.colors.textMuted}
             />
+            {isReviewEmail && (
+              <TextInput
+                placeholder="Password"
+                autoCapitalize="none"
+                autoCorrect={false}
+                secureTextEntry
+                value={password}
+                onChangeText={setPassword}
+                editable={!busy}
+                onSubmitEditing={() => password.length > 0 && onPasswordSignIn()}
+                style={authStyles.input}
+                placeholderTextColor={theme.colors.textMuted}
+              />
+            )}
             {error && <Text style={authStyles.error}>{error}</Text>}
-            <Button title="Send code" onPress={onSendCode} loading={busy} />
+            {isReviewEmail ? (
+              <Button title="Sign in" onPress={onPasswordSignIn} loading={busy} />
+            ) : (
+              <Button title="Send code" onPress={onSendCode} loading={busy} />
+            )}
           </>
         ) : (
           <>

@@ -83,6 +83,12 @@ export interface AuthProviderAdapter {
     sendMagicCode(email: string): Promise<void>
     verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null>
     /**
+     * Password auth for the native flow. Used ONLY by the Play/App Store review
+     * account (which cannot receive a magic code), gated by env in the route
+     * layer. Returns the same token shape as verifyMagicCode; null on bad creds.
+     */
+    verifyPassword(email: string, password: string): Promise<NativeAuthTokens | null>
+    /**
      * Web cookie-session variant of magic-code verification: verifies the code and
      * seals the resulting session into the provider's cookie (so withAuth() reads
      * it), returning the mapped user. Lets web do magic-code login with no OAuth

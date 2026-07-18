@@ -58,6 +58,7 @@
       "webBaseUrl": "https://www.mcloud.co.ke",
       "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",
       "workosDomain": "https://api.workos.com",
+      "reviewEmail": "hello@spiritbulb.org",
       "router": {},
       "eas": {
         "projectId": "7c75f6a5-e45a-4e0d-bb68-ce44eab0d21c"

@@ -17,17 +17,25 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 import { useAuth } from '@/auth/AuthContext'
 import { Button, FadeInUp, MarketingImage } from '@/components/ui'
 import { useTheme } from '@/lib/theme'
+import { config } from '@/lib/config'
 
 type Step = 'email' | 'code'
 
 export default function Home() {
   const t = useTheme()
-  const { user, loading, sendCode, verifyCode } = useAuth()
+  const { user, loading, sendCode, verifyCode, verifyPassword } = useAuth()
   const [step, setStep] = React.useState<Step>('email')
   const [email, setEmail] = React.useState('')
   const [code, setCode] = React.useState('')
+  const [password, setPassword] = React.useState('')
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+
+  // The app-store review account signs in by password (reviewers can't get the
+  // emailed code). Reveal the password field only when its exact email is typed;
+  // config.reviewEmail is empty for normal builds, so this never shows.
+  const isReviewEmail =
+    config.reviewEmail !== '' && email.trim().toLowerCase() === config.reviewEmail
 
   if (loading) {
     return (
@@ -60,6 +68,19 @@ export default function Home() {
       // On success the auth state flips to a user and the Redirect above fires.
     } catch (e) {
       setError(e instanceof Error ? e.message : 'That code is invalid or expired.')
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const onPasswordSignIn = async () => {
+    setError(null)
+    setBusy(true)
+    try {
+      await verifyPassword(email.trim(), password)
+      // On success the auth state flips to a user and the Redirect above fires.
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Invalid credentials.')
     } finally {
       setBusy(false)
     }
@@ -130,7 +151,7 @@ export default function Home() {
                 inputMode="email"
                 returnKeyType="send"
                 editable={!busy}
-                onSubmitEditing={() => emailValid && onSendCode()}
+                onSubmitEditing={() => emailValid && !isReviewEmail && onSendCode()}
                 style={[
                   styles.input,
                   {
@@ -140,13 +161,45 @@ export default function Home() {
                   },
                 ]}
               />
-              <Button
-                label="Send code"
-                onPress={onSendCode}
-                loading={busy}
-                disabled={!emailValid}
-                variant="filled"
-              />
+              {isReviewEmail ? (
+                <>
+                  <TextInput
+                    value={password}
+                    onChangeText={setPassword}
+                    placeholder="Password"
+                    placeholderTextColor={t.colors.onSurfaceVariant}
+                    autoCapitalize="none"
+                    autoCorrect={false}
+                    secureTextEntry
+                    editable={!busy}
+                    returnKeyType="go"
+                    onSubmitEditing={() => password.length > 0 && onPasswordSignIn()}
+                    style={[
+                      styles.input,
+                      {
+                        backgroundColor: t.colors.surfaceVariant,
+                        color: t.colors.onSurface,
+                        borderColor: t.colors.outline,
+                      },
+                    ]}
+                  />
+                  <Button
+                    label="Sign in"
+                    onPress={onPasswordSignIn}
+                    loading={busy}
+                    disabled={password.length === 0}
+                    variant="filled"
+                  />
+                </>
+              ) : (
+                <Button
+                  label="Send code"
+                  onPress={onSendCode}
+                  loading={busy}
+                  disabled={!emailValid}
+                  variant="filled"
+                />
+              )}
             </>
           ) : (
             <>

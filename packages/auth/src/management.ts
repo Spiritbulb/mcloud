@@ -34,6 +34,15 @@ export function verifyMagicCode(email: string, code: string): Promise<NativeAuth
 }
 
 /**
+ * Exchange email+password for tokens; null on bad credentials. Used ONLY for the
+ * Play/App Store review account (env-gated in the route). Every other user is
+ * magic-code only.
+ */
+export function verifyPassword(email: string, password: string): Promise<NativeAuthTokens | null> {
+    return provider.verifyPassword(email, password)
+}
+
+/**
  * Web variant: verify an emailed code and set the auth cookie (no OAuth redirect).
  * Returns the user, or null if the code is invalid/expired.
  */

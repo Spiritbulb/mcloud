@@ -56,6 +56,8 @@ type AuthState = {
   sendCode: (email: string) => Promise<void>
   /** Native magic-code: exchange the code for a session. Throws on invalid code. */
   verifyCode: (email: string, code: string) => Promise<void>
+  /** Review-account-only password sign-in (see AuthContext impl). */
+  verifyPassword: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   /** fetch() against apps/web with the bearer token attached + refresh-on-401. */
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>
@@ -382,6 +384,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [hydrate],
   )
 
+  // Password sign-in for the app-store review account only. Same endpoint and
+  // downstream handling as verifyCode; sends a password instead of a code. The
+  // server gates this to the one review email by env, so it is inert for anyone
+  // else even if called.
+  const verifyPassword = React.useCallback(
+    async (email: string, password: string) => {
+      const res = await fetch(`${config.apiBaseUrl}/api/mobile/auth/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = (await res.json().catch(() => ({}))) as {
+        accessToken?: string
+        refreshToken?: string
+        expiresIn?: number
+        error?: string
+      }
+      if (!res.ok || !data.accessToken) {
+        throw new Error(data.error ?? 'Invalid credentials.')
+      }
+      await saveTokens({
+        accessToken: data.accessToken,
+        refreshToken: data.refreshToken,
+        expiresAt: data.expiresIn ? Date.now() + data.expiresIn * 1000 : undefined,
+      })
+      try { await SecureStore.deleteItemAsync(FORCE_LOGIN_KEY) } catch {}
+      await hydrate()
+    },
+    [hydrate],
+  )
+
   const refresh = React.useCallback(() => refreshTokens(), [])
 
   const signOut = React.useCallback(async () => {
@@ -421,8 +454,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   )
 
   const value = React.useMemo(
-    () => ({ user, loading, signIn, sendCode, verifyCode, signOut, authedFetch, refreshSession: hydrate }),
-    [user, loading, signIn, sendCode, verifyCode, signOut, authedFetch, hydrate],
+    () => ({ user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, refreshSession: hydrate }),
+    [user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, hydrate],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
