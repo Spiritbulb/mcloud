@@ -20,7 +20,7 @@
     },
     "android": {
       "package": "cloud.menengai.twa",
-      "versionCode": 19,
+      "versionCode": 20,
       "adaptiveIcon": {
         "backgroundColor": "#3fa9f5",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
