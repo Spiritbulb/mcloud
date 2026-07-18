@@ -11,6 +11,8 @@ import ImagePicker from './image-picker'
 import ContentClient from '../content/content-client'
 import { applySectionOp, type SectionOp } from './section-ops'
 import { seedSection } from './section-seeds-registry'
+import { applyItemOp, type ItemOp } from './item-ops'
+import { seedRecord } from './section-seeds'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 import type { Plan } from '@/lib/plans'
 
@@ -295,6 +297,26 @@ export default function EditorClient({
                     return { ...prev, [list]: arr }
                 })
                 setSaved(false)
+            }
+
+            // Structural op on a repeated record -> mutate storeDraft[list].
+            if (data.type === 'mcloud:item-op') {
+                const { list, op } = data
+                if (typeof list !== 'string' || !EDITABLE_LISTS.has(list)) return
+                if (!['move', 'delete', 'duplicate', 'add'].includes(op)) return
+                if (!Number.isInteger(data.index)) return
+                if (op === 'move' && !Number.isInteger(data.to)) return
+
+                setStoreDraft((prev) => {
+                    const arr = listFor(list, prev, storeSettings)
+                    const applied = applyItemOp(arr, {
+                        op, index: data.index, to: data.to, list,
+                    } as ItemOp, seedRecord)
+                    return { ...prev, [list]: applied }
+                })
+                setSaved(false)
+                // Records always change record COUNT/order -> the list re-renders,
+                // so let the debounced reload run (do NOT set skipReloadRef).
             }
         }
         window.addEventListener('message', onMessage)
