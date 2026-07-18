@@ -32,6 +32,10 @@ overlay controls **in the preview**:
 mutation on state that already exists and already persists. That is what makes
 this tractable rather than a rewrite.
 
+**Ordering:** sub-project 0 (backfill every store with a `pages` row — see
+"Prerequisite" below) ships FIRST. CRUD assumes every store reads a real,
+persisted `sections` array; the backfill is what makes that true.
+
 ### Every store already qualifies — there is no "old theming" cohort
 
 A concern worth pinning: does a store still on the old React theming get left
@@ -44,14 +48,47 @@ template bug can never take a live store down"), a sub-project-1 safety net that
 is removed when React is retired. So the mechanics CRUD depends on are already
 universal.
 
-**The one case to handle: a store with no `pages` row.** Such a store renders
-`defaultHomeSections(store.type)` (a repo-defined default list), not a persisted
-one. Its FIRST structural op must materialise that default set into a real
-`pages.sections` array before mutating, or there is nothing to persist. This is
-already the case today for text edits — the Editor seeds `sections` state from
-the same `defaultHomeSections` source and `updatePageSections` writes the whole
-array — so the first save creates the row. The implementer must not assume a
-`pages` row exists; the seed-from-default path is the same one text edits use.
+### Prerequisite (sub-project 0): backfill a `pages` row for every store
+
+The screenshot that surfaced this (store `locdessence.shop`, a new shop with no
+catalog) exposed a real divergence CRUD cannot be built on top of:
+
+- **Storefront**, no page row → `sections = defaultHomeSections(store.type)` →
+  renders the full default layout.
+- **Editor rail**, no page row → `sections = []`
+  (`apps/web/.../editor/page.tsx` reads `pages` and returns `[]` when absent) →
+  rail shows "This site uses the default layout. Nothing to configure yet."
+
+So the two sides read the same *absent* data differently — the storefront renders
+four sections while the rail claims there is nothing to configure. This is the
+render/save divergence pattern again (see `editor-render-save-divergence`), and
+CRUD makes it untenable: you cannot reorder or delete against an empty rail when
+the page in fact has four sections.
+
+(Note: for `locdessence.shop` the preview body *also* looked blank, but that part
+is NOT a bug — the hero renders white because no hero image is set, and the
+catalog sections correctly render nothing because the shop has no products or
+collections yet. Empty-catalog guards were added in storefront sub-project 2.
+CRUD + this backfill is exactly what lets such a merchant build the page instead
+of staring at a blank one.)
+
+**Fix (decided): a one-time backfill migration.** Create a `pages` row (slug `''`,
+`sections` from that store's vertical defaults, `position` 0) for every store that
+lacks one. After it runs, every store has a persisted home page, the Editor and
+storefront both read the SAME row, the `defaultHomeSections` fallback branch is no
+longer load-bearing for existing stores, and there is no "page-less store" special
+case for CRUD to handle.
+
+- The migration derives sections from `getVertical(store.type).defaultPages` (the
+  same source both sides use today), so no store's rendered home changes.
+- Idempotent: only inserts where no `(store_id, slug='')` row exists; safe to
+  re-run. Respects the existing `unique(store_id, slug)` constraint.
+- New stores created after the migration must ALSO get a home page row at creation
+  time (store-provisioning path), or the divergence returns for them. This is part
+  of sub-project 0, not an afterthought.
+- The storefront's `defaultHomeSections` fallback and the Editor's empty-array
+  fallback both STAY as defence in depth (a future new vertical, a failed insert),
+  but are no longer the normal path.
 
 ### Explicitly out of scope
 
@@ -186,6 +223,12 @@ implementation, and verification means clicking in a real browser
 6. **Legacy hero on first structural op:** add a slide to a store that has flat
    hero keys and no `heroSlides` array → `listFor`/`authoredSlides` normalises so
    nothing is dropped (fault-line bug #3).
+7. **Backfill parity (sub-project 0):** for a store that had no `pages` row, the
+   Editor rail after backfill lists the SAME sections the storefront renders, and
+   the rendered home is byte-for-byte unchanged (defaults derived from the same
+   `getVertical` source). Backfill is idempotent (re-run inserts nothing).
+8. **New-store provisioning:** a store created after the migration gets a home
+   `pages` row at creation, so the rail-vs-storefront divergence does not return.
 
 ## Files touched (anticipated)
 
