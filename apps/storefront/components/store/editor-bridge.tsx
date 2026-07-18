@@ -128,6 +128,29 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     font: 500 13px/1.2 system-ui, sans-serif;
                     opacity: .5;
                 }
+
+                #mcloud-op-toolbar {
+                    position: fixed;
+                    z-index: 2147483647;
+                    display: none;
+                    gap: 4px;
+                    padding: 4px;
+                    background: #11111b;
+                    border-radius: 8px;
+                    box-shadow: 0 4px 14px rgba(0,0,0,.35);
+                    /* the BAR ignores clicks; only its buttons take them, so it
+                       can never eat a click meant for the content beneath. */
+                    pointer-events: none;
+                }
+                #mcloud-op-toolbar button {
+                    pointer-events: auto;
+                    width: 28px; height: 28px;
+                    display: grid; place-items: center;
+                    border: 0; border-radius: 6px;
+                    background: transparent; color: #fff;
+                    font: 600 14px/1 system-ui, sans-serif; cursor: pointer;
+                }
+                #mcloud-op-toolbar button:hover { background: rgba(255,255,255,.14); }
             `
             document.head.appendChild(style)
         }
@@ -137,6 +160,90 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             if (!host) return null
             const i = Number(host.getAttribute('data-mcloud-section'))
             return Number.isInteger(i) ? i : null
+        }
+
+        // ── Hover overlay toolbar ────────────────────────────────────────────────
+        //
+        // Hovering a section or a record shows a small floating bar with structural
+        // ops (move / duplicate / delete / add). The bar itself never intercepts a
+        // click — see the hero lesson above: the same failure mode (an overlay
+        // eating clicks meant for what's beneath it) applies here, just one layer
+        // up, over the whole section instead of one image. Only the buttons take
+        // pointer events; the bar between them is a pass-through.
+        function post(msg: Record<string, unknown>) {
+            window.parent.postMessage(msg, adminOrigin)
+        }
+
+        const toolbar = document.createElement('div')
+        toolbar.id = 'mcloud-op-toolbar'
+        toolbar.innerHTML =
+            '<button data-op="up" title="Move up">↑</button>' +
+            '<button data-op="down" title="Move down">↓</button>' +
+            '<button data-op="dup" title="Duplicate">⧉</button>' +
+            '<button data-op="del" title="Delete">🗑</button>' +
+            '<button data-op="add" title="Add below">＋</button>'
+        document.body.appendChild(toolbar)
+
+        // The element the toolbar currently acts on: either a section or a record.
+        let hovered: HTMLElement | null = null
+
+        function targetOf(el: Element): HTMLElement | null {
+            // A record wins over its section: the more specific handle.
+            return el.closest<HTMLElement>('[data-mcloud-record]')
+                ?? el.closest<HTMLElement>('[data-mcloud-section]')
+        }
+
+        function showToolbarFor(el: HTMLElement) {
+            hovered = el
+            const r = el.getBoundingClientRect()
+            toolbar.style.display = 'flex'
+            // top-right of the element, clamped into the viewport.
+            toolbar.style.top = `${Math.max(4, r.top + 4)}px`
+            toolbar.style.left = `${Math.min(window.innerWidth - 160, r.right - 160)}px`
+        }
+
+        function onOver(e: Event) {
+            if (!(e.target instanceof Element)) return
+            const t = targetOf(e.target)
+            if (t) showToolbarFor(t)
+        }
+        function onOut(e: Event) {
+            // Hide only when leaving to something that is neither the toolbar nor a target.
+            const to = (e as MouseEvent).relatedTarget
+            if (to instanceof Element && (to.closest('#mcloud-op-toolbar') || targetOf(to))) return
+            toolbar.style.display = 'none'
+            hovered = null
+        }
+
+        function toolbarIndexOf(el: HTMLElement): number {
+            return Number(el.getAttribute('data-mcloud-index') ?? el.getAttribute('data-mcloud-section'))
+        }
+
+        function onToolbarClick(e: MouseEvent) {
+            const btn = (e.target as Element)?.closest<HTMLButtonElement>('button[data-op]')
+            if (!btn || !hovered) return
+            e.preventDefault(); e.stopPropagation()
+
+            const isRecord = hovered.hasAttribute('data-mcloud-record')
+            const index = toolbarIndexOf(hovered)
+            if (!Number.isInteger(index)) return
+            const op = btn.getAttribute('data-op')
+
+            if (isRecord) {
+                const list = hovered.getAttribute('data-mcloud-list')
+                if (!list) return
+                if (op === 'up') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index - 1 })
+                else if (op === 'down') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index + 1 })
+                else if (op === 'dup') post({ type: 'mcloud:item-op', op: 'duplicate', list, index })
+                else if (op === 'del') post({ type: 'mcloud:item-op', op: 'delete', list, index })
+                else if (op === 'add') post({ type: 'mcloud:item-op', op: 'add', list, index: index + 1 })
+            } else {
+                if (op === 'up') post({ type: 'mcloud:section-op', op: 'move', index, to: index - 1 })
+                else if (op === 'down') post({ type: 'mcloud:section-op', op: 'move', index, to: index + 1 })
+                else if (op === 'dup') post({ type: 'mcloud:section-op', op: 'duplicate', index })
+                else if (op === 'del') post({ type: 'mcloud:section-op', op: 'delete', index })
+                else if (op === 'add') post({ type: 'mcloud:section-add-requested', index: index + 1 })
+            }
         }
 
         function select(index: number) {
@@ -356,6 +463,9 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         document.addEventListener('keydown', onKeyDown, true)
         document.addEventListener('paste', onPaste, true)
         window.addEventListener('message', onMessage)
+        document.addEventListener('mouseover', onOver, true)
+        document.addEventListener('mouseout', onOut, true)
+        toolbar.addEventListener('click', onToolbarClick, true)
 
         // Announce readiness on the channel PreviewListener uses, so a reload (which
         // a copy edit triggers) restores the unsaved theme AND the selection.
@@ -369,6 +479,10 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             document.removeEventListener('keydown', onKeyDown, true)
             document.removeEventListener('paste', onPaste, true)
             window.removeEventListener('message', onMessage)
+            document.removeEventListener('mouseover', onOver, true)
+            document.removeEventListener('mouseout', onOut, true)
+            toolbar.removeEventListener('click', onToolbarClick, true)
+            toolbar.remove()
         }
     }, [adminOrigin])
 
