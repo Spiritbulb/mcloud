@@ -89,9 +89,13 @@ screenshot `/store/locd26?preview=<empty>` vs the live URL) was NOT yet run and 
 required during implementation, per the `editor-render-save-divergence` rule
 ("verify in a real browser, not a string match").
 
-**Fix (decided): a one-time backfill migration.** Create a `pages` row (slug `''`,
-`sections` from that store's vertical defaults, `position` 0) for every store that
-lacks one. After it runs, every store has a persisted home page, the Editor and
+**Fix (DONE, shipped 2026-07-18): a one-time backfill migration.**
+`migrations/20260718_backfill_home_pages.sql`, applied to prod: 20 rows inserted,
+all 22 active stores now have a home page row; `locd26` verified with the shop
+default sections. This resolves the blank-preview bug at the data level. (The
+browser-level confirmation — Editor rail lists the sections, preview renders the
+real site — is the remaining check.) Create a `pages` row (slug `''`, `sections`
+from that store's vertical defaults, `position` 0) for every store that lacks one. After it runs, every store has a persisted home page, the Editor and
 storefront both read the SAME row, the `defaultHomeSections` fallback branch is no
 longer load-bearing for existing stores, and there is no "page-less store" special
 case for CRUD to handle.
