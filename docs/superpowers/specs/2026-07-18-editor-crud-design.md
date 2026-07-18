@@ -50,27 +50,44 @@ universal.
 
 ### Prerequisite (sub-project 0): backfill a `pages` row for every store
 
-The screenshot that surfaced this (store `locdessence.shop`, a new shop with no
-catalog) exposed a real divergence CRUD cannot be built on top of:
+The screenshot that surfaced this (store **`locd26`**, "Loc'd Essence" — the OG
+store, the most set-up shop on mcloud, NOT a new empty one) exposed a real,
+already-shipped bug CRUD cannot be built on top of. Investigation (DB + code
+trace, 2026-07-18) established the facts:
 
-- **Storefront**, no page row → `sections = defaultHomeSections(store.type)` →
-  renders the full default layout.
-- **Editor rail**, no page row → `sections = []`
-  (`apps/web/.../editor/page.tsx` reads `pages` and returns `[]` when absent) →
-  rail shows "This site uses the default layout. Nothing to configure yet."
+- `locd26` has **no `pages` row**, 4 active products, 3 hero slides. It has real
+  content; "blank because empty" was WRONG.
+- **20 of 22 active stores have no home `pages` row.** This is the normal state,
+  not an edge case.
 
-So the two sides read the same *absent* data differently — the storefront renders
-four sections while the rail claims there is nothing to configure. This is the
-render/save divergence pattern again (see `editor-render-save-divergence`), and
-CRUD makes it untenable: you cannot reorder or delete against an empty rail when
-the page in fact has four sections.
+Two distinct defects, both rooted in an empty-array ambiguity:
 
-(Note: for `locdessence.shop` the preview body *also* looked blank, but that part
-is NOT a bug — the hero renders white because no hero image is set, and the
-catalog sections correctly render nothing because the shop has no products or
-collections yet. Empty-catalog guards were added in storefront sub-project 2.
-CRUD + this backfill is exactly what lets such a merchant build the page instead
-of staring at a blank one.)
+1. **Rail vs storefront divergence.** No page row → storefront renders
+   `defaultHomeSections(store.type)` (four sections), but the Editor rail reads
+   `sections = []` (`apps/web/.../editor/page.tsx:62`) → "This site uses the
+   default layout. Nothing to configure yet." Same absent data, read two ways.
+
+2. **The blank preview (the screenshot).** The Editor encodes its `sections` into
+   the preview URL with NO guard (`editor-client.tsx:325`:
+   `toBase64Url(JSON.stringify(sections))`). With no page row that is `[]`. The
+   storefront's preview override treats ANY array as authoritative
+   (`page.tsx:158`: `if (Array.isArray(parsed)) sections = parsed`), so `[]`
+   replaces the defaults → `renderPage([])` →
+   `<div class="min-h-screen"></div>` → an empty body. The LIVE site renders
+   correctly (no `?preview`, so defaults stand) — which is why `/store/locd26`
+   was verified at parity in storefront SP2. Only the *Editor preview* is blank,
+   for ~91% of live stores.
+
+The Editor conflates "this store has no saved page yet" (preview the vertical
+defaults) with "this page has zero sections" (preview empty). It encodes `[]` for
+the first and the storefront renders it as the second.
+
+**Verification status:** the chain was confirmed by DB query + reading every link
+(`editor/page.tsx` → `editor-client.tsx:325` → storefront `page.tsx:158-165` →
+`render-page.ts`). A browser-level repro (start storefront, sign a preview token,
+screenshot `/store/locd26?preview=<empty>` vs the live URL) was NOT yet run and is
+required during implementation, per the `editor-render-save-divergence` rule
+("verify in a real browser, not a string match").
 
 **Fix (decided): a one-time backfill migration.** Create a `pages` row (slug `''`,
 `sections` from that store's vertical defaults, `position` 0) for every store that
@@ -89,6 +106,23 @@ case for CRUD to handle.
 - The storefront's `defaultHomeSections` fallback and the Editor's empty-array
   fallback both STAY as defence in depth (a future new vertical, a failed insert),
   but are no longer the normal path.
+
+**Also fix the encode-`[]` guard (independent of the backfill).** The backfill
+makes `sections` non-empty for existing stores, but the ambiguity in the preview
+channel remains and would bite again (a brand-new store before provisioning
+completes; and — once CRUD ships — a merchant who legitimately deletes every
+section, where the preview SHOULD then honour empty). The durable fix lives on
+the storefront side, which is the one place that can tell the two cases apart:
+
+- Distinguish "no preview intent" from "preview an empty page." Simplest: the
+  Editor omits the `preview` param entirely when it has nothing authoritative to
+  say (no page row AND no local edits), so the storefront falls through to its
+  normal default-sections path. Once the store has a real page (post-backfill or
+  post-first-save), the param carries the real array, empty or not, and empty then
+  correctly means empty.
+- This keeps ONE owner for "what does an absent/empty sections list mean," instead
+  of the Editor and storefront each deciding — which is the render/save divergence
+  root cause the whole Editor has fought (see `editor-render-save-divergence`).
 
 ### Explicitly out of scope
 
