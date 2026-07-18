@@ -8,7 +8,7 @@ import DocsClient from "@/components/docs-client"
 import type { DocPage } from "@/lib/docs"
 
 export const metadata = {
-    title: "Documentation — Menengai Cloud",
+    title: "Documentation | Menengai Cloud",
     description: "Guides and references for getting the most out of Menengai Cloud.",
 }
 

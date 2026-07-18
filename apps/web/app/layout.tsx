@@ -39,21 +39,14 @@ export const metadata: Metadata = {
     title: "Menengai Cloud | Your Website, Fully Managed",
     description:
       "Get a professional, high-speed website without touching servers, codes, or settings. Menengai Cloud handles design, hosting, security, and updates for Kenyan businesses that want results, not headaches.",
-    images: [
-      {
-        url: "/og-image.jpg",
-        width: 1200,
-        height: 630,
-        alt: "Menengai Cloud - Managed Websites for Kenyan Businesses",
-      },
-    ],
+    // Share image comes from app/opengraph-image.tsx (generated), so it is
+    // always present. Do not reference static files here that do not exist.
   },
   twitter: {
     card: "summary_large_image",
     title: "Menengai Cloud | Fully Managed Websites for Kenyan Businesses",
     description:
-      "Focus on running your business. Menengai Cloud keeps your website online, secure, fast, and looking sharp—every single day.",
-    images: ["/twitter-image.jpg"],
+      "Focus on running your business. Menengai Cloud keeps your website online, secure, fast, and looking sharp, every single day.",
   },
   robots: {
     index: true,
