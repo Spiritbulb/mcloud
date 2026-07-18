@@ -99,6 +99,15 @@ export default function EditorClient({
     /** Threaded to ContentClient's ProGateInline (Content rail is Hobby+). */
     plan: Plan
 }) {
+    // The registry is vertical-agnostic; a shop should not be offered
+    // programs/impact/campaigns/contact, and an NGO should not be offered
+    // collections/featured/all-products.
+    const ADDABLE_BY_COMMERCE: Record<'shop' | 'ngo', string[]> = {
+        shop: ['hero', 'collections', 'featured', 'all-products'],
+        ngo: ['hero', 'mission', 'programs', 'impact', 'campaigns', 'contact'],
+    }
+    const addableTypes = commerce ? ADDABLE_BY_COMMERCE.shop : ADDABLE_BY_COMMERCE.ngo
+
     const [selection, setSelection] = useState<Selection>(null)
     // Which section the preview is showing as selected. Separate from `selection`,
     // because clicking a section in the page should HIGHLIGHT it in the rail without
@@ -115,6 +124,9 @@ export default function EditorClient({
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [saved, setSaved] = useState(false)
+    // The index the bridge asked to insert a new section at, or null when the
+    // add-section picker is closed.
+    const [addAt, setAddAt] = useState<number | null>(null)
 
     const iframeRef = useRef<HTMLIFrameElement>(null)
 
@@ -194,6 +206,12 @@ export default function EditorClient({
                 // preview is the thing they were avoiding by doing so. The drawer is
                 // opened from the rail, for what the page cannot show.
                 setRailFocus(data.index)
+            }
+
+            // The merchant clicked ＋ on a section in the preview: open the
+            // type-picker so they choose what to insert at that index.
+            if (data.type === 'mcloud:section-add-requested' && Number.isInteger(data.index)) {
+                setAddAt(data.index)
             }
 
             // ── The merchant typed into the preview itself ────────────────────────
@@ -522,6 +540,29 @@ export default function EditorClient({
                     onPick={applyImage}
                     onClose={() => setPicker(null)}
                 />
+
+                {/* The bridge posted mcloud:section-add-requested for this index:
+                    let the merchant pick what kind of section to insert there. */}
+                {addAt !== null && (
+                    <div className="absolute inset-0 z-40 grid place-items-center bg-black/30" onClick={() => setAddAt(null)}>
+                        <div className="w-72 rounded-xl bg-[var(--md-sys-color-surface)] p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                            <p className="px-3 py-2 text-[12px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">Add a section</p>
+                            {addableTypes.map((t) => (
+                                <button
+                                    key={t}
+                                    onClick={() => {
+                                        setSections((prev) => applySectionOp(prev, { op: 'add', index: addAt, sectionType: t }, seedSection))
+                                        setSaved(false)
+                                        setAddAt(null)
+                                    }}
+                                    className="w-full text-left px-3 h-9 rounded-lg text-[13px] hover:bg-[var(--md-sys-color-surface-container)]"
+                                >
+                                    {sectionDef(t)?.label ?? t}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 {previewToken ? (
                     <iframe
