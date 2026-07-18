@@ -216,7 +216,7 @@ export default function TodayTab() {
               </View>
               <View style={s.actionRow}>
                 <ActionTile t={t} icon="share-outline" label="Share store" iconColor="rgb(0 90 120)" iconBg="rgb(200 235 245)" onPress={() => {
-                  const url = store.custom_domain ? `https://${store.custom_domain}` : `https://menengai.cloud/s/${store.slug}`
+                  const url = store.custom_domain ? `https://${store.custom_domain}` : `https://mcloud.co.ke/s/${store.slug}`
                   Share.share({ message: url, url })
                 }} />
                 <ActionTile t={t} icon="color-palette-outline" label="Branding" iconColor="rgb(80 60 140)" iconBg="rgb(237 232 255)" onPress={() => router.push(`/store/${slug}/branding` as never)} />

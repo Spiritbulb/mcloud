@@ -116,7 +116,7 @@ export default function OnboardingScreen() {
                 placeholder="e.g. Loc'd by Naya"
                 autoCapitalize="words"
                 autoFocus
-                helper={storeSlug ? `menengai.cloud/${storeSlug}` : undefined}
+                helper={storeSlug ? `mcloud.co.ke/${storeSlug}` : undefined}
                 returnKeyType="done"
                 onSubmitEditing={onCreateStore}
               />

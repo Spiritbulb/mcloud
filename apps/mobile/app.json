@@ -54,8 +54,8 @@
     },
     "extra": {
       "sentryDsn": "",
-      "apiBaseUrl": "https://www.menengai.cloud",
-      "webBaseUrl": "https://www.menengai.cloud",
+      "apiBaseUrl": "https://www.mcloud.co.ke",
+      "webBaseUrl": "https://www.mcloud.co.ke",
       "workosClientId": "client_01KR36PTHAC1K3G9AV4KRYQRA2",
       "workosDomain": "https://api.workos.com",
       "router": {},
