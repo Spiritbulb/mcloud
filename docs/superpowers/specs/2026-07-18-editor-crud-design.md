@@ -32,6 +32,27 @@ overlay controls **in the preview**:
 mutation on state that already exists and already persists. That is what makes
 this tractable rather than a rewrite.
 
+### Every store already qualifies — there is no "old theming" cohort
+
+A concern worth pinning: does a store still on the old React theming get left
+behind? No. The storefront home (`apps/storefront/app/store/[slug]/page.tsx`)
+renders EVERY store through the Liquid pipeline (`renderPage(sections, context)`
+→ `data-mcloud-section` anchors → the `editor-bridge`). The React
+`@mcloud/themes/classic` path is NOT a theme a store is "on" — it is only an
+error fallback ("on any template/render error, fall back to the React theme so a
+template bug can never take a live store down"), a sub-project-1 safety net that
+is removed when React is retired. So the mechanics CRUD depends on are already
+universal.
+
+**The one case to handle: a store with no `pages` row.** Such a store renders
+`defaultHomeSections(store.type)` (a repo-defined default list), not a persisted
+one. Its FIRST structural op must materialise that default set into a real
+`pages.sections` array before mutating, or there is nothing to persist. This is
+already the case today for text edits — the Editor seeds `sections` state from
+the same `defaultHomeSections` source and `updatePageSections` writes the whole
+array — so the first save creates the row. The implementer must not assume a
+`pages` row exists; the seed-from-default path is the same one text edits use.
+
 ### Explicitly out of scope
 
 - **Mobile / touch.** The Editor is a desktop-only three-pane shell (fixed
