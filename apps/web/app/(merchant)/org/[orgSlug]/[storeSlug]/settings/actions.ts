@@ -10,6 +10,7 @@ import { createClient } from '@mcloud/db/server'
 import type { TablesUpdate } from '@mcloud/db/types'
 import { canManage, requireStoreAccess } from '@/lib/merchant/stores'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
+import { validateSectionTypes } from './section-validate'
 
 type ActionResult = { error: string | null }
 
@@ -117,11 +118,10 @@ export async function updatePageSections(
         .maybeSingle()
     if (!page) return { error: 'Page not found' }
 
-    const existing = (Array.isArray(page.sections) ? page.sections : []) as { type: string }[]
-    const sameShape =
-        existing.length === sections.length &&
-        existing.every((s, i) => s.type === sections[i].type)
-    if (!sameShape) return { error: 'The page layout changed. Reload and try again.' }
+    const stored = (Array.isArray(page.sections) ? page.sections : []) as { type: string }[]
+    if (!validateSectionTypes(sections, stored)) {
+      return { error: 'That section type is not allowed. Reload and try again.' }
+    }
 
     const { error } = await supabase
         .from('pages')
