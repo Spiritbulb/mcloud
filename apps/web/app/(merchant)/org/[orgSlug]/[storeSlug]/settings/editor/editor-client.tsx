@@ -9,6 +9,8 @@ import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../ac
 import SettingsFields from './settings-fields'
 import ImagePicker from './image-picker'
 import ContentClient from '../content/content-client'
+import { applySectionOp, type SectionOp } from './section-ops'
+import { seedSection } from './section-seeds-registry'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 import type { Plan } from '@/lib/plans'
 
@@ -216,6 +218,30 @@ export default function EditorClient({
                     return next
                 })
                 setSaved(false)
+            }
+
+            // Structural op on page sections -> mutate `sections`.
+            if (data.type === 'mcloud:section-op') {
+                const op = data.op
+                if (op === 'add' && typeof data.sectionType !== 'string') return
+                if (op === 'move' && !Number.isInteger(data.to)) return
+                if (!['move', 'delete', 'duplicate', 'add'].includes(op)) return
+                if (!Number.isInteger(data.index)) return
+
+                // move reorders in place in the preview (no reload); the others
+                // must redraw, so let the debounced reload run.
+                if (op === 'move') skipReloadRef.current = true
+
+                setSections((prev) => applySectionOp(prev, {
+                    op, index: data.index, to: data.to, sectionType: data.sectionType,
+                } as SectionOp, seedSection))
+                setSaved(false)
+
+                if (op === 'move' && Number.isInteger(data.to)) {
+                    // Tell the preview to shuffle the existing nodes now.
+                    const win = iframeRef.current?.contentWindow
+                    try { win?.postMessage({ type: 'mcloud:reorder-preview', from: data.index, to: data.to }, storefrontOrigin) } catch {}
+                }
             }
 
             // 2. A store setting -> stores.settings[key]  (hero title, mission …)
