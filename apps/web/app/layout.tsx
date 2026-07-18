@@ -27,14 +27,14 @@ export const metadata: Metadata = {
     "website for small business Kenya",
     "M-Pesa payment website",
   ],
-  metadataBase: new URL("https://menengai.cloud"),
+  metadataBase: new URL("https://mcloud.co.ke"),
   alternates: {
     canonical: "/",
   },
   openGraph: {
     type: "website",
     locale: "en_KE",
-    url: "https://menengai.cloud",
+    url: "https://mcloud.co.ke",
     siteName: "Menengai Cloud",
     title: "Menengai Cloud | Your Website, Fully Managed",
     description:

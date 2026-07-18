@@ -40,16 +40,9 @@ export function ProBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
 }
 
 // ─── SubscribeCard ────────────────────────────────────────────────────────────
-// Pure display. Explains that Pro is subscribed via the mobile app and points to
-// the beta. No web payment.
-
-const PRO_FEATURES = [
-    'Custom domain (bring your own)',
-    'Advanced analytics & funnel data',
-    'Remove Menengai Cloud branding',
-    'Priority support',
-    'Blog & content pages',
-] as const
+// Pure display. Paid plans (Hobby, Pro) are chosen and purchased in the mobile
+// app, which owns the tier and price detail so this card never drifts from the
+// real limits. Web only points people to the app. No web payment.
 
 export function SubscribeCard() {
     return (
@@ -59,27 +52,18 @@ export function SubscribeCard() {
             'bg-[var(--md-sys-color-primary-container)]',
         )}>
             {/* Header */}
-            <div className="px-6 pt-6 pb-3">
+            <div className="px-6 pt-6 pb-4">
                 <div className="flex items-center gap-2 mb-3">
                     <MSO icon="workspace_premium" className="text-[20px] text-[var(--md-sys-color-primary)]" fill={1} />
                     <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)]">
-                        Menengai Cloud Pro
+                        Upgrade your store
                     </p>
                 </div>
                 <p className="text-[12px] text-[var(--md-sys-color-primary)]/90 leading-relaxed">
-                    Pro subscriptions are managed in the Menengai Cloud mobile app. Join the
-                    beta to get the app and unlock Pro for your store.
+                    Paid plans are chosen and managed in the Menengai Cloud mobile app,
+                    where you can compare tiers and prices for your store. Join the beta to
+                    get the app and upgrade.
                 </p>
-            </div>
-
-            {/* Feature list */}
-            <div className="px-6 pb-5 space-y-2 mt-1">
-                {PRO_FEATURES.map(f => (
-                    <div key={f} className="flex items-center gap-2.5">
-                        <MSO icon="check" className="text-[15px] text-[var(--md-sys-color-primary)] shrink-0" />
-                        <p className="text-[12px] text-[var(--md-sys-color-on-primary-container)]">{f}</p>
-                    </div>
-                ))}
             </div>
 
             {/* CTA */}
