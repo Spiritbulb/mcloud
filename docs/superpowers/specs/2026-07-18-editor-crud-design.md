@@ -1,7 +1,9 @@
 # Editor CRUD — sections and repeated records, in the preview
 
 **Date:** 2026-07-18
-**Status:** Design approved, ready for implementation plan
+**Status:** Sub-project 0 (pages backfill) DONE + shipped to prod. CRUD feature
+design approved, ready for implementation plan. The plan covers the CRUD feature;
+SP0 is recorded here as context, not work to redo.
 **Area:** `apps/web` merchant Editor + `apps/storefront` editor-bridge + `packages/liquid` snippets
 
 ## Problem
@@ -91,14 +93,14 @@ required during implementation, per the `editor-render-save-divergence` rule
 
 **Fix (DONE, shipped 2026-07-18): a one-time backfill migration.**
 `migrations/20260718_backfill_home_pages.sql`, applied to prod: 20 rows inserted,
-all 22 active stores now have a home page row; `locd26` verified with the shop
-default sections. This resolves the blank-preview bug at the data level. (The
-browser-level confirmation — Editor rail lists the sections, preview renders the
-real site — is the remaining check.) Create a `pages` row (slug `''`, `sections`
-from that store's vertical defaults, `position` 0) for every store that lacks one. After it runs, every store has a persisted home page, the Editor and
-storefront both read the SAME row, the `defaultHomeSections` fallback branch is no
+all 22 active stores now have a home page row (`slug ''`, `sections` from each
+store's vertical defaults, `position` 0); `locd26` verified with the shop default
+sections. After it ran, every store has a persisted home page, the Editor and
+storefront read the SAME row, the `defaultHomeSections` fallback branch is no
 longer load-bearing for existing stores, and there is no "page-less store" special
-case for CRUD to handle.
+case for CRUD to handle. This resolves the blank-preview bug at the data level;
+the browser-level confirmation (Editor rail lists the sections, preview renders
+the real site) is the one remaining check.
 
 - The migration derives sections from `getVertical(store.type).defaultPages` (the
   same source both sides use today), so no store's rendered home changes.
@@ -113,22 +115,11 @@ case for CRUD to handle.
   fallback both STAY as defence in depth (a future new vertical, a failed insert),
   but are no longer the normal path.
 
-**Also fix the encode-`[]` guard (independent of the backfill).** The backfill
-makes `sections` non-empty for existing stores, but the ambiguity in the preview
-channel remains and would bite again (a brand-new store before provisioning
-completes; and — once CRUD ships — a merchant who legitimately deletes every
-section, where the preview SHOULD then honour empty). The durable fix lives on
-the storefront side, which is the one place that can tell the two cases apart:
-
-- Distinguish "no preview intent" from "preview an empty page." Simplest: the
-  Editor omits the `preview` param entirely when it has nothing authoritative to
-  say (no page row AND no local edits), so the storefront falls through to its
-  normal default-sections path. Once the store has a real page (post-backfill or
-  post-first-save), the param carries the real array, empty or not, and empty then
-  correctly means empty.
-- This keeps ONE owner for "what does an absent/empty sections list mean," instead
-  of the Editor and storefront each deciding — which is the render/save divergence
-  root cause the whole Editor has fought (see `editor-render-save-divergence`).
+**The encode-`[]` ambiguity is NOT fully closed by the backfill.** The backfill
+makes `sections` non-empty for existing stores, but once CRUD ships a merchant can
+legitimately delete every section, and then an empty array must render empty. That
+guard is owned by the CRUD plan, not SP0 — see "The encode-`[]` guard (in scope for
+THIS plan)" under Architecture.
 
 ### Explicitly out of scope
 
@@ -200,6 +191,19 @@ index→node mapping. `render-page.ts` already counts EVERY section (including
 skipped unknown types) so indices stay stable; the client keeps that invariant by
 addressing by array position only.
 
+### The encode-`[]` guard (in scope for THIS plan)
+
+Deleting is now reachable, so a merchant CAN legitimately reach an empty section
+list, and the preview must render it as empty — while a store that simply has no
+local edits must still render its saved/default page, not blank. That is the
+encode-`[]` ambiguity (see Prerequisite above). It is unowned until CRUD, so this
+plan owns it. Chosen fix: the Editor omits the `preview` param when it has nothing
+authoritative to send (no local `sections` edits), so the storefront falls through
+to its saved page; once the merchant makes ANY structural edit the param carries
+the real array, and an intentionally-empty array then correctly renders empty. One
+owner for "what does an empty/absent list mean" — the Editor's edit state — not two
+sides guessing.
+
 ## Data flow — one op, end to end
 
 1. Merchant hovers a section/record → bridge overlays `↑ ↓ ⧉ 🗑 ＋` from the
@@ -267,8 +271,10 @@ implementation, and verification means clicking in a real browser
    Editor rail after backfill lists the SAME sections the storefront renders, and
    the rendered home is byte-for-byte unchanged (defaults derived from the same
    `getVertical` source). Backfill is idempotent (re-run inserts nothing).
-8. **New-store provisioning:** a store created after the migration gets a home
-   `pages` row at creation, so the rail-vs-storefront divergence does not return.
+8. **New-store provisioning (already true, pin it):** `createStoreForUser` seeds
+   default pages at creation via `seedPageRows`, so a newly created store gets a
+   home `pages` row and the rail-vs-storefront divergence does not return. This is
+   pre-existing behaviour; the test guards against regressing it.
 
 ## Files touched (anticipated)
 
