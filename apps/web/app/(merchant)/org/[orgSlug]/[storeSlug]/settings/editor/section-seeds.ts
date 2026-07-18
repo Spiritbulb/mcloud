@@ -21,17 +21,6 @@ export function fillDefaults(schema: readonly SettingFieldLike[] | undefined): R
 }
 
 /**
- * A new section starts from its schema's declared defaults (all string copy).
- * Requires registry access at runtime; test must not import this.
- */
-export function seedSection(type: string): { type: string; settings: Record<string, unknown> } {
-  // Import at call time to avoid breaking test runner on require
-  const { SECTION_REGISTRY } = require('../../../../../../../../storefront/lib/sections')
-  const def = (SECTION_REGISTRY as Record<string, { schema?: readonly SettingFieldLike[] }>)[type]
-  return { type, settings: fillDefaults(def?.schema) }
-}
-
-/**
  * Placeholder copy for a newly added record. Seeded (not empty) so there is
  * always a clickable target the merchant can type over. No em dashes (merchant
  * facing). Keys match what each section template reads.
