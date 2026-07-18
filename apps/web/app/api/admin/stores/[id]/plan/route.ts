@@ -17,7 +17,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (caller?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { id } = await params
-    const { action } = await request.json()
+    const { action, plan: planInput } = await request.json()
+    const plan: 'hobby' | 'pro' = planInput === 'hobby' ? 'hobby' : 'pro'
 
     if (action !== 'grant' && action !== 'revoke') {
         return NextResponse.json({ error: 'action must be "grant" or "revoke"' }, { status: 400 })
@@ -41,7 +42,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         if (existingSub) {
             await supabase
                 .from('store_subscriptions')
-                .update({ status: 'active' })
+                .update({ status: 'active', plan })
                 .eq('id', existingSub.id)
         } else {
             const { data: store } = await supabase
@@ -57,7 +58,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                     provider: 'admin',
                     amount: 0,
                     currency: store?.currency ?? 'KES',
-                    plan: 'pro',
+                    plan,
                     period_start: new Date().toISOString(),
                 })
         }

@@ -2,6 +2,8 @@
 
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { cn } from '@mcloud/ui/utils'
+import { ProGateInline } from '@/components/pro'
+import type { Plan } from '@/lib/plans'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -15,11 +17,13 @@ type Analytics = {
     totals: { views: number; orders: number; revenue: number; add_to_carts: number; unique_visitors: number }
     previous: { views: number; orders: number; revenue: number }
     series: SeriesPoint[]
-    funnel: { views: number; add_to_carts: number; checkouts: number; orders: number }
     by_device: Breakdown[]
-    by_source: Breakdown[]
-    by_country: Breakdown[]
-    top_products: TopProduct[]
+    // Advanced blocks — Hobby+ only. Omitted from the payload below Hobby, so
+    // these must stay optional or the UI crashes reading .funnel etc. on Free.
+    funnel?: { views: number; add_to_carts: number; checkouts: number; orders: number }
+    by_source?: Breakdown[]
+    by_country?: Breakdown[]
+    top_products?: TopProduct[]
 }
 
 const RANGES = [
@@ -185,7 +189,7 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
 
 // ─── Funnel ───────────────────────────────────────────────────────────────────
 
-function Funnel({ funnel }: { funnel: Analytics['funnel'] }) {
+function Funnel({ funnel }: { funnel: NonNullable<Analytics['funnel']> }) {
     // Each rate is share-of-Views (top of funnel), not step-over-step, so a step
     // larger than the one above it can't produce a >100% rate.
     const steps = [
@@ -252,7 +256,7 @@ function BreakdownCard({ title, icon, items }: { title: string; icon: string; it
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function AnalyticsClient({ slug, storeName }: { slug: string; storeName: string }) {
+export default function AnalyticsClient({ slug, storeName, plan }: { slug: string; storeName: string; plan: Plan }) {
     const [range, setRange] = useState('30d')
     const [data, setData] = useState<Analytics | null>(null)
     const [loading, setLoading] = useState(true)
@@ -346,44 +350,65 @@ export default function AnalyticsClient({ slug, storeName }: { slug: string; sto
                         ? <Sk className="h-[260px] w-full rounded-2xl" />
                         : data && <TrendChart series={data.series} currency={currency} />}
 
-                    {/* Funnel + top products */}
+                    {/* Funnel + top products — Hobby+ */}
                     {!loading && data && (
-                        <div className="grid md:grid-cols-2 gap-4">
-                            <Funnel funnel={data.funnel} />
-                            <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
-                                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-4">Top products</p>
-                                {data.top_products.length === 0 ? (
-                                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] py-2">No sales in this range yet.</p>
-                                ) : (
-                                    <div className="space-y-3">
-                                        {data.top_products.map(p => (
-                                            <div key={p.id} className="flex items-center gap-3">
-                                                <div className="w-9 h-9 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center shrink-0">
-                                                    {p.image_url
-                                                        ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                                                        : <MSO icon="inventory_2" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />}
+                        <ProGateInline
+                            plan={plan}
+                            requires="hobby"
+                            feature="Advanced analytics"
+                            description="Funnel, traffic sources, and top products are available on the Hobby plan and higher."
+                        >
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <Funnel funnel={data.funnel ?? { views: 0, add_to_carts: 0, checkouts: 0, orders: 0 }} />
+                                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
+                                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-4">Top products</p>
+                                    {!data.top_products || data.top_products.length === 0 ? (
+                                        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] py-2">No sales in this range yet.</p>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {data.top_products.map(p => (
+                                                <div key={p.id} className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center shrink-0">
+                                                        {p.image_url
+                                                            ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
+                                                            : <MSO icon="inventory_2" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />}
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{p.name}</p>
+                                                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{p.units_sold} sold</p>
+                                                    </div>
+                                                    <span className="text-[12px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)] shrink-0">
+                                                        {fmtMoney(p.revenue, currency)}
+                                                    </span>
                                                 </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{p.name}</p>
-                                                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{p.units_sold} sold</p>
-                                                </div>
-                                                <span className="text-[12px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)] shrink-0">
-                                                    {fmtMoney(p.revenue, currency)}
-                                                </span>
-                                            </div>
-                                        ))}
-                                    </div>
-                                )}
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </ProGateInline>
                     )}
 
-                    {/* Breakdowns */}
+                    {/* Breakdowns — devices is basic (all plans); sources/countries are Hobby+ */}
                     {!loading && data && (
                         <div className="grid sm:grid-cols-3 gap-4">
                             <BreakdownCard title="Devices" icon="devices" items={data.by_device} />
-                            <BreakdownCard title="Sources" icon="travel_explore" items={data.by_source} />
-                            <BreakdownCard title="Countries" icon="public" items={data.by_country} />
+                            <ProGateInline
+                                plan={plan}
+                                requires="hobby"
+                                feature="Advanced analytics"
+                                description="Traffic sources are available on the Hobby plan and higher."
+                            >
+                                <BreakdownCard title="Sources" icon="travel_explore" items={data.by_source ?? []} />
+                            </ProGateInline>
+                            <ProGateInline
+                                plan={plan}
+                                requires="hobby"
+                                feature="Advanced analytics"
+                                description="Visitor countries are available on the Hobby plan and higher."
+                            >
+                                <BreakdownCard title="Countries" icon="public" items={data.by_country ?? []} />
+                            </ProGateInline>
                         </div>
                     )}
                 </>

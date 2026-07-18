@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { getVertical } from '@mcloud/verticals'
 import { getStoreSettingsData } from '@/lib/store-data'
+import { getStorePlan } from '@/lib/plans-server'
 import ContentClient from './content-client'
 
 export default async function ContentPage({
@@ -33,5 +34,7 @@ export default async function ContentPage({
             ? (store.settings as Record<string, unknown>)
             : {}
 
-    return <ContentClient slug={storeSlug} storeId={store.id} initialSettings={settings} />
+    const plan = await getStorePlan(store.id)
+
+    return <ContentClient slug={storeSlug} storeId={store.id} initialSettings={settings} plan={plan} />
 }

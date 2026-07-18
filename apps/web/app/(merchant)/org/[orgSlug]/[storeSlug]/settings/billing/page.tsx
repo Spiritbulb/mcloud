@@ -3,6 +3,8 @@ import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
 import BillingClient from '@/components/billing-client'
+import { getStorePlan } from '@/lib/plans-server'
+import { PLAN_LIMITS, isOverLimit } from '@/lib/plans'
 
 export default async function BillingPage({
     params,
@@ -30,5 +32,25 @@ export default async function BillingPage({
         .limit(1)
         .single()
 
-    return <BillingClient store={store} subscription={subscription} />
+    const plan = await getStorePlan(store.id)
+    const limits = PLAN_LIMITS[plan]
+
+    const monthStart = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const { count: monthOrders } = await supabase
+        .from('orders')
+        .select('id', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+        .gte('created_at', monthStart)
+        .not('status', 'in', '("cancelled","refunded")')
+    const overOrders = isOverLimit(monthOrders ?? 0, limits.monthlyOrders)
+
+    return (
+        <BillingClient
+            store={store}
+            subscription={subscription}
+            plan={plan}
+            limits={limits}
+            overOrders={overOrders}
+        />
+    )
 }

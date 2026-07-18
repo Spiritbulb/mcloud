@@ -2,6 +2,8 @@
 // store (requireStoreAccess); writes require owner/admin.
 import { createClient } from '@mcloud/db/server'
 import { canManage, requireStoreAccess, type Role } from './stores'
+import { getStorePlan } from '../plans-server'
+import { PLAN_LIMITS, isOverLimit, limitMessage } from '../plans'
 
 export interface MobileProduct {
     id: string
@@ -59,6 +61,20 @@ export async function createProduct(
     const access = await requireStoreAccess(slug, userId)
     if (access.error === 'not_found') return { error: 'Store not found', status: 404, data: null }
     if (access.error || !canManage(access.role)) return { error: 'Not authorized', status: 403, data: null }
+
+    // Plan limit: block creating a product past the store's tier ceiling.
+    const plan = await getStorePlan(access.storeId)
+    const productLimit = PLAN_LIMITS[plan].products
+    if (Number.isFinite(productLimit)) {
+        const supabaseCount = await createClient()
+        const { count } = await supabaseCount
+            .from('products')
+            .select('id', { count: 'exact', head: true })
+            .eq('store_id', access.storeId)
+        if (isOverLimit(count ?? 0, productLimit)) {
+            return { error: limitMessage(plan, 'products', productLimit), status: 403, data: null }
+        }
+    }
 
     const name = input.name?.trim()
     if (!name) return { error: 'Name is required', status: 400, data: null }

@@ -48,6 +48,8 @@ import {
 } from '@mcloud/ui/alert-dialog'
 import { cn } from '@mcloud/ui/utils'
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
+import { ProGateInline } from '@/components/pro'
+import type { Plan } from '@/lib/plans'
 
 // Radix Select forbids empty-string values (it uses "" internally to mean
 // "nothing selected / show placeholder"). Use a sentinel instead.
@@ -60,6 +62,7 @@ interface Props {
     storeSlug: string
     posts: BlogPost[]
     authors: BlogAuthor[]
+    plan: Plan
 }
 
 type View = 'list' | 'editor'
@@ -316,7 +319,7 @@ function MarkdownPreview({ content }: { content: string }) {
 
 // ─── Main BlogSettingsClient ──────────────────────────────────────────────────
 
-export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, authors: initialAuthors }: Props) {
+export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, authors: initialAuthors, plan }: Props) {
     const supabase = createClient()
 
     const [view, setView] = useState<View>('list')
@@ -470,6 +473,12 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
+        <ProGateInline
+            plan={plan}
+            requires="hobby"
+            feature="Blog & content pages"
+            description="Publish blog posts and custom content pages on the Hobby plan and higher."
+        >
         <div className="h-[90.2vh] flex flex-col -mx-6 md:-mx-10 -my-8">
 
             {/* ── View: Post list ── */}
@@ -869,5 +878,6 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                 />
             )}
         </div>
+        </ProGateInline>
     )
-}      
+}

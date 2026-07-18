@@ -1,9 +1,9 @@
-// Thin wrapper over expo-iap for the single "Pro" subscription SKU. Screens use
-// `useProIap()` and never touch the IAP SDK directly.
+// Thin wrapper over expo-iap for the "Hobby" and "Pro" subscription SKUs. Screens
+// use `useProIap()` and never touch the IAP SDK directly.
 //
 // Flow: requestPurchase (native Play sheet) → onPurchaseSuccess fires with the
 // purchase → we send its purchaseToken to our backend to verify with Google and
-// grant Pro → ONLY on backend success do we finishTransaction (acknowledge).
+// grant the tier → ONLY on backend success do we finishTransaction (acknowledge).
 // If the backend rejects it we do NOT acknowledge, so Play auto-refunds in 3 days.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -12,7 +12,11 @@ import type { Purchase } from 'expo-iap'
 import { useAuth } from '@/auth/AuthContext'
 import { api as makeApi } from '@/lib/api'
 
-const SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU as string
+const HOBBY_SKU = process.env.EXPO_PUBLIC_PLAY_HOBBY_SKU as string
+const PRO_SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU as string
+const SKUS = [HOBBY_SKU, PRO_SKU].filter(Boolean)
+
+type Tier = 'hobby' | 'pro'
 
 // Raised when the Play payment SUCCEEDED but our backend failed to verify/grant
 // Pro. The user has paid (or will be charged unless Play auto-refunds), so they
@@ -44,7 +48,7 @@ export function useProIap() {
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
     // The purchase result arrives via a listener callback, outside the
-    // requestPurchase() promise — bridge it back to the awaited purchasePro().
+    // requestPurchase() promise — bridge it back to the awaited purchase().
     const pending = useRef<PendingPurchase | null>(null)
     // useIAP's finishTransaction, captured for the success handler (which is
     // defined before the hook returns it).
@@ -108,35 +112,46 @@ export function useProIap() {
 
     finishRef.current = finishTransaction
 
-    // Load the Pro product once connected so we can show live localized pricing.
+    // Load both tier products once connected so we can show live localized pricing.
     useEffect(() => {
-        if (connected && SKU) fetchProducts({ skus: [SKU], type: 'subs' })
+        if (connected && SKUS.length > 0) fetchProducts({ skus: SKUS, type: 'subs' })
     }, [connected, fetchProducts])
 
-    const rawProduct = useMemo(
-        () => subscriptions.find((s) => s.id === SKU),
+    const rawHobbyProduct = useMemo(
+        () => subscriptions.find((s) => s.id === HOBBY_SKU),
+        [subscriptions],
+    )
+    const rawProProduct = useMemo(
+        () => subscriptions.find((s) => s.id === PRO_SKU),
         [subscriptions],
     )
 
+    const hobbyProduct = useMemo(
+        () => (rawHobbyProduct ? { displayPrice: rawHobbyProduct.displayPrice } : null),
+        [rawHobbyProduct],
+    )
     const proProduct = useMemo(
-        () => (rawProduct ? { displayPrice: rawProduct.displayPrice } : null),
-        [rawProduct],
+        () => (rawProProduct ? { displayPrice: rawProProduct.displayPrice } : null),
+        [rawProProduct],
     )
 
     // Android subscriptions purchase against a base-plan *offer*. Pull the first
     // offer token from the fetched product; Play rejects the request without it.
-    const offerToken = useMemo<string | null>(() => {
-        const offers = (rawProduct as { subscriptionOfferDetailsAndroid?: { offerToken: string }[] } | undefined)
+    const offerTokenFor = useCallback((raw: typeof rawHobbyProduct): string | null => {
+        const offers = (raw as { subscriptionOfferDetailsAndroid?: { offerToken: string }[] } | undefined)
             ?.subscriptionOfferDetailsAndroid
         return offers && offers.length > 0 ? offers[0].offerToken : null
-    }, [rawProduct])
+    }, [])
 
-    const purchasePro = useCallback((slug: string): Promise<{ pro: boolean }> => {
+    const purchase = useCallback((slug: string, tier: Tier): Promise<{ pro: boolean }> => {
         setError(null)
-        if (!SKU) {
-            setError('Pro is not configured yet (missing SKU).')
+        const sku = tier === 'hobby' ? HOBBY_SKU : PRO_SKU
+        const rawProduct = tier === 'hobby' ? rawHobbyProduct : rawProProduct
+        if (!sku) {
+            setError(`${tier === 'hobby' ? 'Hobby' : 'Pro'} is not configured yet (missing SKU).`)
             return Promise.resolve({ pro: false })
         }
+        const offerToken = offerTokenFor(rawProduct)
         setLoading(true)
         return new Promise<{ pro: boolean }>((resolve, reject) => {
             pending.current = { slug, resolve, reject }
@@ -144,9 +159,9 @@ export function useProIap() {
                 type: 'subs',
                 request: {
                     google: {
-                        skus: [SKU],
+                        skus: [sku],
                         ...(offerToken
-                            ? { subscriptionOffers: [{ sku: SKU, offerToken }] }
+                            ? { subscriptionOffers: [{ sku, offerToken }] }
                             : {}),
                     },
                 },
@@ -169,7 +184,7 @@ export function useProIap() {
                 return { pro: false }
             })
             .finally(() => setLoading(false))
-    }, [requestPurchase, offerToken])
+    }, [requestPurchase, rawHobbyProduct, rawProProduct, offerTokenFor])
 
-    return { ready: connected, proProduct, purchasePro, loading, error }
+    return { ready: connected, hobbyProduct, proProduct, purchase, loading, error }
 }

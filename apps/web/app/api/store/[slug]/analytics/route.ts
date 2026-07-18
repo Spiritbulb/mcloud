@@ -3,6 +3,7 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
+import { storeHasFeature } from '@/lib/plans-server'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 }
 
@@ -50,7 +51,18 @@ export async function GET(
         return NextResponse.json({ error: 'Failed to load analytics' }, { status: 500 })
     }
 
-    return NextResponse.json({ range: rangeKey, currency: store.currency, ...(data as object) })
+    const result: Record<string, unknown> = { range: rangeKey, currency: store.currency, ...(data as object) }
+
+    // Advanced analytics (funnel + source/country/product breakdowns) is Hobby+.
+    // Free stores get the basic subset only.
+    if (!(await storeHasFeature(store.id, 'advancedAnalytics'))) {
+        delete result.funnel
+        delete result.by_source
+        delete result.by_country
+        delete result.top_products
+    }
+
+    return NextResponse.json(result)
 }
 
 export async function POST(

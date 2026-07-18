@@ -5,6 +5,8 @@ import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
 import type { MemberRow } from './utils'
+import { getStorePlan } from '@/lib/plans-server'
+import { PLAN_LIMITS, isOverLimit, limitMessage } from '@/lib/plans'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -90,6 +92,28 @@ export async function inviteMember(formData: FormData) {
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) {
         return { error: 'You do not have permission to invite members' }
+    }
+
+    // Plan limit: a seat is consumed by each member AND each pending invite.
+    const plan = await getStorePlan(storeId)
+    const memberLimit = PLAN_LIMITS[plan].members
+    if (Number.isFinite(memberLimit)) {
+        const [{ count: memberCount }, { count: inviteCount }] = await Promise.all([
+            supabase
+                .from('store_members')
+                .select('id', { count: 'exact', head: true })
+                .eq('store_id', storeId),
+            supabase
+                .from('store_invites')
+                .select('id', { count: 'exact', head: true })
+                .eq('store_id', storeId)
+                .is('accepted_at', null)
+                .gt('expires_at', new Date().toISOString()),
+        ])
+        const used = (memberCount ?? 0) + (inviteCount ?? 0)
+        if (isOverLimit(used, memberLimit)) {
+            return { error: limitMessage(plan, 'team members', memberLimit) }
+        }
     }
 
     // Check if already a member

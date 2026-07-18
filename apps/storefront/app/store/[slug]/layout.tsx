@@ -34,6 +34,14 @@ async function getStoreTheme(slug: string) {
 }
 
 
+// Pure derivation mirrored from apps/web/lib/plans.ts (planFromActiveRow). The
+// storefront is a separate app with no dependency on apps/web, so this tiny
+// rule is inlined rather than imported: an active row on the 'pro' plan is
+// the only case that hides Menengai Cloud branding.
+function hideBrandingFromRow(row: { plan: string | null; status: string } | null | undefined): boolean {
+    return !!row && row.status === 'active' && row.plan === 'pro'
+}
+
 async function getStore(slug: string) {
     const supabase = await createClient()
     const { data: store } = await supabase
@@ -42,7 +50,17 @@ async function getStore(slug: string) {
         .eq('slug', slug)
         .single()
 
-    return store
+    if (!store) return store
+
+    const { data: subRow } = await supabase
+        .from('store_subscriptions')
+        .select('plan, status')
+        .eq('store_id', store.id)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    return { ...store, hideBranding: hideBrandingFromRow(subRow) }
 }
 
 
