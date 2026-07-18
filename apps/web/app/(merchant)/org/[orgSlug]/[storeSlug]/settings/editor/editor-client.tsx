@@ -388,9 +388,12 @@ export default function EditorClient({
     // Copy -> debounced reload. A copy change needs Liquid re-run server-side
     // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
     const previewSrc = useMemo(() => {
+        const sectionsDirty = JSON.stringify(sections) !== JSON.stringify(initialSections)
+        const base = `${storefrontOrigin}/store/${slug}?token=${encodeURIComponent(previewToken)}`
+        if (!sectionsDirty) return base // no section edits: let the storefront render its saved page
         const payload = toBase64Url(JSON.stringify(sections))
-        return `${storefrontOrigin}/store/${slug}?preview=${encodeURIComponent(payload)}&token=${encodeURIComponent(previewToken)}`
-    }, [sections, slug, previewToken, storefrontOrigin])
+        return `${base}&preview=${encodeURIComponent(payload)}`
+    }, [sections, initialSections, slug, previewToken, storefrontOrigin])
 
     // An edit made IN the preview is already visible there, so it must not reload
     // the frame; an edit made in the DRAWER must. Same state, two origins, and only

@@ -448,11 +448,29 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         function onMessage(e: MessageEvent) {
             if (e.origin !== adminOrigin) return
             const data = e.data
-            if (!data || data.type !== 'mcloud:select-section') return
-            if (!Number.isInteger(data.index)) return
+            if (!data) return
 
-            const el = select(data.index)
-            el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            if (data.type === 'mcloud:select-section' && Number.isInteger(data.index)) {
+                const el = select(data.index)
+                el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                return
+            }
+
+            // ── IN: the rail reordered a section ─────────────────────────────────
+            //
+            // Shuffle the existing DOM nodes in place instead of waiting for an
+            // iframe reload, so a drag/move in the rail feels instant here too.
+            if (data.type === 'mcloud:reorder-preview' && Number.isInteger(data.from) && Number.isInteger(data.to)) {
+                const nodes = Array.from(document.querySelectorAll('[data-mcloud-section]'))
+                const from = nodes[data.from]
+                const parent = from?.parentNode
+                if (!from || !parent) return
+                const ref = data.to >= nodes.length ? null : nodes[data.to]
+                parent.insertBefore(from, data.to > data.from ? (ref?.nextSibling ?? null) : ref)
+                // Re-index so later clicks address the right section.
+                Array.from(parent.querySelectorAll('[data-mcloud-section]'))
+                    .forEach((n, i) => n.setAttribute('data-mcloud-section', String(i)))
+            }
         }
 
         // Capture phase: get the click before a link or button handles it.
