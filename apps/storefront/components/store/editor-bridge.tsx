@@ -175,6 +175,46 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     font: 600 14px/1 system-ui, sans-serif; cursor: pointer;
                 }
                 #mcloud-op-toolbar button:hover { background: rgba(255,255,255,.14); }
+
+                /* Hero filmstrip (editor only). The dots become taller, numbered
+                   slide selectors so paging-to-edit reads as an affordance, plus an
+                   add-slide control. Visitors never see this — the section only
+                   emits these classes when store.editing. */
+                .sf-hero__dots--editing {
+                    gap: 8px;
+                    padding: 6px 8px;
+                    background: rgba(17,17,27,.72);
+                    border-radius: 10px;
+                }
+                .sf-hero__dots--editing .sf-hero__dot {
+                    height: 22px !important;
+                    min-width: 22px;
+                    width: auto !important;
+                    padding: 0 7px !important;
+                    border-radius: 6px !important;
+                    background: rgba(255,255,255,.22) !important;
+                    pointer-events: auto;
+                }
+                .sf-hero__dots--editing .sf-hero__dot.sf-hero__dot--active {
+                    background: #fff !important;
+                }
+                .sf-hero__dot-num {
+                    font: 600 12px/22px system-ui, sans-serif;
+                    color: #11111b;
+                }
+                .sf-hero__dots--editing .sf-hero__dot:not(.sf-hero__dot--active) .sf-hero__dot-num {
+                    color: #fff;
+                }
+                .sf-hero__add-slide {
+                    pointer-events: auto;
+                    height: 22px; min-width: 22px;
+                    padding: 0 8px;
+                    display: grid; place-items: center;
+                    border: 0; border-radius: 6px;
+                    background: var(--sf-primary, #6366f1); color: #fff;
+                    font: 700 15px/1 system-ui, sans-serif; cursor: pointer;
+                }
+                .sf-hero__add-slide:hover { filter: brightness(1.1); }
             `
             document.head.appendChild(style)
         }
@@ -241,6 +281,18 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
         function toolbarIndexOf(el: HTMLElement): number {
             return Number(el.getAttribute('data-mcloud-index') ?? el.getAttribute('data-mcloud-section'))
+        }
+
+        // The hero filmstrip's add-slide control. Appends a slide after the last;
+        // the admin computes the follow index so the reload lands on the new slide.
+        function onAddSlide(e: MouseEvent) {
+            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-add-slide]')
+            if (!btn) return
+            e.preventDefault(); e.stopPropagation()
+            const count = document.querySelectorAll(
+                '[data-mcloud-record][data-mcloud-list="heroSlides"]',
+            ).length
+            post({ type: 'mcloud:item-op', op: 'add', list: 'heroSlides', index: count })
         }
 
         function onToolbarClick(e: MouseEvent) {
@@ -569,6 +621,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
         // Capture phase: get the click before a link or button handles it.
         document.addEventListener('mousedown', onMouseDown, true)
+        document.addEventListener('click', onAddSlide, true)
         document.addEventListener('click', onClick, true)
         document.addEventListener('beforeinput', onBeforeInput, true)
         document.addEventListener('input', onInput, true)
@@ -586,6 +639,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
         return () => {
             document.removeEventListener('mousedown', onMouseDown, true)
+            document.removeEventListener('click', onAddSlide, true)
             document.removeEventListener('click', onClick, true)
             document.removeEventListener('beforeinput', onBeforeInput, true)
             document.removeEventListener('input', onInput, true)

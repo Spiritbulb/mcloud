@@ -130,17 +130,27 @@
     {%- endfor -%}
   </div>
 
-  {%- if multi -%}
-    {{- - DOT INDICATORS — only meaningful with more than one slide - -}}
-    <div class="absolute bottom-6 flex gap-2 z-30" style="left: 50%; transform: translateX(-50%)">
+  {%- comment -%}
+    DOT INDICATORS. For a visitor they only matter with 2+ slides. In the EDITOR
+    the row also shows for a single slide, and carries an add-slide control, so the
+    merchant can page between slides to edit them and grow the carousel — the dots
+    are the slide filmstrip.
+  {%- endcomment -%}
+  {%- if multi or store.editing -%}
+    <div class="sf-hero__dots absolute bottom-6 flex items-center gap-2 z-30{% if store.editing %} sf-hero__dots--editing{% endif %}" style="left: 50%; transform: translateX(-50%)">
       {%- for slide in slides -%}
         <button
           class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
           data-index="{{ forloop.index0 }}"
           aria-label="Go to slide {{ forloop.index }}"
           style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
-        ></button>
+        >{%- if store.editing -%}<span class="sf-hero__dot-num">{{ forloop.index }}</span>{%- endif -%}</button>
       {%- endfor -%}
+      {%- if store.editing -%}
+        {%- comment -%} Editor-only: add a slide after the last. The bridge routes
+          the click to an item-op add on heroSlides. {%- endcomment -%}
+        <button type="button" class="sf-hero__add-slide" data-mcloud-add-slide="1" aria-label="Add slide">+</button>
+      {%- endif -%}
     </div>
   {%- endif -%}
 </section>
