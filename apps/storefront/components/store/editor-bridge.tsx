@@ -105,6 +105,21 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 .sf-hero .sf-hero__dot {
                     pointer-events: auto;
                 }
+                /* THE CAROUSEL TRAP: a multi-slide hero stacks every slide
+                   absolute inset-0; inactive slides are hidden with
+                   `opacity-0 pointer-events-none`, and the LAST slide paints on top.
+                   But the editable/image rules above re-enable pointer-events on the
+                   marked elements INSIDE those hidden slides, so a click on the
+                   visible slide's heading actually lands on a hidden slide's <img>
+                   stacked over it (e.target === that IMG → "image settings", and the
+                   real heading never edits). A single-slide hero (e.g. an NGO's) has
+                   nothing stacked, so it worked — which is why one hero edited and an
+                   otherwise-identical one did not. Force every descendant of an
+                   inactive slide back to inert so only the ACTIVE slide is clickable. */
+                .sf-hero .sf-hero__slide.pointer-events-none,
+                .sf-hero .sf-hero__slide.pointer-events-none * {
+                    pointer-events: none !important;
+                }
 
                 /* An image gets a picker, not a caret, so it must not look typeable. */
                 [data-mcloud-image] {
