@@ -107,7 +107,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 }
                 /* THE CAROUSEL TRAP: a multi-slide hero stacks every slide
                    absolute inset-0; inactive slides are hidden with
-                   `opacity-0 pointer-events-none`, and the LAST slide paints on top.
+                   opacity-0 + pointer-events-none, and the LAST slide paints on top.
                    But the editable/image rules above re-enable pointer-events on the
                    marked elements INSIDE those hidden slides, so a click on the
                    visible slide's heading actually lands on a hidden slide's <img>
