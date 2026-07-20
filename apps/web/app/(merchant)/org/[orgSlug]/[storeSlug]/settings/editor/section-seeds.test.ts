@@ -26,3 +26,18 @@ test('seedRecord returns a clickable placeholder for programs', () => {
 test('seedRecord for an unknown list is an empty object', () => {
   assert.deepEqual(seedRecord('nope'), {})
 })
+
+test('seedRecord for campaigns has a non-empty string id and goalAmount key', () => {
+  const r = seedRecord('campaigns')
+  assert.equal(typeof r.id, 'string')
+  assert.ok((r.id as string).length > 0)
+  assert.ok('goalAmount' in r)
+  assert.ok(!('goal' in r))
+  assert.ok(!('raised' in r))
+})
+
+test('seedRecord for campaigns yields different ids on each call', () => {
+  const a = seedRecord('campaigns')
+  const b = seedRecord('campaigns')
+  assert.notEqual(a.id, b.id)
+})

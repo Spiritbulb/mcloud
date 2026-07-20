@@ -27,14 +27,24 @@ export function fillDefaults(schema: readonly SettingFieldLike[] | undefined): R
  */
 export const EDITABLE_LISTS_SEEDS: Record<string, Record<string, unknown>> = {
   programs: { title: 'New program', description: 'Describe this program.' },
-  campaigns: { title: 'New campaign', description: 'Describe this campaign.', goal: 0, raised: 0 },
+  campaigns: { title: 'New campaign', description: 'Describe this campaign.', image: '', goalAmount: '', presets: '', allowCustomAmount: true, minAmount: '' },
   impactStats: { value: '0', label: 'New stat' },
   heroSlides: { title: 'New slide', subtitle: '' },
+}
+
+/** A short url-safe id in the same format as newCampaignId (kept inline so this
+ * module stays dependency-free and unit-testable). Campaigns are FILTERED out by
+ * readCampaigns unless they carry a string id, so a seeded campaign MUST have one
+ * or it never renders and later index-addressed ops desync. */
+function freshCampaignId(): string {
+  return `c${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`
 }
 
 /**
  * A new record placeholder. Returns an empty object if the list is unknown.
  */
 export function seedRecord(list: string): Record<string, unknown> {
-  return { ...(EDITABLE_LISTS_SEEDS[list] ?? {}) }
+  const base = { ...(EDITABLE_LISTS_SEEDS[list] ?? {}) }
+  if (list === 'campaigns') base.id = freshCampaignId()
+  return base
 }
