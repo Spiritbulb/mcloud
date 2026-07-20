@@ -325,6 +325,12 @@ export default function EditorClient({
                 if (!Number.isInteger(data.index)) return
                 if (op === 'move' && !Number.isInteger(data.to)) return
 
+                // A move keeps the record COUNT the same, so — like a section move —
+                // the preview can shuffle the existing nodes in place instead of
+                // paying for a full ~1.6s Liquid reload. add/delete/duplicate change
+                // the count and must redraw, so they still let the reload run.
+                if (op === 'move') skipReloadRef.current = true
+
                 setStoreDraft((prev) => {
                     const arr = listFor(list, prev, storeSettings)
                     const applied = applyItemOp(arr, {
@@ -333,8 +339,13 @@ export default function EditorClient({
                     return { ...prev, [list]: applied }
                 })
                 setSaved(false)
-                // Records always change record COUNT/order -> the list re-renders,
-                // so let the debounced reload run (do NOT set skipReloadRef).
+
+                if (op === 'move' && Number.isInteger(data.to)) {
+                    // Shuffle the record's DOM nodes now, so a reorder feels instant
+                    // here too. Keyed by `list` so only that list's records move.
+                    const win = iframeRef.current?.contentWindow
+                    try { win?.postMessage({ type: 'mcloud:reorder-preview-item', list, from: data.index, to: data.to }, storefrontOrigin) } catch {}
+                }
             }
         }
         window.addEventListener('message', onMessage)

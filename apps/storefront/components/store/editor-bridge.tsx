@@ -356,8 +356,28 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         function onClick(e: MouseEvent) {
             if (!(e.target instanceof Element)) return
 
-            const image = e.target.closest<HTMLElement>('[data-mcloud-image]')
-            const field = image ? null : e.target.closest<HTMLElement>(EDITABLE)
+            // A hero's background image is a full-bleed layer BEHIND the text card.
+            // A plain closest() on e.target can land on that image layer even when
+            // the merchant clicked on (or right next to) an editable heading — the
+            // hero lesson again. So resolve intent by what is actually stacked at the
+            // click point: an editable field ALWAYS wins over the background image,
+            // and the image is only chosen when no field sits under the pointer.
+            // (elementsFromPoint returns hits front-to-back; the first EDITABLE is
+            // the one the merchant visually clicked.)
+            const stack = document.elementsFromPoint(e.clientX, e.clientY)
+            let field: HTMLElement | null = null
+            let image: HTMLElement | null = null
+            for (const el of stack) {
+                const f = el.closest<HTMLElement>(EDITABLE)
+                if (f && f.closest('[data-mcloud-image]') === null) { field = f; break }
+                if (!image) {
+                    const img = el.closest<HTMLElement>('[data-mcloud-image]')
+                    if (img) image = img
+                }
+            }
+            // A field found anywhere in the stack wins; the image is a fallback.
+            if (field) image = null
+
             const index = sectionIndexOf(e.target)
             if (index === null) return
 
@@ -470,6 +490,39 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 // Re-index so later clicks address the right section.
                 Array.from(parent.querySelectorAll('[data-mcloud-section]'))
                     .forEach((n, i) => n.setAttribute('data-mcloud-section', String(i)))
+            }
+
+            // ── IN: a repeated record was reordered ──────────────────────────────
+            //
+            // Same idea as a section move, scoped to one list: shuffle that list's
+            // record nodes in place so a record reorder feels instant too, instead
+            // of waiting for the full reload. `list` picks the record set; from/to
+            // are indices within it.
+            if (
+                data.type === 'mcloud:reorder-preview-item' &&
+                typeof data.list === 'string' &&
+                Number.isInteger(data.from) &&
+                Number.isInteger(data.to)
+            ) {
+                const listEsc = CSS.escape(data.list)
+                const recordSel = `[data-mcloud-record][data-mcloud-list="${listEsc}"]`
+                const nodes = Array.from(document.querySelectorAll<HTMLElement>(recordSel))
+                const from = nodes[data.from]
+                const parent = from?.parentNode
+                if (!from || !parent) return
+                const ref = data.to >= nodes.length ? null : nodes[data.to]
+                parent.insertBefore(from, data.to > data.from ? (ref?.nextSibling ?? null) : ref)
+                // Re-index in DOM order. Both the record container AND the editable
+                // fields inside it carry their own data-mcloud-index (commit() reads
+                // the field's own attribute, not the container's via closest()), so
+                // BOTH must be renumbered or a later text/image edit on this list
+                // would address the wrong record.
+                Array.from(document.querySelectorAll<HTMLElement>(recordSel)).forEach((rec, i) => {
+                    rec.setAttribute('data-mcloud-index', String(i))
+                    rec
+                        .querySelectorAll<HTMLElement>(`[data-mcloud-list="${listEsc}"][data-mcloud-index]`)
+                        .forEach((f) => f.setAttribute('data-mcloud-index', String(i)))
+                })
             }
         }
 
