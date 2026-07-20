@@ -182,6 +182,16 @@
         });
       });
 
+      // Editor handoff: after a slide add/delete/reorder the iframe reloads, and the
+      // Editor sets location.hash to the slide the merchant was acting on so the
+      // carousel FOLLOWS it instead of snapping back to slide 0. Server-free.
+      (function () {
+        var m = /(?:^|#|&)slide=(\d+)/.exec(location.hash || '');
+        if (!m) return;
+        var n = parseInt(m[1], 10);
+        if (n > 0 && n < slides.length) goTo(n);
+      })();
+
       var firstCard = slides[0].querySelector('.sf-hero__card-animate');
       if (firstCard) {
         setTimeout(function () { firstCard.classList.add('sf-hero__card-animate--in'); }, 80);
