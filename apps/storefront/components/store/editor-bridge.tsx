@@ -330,20 +330,42 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
          */
         const typed = new WeakSet<HTMLElement>()
 
-        function beginEdit(el: HTMLElement) {
+        function beginEdit(el: HTMLElement, placeCaret: boolean) {
             if (el.getAttribute('contenteditable') === 'true') return
             el.setAttribute('contenteditable', 'true')
             el.setAttribute('spellcheck', 'false')
             el.focus()
 
-            // Put the caret at the end rather than selecting everything, so a click
-            // lands where the merchant clicked.
+            // When we begin on mousedown, the browser's OWN mouseup places the caret
+            // exactly where the merchant pressed — forcing a range here would fight it.
+            // We only place a caret ourselves when there is no native click to do it
+            // (i.e. a programmatic begin), collapsing to the end.
+            if (!placeCaret) return
             const range = document.createRange()
             range.selectNodeContents(el)
             range.collapse(false)
             const sel = window.getSelection()
             sel?.removeAllRanges()
             sel?.addRange(range)
+        }
+
+        // ── Mousedown: begin editing a text field BEFORE the browser's native focus
+        // and caret logic runs on this press. If we waited for `click`, the element
+        // was still non-editable at mousedown, so the browser never started a text
+        // selection in it — the field would flip to contenteditable but show no caret
+        // and refuse typing (works when triggered synthetically, fails on real mouse
+        // clicks). Making it editable on mousedown lets the SAME press's mouseup drop
+        // the caret where the merchant clicked. Images/sections are still handled on
+        // `click` (they need no caret).
+        function onMouseDown(e: MouseEvent) {
+            if (!(e.target instanceof Element)) return
+            if (e.button !== 0) return
+            const targetField = e.target.closest<HTMLElement>(EDITABLE)
+            if (!targetField) return
+            // An image slot is not a text field; it opens the picker on click.
+            if (e.target.closest('[data-mcloud-image]')) return
+            if (sectionIndexOf(e.target) === null) return
+            beginEdit(targetField, false)
         }
 
         function endEdit(el: HTMLElement) {
@@ -403,7 +425,10 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 return
             }
 
-            if (field) beginEdit(field)
+            // Usually mousedown already began the edit (so the caret landed where the
+            // merchant clicked); this covers any click with no matching mousedown
+            // (keyboard activation, synthetic). Place a caret ourselves in that case.
+            if (field) beginEdit(field, true)
         }
 
         // ── Editing ───────────────────────────────────────────────────────────────
@@ -519,6 +544,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         }
 
         // Capture phase: get the click before a link or button handles it.
+        document.addEventListener('mousedown', onMouseDown, true)
         document.addEventListener('click', onClick, true)
         document.addEventListener('beforeinput', onBeforeInput, true)
         document.addEventListener('input', onInput, true)
@@ -535,6 +561,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         window.parent.postMessage({ type: 'mcloud:preview-ready' }, adminOrigin)
 
         return () => {
+            document.removeEventListener('mousedown', onMouseDown, true)
             document.removeEventListener('click', onClick, true)
             document.removeEventListener('beforeinput', onBeforeInput, true)
             document.removeEventListener('input', onInput, true)
