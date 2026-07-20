@@ -11,6 +11,7 @@ import ImagePicker from './image-picker'
 import ContentClient from '../content/content-client'
 import { applySectionOp, type SectionOp } from './section-ops'
 import { seedSection } from './section-seeds-registry'
+import { followSlideIndex } from './slide-follow'
 import { applyItemOp, type ItemOp } from './item-ops'
 import { seedRecord } from './section-seeds'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
@@ -325,24 +326,31 @@ export default function EditorClient({
                 if (!Number.isInteger(data.index)) return
                 if (op === 'move' && !Number.isInteger(data.to)) return
 
-                // A move keeps the record COUNT the same, so — like a section move —
-                // the preview can shuffle the existing nodes in place instead of
-                // paying for a full ~1.6s Liquid reload. add/delete/duplicate change
-                // the count and must redraw, so they still let the reload run.
-                if (op === 'move') skipReloadRef.current = true
+                const itemOp = { op, index: data.index, to: data.to, list } as ItemOp
+
+                // The hero is a CAROUSEL: its slides are stacked, not laid out in a
+                // grid, so the instant in-place node shuffle used for grid records
+                // does not apply. Every heroSlides op reloads the preview, and we set
+                // the slide to FOLLOW (via #slide=N, read by the carousel on init) so
+                // the reload lands on the slide the merchant acted on rather than
+                // snapping to slide 0.
+                const isHero = list === 'heroSlides'
+
+                // A grid-record move keeps the COUNT the same, so it can shuffle nodes
+                // in place with no reload. Hero move must reload (to re-stack + follow).
+                if (op === 'move' && !isHero) skipReloadRef.current = true
 
                 setStoreDraft((prev) => {
                     const arr = listFor(list, prev, storeSettings)
-                    const applied = applyItemOp(arr, {
-                        op, index: data.index, to: data.to, list,
-                    } as ItemOp, seedRecord)
+                    const applied = applyItemOp(arr, itemOp, seedRecord)
+                    if (isHero) followSlideRef.current = followSlideIndex(itemOp, applied.length)
                     return { ...prev, [list]: applied }
                 })
                 setSaved(false)
 
-                if (op === 'move' && Number.isInteger(data.to)) {
-                    // Shuffle the record's DOM nodes now, so a reorder feels instant
-                    // here too. Keyed by `list` so only that list's records move.
+                if (op === 'move' && Number.isInteger(data.to) && !isHero) {
+                    // Grid record: shuffle the DOM nodes now so a reorder feels instant.
+                    // Keyed by `list` so only that list's records move.
                     const win = iframeRef.current?.contentWindow
                     try { win?.postMessage({ type: 'mcloud:reorder-preview-item', list, from: data.index, to: data.to }, storefrontOrigin) } catch {}
                 }
@@ -396,6 +404,13 @@ export default function EditorClient({
         JSON.stringify(sections) !== JSON.stringify(initialSections) ||
         THEME_SCHEMA.some((f) => (themeValues[f.id] ?? '') !== (theme[f.id] ?? ''))
 
+    // After a hero slide op, the carousel should open on the slide the merchant
+    // acted on. The item-op handler sets this (synchronously, before its
+    // setStoreDraft), and previewSrc appends `#slide=N` on the next render — which
+    // storeDraft (a previewSrc dep) guarantees. Reset once the reload has fired so a
+    // later unrelated reload does not re-jump. null = no follow.
+    const followSlideRef = useRef<number | null>(null)
+
     // Copy -> debounced reload. A copy change needs Liquid re-run server-side
     // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
     const previewSrc = useMemo(() => {
@@ -404,7 +419,8 @@ export default function EditorClient({
         params.set('token', previewToken)
         if (sectionsDirty) params.set('preview', toBase64Url(JSON.stringify(sections)))
         if (Object.keys(storeDraft).length > 0) params.set('settings', toBase64Url(JSON.stringify(storeDraft)))
-        return `${storefrontOrigin}/store/${slug}?${params.toString()}`
+        const url = `${storefrontOrigin}/store/${slug}?${params.toString()}`
+        return followSlideRef.current !== null ? `${url}#slide=${followSlideRef.current}` : url
     }, [sections, initialSections, storeDraft, slug, previewToken, storefrontOrigin])
 
     // An edit made IN the preview is already visible there, so it must not reload
@@ -417,7 +433,7 @@ export default function EditorClient({
             skipReloadRef.current = false
             return
         }
-        const t = setTimeout(() => setDebouncedSrc(previewSrc), 400)
+        const t = setTimeout(() => { setDebouncedSrc(previewSrc); followSlideRef.current = null }, 400)
         return () => clearTimeout(t)
     }, [previewSrc])
 
