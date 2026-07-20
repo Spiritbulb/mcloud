@@ -17,7 +17,7 @@ export const revalidate = 60
 
 interface Props {
     params: Promise<{ slug: string }>
-    searchParams: Promise<{ preview?: string; token?: string }>
+    searchParams: Promise<{ preview?: string; token?: string; settings?: string }>
 }
 
 export async function generateMetadata({ params }: Props) {
@@ -57,7 +57,7 @@ async function incrementViews(storeId: string) {
 
 export default async function StorePage({ params, searchParams }: Props) {
     const { slug } = await params
-    const { preview, token } = await searchParams
+    const { preview, token, settings } = await searchParams
     const supabase = await createClient()
 
     const { data: rawStore } = await supabase
@@ -164,10 +164,33 @@ export default async function StorePage({ params, searchParams }: Props) {
             }
         }
 
-        const campaigns = await loadCampaignsWithProgress(store.id, rawStore.settings)
+        // The Editor also previews UNSAVED record edits/CRUD (programs, campaigns,
+        // impact stats, hero slides), which live in the Editor's `storeDraft` state
+        // and are never persisted until Save. Same token gate as `preview` above:
+        // honoured only for a verified editing session, merged over saved settings
+        // so any key the draft doesn't touch still comes from the real store.
+        let previewStore = store
+        let previewSettingsForCampaigns: unknown = rawStore.settings
+        if (editing && settings) {
+            try {
+                const override = JSON.parse(Buffer.from(settings, 'base64url').toString('utf-8'))
+                if (override && typeof override === 'object' && !Array.isArray(override)) {
+                    const savedSettings = (rawStore.settings && typeof rawStore.settings === 'object' && !Array.isArray(rawStore.settings))
+                        ? rawStore.settings as Record<string, unknown>
+                        : {}
+                    const mergedSettings = { ...savedSettings, ...override }
+                    previewStore = castStore({ ...rawStore, settings: mergedSettings })
+                    previewSettingsForCampaigns = mergedSettings
+                }
+            } catch {
+                // A malformed settings payload falls through to the saved settings.
+            }
+        }
+
+        const campaigns = await loadCampaignsWithProgress(store.id, previewSettingsForCampaigns)
         const context = {
             ...buildHomeContext({
-                store,
+                store: previewStore,
                 storeType: rawStore.type as string | null | undefined,
                 editing,
                 products,

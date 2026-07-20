@@ -389,11 +389,12 @@ export default function EditorClient({
     // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
     const previewSrc = useMemo(() => {
         const sectionsDirty = JSON.stringify(sections) !== JSON.stringify(initialSections)
-        const base = `${storefrontOrigin}/store/${slug}?token=${encodeURIComponent(previewToken)}`
-        if (!sectionsDirty) return base // no section edits: let the storefront render its saved page
-        const payload = toBase64Url(JSON.stringify(sections))
-        return `${base}&preview=${encodeURIComponent(payload)}`
-    }, [sections, initialSections, slug, previewToken, storefrontOrigin])
+        const params = new URLSearchParams()
+        params.set('token', previewToken)
+        if (sectionsDirty) params.set('preview', toBase64Url(JSON.stringify(sections)))
+        if (Object.keys(storeDraft).length > 0) params.set('settings', toBase64Url(JSON.stringify(storeDraft)))
+        return `${storefrontOrigin}/store/${slug}?${params.toString()}`
+    }, [sections, initialSections, storeDraft, slug, previewToken, storefrontOrigin])
 
     // An edit made IN the preview is already visible there, so it must not reload
     // the frame; an edit made in the DRAWER must. Same state, two origins, and only
