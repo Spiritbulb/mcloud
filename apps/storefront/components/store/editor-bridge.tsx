@@ -85,9 +85,18 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 .sf-hero [data-mcloud-image] {
                     pointer-events: auto;
                 }
-                /* ...and so do the things a merchant actually clicks. Without this the
-                   headline would become unselectable in the very act of making the
-                   image clickable. */
+                /* ...and so does the whole text CARD. This is the fix for "clicking
+                   the heading opens image settings": making only the text glyphs
+                   clickable meant a click in the card's padding, or in the gaps
+                   between/around the text, fell THROUGH the content layer to the
+                   image behind it (the real e.target became the <img>). Making the
+                   card itself an island of pointer-events restores clicks anywhere on
+                   it to the text/card, while genuinely empty hero space (outside the
+                   card) still reaches the background image to change it. */
+                .sf-hero .sf-hero-card {
+                    pointer-events: auto;
+                }
+                /* ...and so do the individual things a merchant clicks. */
                 .sf-hero [data-mcloud-field],
                 .sf-hero [data-mcloud-setting],
                 .sf-hero [data-mcloud-key],
