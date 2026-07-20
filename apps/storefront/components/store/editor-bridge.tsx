@@ -356,27 +356,19 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         function onClick(e: MouseEvent) {
             if (!(e.target instanceof Element)) return
 
-            // A hero's background image is a full-bleed layer BEHIND the text card.
-            // A plain closest() on e.target can land on that image layer even when
-            // the merchant clicked on (or right next to) an editable heading — the
-            // hero lesson again. So resolve intent by what is actually stacked at the
-            // click point: an editable field ALWAYS wins over the background image,
-            // and the image is only chosen when no field sits under the pointer.
-            // (elementsFromPoint returns hits front-to-back; the first EDITABLE is
-            // the one the merchant visually clicked.)
-            const stack = document.elementsFromPoint(e.clientX, e.clientY)
-            let field: HTMLElement | null = null
-            let image: HTMLElement | null = null
-            for (const el of stack) {
-                const f = el.closest<HTMLElement>(EDITABLE)
-                if (f && f.closest('[data-mcloud-image]') === null) { field = f; break }
-                if (!image) {
-                    const img = el.closest<HTMLElement>('[data-mcloud-image]')
-                    if (img) image = img
-                }
-            }
-            // A field found anywhere in the stack wins; the image is a fallback.
-            if (field) image = null
+            // Resolve what the merchant clicked from the event target itself. This
+            // is coordinate-free, so it works for every click (mouse, keyboard,
+            // synthetic) — unlike elementsFromPoint, which needs real clientX/Y.
+            //
+            // An editable field wins over the background image: the hero's image is
+            // a full-bleed layer BEHIND the text, so when the target sits inside BOTH
+            // an editable field and the image markup, the merchant meant the text.
+            // Only a click whose target is the image (and NOT an editable field) opens
+            // the picker — that is a click on the bare hero background.
+            const targetField = e.target.closest<HTMLElement>(EDITABLE)
+            const targetImage = e.target.closest<HTMLElement>('[data-mcloud-image]')
+            const field = targetField
+            const image = targetField ? null : targetImage
 
             const index = sectionIndexOf(e.target)
             if (index === null) return
