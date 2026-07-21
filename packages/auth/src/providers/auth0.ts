@@ -198,6 +198,9 @@ export const auth0Provider: AuthProviderAdapter = {
     async verifyPassword() {
         throw new Error('Password auth is not supported by the Auth0 provider.')
     },
+    async createSessionFromTokens() {
+        throw new Error('SSO handoff is not supported by the Auth0 provider.')
+    },
 }
 
 // Real per-device session revocation requires Auth0's Sessions API (paywalled —

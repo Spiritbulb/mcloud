@@ -9,6 +9,19 @@ export function getSession(req?: NextRequest): Promise<AuthSession | null> {
     return provider.getSession(req)
 }
 
+/** Resolve a session from a raw provider access token (bearer / handoff verify). */
+export function getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
+    return provider.getSessionFromToken(accessToken)
+}
+
+/** Establish a cookie session from an existing WorkOS token pair (SSO handoff). */
+export function createSessionFromTokens(
+    tokens: { accessToken: string; refreshToken: string },
+    req: NextRequest,
+): Promise<AuthUser | null> {
+    return provider.createSessionFromTokens(tokens, req)
+}
+
 /** Current user, or null. Convenience over getSession(). */
 export async function getCurrentUser(req?: NextRequest): Promise<AuthUser | null> {
     const session = await provider.getSession(req)
