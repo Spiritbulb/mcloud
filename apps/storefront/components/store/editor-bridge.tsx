@@ -478,11 +478,23 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             const index = sectionIndexOf(e.target)
             if (index === null) return
 
-            // The preview is for editing, not for shopping: a click that would
-            // navigate away (or submit, or open the donate modal) would take the
-            // merchant off the page they are editing.
-            e.preventDefault()
-            e.stopPropagation()
+            // Intercept ONLY what actually needs intercepting, instead of swallowing
+            // every click in the section. The old blanket preventDefault/stopPropagation
+            // made each new interactive control (dots, buttons) dead until whitelisted.
+            // Now:
+            //   - a NAVIGATIONAL click (a link, a submit, the donate CTA, an inline
+            //     onclick) is blocked, because the preview is for editing, not
+            //     shopping — leaving the page mid-edit is the thing to prevent;
+            //   - an editable field or image gets preventDefault (avoid the browser's
+            //     own selection/drag on the element) but NOT a broad stopPropagation;
+            //   - anything else (plain content) is left entirely alone.
+            const nav = e.target.closest<HTMLElement>('a[href], button[type="submit"], .sf-donate, [onclick]')
+            if (nav && !field && !image) {
+                e.preventDefault()
+                e.stopPropagation()
+            } else if (field || image) {
+                e.preventDefault()
+            }
 
             select(index)
             window.parent.postMessage({ type: 'mcloud:section-click', index }, adminOrigin)
