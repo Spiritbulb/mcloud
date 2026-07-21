@@ -53,6 +53,9 @@ table and are redeemed by the same MCloud route. Mobile cannot use the partner s
 ## §1 — Spiritbulb session rework (prerequisite)
 
 This is strictly a fix, not the SSO feature, but SSO cannot work without it.
+**Ships first, as its own PR** — it closes a real auth hole (presence-check gate in
+front of soon-to-be org data) and is independently testable without any MCloud change.
+The handoff routes (§2–§3) follow in a second PR.
 
 ### Current state (the problem)
 
@@ -98,6 +101,24 @@ into a cookie):
 - Cookie life drops from 30 days to **7 days**. With an encrypted-cookie model there is no
   instant server-side revocation; a shorter window is the accepted tradeoff, and the access
   token's own short expiry is the real gate.
+
+### Nav / UI consumers (ships with §1)
+
+The session rework has visible consumers that must move with it, or the fix lands invisibly:
+
+- **`components/Header.tsx`** is currently a stateless `'use client'` component showing a
+  permanent "Sign in" link — it never reads auth state (and, being a client component,
+  cannot read the httpOnly cookie directly). Once a real session exists it must reflect it:
+  signed-out shows "Sign in"; signed-in shows the user + an entry into `/home` (the dock).
+  Session state reaches it from a server component (layout/page passing `getSession()`
+  result down) or a tiny `/api/session` read — **not** by the client reading the cookie.
+- **`components/ProductPage.tsx`** launch links (`product.external.href`, a raw
+  `<a target="_blank">`) are where **flow #2 (spiritb.uk → MCloud)** surfaces in the UI.
+  When the user is authed and the target is MCloud, the link routes through the handoff
+  (spiritbulb mint → MCloud redeem) instead of dropping them at MCloud's login. The raw
+  link stays the signed-out fallback. **This part depends on the §2–§3 handoff routes, so
+  it lands in the second PR, not the §1 session PR** — but the Header auth-state work ships
+  in §1.
 
 ### Encryption key
 
