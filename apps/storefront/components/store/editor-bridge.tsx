@@ -454,6 +454,13 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         function onClick(e: MouseEvent) {
             if (!(e.target instanceof Element)) return
 
+            // The hero filmstrip (slide dots + add-slide) is EDITOR UI, not content.
+            // Let its own handlers run: the dots need their native goTo click to page
+            // slides, and add-slide is handled by onAddSlide. If we fell through, the
+            // section preventDefault/stopPropagation below would swallow the dot click
+            // and the carousel would never advance.
+            if (e.target.closest('.sf-hero__dot, [data-mcloud-add-slide]')) return
+
             // Resolve what the merchant clicked from the event target itself. This
             // is coordinate-free, so it works for every click (mouse, keyboard,
             // synthetic) — unlike elementsFromPoint, which needs real clientX/Y.
