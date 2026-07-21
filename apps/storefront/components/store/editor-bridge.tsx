@@ -215,6 +215,27 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     font: 700 15px/1 system-ui, sans-serif; cursor: pointer;
                 }
                 .sf-hero__add-slide:hover { filter: brightness(1.1); }
+
+                /* Per-slide cell: the numbered dot plus its own delete. */
+                .sf-hero__slide-cell {
+                    position: relative;
+                    display: inline-flex;
+                    align-items: center;
+                }
+                .sf-hero__slide-del {
+                    pointer-events: auto;
+                    margin-left: 2px;
+                    width: 16px; height: 16px;
+                    display: grid; place-items: center;
+                    border: 0; border-radius: 4px;
+                    background: rgba(255,255,255,.18); color: #fff;
+                    font: 700 12px/1 system-ui, sans-serif; cursor: pointer;
+                    opacity: .7;
+                }
+                .sf-hero__slide-del:hover {
+                    opacity: 1;
+                    background: #b3261e; /* clearly a delete on hover */
+                }
             `
             document.head.appendChild(style)
         }
@@ -295,6 +316,22 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             post({ type: 'mcloud:item-op', op: 'add', list: 'heroSlides', index: count })
         }
 
+        // The hero filmstrip's per-slide delete. Distinct from the section 🗑 so a
+        // merchant removing ONE slide can't accidentally nuke the whole hero. Refuses
+        // to delete the last slide, and confirms first (paired with the undo toast on
+        // the admin side).
+        function onDeleteSlide(e: MouseEvent) {
+            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-del-slide]')
+            if (!btn) return
+            e.preventDefault(); e.stopPropagation()
+            const index = Number(btn.getAttribute('data-mcloud-del-slide'))
+            if (!Number.isInteger(index)) return
+            const total = document.querySelectorAll('[data-mcloud-record][data-mcloud-list="heroSlides"]').length
+            if (total <= 1) { window.alert('This is the only slide. A hero needs at least one slide.'); return }
+            if (!window.confirm('Delete this slide? You can undo right after.')) return
+            post({ type: 'mcloud:item-op', op: 'delete', list: 'heroSlides', index })
+        }
+
         function onToolbarClick(e: MouseEvent) {
             const btn = (e.target as Element)?.closest<HTMLButtonElement>('button[data-op]')
             if (!btn || !hovered) return
@@ -311,13 +348,19 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                 if (op === 'up') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index - 1 })
                 else if (op === 'down') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index + 1 })
                 else if (op === 'dup') post({ type: 'mcloud:item-op', op: 'duplicate', list, index })
-                else if (op === 'del') post({ type: 'mcloud:item-op', op: 'delete', list, index })
+                else if (op === 'del') {
+                    if (!window.confirm('Delete this item? You can undo right after.')) return
+                    post({ type: 'mcloud:item-op', op: 'delete', list, index })
+                }
                 else if (op === 'add') post({ type: 'mcloud:item-op', op: 'add', list, index: index + 1 })
             } else {
                 if (op === 'up') post({ type: 'mcloud:section-op', op: 'move', index, to: index - 1 })
                 else if (op === 'down') post({ type: 'mcloud:section-op', op: 'move', index, to: index + 1 })
                 else if (op === 'dup') post({ type: 'mcloud:section-op', op: 'duplicate', index })
-                else if (op === 'del') post({ type: 'mcloud:section-op', op: 'delete', index })
+                else if (op === 'del') {
+                    if (!window.confirm('Delete this whole section? You can undo right after.')) return
+                    post({ type: 'mcloud:section-op', op: 'delete', index })
+                }
                 else if (op === 'add') post({ type: 'mcloud:section-add-requested', index: index + 1 })
             }
         }
@@ -641,6 +684,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         // Capture phase: get the click before a link or button handles it.
         document.addEventListener('mousedown', onMouseDown, true)
         document.addEventListener('click', onAddSlide, true)
+        document.addEventListener('click', onDeleteSlide, true)
         document.addEventListener('click', onClick, true)
         document.addEventListener('beforeinput', onBeforeInput, true)
         document.addEventListener('input', onInput, true)
@@ -659,6 +703,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         return () => {
             document.removeEventListener('mousedown', onMouseDown, true)
             document.removeEventListener('click', onAddSlide, true)
+            document.removeEventListener('click', onDeleteSlide, true)
             document.removeEventListener('click', onClick, true)
             document.removeEventListener('beforeinput', onBeforeInput, true)
             document.removeEventListener('input', onInput, true)

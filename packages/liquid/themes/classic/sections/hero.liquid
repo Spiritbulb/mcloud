@@ -139,12 +139,27 @@
   {%- if multi or store.editing -%}
     <div class="sf-hero__dots absolute bottom-6 flex items-center gap-2 z-30{% if store.editing %} sf-hero__dots--editing{% endif %}" style="left: 50%; transform: translateX(-50%)">
       {%- for slide in slides -%}
-        <button
-          class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
-          data-index="{{ forloop.index0 }}"
-          aria-label="Go to slide {{ forloop.index }}"
-          style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
-        >{%- if store.editing -%}<span class="sf-hero__dot-num">{{ forloop.index }}</span>{%- endif -%}</button>
+        {%- if store.editing -%}
+          {%- comment -%} Editor: a numbered dot that pages to this slide, plus its
+            OWN delete so removing one slide is clearly distinct from deleting the
+            whole hero section. The delete is a sibling, not nested in the dot. {%- endcomment -%}
+          <span class="sf-hero__slide-cell">
+            <button
+              class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
+              data-index="{{ forloop.index0 }}"
+              aria-label="Go to slide {{ forloop.index }}"
+              style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
+            ><span class="sf-hero__dot-num">{{ forloop.index }}</span></button>
+            <button type="button" class="sf-hero__slide-del" data-mcloud-del-slide="{{ forloop.index0 }}" aria-label="Delete slide {{ forloop.index }}">×</button>
+          </span>
+        {%- else -%}
+          <button
+            class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
+            data-index="{{ forloop.index0 }}"
+            aria-label="Go to slide {{ forloop.index }}"
+            style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
+          ></button>
+        {%- endif -%}
       {%- endfor -%}
       {%- if store.editing -%}
         {%- comment -%} Editor-only: add a slide after the last. The bridge routes
@@ -169,6 +184,7 @@
         slides[current].classList.add('opacity-0', 'pointer-events-none');
         dots[current].style.width = '1.5rem';
         dots[current].style.background = 'rgba(255,255,255,0.35)';
+        dots[current].classList.remove('sf-hero__dot--active');
 
         current = index;
 
@@ -176,6 +192,7 @@
         slides[current].classList.add('opacity-100');
         dots[current].style.width = '3rem';
         dots[current].style.background = '#fff';
+        dots[current].classList.add('sf-hero__dot--active');
 
         var card = slides[current].querySelector('.sf-hero__card-animate');
         if (card) {
