@@ -234,6 +234,33 @@ export const workosProvider: AuthProviderAdapter = {
         }
     },
 
+    async createSessionFromTokens(
+        tokens: { accessToken: string; refreshToken: string },
+        req: NextRequest,
+    ): Promise<AuthUser | null> {
+        try {
+            // Verify the access token and resolve the WorkOS user id from it.
+            const { payload } = await jwtVerify(tokens.accessToken, jwks)
+            const sub = typeof payload.sub === 'string' ? payload.sub : null
+            if (!sub) return null
+            // Keep the full WorkOS User for saveSession (it needs the whole shape);
+            // read our structural subset separately for ensureLinked/mapUser.
+            const raw = await getWorkOS().userManagement.getUser(sub)
+            if (!raw) return null
+            const user = await ensureLinked(raw as WorkOSUserish)
+            // Seal into the AuthKit cookie. Pass the RAW WorkOS user (see
+            // verifyMagicCodeWeb) so withAuth() decodes the shape it expects, while
+            // we return the MAPPED user to the app.
+            await saveSession(
+                { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, user: raw },
+                req,
+            )
+            return mapUser(user)
+        } catch {
+            return null
+        }
+    },
+
     async verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {
         try {
             const res = await getWorkOS().userManagement.authenticateWithMagicAuth({

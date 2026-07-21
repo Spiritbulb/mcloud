@@ -50,3 +50,14 @@ export function allowMagicSend(email: string, ip: string): boolean {
 export function allowMagicVerify(email: string, ip: string): boolean {
   return allow('verify', email, ip, VERIFY_MAX)
 }
+
+const HANDOFF_MAX = 10
+
+/**
+ * True if an SSO handoff mint is allowed (max 10 / 15 min per key and per ip).
+ * `key` is the authenticated user id (the mint is already authenticated, so this
+ * just bounds a hot path); `allow` treats its second arg as an opaque key.
+ */
+export function allowHandoffMint(key: string, ip: string): boolean {
+  return allow('handoff', key, ip, HANDOFF_MAX)
+}

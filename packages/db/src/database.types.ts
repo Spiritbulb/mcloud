@@ -68,6 +68,33 @@ export type Database = {
           },
         ]
       }
+      auth_handoff_tickets: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          redirect_to: string
+          sealed_tokens: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at: string
+          id: string
+          redirect_to?: string
+          sealed_tokens: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          redirect_to?: string
+          sealed_tokens?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       beta_signups: {
         Row: {
           created_at: string

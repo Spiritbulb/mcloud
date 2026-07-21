@@ -95,4 +95,14 @@ export interface AuthProviderAdapter {
      * redirect. Returns null on an invalid/expired code.
      */
     verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null>
+    /**
+     * Establish a cookie session from an EXISTING WorkOS token pair (SSO handoff).
+     * Verifies the access token, loads + links the user, seals the pair into the
+     * provider's cookie via saveSession, and returns the mapped user. Used by the
+     * /auth/handoff redeem route. Returns null on an invalid pair or lookup failure.
+     */
+    createSessionFromTokens(
+        tokens: { accessToken: string; refreshToken: string },
+        req: NextRequest,
+    ): Promise<AuthUser | null>
 }
