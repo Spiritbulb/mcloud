@@ -112,6 +112,11 @@ The session rework has visible consumers that must move with it, or the fix land
   signed-out shows "Sign in"; signed-in shows the user + an entry into `/home` (the dock).
   Session state reaches it from a server component (layout/page passing `getSession()`
   result down) or a tiny `/api/session` read — **not** by the client reading the cookie.
+- **`/home` dock stub (ships with §1).** So the Header's "Home" entry lands somewhere real,
+  §1 also introduces a minimal `/home` page: the dock shell behind the verified-session
+  gate, greeting the signed-in user and showing the product tiles/switcher as a shell. No
+  org data yet (that is the future dock direction). This is what the first deploy actually
+  demonstrates — the post-login surface, not a link to an empty route.
 - **`components/ProductPage.tsx`** launch links (`product.external.href`, a raw
   `<a target="_blank">`) are where **flow #2 (spiritb.uk → MCloud)** surfaces in the UI.
   When the user is authed and the target is MCloud, the link routes through the handoff
