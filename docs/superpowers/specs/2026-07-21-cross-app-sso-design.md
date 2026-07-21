@@ -139,18 +139,27 @@ New Supabase table in MCloud, `auth_handoff_tickets`:
 | column | type | purpose |
 |---|---|---|
 | `id` | text (PK) | opaque random token, 32 bytes base64url — the value in the URL |
-| `user_id` | text | canonical `AuthUser.id` (survives the `externalId` continuity seam) |
+| `sealed_tokens` | text | **AES-GCM-encrypted** WorkOS `{accessToken, refreshToken}` pair |
 | `redirect_to` | text | relative path to land on, e.g. `/stores/acme/orders/123` |
 | `expires_at` | timestamptz | `now() + 60 seconds` |
 | `used_at` | timestamptz \| null | null until redeemed — **single-use** |
 | `created_at` | timestamptz | default `now()`, for sweeping |
 
+- **Why `sealed_tokens`, not a bare `user_id` (design correction, decided during PR 2):**
+  `saveSession` (the only way to establish MCloud's cookie session) requires a full WorkOS
+  `{accessToken, refreshToken, user}` triple from an authentication event. There is **no**
+  WorkOS primitive to mint a cookie session from a bare `user_id`. But the mint side already
+  holds real tokens (spiritbulb from its decrypted `sb_session`; mobile presents its access
+  token and sends its refresh token). So the ticket carries the encrypted token pair, and
+  redeem hands it to `saveSession`. Encrypted at rest so a DB read alone does not yield
+  usable credentials. Reuses `SESSION_ENC_KEY` semantics (a dedicated `HANDOFF_ENC_KEY` in
+  MCloud env).
 - **Must be a table, not an in-memory map.** On Vercel the mint and the redeem can land on
   different serverless instances; an in-process store would lose the ticket between the two
   calls.
 - **Redemption is an atomic conditional update:**
   `UPDATE ... SET used_at = now() WHERE id = $1 AND used_at IS NULL AND expires_at > now()
-  RETURNING user_id, redirect_to`. A replay races and loses (0 rows) rather than
+  RETURNING sealed_tokens, redirect_to`. A replay races and loses (0 rows) rather than
   double-redeeming.
 - **Service-role access only** — consistent with the route-everything / no-anon-table
   direction. No RLS-exposed anon path.
@@ -165,16 +174,19 @@ Three new routes.
 
 ### `POST /api/partner/auth/handoff` — spiritbulb mint
 
-- Auth: existing `requirePartnerSecret(req)` **plus** the user's access token in the body.
-- MCloud verifies the token with the existing `getSessionFromToken` (JWKS path) to resolve
-  `user_id`. Only then mints. The secret alone is insufficient.
-- Body: `{ accessToken, redirectTo }`.
+- Auth: existing `requirePartnerSecret(req)` **plus** the user's token pair in the body.
+- MCloud verifies the access token with the existing `getSessionFromToken` (JWKS path) to
+  confirm it is a real, live session. Only then mints. The secret alone is insufficient.
+- Body: `{ accessToken, refreshToken, redirectTo }`. The pair is what gets sealed into the
+  ticket so redeem can call `saveSession`.
 - Rate-limited like the other partner auth routes (hot path once orders/events open on web).
 
 ### `POST /api/mobile/auth/handoff` — mobile mint
 
 - Auth: existing `requireMobileUser(req)` (bearer access token). **No secret.**
-- Body: `{ redirectTo }` — `user_id` comes from the bearer identity.
+- Body: `{ refreshToken, redirectTo }`. The access token comes from the bearer header; the
+  refresh token must be sent in the body (mobile holds it on-device) so the sealed pair is
+  refreshable after redeem.
 - Rate-limited like the other mobile auth routes.
 
 Both mint routes:
@@ -183,15 +195,19 @@ Both mint routes:
   `//` (protocol-relative), reject any `scheme:` and backslashes, reject `/../` traversal.
   This is the open-redirect guard — a fresh MCloud session cookie is a valuable place to be
   redirected from. Default to `/` if absent or invalid.
-- Return `{ url }` = `https://mcloud.co.ke/auth/handoff?ticket=<id>`.
+- Seal `{accessToken, refreshToken}` with `HANDOFF_ENC_KEY`, insert the ticket row, and
+  return `{ url }` = `https://mcloud.co.ke/auth/handoff?ticket=<id>`.
 
 ### `GET /auth/handoff?ticket=…` — redeem (MCloud web)
 
-- Atomically consume the ticket (the conditional update above).
-- On success: load the user, call AuthKit `saveSession` to set MCloud's **normal** session
-  cookie, then **302 to `redirect_to`**.
-- On any failure (unknown / expired / already-used ticket): 302 to the normal MCloud login
-  page. **Never** explain why; **never** echo the ticket back.
+- Atomically consume the ticket (the conditional update above), yielding `sealed_tokens` +
+  `redirect_to`.
+- On success: open `sealed_tokens`, load the WorkOS user for that access token
+  (`getSessionFromToken` / `getUser`), call AuthKit `saveSession({ accessToken, refreshToken,
+  user })` to set MCloud's **normal** session cookie, then **302 to `redirect_to`**.
+- On any failure (unknown / expired / already-used ticket, or an unopenable/invalid token
+  pair): 302 to the normal MCloud login page. **Never** explain why; **never** echo the
+  ticket back.
 
 ---
 
@@ -266,6 +282,7 @@ Following the repos' existing route-test patterns (the auth routes already have 
 |---|---|---|
 | `SESSION_ENC_KEY` | spiritbulb | 32-byte base64 AES-GCM key for the session cookie. Fails closed if unset. |
 | `WORKOS_CLIENT_ID` | spiritbulb | needed by the spiritbulb-local token refresh call to WorkOS. |
+| `HANDOFF_ENC_KEY` | MCloud | 32-byte base64 AES-GCM key for `auth_handoff_tickets.sealed_tokens`. Fails closed if unset. |
 | `PARTNER_AUTH_SECRET` | both (existing) | already shared; the partner mint reuses it. |
 
 ## Out of scope
