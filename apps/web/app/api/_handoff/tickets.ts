@@ -5,15 +5,13 @@
 // the Next runtime — so it is imported dynamically INSIDE the async DB functions,
 // keeping this module's top level dependency-free. That lets the pure helpers
 // (newTicketId, safeRedirect) be unit-tested under bare `node --test`.
-import { randomBytes } from 'node:crypto'
-import { sealTokens, openTokens, type HandoffTokens } from './crypto.ts'
-import { sanitizeReturnTo } from '../auth/_return-to.ts'
+import { sealTokens, openTokens, type HandoffTokens } from './crypto'
+import { newTicketId } from './ticket-id'
+import { sanitizeReturnTo } from '../auth/_return-to'
+
+export { newTicketId }
 
 const TTL_MS = 60_000
-
-export function newTicketId(): string {
-  return randomBytes(32).toString('base64url')
-}
 
 /** Sanitize an untrusted redirect to a same-origin relative path (fallback '/'). */
 export function safeRedirect(value: unknown): string {
