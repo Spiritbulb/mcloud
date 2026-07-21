@@ -160,7 +160,7 @@ test('throws when the key is missing', async () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd c:/Users/busie/mcloud-1 && node --test --experimental-strip-types apps/web/app/api/_handoff/crypto.test.ts`
+Run: `cd c:/Users/busie/mcloud-1 && node --test apps/web/app/api/_handoff/crypto.test.ts`
 Expected: FAIL — cannot find `./crypto.ts`.
 (If `--experimental-strip-types` is unavailable on the installed Node, use the repo's existing test invocation — check `package.json` `scripts.test` and mirror it. The `_return-to.test.ts` file runs the same way, so whatever runs that runs this.)
 
@@ -269,7 +269,7 @@ test('safeRedirect rejects open-redirect attempts to /', () => {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `cd c:/Users/busie/mcloud-1 && node --test --experimental-strip-types apps/web/app/api/_handoff/tickets.test.ts`
+Run: `cd c:/Users/busie/mcloud-1 && node --test apps/web/app/api/_handoff/tickets.test.ts`
 Expected: FAIL — cannot find `./tickets.ts`.
 
 - [ ] **Step 3: Write the implementation**
