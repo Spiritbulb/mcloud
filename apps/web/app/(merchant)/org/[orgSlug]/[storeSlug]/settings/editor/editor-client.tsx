@@ -125,6 +125,11 @@ export default function EditorClient({
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState<string | null>(null)
     const [saved, setSaved] = useState(false)
+    // A one-shot "Deleted. Undo?" safety net. Set right before a delete is applied
+    // (with a snapshot to restore), auto-dismisses after a few seconds. This is the
+    // net for an accidental delete — e.g. removing the whole hero when you meant one
+    // slide. `restore` puts the exact pre-delete state back.
+    const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
     // The index the bridge asked to insert a new section at, or null when the
     // add-section picker is closed.
     const [addAt, setAddAt] = useState<number | null>(null)
@@ -253,6 +258,15 @@ export default function EditorClient({
                 // must redraw, so let the debounced reload run.
                 if (op === 'move') skipReloadRef.current = true
 
+                // Snapshot BEFORE applying a delete, so the undo toast can restore
+                // the exact prior sections (the accidental "deleted the whole hero"
+                // case). Captured here, not in the setState updater, so the closure
+                // holds the pre-delete value.
+                if (op === 'delete') {
+                    const prevSections = sections
+                    setUndo({ label: 'Section deleted.', restore: () => { setSections(prevSections); setSaved(false) } })
+                }
+
                 setSections((prev) => applySectionOp(prev, {
                     op, index: data.index, to: data.to, sectionType: data.sectionType,
                 } as SectionOp, seedSection))
@@ -339,6 +353,15 @@ export default function EditorClient({
                 // A grid-record move keeps the COUNT the same, so it can shuffle nodes
                 // in place with no reload. Hero move must reload (to re-stack + follow).
                 if (op === 'move' && !isHero) skipReloadRef.current = true
+
+                // Snapshot the affected list BEFORE deleting, so undo restores it.
+                // listFor resolves the current value (incl. a legacy hero normalised
+                // to a slide), so the restore is faithful whatever the draft state.
+                if (op === 'delete') {
+                    const prevList = listFor(list, storeDraft, storeSettings)
+                    const label = isHero ? 'Slide deleted.' : 'Item deleted.'
+                    setUndo({ label, restore: () => { setStoreDraft((p) => ({ ...p, [list]: prevList })); setSaved(false) } })
+                }
 
                 setStoreDraft((prev) => {
                     const arr = listFor(list, prev, storeSettings)
@@ -436,6 +459,15 @@ export default function EditorClient({
         const t = setTimeout(() => { setDebouncedSrc(previewSrc); followSlideRef.current = null }, 400)
         return () => clearTimeout(t)
     }, [previewSrc])
+
+    // The undo toast auto-dismisses. A new delete replaces the pending one (this
+    // effect re-runs and resets the timer), so only the most recent delete is
+    // undoable — matching the "quick safety net", not a full history.
+    useEffect(() => {
+        if (!undo) return
+        const t = setTimeout(() => setUndo(null), 6000)
+        return () => clearTimeout(t)
+    }, [undo])
 
     async function onSave() {
         setSaving(true)
@@ -557,6 +589,19 @@ export default function EditorClient({
                             className="h-10 rounded-full bg-[var(--md-sys-color-primary)] px-5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] shadow-lg disabled:opacity-50"
                         >
                             {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
+                        </button>
+                    </div>
+                )}
+                {/* Undo safety net for a delete. Bottom-centre so it never sits under
+                    the Save button. Auto-dismisses; Undo restores the prior state. */}
+                {undo && (
+                    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[var(--md-sys-color-inverse-surface)] pl-4 pr-2 py-1.5 shadow-lg">
+                        <span className="text-[13px] text-[var(--md-sys-color-inverse-on-surface)]">{undo.label}</span>
+                        <button
+                            onClick={() => { undo.restore(); setUndo(null) }}
+                            className="rounded-full bg-[var(--md-sys-color-inverse-primary)] px-3 h-8 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)]"
+                        >
+                            Undo
                         </button>
                     </div>
                 )}
