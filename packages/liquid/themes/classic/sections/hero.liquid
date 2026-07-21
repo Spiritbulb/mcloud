@@ -43,23 +43,24 @@
         class="sf-hero__slide absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
         data-index="{{ forloop.index0 }}"
         {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'heroSlides', index: forloop.index0 %}
+        {%- if store.editing -%} data-mcloud-slide-image="{{ authored_slide.image | escape }}"{%- endif -%}
       >
         {%- comment -%}
-          The image is a BACKGROUND, so the click target is the backdrop itself
-          rather than an <img>. Both branches fill the slide, so the fallback is
-          equally clickable: that is how a hero with no image ever gets one.
+          The image is a full-bleed BACKGROUND. It is NOT click-to-edit: a
+          full-bleed layer over the whole slide would steal clicks meant for the
+          text on top (the hero lesson). Changing the background is a control on the
+          slide toolbar instead (data-mcloud-slide-image above carries the current
+          value). So the background is inert and can be pointer-events:none.
         {%- endcomment -%}
         {%- if slide.image and slide.image != '' -%}
           <img
             src="{{ slide.image }}"
             alt="{{ slide.title }}"
             class="w-full h-full object-cover"
-            {% render 'classic/snippets/editable-image', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'image', value: authored_slide.image %}
           >
           <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
         {%- else -%}
-          <div class="sf-hero-fallback absolute inset-0"
-            {% render 'classic/snippets/editable-image', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'image', value: authored_slide.image %}></div>
+          <div class="sf-hero-fallback absolute inset-0"></div>
         {%- endif -%}
 
         <div class="absolute inset-0 flex items-end md:items-center">

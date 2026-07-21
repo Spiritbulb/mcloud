@@ -65,57 +65,34 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                     font-style: italic;
                 }
 
-                /* THE HERO PROBLEM: its content layer is absolutely positioned across
-                   the whole section, so it ate every click before one could reach the
-                   background image behind it. The image was correctly marked, and
-                   completely unclickable — markup alone does not make a feature.
+                /* THE HERO, simplified. The background image is now edited from the
+                   slide toolbar (data-op="img"), NOT by clicking the backdrop — so the
+                   full-bleed background no longer needs to be clickable and can be
+                   fully inert. That collapses the pointer-events juggling this file
+                   used to need: nothing full-bleed competes with the text, so a click
+                   simply lands on whatever the merchant sees.
 
-                   So in the editor the overlay stops taking pointer events and hands
-                   them through to the image, while the things a merchant ACTUALLY
-                   clicks (the text, the button) take them back. Clicking empty space
-                   in the hero now reaches the background. */
-                /* Everything layered over the hero's background stops intercepting
-                   clicks... */
-                .sf-hero > div,
-                .sf-hero__content,
-                .sf-hero__slide > div:not([data-mcloud-image]) {
+                   Background layers take NO clicks... */
+                .sf-hero__slide > img,
+                .sf-hero__slide > .sf-hero-fallback,
+                .sf-hero__slide > div[style*="rgba(0,0,0"] {
                     pointer-events: none;
                 }
-                /* ...the background itself takes them... */
-                .sf-hero [data-mcloud-image] {
+                /* ...and the active slide's interactive things take clicks normally.
+                   (Default pointer-events already work now that nothing overlays the
+                   text; these are belt-and-suspenders in case a theme sets none.) */
+                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-field],
+                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-setting],
+                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-key],
+                .sf-hero__slide:not(.pointer-events-none) button,
+                .sf-hero__slide:not(.pointer-events-none) a,
+                .sf-hero .sf-hero__dot,
+                .sf-hero__slide-del,
+                .sf-hero__add-slide {
                     pointer-events: auto;
                 }
-                /* ...and so does the whole text CARD. This is the fix for "clicking
-                   the heading opens image settings": making only the text glyphs
-                   clickable meant a click in the card's padding, or in the gaps
-                   between/around the text, fell THROUGH the content layer to the
-                   image behind it (the real e.target became the <img>). Making the
-                   card itself an island of pointer-events restores clicks anywhere on
-                   it to the text/card, while genuinely empty hero space (outside the
-                   card) still reaches the background image to change it. */
-                .sf-hero .sf-hero-card {
-                    pointer-events: auto;
-                }
-                /* ...and so do the individual things a merchant clicks. */
-                .sf-hero [data-mcloud-field],
-                .sf-hero [data-mcloud-setting],
-                .sf-hero [data-mcloud-key],
-                .sf-hero button,
-                .sf-hero a,
-                .sf-hero .sf-hero__dot {
-                    pointer-events: auto;
-                }
-                /* THE CAROUSEL TRAP: a multi-slide hero stacks every slide
-                   absolute inset-0; inactive slides are hidden with
-                   opacity-0 + pointer-events-none, and the LAST slide paints on top.
-                   But the editable/image rules above re-enable pointer-events on the
-                   marked elements INSIDE those hidden slides, so a click on the
-                   visible slide's heading actually lands on a hidden slide's <img>
-                   stacked over it (e.target === that IMG → "image settings", and the
-                   real heading never edits). A single-slide hero (e.g. an NGO's) has
-                   nothing stacked, so it worked — which is why one hero edited and an
-                   otherwise-identical one did not. Force every descendant of an
-                   inactive slide back to inert so only the ACTIVE slide is clickable. */
+                /* Inactive carousel slides stay fully inert so a stacked hidden slide
+                   can never catch a click meant for the visible one. */
                 .sf-hero .sf-hero__slide.pointer-events-none,
                 .sf-hero .sf-hero__slide.pointer-events-none * {
                     pointer-events: none !important;
@@ -262,12 +239,14 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         const toolbar = document.createElement('div')
         toolbar.id = 'mcloud-op-toolbar'
         toolbar.innerHTML =
+            '<button data-op="img" title="Change background image" hidden>🖼</button>' +
             '<button data-op="up" title="Move up">↑</button>' +
             '<button data-op="down" title="Move down">↓</button>' +
             '<button data-op="dup" title="Duplicate">⧉</button>' +
             '<button data-op="del" title="Delete">🗑</button>' +
             '<button data-op="add" title="Add below">＋</button>'
         document.body.appendChild(toolbar)
+        const imgBtn = toolbar.querySelector<HTMLButtonElement>('button[data-op="img"]')!
 
         // The element the toolbar currently acts on: either a section or a record.
         let hovered: HTMLElement | null = null
@@ -280,11 +259,18 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
         function showToolbarFor(el: HTMLElement) {
             hovered = el
+            // The change-background button is only meaningful for a hero slide (the
+            // one record whose image is a full-bleed background edited from here, not
+            // by clicking it). Other records edit their image by clicking the photo.
+            const isHeroSlide = el.getAttribute('data-mcloud-list') === 'heroSlides'
+            imgBtn.hidden = !isHeroSlide
             const r = el.getBoundingClientRect()
             toolbar.style.display = 'flex'
-            // top-right of the element, clamped into the viewport.
+            // top-right of the element, clamped into the viewport (wider when the
+            // image button is present).
+            const w = isHeroSlide ? 190 : 160
             toolbar.style.top = `${Math.max(4, r.top + 4)}px`
-            toolbar.style.left = `${Math.min(window.innerWidth - 160, r.right - 160)}px`
+            toolbar.style.left = `${Math.min(window.innerWidth - w, r.right - w)}px`
         }
 
         function onOver(e: Event) {
@@ -345,6 +331,17 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             if (isRecord) {
                 const list = hovered.getAttribute('data-mcloud-list')
                 if (!list) return
+                // Change the hero slide's background image: reuse the same picker flow
+                // a clicked image would open. The current value rides on the slide.
+                if (op === 'img') {
+                    post({
+                        type: 'mcloud:image-click',
+                        setting: null, list, index,
+                        key: 'image',
+                        value: hovered.getAttribute('data-mcloud-slide-image') ?? '',
+                    })
+                    return
+                }
                 if (op === 'up') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index - 1 })
                 else if (op === 'down') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index + 1 })
                 else if (op === 'dup') post({ type: 'mcloud:item-op', op: 'duplicate', list, index })
