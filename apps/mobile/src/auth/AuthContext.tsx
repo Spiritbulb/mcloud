@@ -61,6 +61,13 @@ type AuthState = {
   signOut: () => Promise<void>
   /** fetch() against apps/web with the bearer token attached + refresh-on-401. */
   authedFetch: (path: string, init?: RequestInit) => Promise<Response>
+  /**
+   * Open a web path already authenticated, via the SSO handoff: mint a single-use
+   * ticket, then open the redeem URL in an in-app browser so the user lands signed
+   * in. Falls back to opening the raw web URL if the handoff can't be minted, so a
+   * failure degrades to the old unauthenticated behavior rather than a dead button.
+   */
+  openOnWeb: (path: string) => Promise<void>
   /** Re-resolve the current user from stored tokens (after deep-link auth completes). */
   refreshSession: () => Promise<void>
 }
@@ -453,9 +460,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     [refresh, signOut],
   )
 
+  const openOnWeb = React.useCallback(
+    async (path: string): Promise<void> => {
+      const rawUrl = `${config.webBaseUrl}${path}`
+      try {
+        // The mint route needs the refresh token in the body (the app holds it
+        // on-device); authedFetch attaches the access token + refreshes on 401.
+        const tokens = await loadTokens()
+        if (!tokens?.refreshToken) {
+          await WebBrowser.openBrowserAsync(rawUrl)
+          return
+        }
+        const res = await authedFetch('/api/mobile/auth/handoff', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken: tokens.refreshToken, redirectTo: path }),
+        })
+        const data = (await res.json().catch(() => null)) as { url?: string } | null
+        // On any mint failure, fall back to the raw (unauthenticated) URL so the
+        // button still works — same as before the handoff existed.
+        await WebBrowser.openBrowserAsync(res.ok && data?.url ? data.url : rawUrl)
+      } catch {
+        await WebBrowser.openBrowserAsync(rawUrl)
+      }
+    },
+    [authedFetch],
+  )
+
   const value = React.useMemo(
-    () => ({ user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, refreshSession: hydrate }),
-    [user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, hydrate],
+    () => ({ user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, openOnWeb, refreshSession: hydrate }),
+    [user, loading, signIn, sendCode, verifyCode, verifyPassword, signOut, authedFetch, openOnWeb, hydrate],
   )
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>

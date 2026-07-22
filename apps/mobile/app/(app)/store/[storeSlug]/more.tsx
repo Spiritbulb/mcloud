@@ -6,14 +6,12 @@ import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'r
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-import * as WebBrowser from 'expo-web-browser'
 import { useAuth } from '@/auth/AuthContext'
 import { type StoreHub } from '@/lib/api'
 import { useDemoApi } from '@/demo/demoApi'
 import { Body, Card, ConfirmDelete, Skeleton } from '@/components/ui'
 import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
-import { config } from '@/lib/config'
 import { useTheme, type Theme } from '@/lib/theme'
 
 const PRO_SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU
@@ -36,7 +34,7 @@ export default function MoreTab() {
   const s = React.useMemo(() => styles(t), [t])
   const router = useRouter()
   const { slug, store, loading, error, canManage, refresh } = useStore()
-  const { authedFetch } = useAuth()
+  const { authedFetch, openOnWeb } = useAuth()
   const client = useDemoApi(authedFetch)
 
   const [confirmOpen, setConfirmOpen] = React.useState(false)
@@ -127,7 +125,7 @@ export default function MoreTab() {
                 desc="Payments, domain, members, design"
                 external
                 divider={false}
-                onPress={() => WebBrowser.openBrowserAsync(`${config.webBaseUrl}${advancedSettingsUrl(store)}`)}
+                onPress={() => openOnWeb(advancedSettingsUrl(store))}
               />
             </Card>
 

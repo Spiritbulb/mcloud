@@ -15,9 +15,9 @@ import {
   type TextInputProps,
   type ViewProps,
 } from 'react-native'
-import * as WebBrowser from 'expo-web-browser'
 import { useTheme, type Theme } from '../lib/theme'
 import { config } from '../lib/config'
+import { useAuth } from '../auth/AuthContext'
 
 // ── Motion: staggered entrance (the one orchestrated page-load moment) ──────────
 
@@ -504,9 +504,10 @@ export function Screen({ children, style, ...rest }: ViewProps) {
 
 export function ManageOnWeb({ label, path, icon }: { label: string; path: string; icon?: React.ReactNode }) {
   const t = useTheme()
+  const { openOnWeb } = useAuth()
   return (
     <Pressable
-      onPress={() => WebBrowser.openBrowserAsync(`${config.webBaseUrl}${path}`)}
+      onPress={() => openOnWeb(path)}
       style={({ pressed }) => [
         styles.manageRow,
         { borderColor: t.colors.outlineVariant, backgroundColor: t.colors.surface },
