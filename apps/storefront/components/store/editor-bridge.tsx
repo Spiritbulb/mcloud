@@ -249,7 +249,12 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         const imgBtn = toolbar.querySelector<HTMLButtonElement>('button[data-op="img"]')!
 
         // The element the toolbar currently acts on: either a section or a record.
+        // Two variables on purpose — `hovered` still drives show/hide via
+        // mouseover/mouseout, but `current` is the one onToolbarClick trusts,
+        // and it is ONLY ever cleared by a genuine next hover or by the toolbar
+        // being explicitly hidden, never by a possibly-missed mouseout.
         let hovered: HTMLElement | null = null
+        let current: HTMLElement | null = null
 
         function targetOf(el: Element): HTMLElement | null {
             // A record wins over its section: the more specific handle.
@@ -259,6 +264,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
 
         function showToolbarFor(el: HTMLElement) {
             hovered = el
+            current = el
             // The change-background button is only meaningful for a hero slide (the
             // one record whose image is a full-bleed background edited from here, not
             // by clicking it). Other records edit their image by clicking the photo.
@@ -302,6 +308,8 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             post({ type: 'mcloud:item-op', op: 'add', list: 'heroSlides', index: count })
         }
 
+        
+
         // The hero filmstrip's per-slide delete. Distinct from the section 🗑 so a
         // merchant removing ONE slide can't accidentally nuke the whole hero. Refuses
         // to delete the last slide, and confirms first (paired with the undo toast on
@@ -318,18 +326,45 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             post({ type: 'mcloud:item-op', op: 'delete', list: 'heroSlides', index })
         }
 
+        // The gallery's empty-state "+ Add photo" button. Same idea as
+        // onAddSlide: appends one empty record so there is something to click
+        // when the list starts at zero.
+        function onAddGalleryPhoto(e: MouseEvent) {
+            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-add-gallery]')
+            if (!btn) return
+            e.preventDefault(); e.stopPropagation()
+            const count = document.querySelectorAll(
+                '[data-mcloud-record][data-mcloud-list="galleryPhotos"]',
+            ).length
+            post({ type: 'mcloud:item-op', op: 'add', list: 'galleryPhotos', index: count })
+        }
+
         function onToolbarClick(e: MouseEvent) {
             const btn = (e.target as Element)?.closest<HTMLButtonElement>('button[data-op]')
-            if (!btn || !hovered) return
+            if (!btn) return
             e.preventDefault(); e.stopPropagation()
 
-            const isRecord = hovered.hasAttribute('data-mcloud-record')
-            const index = toolbarIndexOf(hovered)
+            // Resolve the target FROM THE BUTTON, not from `hovered`. `hovered` is
+            // set by mouseover/mouseout, and `onOut`'s relatedTarget check can miss
+            // an exit (relatedTarget is null on some transitions) and null it out
+            // right as the pointer crosses onto a toolbar button — so by the time
+            // this click fires, `hovered` may already be stale/null even though the
+            // toolbar is visibly sitting over the right element. The toolbar itself
+            // carries no positional link to its target other than CSS placement, so
+            // instead we keep the last-shown target on the BUTTON'S OWN ancestor
+            // chain via a dataset fallback: `current`, updated every time
+            // showToolbarFor runs, and read here directly instead of through the
+            // mouseover/mouseout state machine.
+            const target = current
+            if (!target) return
+
+            const isRecord = target.hasAttribute('data-mcloud-record')
+            const index = toolbarIndexOf(target)
             if (!Number.isInteger(index)) return
             const op = btn.getAttribute('data-op')
 
             if (isRecord) {
-                const list = hovered.getAttribute('data-mcloud-list')
+                const list = target.getAttribute('data-mcloud-list')
                 if (!list) return
                 // Change the hero slide's background image: reuse the same picker flow
                 // a clicked image would open. The current value rides on the slide.
@@ -338,7 +373,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
                         type: 'mcloud:image-click',
                         setting: null, list, index,
                         key: 'image',
-                        value: hovered.getAttribute('data-mcloud-slide-image') ?? '',
+                        value: target.getAttribute('data-mcloud-slide-image') ?? '',
                     })
                     return
                 }
@@ -510,10 +545,12 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
             // an editable field and the image markup, the merchant meant the text.
             // Only a click whose target is the image (and NOT an editable field) opens
             // the picker — that is a click on the bare hero background.
-            const targetField = e.target.closest<HTMLElement>(EDITABLE)
-            const targetImage = e.target.closest<HTMLElement>('[data-mcloud-image]')
-            const field = targetField
-            const image = targetField ? null : targetImage
+            const closestField = e.target.closest<HTMLElement>(EDITABLE)
+const closestImage = e.target.closest<HTMLElement>('[data-mcloud-image]')
+// An element that IS an image slot is never treated as a text field, even if it
+// also carries list/key addressing attributes for the image-click message.
+const field = closestField && !closestField.hasAttribute('data-mcloud-image') ? closestField : null
+const image = field ? null : closestImage
 
             const index = sectionIndexOf(e.target)
             if (index === null) return
@@ -681,6 +718,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         // Capture phase: get the click before a link or button handles it.
         document.addEventListener('mousedown', onMouseDown, true)
         document.addEventListener('click', onAddSlide, true)
+        document.addEventListener('click', onAddGalleryPhoto, true)
         document.addEventListener('click', onDeleteSlide, true)
         document.addEventListener('click', onClick, true)
         document.addEventListener('beforeinput', onBeforeInput, true)
@@ -700,6 +738,7 @@ export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
         return () => {
             document.removeEventListener('mousedown', onMouseDown, true)
             document.removeEventListener('click', onAddSlide, true)
+            document.removeEventListener('click', onAddGalleryPhoto, true)
             document.removeEventListener('click', onDeleteSlide, true)
             document.removeEventListener('click', onClick, true)
             document.removeEventListener('beforeinput', onBeforeInput, true)

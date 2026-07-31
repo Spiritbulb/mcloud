@@ -1,0 +1,64 @@
+{%- assign heading = section.heading | default: 'Recent Trails' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Gallery' -%}
+{%- assign ctaText = section.ctaText | default: 'View full gallery' -%}
+{%- assign ctaUrl = section.ctaUrl | default: '' -%}
+{%- assign limit = section.limit | default: 8 -%}
+{%- assign settings = store.settings -%}
+{%- assign photos = null -%}
+{%- if settings -%}{%- assign photos = settings.galleryPhotos -%}{%- endif -%}
+{%- assign hasPhotos = false -%}
+{%- if photos and photos.size > 0 -%}{%- assign hasPhotos = true -%}{%- endif -%}
+{%- if hasPhotos or store.editing -%}
+<section class="sf-gallery py-16 md:py-24">
+  <div class="container mx-auto max-w-6xl px-6">
+    <div class="mb-10 md:mb-14 text-center">
+      <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium mb-3" {% render 'classic/snippets/editable', editing: store.editing, field: 'eyebrow', value: section.eyebrow %}>
+        {{ eyebrow }}
+      </span>
+      <h2 class="sf-heading text-3xl md:text-4xl font-light tracking-tight" {% render 'classic/snippets/editable', editing: store.editing, field: 'heading', value: section.heading %}>{{ heading }}</h2>
+    </div>
+
+    {%- comment -%}
+      CSS masonry via column-count, no JS library. break-inside: avoid keeps a
+      photo from splitting across columns. The display cap is enforced HERE
+      (forloop.index > limit → break), not on upload — the merchant can keep a
+      larger library in settings and only ever show the top N on the storefront.
+    {%- endcomment -%}
+    <div class="sf-gallery-masonry" style="column-count: 3; column-gap: 1.25rem;">
+      {%- for photo in photos -%}
+        {%- if forloop.index > limit -%}{%- break -%}{%- endif -%}
+        <div class="sf-gallery-item mb-5 break-inside-avoid overflow-hidden rounded-lg sf-bg-muted"
+          {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'galleryPhotos', index: forloop.index0 %}>
+          {%- if photo.image and photo.image != '' -%}
+            <div class="relative"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'galleryPhotos', index: forloop.index0, key: 'image', value: photo.image %}>
+              <img src="{{ photo.image }}" alt="{{ photo.caption }}" loading="lazy" class="w-full h-auto block">
+            </div>
+          {%- elsif store.editing -%}
+            <div class="relative sf-bg-muted" style="aspect-ratio: 3/4"
+              {% render 'classic/snippets/editable-image', editing: store.editing, list: 'galleryPhotos', index: forloop.index0, key: 'image', value: photo.image %}></div>
+          {%- endif -%}
+          {%- if photo.caption or store.editing -%}
+            <p class="text-xs px-1 pt-2 pb-1" style="color: var(--sf-foreground-subtle)"
+              {% render 'classic/snippets/editable-item', editing: store.editing, list: 'galleryPhotos', index: forloop.index0, key: 'caption', value: photo.caption %}>{{ photo.caption }}</p>
+          {%- endif -%}
+        </div>
+      {%- endfor -%}
+
+
+    </div>
+
+    {%- if ctaUrl and ctaUrl != '' -%}
+      <div class="mt-10 md:mt-14 text-center">
+        <a href="{{ ctaUrl }}" target="_blank" rel="noopener noreferrer" class="sf-btn-outline inline-flex items-center px-6 py-3 text-sm font-medium border">
+          {{ ctaText }}
+        </a>
+      </div>
+    {%- elsif store.editing -%}
+      <div class="mt-10 md:mt-14 text-center opacity-50 text-sm" style="color: var(--sf-foreground-subtle)">
+        Add a link URL above to show the "{{ ctaText }}" button.
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+{%- endif -%}

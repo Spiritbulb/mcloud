@@ -19,6 +19,7 @@ export type SectionType =
   | 'impact'
   | 'contact'
   | 'campaigns'
+  | 'gallery'
 
 export interface PageSection {
   type: string
@@ -146,6 +147,17 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     label: 'Campaigns',
     pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
     schema: copy('Support a Cause', 'Campaigns'),
+  },
+  gallery: {
+    templateKey: 'classic/sections/gallery',
+    label: 'Gallery',
+    pickContext: (ctx) => ({ store: ctx.store }),
+    schema: [
+      ...copy('Recent Trails', 'Gallery'),
+      { id: 'limit', type: 'number', label: 'Photos to show', default: 8, min: 1, max: 30 },
+      { id: 'ctaText', type: 'text', label: 'Link button text', default: 'View full gallery' },
+      { id: 'ctaUrl', type: 'text', label: 'Link button URL', default: '' },
+    ],
   },
 }
 

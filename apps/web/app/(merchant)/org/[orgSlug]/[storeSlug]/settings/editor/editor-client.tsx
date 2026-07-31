@@ -45,7 +45,7 @@ type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; in
  * Must match the keys passed to the `editable-setting` / `editable-item` snippets.
  */
 const EDITABLE_SETTINGS = new Set(['missionHeadline', 'mission'])
-const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats', 'heroSlides'])
+const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats', 'heroSlides', 'galleryPhotos'])
 /** Store settings that hold an IMAGE, so a click opens the picker. */
 const EDITABLE_SETTINGS_IMAGE = new Set<string>([])
 
@@ -80,6 +80,7 @@ function listFor(
     if (Array.isArray(saved[list])) return [...(saved[list] as unknown[])]
     // A legacy hero: the renderer's own normalisation, so nothing is lost.
     if (list === 'heroSlides') return authoredSlides(saved)
+    if (list === 'galleryPhotos') return [seedRecord('galleryPhotos')]
     return []
 }
 
@@ -382,6 +383,14 @@ export default function EditorClient({
         window.addEventListener('message', onMessage)
         return () => window.removeEventListener('message', onMessage)
     }, [storefrontOrigin, postTheme, postSelect, sections.length, storeSettings])
+
+    useEffect(() => {
+  const hasGallerySection = sections.some((s) => s.type === 'gallery')
+  const hasPhotos = Array.isArray(storeSettings.galleryPhotos) && storeSettings.galleryPhotos.length > 0
+  if (hasGallerySection && !hasPhotos && storeDraft.galleryPhotos === undefined) {
+    setStoreDraft((prev) => ({ ...prev, galleryPhotos: [seedRecord('galleryPhotos')] }))
+  }
+}, []) // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount only
 
     /** Rail -> preview. */
     function selectSection(index: number) {

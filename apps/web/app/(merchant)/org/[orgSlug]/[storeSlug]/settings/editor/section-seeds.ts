@@ -30,6 +30,7 @@ export const EDITABLE_LISTS_SEEDS: Record<string, Record<string, unknown>> = {
   campaigns: { title: 'New campaign', description: 'Describe this campaign.', image: '', goalAmount: '', presets: '', allowCustomAmount: true, minAmount: '' },
   impactStats: { value: '0', label: 'New stat' },
   heroSlides: { title: 'New slide', subtitle: '' },
+  galleryPhotos: { image: '', caption: '' }, 
 }
 
 /** A short url-safe id in the same format as newCampaignId (kept inline so this
