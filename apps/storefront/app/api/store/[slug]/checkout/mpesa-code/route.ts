@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getActiveStoreId } from '@/lib/customer-auth'
+import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
+import { sendPushToUsers } from '@/lib/merchant/send-push'
 
 const noStore = { 'Cache-Control': 'no-store' }
 
@@ -32,7 +34,7 @@ export async function POST(
     const admin = await createClient()
     const { data: order } = await admin
         .from('orders')
-        .select('id, metadata')
+        .select('id, metadata, total, currency')
         .eq('store_id', storeId)
         .eq('order_number', orderNumber)
         .maybeSingle()
@@ -50,6 +52,19 @@ export async function POST(
             },
         })
         .eq('id', order.id)
+
+    // Notify store managers that a code needs verification — this is an action
+    // prompt, not an informational "new order" push, since nothing is confirmed
+    // yet. Best-effort, never blocks the customer-facing response.
+    void (async () => {
+        const userIds = await getStoreManagerUserIds(storeId)
+        if (!userIds.length) return
+        await sendPushToUsers(userIds, {
+            title: 'Payment code submitted',
+            body: `${orderNumber} · ${order.currency} ${Number(order.total).toLocaleString()} — verify M-Pesa code`,
+            data: { storeSlug: slug, type: 'mpesa_code_submitted', orderId: order.id },
+        })
+    })().catch(() => {})
 
     return NextResponse.json({ ok: true }, { headers: noStore })
 }
