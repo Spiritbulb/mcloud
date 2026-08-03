@@ -3,6 +3,8 @@
 import * as React from 'react'
 import { useAuth } from '@/auth/AuthContext'
 import { registerPush } from './registerPush'
+import * as Notifications from 'expo-notifications'
+import { useRouter } from 'expo-router'
 
 export function useNotificationRegistration() {
   const { user, authedFetch } = useAuth()
@@ -12,4 +14,18 @@ export function useNotificationRegistration() {
     ran.current = true
     registerPush(authedFetch).catch(() => {}) // fire-and-forget; never block UI
   }, [user, authedFetch])
+}
+
+export function useNotificationTapRouting() {
+  const router = useRouter()
+ 
+  React.useEffect(() => {
+    const sub = Notifications.addNotificationResponseReceivedListener((response) => {
+      const data = response.notification.request.content.data as { storeSlug?: string } | undefined
+      if (data?.storeSlug) {
+        router.push(`/store/${data.storeSlug}` as never)
+      }
+    })
+    return () => sub.remove()
+  }, [router])
 }

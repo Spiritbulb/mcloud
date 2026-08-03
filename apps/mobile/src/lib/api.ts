@@ -18,6 +18,7 @@ export type Store = {
   logo_url: string | null
   is_pro: boolean
   created_at: string
+  settings: {}
 }
 
 // ── Picker (mobile home) ────────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ export type StoreHub = {
   orgSlug: string | null
   role: string
   canManage: boolean
+  settings: {}
 }
 
 // ── Section types ───────────────────────────────────────────────────────────────

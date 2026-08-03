@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
+import { sendPushToUsers } from '@/lib/merchant/send-push'
 
 // Safaricom posts to this URL after STK push completes or fails.
 // No auth header — Safaricom doesn't send one. We validate by matching
@@ -19,10 +21,11 @@ export async function POST(req: NextRequest) {
         // Always ack Safaricom immediately regardless of outcome
         const supabase = await createClient()
 
-        // Find the order by CheckoutRequestID stored in metadata
+        // Find the order by CheckoutRequestID stored in metadata. Widened select —
+        // push needs store_id/order_number/total/currency, not just id/metadata.
         const { data: orders } = await supabase
             .from('orders')
-            .select('id, metadata')
+            .select('id, metadata, store_id, order_number, total, currency')
             .eq('metadata->>daraja_checkout_request_id', CheckoutRequestID)
             .limit(1)
 
@@ -52,6 +55,26 @@ export async function POST(req: NextRequest) {
                     mpesa_phone_used: phone,
                 },
             }).eq('id', order.id)
+
+            // Notify store managers of the new paid order. Best-effort — payment
+            // is already recorded above regardless of whether this succeeds.
+            // Needs the store's slug (not just id) for the notification's tap
+            // target — resolve it here since `order` only carries store_id.
+            void (async () => {
+                const { data: store } = await supabase
+                    .from('stores')
+                    .select('slug')
+                    .eq('id', order.store_id)
+                    .single()
+                if (!store) return
+                const userIds = await getStoreManagerUserIds(order.store_id)
+                if (!userIds.length) return
+                await sendPushToUsers(userIds, {
+                    title: 'New order',
+                    body: `${order.order_number} · ${order.currency} ${Number(order.total).toLocaleString()}`,
+                    data: { storeSlug: store.slug, type: 'new_order', orderId: order.id },
+                })
+            })().catch(() => {})
         } else {
             // Payment failed or cancelled
             await supabase.from('orders').update({

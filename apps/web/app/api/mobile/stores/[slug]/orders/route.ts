@@ -4,6 +4,8 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { listOrders, shapeOrder } from '@/lib/merchant/store-sections'
 import { requireStoreAccess, canManage } from '@/lib/merchant/stores'
+import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
+import { sendPushToUsers } from '@/lib/merchant/send-push'
 import { fail, requireMobileUser } from '../../../_lib'
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
@@ -88,6 +90,20 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     const ORDER_COLS = 'id, order_number, status, fulfillment_status, total, currency, customer_phone, customer_email, created_at, order_items(id, title, quantity, price, image_url)'
     const { data: full } = await supabase.from('orders').select(ORDER_COLS).eq('id', order.id).single()
+
+    // Notify store managers — best-effort, never blocks the response. Excludes
+    // the creator themselves since they obviously already know they made it.
+    getStoreManagerUserIds(access.storeId)
+        .then((userIds) => {
+            const recipients = userIds.filter((id) => id !== auth.user.id)
+            if (!recipients.length) return
+            return sendPushToUsers(recipients, {
+                title: 'New order',
+                body: `${orderNumber} · ${currency} ${total.toLocaleString()}`,
+                data: { storeSlug: slug, type: 'new_order', orderId: order.id },
+            })
+        })
+        .catch(() => {})
 
     return NextResponse.json({ order: full ? shapeOrder(full) : null }, { status: 201 })
 }

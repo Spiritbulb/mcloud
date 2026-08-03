@@ -17,7 +17,15 @@ import { api, type PickerData, type PickerStore } from '@/lib/api'
 import { Avatar, Badge, FadeInUp, MarketingImage, MetaPill, SkeletonCard } from '@/components/ui'
 import { useTheme, type Theme } from '@/lib/theme'
 
+
 // ── Screen ──────────────────────────────────────────────────────────────────────
+
+function getGreeting() {
+  const hour = new Date().getHours()
+  if (hour < 12) return 'Good morning'
+  if (hour < 17) return 'Good afternoon'
+  return 'Good evening'
+}
 
 export default function PickerScreen() {
   const t = useTheme()
@@ -26,11 +34,13 @@ export default function PickerScreen() {
   const { user, authedFetch } = useAuth()
   const client = React.useMemo(() => api(authedFetch), [authedFetch])
 
+
   const [data, setData] = React.useState<PickerData | null>(null)
   const [loading, setLoading] = React.useState(true)
   const [refreshing, setRefreshing] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
   const hasData = React.useRef(false)
+
 
   const load = React.useCallback(async () => {
     setError(null)
@@ -47,19 +57,24 @@ export default function PickerScreen() {
     }
   }, [client])
 
+
   React.useEffect(() => {
     load()
   }, [load])
+
 
   const onRefresh = React.useCallback(() => {
     setRefreshing(true)
     load()
   }, [load])
 
+
   const orgs = data?.orgs ?? []
   const otherStores = data?.otherStores ?? []
   const firstName = (user?.name ?? user?.email ?? 'there').split(' ')[0].split('@')[0]
   const totalStores = orgs.reduce((n, o) => n + o.stores.length, 0) + otherStores.length
+  const greeting = React.useMemo(() => getGreeting(), [])
+
 
   // New user with no orgs/stores → onboarding
   React.useEffect(() => {
@@ -68,28 +83,37 @@ export default function PickerScreen() {
     }
   }, [loading, data, orgs.length, otherStores.length, router])
 
+
   return (
     <SafeAreaView style={[s.fill, { backgroundColor: t.colors.background }]} edges={['top']}>
       {/* Top app bar */}
       <View style={s.appbar}>
-        <View style={{ flex: 1 }}>
-          
-          <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>Hi, {firstName}</Text>
+        <View style={{ flex: 1, gap: 2 }}>
+          <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>{greeting}</Text>
+          <Text style={[t.type.headlineSmall, { color: t.colors.onSurface }]}>{firstName}</Text>
         </View>
         <Pressable
           onPress={() => router.push('/(app)/account' as never)}
           hitSlop={10}
+          accessibilityRole="button"
+          accessibilityLabel="Your account"
           style={({ pressed }) => [s.avatarBtn, pressed && { opacity: 0.7 }]}
         >
           <Avatar name={user?.name ?? user?.email ?? '?'} uri={user?.avatarUrl} size={42} radius={21} />
         </Pressable>
       </View>
 
+
       <ScrollView
         contentContainerStyle={s.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={t.colors.primary} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={t.colors.primary}
+            colors={[t.colors.primary]}
+          />
         }
       >
         {/* Hero */}
@@ -97,15 +121,20 @@ export default function PickerScreen() {
           <View style={s.hero}>
             <View style={s.heroText}>
               <Text style={[t.type.titleLarge, { color: t.colors.onSurface }]}>
-                {totalStores > 0 ? `${totalStores} stores, one tap away` : "Let’s get you online"}
+                {totalStores > 0
+                  ? `${totalStores} ${totalStores === 1 ? 'site' : 'sites'}, one tap away`
+                  : "Let's get your site online"}
               </Text>
               <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
-                Hosting, SSL and uptime are handled. You focus on selling.
+                {totalStores > 0
+                  ? 'Manage all your sites from one place.'
+                  : 'Set up once and start selling in minutes, no technical work needed.'}
               </Text>
             </View>
             <MarketingImage name="marketing-make-it-yours.png" width={104} height={104} opacity={0.95} />
           </View>
         </FadeInUp>
+
 
         {/* Loading / error / empty */}
         {loading && !data ? (
@@ -116,19 +145,38 @@ export default function PickerScreen() {
           </View>
         ) : error ? (
           <View style={[s.notice, { backgroundColor: t.colors.errorContainer }]}>
-            <Text style={[t.type.bodyMedium, { color: t.colors.onErrorContainer }]}>{error}</Text>
+            <Text style={[t.type.displaySmall, { color: t.colors.onErrorContainer }]}>
+              Couldn't load your sites
+            </Text>
+            <Text style={[t.type.bodyMedium, { color: t.colors.onErrorContainer, marginTop: 4 }]}>
+              {error}
+            </Text>
+            <Pressable
+              onPress={load}
+              accessibilityRole="button"
+              accessibilityLabel="Try again"
+              style={({ pressed }) => [
+                s.retryBtn,
+                { backgroundColor: t.colors.onErrorContainer },
+                pressed && { opacity: 0.75 },
+              ]}
+            >
+              <Ionicons name="refresh" size={16} color={t.colors.errorContainer} />
+              <Text style={[t.type.labelLarge, { color: t.colors.errorContainer }]}>Try again</Text>
+            </Pressable>
           </View>
         ) : orgs.length === 0 && otherStores.length === 0 ? (
           <View style={s.emptyState}>
             <MarketingImage name="marketing-make-it-yours.png" width={160} height={130} />
             <Text style={[t.type.titleMedium, { color: t.colors.onSurface, textAlign: 'center' }]}>
-              No stores yet
+              No stores yet — that's okay
             </Text>
             <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant, textAlign: 'center' }]}>
-              Create your first store on the web, then manage it here.
+              Create your first store on the web, then come back here to manage it anytime.
             </Text>
           </View>
         ) : null}
+
 
         {/* Stats strip */}
         {!loading && (orgs.length > 0 || otherStores.length > 0) && (
@@ -145,6 +193,7 @@ export default function PickerScreen() {
           </FadeInUp>
         )}
 
+
         {/* Org groups — one entrance animation per section (capped stagger) keeps
             the load light no matter how many stores the user has. */}
         {orgs.map((org, gi) => (
@@ -153,11 +202,15 @@ export default function PickerScreen() {
               <View style={s.groupHeader}>
                 <Pressable
                   onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open ${org.name} workspace`}
                   style={({ pressed }) => [s.groupHeaderTap, pressed && { opacity: 0.65 }]}
                 >
                   <Avatar name={org.name} uri={org.logo_url} size={40} radius={12} />
                   <View style={{ flex: 1, gap: 4 }}>
-                    <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]}>{org.name}</Text>
+                    <Text style={[t.type.titleMedium, { color: t.colors.onSurface }]} numberOfLines={1}>
+                      {org.name}
+                    </Text>
                     <MetaPill label={`${org.role} · ${org.stores.length} ${org.stores.length === 1 ? 'store' : 'stores'}`} />
                   </View>
                   <Ionicons name="chevron-forward" size={20} color={t.colors.onSurfaceVariant} />
@@ -166,13 +219,16 @@ export default function PickerScreen() {
                   <Pressable
                     onPress={() => router.push({ pathname: '/(app)/org/[orgSlug]', params: { orgSlug: org.slug } })}
                     hitSlop={8}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Add a new site to ${org.name}`}
                     style={({ pressed }) => [s.newStoreBtn, { backgroundColor: t.colors.surfaceContainerHigh }, pressed && { opacity: 0.6 }]}
                   >
                     <Ionicons name="add" size={16} color={t.colors.onSurfaceVariant} />
-                    <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>New store</Text>
+                    <Text style={[t.type.labelMedium, { color: t.colors.onSurfaceVariant }]}>New site</Text>
                   </Pressable>
                 )}
               </View>
+
 
               <View style={s.cardStack}>
                 {org.stores.map((st) => (
@@ -188,6 +244,7 @@ export default function PickerScreen() {
           </FadeInUp>
         ))}
 
+
         {/* Other workspaces */}
         {otherStores.length > 0 && (
           <FadeInUp delay={360}>
@@ -195,7 +252,7 @@ export default function PickerScreen() {
               <View style={{ gap: 4 }}>
                 <Text style={[t.type.titleMedium, { color: t.colors.onSurfaceVariant }]}>Other workspaces</Text>
                 <Text style={[t.type.bodyMedium, { color: t.colors.onSurfaceVariant }]}>
-                  Stores you manage elsewhere
+                  Stores you manage in other organizations
                 </Text>
               </View>
               <View style={s.cardStack}>
@@ -214,13 +271,16 @@ export default function PickerScreen() {
           </FadeInUp>
         )}
 
+
         <View style={{ height: 32 }} />
       </ScrollView>
     </SafeAreaView>
   )
 }
 
+
 // ── Pieces ──────────────────────────────────────────────────────────────────────
+
 
 function Stat({ t, value, label }: { t: Theme; value: string; label: string }) {
   return (
@@ -231,6 +291,7 @@ function Stat({ t, value, label }: { t: Theme; value: string; label: string }) {
   )
 }
 
+
 function StoreCard({
   t, store, subtitle, external, onPress,
 }: {
@@ -240,6 +301,8 @@ function StoreCard({
   return (
     <Pressable
       onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Open ${store.name}${store.is_pro ? ', Pro plan' : ''}`}
       style={({ pressed }) => [
         s.storeCard,
         { backgroundColor: t.colors.surfaceContainerLow, borderColor: t.colors.outlineVariant },
@@ -259,16 +322,21 @@ function StoreCard({
         <Ionicons name="open-outline" size={18} color={t.colors.onSurfaceVariant} />
       ) : store.is_pro ? (
         <Badge label="PRO" tone="primary" />
-      ) : null}
+      ) : (
+        <Ionicons name="chevron-forward" size={18} color={t.colors.onSurfaceVariant} />
+      )}
     </Pressable>
   )
 }
 
+
 // ── Styles (theme-aware factory) ────────────────────────────────────────────────
+
 
 const statStyles = StyleSheet.create({
   box: { flex: 1, borderRadius: 16, paddingVertical: 14, paddingHorizontal: 16, gap: 2 },
 })
+
 
 const styles = (t: Theme) =>
   StyleSheet.create({
@@ -288,7 +356,17 @@ const styles = (t: Theme) =>
     heroText: { flex: 1, gap: 6 },
     stats: { flexDirection: 'row', gap: 12, alignSelf: 'stretch' },
     group: { gap: 14, alignSelf: 'stretch' },
-    notice: { alignSelf: 'stretch', borderRadius: 16, padding: 16 },
+    notice: { alignSelf: 'stretch', borderRadius: 16, padding: 16, gap: 4 },
+    retryBtn: {
+      flexDirection: 'row',
+      alignSelf: 'flex-start',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 12,
+      paddingHorizontal: 14,
+      paddingVertical: 9,
+      borderRadius: 12,
+    },
     emptyState: { alignSelf: 'stretch', alignItems: 'center', gap: 10, paddingVertical: 32, paddingHorizontal: 24 },
     groupHeader: { flexDirection: 'row', alignItems: 'center', gap: 8 },
     groupHeaderTap: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 },

@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
+  Pressable,
+  ScrollView,
   StyleSheet,
   Text,
   TextInput,
@@ -24,6 +26,7 @@ type Step = 'email' | 'code'
 export default function Home() {
   const t = useTheme()
   const { user, loading, sendCode, verifyCode, verifyPassword } = useAuth()
+
   const [step, setStep] = React.useState<Step>('email')
   const [email, setEmail] = React.useState('')
   const [code, setCode] = React.useState('')
@@ -35,244 +38,578 @@ export default function Home() {
   // emailed code). Reveal the password field only when its exact email is typed;
   // config.reviewEmail is empty for normal builds, so this never shows.
   const isReviewEmail =
-    config.reviewEmail !== '' && email.trim().toLowerCase() === config.reviewEmail
+    config.reviewEmail !== '' &&
+    email.trim().toLowerCase() === config.reviewEmail
+
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const codeValid = code.trim().length >= 6
 
   if (loading) {
     return (
-      <View style={[styles.fill, styles.center, { backgroundColor: t.colors.background }]}>
-        <ActivityIndicator color={t.colors.primary} />
-      </View>
+      <SafeAreaView
+        style={[
+          styles.fill,
+          styles.center,
+          { backgroundColor: t.colors.background },
+        ]}
+      >
+        <ActivityIndicator color={t.colors.primary} size="large" />
+        <Text
+          style={[
+            styles.loadingText,
+            { color: t.colors.onSurfaceVariant },
+          ]}
+        >
+          Getting things ready…
+        </Text>
+      </SafeAreaView>
     )
   }
 
-  if (user) return <Redirect href="/(app)/orgs" />
+  // Keep the existing typed route used by the app.
+  if (user) return <Redirect href="/orgs" />
 
   const onSendCode = async () => {
+    if (!emailValid || busy) return
+
     setError(null)
     setBusy(true)
+
     try {
       await sendCode(email.trim())
       setStep('code')
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Could not send a code.')
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'We could not send the code. Please try again.',
+      )
     } finally {
       setBusy(false)
     }
   }
 
   const onVerify = async () => {
+    if (!codeValid || busy) return
+
     setError(null)
     setBusy(true)
+
     try {
       await verifyCode(email.trim(), code.trim())
       // On success the auth state flips to a user and the Redirect above fires.
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'That code is invalid or expired.')
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'That code is not valid or has expired. Please try again.',
+      )
     } finally {
       setBusy(false)
     }
   }
 
   const onPasswordSignIn = async () => {
+    if (!password || busy) return
+
     setError(null)
     setBusy(true)
+
     try {
       await verifyPassword(email.trim(), password)
       // On success the auth state flips to a user and the Redirect above fires.
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Invalid credentials.')
+      setError(
+        e instanceof Error
+          ? e.message
+          : 'Your email or password is incorrect.',
+      )
     } finally {
       setBusy(false)
     }
   }
 
   const onChangeEmail = () => {
+    if (busy) return
+
     setStep('email')
     setCode('')
+    setPassword('')
     setError(null)
   }
 
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-  const codeValid = code.trim().length >= 6
+  const onEmailChange = (value: string) => {
+    setEmail(value)
+    if (error) setError(null)
+  }
+
+  const onCodeChange = (value: string) => {
+    setCode(value.replace(/[^0-9]/g, '').slice(0, 6))
+    if (error) setError(null)
+  }
+
+  const onPasswordChange = (value: string) => {
+    setPassword(value)
+    if (error) setError(null)
+  }
+
+  const heading =
+    step === 'email' ? 'Your business, in your hands.' : 'Check your email'
+
+  const supportingCopy =
+    step === 'email'
+      ? 'Enter your email address to sign in. If you are new, we will create your account after you confirm your code.'
+      : `We have sent a 6-digit code to ${email.trim()}. Enter it below to continue.`
 
   return (
-    <SafeAreaView style={[styles.fill, { backgroundColor: t.colors.background }]}>
-      <KeyboardAvoidingView
+  <SafeAreaView
+    style={[styles.fill, { backgroundColor: t.colors.background }]}
+  >
+    <KeyboardAvoidingView
+      style={styles.fill}
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+    >
+      <ScrollView
         style={styles.fill}
-        // Android needs an explicit behavior — `undefined` is a no-op that lets the
-        // keyboard cover the inputs. 'height' shrinks the view so the footer
-        // (inputs + buttons) rides above the keyboard; iOS uses 'padding'.
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
       >
-        <View style={styles.body}>
+        <View style={styles.topBar}>
+          <Text
+            accessibilityRole="header"
+            style={[styles.brand, { color: t.colors.primary }]}
+          >
+            MENENGAI CLOUD
+          </Text>
+
+          <Text
+            style={[
+              styles.stepIndicator,
+              {
+                color: t.colors.onSurfaceVariant,
+                backgroundColor: t.colors.surfaceVariant,
+              },
+            ]}
+          >
+            {step === 'email' ? 'Step 1 of 2' : 'Step 2 of 2'}
+          </Text>
+        </View>
+
+        <View style={styles.content}>
           <FadeInUp delay={0}>
-            <View style={[styles.illoPanel, { backgroundColor: t.colors.primaryContainer }]}>
-              <MarketingImage name="marketing-make-it-yours.png" width={220} height={180} />
+            <View
+              style={[
+                styles.illoPanel,
+                { backgroundColor: t.colors.primaryContainer },
+              ]}
+            >
+              <MarketingImage
+                name="marketing-make-it-yours.png"
+                width={220}
+                height={180}
+              />
             </View>
           </FadeInUp>
 
-          <View style={styles.copy}>
-            <FadeInUp delay={80}>
-              <Text style={[t.type.overline, { color: t.colors.primary }]}>MENENGAI CLOUD</Text>
-            </FadeInUp>
-            <FadeInUp delay={140}>
-              <Text style={[t.type.displaySmall, { color: t.colors.onSurface, fontWeight: '700' }]}>
-                {step === 'email' ? 'Run your stores\nfrom your pocket.' : 'Check your email.'}
+          <FadeInUp delay={80}>
+            <View style={styles.copy}>
+              <Text
+                accessibilityRole="header"
+                style={[styles.heading, { color: t.colors.onSurface }]}
+              >
+                {heading}
               </Text>
-            </FadeInUp>
-            <FadeInUp delay={200}>
-              <Text style={[t.type.bodyLarge, { color: t.colors.onSurfaceVariant, maxWidth: 330 }]}>
-                {step === 'email'
-                  ? 'Enter your email and we’ll send you a sign-in code. New here? The same code creates your account.'
-                  : `We sent a 6-digit code to ${email.trim()}. Enter it below to sign in.`}
-              </Text>
-            </FadeInUp>
-          </View>
-        </View>
 
-        <FadeInUp delay={260} style={styles.footer}>
-          {error && (
-            <View style={[styles.errorChip, { backgroundColor: t.colors.errorContainer }]}>
-              <Text style={[t.type.bodyMedium, { color: t.colors.onErrorContainer }]}>{error}</Text>
-            </View>
-          )}
-
-          {step === 'email' ? (
-            <>
-              <TextInput
-                value={email}
-                onChangeText={setEmail}
-                placeholder="you@example.com"
-                placeholderTextColor={t.colors.onSurfaceVariant}
-                autoCapitalize="none"
-                autoCorrect={false}
-                autoComplete="email"
-                keyboardType="email-address"
-                inputMode="email"
-                returnKeyType="send"
-                editable={!busy}
-                onSubmitEditing={() => emailValid && !isReviewEmail && onSendCode()}
+              <Text
                 style={[
-                  styles.input,
-                  {
-                    backgroundColor: t.colors.surfaceVariant,
-                    color: t.colors.onSurface,
-                    borderColor: t.colors.outline,
-                  },
+                  styles.supportingCopy,
+                  { color: t.colors.onSurfaceVariant },
                 ]}
-              />
-              {isReviewEmail ? (
-                <>
-                  <TextInput
-                    value={password}
-                    onChangeText={setPassword}
-                    placeholder="Password"
-                    placeholderTextColor={t.colors.onSurfaceVariant}
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    secureTextEntry
-                    editable={!busy}
-                    returnKeyType="go"
-                    onSubmitEditing={() => password.length > 0 && onPasswordSignIn()}
+              >
+                {supportingCopy}
+              </Text>
+            </View>
+          </FadeInUp>
+
+          <FadeInUp delay={160}>
+            <View style={styles.form}>
+                {error && (
+                  <View
+                    accessibilityRole="alert"
                     style={[
-                      styles.input,
+                      styles.errorCard,
                       {
-                        backgroundColor: t.colors.surfaceVariant,
-                        color: t.colors.onSurface,
-                        borderColor: t.colors.outline,
+                        backgroundColor: t.colors.errorContainer,
+                        borderColor: t.colors.error,
                       },
                     ]}
-                  />
-                  <Button
-                    label="Sign in"
-                    onPress={onPasswordSignIn}
-                    loading={busy}
-                    disabled={password.length === 0}
-                    variant="filled"
-                  />
-                </>
-              ) : (
-                <Button
-                  label="Send code"
-                  onPress={onSendCode}
-                  loading={busy}
-                  disabled={!emailValid}
-                  variant="filled"
-                />
-              )}
-            </>
-          ) : (
-            <>
-              <TextInput
-                value={code}
-                onChangeText={(v) => setCode(v.replace(/[^0-9]/g, '').slice(0, 6))}
-                placeholder="123456"
-                placeholderTextColor={t.colors.onSurfaceVariant}
-                keyboardType="number-pad"
-                inputMode="numeric"
-                autoComplete="one-time-code"
-                textContentType="oneTimeCode"
-                returnKeyType="go"
-                editable={!busy}
-                autoFocus
-                maxLength={6}
-                onSubmitEditing={() => codeValid && onVerify()}
-                style={[
-                  styles.input,
-                  styles.codeInput,
-                  {
-                    backgroundColor: t.colors.surfaceVariant,
-                    color: t.colors.onSurface,
-                    borderColor: t.colors.outline,
-                  },
-                ]}
-              />
-              <Button
-                label="Sign in"
-                onPress={onVerify}
-                loading={busy}
-                disabled={!codeValid}
-                variant="filled"
-              />
-              <Text
-                onPress={busy ? undefined : onChangeEmail}
-                style={[t.type.labelLarge, styles.link, { color: t.colors.primary }]}
-              >
-                Use a different email
-              </Text>
-            </>
-          )}
-        </FadeInUp>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
-  )
+                  >
+                    <Text
+                      style={[
+                        styles.errorTitle,
+                        { color: t.colors.onErrorContainer },
+                      ]}
+                    >
+                      Something went wrong
+                    </Text>
+
+                    <Text
+                      style={[
+                        styles.errorText,
+                        { color: t.colors.onErrorContainer },
+                      ]}
+                    >
+                      {error}
+                    </Text>
+                  </View>
+                )}
+
+                {step === 'email' ? (
+                  <>
+                    <View style={styles.fieldGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: t.colors.onSurface },
+                        ]}
+                      >
+                        Email address
+                      </Text>
+
+                      <TextInput
+                        value={email}
+                        onChangeText={onEmailChange}
+                        placeholder="you@example.com"
+                        placeholderTextColor={t.colors.onSurfaceVariant}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        autoComplete="email"
+                        keyboardType="email-address"
+                        inputMode="email"
+                        textContentType="emailAddress"
+                        returnKeyType={isReviewEmail ? 'next' : 'go'}
+                        editable={!busy}
+                        onSubmitEditing={() => {
+                          if (!isReviewEmail) onSendCode()
+                        }}
+                        accessibilityLabel="Email address"
+                        accessibilityHint="Enter the email address you use for Menengai Cloud"
+                        style={[
+                          styles.input,
+                          {
+                            backgroundColor: t.colors.surfaceVariant,
+                            color: t.colors.onSurface,
+                            borderColor: t.colors.outline,
+                          },
+                        ]}
+                      />
+
+                      <Text
+                        style={[
+                          styles.helperText,
+                          { color: t.colors.onSurfaceVariant },
+                        ]}
+                      >
+                        We will send a secure sign-in code to this address.
+                      </Text>
+                    </View>
+
+                    {isReviewEmail ? (
+                      <>
+                        <View style={styles.fieldGroup}>
+                          <Text
+                            style={[
+                              styles.label,
+                              { color: t.colors.onSurface },
+                            ]}
+                          >
+                            Password
+                          </Text>
+
+                          <TextInput
+                            value={password}
+                            onChangeText={onPasswordChange}
+                            placeholder="Enter your password"
+                            placeholderTextColor={t.colors.onSurfaceVariant}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoComplete="current-password"
+                            secureTextEntry
+                            textContentType="password"
+                            returnKeyType="go"
+                            editable={!busy}
+                            onSubmitEditing={onPasswordSignIn}
+                            accessibilityLabel="Password"
+                            style={[
+                              styles.input,
+                              {
+                                backgroundColor: t.colors.surfaceVariant,
+                                color: t.colors.onSurface,
+                                borderColor: t.colors.outline,
+                              },
+                            ]}
+                          />
+                        </View>
+
+                        <Button
+                          label="Sign in"
+                          onPress={onPasswordSignIn}
+                          loading={busy}
+                          disabled={password.length === 0}
+                          variant="filled"
+                        />
+                      </>
+                    ) : (
+                      <Button
+                        label="Send me a code"
+                        onPress={onSendCode}
+                        loading={busy}
+                        disabled={!emailValid}
+                        variant="filled"
+                      />
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <View style={styles.fieldGroup}>
+                      <Text
+                        style={[
+                          styles.label,
+                          { color: t.colors.onSurface },
+                        ]}
+                      >
+                        6-digit sign-in code
+                      </Text>
+
+                      <TextInput
+                        value={code}
+                        onChangeText={onCodeChange}
+                        placeholder="123456"
+                        placeholderTextColor={t.colors.onSurfaceVariant}
+                        keyboardType="number-pad"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                        textContentType="oneTimeCode"
+                        returnKeyType="go"
+                        editable={!busy}
+                        autoFocus
+                        maxLength={6}
+                        onSubmitEditing={onVerify}
+                        accessibilityLabel="6-digit sign-in code"
+                        accessibilityHint="Enter the six digit code sent to your email"
+                        style={[
+                          styles.input,
+                          styles.codeInput,
+                          {
+                            backgroundColor: t.colors.surfaceVariant,
+                            color: t.colors.onSurface,
+                            borderColor: t.colors.outline,
+                          },
+                        ]}
+                      />
+
+                      <Text
+                        style={[
+                          styles.helperText,
+                          { color: t.colors.onSurfaceVariant },
+                        ]}
+                      >
+                        The code may take a minute to arrive. Check your spam folder too.
+                      </Text>
+                    </View>
+
+                    <Button
+                      label="Sign in"
+                      onPress={onVerify}
+                      loading={busy}
+                      disabled={!codeValid}
+                      variant="filled"
+                    />
+
+                    <Pressable
+                      accessibilityRole="button"
+                      accessibilityLabel="Use a different email address"
+                      disabled={busy}
+                      onPress={onChangeEmail}
+                      style={({ pressed }) => [
+                        styles.secondaryAction,
+                        pressed && !busy && styles.pressed,
+                      ]}
+                    >
+                      <Text
+                        style={[
+                          styles.secondaryActionText,
+                          {
+                            color: busy
+                              ? t.colors.onSurfaceVariant
+                              : t.colors.primary,
+                          },
+                        ]}
+                      >
+                        Use a different email
+                      </Text>
+                    </Pressable>
+                  </>
+                )}
+              </View>
+          </FadeInUp>
+        </View>
+
+        <View style={styles.footer}>
+          <Text
+            style={[
+              styles.footerText,
+              { color: t.colors.onSurfaceVariant },
+            ]}
+          >
+            Secure access for your Menengai Cloud business.
+          </Text>
+        </View>
+      </ScrollView>
+    </KeyboardAvoidingView>
+  </SafeAreaView>
+)
 }
 
 const styles = StyleSheet.create({
-  fill: { flex: 1 },
-  center: { alignItems: 'center', justifyContent: 'center' },
-  body: { flex: 1, justifyContent: 'center', paddingHorizontal: 28, gap: 32 },
-  illoPanel: {
-    borderRadius: 28,
-    paddingVertical: 28,
+  fill: {
+    flex: 1,
+  },
+  center: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  copy: { gap: 14 },
-  footer: { paddingHorizontal: 28, paddingBottom: 28, gap: 12 },
-  errorChip: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12 },
-  input: {
-    height: 56,
-    borderRadius: 14,
-    borderWidth: 1,
-    paddingHorizontal: 18,
-    fontSize: 17,
+  screen: {
+    flex: 1,
   },
-  codeInput: {
-    textAlign: 'center',
-    letterSpacing: 8,
-    fontSize: 24,
+  loadingText: {
+    fontSize: 15,
+    fontWeight: '500',
+    marginTop: 14,
+  },
+  topBar: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingHorizontal: 24,
+    paddingTop: 12,
+  },
+  brand: {
+    fontSize: 13,
+    fontWeight: '800',
+    letterSpacing: 1.1,
+  },
+  stepIndicator: {
+    borderRadius: 999,
+    fontSize: 12,
+    fontWeight: '700',
+    overflow: 'hidden',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+  },
+ scrollContent: {
+  flexGrow: 1,
+  paddingBottom: 32,
+},
+content: {
+  flexGrow: 1,
+  justifyContent: 'center',
+  paddingHorizontal: 24,
+  paddingTop: 24,
+  paddingBottom: 48,
+},
+  illoPanel: {
+    alignItems: 'center',
+    borderRadius: 32,
+    justifyContent: 'center',
+    marginBottom: 32,
+    minHeight: 156,
+    overflow: 'hidden',
+    paddingHorizontal: 24,
+    paddingVertical: 24,
+  },
+  copy: {
+    gap: 12,
+    marginBottom: 28,
+  },
+  heading: {
+    fontSize: 31,
+    fontWeight: '800',
+    letterSpacing: -0.6,
+    lineHeight: 38,
+  },
+  supportingCopy: {
+    fontSize: 16,
+    lineHeight: 24,
+  },
+  form: {
+    gap: 20,
+  },
+  fieldGroup: {
+    gap: 9,
+  },
+  label: {
+    fontSize: 14,
     fontWeight: '700',
   },
-  link: { textAlign: 'center', paddingVertical: 6 },
+  input: {
+    borderRadius: 16,
+    borderWidth: 1,
+    fontSize: 17,
+    height: 58,
+    paddingHorizontal: 18,
+  },
+  codeInput: {
+    fontSize: 25,
+    fontWeight: '800',
+    letterSpacing: 8,
+    paddingLeft: 26,
+    textAlign: 'center',
+  },
+  helperText: {
+    fontSize: 13,
+    lineHeight: 19,
+  },
+  errorCard: {
+    borderLeftWidth: 4,
+    borderRadius: 16,
+    gap: 4,
+    paddingHorizontal: 15,
+    paddingVertical: 13,
+  },
+  errorTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  errorText: {
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  secondaryAction: {
+    alignItems: 'center',
+    borderRadius: 16,
+    justifyContent: 'center',
+    minHeight: 48,
+    paddingHorizontal: 16,
+  },
+  secondaryActionText: {
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  pressed: {
+    opacity: 0.72,
+  },
+  footer: {
+    alignItems: 'center',
+    paddingBottom: 16,
+    paddingHorizontal: 24,
+  },
+  footerText: {
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+  },
 })
