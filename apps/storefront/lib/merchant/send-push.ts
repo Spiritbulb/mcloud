@@ -52,9 +52,15 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
             if (!res.ok || !Array.isArray(tickets)) {
                 console.error('[push] send request failed', res.status, json)
             } else {
-                tickets.forEach((ticket: { status: string; message?: string; details?: unknown }, idx: number) => {
+                tickets.forEach((ticket: { status: string; id?: string; message?: string; details?: unknown }, idx: number) => {
                     if (ticket.status !== 'ok') {
                         console.error('[push] delivery error for token', batch[idx]?.to, ticket)
+                    } else {
+                        // 'ok' only means Expo accepted the job — it does not confirm
+                        // the device received it. The receipt ID lets us check actual
+                        // delivery status later via /getReceipts (Expo processes
+                        // receipts on a delay, usually within ~15 min of send).
+                        console.log('[push] ticket accepted', batch[idx]?.to, 'receiptId:', ticket.id)
                     }
                 })
             }
