@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "281652651476",
+    "project_id": "mcloud-16434",
+    "storage_bucket": "mcloud-16434.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:281652651476:android:7b91b42a30d91a8c856241",
+        "android_client_info": {
+          "package_name": "cloud.menengai.twa"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDiGZDl0CtZjo4TGOg96linVN79DpeHTIA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

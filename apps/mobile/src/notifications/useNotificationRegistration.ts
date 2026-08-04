@@ -6,13 +6,17 @@ import { registerPush } from './registerPush'
 import * as Notifications from 'expo-notifications'
 import { useRouter } from 'expo-router'
 
+
+
 export function useNotificationRegistration() {
   const { user, authedFetch } = useAuth()
   const ran = React.useRef(false)
   React.useEffect(() => {
     if (!user || ran.current) return
     ran.current = true
-    registerPush(authedFetch).catch(() => {}) // fire-and-forget; never block UI
+    registerPush(authedFetch)
+      .then((result) => { if (__DEV__) console.log('[push] registration result:', result) })
+      .catch(() => {}) // fire-and-forget; never block UI
   }, [user, authedFetch])
 }
 

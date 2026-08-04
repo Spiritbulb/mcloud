@@ -38,13 +38,28 @@ export async function sendPushToUsers(userIds: string[], payload: PushPayload): 
     for (let i = 0; i < messages.length; i += BATCH_SIZE) {
         const batch = messages.slice(i, i + BATCH_SIZE)
         try {
-            await fetch(EXPO_PUSH_URL, {
+            const res = await fetch(EXPO_PUSH_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
                 body: JSON.stringify(batch),
             })
-        } catch {
-            // best-effort — a push failure should never fail the caller's request
+            const json = await res.json().catch(() => null)
+            // Expo returns { data: [{ status: 'ok' | 'error', message?, details? }, ...] }
+            // one entry per message, in the same order as the batch. Log anything
+            // that isn't a clean 'ok' so delivery failures are visible — this was
+            // previously silent, making "no push arrived" impossible to diagnose.
+            const tickets = json?.data
+            if (!res.ok || !Array.isArray(tickets)) {
+                console.error('[push] send request failed', res.status, json)
+            } else {
+                tickets.forEach((ticket: { status: string; message?: string; details?: unknown }, idx: number) => {
+                    if (ticket.status !== 'ok') {
+                        console.error('[push] delivery error for token', batch[idx]?.to, ticket)
+                    }
+                })
+            }
+        } catch (e) {
+            console.error('[push] send request threw', e)
         }
     }
 }

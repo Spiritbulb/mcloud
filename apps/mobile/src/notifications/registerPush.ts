@@ -24,14 +24,24 @@ export async function registerPush(authedFetch: Fetch): Promise<PushRegisterResu
     const projectId =
       Constants.expoConfig?.extra?.eas?.projectId ??
       (Constants as { easConfig?: { projectId?: string } }).easConfig?.projectId
+
+    if (__DEV__) console.log('[push] projectId:', projectId)
+
     const tokenResp = await Notifications.getExpoPushTokenAsync(
       projectId ? { projectId } : undefined,
     )
+
+    if (__DEV__) console.log('[push] got token:', tokenResp.data)
+
     // Single source of truth for the endpoint contract — the api client owns the
     // path + body shape (throws on non-ok, caught below → 'error').
     await api(authedFetch).registerPushToken(tokenResp.data, Platform.OS)
+
+    if (__DEV__) console.log('[push] registered with backend')
+
     return 'registered'
-  } catch {
+  } catch (e) {
+    if (__DEV__) console.log('[push] registerPush failed:', e)
     return 'error'
   }
 }

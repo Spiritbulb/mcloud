@@ -13,7 +13,7 @@ import {
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
-//import * as Clipboard from 'expo-clipboard'
+import * as Clipboard from 'expo-clipboard'
 import { Avatar, Body, Card, FadeInUp, Skeleton } from '@/components/ui'
 import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
@@ -108,7 +108,7 @@ export default function TodayTab() {
       const result = await Share.share({ message: url, url })
       if (result.action === Share.dismissedAction) return
     } catch {
-      //await Clipboard.setStringAsync(url)
+      await Clipboard.setStringAsync(url)
       showToast('Link copied to clipboard')
     }
   }, [store, showToast])
