@@ -44,7 +44,7 @@ function ProductCard({ product }: { product: ProductItem }) {
 
     return (
         <div className="sf-tile group flex flex-col h-full">
-            <Link href={`/${storeSlug}/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
+            <Link href={`/store/${storeSlug}/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -71,7 +71,7 @@ function ProductCard({ product }: { product: ProductItem }) {
                             <span>{product.rating!.toFixed(1)} ({product.review_count})</span>
                         </div>
                     ) : null}
-                    <Link href={`/${storeSlug}/${product.slug}`} className="block">
+                    <Link href={`/store/${storeSlug}/${product.slug}`} className="block">
                         <h3 className="sf-heading text-base font-normal leading-tight line-clamp-2 sf-tile-name">
                             {product.name}
                         </h3>
@@ -117,6 +117,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
     const packages = service.metadata?.packages ?? []
     const prices = packages.map((p) => parseFloat(String(p.price)) || 0).filter(Boolean)
     const minPrice = prices.length > 0 ? Math.min(...prices) : service.price
+    const { storeSlug } = useCart()
 
     const availColor = {
         available: 'sf-dot-instock',
@@ -132,7 +133,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
 
     return (
         <div className="sf-tile group flex flex-col h-full">
-            <Link href={`/services/${service.slug}`} className="block relative overflow-hidden aspect-[4/3] sf-bg-muted">
+            <Link href={`/store/${storeSlug}/services/${service.slug}`} className="block relative overflow-hidden aspect-[4/3] sf-bg-muted">
                 {thumb ? (
                     <img
                         src={thumb}
@@ -166,7 +167,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                             </span>
                         </div>
                     )}
-                    <Link href={`/services/${service.slug}`} className="block">
+                    <Link href={`/store/${storeSlug}/services/${service.slug}`} className="block">
                         <h3 className="sf-heading text-base font-normal leading-tight line-clamp-2 sf-tile-name">
                             {service.name}
                         </h3>
@@ -201,7 +202,7 @@ function ServiceCard({ service }: { service: ServiceItem }) {
                             KSh {minPrice.toLocaleString()}
                         </span>
                     </div>
-                    <Link href={`/services/${service.slug}`}>
+                    <Link href={`/store/${storeSlug}/services/${service.slug}`}>
                         <Button
                             size="sm"
                             className="sf-btn-primary shrink-0"

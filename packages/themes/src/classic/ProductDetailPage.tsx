@@ -64,7 +64,7 @@ export default function ClassicProductDetailPage({
         <div className="min-h-screen pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
                 <Link
-                    href={`/${storeSlug}/products`}
+                    href={`/store/${storeSlug}/products`}
                     className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-3 py-1.5 text-sm mb-8"
                 >
                     <ArrowLeft className="h-4 w-4" />

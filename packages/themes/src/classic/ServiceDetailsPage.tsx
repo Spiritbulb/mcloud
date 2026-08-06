@@ -274,7 +274,7 @@ export default function ClassicServiceDetailsPage({
         <div className="min-h-[100dvh] pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
                 <a
-                    href="/services"
+                    href={`/store/${storeSlug}/services`}
                     className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-3 py-1.5 text-sm mb-8"
                 >
                     <ArrowLeft className="h-4 w-4" />
