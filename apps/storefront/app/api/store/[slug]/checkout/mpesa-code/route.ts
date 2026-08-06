@@ -61,7 +61,7 @@ export async function POST(
         if (!userIds.length) return
         await sendPushToUsers(userIds, {
             title: 'Payment code submitted',
-            body: `${orderNumber} · ${order.currency} ${Number(order.total).toLocaleString()} — verify M-Pesa code`,
+            body: `${orderNumber} · ${order.currency} ${Number(order.total).toLocaleString()}, verify M-Pesa code`,
             data: { storeSlug: slug, type: 'mpesa_code_submitted', orderId: order.id },
         })
     })().catch(() => {})

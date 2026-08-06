@@ -3,6 +3,7 @@ import { ActivityIndicator, View } from 'react-native'
 import { useAuth } from '@/auth/AuthContext'
 import { useTheme } from '@/lib/theme'
 import { useNotificationRegistration, useNotificationTapRouting } from '@/notifications/useNotificationRegistration'
+import '@/notifications/notificationHandler'
 import { QueryProvider } from '@/data/QueryProvider'
 import { DemoProvider } from '@/demo/DemoContext'
 

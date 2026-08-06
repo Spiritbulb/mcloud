@@ -5,6 +5,8 @@ import { StatusBar } from 'expo-status-bar'
 import { SafeAreaProvider } from 'react-native-safe-area-context'
 import { AuthProvider } from '@/auth/AuthContext'
 import { ThemeProvider, useTheme } from '@/lib/theme'
+import { useNotificationRegistration, useNotificationTapRouting } from '@/notifications/useNotificationRegistration'
+import '@/notifications/notificationHandler'
 
 const sentryDsn = Constants.expoConfig?.extra?.sentryDsn as string | undefined
 if (sentryDsn) {
@@ -12,6 +14,8 @@ if (sentryDsn) {
 }
 
 function AppShell() {
+  useNotificationRegistration()
+  useNotificationTapRouting()
   const t = useTheme()
   return (
     <>

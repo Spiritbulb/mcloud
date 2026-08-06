@@ -51,3 +51,4 @@ yarn-error.log*
 next-env.d.ts
 .env*.local
 .superpowers/
+apps/storefront/connect-google-photos.mjs

@@ -123,7 +123,7 @@ export default function CartPageContainer() {
             await submitMpesaCode(storeSlug ?? '', orderNumber, guest.mpesaCode)
 
             await clearCart()
-            router.push(`/orders/${orderNumber}`)
+            router.push(`/${storeSlug}/?order=${encodeURIComponent(orderNumber)}`)
         } finally {
             setIsProcessing(false)
         }
