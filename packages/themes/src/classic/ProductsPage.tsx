@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { Search, Loader2, ShoppingBag, X, Star, BadgeCheck, Package, Clock, MapPin, CalendarCheck } from 'lucide-react'
-import { useCart } from '@/contexts/CartContext'
+import { useCart } from '../../../../apps/storefront/contexts/CartContext'
 import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
 import { Card, CardContent } from '@mcloud/ui/card'
@@ -44,7 +44,7 @@ function ProductCard({ product }: { product: ProductItem }) {
 
     return (
         <div className="sf-tile group flex flex-col h-full">
-            <Link href={`/products/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
+            <Link href={`/${storeSlug}/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
                 <img
                     src={imageUrl}
                     alt={product.name}
@@ -71,7 +71,7 @@ function ProductCard({ product }: { product: ProductItem }) {
                             <span>{product.rating!.toFixed(1)} ({product.review_count})</span>
                         </div>
                     ) : null}
-                    <Link href={`/products/${product.slug}`} className="block">
+                    <Link href={`/${storeSlug}/${product.slug}`} className="block">
                         <h3 className="sf-heading text-base font-normal leading-tight line-clamp-2 sf-tile-name">
                             {product.name}
                         </h3>

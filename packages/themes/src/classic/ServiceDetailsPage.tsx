@@ -22,7 +22,7 @@ import {
     Play,
     Shield,
 } from 'lucide-react'
-import { MdxContent } from '@/components/MdxContent'
+import { MdxContent } from '../../../../apps/storefront/components/MdxContent'
 import { Button } from '@mcloud/ui/button'
 import { Card, CardContent } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'

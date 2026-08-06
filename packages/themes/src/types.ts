@@ -407,3 +407,27 @@ export interface BlogPostPageProps {
     relatedPosts: BlogPost[]
     contentHtml: string
 }
+
+// Props for the cart-only page (line items, no payment)
+export interface CartOnlyPageProps {
+    storeSlug: string
+    cartItems: CartItem[]
+    loading: boolean
+    itemLoadingStates: Record<string, boolean>
+    onUpdateQuantity: (variantId: string, quantity: number) => void
+    onRemoveItem: (variantId: string) => void
+}
+
+// Props for the checkout-only page (payment, no line-item editing)
+export interface CheckoutPageProps {
+    storeSlug: string
+    cartItems: CartItem[]
+    loading: boolean
+    mpesaConfig: MpesaConfig | null
+    onMpesaCheckout: (guest: GuestDetails) => Promise<void>
+    onDarajaCheckout: (phone: string, amount: number) => Promise<{ orderId: string; checkoutRequestId: string }>
+    onPaypalCheckout: () => Promise<void>
+    onPesapalCheckout?: () => Promise<void>
+    onIntasendCheckout?: () => Promise<void>
+    isProcessing: boolean
+}

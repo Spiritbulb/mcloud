@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react'
 import { Star, BadgeCheck } from 'lucide-react'
 import { cn } from '@mcloud/ui/utils'
 import { Button } from '@mcloud/ui/button'
-import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
+import { useCustomerAuth } from '../../../../apps/storefront/contexts/CustomerAuthContext'
 import { useParams, useRouter } from 'next/navigation'
 
 interface Review {
@@ -153,7 +153,7 @@ function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel }:
         setSubmitting(true)
         setError(null)
         try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/reviews`, {
+            const res = await fetch(`https://mcloud.co.ke/store/${storeSlug}/reviews`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -265,7 +265,7 @@ export function ReviewsSection({ productId, storeSlug, onReviewSubmitted }: { pr
     }
 
     useEffect(() => {
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/reviews?product_id=${productId}`, {
+        fetch(`https://mcloud.co.ke/store/${storeSlug}/reviews?product_id=${productId}`, {
             credentials: 'include',
         })
             .then((r) => r.json())

@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { MdxContent } from '@/components/MdxContent'
+import { MdxContent } from '../../../../apps/storefront/components/MdxContent'
 import {
     ArrowLeft, ShoppingCart, Star, Minus, Plus,
     Shield, Truck, RefreshCw, Loader2,
@@ -11,7 +11,7 @@ import { Button } from '@mcloud/ui/button'
 import { Card } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ProductDetailPageProps } from '../types'
-import { WishlistButton } from '@/components/store/WishlistButton'
+import { WishlistButton } from '../../../../apps/storefront/components/store/WishlistButton'
 import { ReviewsSection } from './ReviewsSection'
 
 export default function ClassicProductDetailPage({
@@ -64,7 +64,7 @@ export default function ClassicProductDetailPage({
         <div className="min-h-screen pt-4">
             <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
                 <Link
-                    href="/products"
+                    href={`/${storeSlug}/products`}
                     className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-3 py-1.5 text-sm mb-8"
                 >
                     <ArrowLeft className="h-4 w-4" />
