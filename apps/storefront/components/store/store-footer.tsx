@@ -83,9 +83,9 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
 
                 {!store.hideBranding && (
                     <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                        Made for free on{' '}
+                        Made on{' '}
                         <a
-                            href="https://menengai.cloud"
+                            href="https://mcloud.co.ke"
                             style={{ color: 'var(--sf-foreground-subtle)' }}
                             onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
                             onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
@@ -142,7 +142,7 @@ function NoirFooter({ store, settings }: { store: Store; settings: Store['settin
                     <p className="text-[9px] tracking-[0.3em] uppercase text-[#252525]">
                         Powered by{' '}
                         <a
-                            href="https://menengai.cloud"
+                            href="https://mcloud.co.ke"
                             className="hover:text-[#c9a96e] transition-colors duration-300"
                         >
                             Menengai Cloud

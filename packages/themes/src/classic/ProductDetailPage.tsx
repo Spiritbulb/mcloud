@@ -21,6 +21,7 @@ export default function ClassicProductDetailPage({
     selectedVariant,
     selectedOptions,
     quantity,
+    apiBaseUrl,
     currentImageIndex,
     onOptionChange,
     onQuantityChange,
@@ -323,7 +324,7 @@ export default function ClassicProductDetailPage({
                 </div>
             </div>
 
-            <ReviewsSection productId={product.id} storeSlug={storeSlug} onReviewSubmitted={onReviewSubmitted} />
+            <ReviewsSection productId={product.id} storeSlug={storeSlug} onReviewSubmitted={onReviewSubmitted} apiBaseUrl={apiBaseUrl} />
         </div>
     )
 }

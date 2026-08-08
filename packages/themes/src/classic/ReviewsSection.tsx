@@ -132,12 +132,13 @@ function RatingSummary({ reviews }: { reviews: Review[] }) {
     )
 }
 
-function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel }: {
+function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel, apiBaseUrl }: {
     storeSlug: string
     productId: string
     customerId: string
     onSubmitted: () => void
     onCancel: () => void
+    apiBaseUrl: string
 }) {
     const [rating, setRating] = useState(0)
     const [title, setTitle] = useState('')
@@ -153,7 +154,7 @@ function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel }:
         setSubmitting(true)
         setError(null)
         try {
-            const res = await fetch(`https://mcloud.co.ke/store/${storeSlug}/reviews`, {
+            const res = await fetch(`${apiBaseUrl}/store/${storeSlug}/reviews`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
@@ -247,7 +248,7 @@ function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel }:
     )
 }
 
-export function ReviewsSection({ productId, storeSlug, onReviewSubmitted }: { productId: string; storeSlug: string, onReviewSubmitted?: () => void }) {
+export function ReviewsSection({ productId, storeSlug, onReviewSubmitted, apiBaseUrl }: { productId: string; storeSlug: string; onReviewSubmitted?: () => void; apiBaseUrl: string }) {
     const [reviews, setReviews] = useState<Review[]>([])
     const [loading, setLoading] = useState(true)
     const [showForm, setShowForm] = useState(false)
@@ -265,12 +266,12 @@ export function ReviewsSection({ productId, storeSlug, onReviewSubmitted }: { pr
     }
 
     useEffect(() => {
-        fetch(`https://mcloud.co.ke/store/${storeSlug}/reviews?product_id=${productId}`, {
+        fetch(`${apiBaseUrl}/store/${storeSlug}/reviews?product_id=${productId}`, {
             credentials: 'include',
         })
             .then((r) => r.json())
             .then((d) => { setReviews(d.reviews || []); setLoading(false) })
-    }, [productId, storeSlug])
+    }, [productId, storeSlug, apiBaseUrl])
 
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-8 pb-20">
@@ -304,6 +305,7 @@ export function ReviewsSection({ productId, storeSlug, onReviewSubmitted }: { pr
                     storeSlug={storeSlug}
                     productId={productId}
                     customerId={user.id}
+                    apiBaseUrl={apiBaseUrl}
                     onSubmitted={() => {
                         setShowForm(false)
                         setSubmitted(true)

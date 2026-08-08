@@ -30,6 +30,7 @@ export default function ClassicCheckoutPage({
     onMpesaCheckout,
     onDarajaCheckout,
     onPaypalCheckout,
+    apiBaseUrl,
     onPesapalCheckout,
     onIntasendCheckout,
     isProcessing,
@@ -52,7 +53,7 @@ export default function ClassicCheckoutPage({
             attempts++
             try {
                 const res = await fetch(
-                    `https://mcloud.co.ke/payments/mpesa/status?orderId=${orderId}`,
+                    `${apiBaseUrl}/payments/mpesa/status?orderId=${orderId}`,
                     { credentials: 'include' }
                 )
                 const data = await res.json()
@@ -71,7 +72,7 @@ export default function ClassicCheckoutPage({
                 // network blip — keep polling
             }
         }, 3000)
-    }, [stopPolling, router])
+    }, [stopPolling, router, apiBaseUrl])
 
     const setField = (field: keyof GuestDetails) =>
         (e: React.ChangeEvent<HTMLInputElement>) =>

@@ -196,6 +196,7 @@ export default function CheckoutPageContainer() {
             cartItems={safeCartItems}
             loading={loading}
             mpesaConfig={mpesaConfig}
+            apiBaseUrl={`process.env.NEXT_PUBLIC_API_BASE_URL`}
             onMpesaCheckout={handleMpesaCheckout}
             onDarajaCheckout={handleDarajaCheckout}
             onPaypalCheckout={handlePaypalCheckout}

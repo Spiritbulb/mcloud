@@ -199,6 +199,7 @@ export interface ProductDetailPageProps {
     selectedVariant: ProductVariant | null
     selectedOptions: Record<string, string>
     quantity: number
+    apiBaseUrl: string
     currentImageIndex: number
     onOptionChange: (optionName: string, value: string) => void
     onQuantityChange: (qty: number) => void
@@ -423,6 +424,7 @@ export interface CheckoutPageProps {
     storeSlug: string
     cartItems: CartItem[]
     loading: boolean
+    apiBaseUrl: string
     mpesaConfig: MpesaConfig | null
     onMpesaCheckout: (guest: GuestDetails) => Promise<void>
     onDarajaCheckout: (phone: string, amount: number) => Promise<{ orderId: string; checkoutRequestId: string }>
