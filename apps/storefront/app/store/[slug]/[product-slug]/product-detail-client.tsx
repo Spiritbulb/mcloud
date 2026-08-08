@@ -77,7 +77,7 @@ export default function ProductDetailClient({
             selectedVariant={selectedVariant}
             selectedOptions={selectedOptions}
             quantity={quantity}
-            apiBaseUrl={`process.env.NEXT_PUBLIC_API_BASE_URL`}
+            apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api'}
             currentImageIndex={currentImageIndex}
             onOptionChange={(name, value) => setSelectedOptions(prev => ({ ...prev, [name]: value }))}
             onQuantityChange={setQuantity}
