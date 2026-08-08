@@ -109,7 +109,7 @@ export default function CheckoutPageContainer() {
             const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
             await submitMpesaCode(storeSlug ?? '', orderNumber, guest.mpesaCode)
             await clearCart()
-            router.push(`/${storeSlug}/?order=${encodeURIComponent(orderNumber)}`)
+            router.push(`/store/${storeSlug}/?order=${encodeURIComponent(orderNumber)}`)
         } finally {
             setIsProcessing(false)
         }
