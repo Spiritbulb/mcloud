@@ -4,7 +4,7 @@ import { CheckCircle, File, Loader2, Upload, X } from 'lucide-react'
 import { createContext, useCallback, useContext, type PropsWithChildren } from 'react'
 
 import { cn } from '@mcloud/ui/utils'
-import { type UseSupabaseUploadReturn } from '@/hooks/use-supabase-upload'
+import { type UseSupabaseUploadReturn } from '@/hooks/use-r2-upload'
 import { Button } from '@mcloud/ui/button'
 
 export const formatBytes = (

@@ -1788,6 +1788,54 @@ export type Database = {
           },
         ]
       }
+      store_join_requests: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          full_name: string
+          id: string
+          message: string | null
+          phone: string
+          status: string
+          store_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          full_name: string
+          id?: string
+          message?: string | null
+          phone: string
+          status?: string
+          store_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          full_name?: string
+          id?: string
+          message?: string | null
+          phone?: string
+          status?: string
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "store_join_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "store_join_requests_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       store_members: {
         Row: {
           created_at: string | null

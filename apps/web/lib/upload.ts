@@ -1,25 +1,13 @@
-import { createClient } from '@mcloud/db/client'
-
-type Bucket = 'store-assets' | 'product-images'
-
-export async function uploadImage(
-    file: File,
-    bucket: Bucket,
-    path: string // e.g. `${storeId}/logo`
-): Promise<string> {
-    const supabase = createClient()
+// upload.ts — call your own API instead of the worker directly
+export async function uploadImage(file: File, bucket: any, path: string): Promise<string> {
     const ext = file.name.split('.').pop()
-    const filePath = `${path}.${ext}`
+    const key = `${bucket}/${path}.${ext}`
 
-    const { error } = await supabase.storage
-        .from(bucket)
-        .upload(filePath, file, { upsert: true })
-
-    if (error) throw error
-
-    const { data } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(filePath)
-
-    return data.publicUrl
+    const res = await fetch(`/api/upload?key=${encodeURIComponent(key)}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': file.type },
+        body: file,
+    })
+    if (!res.ok) throw new Error(await res.text())
+    return (await res.json()).url
 }

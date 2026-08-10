@@ -9,7 +9,19 @@ import { getActiveStoreId } from '@/lib/customer-auth'
 import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
 import { sendPushToUsers } from '@/lib/merchant/send-push'
 
-const noStore = { 'Cache-Control': 'no-store' }
+
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+const noStore = { 'Cache-Control': 'no-store', ...corsHeaders }
+
+export async function OPTIONS() {
+    return new NextResponse(null, { status: 204, headers: corsHeaders })
+}
+
 
 export async function POST(
     req: NextRequest,

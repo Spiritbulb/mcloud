@@ -18,7 +18,19 @@ import { createClient } from '@mcloud/db/server'
 import { getActiveStoreId } from '@/lib/customer-auth'
 import { createOrderWithPayment, type OrderLineInput } from '@/lib/orders'
 
-const noStore = { 'Cache-Control': 'no-store' }
+
+const corsHeaders = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+}
+
+const noStore = { 'Cache-Control': 'no-store', ...corsHeaders }
+
+export async function OPTIONS() {
+    return new NextResponse(null, { status: 204, headers: corsHeaders })
+}
+
 
 interface LineInput {
     productId: string

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
-import { useSupabaseUpload } from '@/hooks/use-supabase-upload'
+import { useR2Upload } from '@/hooks/use-r2-upload'
 import { createClient } from '@mcloud/db/client'
 import { X } from 'lucide-react'
 
@@ -33,7 +33,7 @@ export default function ImageUpload({
     // rejects with a 400.
     const normalizedPrefix = pathPrefix.replace(/\/+$/, '')
 
-    const uploadProps = useSupabaseUpload({
+    const uploadProps = useR2Upload({
         bucketName: bucket,
         // The hook uploads to: `${path}/${file.name}`.
         // Pass the normalised prefix so the final path is clean.

@@ -1,22 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useDropzone, type FileError, type FileRejection } from 'react-dropzone'
 
-import { createClient } from '@mcloud/db/client'
-
-const supabase = createClient()
-
 interface FileWithPreview extends File {
   preview?: string
   errors: readonly FileError[]
 }
 
-type UseSupabaseUploadOptions = {
+type UseR2UploadOptions = {
   /**
-   * Name of bucket to upload files to in your Supabase project
+   * R2 "bucket" — really just a key prefix, since it's one physical bucket behind the worker
    */
   bucketName: string
   /**
-   * Folder to upload files to in the specified bucket within your Supabase project.
+   * Folder/path to upload files to within the prefix.
    *
    * Defaults to uploading files to the root of the bucket
    *
@@ -38,30 +34,22 @@ type UseSupabaseUploadOptions = {
    */
   maxFiles?: number
   /**
-   * The number of seconds the asset is cached in the browser and in the Supabase CDN.
-   *
-   * This is set in the Cache-Control: max-age=<seconds> header. Defaults to 3600 seconds.
-   */
-  cacheControl?: number
-  /**
-   * When set to true, the file is overwritten if it exists.
-   *
-   * When set to false, an error is thrown if the object already exists. Defaults to `false`
+   * When set to true, the file is overwritten if it exists (R2 .put() overwrites by default,
+   * so this is mostly kept for interface parity — set to false to error on collision instead).
    */
   upsert?: boolean
 }
 
-type UseSupabaseUploadReturn = ReturnType<typeof useSupabaseUpload>
+type UseR2UploadReturn = ReturnType<typeof useR2Upload>
 
-const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
+const useR2Upload = (options: UseR2UploadOptions) => {
   const {
     bucketName,
     path,
     allowedMimeTypes = [],
     maxFileSize = Number.POSITIVE_INFINITY,
     maxFiles = 1,
-    cacheControl = 3600,
-    upsert = false,
+    upsert = true,
   } = options
 
   const [files, setFiles] = useState<FileWithPreview[]>([])
@@ -114,8 +102,8 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   const onUpload = useCallback(async () => {
     setLoading(true)
 
-    // [Joshen] This is to support handling partial successes
-    // If any files didn't upload for any reason, hitting "Upload" again will only upload the files that had errors
+    // Same partial-retry behavior as the Supabase version:
+    // if any files errored, retrying only re-attempts those + not-yet-successful ones
     const filesWithErrors = errors.map((x) => x.name)
     const filesToUpload =
       filesWithErrors.length > 0
@@ -127,22 +115,28 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
 
     const responses = await Promise.all(
       filesToUpload.map(async (file) => {
-        const { error } = await supabase.storage
-          .from(bucketName)
-          .upload(!!path ? `${path}/${file.name}` : file.name, file, {
-            cacheControl: cacheControl.toString(),
-            upsert,
+        const key = path ? `${bucketName}/${path}/${file.name}` : `${bucketName}/${file.name}`
+
+        try {
+          const res = await fetch(`/api/upload?key=${encodeURIComponent(key)}${upsert ? '' : '&upsert=false'}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': file.type || 'application/octet-stream' },
+            body: file,
           })
-        if (error) {
-          return { name: file.name, message: error.message }
-        } else {
+
+          if (!res.ok) {
+            const message = await res.text()
+            return { name: file.name, message: message || `Upload failed (${res.status})` }
+          }
+
           return { name: file.name, message: undefined }
+        } catch (err) {
+          return { name: file.name, message: err instanceof Error ? err.message : 'Upload failed' }
         }
       })
     )
 
-    const responseErrors = responses.filter((x) => x.message !== undefined)
-    // if there were errors previously, this function tried to upload the files again so we should clear/overwrite the existing errors.
+    const responseErrors = responses.filter((x) => x.message !== undefined) as { name: string; message: string }[]
     setErrors(responseErrors)
 
     const responseSuccesses = responses.filter((x) => x.message === undefined)
@@ -152,7 +146,7 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
     setSuccesses(newSuccesses)
 
     setLoading(false)
-  }, [files, path, bucketName, errors, successes])
+  }, [files, path, bucketName, errors, successes, upsert])
 
   useEffect(() => {
     if (files.length === 0) {
@@ -191,4 +185,4 @@ const useSupabaseUpload = (options: UseSupabaseUploadOptions) => {
   }
 }
 
-export { useSupabaseUpload, type UseSupabaseUploadOptions, type UseSupabaseUploadReturn }
+export { useR2Upload, type UseR2UploadOptions, type UseR2UploadReturn }
