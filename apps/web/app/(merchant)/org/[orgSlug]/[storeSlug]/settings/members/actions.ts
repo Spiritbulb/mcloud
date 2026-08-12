@@ -187,7 +187,7 @@ export async function inviteMember(formData: FormData) {
     if (inviteError) return { error: inviteError.message }
 
     // Send email via Resend
-    const inviteUrl = `${process.env.NEXT_PUBLIC_APP_URL}/invite/${invite.token}`
+    const inviteUrl = `https:///www.mcloud.co.ke/invite/${invite.token}`
 
     await resend.emails.send({
         from: 'Menengai Cloud <noreply@menengai.cloud>',
