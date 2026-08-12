@@ -4,7 +4,7 @@ import { CheckCircle, File, Loader2, Upload, X } from 'lucide-react'
 import { createContext, useCallback, useContext, type PropsWithChildren } from 'react'
 
 import { cn } from '@mcloud/ui/utils'
-import { type UseSupabaseUploadReturn } from '@/hooks/use-r2-upload'
+import { type UseR2UploadReturn } from '@/hooks/use-r2-upload'
 import { Button } from '@mcloud/ui/button'
 
 export const formatBytes = (
@@ -21,11 +21,11 @@ export const formatBytes = (
   return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i]
 }
 
-type DropzoneContextType = Omit<UseSupabaseUploadReturn, 'getRootProps' | 'getInputProps'>
+type DropzoneContextType = Omit<UseR2UploadReturn, 'getRootProps' | 'getInputProps'>
 
 const DropzoneContext = createContext<DropzoneContextType | undefined>(undefined)
 
-type DropzoneProps = UseSupabaseUploadReturn & {
+type DropzoneProps = UseR2UploadReturn & {
   className?: string
 }
 
