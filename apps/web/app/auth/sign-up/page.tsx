@@ -1,16 +1,12 @@
-import { MagicCodeForm } from '@/components/login-form'
+import { redirect } from "next/navigation";
 
-export default async function Page({
+export default function MCloudSignUpRedirect({
   searchParams,
 }: {
-  searchParams: Promise<{ returnTo?: string }>
+  searchParams: { next?: string };
 }) {
-  const { returnTo } = await searchParams
-  return (
-    <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
-      <div className="w-full max-w-sm">
-        <MagicCodeForm mode="signup" returnTo={returnTo} />
-      </div>
-    </div>
-  )
+  const to = searchParams.next ?? "/onboarding";
+  redirect(
+    `https://spiritb.uk/go/mcloud?to=${encodeURIComponent(to)}`
+  );
 }

@@ -4,7 +4,7 @@
 // renders when a store has no page row. This package is Liquid-free — it only
 // NAMES section types (strings); the storefront registry maps names to templates.
 
-export type VerticalId = 'shop' | 'ngo'
+export type VerticalId = 'shop' | 'ngo' | 'events'
 
 /** Names a section type; mapped to a Liquid template by the storefront registry. */
 export interface SeedSection {
@@ -59,10 +59,23 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
       },
     ],
   },
+  events: {
+    id: 'events',
+    label: 'Events',
+    commerce: true,
+    defaultPages: [
+      {
+        slug: '',
+        title: 'Home',
+        position: 0,
+        sections: [{ type: 'hero' }, { type: 'upcoming-events' }, { type: 'past-events' }, { type: 'contact' }],
+      },
+    ],
+  }
 }
 
 export function isVerticalId(type: string): type is VerticalId {
-  return type === 'shop' || type === 'ngo'
+  return type === 'shop' || type === 'ngo' || type === 'events'
 }
 
 /** Resolve a store type to its vertical. Unknown/null/undefined → shop. Never throws. */
