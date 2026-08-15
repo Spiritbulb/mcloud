@@ -1,11 +1,11 @@
 import { redirect } from "next/navigation";
 
-export default function MCloudLoginRedirect({
+export default async function MCloudLoginRedirect({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  searchParams: Promise<{ next?: string }>;
 }) {
-  const to = searchParams.next ?? "/admin/settings";
+  const to = (await searchParams).next ?? "/admin/settings";
   redirect(
     `https://spiritb.uk/go/mcloud?to=${encodeURIComponent(to)}`
   );
