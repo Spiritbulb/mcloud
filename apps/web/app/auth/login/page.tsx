@@ -5,7 +5,7 @@ export default async function MCloudLoginRedirect({
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  const to = (await searchParams).next ?? "/admin/settings";
+  const to = (await searchParams).next ?? "/org";
   redirect(
     `https://spiritb.uk/go/mcloud?to=${encodeURIComponent(to)}`
   );
