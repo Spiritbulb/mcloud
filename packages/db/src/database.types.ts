@@ -2250,6 +2250,30 @@ export type Database = {
         }
         Relationships: []
       }
+      waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          product: string
+          wants_updates: boolean
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          product: string
+          wants_updates?: boolean
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          product?: string
+          wants_updates?: boolean
+        }
+        Relationships: []
+      }
       webhook_logs: {
         Row: {
           created_at: string | null
