@@ -10,6 +10,7 @@ import { useRouter } from 'next/navigation'
 // The nav model (sections, tabs, tab ids) is data about the vertical and lives
 // in @mcloud/verticals so it has one home and is unit-testable.
 import type { NavSection, NavTab as Tab, NavSubTab as SubTab, TabId } from '@mcloud/verticals'
+import { Button } from '@/components/retroui/Button'
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -250,6 +251,8 @@ function NavSectionGroup({
     )
 }
 
+
+
 // ─── StoreSwitcher ────────────────────────────────────────────────────────────
 
 function StoreSwitcher({
@@ -321,7 +324,7 @@ function StoreSwitcher({
 
     if (railMode) {
         return (
-            <div ref={containerRef} className="relative flex justify-center py-2">
+            <div ref={containerRef} className="relative flex justify-center pt-2">
                 <button
                     onClick={() => hasMultiple && setOpen(v => !v)}
                     title={store.name}
@@ -337,8 +340,10 @@ function StoreSwitcher({
         )
     }
 
+    
+
     return (
-        <div ref={containerRef} className="relative px-1 py-2.5">
+        <div ref={containerRef} className="relative px-1">
             <button
                 onClick={() => hasMultiple && setOpen(v => !v)}
                 className={cn(
@@ -550,10 +555,10 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+            className="pt-1.5 px-2 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
         >
             <span className="material-symbols-outlined">
-                {railMode ? 'menu_open' : 'menu'}
+                {railMode ? 'menu' : 'menu_open'}
             </span>
         </button>
     )
@@ -596,23 +601,23 @@ function SidebarShell({
 
     return (
         <aside className={cn(
-            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md bg-card',
+            'flex flex-col h-[90dvh] md:h-[100dvh] my-auto bg-card',
             'transition-all duration-200 ease-out',
-            railMode ? 'w-[56px]' : 'w-[220px]'
+            railMode ? 'w-[56px] pt-1.5 space-y-1' : 'w-[220px]'
         )}>
             {/* Logo + rail toggle */}
             <div className={cn(
                 'flex items-center',
                 railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
             )}>
-                {!railMode && (
-                    <Link href="/" className="flex items-center shrink-0">
+                <button onClick={onToggleRail} className="flex items-center shrink-0">
                         <img src={src} alt="Logo" className="w-auto h-5" />
-                    </Link>
-                )}
-                <div className="flex items-center">
+                </button>
+                {!railMode && (
+                  <div className="flex items-center">
                     <RailToggle railMode={railMode} onToggle={onToggleRail} />
-                </div>
+                </div>  
+                )}
             </div>
 
             <StoreSwitcher store={store} allStores={allStores} railMode={railMode} orgSlug={orgSlug} />

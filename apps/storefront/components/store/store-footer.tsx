@@ -192,7 +192,7 @@ function MinimalFooter({ store, settings }: { store: Store; settings: Store['set
                     <p className="text-xs text-[#c8c0b6]">
                         Powered by{' '}
                         <a
-                            href="https://menengai.cloud"
+                            href="https://mcloud.co.ke"
                             className="hover:text-[#5c5650] transition-colors"
                         >
                             Menengai Cloud
@@ -246,7 +246,7 @@ function PhotographyFooter({ store, settings }: { store: Store; settings: Store[
                 {!store.hideBranding && (
                     <p className="text-[10px] tracking-[0.2em] uppercase text-[#333]">
                         Powered by{' '}
-                        <a href="https://menengai.cloud" className="hover:text-[#c8965a] transition-colors">
+                        <a href="https://mcloud.co.ke" className="hover:text-[#c8965a] transition-colors">
                             Menengai Cloud
                         </a>
                     </p>
@@ -291,7 +291,7 @@ function PortfolioFooter({ store, settings }: { store: Store; settings: Store['s
                 {!store.hideBranding && (
                     <p className="text-xs text-gray-400">
                         Powered by{' '}
-                        <a href="https://menengai.cloud" className="text-gray-500 hover:text-gray-900 transition-colors">
+                        <a href="https://mcloud.co.ke" className="text-gray-500 hover:text-gray-900 transition-colors">
                             Menengai Cloud
                         </a>
                     </p>
@@ -336,7 +336,7 @@ function ServicesFooter({ store, settings }: { store: Store; settings: Store['se
                 {!store.hideBranding && (
                     <p className="text-xs text-slate-400">
                         Powered by{' '}
-                        <a href="https://menengai.cloud" className="text-slate-500 hover:text-slate-900 transition-colors">
+                        <a href="https://mcloud.co.ke" className="text-slate-500 hover:text-slate-900 transition-colors">
                             Menengai Cloud
                         </a>
                     </p>
@@ -381,7 +381,7 @@ function RestaurantFooter({ store, settings }: { store: Store; settings: Store['
                 {!store.hideBranding && (
                     <p className="text-xs text-[#c8beb6]">
                         Powered by{' '}
-                        <a href="https://menengai.cloud" className="text-[#8b6f5c] hover:text-[#c8622a] transition-colors">
+                        <a href="https://mcloud.co.ke" className="text-[#8b6f5c] hover:text-[#c8622a] transition-colors">
                             Menengai Cloud
                         </a>
                     </p>

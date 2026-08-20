@@ -43,7 +43,7 @@ export default function StoreCarousel({ slugs }: { slugs: string[] }) {
 
                     {/* Live iframe preview */}
                     <iframe
-                        src={`https://${slugs[current]}.menengai.cloud`}
+                        src={`https://${slugs[current]}.mcloud.co.ke`}
                         title={`${slugs[current]} live preview`}
                         className="w-full h-full border-0 pointer-events-none"
                         loading="lazy"

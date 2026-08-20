@@ -24,11 +24,11 @@ export async function sendBetaWelcome(email: string): Promise<{ ok: boolean; err
 
     try {
         const { error } = await resend.emails.send({
-            from: 'Menengai Cloud <noreply@menengai.cloud>',
+            from: 'Menengai Cloud <noreply@mcloud.co.ke>',
             to: email,
             subject: "You're in — welcome to the Menengai Cloud beta",
             html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">menengai.cloud</p>
+  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">mcloud.co.ke</p>
   <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">You're on the beta 🎉</h1>
   <p style="font-size:15px;color:#374151;margin:0 0 24px">Thanks for joining the Menengai Cloud closed beta. You've been added to our tester group, so you'll get early access as we roll out.</p>
   ${optInBlock}

@@ -43,12 +43,12 @@ function storefrontRedirect(slug: string, subpath: string, search: string): Next
 }
 
 /**
- * Platform apex domains. We're migrating from menengai.cloud → mcloud.co.ke; both
+ * Platform apex domains. We're migrating from mcloud.co.ke → mcloud.co.ke; both
  * point at prod during the transition, so the app must recognise either as "the
- * platform host" (not a merchant custom domain). menengai.cloud will be dropped
+ * platform host" (not a merchant custom domain). mcloud.co.ke will be dropped
  * once the migration completes — remove it here and the recognition logic follows.
  */
-const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
+const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke'] as const
 
 /** True when `host` is a platform apex or any of its subdomains (incl. www). */
 function isPlatformHost(host: string): boolean {

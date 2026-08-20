@@ -34,7 +34,7 @@ function mapUser(u: { sub: string; email?: string; name?: string; picture?: stri
 const client = new Auth0Client({
     session: {
         cookie: {
-            domain: process.env.NODE_ENV === 'production' ? 'menengai.cloud' : 'localhost',
+            domain: process.env.NODE_ENV === 'production' ? 'mcloud.co.ke' : 'localhost',
         },
     },
 

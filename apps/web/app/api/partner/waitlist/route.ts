@@ -75,11 +75,10 @@ export async function POST(req: NextRequest) {
         const resend = getResend()
         const label = PRODUCT_LABEL[product] ?? product
         await resend.emails.send({
-            from: 'Spiritbulb <noreply@spiritb.uk>',
+            from: 'Spiritbulb <spiritb@mcloud.co.ke>',
             to: email,
             subject: `You're on the ${label} waitlist`,
             html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">spiritb.uk</p>
   <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">You're on the list</h1>
   <p style="font-size:15px;color:#374151;margin:0 0 24px">We'll email you at this address when <strong>${label}</strong> is ready.</p>
 </div>`,

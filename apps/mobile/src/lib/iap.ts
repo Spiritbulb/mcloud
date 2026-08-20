@@ -32,7 +32,7 @@ class GrantError extends Error {
 
 const SUPPORT_MESSAGE =
     "Payment went through but we couldn't activate Pro on our end. " +
-    'You have not lost your money — please contact support@menengai.cloud ' +
+    'You have not lost your money — please contact support@mcloud.co.ke ' +
     'with your store name and we’ll sort it out right away.'
 
 type PendingPurchase = {

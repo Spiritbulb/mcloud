@@ -1,5 +1,5 @@
 // Dark branded loading screen shown during auth redirects (Auth0 round-trip).
-// Kills the white flash between menengai.cloud and auth.menengai.cloud.
+// Kills the white flash between mcloud.co.ke and auth.mcloud.co.ke.
 export function AuthLoading({ label = 'Signing you in…' }: { label?: string }) {
     return (
         <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-6 bg-[#0a0a0a] text-white">

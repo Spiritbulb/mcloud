@@ -13,7 +13,7 @@ import {
 import { UpgradeChip } from '@/components/pro'
 import { cn } from '@mcloud/ui/utils'
 
-const BETA_URL = 'https://menengai.cloud/beta'
+const BETA_URL = 'https://mcloud.co.ke/beta'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 
@@ -67,7 +67,7 @@ export function SettingsHeader({
     const isPro = store?.is_pro ?? false
 
     return (
-        <header className="shrink-0 h-[57px] bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
+        <header className="shrink-0 h-[57px] border-b border-border bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
 
             {/* Mobile menu button */}
             <button
@@ -89,14 +89,8 @@ export function SettingsHeader({
                             <MSO icon="domain" className="text-[12px]" />
                             <span className="truncate">{store.org.name}</span>
                         </span>
-                        <MSO icon="chevron_right" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
                     </>
                 )}
-                <span className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">Settings</span>
-                <MSO icon="chevron_right" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0" />
-                <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
-                    {activeLabel}
-                </span>
 
             </div>
 
@@ -117,7 +111,7 @@ export function SettingsHeader({
 
                 {/* Support — desktop only */}
                 <Link
-                    href="https://menengai.cloud/support"
+                    href="https://mcloud.co.ke/support"
                     target="_blank"
                     rel="noopener noreferrer"
                     title="Support"
@@ -140,7 +134,7 @@ export function SettingsHeader({
                         >
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
                                 <Link
-                                    href="https://menengai.cloud/docs"
+                                    href="https://mcloud.co.ke/docs"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"
@@ -151,7 +145,7 @@ export function SettingsHeader({
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
                                 <Link
-                                    href="https://menengai.cloud/changelog"
+                                    href="https://mcloud.co.ke/changelog"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"
@@ -163,7 +157,7 @@ export function SettingsHeader({
                             <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
                             <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
                                 <Link
-                                    href="https://status.menengai.cloud"
+                                    href="https://status.mcloud.co.ke"
                                     target="_blank"
                                     rel="noopener noreferrer"
                                     className="flex items-center gap-2.5"

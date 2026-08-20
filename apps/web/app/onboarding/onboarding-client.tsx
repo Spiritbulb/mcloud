@@ -109,7 +109,7 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
                   >
                     <MSO icon="link" className="text-[13px] text-[var(--md-sys-color-primary)]" />
                     <span className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-                      menengai.cloud/admin/org/<span className="font-medium text-[var(--md-sys-color-primary)]">{slug}</span>
+                      mcloud.co.ke/admin/org/<span className="font-medium text-[var(--md-sys-color-primary)]">{slug}</span>
                     </span>
                   </motion.div>
                 )}

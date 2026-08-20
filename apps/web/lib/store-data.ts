@@ -324,6 +324,7 @@ export async function getStoreOverview(
                 payments_enabled: mpesaEnabled || paypalEnabled || stripeEnabled,
                 mpesa_enabled: mpesaEnabled,
                 paypal_enabled: paypalEnabled,
+custom_domain: store.custom_domain ?? null,
                 custom_domain_set: !!store.custom_domain,
                 notifications_enabled: false,
             },

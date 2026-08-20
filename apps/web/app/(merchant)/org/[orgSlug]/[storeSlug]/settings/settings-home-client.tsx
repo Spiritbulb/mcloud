@@ -8,6 +8,8 @@ import { cn } from '@mcloud/ui/utils'
 import { getVertical } from '@mcloud/verticals'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@/lib/storefront-url'
 import type { TabId } from './settings-shell'
+import GeneralSettingsPage from './general/general-settings-page'
+
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,7 @@ type StoreOverview = {
     payments_enabled?: boolean
     mpesa_enabled?: boolean
     paypal_enabled?: boolean
+    custom_domain?: string | null
     custom_domain_set?: boolean
     primary_color?: string | null
     theme?: string | null
@@ -86,6 +89,7 @@ const STATUS: Record<Order['status'], { icon: string; label: string; bg: string;
     refunded: { icon: 'currency_exchange', label: 'Refunded', bg: 'bg-[var(--md-sys-color-surface-variant)]', fg: 'text-[var(--md-sys-color-on-surface-variant)]' },
 }
 
+
 function fmt(n: number, currency: string) {
     return new Intl.NumberFormat('en-KE', {
         style: 'currency', currency,
@@ -111,7 +115,7 @@ function timeAgo(iso: string) {
 function Sk({ className }: { className?: string }) {
     return (
         <span className={cn(
-            'block animate-pulse rounded-lg bg-[var(--md-sys-color-surface-variant)]',
+            'block animate-pulse bg-[var(--md-sys-color-surface-variant)]',
             className
         )} />
     )
@@ -135,7 +139,7 @@ function KpiCard({ label, value, sub, icon, loading, featured }: {
 }) {
     return (
         <div className={cn(
-            'relative overflow-hidden rounded-2xl p-5 flex flex-col gap-1',
+            'relative overflow-hidden p-5 flex flex-col gap-1',
             featured
                 ? 'bg-[var(--md-sys-color-primary-container)] col-span-2 sm:col-span-1'
                 : 'bg-[var(--md-sys-color-surface-container-low)] border border-[var(--md-sys-color-outline-variant)]'
@@ -196,7 +200,7 @@ function PaymentsCallout({ onNavigate, commerce }: { onNavigate: () => void; com
             onClick={onNavigate}
             className={cn(
                 'w-full flex items-start gap-4 text-left',
-                'rounded-2xl bg-[var(--md-sys-color-secondary-container)]',
+                'bg-[var(--md-sys-color-secondary-container)]',
                 'px-5 py-4 group',
                 'hover:brightness-95 dark:hover:brightness-110 transition-all duration-150'
             )}
@@ -243,7 +247,7 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
     ]
 
     return (
-        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
+        <div className="border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
             <div className="grid grid-cols-4 divide-x divide-[var(--md-sys-color-outline-variant)]">
                 {steps.map((step, i) => (
                     <div key={step.label} className="flex flex-col gap-1 px-4 py-4">
@@ -303,7 +307,6 @@ function TopProductCard({ product, currency, loading, onNavigate }: {
             onClick={onNavigate}
             className={cn(
                 'w-full flex items-center gap-4 text-left group',
-                'rounded-2xl border border-[var(--md-sys-color-outline-variant)]',
                 'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
                 'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
             )}
@@ -360,7 +363,6 @@ function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
             onClick={onNavigate}
             className={cn(
                 'w-full flex flex-col gap-3 text-left group',
-                'rounded-2xl border border-[var(--md-sys-color-outline-variant)]',
                 'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
                 'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
             )}
@@ -447,7 +449,7 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
                 : 'Add a campaign, share your link, and take your first donation today. We handle the hosting, SSL, and uptime.'
 
     return (
-        <div className="relative overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+        <div className="relative overflow-hidden bg-[var(--md-sys-color-surface-container-low)]">
             {/* brand glow */}
             <div
                 className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full opacity-60 blur-3xl"
@@ -471,7 +473,7 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
                             </span>
                         )}
                         <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
-                            {loading ? <Sk className="h-3 w-40 inline-block" /> : storefrontDisplayUrl(store?.slug ?? '')}
+                            {loading ? <Sk className="h-3 w-40 inline-block" /> : storefrontDisplayUrl(store?.slug ?? '', store?.custom_domain)}
                         </p>
                     </div>
                     {headline
@@ -516,24 +518,24 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
 
 // ─── Share store card ─────────────────────────────────────────────────────────
 
-function ShareStore({ slug }: { slug: string }) {
+function ShareStore({ slug, custom_domain }: { slug: string; custom_domain?: string | null }) {
     const [copied, setCopied] = useState(false)
-    const url = storefrontDisplayUrl(slug)
+    const url = storefrontDisplayUrl(slug, custom_domain)
 
     const copy = () => {
-        navigator.clipboard?.writeText(storefrontUrl(slug)).then(() => {
+        navigator.clipboard?.writeText(storefrontUrl(slug, custom_domain)).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 1800)
         })
     }
 
     return (
-        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4 flex items-center gap-3">
+        <div className="bg-[var(--md-sys-color-surface)] p-4 flex items-center gap-3">
             <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
                 <MSO icon="share" className="text-[18px] text-[var(--md-sys-color-primary)]" fill={1} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Share your site</p>
+                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Get more action by sharing your link!</p>
                 <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{url}</p>
             </div>
             <button
@@ -657,7 +659,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
     const topCampaign = campaigns[0]
 
     return (
-        <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
+        <div className="max-w-3xl mx-auto space-y-6 pb-16 pt-2">
 
             {/* ── Welcome hero ─────────────────────────────────────────────── */}
             <div className="animate-rise">
@@ -705,6 +707,13 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                 )}
             </div>
 
+            {/* ── Share store ──────────────────────────────────────────────── */}
+            {!loading && store && (
+                <div className="animate-rise-4">
+                    <ShareStore slug={store.slug} custom_domain={store.custom_domain} />
+                </div>
+            )}
+
             {/* ── Funnel (commerce only: an NGO's visitors never add to cart) ─ */}
             {commerce && (
                 <div className="animate-rise-2">
@@ -739,13 +748,6 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             {paymentsNeeded && (
                 <div className="animate-rise">
                     <PaymentsCallout onNavigate={() => navigate('integrations')} commerce={commerce} />
-                </div>
-            )}
-
-            {/* ── Share store ──────────────────────────────────────────────── */}
-            {!loading && store && (
-                <div className="animate-rise-4">
-                    <ShareStore slug={store.slug} />
                 </div>
             )}
 
@@ -851,42 +853,6 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                     <ProUpsell onNavigate={() => navigate('billing')} />
                 </div>
             )}
-
-            {/* ── Settings quick links ─────────────────────────────────────── */}
-            <div className="animate-rise-6">
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-3">Settings</p>
-                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] overflow-hidden">
-                    {quickLinksFor(commerce).map((link) => (
-                        <button
-                            key={link.tab}
-                            onClick={() => navigate(link.tab)}
-                            className={cn(
-                                'w-full flex items-center gap-3 px-4 py-3 text-left group',
-                                'border-b border-[var(--md-sys-color-outline-variant)] last:border-0',
-                                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-100'
-                            )}
-                        >
-                            <MSO
-                                icon={link.icon}
-                                className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors shrink-0"
-                            />
-                            <span className="flex-1 text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
-                                {link.label}
-                            </span>
-                            {link.beta && (
-                                <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] shrink-0">
-                                    beta
-                                </span>
-                            )}
-                            <MSO
-                                icon="chevron_right"
-                                className="text-[16px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors shrink-0"
-                            />
-                        </button>
-                    ))}
-                </div>
-            </div>
-
         </div>
     )
 }

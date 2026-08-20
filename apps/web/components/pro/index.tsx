@@ -8,7 +8,7 @@ import { planAllowsRequired, type Plan } from '@/lib/plans'
 
 // Where merchants go to get on Pro now: subscription happens in the mobile app,
 // and the beta is the entry point. Absolute so it works from any merchant origin.
-const BETA_URL = 'https://menengai.cloud/beta'
+const BETA_URL = 'https://mcloud.co.ke/beta'
 
 // ─── MSO ─────────────────────────────────────────────────────────────────────
 

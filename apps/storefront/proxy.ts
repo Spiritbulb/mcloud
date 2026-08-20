@@ -72,7 +72,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return rewriteToStore(request, slug, pathname)
   }
 
-  // ── 3. Platform host (shop.menengai.cloud, localhost) ────────────────────────
+  // ── 3. Platform host (shop.mcloud.co.ke, localhost) ────────────────────────
   // Resolve the candidate slug from either /store/{slug}/... (canonical) or the
   // bare /{slug}/... form, then decide: canonicalize to the store's custom domain
   // if it has one, otherwise serve under the platform host.

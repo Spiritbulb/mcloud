@@ -190,12 +190,12 @@ export async function inviteMember(formData: FormData) {
     const inviteUrl = `https://www.mcloud.co.ke/invite/${invite.token}`
 
     await resend.emails.send({
-        from: 'Menengai Cloud <noreply@menengai.cloud>',
+        from: 'Menengai Cloud <noreply@mcloud.co.ke>',
         to: email,
         subject: `You've been invited to join ${store?.name} on Menengai Cloud`,
         html: `
       <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-        <p style="font-size:14px;color:#6b7280;margin:0 0 24px">menengai.cloud</p>
+        <p style="font-size:14px;color:#6b7280;margin:0 0 24px">mcloud.co.ke</p>
         <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">
           You're invited to join ${store?.name}
         </h1>

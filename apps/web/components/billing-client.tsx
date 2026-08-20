@@ -3,7 +3,7 @@
 
 import type { Plan, PlanLimits } from '@/lib/plans'
 
-const BETA_URL = 'https://menengai.cloud/beta'
+const BETA_URL = 'https://mcloud.co.ke/beta'
 
 function formatLimit(limit: number): string {
     return Number.isFinite(limit) ? String(limit) : 'Unlimited'

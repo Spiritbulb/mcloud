@@ -20,18 +20,20 @@
  * is how a rename becomes a search-and-replace across the UI with a decent chance
  * of breaking a merchant's link to their own site. Import from here.
  */
+import { getSession } from '@mcloud/auth/server'
+import { getStoreHub } from '@/lib/merchant/stores'
 
-/** Canonical public origin for merchant sites. Env-overridable per environment. */
+// storefront-links.ts — stays 100% sync, safe for client components
 const SITE_ORIGIN =
   process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://app.mcloud.co.ke"
 
-/** Absolute, canonical public URL for a site. */
-export function storefrontUrl(slug: string): string {
-  return `${SITE_ORIGIN}/${slug}`
+export function storefrontUrl(slug: string, customDomain?: string | null): string {
+  if (customDomain) return `https://www.${customDomain}`
+  return`${SITE_ORIGIN}/${slug}`
 }
 
-/** Display form (no scheme) for showing the link in the UI. */
-export function storefrontDisplayUrl(slug: string): string {
+export function storefrontDisplayUrl(slug: string, customDomain?: string | null): string {
+  if (customDomain) return `https://www.${customDomain}`
   return `${SITE_ORIGIN.replace(/^https?:\/\//, "")}/${slug}`
 }
 

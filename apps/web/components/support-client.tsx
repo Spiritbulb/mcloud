@@ -102,7 +102,7 @@ const commonIssues = [
     },
     {
         title: "Not receiving emails",
-        description: "Check your spam folder and ensure no-reply@menengai.cloud is added to your safe sender list."
+        description: "Check your spam folder and ensure no-reply@mcloud.co.ke is added to your safe sender list."
     },
     {
         title: "M-Pesa integration failing",
@@ -226,7 +226,7 @@ export default function SupportClient() {
                             Our support team is always ready to assist you. Send us an email and we'll get back to you within 24 hours.
                         </p>
                         <a
-                            href="mailto:support@menengai.cloud"
+                            href="mailto:support@mcloud.co.ke"
                             className="inline-flex items-center justify-center rounded-full bg-[#425e7b] hover:bg-[#425e7b]/90 text-white px-8 py-4 text-body-large font-medium transition-all"
                         >
                             Contact us

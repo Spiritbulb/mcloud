@@ -140,11 +140,11 @@ if (!appUrl) return { error: 'App URL is not configured' }
 const inviteUrl = `${appUrl}/invite/org/${invite.token}`
     const resend = getResend()
     await resend.emails.send({
-        from: 'Menengai Cloud <noreply@menengai.cloud>',
+        from: 'Menengai Cloud <noreply@mcloud.co.ke>',
         to: email,
         subject: `You've been invited to join ${org?.name} on Menengai Cloud`,
         html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">menengai.cloud</p>
+  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">mcloud.co.ke</p>
   <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">You're invited to join ${org?.name}</h1>
   <p style="font-size:15px;color:#374151;margin:0 0 24px">${inviter?.name ?? 'Someone'} has invited you to join <strong>${org?.name}</strong> as a <strong>${role}</strong>.</p>
   <a href="${inviteUrl}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px">Accept invite →</a>

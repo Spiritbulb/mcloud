@@ -21,6 +21,12 @@ type StoreSettingsPatch = Pick<
     'name' | 'description' | 'currency' | 'timezone' | 'is_active' | 'settings' | 'logo_url'
 >
 
+export const userId = async () => {
+    const session = await getSession()
+    if (!session?.user) return null
+    return session.user.id
+}
+
 /**
  * Write a site's theme. Owner/admin only, service-role, and whitelisted against
  * THEME_SCHEMA rather than a hand-maintained list, so the form and the validator
@@ -130,3 +136,5 @@ export async function updatePageSections(
         .eq('id', page.id)
     return { error: error ? error.message : null }
 }
+
+

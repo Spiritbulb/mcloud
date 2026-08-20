@@ -11,7 +11,7 @@
  * prod during the transition, so either (and any subdomain) counts as a platform
  * host. Drop menengai.cloud here once the migration completes.
  */
-const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke', 'menengai.cloud'] as const
+const PLATFORM_APEX_DOMAINS = ['mcloud.co.ke'] as const
 
 export function isPlatformHost(host: string): boolean {
     return (
