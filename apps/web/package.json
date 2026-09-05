@@ -52,6 +52,7 @@
     "intasend-node": "^1.1.2",
     "liquidjs": "^10.25.2",
     "lucide-react": "^0.562.0",
+    "micro-key-producer": "^0.10.2",
     "motion": "^12.34.3",
     "next": "^16.2.7",
     "next-themes": "^0.4.6",

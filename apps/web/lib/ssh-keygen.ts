@@ -1,9 +1,9 @@
 // apps/web/lib/ssh-keygen.ts
-import { utils } from 'ssh2'
+import { getKeys } from 'micro-key-producer/ssh.js'
+import { randomBytes } from 'micro-key-producer/utils.js'
 
 export function generateServerKeypair(comment: string) {
-  const { public: publicKey, private: privateKey } = utils.generateKeyPairSync('ed25519', {
-    comment,
-  })
-  return { publicKey, privateKey }
+  const seed = randomBytes(32)
+  const keys = getKeys(seed, comment)
+  return { publicKey: keys.publicKey, privateKey: keys.privateKey }
 }
