@@ -8,11 +8,13 @@
 /* ============================================================
    TAILWIND v4 PREFLIGHT FIX
    ============================================================ */
-*,
-::before,
-::after {
-  border-color: rgb(var(--border));
-  box-sizing: border-box;
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: rgb(var(--border));
+    box-sizing: border-box;
+  }
 }
 
 /* ============================================================
@@ -1655,4 +1657,18 @@ body:has([data-settings-shell]) {
 
 .betaCardAnim {
   animation: betaCardIn 500ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+select[aria-hidden="true"] {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  margin: -1px !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
 }

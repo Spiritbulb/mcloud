@@ -44,7 +44,10 @@
         "REVIEW_ACCOUNT_PASSWORD",
         "HANDOFF_ENC_KEY",
         "R2_WORKER_URL",
-        "R2_AUTH_SECRET"
+        "R2_AUTH_SECRET",
+        "PALPLUSS_API_KEY",
+        "PALPLUSS_API_TOKEN",
+        "UPCLOUD_API_KEY"
       ]
     },
     "dev": {

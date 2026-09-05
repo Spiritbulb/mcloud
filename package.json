@@ -16,6 +16,13 @@
     "obsidian": "node scripts/obsidian-graph.js"
   },
   "devDependencies": {
+    "@types/ssh2": "^1.15.6",
     "turbo": "^2.5.0"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.3": true,
+    "protobufjs@7.6.6": true,
+    "unrs-resolver@1.12.2": true,
+    "ssh2@1.17.0": true
   }
 }

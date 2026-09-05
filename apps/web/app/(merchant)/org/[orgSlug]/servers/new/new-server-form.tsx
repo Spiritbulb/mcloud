@@ -4,6 +4,18 @@ import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { getPlanEurPrice } from '@/lib/pricing-dc'
 import { cn } from '@mcloud/ui/utils'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@mcloud/ui/select'
+import 'flag-icons/css/flag-icons.min.css';
+
+interface FlagProps {
+  countryCode: string; // e.g., "us", "fr", "gb" (must be lowercase ISO 3166-1 alpha-2)
+}
 
 type Zone = {
   id: string
@@ -51,91 +63,91 @@ const GREEN_ZONES = new Set([
 
 const ZONE_META: Record<string, ZoneMeta> = {
   'au-syd1': {
-    flag: '🇦🇺',
+    flag: 'au',
     country: 'Australia',
     city: 'Sydney',
     region: 'Asia-Pacific',
   },
   'de-fra1': {
-    flag: '🇩🇪',
+    flag: 'de',
     country: 'Germany',
     city: 'Frankfurt',
     region: 'Europe',
   },
   'dk-cph1': {
-    flag: '🇩🇰',
+    flag: 'dk',
     country: 'Denmark',
     city: 'Copenhagen',
     region: 'Europe',
   },
   'es-mad1': {
-    flag: '🇪🇸',
+    flag: 'es',
     country: 'Spain',
     city: 'Madrid',
     region: 'Europe',
   },
   'fi-hel1': {
-    flag: '🇫🇮',
+    flag: 'fi',
     country: 'Finland',
     city: 'Helsinki',
     region: 'Europe',
   },
   'fi-hel2': {
-    flag: '🇫🇮',
+    flag: 'fi',
     country: 'Finland',
     city: 'Helsinki',
     region: 'Europe',
   },
   'nl-ams1': {
-    flag: '🇳🇱',
+    flag: 'nl',
     country: 'Netherlands',
     city: 'Amsterdam',
     region: 'Europe',
   },
   'no-svg1': {
-    flag: '🇳🇴',
+    flag: 'no',
     country: 'Norway',
     city: 'Stavanger',
     region: 'Europe',
   },
   'pl-waw1': {
-    flag: '🇵🇱',
+    flag: 'pl',
     country: 'Poland',
     city: 'Warsaw',
     region: 'Europe',
   },
   'se-sto1': {
-    flag: '🇸🇪',
+    flag: 'se',
     country: 'Sweden',
     city: 'Stockholm',
     region: 'Europe',
   },
   'sg-sin1': {
-    flag: '🇸🇬',
+    flag: 'sg',
     country: 'Singapore',
     city: 'Singapore',
     region: 'Asia-Pacific',
   },
   'uk-lon1': {
-    flag: '🇬🇧',
+    flag: 'gb',
     country: 'United Kingdom',
     city: 'London',
     region: 'Europe',
   },
   'us-chi1': {
-    flag: '🇺🇸',
+    flag: 'us',
     country: 'United States',
     city: 'Chicago',
     region: 'North America',
   },
   'us-nyc1': {
-    flag: '🇺🇸',
+    flag: 'us',
     country: 'United States',
     city: 'New York',
     region: 'North America',
   },
   'us-sjo1': {
-    flag: '🇺🇸',
+    flag: 'us',
     country: 'United States',
     city: 'San Jose',
     region: 'North America',
@@ -179,7 +191,7 @@ const OS_FAMILIES = [
     key: 'almalinux',
     label: 'AlmaLinux',
     recommended: false,
-    icon: '/almalinux-logo.png',
+    icon: '/almaLinux-logo.png',
   },
 ] as const
 
@@ -824,12 +836,12 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="mx-auto max-w-6xl pb-28 lg:pb-8"
+      className="mx-auto max-w-6xl"
     >
 
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="min-w-0 space-y-10">
-          <section className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 sm:p-6">
+          <section className="mt-4">
             <SectionHeading
               eyebrow="01 · Server details"
               title="Name your server"
@@ -852,7 +864,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   required
                   placeholder="Production API"
                   autoComplete="off"
-                  className="w-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
+                  className="w-full bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
                 />
 
                 <p className="mt-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
@@ -877,7 +889,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
+                  className="w-full bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
                 />
 
                 <p className="mt-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
@@ -887,21 +899,21 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 sm:p-6">
+          <section className="mt-4">
             <SectionHeading
               eyebrow="02 · Location"
               title="Choose where your server runs"
               description="Start with the closest recommended region for Kenya, or select another location based on your customers, services, or compliance needs."
               aside={
-                <span className="hidden items-center gap-1.5 rounded-full bg-green-50 px-2.5 py-1 text-[11px] font-medium text-green-700 sm:flex">
-                  <MSO icon="eco" className="text-[14px]" />
+                <span className="hidden items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-green-700 sm:flex">
+                  <MSO icon="eco" className="text-[14px] pb-1" />
                   Green
                 </span>
               }
             />
 
             <div className="mt-6">
-              <div className="grid gap-3 sm:grid-cols-3">
+              <div className="grid gap-3 sm:grid-rows-3">
                 {recommendedZones.map((currentZone) => {
                   const meta = ZONE_META[currentZone.id]
                   const isSelected = zone === currentZone.id
@@ -915,17 +927,18 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                       onClick={() => setZone(currentZone.id)}
                       aria-pressed={isSelected}
                       className={cn(
-                        'relative min-h-[144px] rounded-2xl border p-4 text-left transition-all',
+                        'relative min-h-[80px] border-2 p-4 text-left transition-all',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                         isSelected
-                          ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)] shadow-sm'
-                          : 'border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)]/60 hover:shadow-sm',
+                          ? 'border-[var(--md-sys-color-primary)]'
+                          : 'border-[var(--md-sys-color-outline-variant)] hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-sm',
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
-                        <span className="text-2xl leading-none">
-                          {meta?.flag ?? '🌍'}
-                        </span>
+                        <span
+  className={cn('fi', meta?.flag ? `fi-${meta.flag}` : '', 'w-6 h-4')}
+  aria-hidden="true"
+/>
 
                         <span
                           className={cn(
@@ -939,14 +952,12 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             <span className="h-2.5 w-2.5 rounded-full bg-[var(--md-sys-color-primary)]" />
                           )}
                         </span>
+                        
                       </div>
 
+                    <div className="flex justify-between">
                       <p className="mt-4 text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
                         {meta?.city ?? currentZone.description}
-                      </p>
-
-                      <p className="mt-0.5 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-                        {meta?.country ?? currentZone.id.toUpperCase()}
                       </p>
 
                       <div className="mt-3">
@@ -964,12 +975,13 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                           </span>
                         )}
                       </div>
+                    </div>
                     </button>
                   )
                 })}
               </div>
 
-              <div className="mt-4 rounded-xl bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
+              <div className="mt-4 bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
                 <div className="flex items-start gap-2.5">
                   <MSO
                     icon="info"
@@ -990,7 +1002,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                     type="button"
                     onClick={() => setShowAllLocations((current) => !current)}
                     aria-expanded={showAllLocations}
-                    className="flex items-center gap-1.5 rounded-lg px-2 py-1.5 text-[12px] font-medium text-[var(--md-sys-color-primary)] transition-colors hover:bg-[var(--md-sys-color-primary-container)]"
+                    className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] font-medium text-[var(--md-sys-color-primary)] transition-colors hover:bg-[var(--md-sys-color-primary-container)] cursor-pointer"
                   >
                     <MSO
                       icon={
@@ -1017,16 +1029,17 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             onClick={() => setZone(currentZone.id)}
                             aria-pressed={isSelected}
                             className={cn(
-                              'flex items-center gap-3 rounded-xl border p-3 text-left transition-colors',
+                              'flex items-center gap-3 border p-3 text-left transition-colors cursor-pointer',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                               isSelected
                                 ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]'
                                 : 'border-[var(--md-sys-color-outline-variant)] hover:border-[var(--md-sys-color-primary)]/60 hover:bg-[var(--md-sys-color-surface-variant)]',
                             )}
                           >
-                            <span className="text-xl leading-none">
-                              {meta?.flag ?? '🌍'}
-                            </span>
+<span
+  className={cn('fi shrink-0', meta?.flag ? `fi-${meta.flag}` : '', 'w-5 h-4')}
+  aria-hidden="true"
+/>
 
                             <span className="min-w-0 flex-1">
                               <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
@@ -1059,7 +1072,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 sm:p-6">
+          <section className="mt-4">
             <SectionHeading
               eyebrow="03 · Compute"
               title="Choose a server plan"
@@ -1067,7 +1080,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             />
 
             <div
-              className="mt-6 grid grid-cols-2 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/40 p-1"
+              className="mt-6 grid grid-cols-2 bg-[var(--md-sys-color-surface-variant)]/10 p-1"
               role="tablist"
               aria-label="Plan tier"
             >
@@ -1085,7 +1098,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                     aria-controls={`${tier.toLowerCase()}-plans-panel`}
                     onClick={() => selectPlanTier(tier)}
                     className={cn(
-                      'rounded-lg px-3 py-2.5 text-left transition-all',
+                      'px-3 py-2.5 text-left transition-all',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)]',
                       isActive
                         ? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] shadow-sm'
@@ -1126,7 +1139,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                       onClick={() => setPlan(currentPlan.name)}
                       aria-pressed={isSelected}
                       className={cn(
-                        'relative min-h-[190px] rounded-2xl border p-4 text-left transition-all',
+                        'relative min-h-[190px] border p-4 text-left transition-all',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                         isSelected
                           ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)] shadow-sm'
@@ -1219,7 +1232,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             </div>
           </section>
 
-          <section className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 sm:p-6">
+          <section className="mt-4">
             <SectionHeading
               eyebrow="04 · Operating system"
               title="Choose your operating system"
@@ -1239,7 +1252,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                     onClick={() => selectOsFamily(family.key)}
                     aria-pressed={isSelected}
                     className={cn(
-                      'relative flex min-h-[96px] flex-col items-start rounded-xl border p-3 text-left transition-all',
+                      'relative flex min-h-[96px] flex-col items-start border p-3 text-left transition-all',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                       isSelected
                         ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]'
@@ -1282,22 +1295,25 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   Version
                 </label>
 
-                <select
-                  id="template-version"
+                <Select
                   value={templateUuid}
-                  onChange={(event) => setTemplateUuid(event.target.value)}
-                  className="w-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[13px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
+                  onValueChange={(value) => setTemplateUuid(value)}
                 >
-                  {versionsForFamily.map((template) => (
-                    <option key={template.uuid} value={template.uuid}>
-                      {template.title}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger id="template-version" className="w-full" size="sm">
+                    <SelectValue placeholder="Select a version" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {versionsForFamily.map((template) => (
+                      <SelectItem key={template.uuid} value={template.uuid} className="text-[13px] text-[var(--md-sys-color-on-surface)]">
+                        {template.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             )}
 
-            <div className="mt-5 flex items-start gap-2 rounded-xl bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
+            <div className="mt-5 flex items-start gap-2 bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
               <MSO
                 icon="vpn_key"
                 className="mt-0.5 text-[16px] text-[var(--md-sys-color-primary)]"
@@ -1322,18 +1338,18 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
           <button
             type="submit"
             disabled={submitting || !formIsComplete}
-            className="hidden w-full items-center justify-center gap-2 rounded-xl bg-[var(--md-sys-color-primary)] px-5 py-3.5 text-[14px] font-semibold text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
+            className="hidden w-full items-center justify-center gap-2 bg-[var(--md-sys-color-primary)] px-5 py-3.5 text-[14px] font-semibold text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
           >
+            {submitting ? 'Creating server…' : 'Create server'}
             <MSO
-              icon={submitting ? 'progress_activity' : 'add_circle'}
+              icon={submitting ? 'progress_activity' : 'arrow_right_alt'}
               className={cn('text-[19px]', submitting && 'animate-spin')}
             />
-            {submitting ? 'Creating server…' : 'Create server'}
           </button>
         </div>
 
         <aside className="hidden w-full lg:sticky lg:top-6 lg:block">
-          <div className="overflow-hidden rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] shadow-sm">
+          <div className="overflow-hidden border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] shadow-sm">
             <div className="bg-[var(--md-sys-color-primary-container)] px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -1345,7 +1361,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   </p>
                 </div>
 
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--md-sys-color-primary)]">
                   <MSO icon="dns" className="text-[20px]" />
                 </span>
               </div>
@@ -1436,7 +1452,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
         </aside>
       </div>
 
-      <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
+       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate text-[11px] text-[var(--md-sys-color-on-surface-variant)]">

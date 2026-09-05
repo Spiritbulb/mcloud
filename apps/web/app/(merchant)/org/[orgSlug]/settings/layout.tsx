@@ -47,8 +47,7 @@ export default async function OrgPagesLayout({
     }
 
     return (
-        <OrgShell org={org} user={user} orgSlug={orgSlug}>
             {children}
-        </OrgShell>
+        
     )
 }

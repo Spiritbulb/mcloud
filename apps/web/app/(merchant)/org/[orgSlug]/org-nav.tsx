@@ -227,7 +227,7 @@ function SidebarShell({
 
     return (
         <aside className={cn(
-            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md bg-card',
+            'flex flex-col h-full ml-2 rounded-md bg-card',
             'transition-all duration-200 ease-out',
             railMode ? 'w-[56px]' : 'w-[220px]'
         )}>

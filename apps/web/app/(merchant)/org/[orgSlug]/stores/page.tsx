@@ -31,8 +31,7 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
     if (data.error === 'Not a member') notFound()
 
     return (
-        <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
             <StoresClient orgId={data.orgId!} orgSlug={orgSlug} stores={data.stores.map(s => ({ ...s, created_at: s.created_at ?? '' }))} role={data.role} />
-        </OrgShell>
+        
     )
 }

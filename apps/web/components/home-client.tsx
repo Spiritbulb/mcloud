@@ -419,7 +419,7 @@ const SERVER_FEATURES: Feature[] = [
         body: 'Infrastructure should not come with an invoice that surprises you at the end of the month. Start with the capacity you need now, then move up when the work earns it.',
         image: '/undraw_pay-with-credit-card_77g6.svg',
         points: [
-            'Cloud servers from KES 653 per month',
+            'Cloud servers from KES 700 per month',
             'Simple monthly billing you can plan around',
             'Choose more capacity when your workload needs it',
         ],
@@ -463,7 +463,7 @@ const SERVER_FAQS: FaqEntry[] = [
     },
     {
         q: 'How much does a cloud server cost?',
-        a: 'Cloud-server plans begin from KES 653 per month. The right plan depends on the memory, compute, storage, bandwidth, operating-system, support, and deployment requirements of your workload.',
+        a: 'Cloud-server plans begin from KES 700 per month. The right plan depends on the memory, compute, storage, bandwidth, operating-system, support, and deployment requirements of your workload.',
     },
 ]
 
@@ -729,7 +729,7 @@ function CloudServers() {
                                         Serious infrastructure. <br/> A sensible place to begin.
                                     </h2>
                                     <p className="max-w-xl text-[16px] leading-relaxed text-muted-foreground">
-                                        Your first cloud server starts from KES 653 per month. Choose the capacity your project needs today, without turning one deploy into a complicated enterprise-cloud decision.
+                                        Your first cloud server starts from KES 700 per month. Choose the capacity your project needs today, without turning one deploy into a complicated enterprise-cloud decision.
                                     </p>
                                 </div>
                                 <div className="space-y-5 md:justify-self-end md:text-right">
@@ -792,7 +792,7 @@ function CloudServers() {
                                 Ask a question
                             </Link>
                         </div>
-                        <p className="text-[12px] text-muted-foreground/60">Cloud servers from KES 653 per month.</p>
+                        <p className="text-[12px] text-muted-foreground/60">Cloud servers from KES 700 per month.</p>
                     </FadeIn>
                 </div>
             </section>
@@ -941,7 +941,7 @@ export default function HomeClient() {
                             </div>
 
                             <p className="text-[12px] text-muted-foreground/65">
-                                Cloud servers from KES 653/month. Storefronts are free to start.
+                                Cloud servers from KES 700/month. Storefronts are free to start.
                             </p>
                         </div>
 

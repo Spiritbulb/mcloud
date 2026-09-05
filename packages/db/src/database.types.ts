@@ -2354,6 +2354,7 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          mpesa_number: string | null
           name: string | null
           role: string
           updated_at: string | null
@@ -2363,6 +2364,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id: string
+          mpesa_number?: string | null
           name?: string | null
           role?: string
           updated_at?: string | null
@@ -2372,6 +2374,7 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          mpesa_number?: string | null
           name?: string | null
           role?: string
           updated_at?: string | null

@@ -297,6 +297,7 @@ export async function deleteStore(storeId: string): Promise<{ error?: string }> 
 export async function completeOnboarding(formData: FormData) {
     const orgName = formData.get('orgName') as string
     const fullName = formData.get('fullName') as string | null
+    const mpesaNumber = formData.get('mpesaNumber') as string | null
 
     const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
@@ -307,6 +308,7 @@ export async function completeOnboarding(formData: FormData) {
     if (fullName) {
         await supabase.from('users').upsert({
             id: userId, email, name: fullName, avatar_url: picture,
+            mpesa_number: mpesaNumber || null,
             updated_at: new Date().toISOString(),
         }, { onConflict: 'id' })
     }

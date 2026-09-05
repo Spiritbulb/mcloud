@@ -32,7 +32,6 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
     if (!data.currentRole) redirect(`/org/${orgSlug}`)
 
     return (
-        <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
             <OrgMembersClient
                 orgId={data.orgId!}
                 orgSlug={orgSlug}
@@ -40,6 +39,5 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
                 invites={data.invites}
                 currentRole={data.currentRole}
             />
-        </OrgShell>
     )
 }

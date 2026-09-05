@@ -1,9 +1,9 @@
 // apps/web/lib/ssh-keygen.ts
-import ssh from 'ed25519-keygen/ssh'
-import { randomBytes } from 'ed25519-keygen/utils'
+import { utils } from 'ssh2'
 
 export function generateServerKeypair(comment: string) {
-  const seed = randomBytes(32)
-  const { publicKey, privateKey } = ssh(seed, comment)
+  const { public: publicKey, private: privateKey } = utils.generateKeyPairSync('ed25519', {
+    comment,
+  })
   return { publicKey, privateKey }
 }

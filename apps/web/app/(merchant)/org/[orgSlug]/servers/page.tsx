@@ -60,7 +60,7 @@ export default async function ServersPage({
     }
 
     return (
-        <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
+        <>
             <div className="max-w-6xl mx-auto space-y-6 mb-6">
         {/* Hero — provisioning is the headline action now */}
             <section className="relative overflow-hidden ">
@@ -126,6 +126,6 @@ export default async function ServersPage({
                 <ServersTable orgSlug={orgSlug} servers={servers} canManage={canManage} />
             )}
         </div>
-        </OrgShell>
+        </>
     )
 }
