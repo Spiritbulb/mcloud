@@ -6,13 +6,17 @@ import { Input } from '@mcloud/ui/input'
 import { Label } from '@mcloud/ui/label'
 import { Card, CardContent } from '@mcloud/ui/card'
 import { Check, CheckCircle, Loader2 } from 'lucide-react'
+import { ProGateInline } from '../pro'
+import type { Plan } from '@/lib/plans'
 
 export default function DomainSettings({
     storeId,
     currentDomain,
+    plan,
 }: {
     storeId: string
     currentDomain: string | null
+    plan: Plan
 }) {
     const [domain, setDomain] = useState(currentDomain ?? '')
     const [saving, setSaving] = useState(false)
@@ -50,6 +54,13 @@ export default function DomainSettings({
     }, [])
 
     return (
+        
+        <ProGateInline
+                    plan={plan}
+                    requires="hobby"
+                    feature="Add a custom domain"
+                    description="Manage your custom domain on the Hobby plan and higher."
+        >
         <div className="space-y-6">
             <div>
                 <h2 className="text-base font-semibold text-foreground">Custom Domain</h2>
@@ -131,5 +142,6 @@ export default function DomainSettings({
                 </Card>
             )}
         </div>
+        </ProGateInline>
     )
 }

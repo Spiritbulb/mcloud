@@ -86,7 +86,7 @@ external redirect. `/auth/login` returns 200 and renders a local form — `nav /
 stays on `localhost:3000`. `/auth/logout` is the WorkOS sign-out route. (The old Auth0 /
 `auth.menengai.cloud` redirect is gone.)
 
-**Auth-gated pages** (`/admin`, `/org/...`, `/onboarding`) need a real WorkOS session cookie
+**Auth-gated pages** (`/admin`, `/org/...`, `/org/onboarding`) need a real WorkOS session cookie
 — you can't screenshot them headless without one; they redirect to `/auth/login`. Use the
 public pages (`/`, `/docs`, `/changelog`, `/support`, and storefront `/store/<slug>`) for UI
 verification, or do the magic-code login flow manually first.

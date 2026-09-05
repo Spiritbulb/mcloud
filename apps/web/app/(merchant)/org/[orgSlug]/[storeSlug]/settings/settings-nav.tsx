@@ -347,7 +347,7 @@ function StoreSwitcher({
             <button
                 onClick={() => hasMultiple && setOpen(v => !v)}
                 className={cn(
-                    'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100 bg-[rgb(var(--background))]',
+                    'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100',
                     hasMultiple && 'hover:bg-[var(--md-sys-color-surface-variant)] cursor-pointer'
                 )}
             >
@@ -391,8 +391,8 @@ function UtilityItems({
 }) {
     const router = useRouter()
     const items = [
-        { icon: 'notifications', label: 'Notifications', badge: notificationCount, href: settingsPath(orgSlug, store.slug, 'notifications') },
-        { icon: 'help_outline', label: 'Support', href: '/support' },
+        { icon: 'phone', label: 'Contact', href: 'https://mcloud.co.ke/contact' },
+        { icon: 'help_outline', label: 'Support', href: 'https://mcloud.co.ke/support' },
     ]
 
     return (
@@ -410,20 +410,10 @@ function UtilityItems({
                     >
                         <span className="material-symbols-outlined text-[18px] shrink-0 relative">
                             {item.icon}
-                            {item.badge != null && item.badge > 0 && (
-                                <span className="absolute -top-1 -right-1 flex items-center justify-center w-4 h-4 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] text-[9px] font-bold leading-none">
-                                    {item.badge > 9 ? '9+' : item.badge}
-                                </span>
-                            )}
                         </span>
                         {!railMode && (
                             <>
                                 <span className="flex-1 text-left text-[13px]">{item.label}</span>
-                                {item.badge != null && item.badge > 0 && (
-                                    <span className="flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] text-[10px] font-bold">
-                                        {item.badge > 9 ? '9+' : item.badge}
-                                    </span>
-                                )}
                             </>
                         )}
                     </button>

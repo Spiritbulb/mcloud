@@ -1,6 +1,7 @@
 import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import PaymentSettings from '@/components/store/payment-settings'
+import { getStorePlan } from '@/lib/plans-server';
 
 export default async function PaymentsPage({
     params,
@@ -9,7 +10,8 @@ export default async function PaymentsPage({
 }) {
     const { storeSlug: slug } = await params
     const store = await getStore(slug)
+    
     if (!store) notFound()
-
-    return <PaymentSettings storeId={store.id} slug={slug} />
+    const plan = await getStorePlan(store.id)
+    return <PaymentSettings storeId={store.id} slug={slug} plan={plan} />
 }

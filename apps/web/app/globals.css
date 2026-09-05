@@ -24,7 +24,7 @@
 :root {
   /* ── Core semantic tokens (Tailwind / shadcn-style) ── */
   --background: 252 252 255;
-  --foreground: 26 28 30;
+  --foreground: 12 13 14;
   /* --md-sys-color-on-surface */
 
   --card: 255 255 255;
@@ -88,7 +88,7 @@
 }
 
 .dark {
-  --background: 26 28 30;
+  --background: 12 13 14;
   --foreground: 226 226 229;
 
   --card: 12 14 17;
@@ -174,7 +174,7 @@
   --md-sys-color-on-error-container: rgb(147 0 10);
 
   --md-sys-color-background: rgb(252 252 255);
-  --md-sys-color-on-background: rgb(26 28 30);
+  --md-sys-color-on-background: rgb(12, 13, 14);
 
   --md-sys-color-surface: rgb(252 252 255);
   --md-sys-color-on-surface: rgb(26 28 30);
@@ -755,4 +755,904 @@ body:has([data-settings-shell]) {
   border-radius: 9999px;
   letter-spacing: 0.05em;
   text-transform: uppercase;
+}
+
+@reference "tailwindcss";
+
+
+.home {
+  --vps-accent: #5fd0e0;
+  --store-accent: #7aa2e0;
+
+  min-height: 100dvh;
+  overflow-x: hidden;
+  color: var(--foreground);
+  background: var(--background);
+}
+
+.divider {
+  border-top: 1px solid var(--border);
+}
+
+/* Shared layout */
+
+.container {
+  width: 100%;
+  max-width: 64rem;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+}
+
+.containerNarrow {
+  max-width: 48rem;
+}
+
+.containerFaq {
+  max-width: 42rem;
+}
+
+.containerCta {
+  max-width: 56rem;
+}
+
+.section {
+  padding-block: 6rem;
+}
+
+.sectionMuted {
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+.sectionStorefront {
+  background: color-mix(in srgb, var(--foreground) 1.5%, transparent);
+}
+
+@media (min-width: 768px) {
+  .container {
+    padding-inline: 3rem;
+  }
+
+  .section {
+    padding-block: 8rem;
+  }
+}
+
+/* Headings */
+
+.sectionHeading {
+  margin-bottom: 3.5rem;
+}
+
+.sectionHeadingCenter {
+  margin-inline: auto;
+  text-align: center;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgb(var(--muted-foreground));
+}
+
+.eyebrowVps {
+  color: var(--vps-accent);
+}
+
+.eyebrowStore {
+  color: var(--store-accent);
+}
+
+.sectionTitle {
+  max-width: 42rem;
+  margin-top: 0.75rem;
+  color: var(--foreground);
+  font-size: 2.2rem;
+  font-weight: 700;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+}
+
+.sectionHeadingCenter .sectionTitle {
+  margin-inline: auto;
+}
+
+.sectionDescription {
+  max-width: 36rem;
+  padding-top: 0.25rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.sectionHeadingCenter .sectionDescription {
+  margin-inline: auto;
+}
+
+@media (min-width: 768px) {
+  .sectionTitle {
+    font-size: 2.8rem;
+  }
+}
+
+/* Hero */
+
+.hero {
+  position: relative;
+  overflow: hidden;
+}
+
+.heroGlow,
+.ctaGlow {
+  position: absolute;
+  left: 50%;
+  pointer-events: none;
+  border-radius: 9999px;
+  transform: translateX(-50%);
+  background: var(--vps-accent);
+}
+
+.heroGlow {
+  top: 0;
+  width: 56.25rem;
+  height: 31.25rem;
+  opacity: 0.08;
+  filter: blur(160px);
+}
+
+.heroGrid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.03;
+  color: var(--foreground);
+  background-image:
+    linear-gradient(currentColor 1px, transparent 1px),
+    linear-gradient(90deg, currentColor 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  padding-top: 3.5rem;
+  padding-bottom: 4rem;
+}
+
+.heroLayout {
+  display: grid;
+  align-items: center;
+  gap: 3rem;
+}
+
+.heroCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+}
+
+.heroTitle {
+  color: var(--foreground);
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.02;
+  letter-spacing: -0.04em;
+}
+
+.heroDescription {
+  max-width: 32.5rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 1.0625rem;
+  line-height: 1.65;
+}
+
+.heroMeta {
+  padding-top: 0.25rem;
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 50%, transparent);
+  font-size: 0.8125rem;
+}
+
+@media (min-width: 768px) {
+  .heroContent {
+    padding-top: 5rem;
+    padding-bottom: 6rem;
+  }
+
+  .heroTitle {
+    font-size: 4.2rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .heroLayout {
+    grid-template-columns: 1.05fr 0.95fr;
+    gap: 4rem;
+  }
+}
+
+/* Buttons */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.buttonPrimary,
+.buttonSecondary,
+.buttonText,
+.deployButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition:
+    color 200ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease,
+    opacity 200ms ease;
+}
+
+.buttonPrimary {
+  height: 3rem;
+  padding-inline: 1.75rem;
+  color: var(--background);
+  background: var(--foreground);
+  font-size: 0.9375rem;
+}
+
+.buttonPrimary:hover {
+  opacity: 0.9;
+}
+
+.buttonSecondary {
+  height: 3rem;
+  padding-inline: 1.5rem;
+  border: 1px solid var(--border);
+  color: rgb(var(--muted-foreground));
+  font-size: 0.9375rem;
+}
+
+.buttonSecondary:hover {
+  color: var(--foreground);
+}
+
+.buttonText {
+  height: 3rem;
+  padding-inline: 1.5rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 0.9375rem;
+}
+
+.buttonText:hover {
+  color: var(--foreground);
+}
+
+.buttonIcon {
+  font-size: 1.0625rem;
+}
+
+/* Spec terminal */
+
+.specReadout {
+  position: relative;
+  width: 100%;
+  max-width: 26.25rem;
+  margin-inline: auto;
+}
+
+.terminal {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.terminalHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+.terminalDot {
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 9999px;
+  background: color-mix(in srgb, var(--foreground) 15%, transparent);
+}
+
+.terminalHost {
+  margin-left: 0.5rem;
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 50%, transparent);
+  font-size: 0.6875rem;
+  letter-spacing: 0.025em;
+}
+
+.terminalBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1.25rem;
+}
+
+.readoutRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+}
+
+.readoutLabel {
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 60%, transparent);
+}
+
+.readoutValue {
+  color: var(--foreground);
+  font-weight: 500;
+}
+
+.provisionStatus {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-top: 0.5rem;
+  margin-top: 0.25rem;
+  border-top: 1px solid var(--border);
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 70%, transparent);
+  font-size: 0.75rem;
+}
+
+.statusDot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 9999px;
+  background: var(--vps-accent);
+}
+
+/* Feature cards */
+
+.featuresGrid {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.featureCard,
+.storePoint,
+.pricingCard,
+.faqCard,
+.betaCard {
+  border: 1px solid var(--border);
+  border-radius: 1rem;
+}
+
+.featureCard {
+  display: flex;
+  height: 100%;
+  gap: 1rem;
+  padding: 1.5rem;
+  transition:
+    border-color 200ms ease,
+    background-color 200ms ease;
+}
+
+.featureCard:hover {
+  border-color: color-mix(in srgb, var(--foreground) 20%, var(--border));
+  background: color-mix(in srgb, var(--foreground) 4%, transparent);
+}
+
+.iconBox {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.75rem;
+  background: color-mix(in srgb, var(--vps-accent) 12%, transparent);
+}
+
+.iconBoxStore {
+  width: 2.25rem;
+  height: 2.25rem;
+  background: color-mix(in srgb, var(--store-accent) 12%, transparent);
+}
+
+.materialIcon {
+  color: var(--vps-accent);
+  font-size: 1.25rem;
+  font-variation-settings: "FILL" 0;
+}
+
+.materialIconStore {
+  color: var(--store-accent);
+  font-size: 1.125rem;
+  font-variation-settings: "FILL" 0;
+}
+
+.cardContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.cardTitle {
+  color: var(--foreground);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}
+
+.cardBody {
+  color: rgb(var(--muted-foreground));
+  font-size: 0.8125rem;
+  line-height: 1.65;
+}
+
+@media (min-width: 768px) {
+  .featuresGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .featuresGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+/* Pricing */
+
+.pricingGrid {
+  display: grid;
+  gap: 1rem;
+}
+
+.pricingCard {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 1.25rem;
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+.pricingCardPopular {
+  background: color-mix(in srgb, var(--foreground) 6%, transparent);
+}
+
+.popularBadge {
+  position: absolute;
+  top: -0.625rem;
+  left: 1.5rem;
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  color: var(--background);
+  background: var(--vps-accent);
+  font-size: 0.625rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.planName {
+  color: var(--foreground);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.planPrice {
+  margin-top: 0.25rem;
+  color: var(--foreground);
+  font-size: 1.375rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.planSpecs {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  color: var(--foreground);
+  font-size: 0.8125rem;
+}
+
+.planSpec {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.planSpecLabel {
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 60%, transparent);
+}
+
+.planSpecValue {
+  font-weight: 500;
+}
+
+.deployButton {
+  height: 2.5rem;
+  padding-inline: 1rem;
+  margin-top: auto;
+  border: 1px solid var(--border);
+  color: color-mix(in srgb, var(--foreground) 80%, transparent);
+  font-size: 0.8125rem;
+}
+
+.deployButton:hover {
+  color: var(--foreground);
+}
+
+.deployButtonPopular {
+  border-color: transparent;
+  color: var(--background);
+  background: var(--foreground);
+}
+
+.deployButtonPopular:hover {
+  opacity: 0.9;
+}
+
+@media (min-width: 640px) {
+  .pricingGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .pricingGrid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* FAQ */
+
+.faqCard {
+  padding-inline: 1.5rem;
+  padding-block: 0.5rem;
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--border);
+}
+
+.faqItem:last-child {
+  border-bottom: 0;
+}
+
+.faqButton {
+  display: flex;
+  width: 100%;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding-block: 1.25rem;
+  color: inherit;
+  text-align: left;
+}
+
+.faqQuestion {
+  color: color-mix(in srgb, var(--foreground) 90%, transparent);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.faqIcon {
+  flex: none;
+  margin-top: 0.125rem;
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 70%, transparent);
+  font-size: 1.125rem;
+  user-select: none;
+}
+
+.faqAnswerWrap {
+  overflow: hidden;
+}
+
+.faqAnswer {
+  padding-bottom: 1.25rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+/* Storefront */
+
+.storefrontLayout {
+  display: grid;
+  align-items: center;
+  gap: 3rem;
+}
+
+.storeCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.storeTitle {
+  color: var(--foreground);
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.035em;
+}
+
+.storeDescription {
+  max-width: 28rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 0.9375rem;
+  line-height: 1.65;
+}
+
+.storePoints {
+  display: grid;
+  gap: 1rem;
+}
+
+.storePoint {
+  display: flex;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: color-mix(in srgb, var(--foreground) 2%, transparent);
+}
+
+@media (min-width: 768px) {
+  .storefrontLayout {
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 4rem;
+  }
+
+  .storeTitle {
+    font-size: 2.4rem;
+  }
+}
+
+/* Beta */
+
+.betaSection {
+  position: relative;
+}
+
+.betaInner {
+  padding-block: 4rem;
+}
+
+.betaCard {
+  padding: 1.5rem;
+  background: color-mix(in srgb, var(--foreground) 3%, transparent);
+}
+
+.betaLayout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.betaCopy {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.betaEyebrow {
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 60%, transparent);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.betaTitle {
+  color: var(--foreground);
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.betaDescription {
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 70%, transparent);
+  font-size: 0.875rem;
+  line-height: 1.65;
+}
+
+.betaForm {
+  width: 100%;
+}
+
+.betaHelp {
+  margin-top: 0.75rem;
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 50%, transparent);
+  font-size: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (min-width: 768px) {
+  .betaInner {
+    padding-block: 5rem;
+  }
+
+  .betaCard {
+    padding: 2rem;
+  }
+
+  .betaLayout {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .betaCopy {
+    max-width: 24rem;
+  }
+
+  .betaForm {
+    width: 22.5rem;
+  }
+
+  .betaTitle {
+    font-size: 1.375rem;
+  }
+}
+
+/* Final CTA */
+
+.cta {
+  position: relative;
+  overflow: hidden;
+  padding-block: 8rem;
+}
+
+.ctaGlow {
+  bottom: 0;
+  width: 43.75rem;
+  height: 25rem;
+  opacity: 0.1;
+  filter: blur(100px);
+}
+
+.ctaContent {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+}
+
+.ctaStack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.75rem;
+}
+
+.ctaTitle {
+  color: var(--foreground);
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+}
+
+.ctaDescription {
+  max-width: 32rem;
+  color: rgb(var(--muted-foreground));
+  font-size: 1rem;
+  line-height: 1.65;
+}
+
+.ctaActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding-top: 0.5rem;
+}
+
+.ctaMeta {
+  color: color-mix(in srgb, rgb(var(--muted-foreground)) 60%, transparent);
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .ctaActions {
+    flex-direction: row;
+  }
+}
+
+@media (min-width: 768px) {
+  .cta {
+    padding-block: 10rem;
+  }
+
+  .ctaTitle {
+    font-size: 3.6rem;
+  }
+}
+
+/* Generic fade-in-up, used by the FadeIn wrapper via IntersectionObserver */
+.fadeIn {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 500ms ease-out, transform 500ms ease-out;
+}
+
+.fadeIn.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Hero entrance (one-time, above the fold — kept as a real animation, just CSS) */
+@keyframes heroCopyIn {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes heroArtIn {
+  from { opacity: 0; transform: translateY(12px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.heroCopy {
+  animation: heroCopyIn 600ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+.heroArt {
+  animation: heroArtIn 700ms cubic-bezier(0.25, 0.1, 0.25, 1) 100ms both;
+}
+
+/* Spec terminal row stagger — animationDelay set inline per row */
+@keyframes rowIn {
+  from { opacity: 0; transform: translateX(-8px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.specRow {
+  animation: rowIn 400ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
+}
+
+/* FAQ — grid-rows trick, no JS height measurement needed */
+.faqAnswerWrap {
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 220ms cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.faqAnswerWrap.open {
+  grid-template-rows: 1fr;
+}
+
+.faqAnswerInner {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.faqIconOpen {
+  transform: rotate(45deg);
+}
+
+.faqIcon {
+  transition: transform 200ms ease;
+}
+
+/* Beta card entrance (was whileInView motion.div) */
+@keyframes betaCardIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.betaCardAnim {
+  animation: betaCardIn 500ms cubic-bezier(0.25, 0.1, 0.25, 1) both;
 }

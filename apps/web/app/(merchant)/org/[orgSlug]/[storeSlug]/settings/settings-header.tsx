@@ -67,7 +67,7 @@ export function SettingsHeader({
     const isPro = store?.is_pro ?? false
 
     return (
-        <header className="shrink-0 h-[57px] border-b border-border bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
+        <header className="shrink-0 h-[57px] border-b border-border z-40 flex items-center px-4 md:px-5 gap-3">
 
             {/* Mobile menu button */}
             <button

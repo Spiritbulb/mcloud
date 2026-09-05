@@ -432,7 +432,7 @@ export default function PickerClient({ stores, orgs, userName }: {
                                 />
                             ))}
                             {org.canManage && (
-                                <AddTile label="Add site" sub="In this org" onClick={() => router.push(`/onboarding?org=${org.id}`)} />
+                                <AddTile label="Add site" sub="In this org" onClick={() => router.push(`/org/onboarding?org=${org.id}`)} />
                             )}
                         </Section>
                     )
@@ -447,7 +447,7 @@ export default function PickerClient({ stores, orgs, userName }: {
                                 orgs={orgs} onPick={handlePick} onMove={handleMove} onDelete={setDeleteTarget}
                             />
                         ))}
-                        <AddTile label="New site" sub="Free forever" onClick={() => router.push('/onboarding')} />
+                        <AddTile label="New site" sub="Free forever" onClick={() => router.push('/org/onboarding')} />
                     </Section>
                 )}
 

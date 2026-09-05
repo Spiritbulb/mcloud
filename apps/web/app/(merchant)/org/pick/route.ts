@@ -20,5 +20,5 @@ export async function GET(request: NextRequest) {
         .maybeSingle()
 
     const orgSlug = firstOrg ? (firstOrg.org as { slug?: string } | null)?.slug : null
-    return NextResponse.redirect(new URL(orgSlug ? `/org/${orgSlug}` : '/onboarding', request.url))
+    return NextResponse.redirect(new URL(orgSlug ? `/org/${orgSlug}` : '/org/onboarding', request.url))
 }

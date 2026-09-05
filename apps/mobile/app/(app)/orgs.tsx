@@ -79,7 +79,7 @@ export default function PickerScreen() {
   // New user with no orgs/stores → onboarding
   React.useEffect(() => {
     if (!loading && data && orgs.length === 0 && otherStores.length === 0) {
-      router.replace('/(app)/onboarding' as never)
+      router.replace('/(app)/org/onboarding' as never)
     }
   }, [loading, data, orgs.length, otherStores.length, router])
 

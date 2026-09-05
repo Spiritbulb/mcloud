@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import { SettingsSection, SettingsField, SaveBar, SaveToast } from '../../settings-primitives'
 import { updateStoreSettings } from '../../actions'
+import { ProGateInline } from '@/components/pro'
+import { Plan } from '@/lib/plans'
 
-export default function SocialSettingsPage({ store }: { store: any }) {
+export default function SocialSettingsPage({ store, plan }: { store: any; plan: Plan }) {
     const links = store.settings?.socialLinks ?? {}
     const [instagram, setInstagram] = useState(links.instagram ?? '')
     const [tiktok, setTiktok] = useState(links.tiktok ?? '')
@@ -39,7 +41,13 @@ export default function SocialSettingsPage({ store }: { store: any }) {
     ]
 
     return (
-        <>
+        
+        <ProGateInline
+                    plan={plan}
+                    requires="hobby"
+                    feature="Link your social media accounts"
+                    description="Manage your social media accounts on the Hobby plan and higher."
+        >
             <SettingsSection title="Social links" description="Show up where your audience already is">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                     {fields.map((f) => (
@@ -51,6 +59,7 @@ export default function SocialSettingsPage({ store }: { store: any }) {
             </SettingsSection>
             <SaveBar onSave={handleSave} saving={saving} />
             <SaveToast saving={saving} saved={saved} />
-        </>
+        </ProGateInline>
+        
     )
 }

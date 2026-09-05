@@ -3,7 +3,7 @@ import Link from 'next/link'
 export function Footer() {
     return (
         <footer className="border-t border-border bg-background">
-            <div className="container mx-auto px-6 md:px-12 max-w-6xl py-10">
+            <div className="mx-auto px-4 md:px-2 max-w-6xl py-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                     <div className="col-span-2 md:col-span-1 space-y-3">
                         <Link href="/" className="flex items-center gap-2">
@@ -19,8 +19,8 @@ export function Footer() {
                         <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">Platform</p>
                         <ul className="space-y-2">
                             {[
-                                { href: '/auth/sign-up', label: 'Storefront' },
-                                { href: '/contact', label: 'Trading Apps' },
+                                { href: '/org/stores?new=1', label: 'Create storefront' },
+                                { href: '/org/servers', label: 'Deploy server' },
                             ].map(({ href, label }) => (
                                 <li key={href}>
                                     <Link href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">

@@ -20,8 +20,8 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
     const logo = '/logo-light.svg'
 
     return (
-        <header className="sticky top-0 z-50 border-b border-border bg-background/80 backdrop-blur-md">
-            <div className="container mx-auto px-6 md:px-12 max-w-6xl">
+        <header className="sticky top-0 z-50 border-b border-border bg-background">
+            <div className="mx-auto px-6 md:px-12 max-w-7xl">
                 <div className="flex h-14 items-center justify-between">
                     {/* Logo */}
                     <Link href="/" className="flex items-center gap-2.5">

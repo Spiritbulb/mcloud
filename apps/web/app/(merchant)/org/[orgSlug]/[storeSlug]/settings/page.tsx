@@ -4,7 +4,7 @@ import { getStoreOverview } from '@/lib/store-data'
 import SettingsHomeClient from './settings-home-client'
 
 export const metadata: Metadata = {
-    title: 'Settings — Overview',
+    title: 'Overview',
 }
 
 export default async function SettingsHomePage({

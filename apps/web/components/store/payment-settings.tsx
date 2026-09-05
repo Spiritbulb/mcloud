@@ -8,6 +8,8 @@ import { Badge } from '@mcloud/ui/badge'
 import { Separator } from '@mcloud/ui/separator'
 import { Switch } from '@mcloud/ui/switch'
 import { Check, ExternalLink, Phone, Loader2, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
+import { Plan } from '@/lib/plans'
+import { ProGateInline } from '../pro'
 
 interface IntegrationData {
     enabled?: boolean
@@ -17,9 +19,10 @@ interface IntegrationData {
 interface PaymentSettingsProps {
     storeId: string
     slug: string
+    plan: Plan
 }
 
-export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps) {
+export default function PaymentSettings({ storeId, slug, plan }: PaymentSettingsProps) {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState<string | null>(null)
     const [saved, setSaved] = useState<string | null>(null)
@@ -239,6 +242,12 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
 
             {/* Daraja guided setup sheet */}
             {darajaSheetOpen && (
+                <ProGateInline
+                    plan={plan}
+                    requires="hobby"
+                    feature="Automate your M-PESA payments"
+                    description="Manage your M-PESA payments on the Hobby plan and higher."
+        >
                 <div className="fixed inset-0 z-50 flex">
                     {/* Backdrop */}
                     <div className="flex-1 bg-black/40" onClick={() => setDarajaSheetOpen(false)} />
@@ -398,6 +407,7 @@ export default function PaymentSettings({ storeId, slug }: PaymentSettingsProps)
                         </div>
                     </div>
                 </div>
+                </ProGateInline>
             )}
 
 

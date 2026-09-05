@@ -502,12 +502,11 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
                             openExternal(storefrontUrl(store.slug))
                         }}
                         className={cn(
-                            'shrink-0 inline-flex items-center gap-1.5 h-9 px-4 rounded-full',
+                            'shrink-0 inline-flex items-center gap-1.5 h-9 p-2 rounded-full',
                             'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
                             'text-[12px] font-semibold hover:opacity-90 transition-opacity'
                         )}
                     >
-                        Visit site
                         <MSO icon="open_in_new" className="text-[15px]" />
                     </a>
                 )}

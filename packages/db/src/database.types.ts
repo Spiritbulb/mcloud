@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -1008,6 +1008,35 @@ export type Database = {
           },
         ]
       }
+      org_wallets: {
+        Row: {
+          balance_cents: number
+          created_at: string
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          balance_cents?: number
+          created_at?: string
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          balance_cents?: number
+          created_at?: string
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "org_wallets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       orgs: {
         Row: {
           created_at: string
@@ -1472,6 +1501,105 @@ export type Database = {
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      server_billing: {
+        Row: {
+          created_at: string
+          hourly_rate_cents: number
+          last_billed_at: string
+          org_id: string
+          server_id: string
+          suspended_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          hourly_rate_cents: number
+          last_billed_at?: string
+          org_id: string
+          server_id: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          hourly_rate_cents?: number
+          last_billed_at?: string
+          org_id?: string
+          server_id?: string
+          suspended_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "server_billing_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "server_billing_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: true
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      servers: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          plan: string
+          state: string
+          title: string
+          upcloud_uuid: string
+          updated_at: string
+          zone: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          plan: string
+          state?: string
+          title: string
+          upcloud_uuid: string
+          updated_at?: string
+          zone: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          plan?: string
+          state?: string
+          title?: string
+          upcloud_uuid?: string
+          updated_at?: string
+          zone?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "servers_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "servers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
             referencedColumns: ["id"]
           },
         ]
@@ -2274,6 +2402,114 @@ export type Database = {
         }
         Relationships: []
       }
+      wallet_ledger_entries: {
+        Row: {
+          amount_cents: number
+          balance_after_cents: number
+          created_at: string
+          id: string
+          kind: string
+          metadata: Json
+          org_id: string
+          reference: string | null
+          server_id: string | null
+        }
+        Insert: {
+          amount_cents: number
+          balance_after_cents: number
+          created_at?: string
+          id?: string
+          kind: string
+          metadata?: Json
+          org_id: string
+          reference?: string | null
+          server_id?: string | null
+        }
+        Update: {
+          amount_cents?: number
+          balance_after_cents?: number
+          created_at?: string
+          id?: string
+          kind?: string
+          metadata?: Json
+          org_id?: string
+          reference?: string | null
+          server_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_ledger_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_ledger_entries_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      wallet_topups: {
+        Row: {
+          amount_cents: number
+          created_at: string
+          id: string
+          mpesa_receipt: string | null
+          org_id: string
+          palpluss_transaction_id: string | null
+          phone: string
+          requested_by: string | null
+          result_desc: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          amount_cents: number
+          created_at?: string
+          id?: string
+          mpesa_receipt?: string | null
+          org_id: string
+          palpluss_transaction_id?: string | null
+          phone: string
+          requested_by?: string | null
+          result_desc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          amount_cents?: number
+          created_at?: string
+          id?: string
+          mpesa_receipt?: string | null
+          org_id?: string
+          palpluss_transaction_id?: string | null
+          phone?: string
+          requested_by?: string | null
+          result_desc?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "wallet_topups_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "orgs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_topups_requested_by_fkey"
+            columns: ["requested_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       webhook_logs: {
         Row: {
           created_at: string | null
@@ -2598,6 +2834,17 @@ export type Database = {
       }
     }
     Functions: {
+      adjust_org_wallet: {
+        Args: {
+          p_amount_cents: number
+          p_kind: string
+          p_metadata?: Json
+          p_org_id: string
+          p_reference?: string
+          p_server_id?: string
+        }
+        Returns: number
+      }
       auth0_uid: { Args: never; Returns: string }
       generate_order_number: { Args: { store_uuid: string }; Returns: string }
       get_store_analytics: {
@@ -2639,12 +2886,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2668,11 +2915,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2693,11 +2940,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2718,11 +2965,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -2735,11 +2982,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

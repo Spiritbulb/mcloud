@@ -46,5 +46,5 @@ export async function onAuthenticated(user: AuthUser): Promise<string> {
         .maybeSingle()
 
     const orgSlug = firstOrg ? (firstOrg.org as { slug?: string } | null)?.slug : null
-    return orgSlug ? `/org/${orgSlug}` : '/onboarding'
+    return orgSlug ? `/org/${orgSlug}` : '/org/onboarding'
 }

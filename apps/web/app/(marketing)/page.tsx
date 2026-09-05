@@ -1,14 +1,15 @@
 import type { Metadata } from "next"
 import HomeClient from "@/components/home-client"
+import Script from "next/script"
 
 export const metadata: Metadata = {
   title: "Menengai Cloud. Business Websites and Apps, Fully Managed",
   description:
-    "The commerce engine of Spiritbulb. Menengai Cloud powers managed business websites and white-label apps for Kenya. Storefronts, hosting, payments, and updates, fully handled.",
+    "Menengai Cloud powers managed digital business tools for Kenya. Storefronts, hosting, payments, and updates, fully handled.",
   openGraph: {
     title: "Menengai Cloud. Business Websites and Apps, Fully Managed",
     description:
-      "The commerce engine of Spiritbulb. Managed storefronts and white-label apps for Kenya, with hosting, payments, and updates handled for you.",
+      "Managed digital business tools for Kenya, with hosting, payments, and updates handled for you.",
     url: "https://mcloud.co.ke",
     siteName: "Menengai Cloud",
     type: "website",
@@ -40,7 +41,7 @@ const jsonLd = [
     url: "https://mcloud.co.ke",
     logo: "https://mcloud.co.ke/mclogo.png",
     description:
-      "The commerce engine of Spiritbulb. Menengai Cloud powers managed business websites and white-label apps for Kenya, with hosting, security, payments, and updates fully handled.",
+      "Menengai Cloud powers managed digital business tools for Kenya. Storefronts, hosting, payments, and updates, fully handled.",
     parentOrganization: {
       "@type": "Organization",
       name: "Spiritbulb",
@@ -54,7 +55,7 @@ export default function Page() {
   // Logged-in users are redirected to their org in proxy.ts (clean HTTP redirect).
   return (
     <>
-      <script
+          <Script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />

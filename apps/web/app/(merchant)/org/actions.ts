@@ -331,7 +331,7 @@ export async function completeOnboarding(formData: FormData) {
 
     if (memberError) return { error: memberError.message }
 
-    redirect(`/org/${org.slug}`)
+    return { success: true, orgId: org.id, slug: org.slug }
 }
 
 // ─── Internal ─────────────────────────────────────────────────────────────────

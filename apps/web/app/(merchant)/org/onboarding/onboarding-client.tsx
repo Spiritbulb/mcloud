@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@mcloud/ui/utils'
 import { completeOnboarding } from '@/app/(merchant)/org/actions'
+import { useRouter } from 'next/navigation'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
   return (
@@ -20,13 +21,14 @@ function slugPreview(name: string) {
   return name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
 }
 
-export default function OnboardingClient({ userName }: { userName?: string | null }) {
+export default function OnboardingClient({ userName, to }: { userName?: string | null; to: string }) {
   const [orgName, setOrgName] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isPending, start] = useTransition()
 
   const slug = slugPreview(orgName)
   const canSubmit = orgName.trim().length >= 2
+  const router = useRouter()
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -38,7 +40,11 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
       if (userName) fd.append('fullName', userName)
       try {
         const result = await completeOnboarding(fd)
-        if (result?.error) { setError(result.error) }
+if (result?.error) {
+  setError(result.error)
+  return
+}
+router.push(to)
       } catch (err) {
         if (err instanceof Error && (err as any).digest?.startsWith('NEXT_REDIRECT')) throw err
         setError('Something went wrong. Please try again.')
@@ -72,9 +78,7 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
       >
         {/* Logo / wordmark */}
         <div className="flex justify-center mb-8">
-          <div className="w-12 h-12 rounded-2xl bg-[var(--md-sys-color-primary)] flex items-center justify-center">
-            <MSO icon="cloud" className="text-[24px] text-[var(--md-sys-color-on-primary)]" fill={1} />
-          </div>
+          <img src="/logo-light.svg" alt="Menengai Cloud" className="w-24 h-auto" />
         </div>
 
         <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] shadow-sm overflow-hidden">
@@ -84,7 +88,7 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
                 {greeting}{firstName ? `, ${firstName}` : ''}
               </h1>
               <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)] leading-relaxed">
-                Start by creating your organisation. You can add stores and team members from there.
+                Start by creating your organisation. It will be the home for your servers and storefronts.
               </p>
             </div>
 
@@ -95,7 +99,7 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Acme Corp"
+                  placeholder="e.g. Spiritbulb LTD"
                   autoFocus
                   value={orgName}
                   onChange={e => setOrgName(e.target.value)}
@@ -109,7 +113,7 @@ export default function OnboardingClient({ userName }: { userName?: string | nul
                   >
                     <MSO icon="link" className="text-[13px] text-[var(--md-sys-color-primary)]" />
                     <span className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-                      mcloud.co.ke/admin/org/<span className="font-medium text-[var(--md-sys-color-primary)]">{slug}</span>
+                      mcloud.co.ke/org/<span className="font-medium text-[var(--md-sys-color-primary)]">{slug}</span>
                     </span>
                   </motion.div>
                 )}

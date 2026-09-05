@@ -2,6 +2,7 @@ import { getStore } from '@mcloud/db/server'
 import { getVertical } from '@mcloud/verticals'
 import { notFound, redirect } from 'next/navigation'
 import CustomersPage from './client'
+import { getStorePlan } from '@/lib/plans-server';
 
 export default async function Page({ params }: { params: Promise<{ orgSlug: string; storeSlug: string }> }) {
     const { orgSlug, storeSlug } = await params
@@ -11,6 +12,7 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
     // sibling products/services pages use, and it selects the whole row.
     const store = await getStore(storeSlug)
     if (!store) notFound()
+    const plan = await getStorePlan(store.id)
 
     // Customer accounts only exist for verticals that sell things. The nav
     // already hides this, but hidden is not the same as unreachable.
@@ -18,5 +20,5 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
         redirect(`/org/${orgSlug}/${storeSlug}/settings`)
     }
 
-    return <CustomersPage slug={storeSlug} />
+    return <CustomersPage slug={storeSlug} plan={plan} />
 }

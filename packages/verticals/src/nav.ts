@@ -79,7 +79,7 @@ const COMMERCE: NavSection = {
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
     { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
     { id: 'customers', label: 'Customers', icon: 'person', beta: true, pro: true },
-    { id: 'blog', label: 'Blog', icon: 'article' },
+    { id: 'blog', label: 'Blog', icon: 'article', beta: true, pro: true },
   ],
 }
 

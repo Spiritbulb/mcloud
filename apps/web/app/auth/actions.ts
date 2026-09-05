@@ -42,5 +42,5 @@ export async function handleCallback() {
     }
 
 
-    return redirect('/onboarding')
+    return redirect('/org/onboarding')
 }

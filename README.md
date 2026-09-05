@@ -13,7 +13,6 @@ A platform for Kenyan merchants and developers to build, automate, and grow onli
 
 - Next.js
 - PostgreSQL
-- n8n (self-hosted, containerized)
 
 ## Status
 

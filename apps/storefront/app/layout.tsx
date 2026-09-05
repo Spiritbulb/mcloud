@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-    title: 'Store',
+    title: 'MCloud App',
     description: 'Powered by Menengai Cloud',
 }
 

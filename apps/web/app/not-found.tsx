@@ -22,7 +22,7 @@ function FloatingStickerImage({ s }: { s: Sticker }) {
             animate={{ y: [0, -14, 0], rotate: [-3, 3, -3] }}
             transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, ease: "easeInOut" }}
         >
-            <Image src={s.src} alt="" width={48} height={48} className="drop-shadow-xl" unoptimized />
+            <Image src={s.src} alt="" width={48} height={48} className="drop-shadow-xl" loading="eager" />
         </motion.div>
     )
 }

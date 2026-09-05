@@ -4,6 +4,9 @@ import { useEffect, useState, useCallback } from 'react'
 import { Search, Users } from 'lucide-react'
 import { Input } from '@mcloud/ui/input'
 import { Badge } from '@mcloud/ui/badge'
+import { ProGate } from '../settings-primitives'
+import { Plan } from '@/lib/plans'
+import { ProGateInline } from '@/components/pro'
 
 type Customer = {
     id: string
@@ -17,7 +20,7 @@ type Customer = {
     tags: string | null
 }
 
-export default function CustomersPage({ slug }: { slug: string }) {
+export default function CustomersPage({ slug, plan }: { slug: string; plan: Plan }) {
     const [customers, setCustomers] = useState<Customer[]>([])
     const [total, setTotal] = useState(0)
     const [loading, setLoading] = useState(true)
@@ -48,6 +51,12 @@ export default function CustomersPage({ slug }: { slug: string }) {
     const totalPages = Math.ceil(total / 20)
 
     return (
+        <ProGateInline
+                            plan={plan}
+                            requires="hobby"
+                            feature="Customer management"
+                            description="Manage your customer base on the Hobby plan and higher."
+                >
         <div className="space-y-6 max-w-5xl">
             <div>
                 <h1 className="text-[22px] font-semibold tracking-tight">Customers</h1>
@@ -143,5 +152,6 @@ export default function CustomersPage({ slug }: { slug: string }) {
                 </div>
             )}
         </div>
+        </ProGateInline>
     )
 }

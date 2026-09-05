@@ -8,7 +8,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/org/", "/admin/", "/api/", "/invite/", "/onboarding"],
+      disallow: ["/org/", "/admin/", "/api/", "/invite/", "/org/onboarding"],
     },
     sitemap: "https://mcloud.co.ke/sitemap.xml",
     host: "https://mcloud.co.ke",

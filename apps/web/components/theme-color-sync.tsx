@@ -19,7 +19,7 @@ import { useTheme } from "next-themes"
 //   .dark        --background:  26  28  30  -> #1A1C1E
 const COLORS = {
   light: "#FCFCFF",
-  dark: "#1A1C1E",
+  dark: "#0f1011",
 } as const
 
 export function ThemeColorSync() {
