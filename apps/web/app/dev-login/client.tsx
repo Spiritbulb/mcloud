@@ -2,9 +2,7 @@
 'use client'
 
 import { useState } from 'react'
-import { NextRequest } from 'next/server'
 import { useRouter } from 'next/navigation'
-import { redirectToOrgPath } from '../(merchant)/org/_lib/redirect'
 
 export default function DevLoginPage( { to }: { to: string } ) {
   const router = useRouter()
