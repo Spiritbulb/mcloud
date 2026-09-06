@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
-import OrgShell from '../org-shell'
+import OrgShell from '../../org-shell'
 import StoresClient from './stores-client'
 import { getOrgStores } from './actions'
 

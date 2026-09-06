@@ -4,9 +4,9 @@ import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import Link from 'next/link'
-import OrgShell from '../org-shell'
+import OrgShell from '../../org-shell'
 import { getOrgRole, listOrgServerUuids, syncServerCache } from '@/lib/servers-db'
-import { listServers } from '@/lib/upcloud'
+import { listServers, getServerDetail } from '@/lib/upcloud'
 import ServersTable from './servers-table'
 
 export default async function ServersPage({
@@ -46,22 +46,23 @@ export default async function ServersPage({
 
     const canManage = role === 'owner' || role === 'admin'
 
-    let servers: Awaited<ReturnType<typeof listServers>> = []
-    let error: string | null = null
-    try {
-        const uuids = await listOrgServerUuids(org.id)
-        if (uuids.length > 0) {
-            const all = await listServers()
-            servers = all.filter((s) => uuids.includes(s.uuid))
-            await syncServerCache(servers)
-        }
-    } catch (e) {
-        error = e instanceof Error ? e.message : 'Failed to load servers'
+    let servers: Awaited<ReturnType<typeof getServerDetail>>[] = []
+let error: string | null = null
+try {
+    const uuids = await listOrgServerUuids(org.id)
+    if (uuids.length > 0) {
+        const all = await listServers()
+        const filtered = all.filter((s) => uuids.includes(s.uuid))
+        servers = await Promise.all(filtered.map((s) => getServerDetail(s.uuid)))
+        await syncServerCache(servers)
     }
+} catch (e) {
+    error = e instanceof Error ? e.message : 'Failed to load servers'
+}
 
     return (
         <>
-            <div className="max-w-6xl mx-auto space-y-6 mb-6">
+            <div className="max-w-4xl mx-auto space-y-6 mb-6">
         {/* Hero — provisioning is the headline action now */}
             <section className="relative overflow-hidden ">
                 <div className="relative flex flex-col sm:flex-row items-center">
@@ -87,7 +88,7 @@ export default async function ServersPage({
             </div>
 
         
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-4xl mx-auto space-y-6">
             {!error && servers.length !== 0 && (
             <div className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">Servers</h1>

@@ -2,7 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
-import OrgShell from '../org-shell'
+import OrgShell from '../../org-shell'
 import { cn } from '@mcloud/ui/utils'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {

@@ -76,6 +76,7 @@ export type UpcloudServer = {
   core_number: string
   memory_amount: string
   tags?: { tag: string[] }
+  ip_addresses?: { ip_address: { address: string; family: string; access: string }[] }
 }
 
 // ---- Reads ----

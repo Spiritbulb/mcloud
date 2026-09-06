@@ -3,7 +3,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
-import OrgShell from '../../org-shell'
+import OrgShell from '../../../org-shell'
 import { getOrgRole } from '@/lib/servers-db'
 import NewServerForm from './new-server-form'
 
@@ -45,6 +45,7 @@ export default async function NewServerPage({
         avatarUrl: userRow?.avatar_url ?? undefined,
     }
 
+    
     return (
         <div className="max-w-6xl mx-auto space-y-6 mb-6">
             {/* Hero — provisioning is the headline action now */}

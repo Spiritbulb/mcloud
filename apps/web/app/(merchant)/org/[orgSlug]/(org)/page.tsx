@@ -4,7 +4,7 @@ import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import Link from 'next/link'
 import { cn } from '@mcloud/ui/utils'
-import OrgShell from './org-shell'
+import OrgShell from '../org-shell'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
     return (
