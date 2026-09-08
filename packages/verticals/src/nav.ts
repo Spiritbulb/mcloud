@@ -56,11 +56,6 @@ const ADVANCED: NavSection = {
   ],
 }
 
-const ACCOUNT: NavSection = {
-  id: 'account',
-  label: 'Account',
-  tabs: [{ id: 'billing', label: 'Billing', icon: 'credit_card' }],
-}
 
 /** Commerce verticals: sell things, so they get a catalog and a commerce group. */
 const CATALOG: NavSection = {
@@ -104,8 +99,8 @@ const DONATIONS: NavSection = {
 /** The admin nav for a vertical. */
 export function sectionsFor(vertical: Vertical): NavSection[] {
   return vertical.commerce
-    ? [SITE, CATALOG, COMMERCE, ADVANCED, ACCOUNT]
-    : [SITE, DONATIONS, ADVANCED, ACCOUNT]
+    ? [SITE, CATALOG, COMMERCE, ADVANCED]
+    : [SITE, DONATIONS, ADVANCED]
 }
 
 /**
