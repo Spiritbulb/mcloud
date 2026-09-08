@@ -61,6 +61,17 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   },
 }
 
+// Paid-plan pricing, KES per month, billed from the org's wallet credits.
+// 'free' has no price entry — it isn't purchasable.
+export const PLAN_PRICE_KES: Record<'hobby' | 'pro', number> = {
+  hobby: 795,
+  pro: 2795,
+}
+
+export function planPriceCents(plan: 'hobby' | 'pro'): number {
+  return PLAN_PRICE_KES[plan] * 100
+}
+
 const RANK: Record<Plan, number> = { free: 0, hobby: 1, pro: 2 }
 
 /** Derive the tier from a store's most-recent-active subscription row. */

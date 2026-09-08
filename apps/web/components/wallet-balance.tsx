@@ -1,42 +1,74 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { WalletTopupModal } from './topup-modal'
 
 function formatKes(amount: number) {
-  return `KSh ${amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}`
+  return `KSh ${amount.toLocaleString('en-KE', {
+    maximumFractionDigits: 0,
+  })}`
 }
+
+const LOW_BALANCE_THRESHOLD_KES = 750
 
 export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
   const [balanceCents, setBalanceCents] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [showTopup, setShowTopup] = useState(false)
 
-  async function fetchBalance() {
+  const fetchBalance = useCallback(async () => {
     try {
-      const res = await fetch(`/api/org/${orgSlug}/wallet/balance`)
-      if (res.ok) {
-        const data = await res.json()
+      const res = await fetch(`/api/org/${orgSlug}/wallet/balance`, {
+        cache: 'no-store',
+      })
+
+      if (!res.ok) {
+        return
+      }
+
+      const data = await res.json()
+
+      if (typeof data.balanceCents === 'number') {
         setBalanceCents(data.balanceCents)
       }
     } catch {
-      // non-fatal — pill just stays in its last known state
+      // This is deliberately non-fatal. Keep the last known balance visible.
     } finally {
       setLoading(false)
     }
-  }
+  }, [orgSlug])
 
   useEffect(() => {
     void fetchBalance()
-    // Light polling so the pill updates after a webhook lands or an hourly
-    // charge fires elsewhere, without needing a realtime channel for this.
-    const interval = setInterval(fetchBalance, 30000)
-    return () => clearInterval(interval)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [orgSlug])
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void fetchBalance()
+      }
+    }, 30_000)
+
+    return () => {
+      window.clearInterval(interval)
+    }
+  }, [fetchBalance])
 
   const balanceKes = balanceCents === null ? null : balanceCents / 100
-  const isLow = balanceKes !== null && balanceKes < 750
+  const isLow =
+    balanceKes !== null && balanceKes < LOW_BALANCE_THRESHOLD_KES
+
+  const buttonText = loading
+    ? 'Loading wallet…'
+    : balanceKes === null
+      ? 'Add credits'
+      : formatKes(balanceKes)
+
+  const ariaLabel = loading
+    ? 'Loading wallet balance'
+    : balanceKes === null
+      ? 'Add credits to organisation wallet'
+      : isLow
+        ? `Low wallet balance: ${formatKes(balanceKes)}. Add credits.`
+        : `Wallet balance: ${formatKes(balanceKes)}. Add credits.`
 
   return (
     <>
@@ -44,13 +76,19 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
         type="button"
         onClick={() => setShowTopup(true)}
         className={cnPill(isLow)}
-        aria-label="Add credits"
+        aria-label={ariaLabel}
+        title={ariaLabel}
       >
-        <span className="material-symbols-outlined text-[16px] leading-none">
+        <span
+          className="material-symbols-outlined text-[16px] leading-none"
+          aria-hidden="true"
+        >
           account_balance_wallet
         </span>
+
         <span className="whitespace-nowrap">
-          {loading ? '…' : balanceKes === null ? 'Add credits' : formatKes(balanceKes)}
+          {isLow && !loading && balanceKes !== null ? 'Low: ' : null}
+          {buttonText}
         </span>
       </button>
 
@@ -59,9 +97,9 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
         open={showTopup}
         onClose={() => setShowTopup(false)}
         onTopupInitiated={() => {
-          // Balance updates async once the webhook confirms — re-poll shortly
-          // after the user confirms the STK prompt on their phone.
-          setTimeout(fetchBalance, 15000)
+          window.setTimeout(() => {
+            void fetchBalance()
+          }, 15_000)
         }}
       />
     </>
@@ -70,8 +108,9 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
 
 function cnPill(isLow: boolean) {
   const base =
-    'flex shrink-0 items-center gap-1.5 px-3 py-1.5 text-[12px] font-medium transition-colors hover:bg-[var(--md-sys-color-surface-variant)] cursor-pointer rounded-2xl'
+    'flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2'
+
   return isLow
-    ? `${base} text-amber-500`
-    : `${base} text-[var(--md-sys-color-on-surface)]`
+    ? `${base} bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400`
+    : `${base} text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-variant)]`
 }

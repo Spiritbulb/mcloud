@@ -452,7 +452,7 @@ function AccountFooter({
 
     const menuItems = [
         ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
-        { href: settingsPath(orgSlug, slug, 'billing'), icon: 'credit_card', label: 'Billing' },
+        { href: `/org/${orgSlug}/billing`, icon: 'credit_card', label: 'Billing' },
     ]
 
     return (

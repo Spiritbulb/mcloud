@@ -2416,6 +2416,7 @@ export type Database = {
           org_id: string
           reference: string | null
           server_id: string | null
+          store_id: string | null
         }
         Insert: {
           amount_cents: number
@@ -2427,6 +2428,7 @@ export type Database = {
           org_id: string
           reference?: string | null
           server_id?: string | null
+          store_id?: string | null
         }
         Update: {
           amount_cents?: number
@@ -2438,6 +2440,7 @@ export type Database = {
           org_id?: string
           reference?: string | null
           server_id?: string | null
+          store_id?: string | null
         }
         Relationships: [
           {
@@ -2452,6 +2455,20 @@ export type Database = {
             columns: ["server_id"]
             isOneToOne: false
             referencedRelation: "servers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "wallet_ledger_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "wallet_ledger_entries_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
             referencedColumns: ["id"]
           },
         ]
@@ -2865,6 +2882,19 @@ export type Database = {
           content: string
           note_id: string
           similarity: number
+        }[]
+      }
+      purchase_store_plan: {
+        Args: {
+          p_amount_cents: number
+          p_org_id: string
+          p_plan: string
+          p_store_id: string
+        }
+        Returns: {
+          new_balance_cents: number
+          period_end: string
+          period_start: string
         }[]
       }
     }
