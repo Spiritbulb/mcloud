@@ -74,14 +74,14 @@ export function WalletTopupModal({
               Add credits
             </h3>
             <p className="mt-1 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
-              Minimum top-up is KSh 750. You&apos;ll get an M-Pesa prompt on your phone.
+              Minimum top-up is KSh 20. You&apos;ll get an M-Pesa prompt on your phone.
             </p>
 
             <label className="mt-4 block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">
               Amount (KSh)
               <input
                 type="number"
-                min={750}
+                min={20}
                 step={1}
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
@@ -117,7 +117,7 @@ export function WalletTopupModal({
                 disabled={submitting}
                 className="flex-1 rounded-xl bg-[var(--md-sys-color-primary)] px-4 py-2.5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] disabled:opacity-40"
               >
-                {submitting ? 'Sending…' : 'Send STK Push'}
+                {submitting ? 'Sending…' : 'Done'}
               </button>
             </div>
           </form>
