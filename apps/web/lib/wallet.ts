@@ -5,7 +5,7 @@
 // avoid float drift across many hourly charges.
 import { createClient } from '@mcloud/db/server'
 
-export const MIN_TOPUP_KES = 750
+export const MIN_TOPUP_KES = 20
 export const MIN_TOPUP_CENTS = MIN_TOPUP_KES * 100
 
 export function kesToCents(kes: number) {
