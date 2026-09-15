@@ -68,7 +68,7 @@ function M3CircularIndicator({ size = 20 }: { size?: number }) {
             style={{ animationDuration: '1000ms', animationTimingFunction: 'linear' }}>
             <circle cx="10" cy="10" r="7.5" fill="none" stroke="currentColor" strokeWidth="2.5"
                 strokeLinecap="round" strokeDasharray="47.1" strokeDashoffset="11.8"
-                className="text-[var(--md-sys-color-primary)]" />
+                className="text-primary" />
         </svg>
     )
 }
@@ -79,7 +79,7 @@ function Avatar({ name, logo_url, size, rounded }: { name: string; logo_url?: st
     return (
         <div
             className={cn('shrink-0 flex items-center justify-center font-semibold overflow-hidden', rounded,
-                !logo_url && 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]')}
+                !logo_url && 'bg-primary text-primary-foreground')}
             style={{ width: size, height: size, fontSize: size * 0.32 }}
         >
             {logo_url ? <img src={logo_url} alt={name} className="w-full h-full object-cover" /> : getInitials(name)}
@@ -104,7 +104,7 @@ function HeroStoreCard({ store, picking, onPick }: {
             disabled={isDisabled}
             className={cn(
                 'group w-full text-left rounded-2xl border transition-all duration-200',
-                'bg-[var(--md-sys-color-primary-container)] border-[var(--md-sys-color-primary)]/20',
+                'bg-accent border-[var(--md-sys-color-primary)]/20',
                 'p-5 flex items-center gap-4',
                 !isDisabled && 'hover:shadow-md hover:-translate-y-0.5 cursor-pointer',
                 isPicking && 'scale-[0.99]',
@@ -114,18 +114,18 @@ function HeroStoreCard({ store, picking, onPick }: {
             <Avatar name={store.name} logo_url={store.logo_url} size={48} rounded="rounded-xl" />
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-0.5">
-                    <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)] truncate">{store.name}</p>
-                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-primary)] shrink-0">
+                    <p className="text-[15px] font-semibold text-accent-foreground truncate">{store.name}</p>
+                    <span className="flex items-center gap-1 text-[10px] font-semibold uppercase tracking-widest text-primary shrink-0">
                         <MSO icon="history" className="text-[11px]" />
                         Last visited
                     </span>
                 </div>
-                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] truncate">
+                <p className="text-[12px] text-muted-foreground truncate">
                     {storefrontDisplayUrl(store.slug)}{ago && <span className="opacity-60"> · {ago}</span>}
                 </p>
             </div>
             <div className={cn('shrink-0 transition-transform duration-150', !isDisabled && 'group-hover:translate-x-1')}>
-                {isPicking ? <M3CircularIndicator /> : <MSO icon="arrow_forward" className="text-[20px] text-[var(--md-sys-color-primary)]" />}
+                {isPicking ? <M3CircularIndicator /> : <MSO icon="arrow_forward" className="text-[20px] text-primary" />}
             </div>
         </motion.button>
     )
@@ -152,7 +152,7 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
             transition={{ duration: 0.26, delay: 0.04 + index * 0.04, ease: [0.25, 0.1, 0.25, 1] }}
             className={cn(
                 'group relative rounded-2xl border transition-all duration-200',
-                'bg-[var(--md-sys-color-surface)] border-[var(--md-sys-color-outline-variant)]',
+                'bg-background border-border',
                 'flex items-center',
                 !isDisabled && 'hover:shadow-sm hover:border-[var(--md-sys-color-primary)]/30',
                 isPicking && 'scale-[0.99]',
@@ -166,8 +166,8 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
             >
                 <Avatar name={store.name} logo_url={store.logo_url} size={32} rounded="rounded-lg" />
                 <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">{store.name}</p>
-                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{storefrontDisplayUrl(store.slug)}</p>
+                    <p className="text-[13px] font-semibold text-foreground truncate">{store.name}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{storefrontDisplayUrl(store.slug)}</p>
                 </div>
                 {isPicking && <M3CircularIndicator size={18} />}
             </button>
@@ -176,28 +176,28 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                         <button
-                            className="shrink-0 mr-2 flex items-center justify-center w-7 h-7 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
+                            className="shrink-0 mr-2 flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground hover:bg-muted transition-colors opacity-0 group-hover:opacity-100 focus:opacity-100 data-[state=open]:opacity-100"
                             aria-label="Site options"
                         >
                             <MSO icon="more_vert" className="text-[18px]" />
                         </button>
                     </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-44 bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] shadow-lg rounded-xl p-1">
+                    <DropdownMenuContent align="end" className="w-44 bg-background border border-border shadow-lg rounded-xl p-1">
                         <DropdownMenuSub>
                             <DropdownMenuSubTrigger className="rounded-lg text-[13px] gap-2">
-                                <MSO icon="drive_file_move" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
+                                <MSO icon="drive_file_move" className="text-[16px] text-muted-foreground" />
                                 Move to
                             </DropdownMenuSubTrigger>
-                            <DropdownMenuSubContent className="w-44 bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] shadow-lg rounded-xl p-1">
+                            <DropdownMenuSubContent className="w-44 bg-background border border-border shadow-lg rounded-xl p-1">
                                 {store.org_id && (
                                     <DropdownMenuItem className="rounded-lg text-[13px] gap-2" onSelect={() => onMove(store, null)}>
-                                        <MSO icon="person" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
+                                        <MSO icon="person" className="text-[16px] text-muted-foreground" />
                                         Personal
                                     </DropdownMenuItem>
                                 )}
                                 {moveTargets.map(o => (
                                     <DropdownMenuItem key={o.id} className="rounded-lg text-[13px] gap-2" onSelect={() => onMove(store, o.id)}>
-                                        <MSO icon="domain" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
+                                        <MSO icon="domain" className="text-[16px] text-muted-foreground" />
                                         <span className="truncate">{o.name}</span>
                                     </DropdownMenuItem>
                                 ))}
@@ -208,7 +208,7 @@ function StoreCard({ store, index, picking, orgs, onPick, onMove, onDelete }: {
                         </DropdownMenuSub>
                         <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
                         <DropdownMenuItem
-                            className="rounded-lg text-[13px] gap-2 text-[var(--md-sys-color-error)] focus:text-[var(--md-sys-color-error)]"
+                            className="rounded-lg text-[13px] gap-2 text-destructive focus:text-destructive"
                             onSelect={() => onDelete(store)}
                         >
                             <MSO icon="delete" className="text-[16px]" />
@@ -229,17 +229,17 @@ function AddTile({ label, sub, icon = 'add', onClick }: { label: string; sub?: s
             onClick={onClick}
             className={cn(
                 'flex items-center gap-3 p-4 rounded-2xl text-left',
-                'border border-dashed border-[var(--md-sys-color-outline-variant)]',
-                'hover:border-[var(--md-sys-color-primary)]/40 hover:bg-[var(--md-sys-color-primary-container)]/20',
+                'border border-dashed border-border',
+                'hover:border-[var(--md-sys-color-primary)]/40 hover:bg-accent/20',
                 'transition-all duration-150 group'
             )}
         >
-            <div className="w-8 h-8 rounded-lg bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center group-hover:bg-[var(--md-sys-color-primary-container)] transition-colors shrink-0">
-                <MSO icon={icon} className="text-[18px] text-[var(--md-sys-color-on-surface-variant)] group-hover:text-[var(--md-sys-color-primary)] transition-colors" />
+            <div className="w-8 h-8 rounded-lg bg-muted flex items-center justify-center group-hover:bg-accent transition-colors shrink-0">
+                <MSO icon={icon} className="text-[18px] text-muted-foreground group-hover:text-primary transition-colors" />
             </div>
             <div>
-                <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">{label}</p>
-                {sub && <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{sub}</p>}
+                <p className="text-[13px] font-medium text-foreground">{label}</p>
+                {sub && <p className="text-[11px] text-muted-foreground">{sub}</p>}
             </div>
         </button>
     )
@@ -254,12 +254,12 @@ function Section({ title, org, children }: { title: string; org?: PickerOrg; chi
             <div className="flex items-center gap-2 px-1">
                 {org
                     ? <Avatar name={org.name} logo_url={org.logo_url} size={20} rounded="rounded-md" />
-                    : <MSO icon="person" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />}
-                <h2 className="text-[12px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] truncate">{title}</h2>
+                    : <MSO icon="person" className="text-[16px] text-muted-foreground" />}
+                <h2 className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground truncate">{title}</h2>
                 {org?.canManage && (
                     <button
                         onClick={() => router.push(`/org/${org.slug}/settings`)}
-                        className="ml-auto flex items-center gap-0.5 text-[11px] font-medium text-[var(--md-sys-color-primary)] hover:underline shrink-0"
+                        className="ml-auto flex items-center gap-0.5 text-[11px] font-medium text-primary hover:underline shrink-0"
                     >
                         Manage <MSO icon="chevron_right" className="text-[14px]" />
                     </button>
@@ -300,14 +300,14 @@ function CreateOrgDialog({ open, onOpenChange }: { open: boolean; onOpenChange: 
                     type="text" autoFocus placeholder="e.g. Acme Holdings"
                     value={name} onChange={e => setName(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && name.trim().length > 1 && submit()}
-                    className="w-full h-11 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/30 px-4 text-[14px] text-[var(--md-sys-color-on-surface)] focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15 transition-all"
+                    className="w-full h-11 rounded-xl border border-border bg-muted/30 px-4 text-[14px] text-foreground focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15 transition-all"
                 />
-                {error && <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>}
+                {error && <p className="text-[12px] text-destructive">{error}</p>}
                 <DialogFooter>
-                    <button onClick={() => onOpenChange(false)} className="h-10 px-4 rounded-full text-[13px] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">Cancel</button>
+                    <button onClick={() => onOpenChange(false)} className="h-10 px-4 rounded-full text-[13px] text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
                     <button
                         onClick={submit} disabled={pending || name.trim().length < 2}
-                        className="flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         {pending && <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />}
                         Create
@@ -343,9 +343,9 @@ function DeleteStoreDialog({ store, onClose }: { store: PickerStore | null; onCl
                     <DialogTitle>Delete {store?.name}?</DialogTitle>
                     <DialogDescription>This permanently removes the site and its data. This can’t be undone.</DialogDescription>
                 </DialogHeader>
-                {error && <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>}
+                {error && <p className="text-[12px] text-destructive">{error}</p>}
                 <DialogFooter>
-                    <button onClick={onClose} className="h-10 px-4 rounded-full text-[13px] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors">Cancel</button>
+                    <button onClick={onClose} className="h-10 px-4 rounded-full text-[13px] text-muted-foreground hover:bg-muted transition-colors">Cancel</button>
                     <button
                         onClick={confirm} disabled={pending}
                         className="flex items-center gap-2 h-10 px-5 rounded-full text-[13px] font-medium bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)] hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-40"
@@ -402,17 +402,17 @@ export default function PickerClient({ stores, orgs, userName }: {
     let cardIndex = 0
 
     return (
-        <div className="min-h-[100dvh] flex flex-col items-center px-4 py-16 bg-[var(--md-sys-color-surface)]">
+        <div className="min-h-[100dvh] flex flex-col items-center px-4 py-16 bg-background">
             <motion.div
                 initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.26 }}
                 className="w-full max-w-2xl space-y-6"
             >
                 {/* Greeting */}
                 <div className="mb-2">
-                    <h1 className="text-[22px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight">
+                    <h1 className="text-[22px] font-semibold text-foreground tracking-tight">
                         {greeting}{firstName ? `, ${firstName}` : ''} 👋
                     </h1>
-                    <p className="mt-1 text-[14px] text-[var(--md-sys-color-on-surface-variant)]">
+                    <p className="mt-1 text-[14px] text-muted-foreground">
                         Pick a store to manage, or jump into an organization.
                     </p>
                 </div>
@@ -455,7 +455,7 @@ export default function PickerClient({ stores, orgs, userName }: {
                 <div className="pt-2">
                     <button
                         onClick={() => setCreateOrgOpen(true)}
-                        className="flex items-center gap-2 text-[13px] font-medium text-[var(--md-sys-color-primary)] hover:underline"
+                        className="flex items-center gap-2 text-[13px] font-medium text-primary hover:underline"
                     >
                         <MSO icon="add_business" className="text-[18px]" />
                         New organization
@@ -465,7 +465,7 @@ export default function PickerClient({ stores, orgs, userName }: {
 
             <motion.p
                 initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.4, delay: 0.5 }}
-                className="mt-12 text-[11px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 text-center"
+                className="mt-12 text-[11px] text-muted-foreground opacity-40 text-center"
             >
                 Menengai Cloud © {new Date().getFullYear()}
             </motion.p>

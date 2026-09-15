@@ -111,14 +111,14 @@ function StatCard({
     highlight?: boolean
 }) {
     return (
-        <div className={`rounded-lg border bg-card p-4 ${highlight ? 'border-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)]/20' : 'border-border'}`}>
+        <div className={`rounded-lg border bg-card p-4 ${highlight ? 'border-[var(--md-sys-color-error)] bg-destructive/20/20' : 'border-border'}`}>
             <div className="flex items-center justify-between mb-2">
                 <span className="text-[12px] text-muted-foreground truncate pr-1">{label}</span>
-                <span className={`material-symbols-outlined text-[16px] shrink-0 ${highlight ? 'text-[var(--md-sys-color-error)]' : 'text-muted-foreground'}`}>
+                <span className={`material-symbols-outlined text-[16px] shrink-0 ${highlight ? 'text-destructive' : 'text-muted-foreground'}`}>
                     {icon}
                 </span>
             </div>
-            <p className={`text-2xl font-semibold ${highlight ? 'text-[var(--md-sys-color-error)]' : 'text-foreground'}`}>
+            <p className={`text-2xl font-semibold ${highlight ? 'text-destructive' : 'text-foreground'}`}>
                 {value.toLocaleString()}
             </p>
         </div>

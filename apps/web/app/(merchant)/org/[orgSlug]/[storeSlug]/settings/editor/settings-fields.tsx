@@ -4,8 +4,8 @@ import ImageUpload from '@/components/store/image-upload'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 
 const inputCls =
-    'w-full h-9 rounded-lg border border-[var(--md-sys-color-outline-variant)] ' +
-    'bg-[var(--md-sys-color-surface)] px-3 text-[13px] text-[var(--md-sys-color-on-surface)] ' +
+    'w-full h-9 rounded-lg border border-border ' +
+    'bg-background px-3 text-[13px] text-foreground ' +
     'focus:outline-none focus:border-[var(--md-sys-color-primary)]'
 
 /**
@@ -28,7 +28,7 @@ export default function SettingsFields({
 }) {
     if (schema.length === 0) {
         return (
-            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="text-[12px] text-muted-foreground">
                 Nothing to configure here yet.
             </p>
         )
@@ -45,7 +45,7 @@ export default function SettingsFields({
 
                 return (
                     <label key={f.id} className="block">
-                        <span className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface)] mb-1.5">
+                        <span className="block text-[12px] font-medium text-foreground mb-1.5">
                             {f.label}
                         </span>
 
@@ -74,7 +74,7 @@ export default function SettingsFields({
                                     type="color"
                                     value={str || f.default || '#000000'}
                                     onChange={(e) => onChange(f.id, e.target.value)}
-                                    className="w-9 h-9 rounded-lg border border-[var(--md-sys-color-outline-variant)] cursor-pointer bg-transparent p-0"
+                                    className="w-9 h-9 rounded-lg border border-border cursor-pointer bg-transparent p-0"
                                 />
                                 <input
                                     className={inputCls + ' font-mono flex-1'}

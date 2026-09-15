@@ -44,7 +44,7 @@ function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; 
 }
 
 function Sk({ className }: { className?: string }) {
-    return <span className={cn('block animate-pulse rounded-lg bg-[var(--md-sys-color-surface-variant)]', className)} />
+    return <span className={cn('block animate-pulse rounded-lg bg-muted', className)} />
 }
 
 function fmtMoney(n: number, currency: string) {
@@ -73,13 +73,13 @@ function pct(a: number, b: number) {
 function DeltaBadge({ current, previous, invert }: { current: number; previous: number; invert?: boolean }) {
     const d = delta(current, previous)
     if (d.dir === 'flat') {
-        return <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] opacity-60">no change</span>
+        return <span className="text-[11px] text-muted-foreground opacity-60">no change</span>
     }
     const good = invert ? d.dir === 'down' : d.dir === 'up'
     return (
         <span className={cn(
             'inline-flex items-center gap-0.5 text-[11px] font-medium',
-            good ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--md-sys-color-error)]'
+            good ? 'text-emerald-600 dark:text-emerald-400' : 'text-destructive'
         )}>
             <MSO icon={d.dir === 'up' ? 'trending_up' : 'trending_down'} className="text-[13px]" />
             {d.pct.toFixed(0)}%
@@ -96,19 +96,19 @@ function Kpi({ label, value, current, previous, icon, featured, loading }: {
         <div className={cn(
             'relative overflow-hidden rounded-2xl p-5 flex flex-col gap-1.5',
             featured
-                ? 'bg-[var(--md-sys-color-primary-container)]'
-                : 'bg-[var(--md-sys-color-surface-container-low)] border border-[var(--md-sys-color-outline-variant)]'
+                ? 'bg-accent'
+                : 'bg-[var(--md-sys-color-surface-container-low)] border border-border'
         )}>
             <MSO icon={icon} fill={1} className={cn(
                 'absolute right-3 top-3 text-[20px]',
-                featured ? 'text-[var(--md-sys-color-primary)] opacity-70' : 'text-[var(--md-sys-color-on-surface-variant)] opacity-30'
+                featured ? 'text-primary opacity-70' : 'text-muted-foreground opacity-30'
             )} />
             {loading
                 ? <Sk className="h-7 w-24" />
                 : <p className={cn('text-[26px] font-semibold tabular-nums leading-none tracking-tight',
-                    featured ? 'text-[var(--md-sys-color-on-primary-container)]' : 'text-[var(--md-sys-color-on-surface)]')}>{value}</p>}
+                    featured ? 'text-accent-foreground' : 'text-foreground')}>{value}</p>}
             <p className={cn('text-[12px] font-medium',
-                featured ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]')}>{label}</p>
+                featured ? 'text-primary' : 'text-muted-foreground')}>{label}</p>
             {!loading && current !== undefined && previous !== undefined && (
                 <div className="mt-0.5"><DeltaBadge current={current} previous={previous} /></div>
             )}
@@ -142,23 +142,23 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
     ]
 
     return (
-        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
+        <div className="rounded-2xl border border-border bg-background p-5">
             <div className="flex items-center justify-between mb-4">
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Over time</p>
+                <p className="text-[13px] font-semibold text-foreground">Over time</p>
                 <div className="inline-flex rounded-full bg-[var(--md-sys-color-surface-container)] p-0.5">
                     {metrics.map(m => (
                         <button key={m.id} onClick={() => setMetric(m.id)}
                             className={cn('px-3 h-7 rounded-full text-[12px] font-medium transition-colors',
                                 metric === m.id
-                                    ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-                                    : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]')}>
+                                    ? 'bg-primary text-primary-foreground'
+                                    : 'text-muted-foreground hover:text-foreground')}>
                             {m.label}
                         </button>
                     ))}
                 </div>
             </div>
             {series.length === 0 ? (
-                <div className="h-[180px] flex items-center justify-center text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+                <div className="h-[180px] flex items-center justify-center text-[12px] text-muted-foreground">
                     No data in this range yet.
                 </div>
             ) : (
@@ -174,9 +174,9 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
                         strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />}
                 </svg>
             )}
-            <div className="flex items-center justify-between mt-2 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+            <div className="flex items-center justify-between mt-2 text-[11px] text-muted-foreground">
                 <span>{series[0]?.date ?? ''}</span>
-                <span className="font-medium text-[var(--md-sys-color-on-surface)]">
+                <span className="font-medium text-foreground">
                     {metric === 'revenue'
                         ? fmtMoney(vals.reduce((a, b) => a + b, 0), currency)
                         : fmtNum(vals.reduce((a, b) => a + b, 0))} total
@@ -200,19 +200,19 @@ function Funnel({ funnel }: { funnel: NonNullable<Analytics['funnel']> }) {
     ]
     const max = Math.max(1, funnel.views)
     return (
-        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
-            <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-4">Conversion funnel</p>
+        <div className="rounded-2xl border border-border bg-background p-5">
+            <p className="text-[13px] font-semibold text-foreground mb-4">Conversion funnel</p>
             <div className="space-y-3">
                 {steps.map((s, i) => (
                     <div key={s.label}>
                         <div className="flex items-center justify-between mb-1">
-                            <span className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">{s.label}</span>
-                            <span className="text-[12px] font-medium tabular-nums text-[var(--md-sys-color-on-surface)]">
-                                {fmtNum(s.value)}{s.rate && <span className="text-[var(--md-sys-color-primary)] ml-2">{s.rate}</span>}
+                            <span className="text-[12px] text-muted-foreground">{s.label}</span>
+                            <span className="text-[12px] font-medium tabular-nums text-foreground">
+                                {fmtNum(s.value)}{s.rate && <span className="text-primary ml-2">{s.rate}</span>}
                             </span>
                         </div>
-                        <div className="h-2 rounded-full bg-[var(--md-sys-color-surface-variant)] overflow-hidden">
-                            <div className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
+                        <div className="h-2 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full bg-primary transition-all duration-500"
                                 style={{ width: `${(s.value / max) * 100}%`, opacity: 1 - i * 0.12 }} />
                         </div>
                     </div>
@@ -227,23 +227,23 @@ function Funnel({ funnel }: { funnel: NonNullable<Analytics['funnel']> }) {
 function BreakdownCard({ title, icon, items }: { title: string; icon: string; items: Breakdown[] }) {
     const total = items.reduce((a, b) => a + b.value, 0)
     return (
-        <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
+        <div className="rounded-2xl border border-border bg-background p-5">
             <div className="flex items-center gap-2 mb-4">
-                <MSO icon={icon} className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">{title}</p>
+                <MSO icon={icon} className="text-[16px] text-muted-foreground" />
+                <p className="text-[13px] font-semibold text-foreground">{title}</p>
             </div>
             {items.length === 0 ? (
-                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] py-2">No data yet.</p>
+                <p className="text-[12px] text-muted-foreground py-2">No data yet.</p>
             ) : (
                 <div className="space-y-2.5">
                     {items.map(it => (
                         <div key={it.key}>
                             <div className="flex items-center justify-between mb-1">
-                                <span className="text-[12px] text-[var(--md-sys-color-on-surface)] capitalize truncate pr-2">{it.key}</span>
-                                <span className="text-[12px] tabular-nums text-[var(--md-sys-color-on-surface-variant)] shrink-0">{fmtNum(it.value)}</span>
+                                <span className="text-[12px] text-foreground capitalize truncate pr-2">{it.key}</span>
+                                <span className="text-[12px] tabular-nums text-muted-foreground shrink-0">{fmtNum(it.value)}</span>
                             </div>
-                            <div className="h-1.5 rounded-full bg-[var(--md-sys-color-surface-variant)] overflow-hidden">
-                                <div className="h-full rounded-full bg-[var(--md-sys-color-primary)]"
+                            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
+                                <div className="h-full rounded-full bg-primary"
                                     style={{ width: `${total ? (it.value / total) * 100 : 0}%` }} />
                             </div>
                         </div>
@@ -303,8 +303,8 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
             {/* Header + range */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div>
-                    <h1 className="text-[18px] font-semibold text-[var(--md-sys-color-on-surface)] tracking-tight">Analytics</h1>
-                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">{storeName}</p>
+                    <h1 className="text-[18px] font-semibold text-foreground tracking-tight">Analytics</h1>
+                    <p className="text-[12px] text-muted-foreground">{storeName}</p>
                 </div>
                 <div className="flex items-center gap-2">
                     <div className="inline-flex rounded-full bg-[var(--md-sys-color-surface-container)] p-0.5">
@@ -312,14 +312,14 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
                             <button key={r.id} onClick={() => setRange(r.id)}
                                 className={cn('px-3 h-8 rounded-full text-[12px] font-medium transition-colors',
                                     range === r.id
-                                        ? 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-                                        : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]')}>
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'text-muted-foreground hover:text-foreground')}>
                                 {r.label}
                             </button>
                         ))}
                     </div>
                     <button onClick={exportCsv} disabled={!data}
-                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-[var(--md-sys-color-outline-variant)] text-[12px] font-medium text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors disabled:opacity-40">
+                        className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-border text-[12px] font-medium text-foreground hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors disabled:opacity-40">
                         <MSO icon="download" className="text-[15px]" />
                         Export
                     </button>
@@ -327,10 +327,10 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
             </div>
 
             {error ? (
-                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
-                    <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
+                <div className="rounded-2xl border border-border bg-background flex items-center gap-2.5 px-5 py-6 text-[13px] text-muted-foreground">
+                    <MSO icon="error_outline" className="text-[18px] text-destructive" />
                     Could not load analytics.
-                    <button onClick={() => setReloadKey(k => k + 1)} className="text-[var(--md-sys-color-primary)] hover:underline">Retry</button>
+                    <button onClick={() => setReloadKey(k => k + 1)} className="text-primary hover:underline">Retry</button>
                 </div>
             ) : (
                 <>
@@ -360,24 +360,24 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
                         >
                             <div className="grid md:grid-cols-2 gap-4">
                                 <Funnel funnel={data.funnel ?? { views: 0, add_to_carts: 0, checkouts: 0, orders: 0 }} />
-                                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5">
-                                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] mb-4">Top products</p>
+                                <div className="rounded-2xl border border-border bg-background p-5">
+                                    <p className="text-[13px] font-semibold text-foreground mb-4">Top products</p>
                                     {!data.top_products || data.top_products.length === 0 ? (
-                                        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] py-2">No sales in this range yet.</p>
+                                        <p className="text-[12px] text-muted-foreground py-2">No sales in this range yet.</p>
                                     ) : (
                                         <div className="space-y-3">
                                             {data.top_products.map(p => (
                                                 <div key={p.id} className="flex items-center gap-3">
-                                                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center shrink-0">
+                                                    <div className="w-9 h-9 rounded-lg overflow-hidden bg-muted flex items-center justify-center shrink-0">
                                                         {p.image_url
                                                             ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" />
-                                                            : <MSO icon="inventory_2" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />}
+                                                            : <MSO icon="inventory_2" className="text-[16px] text-muted-foreground" />}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{p.name}</p>
-                                                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{p.units_sold} sold</p>
+                                                        <p className="text-[12px] font-medium text-foreground truncate">{p.name}</p>
+                                                        <p className="text-[11px] text-muted-foreground">{p.units_sold} sold</p>
                                                     </div>
-                                                    <span className="text-[12px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)] shrink-0">
+                                                    <span className="text-[12px] font-semibold tabular-nums text-foreground shrink-0">
                                                         {fmtMoney(p.revenue, currency)}
                                                     </span>
                                                 </div>

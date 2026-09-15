@@ -280,18 +280,18 @@ function SummaryRow({
 }) {
   return (
     <div className="flex items-start gap-3">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[var(--md-sys-color-surface-variant)]">
+      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
         <MSO
           icon={icon}
-          className="text-[15px] text-[var(--md-sys-color-on-surface-variant)]"
+          className="text-[15px] text-muted-foreground"
         />
       </span>
 
       <div className="min-w-0">
-        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+        <p className="text-[11px] text-muted-foreground">
           {label}
         </p>
-        <p className="truncate text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
+        <p className="truncate text-[13px] font-medium text-foreground">
           {value}
         </p>
       </div>
@@ -313,11 +313,11 @@ function SectionHeading({
   return (
     <div className="flex items-start justify-between gap-4">
       <div>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight text-[var(--md-sys-color-on-surface)]">
+        <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
           {title}
         </h2>
         {description && (
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
             {description}
           </p>
         )}
@@ -695,21 +695,21 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
   if (revealKey) {
     return (
       <div className="mx-auto max-w-xl">
-        <div className="overflow-hidden rounded-3xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] shadow-sm">
-          <div className="border-b border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-primary-container)] px-6 py-7 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] shadow-sm">
+        <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-sm">
+          <div className="border-b border-border bg-accent px-6 py-7 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
               <MSO icon="key" className="text-[24px]" />
             </div>
 
-            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--md-sys-color-on-primary-container)]">
+            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-foreground">
               Server created
             </p>
 
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-[var(--md-sys-color-on-primary-container)]">
+            <h2 className="mt-1 text-xl font-semibold tracking-tight text-accent-foreground">
               Save your private key
             </h2>
 
-            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-[var(--md-sys-color-on-primary-container)]/80">
+            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-accent-foreground/80">
               This private key is shown only once. Download it before you
               continue so you can access your server securely.
             </p>
@@ -726,7 +726,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               </div>
             </div>
 
-            <pre className="max-h-56 overflow-auto rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)] p-4 text-[11px] leading-relaxed whitespace-pre-wrap break-all text-[var(--md-sys-color-on-surface)]">
+            <pre className="max-h-56 overflow-auto rounded-xl border border-border bg-muted p-4 text-[11px] leading-relaxed whitespace-pre-wrap break-all text-foreground">
               {revealKey.key}
             </pre>
 
@@ -734,7 +734,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               <button
                 type="button"
                 onClick={downloadKey}
-                className="flex items-center justify-center gap-2 rounded-xl bg-[var(--md-sys-color-primary)] px-4 py-3 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
+                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
               >
                 <MSO icon="download" className="text-[17px]" />
                 Download .pem key
@@ -743,7 +743,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               <button
                 type="button"
                 onClick={copyKey}
-                className="flex items-center justify-center gap-2 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-4 py-3 text-[13px] font-medium text-[var(--md-sys-color-on-surface)] transition-colors hover:bg-[var(--md-sys-color-surface-variant)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
+                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
               >
                 <MSO
                   icon={copied ? 'check' : 'content_copy'}
@@ -753,13 +753,13 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               </button>
             </div>
 
-            <div className="rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4">
+            <div className="rounded-xl border border-border bg-background p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--md-sys-color-on-surface-variant)]">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                     Connect with SSH
                   </p>
-                  <code className="mt-2 block text-[13px] text-[var(--md-sys-color-on-surface)]">
+                  <code className="mt-2 block text-[13px] text-foreground">
                     ssh root@{revealKey.hostname}
                   </code>
                 </div>
@@ -767,7 +767,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                 <button
                   type="button"
                   onClick={copySshCommand}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-[var(--md-sys-color-primary)] transition-colors hover:bg-[var(--md-sys-color-primary-container)]"
+                  className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-primary transition-colors hover:bg-accent"
                 >
                   <MSO
                     icon={copiedSshCommand ? 'check' : 'content_copy'}
@@ -781,7 +781,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             <button
               type="button"
               onClick={() => router.push(`/org/${orgSlug}/servers`)}
-              className="w-full rounded-xl px-4 py-2.5 text-center text-[13px] font-medium text-[var(--md-sys-color-on-surface-variant)] transition-colors hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]"
+              className="w-full rounded-xl px-4 py-2.5 text-center text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
             >
               I have saved my key — continue to servers
             </button>
@@ -794,16 +794,16 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
   if (loadingOptions) {
     return (
       <div className="mx-auto flex min-h-[360px] max-w-md flex-col items-center justify-center text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[var(--md-sys-color-primary-container)]">
+        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent">
           <MSO
             icon="progress_activity"
-            className="animate-spin text-[24px] text-[var(--md-sys-color-primary)]"
+            className="animate-spin text-[24px] text-primary"
           />
         </span>
-        <p className="mt-4 text-sm font-medium text-[var(--md-sys-color-on-surface)]">
+        <p className="mt-4 text-sm font-medium text-foreground">
           Preparing server options
         </p>
-        <p className="mt-1 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+        <p className="mt-1 text-[13px] text-muted-foreground">
           Loading locations, plans, and operating systems…
         </p>
       </div>
@@ -852,7 +852,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               <div>
                 <label
                   htmlFor="server-title"
-                  className="mb-1.5 block text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
+                  className="mb-1.5 block text-[13px] font-medium text-foreground"
                 >
                   Server title
                 </label>
@@ -864,10 +864,10 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   required
                   placeholder="Production API"
                   autoComplete="off"
-                  className="w-full bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
+                  className="w-full bg-background px-3.5 py-2.5 text-[14px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
                 />
 
-                <p className="mt-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
                   Visible to members of this organisation.
                 </p>
               </div>
@@ -875,7 +875,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               <div>
                 <label
                   htmlFor="server-hostname"
-                  className="mb-1.5 block text-[13px] font-medium text-[var(--md-sys-color-on-surface)]"
+                  className="mb-1.5 block text-[13px] font-medium text-foreground"
                 >
                   Hostname
                 </label>
@@ -889,10 +889,10 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   autoCapitalize="none"
                   autoCorrect="off"
                   spellCheck={false}
-                  className="w-full bg-[var(--md-sys-color-surface)] px-3.5 py-2.5 text-[14px] text-[var(--md-sys-color-on-surface)] outline-none transition-colors placeholder:text-[var(--md-sys-color-on-surface-variant)]/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
+                  className="w-full bg-background px-3.5 py-2.5 text-[14px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
                 />
 
-                <p className="mt-1.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                <p className="mt-1.5 text-[11px] text-muted-foreground">
                   For example, <code>api.example.com</code>.
                 </p>
               </div>
@@ -931,7 +931,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                         isSelected
                           ? 'border-[var(--md-sys-color-primary)]'
-                          : 'border-[var(--md-sys-color-outline-variant)] hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-sm',
+                          : 'border-border hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-sm',
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
@@ -945,24 +945,24 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             'flex h-5 w-5 items-center justify-center rounded-full border-2',
                             isSelected
                               ? 'border-[var(--md-sys-color-primary)]'
-                              : 'border-[var(--md-sys-color-outline-variant)]',
+                              : 'border-border',
                           )}
                         >
                           {isSelected && (
-                            <span className="h-2.5 w-2.5 rounded-full bg-[var(--md-sys-color-primary)]" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
                           )}
                         </span>
                         
                       </div>
 
                     <div className="flex justify-between">
-                      <p className="mt-4 text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+                      <p className="mt-4 text-sm font-semibold text-foreground">
                         {meta?.city ?? currentZone.description}
                       </p>
 
                       <div className="mt-3">
                         {isKenyaDefault ? (
-                          <span className="inline-flex rounded-full bg-[var(--md-sys-color-primary)] px-2 py-1 text-[10px] font-semibold text-[var(--md-sys-color-on-primary)]">
+                          <span className="inline-flex rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground">
                             Recommended for Kenya
                           </span>
                         ) : isFrankfurt ? (
@@ -970,7 +970,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             Fast alternative
                           </span>
                         ) : (
-                          <span className="inline-flex rounded-full bg-[var(--md-sys-color-surface-variant)] px-2 py-1 text-[10px] font-medium text-[var(--md-sys-color-on-surface-variant)]">
+                          <span className="inline-flex rounded-full bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">
                             Europe option
                           </span>
                         )}
@@ -981,13 +981,13 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                 })}
               </div>
 
-              <div className="mt-4 bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
+              <div className="mt-4 bg-muted/60 p-3.5">
                 <div className="flex items-start gap-2.5">
                   <MSO
                     icon="info"
-                    className="mt-0.5 text-[17px] text-[var(--md-sys-color-primary)]"
+                    className="mt-0.5 text-[17px] text-primary"
                   />
-                  <p className="text-[12px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                  <p className="text-[12px] leading-relaxed text-muted-foreground">
                     Amsterdam is the recommended default for Kenyan workloads.
                     Frankfurt is a strong alternative and can be comparable for
                     some ISP routes. Actual latency depends on the network your
@@ -1002,7 +1002,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                     type="button"
                     onClick={() => setShowAllLocations((current) => !current)}
                     aria-expanded={showAllLocations}
-                    className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] font-medium text-[var(--md-sys-color-primary)] transition-colors hover:bg-[var(--md-sys-color-primary-container)] cursor-pointer"
+                    className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] font-medium text-primary transition-colors hover:bg-accent cursor-pointer"
                   >
                     <MSO
                       icon={
@@ -1032,8 +1032,8 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                               'flex items-center gap-3 border p-3 text-left transition-colors cursor-pointer',
                               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                               isSelected
-                                ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]'
-                                : 'border-[var(--md-sys-color-outline-variant)] hover:border-[var(--md-sys-color-primary)]/60 hover:bg-[var(--md-sys-color-surface-variant)]',
+                                ? 'border-[var(--md-sys-color-primary)] bg-accent'
+                                : 'border-border hover:border-[var(--md-sys-color-primary)]/60 hover:bg-muted',
                             )}
                           >
 <span
@@ -1042,7 +1042,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
 />
 
                             <span className="min-w-0 flex-1">
-                              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
                                 {meta?.city ?? currentZone.id.toUpperCase()}
                                 {isGreen && (
                                   <MSO
@@ -1051,7 +1051,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                                   />
                                 )}
                               </span>
-                              <span className="block truncate text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                              <span className="block truncate text-[11px] text-muted-foreground">
                                 {meta?.country ?? currentZone.description}
                               </span>
                             </span>
@@ -1059,7 +1059,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             {isSelected && (
                               <MSO
                                 icon="check_circle"
-                                className="text-[18px] text-[var(--md-sys-color-primary)]"
+                                className="text-[18px] text-primary"
                               />
                             )}
                           </button>
@@ -1080,7 +1080,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             />
 
             <div
-              className="mt-6 grid grid-cols-2 bg-[var(--md-sys-color-surface-variant)]/10 p-1"
+              className="mt-6 grid grid-cols-2 bg-muted/10 p-1"
               role="tablist"
               aria-label="Plan tier"
             >
@@ -1101,8 +1101,8 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                       'px-3 py-2.5 text-left transition-all',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)]',
                       isActive
-                        ? 'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)] shadow-sm'
-                        : 'text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
+                        ? 'bg-background text-foreground shadow-sm'
+                        : 'text-muted-foreground hover:text-foreground',
                     )}
                   >
                     <span className="flex items-center gap-1.5 text-[13px] font-semibold">
@@ -1123,7 +1123,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               aria-labelledby={`${planTierTab.toLowerCase()}-plans-tab`}
               className="mt-5"
             >
-              <p className="mb-3 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+              <p className="mb-3 text-[12px] text-muted-foreground">
                 {TIER_META[planTierTab].description}
               </p>
 
@@ -1142,19 +1142,19 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                         'relative min-h-[190px] border p-4 text-left transition-all',
                         'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                         isSelected
-                          ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)] shadow-sm'
-                          : 'border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)]/60 hover:shadow-sm',
+                          ? 'border-[var(--md-sys-color-primary)] bg-accent shadow-sm'
+                          : 'border-border bg-background hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)]/60 hover:shadow-sm',
                       )}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                          <p className="text-[14px] font-semibold text-foreground">
                             {currentPlan.name.replace(
                               /^(STARTER|PREMIUM)-/,
                               '',
                             )}
                           </p>
-                          <p className="mt-1 text-[11px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                             {planUseCase(currentPlan)}
                           </p>
                         </div>
@@ -1164,51 +1164,51 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                             'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
                             isSelected
                               ? 'border-[var(--md-sys-color-primary)]'
-                              : 'border-[var(--md-sys-color-outline-variant)]',
+                              : 'border-border',
                           )}
                         >
                           {isSelected && (
-                            <span className="h-2.5 w-2.5 rounded-full bg-[var(--md-sys-color-primary)]" />
+                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
                           )}
                         </span>
                       </div>
 
-                      <div className="mt-5 grid grid-cols-3 gap-2 border-y border-[var(--md-sys-color-outline-variant)]/70 py-3">
+                      <div className="mt-5 grid grid-cols-3 gap-2 border-y border-border/70 py-3">
                         <div>
-                          <p className="text-[10px] uppercase tracking-wide text-[var(--md-sys-color-on-surface-variant)]">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                             CPU
                           </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
                             {currentPlan.core_number} vCPU
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-[10px] uppercase tracking-wide text-[var(--md-sys-color-on-surface-variant)]">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                             Memory
                           </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
                             {formatMemory(currentPlan.memory_amount)}
                           </p>
                         </div>
 
                         <div>
-                          <p className="text-[10px] uppercase tracking-wide text-[var(--md-sys-color-on-surface-variant)]">
+                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
                             Storage
                           </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
                             {currentPlan.storage_size} GB
                           </p>
                         </div>
                       </div>
 
                       <div className="mt-3 flex items-end justify-between gap-3">
-                        <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                        <span className="text-[11px] text-muted-foreground">
                           Billed monthly
                         </span>
-                        <span className="text-right text-[17px] font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
+                        <span className="text-right text-[17px] font-bold tracking-tight text-foreground">
                           {formatKes(price)}
-                          <span className="ml-1 text-[11px] font-normal text-[var(--md-sys-color-on-surface-variant)]">
+                          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
                             / mo
                           </span>
                         </span>
@@ -1219,12 +1219,12 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               </div>
 
               {plansInTab.length === 0 && (
-                <div className="rounded-xl border border-dashed border-[var(--md-sys-color-outline-variant)] px-4 py-8 text-center">
+                <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center">
                   <MSO
                     icon="inventory_2"
-                    className="text-[22px] text-[var(--md-sys-color-on-surface-variant)]"
+                    className="text-[22px] text-muted-foreground"
                   />
-                  <p className="mt-2 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+                  <p className="mt-2 text-[13px] text-muted-foreground">
                     No plans are currently available in this tier.
                   </p>
                 </div>
@@ -1255,8 +1255,8 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                       'relative flex min-h-[96px] flex-col items-start border p-3 text-left transition-all',
                       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
                       isSelected
-                        ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary-container)]'
-                        : 'border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] hover:border-[var(--md-sys-color-primary)]/60 hover:bg-[var(--md-sys-color-surface-variant)]',
+                        ? 'border-[var(--md-sys-color-primary)] bg-accent'
+                        : 'border-border bg-background hover:border-[var(--md-sys-color-primary)]/60 hover:bg-muted',
                     )}
                   >
                     <img
@@ -1265,7 +1265,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                       className="h-7 w-7 object-contain"
                     />
 
-                    <span className="mt-auto text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                    <span className="mt-auto text-[12px] font-semibold text-foreground">
                       {family.label}
                     </span>
 
@@ -1278,7 +1278,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                     {isSelected && (
                       <MSO
                         icon="check_circle"
-                        className="absolute right-2.5 top-2.5 text-[18px] text-[var(--md-sys-color-primary)]"
+                        className="absolute right-2.5 top-2.5 text-[18px] text-primary"
                       />
                     )}
                   </button>
@@ -1290,7 +1290,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               <div className="mt-4">
                 <label
                   htmlFor="template-version"
-                  className="mb-1.5 block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]"
+                  className="mb-1.5 block text-[12px] font-medium text-foreground"
                 >
                   Version
                 </label>
@@ -1304,7 +1304,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
                   </SelectTrigger>
                   <SelectContent>
                     {versionsForFamily.map((template) => (
-                      <SelectItem key={template.uuid} value={template.uuid} className="text-[13px] text-[var(--md-sys-color-on-surface)]">
+                      <SelectItem key={template.uuid} value={template.uuid} className="text-[13px] text-foreground">
                         {template.title}
                       </SelectItem>
                     ))}
@@ -1313,12 +1313,12 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               </div>
             )}
 
-            <div className="mt-5 flex items-start gap-2 bg-[var(--md-sys-color-surface-variant)]/60 p-3.5">
+            <div className="mt-5 flex items-start gap-2 bg-muted/60 p-3.5">
               <MSO
                 icon="vpn_key"
-                className="mt-0.5 text-[16px] text-[var(--md-sys-color-primary)]"
+                className="mt-0.5 text-[16px] text-primary"
               />
-              <p className="text-[12px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+              <p className="text-[12px] leading-relaxed text-muted-foreground">
                 A secure SSH private key is generated automatically. You will
                 be able to download it once immediately after creating the server.
               </p>
@@ -1338,7 +1338,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
           <button
             type="submit"
             disabled={submitting || !formIsComplete}
-            className="hidden w-full items-center justify-center gap-2 bg-[var(--md-sys-color-primary)] px-5 py-3.5 text-[14px] font-semibold text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
+            className="hidden w-full items-center justify-center gap-2 bg-primary px-5 py-3.5 text-[14px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
           >
             {submitting ? 'Creating server…' : 'Create server'}
             <MSO
@@ -1349,19 +1349,19 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
         </div>
 
         <aside className="hidden w-full lg:sticky lg:top-6 lg:block">
-          <div className="overflow-hidden border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] shadow-sm">
-            <div className="bg-[var(--md-sys-color-primary-container)] px-5 py-4">
+          <div className="overflow-hidden border border-border bg-background shadow-sm">
+            <div className="bg-accent px-5 py-4">
               <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--md-sys-color-on-primary-container)]/70">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-foreground/70">
                     Your configuration
                   </p>
-                  <p className="mt-1 truncate text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)]">
+                  <p className="mt-1 truncate text-[15px] font-semibold text-accent-foreground">
                     {title || 'New server'}
                   </p>
                 </div>
 
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center text-[var(--md-sys-color-primary)]">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center text-primary">
                   <MSO icon="dns" className="text-[20px]" />
                 </span>
               </div>
@@ -1411,20 +1411,20 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
               />
             </div>
 
-            <div className="border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-variant)]/45 p-5">
+            <div className="border-t border-border bg-muted/45 p-5">
               <div className="flex items-end justify-between gap-3">
                 <div>
-                  <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+                  <p className="text-[12px] text-muted-foreground">
                     Monthly total
                   </p>
-                  <p className="mt-0.5 text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">
                     No setup fee
                   </p>
                 </div>
 
-                <p className="text-right text-xl font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
+                <p className="text-right text-xl font-bold tracking-tight text-foreground">
                   {formatKes(monthlyPrice)}
-                  <span className="ml-1 text-[11px] font-normal text-[var(--md-sys-color-on-surface-variant)]">
+                  <span className="ml-1 text-[11px] font-normal text-muted-foreground">
                     / mo
                   </span>
                 </p>
@@ -1432,17 +1432,17 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
             </div>
           </div>
 
-          <div className="mt-4 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4">
+          <div className="mt-4 rounded-xl border border-border bg-background p-4">
             <div className="flex gap-2.5">
               <MSO
                 icon="verified_user"
-                className="mt-0.5 text-[18px] text-[var(--md-sys-color-primary)]"
+                className="mt-0.5 text-[18px] text-primary"
               />
               <div>
-                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                <p className="text-[12px] font-semibold text-foreground">
                   Secure by default
                 </p>
-                <p className="mt-1 text-[11px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                   Your server is created with key-based SSH access. Backup
                   and firewall controls can be added later.
                 </p>
@@ -1452,17 +1452,17 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
         </aside>
       </div>
 
-       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
+       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="truncate text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="truncate text-[11px] text-muted-foreground">
               {selectedPlan
                 ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} · ${selectedPlan.storage_size} GB`
                 : 'Choose a plan to continue'}
             </p>
-            <p className="text-[16px] font-bold tracking-tight text-[var(--md-sys-color-on-surface)]">
+            <p className="text-[16px] font-bold tracking-tight text-foreground">
               {formatKes(monthlyPrice)}
-              <span className="ml-1 text-[11px] font-normal text-[var(--md-sys-color-on-surface-variant)]">
+              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
                 / mo
               </span>
             </p>
@@ -1471,7 +1471,7 @@ export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
           <button
             type="submit"
             disabled={submitting || !formIsComplete}
-            className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-[var(--md-sys-color-primary)] px-4 py-3 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <MSO
               icon={submitting ? 'progress_activity' : 'add_circle'}

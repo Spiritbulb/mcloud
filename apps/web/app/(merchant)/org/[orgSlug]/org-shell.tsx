@@ -90,10 +90,10 @@ export default function OrgShell({
             {/* Main content */}
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
                 {/* Header */}
-                <header className="shrink-0 h-[57px] z-40 flex items-center px-4 md:px-5 gap-3 border-b border-[var(--md-sys-color-outline-variant)]/40">
+                <header className="shrink-0 h-[57px] z-40 flex items-center px-4 md:px-5 gap-3 border-b border-border/40">
                     <button
                         onClick={() => setMobileNavOpen(true)}
-                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors shrink-0"
+                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors shrink-0"
                         aria-label="Open navigation"
                     >
                         <span className="material-symbols-outlined text-[20px]">
@@ -102,9 +102,9 @@ export default function OrgShell({
                     </button>
 
                     <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">{org.name}</span>
-                        <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40 shrink-0">chevron_right</span>
-                        <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{activeLabel}</span>
+                        <span className="text-[13px] text-muted-foreground">{org.name}</span>
+                        <span className="material-symbols-outlined text-[16px] text-muted-foreground opacity-40 shrink-0">chevron_right</span>
+                        <span className="text-[13px] font-medium text-foreground truncate">{activeLabel}</span>
                     </div>
 
                     <WalletBalancePill orgSlug={orgSlug} />

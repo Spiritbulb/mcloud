@@ -712,8 +712,8 @@ import ImageUpload from '@/components/store/image-upload'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 
 const inputCls =
-    'w-full h-9 rounded-lg border border-[var(--md-sys-color-outline-variant)] ' +
-    'bg-[var(--md-sys-color-surface)] px-3 text-[13px] text-[var(--md-sys-color-on-surface)] ' +
+    'w-full h-9 rounded-lg border border-border ' +
+    'bg-background px-3 text-[13px] text-foreground ' +
     'focus:outline-none focus:border-[var(--md-sys-color-primary)]'
 
 /**
@@ -736,7 +736,7 @@ export default function SettingsFields({
 }) {
     if (schema.length === 0) {
         return (
-            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="text-[12px] text-muted-foreground">
                 Nothing to configure here yet.
             </p>
         )
@@ -753,7 +753,7 @@ export default function SettingsFields({
 
                 return (
                     <label key={f.id} className="block">
-                        <span className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface)] mb-1.5">
+                        <span className="block text-[12px] font-medium text-foreground mb-1.5">
                             {f.label}
                         </span>
 
@@ -782,7 +782,7 @@ export default function SettingsFields({
                                     type="color"
                                     value={str || f.default || '#000000'}
                                     onChange={(e) => onChange(f.id, e.target.value)}
-                                    className="w-9 h-9 rounded-lg border border-[var(--md-sys-color-outline-variant)] cursor-pointer bg-transparent p-0"
+                                    className="w-9 h-9 rounded-lg border border-border cursor-pointer bg-transparent p-0"
                                 />
                                 <input
                                     className={inputCls + ' font-mono flex-1'}
@@ -1306,7 +1306,7 @@ export default function EditorClient({
     return (
         <div className="flex h-[calc(100vh-3.5rem)]">
             {/* Rail */}
-            <aside className="w-72 shrink-0 border-r border-[var(--md-sys-color-outline-variant)] overflow-y-auto p-4 space-y-4">
+            <aside className="w-72 shrink-0 border-r border-border overflow-y-auto p-4 space-y-4">
                 <button
                     onClick={() => setSelection({ kind: 'theme' })}
                     className={railCls(selection.kind === 'theme')}
@@ -1328,7 +1328,7 @@ export default function EditorClient({
                 )}
 
                 <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2">
                         Sections
                     </p>
                     <div className="space-y-1">
@@ -1344,7 +1344,7 @@ export default function EditorClient({
                     </div>
                 </div>
 
-                <div className="pt-4 border-t border-[var(--md-sys-color-outline-variant)] space-y-3">
+                <div className="pt-4 border-t border-border space-y-3">
                     {selection.kind === 'content' ? (
                         // SP5's editor, reused wholesale. It owns its own save (it
                         // writes stores.settings through updateStoreSettings), so it
@@ -1383,24 +1383,24 @@ export default function EditorClient({
                 </div>
 
                 {error && (
-                    <p className="text-[12px] text-[var(--md-sys-color-error)]">{error}</p>
+                    <p className="text-[12px] text-destructive">{error}</p>
                 )}
 
                 <button
                     onClick={onSave}
                     disabled={saving}
-                    className="w-full h-9 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[13px] font-semibold disabled:opacity-50"
+                    className="w-full h-9 rounded-full bg-primary text-primary-foreground text-[13px] font-semibold disabled:opacity-50"
                 >
                     {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
                 </button>
             </aside>
 
             {/* Preview. A preview failure must never block saving. */}
-            <div className="flex-1 bg-[var(--md-sys-color-surface-variant)] p-4">
+            <div className="flex-1 bg-muted p-4">
                 <iframe
                     ref={iframeRef}
                     src={debouncedSrc}
-                    className="w-full h-full rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-white"
+                    className="w-full h-full rounded-xl border border-border bg-white"
                     title="Site preview"
                 />
             </div>
@@ -1413,7 +1413,7 @@ function railCls(active: boolean) {
         'w-full text-left px-3 h-9 rounded-lg text-[13px] transition-colors',
         active
             ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-medium'
-            : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]',
+            : 'text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]',
     ].join(' ')
 }
 

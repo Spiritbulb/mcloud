@@ -67,11 +67,11 @@ function CollapseToggle({
             onClick={onToggle}
             className="flex items-center justify-between w-full px-3 py-1.5 group"
         >
-            <span className="text-[10px] font-semibold tracking-widest uppercase text-[var(--md-sys-color-on-surface-variant)] opacity-60">
+            <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground opacity-60">
                 {label}
             </span>
             <span className={cn(
-                'material-symbols-outlined text-[14px] text-[var(--md-sys-color-on-surface-variant)] opacity-40',
+                'material-symbols-outlined text-[14px] text-muted-foreground opacity-40',
                 'transition-transform duration-150',
                 collapsed && '-rotate-90'
             )}>
@@ -131,7 +131,7 @@ function NavItem({
                         ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
                         : isActive && hasSubTabs
                             ? 'text-[rgb(var(--brand))] font-medium hover:bg-[rgb(var(--muted-foreground))]'
-                            : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-[var(--md-sys-color-on-surface)]'
+                            : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-foreground'
                 )}
             >
                 <span className={cn(
@@ -156,7 +156,7 @@ function NavItem({
                         {hasSubTabs && (
                             <span className={cn(
                                 'material-symbols-outlined text-[16px] shrink-0 transition-transform duration-150',
-                                isActive ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]',
+                                isActive ? 'text-primary' : 'text-muted-foreground',
                                 open && 'rotate-180'
                             )}>
                                 expand_more
@@ -181,8 +181,8 @@ function NavItem({
                                     className={cn(
                                         'flex items-center w-full h-7 px-2 rounded-md text-[12px] transition-colors duration-100',
                                         isSubActive
-                                            ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-on-primary-container)] font-medium'
-                                            : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]'
+                                            ? 'bg-accent text-accent-foreground font-medium'
+                                            : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                                     )}
                                 >
                                     {sub.label}
@@ -290,7 +290,7 @@ function StoreSwitcher({
         return (
             <div className="absolute left-0 right-0 top-full z-50 mt-1 rounded-md border border-[rgb(var(--border))] bg-[rgb(var(--card))] shadow-lg py-1 min-w-[240px]">
                 <div className="px-3 py-2">
-                    <p className="text-[11px] font-semibold text-[var(--md-sys-color-on-surface-variant)] uppercase tracking-wider">
+                    <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
                         Your stores
                     </p>
                 </div>
@@ -299,7 +299,7 @@ function StoreSwitcher({
                     <button
                         key={s.slug}
                         onClick={() => { setOpen(false); switchStore(s) }}
-                        className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                        className="flex items-center gap-2.5 w-full px-3 py-2 text-left hover:bg-muted transition-colors"
                     >
                         <div className="store-avatar-fallback flex w-5 h-5 shrink-0 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
                             {s.logo_url
@@ -309,12 +309,12 @@ function StoreSwitcher({
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
                             <div className="flex items-center gap-2">
-                                <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{s.name}</span>
+                                <span className="text-[13px] font-medium text-foreground truncate">{s.name}</span>
                                 {s.slug === store.slug && (
-                                    <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-[var(--md-sys-color-primary)]" />
+                                    <span className="w-1.5 h-1.5 shrink-0 rounded-full bg-primary" />
                                 )}
                             </div>
-                            <span className="capitalize text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{s.role}</span>
+                            <span className="capitalize text-[11px] text-muted-foreground">{s.role}</span>
                         </div>
                     </button>
                 ))}
@@ -348,7 +348,7 @@ function StoreSwitcher({
                 onClick={() => hasMultiple && setOpen(v => !v)}
                 className={cn(
                     'flex items-center gap-2 w-full rounded-md px-2 py-1.5 transition-colors duration-100',
-                    hasMultiple && 'hover:bg-[var(--md-sys-color-surface-variant)] cursor-pointer'
+                    hasMultiple && 'hover:bg-muted cursor-pointer'
                 )}
             >
                 <div className="flex w-8 h-8 shrink-0 items-center justify-center rounded text-[10px] font-bold overflow-hidden">
@@ -358,15 +358,15 @@ function StoreSwitcher({
                     }
                 </div>
                 <div className="flex flex-col min-w-0 flex-1 text-left">
-                    <span className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)] truncate leading-tight">
+                    <span className="text-[12px] font-semibold text-foreground truncate leading-tight">
                         {store.name}
                     </span>
-                    <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
+                    <span className="text-[10px] text-muted-foreground truncate leading-tight">
                         {store.custom_domain ? `www.${store.custom_domain}` : storefrontDisplayUrl(store.slug)}
                     </span>
                 </div>
                 {hasMultiple && (
-                    <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-surface-variant)]">
+                    <span className="material-symbols-outlined text-[16px] text-muted-foreground">
                         unfold_more
                     </span>
                 )}
@@ -404,7 +404,7 @@ function UtilityItems({
                         title={railMode ? item.label : undefined}
                         className={cn(
                             'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
-                            'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] hover:text-[var(--md-sys-color-on-surface)]',
+                            'text-muted-foreground hover:bg-muted hover:text-foreground',
                             railMode ? 'justify-center w-10 h-10 mx-auto relative' : 'h-8 px-3'
                         )}
                     >
@@ -462,7 +462,7 @@ function AccountFooter({
                 title={railMode ? user.name : undefined}
                 className={cn(
                     'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none',
-                    'hover:bg-[var(--md-sys-color-surface-variant)]',
+                    'hover:bg-muted',
                     railMode ? 'justify-center w-10 h-10 mx-auto' : 'w-full px-2 py-1.5'
                 )}
             >
@@ -475,15 +475,15 @@ function AccountFooter({
                 {!railMode && (
                     <>
                         <div className="flex flex-col min-w-0 flex-1 text-left">
-                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate leading-tight">
+                            <span className="text-[12px] font-medium text-foreground truncate leading-tight">
                                 {user.name}
                             </span>
-                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
+                            <span className="text-[11px] text-muted-foreground truncate leading-tight">
                                 {user.email}
                             </span>
                         </div>
                         <span className={cn(
-                            'material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] transition-transform duration-150',
+                            'material-symbols-outlined text-[18px] text-muted-foreground transition-transform duration-150',
                             open && 'rotate-180'
                         )}>
                             expand_more
@@ -502,8 +502,8 @@ function AccountFooter({
                             }
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
-                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
+                            <span className="text-[12px] font-medium text-foreground truncate">{user.name}</span>
+                            <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
                         </div>
                     </div>
                     <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
@@ -512,9 +512,9 @@ function AccountFooter({
                             key={item.label}
                             href={item.href}
                             onClick={() => setOpen(false)}
-                            className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                            className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-foreground hover:bg-muted transition-colors"
                         >
-                            <span className="material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] shrink-0">
+                            <span className="material-symbols-outlined text-[18px] text-muted-foreground shrink-0">
                                 {item.icon}
                             </span>
                             {item.label}
@@ -525,7 +525,7 @@ function AccountFooter({
                             <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
                             <button
                                 onClick={() => { setOpen(false); user.onSignOut?.() }}
-                                className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                                className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-destructive hover:bg-muted transition-colors"
                             >
                                 <span className="material-symbols-outlined text-[18px] shrink-0">logout</span>
                                 Sign out
@@ -545,7 +545,7 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="pt-1.5 px-2 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+            className="pt-1.5 px-2 rounded-md text-muted-foreground hover:bg-muted transition-colors"
         >
             <span className="material-symbols-outlined">
                 {railMode ? 'menu' : 'menu_open'}
@@ -804,9 +804,9 @@ export function MobileSettingsNav({
                     <button
                         onClick={onOpen}
                         aria-label="Open navigation"
-                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-[var(--md-sys-color-primary-container)] shadow-md active:bg-[var(--md-sys-color-primary)]"
+                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-accent shadow-md active:bg-primary"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">
+                        <span className="material-symbols-outlined text-[16px] text-accent-foreground">
                             chevron_right
                         </span>
                     </button>
@@ -834,7 +834,7 @@ export function MobileSettingsNav({
                     <button
                         onClick={onClose}
                         aria-label="Close navigation"
-                        className="p-1.5 rounded-full hover:bg-[var(--md-sys-color-surface-variant)] transition-colors text-[var(--md-sys-color-on-surface-variant)]"
+                        className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
                     >
                         <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>

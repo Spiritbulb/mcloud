@@ -39,21 +39,21 @@ export default function AdminShell({
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
 
                 {/* Top header */}
-                <header className="shrink-0 h-[57px] bg-[var(--md-sys-color-surface)] z-40 flex items-center px-4 md:px-5 gap-3">
+                <header className="shrink-0 h-[57px] bg-background z-40 flex items-center px-4 md:px-5 gap-3">
                     <button
                         onClick={() => setMobileNavOpen(true)}
-                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors shrink-0"
+                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors shrink-0"
                         aria-label="Open navigation"
                     >
                         <span className="material-symbols-outlined select-none leading-none text-[20px]">menu</span>
                     </button>
 
                     <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">Admin</span>
-                        <span className="material-symbols-outlined select-none leading-none text-[16px] text-[var(--md-sys-color-on-surface-variant)] opacity-40">
+                        <span className="text-[13px] text-muted-foreground">Admin</span>
+                        <span className="material-symbols-outlined select-none leading-none text-[16px] text-muted-foreground opacity-40">
                             chevron_right
                         </span>
-                        <span className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
+                        <span className="text-[13px] font-medium text-foreground truncate">
                             {activeLabel}
                         </span>
                     </div>

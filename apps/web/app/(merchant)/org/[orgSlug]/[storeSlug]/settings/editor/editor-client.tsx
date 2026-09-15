@@ -524,7 +524,7 @@ export default function EditorClient({
         <div className="relative flex h-full min-h-0">
 
             {/* ── Rail: a list, nothing more. Picking something opens the drawer. ── */}
-            <aside className="w-56 shrink-0 border-r border-[var(--md-sys-color-outline-variant)] overflow-y-auto p-3 space-y-4">
+            <aside className="w-56 shrink-0 border-r border-border overflow-y-auto p-3 space-y-4">
                 <div className="space-y-1">
                     <RailItem
                         icon={<Palette className="w-4 h-4 shrink-0" />}
@@ -547,13 +547,13 @@ export default function EditorClient({
                 </div>
 
                 <div>
-                    <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)] mb-2 px-2">
+                    <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-2">
                         <Layers className="w-3.5 h-3.5" />
                         Sections
                     </p>
                     <div className="space-y-1">
                         {sections.length === 0 && (
-                            <p className="px-2 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+                            <p className="px-2 text-[12px] text-muted-foreground">
                                 This site uses the default layout. Nothing to configure yet.
                             </p>
                         )}
@@ -572,7 +572,7 @@ export default function EditorClient({
                 </div>
 
                 {sections.length > 0 && (
-                    <p className="px-2 pt-1 text-[11px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)]">
+                    <p className="px-2 pt-1 text-[11px] leading-relaxed text-muted-foreground">
                         Click any heading in the preview to edit it directly.
                     </p>
                 )}
@@ -580,7 +580,7 @@ export default function EditorClient({
 
             {/* Preview. A preview failure must never block saving, so a missing
                 token degrades to a message rather than an error state. */}
-            <div className="relative flex-1 min-w-0 bg-[var(--md-sys-color-surface-variant)] p-0.5">
+            <div className="relative flex-1 min-w-0 bg-muted p-0.5">
                 {/* Editing happens IN the preview now, so Save cannot live only in the
                     drawer: a merchant who never opens one would have no way to keep
                     their work. It floats over the preview whenever there is something
@@ -588,14 +588,14 @@ export default function EditorClient({
                 {dirty && selection?.kind !== 'content' && (
                     <div className="absolute bottom-5 right-5 z-30 flex items-center gap-3">
                         {error && (
-                            <span className="rounded-lg bg-[var(--md-sys-color-error-container)] px-3 py-1.5 text-[12px] text-[var(--md-sys-color-on-error-container)] shadow">
+                            <span className="rounded-lg bg-destructive/20 px-3 py-1.5 text-[12px] text-destructive-foreground shadow">
                                 {error}
                             </span>
                         )}
                         <button
                             onClick={onSave}
                             disabled={saving}
-                            className="h-10 rounded-full bg-[var(--md-sys-color-primary)] px-5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] shadow-lg disabled:opacity-50"
+                            className="h-10 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-lg disabled:opacity-50"
                         >
                             {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
                         </button>
@@ -608,7 +608,7 @@ export default function EditorClient({
                         <span className="text-[13px] text-[var(--md-sys-color-inverse-on-surface)]">{undo.label}</span>
                         <button
                             onClick={() => { undo.restore(); setUndo(null) }}
-                            className="rounded-full bg-[var(--md-sys-color-inverse-primary)] px-3 h-8 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)]"
+                            className="rounded-full bg-[var(--md-sys-color-inverse-primary)] px-3 h-8 text-[13px] font-semibold text-primary-foreground"
                         >
                             Undo
                         </button>
@@ -630,8 +630,8 @@ export default function EditorClient({
                     let the merchant pick what kind of section to insert there. */}
                 {addAt !== null && (
                     <div className="absolute inset-0 z-40 grid place-items-center bg-black/30" onClick={() => setAddAt(null)}>
-                        <div className="w-72 rounded-xl bg-[var(--md-sys-color-surface)] p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                            <p className="px-3 py-2 text-[12px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">Add a section</p>
+                        <div className="w-72 rounded-xl bg-background p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
+                            <p className="px-3 py-2 text-[12px] font-semibold text-muted-foreground">Add a section</p>
                             {addableTypes.map((t) => (
                                 <button
                                     key={t}
@@ -653,12 +653,12 @@ export default function EditorClient({
                     <iframe
                         ref={iframeRef}
                         src={debouncedSrc}
-                        className="w-full h-full border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)]"
+                        className="w-full h-full border border-border bg-background"
                         title="Site preview"
                     />
                 ) : (
-                    <div className="w-full h-full rounded-xl border border-[var(--md-sys-color-outline-variant)] flex items-center justify-center">
-                        <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+                    <div className="w-full h-full rounded-xl border border-border flex items-center justify-center">
+                        <p className="text-[13px] text-muted-foreground">
                             The preview is unavailable. Your changes still save normally.
                         </p>
                     </div>
@@ -670,18 +670,18 @@ export default function EditorClient({
             {selection && (
                 <div
                     className="absolute inset-y-0 left-56 z-20 w-[26rem] flex flex-col
-                               bg-[var(--md-sys-color-surface)]
-                               border-r border-[var(--md-sys-color-outline-variant)]
+                               bg-background
+                               border-r border-border
                                shadow-xl"
                 >
-                    <header className="shrink-0 flex items-center justify-between gap-2 px-4 h-14 border-b border-[var(--md-sys-color-outline-variant)]">
-                        <h2 className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)] truncate">
+                    <header className="shrink-0 flex items-center justify-between gap-2 px-4 h-14 border-b border-border">
+                        <h2 className="text-[14px] font-semibold text-foreground truncate">
                             {active.label}
                         </h2>
                         <button
                             onClick={() => setSelection(null)}
                             aria-label="Close"
-                            className="shrink-0 w-8 h-8 grid place-items-center rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]"
+                            className="shrink-0 w-8 h-8 grid place-items-center rounded-full text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]"
                         >
                             <X className="w-4 h-4" />
                         </button>
@@ -747,7 +747,7 @@ function RailItem({
                 'w-full flex items-center gap-2 text-left px-3 h-9 rounded-lg text-[13px] transition-colors',
                 active
                     ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-medium'
-                    : 'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]',
+                    : 'text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]',
             ].join(' ')}
         >
             {icon}

@@ -81,12 +81,12 @@ type OverviewData = {
 
 const STATUS: Record<Order['status'], { icon: string; label: string; bg: string; fg: string }> = {
     pending: { icon: 'schedule', label: 'Pending', bg: 'bg-amber-500/10', fg: 'text-amber-600 dark:text-amber-400' },
-    paid: { icon: 'check_circle', label: 'Paid', bg: 'bg-[var(--md-sys-color-primary-container)]', fg: 'text-[var(--md-sys-color-primary)]' },
+    paid: { icon: 'check_circle', label: 'Paid', bg: 'bg-accent', fg: 'text-primary' },
     processing: { icon: 'autorenew', label: 'Processing', bg: 'bg-violet-500/10', fg: 'text-violet-600 dark:text-violet-400' },
     shipped: { icon: 'local_shipping', label: 'Shipped', bg: 'bg-sky-500/10', fg: 'text-sky-600 dark:text-sky-400' },
-    delivered: { icon: 'verified', label: 'Delivered', bg: 'bg-[var(--md-sys-color-primary-container)]', fg: 'text-[var(--md-sys-color-primary)]' },
-    cancelled: { icon: 'cancel', label: 'Cancelled', bg: 'bg-[var(--md-sys-color-error-container)]', fg: 'text-[var(--md-sys-color-error)]' },
-    refunded: { icon: 'currency_exchange', label: 'Refunded', bg: 'bg-[var(--md-sys-color-surface-variant)]', fg: 'text-[var(--md-sys-color-on-surface-variant)]' },
+    delivered: { icon: 'verified', label: 'Delivered', bg: 'bg-accent', fg: 'text-primary' },
+    cancelled: { icon: 'cancel', label: 'Cancelled', bg: 'bg-destructive/20', fg: 'text-destructive' },
+    refunded: { icon: 'currency_exchange', label: 'Refunded', bg: 'bg-muted', fg: 'text-muted-foreground' },
 }
 
 
@@ -115,7 +115,7 @@ function timeAgo(iso: string) {
 function Sk({ className }: { className?: string }) {
     return (
         <span className={cn(
-            'block animate-pulse bg-[var(--md-sys-color-surface-variant)]',
+            'block animate-pulse bg-muted',
             className
         )} />
     )
@@ -141,8 +141,8 @@ function KpiCard({ label, value, sub, icon, loading, featured }: {
         <div className={cn(
             'relative overflow-hidden p-5 flex flex-col gap-1',
             featured
-                ? 'bg-[var(--md-sys-color-primary-container)] col-span-2 sm:col-span-1'
-                : 'bg-[var(--md-sys-color-surface-container-low)] border border-[var(--md-sys-color-outline-variant)]'
+                ? 'bg-accent col-span-2 sm:col-span-1'
+                : 'bg-[var(--md-sys-color-surface-container-low)] border border-border'
         )}>
             {icon && (
                 <MSO
@@ -151,8 +151,8 @@ function KpiCard({ label, value, sub, icon, loading, featured }: {
                     className={cn(
                         'absolute right-3 top-3 text-[20px]',
                         featured
-                            ? 'text-[var(--md-sys-color-primary)] opacity-70'
-                            : 'text-[var(--md-sys-color-on-surface-variant)] opacity-30'
+                            ? 'text-primary opacity-70'
+                            : 'text-muted-foreground opacity-30'
                     )}
                 />
             )}
@@ -160,17 +160,17 @@ function KpiCard({ label, value, sub, icon, loading, featured }: {
                 ? <Sk className="h-8 w-24 mb-1" />
                 : <p className={cn(
                     'text-[28px] font-semibold tabular-nums leading-none tracking-tight',
-                    featured ? 'text-[var(--md-sys-color-on-primary-container)]' : 'text-[var(--md-sys-color-on-surface)]'
+                    featured ? 'text-accent-foreground' : 'text-foreground'
                 )}>{value}</p>
             }
             <p className={cn(
                 'text-[12px] font-medium',
-                featured ? 'text-[var(--md-sys-color-primary)]' : 'text-[var(--md-sys-color-on-surface-variant)]'
+                featured ? 'text-primary' : 'text-muted-foreground'
             )}>{label}</p>
             {sub && !loading && (
                 <p className={cn(
                     'text-[11px]',
-                    featured ? 'text-[var(--md-sys-color-primary)]/60' : 'text-[var(--md-sys-color-on-surface-variant)] opacity-60'
+                    featured ? 'text-primary/60' : 'text-muted-foreground opacity-60'
                 )}>{sub}</p>
             )}
         </div>
@@ -247,14 +247,14 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
     ]
 
     return (
-        <div className="border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
+        <div className="border border-border bg-background overflow-hidden">
             <div className="grid grid-cols-4 divide-x divide-[var(--md-sys-color-outline-variant)]">
                 {steps.map((step, i) => (
                     <div key={step.label} className="flex flex-col gap-1 px-4 py-4">
-                        <div className="h-1 rounded-full bg-[var(--md-sys-color-surface-variant)] mb-2 overflow-hidden">
+                        <div className="h-1 rounded-full bg-muted mb-2 overflow-hidden">
                             {!loading && funnel && (
                                 <div
-                                    className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
+                                    className="h-full rounded-full bg-primary transition-all duration-500"
                                     style={{
                                         width: i === 0 ? '100%' : `${((steps[i].value ?? 0) / (funnel.views || 1)) * 100}%`,
                                         opacity: 1 - i * 0.15,
@@ -264,13 +264,13 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
                         </div>
                         {loading
                             ? <Sk className="h-5 w-14" />
-                            : <p className="text-[18px] font-semibold tabular-nums leading-none text-[var(--md-sys-color-on-surface)]">
+                            : <p className="text-[18px] font-semibold tabular-nums leading-none text-foreground">
                                 {(step.value ?? 0).toLocaleString()}
                             </p>
                         }
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">{step.label}</p>
+                        <p className="text-[11px] text-muted-foreground">{step.label}</p>
                         {step.rate && (
-                            <p className="text-[11px] font-medium text-[var(--md-sys-color-primary)] mt-0.5">
+                            <p className="text-[11px] font-medium text-primary mt-0.5">
                                 {step.rate} conv.
                             </p>
                         )}
@@ -279,13 +279,13 @@ function FunnelRow({ funnel, loading, onViewAnalytics }: {
             </div>
 
             {/* Footer — period label + analytics link */}
-            <div className="px-4 py-2 border-t border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
-                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)]">
+            <div className="px-4 py-2 border-t border-border bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
+                <p className="text-[11px] text-muted-foreground">
                     Last 7 days · site visits to purchases
                 </p>
                 <button
                     onClick={onViewAnalytics}
-                    className="flex items-center gap-0.5 text-[11px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
+                    className="flex items-center gap-0.5 text-[11px] text-primary hover:underline underline-offset-2"
                 >
                     Full report
                     <MSO icon="chevron_right" className="text-[13px]" />
@@ -307,28 +307,28 @@ function TopProductCard({ product, currency, loading, onNavigate }: {
             onClick={onNavigate}
             className={cn(
                 'w-full flex items-center gap-4 text-left group',
-                'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
+                'bg-background px-4 py-3.5',
                 'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
             )}
         >
-            <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
+            <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
                 {loading
                     ? <Sk className="w-full h-full rounded-none" />
                     : product?.image_url
                         ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                        : <MSO icon="inventory_2" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
+                        : <MSO icon="inventory_2" className="text-[18px] text-muted-foreground" />
                 }
             </div>
             <div className="flex-1 min-w-0">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-primary">
                     Top product
                 </span>
                 {loading
                     ? <Sk className="h-4 w-32 mt-0.5" />
-                    : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{product!.name}</p>
+                    : <p className="text-[13px] font-medium text-foreground truncate">{product!.name}</p>
                 }
                 {!loading && product && (
-                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
                         {product.units_sold} sold this month
                     </p>
                 )}
@@ -336,13 +336,13 @@ function TopProductCard({ product, currency, loading, onNavigate }: {
             <div className="shrink-0 text-right">
                 {loading
                     ? <Sk className="h-5 w-16" />
-                    : <p className="text-[14px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)]">
+                    : <p className="text-[14px] font-semibold tabular-nums text-foreground">
                         {fmt(product!.revenue, currency)}
                     </p>
                 }
                 <MSO
                     icon="chevron_right"
-                    className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors mt-0.5 ml-auto"
+                    className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-muted-foreground transition-colors mt-0.5 ml-auto"
                 />
             </div>
         </button>
@@ -363,27 +363,27 @@ function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
             onClick={onNavigate}
             className={cn(
                 'w-full flex flex-col gap-3 text-left group',
-                'bg-[var(--md-sys-color-surface)] px-4 py-3.5',
+                'bg-background px-4 py-3.5',
                 'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
             )}
         >
             <div className="w-full flex items-center gap-4">
-                <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-[var(--md-sys-color-surface-variant)] flex items-center justify-center">
+                <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
                     {loading
                         ? <Sk className="w-full h-full rounded-none" />
-                        : <MSO icon="volunteer_activism" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
+                        : <MSO icon="volunteer_activism" className="text-[18px] text-muted-foreground" />
                     }
                 </div>
                 <div className="flex-1 min-w-0">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--md-sys-color-primary)]">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-primary">
                         Top campaign
                     </span>
                     {loading
                         ? <Sk className="h-4 w-32 mt-0.5" />
-                        : <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{campaign!.title}</p>
+                        : <p className="text-[13px] font-medium text-foreground truncate">{campaign!.title}</p>
                     }
                     {!loading && campaign && (
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                        <p className="text-[11px] text-muted-foreground mt-0.5">
                             {campaign.goal > 0
                                 ? `${campaign.percent}% of ${fmt(campaign.goal, currency)} goal`
                                 : 'No goal set'}
@@ -393,22 +393,22 @@ function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
                 <div className="shrink-0 text-right">
                     {loading
                         ? <Sk className="h-5 w-16" />
-                        : <p className="text-[14px] font-semibold tabular-nums text-[var(--md-sys-color-on-surface)]">
+                        : <p className="text-[14px] font-semibold tabular-nums text-foreground">
                             {fmt(campaign!.raised, currency)}
                         </p>
                     }
                     <MSO
                         icon="chevron_right"
-                        className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-[var(--md-sys-color-on-surface-variant)] transition-colors mt-0.5 ml-auto"
+                        className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-muted-foreground transition-colors mt-0.5 ml-auto"
                     />
                 </div>
             </div>
 
             {/* Goal progress. Only meaningful when the campaign has a goal. */}
             {!loading && campaign && campaign.goal > 0 && (
-                <div className="h-1 w-full rounded-full bg-[var(--md-sys-color-surface-variant)] overflow-hidden">
+                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
                     <div
-                        className="h-full rounded-full bg-[var(--md-sys-color-primary)] transition-all duration-500"
+                        className="h-full rounded-full bg-primary transition-all duration-500"
                         style={{ width: `${campaign.percent}%` }}
                     />
                 </div>
@@ -462,28 +462,28 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
                             <span className={cn(
                                 'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full',
                                 store.active
-                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
-                                    : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-error)]'
+                                    ? 'bg-accent text-primary'
+                                    : 'bg-destructive/20 text-destructive'
                             )}>
                                 <span className={cn(
                                     'w-1.5 h-1.5 rounded-full',
-                                    store.active ? 'bg-[var(--md-sys-color-primary)]' : 'bg-[var(--md-sys-color-error)]'
+                                    store.active ? 'bg-primary' : 'bg-[var(--md-sys-color-error)]'
                                 )} />
                                 {store.active ? 'Live' : 'Offline'}
                             </span>
                         )}
-                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">
+                        <p className="text-[11px] text-muted-foreground truncate">
                             {loading ? <Sk className="h-3 w-40 inline-block" /> : storefrontDisplayUrl(store?.slug ?? '', store?.custom_domain)}
                         </p>
                     </div>
                     {headline
-                        ? <h1 className="text-[1.4rem] sm:text-[1.6rem] font-bold leading-tight tracking-tight text-[var(--md-sys-color-on-surface)]">
+                        ? <h1 className="text-[1.4rem] sm:text-[1.6rem] font-bold leading-tight tracking-tight text-foreground">
                             {headline}
                         </h1>
                         : <Sk className="h-7 w-56" />
                     }
                     {sub
-                        ? <p className="text-[13px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md">{sub}</p>
+                        ? <p className="text-[13px] leading-relaxed text-muted-foreground max-w-md">{sub}</p>
                         : <Sk className="h-4 w-72" />
                     }
                 </div>
@@ -503,7 +503,7 @@ function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
                         }}
                         className={cn(
                             'shrink-0 inline-flex items-center gap-1.5 h-9 p-2 rounded-full',
-                            'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                            'bg-primary text-primary-foreground',
                             'text-[12px] font-semibold hover:opacity-90 transition-opacity'
                         )}
                     >
@@ -529,21 +529,21 @@ function ShareStore({ slug, custom_domain }: { slug: string; custom_domain?: str
     }
 
     return (
-        <div className="bg-[var(--md-sys-color-surface)] p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
-                <MSO icon="share" className="text-[18px] text-[var(--md-sys-color-primary)]" fill={1} />
+        <div className="bg-background p-4 flex items-center gap-3">
+            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent shrink-0">
+                <MSO icon="share" className="text-[18px] text-primary" fill={1} />
             </div>
             <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)]">Get more action by sharing your link!</p>
-                <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{url}</p>
+                <p className="text-[12px] font-semibold text-foreground">Get more action by sharing your link!</p>
+                <p className="text-[11px] text-muted-foreground truncate">{url}</p>
             </div>
             <button
                 onClick={copy}
                 className={cn(
                     'shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium transition-colors',
                     copied
-                        ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
-                        : 'border border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container-low)]'
+                        ? 'bg-accent text-primary'
+                        : 'border border-border text-foreground hover:bg-[var(--md-sys-color-surface-container-low)]'
                 )}
             >
                 <MSO icon={copied ? 'check' : 'content_copy'} className="text-[14px]" />
@@ -559,22 +559,22 @@ function ProUpsell({ onNavigate }: { onNavigate: () => void }) {
     return (
         <button
             onClick={onNavigate}
-            className="w-full text-left rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-5 group hover:border-[var(--md-sys-color-primary)] transition-colors relative overflow-hidden"
+            className="w-full text-left rounded-2xl border border-border bg-background p-5 group hover:border-[var(--md-sys-color-primary)] transition-colors relative overflow-hidden"
         >
             <div
                 className="pointer-events-none absolute -left-10 -bottom-12 h-40 w-40 rounded-full opacity-40 blur-3xl"
                 style={{ background: 'radial-gradient(circle, var(--md-sys-color-primary-container) 0%, transparent 70%)' }}
             />
             <div className="relative flex items-start gap-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--md-sys-color-primary-container)] shrink-0">
-                    <MSO icon="workspace_premium" className="text-[20px] text-[var(--md-sys-color-primary)]" fill={1} />
+                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent shrink-0">
+                    <MSO icon="workspace_premium" className="text-[20px] text-primary" fill={1} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">Grow with Pro</p>
-                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-relaxed max-w-sm">
+                    <p className="text-[13px] font-semibold text-foreground">Grow with Pro</p>
+                    <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed max-w-sm">
                         Your own domain, advanced analytics, a blog, and your branding out front. Everything you need to scale.
                     </p>
-                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-[var(--md-sys-color-primary)] mt-2 group-hover:gap-1.5 transition-all">
+                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary mt-2 group-hover:gap-1.5 transition-all">
                         See Pro features
                         <MSO icon="arrow_forward" className="text-[14px]" />
                     </span>
@@ -753,49 +753,49 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             {/* ── Recent orders ─────────────────────────────────────────────── */}
             <div className="animate-rise-4">
                 <div className="flex items-center justify-between mb-3">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                    <p className="text-[13px] font-semibold text-foreground">
                         {commerce ? 'Recent orders' : 'Recent donations'}
                     </p>
                     <button
                         onClick={() => navigate('orders')}
-                        className="flex items-center gap-0.5 text-[12px] text-[var(--md-sys-color-primary)] hover:underline underline-offset-2"
+                        className="flex items-center gap-0.5 text-[12px] text-primary hover:underline underline-offset-2"
                     >
                         View all
                         <MSO icon="chevron_right" className="text-[15px]" />
                     </button>
                 </div>
 
-                <div className="rounded-2xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] overflow-hidden">
+                <div className="rounded-2xl border border-border bg-background overflow-hidden">
                     {loading ? (
                         Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0">
+                            <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-0">
                                 <Sk className="h-4 w-32 flex-1" />
                                 <Sk className="h-4 w-14" />
                                 <Sk className="h-6 w-20 rounded-full" />
                             </div>
                         ))
                     ) : error ? (
-                        <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
-                            <MSO icon="error_outline" className="text-[18px] text-[var(--md-sys-color-error)]" />
+                        <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-muted-foreground">
+                            <MSO icon="error_outline" className="text-[18px] text-destructive" />
                             {commerce ? 'Could not load orders.' : 'Could not load donations.'}{' '}
-                            <button onClick={() => window.location.reload()} className="text-[var(--md-sys-color-primary)] hover:underline">
+                            <button onClick={() => window.location.reload()} className="text-primary hover:underline">
                                 Retry
                             </button>
                         </div>
                     ) : orders.length === 0 ? (
                         <div className="flex flex-col items-center gap-4 px-5 py-12 text-center">
-                            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--md-sys-color-primary-container)]">
+                            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-accent">
                                 <MSO
                                     icon={commerce ? 'rocket_launch' : 'volunteer_activism'}
-                                    className="text-[26px] text-[var(--md-sys-color-primary)]"
+                                    className="text-[26px] text-primary"
                                     fill={1}
                                 />
                             </div>
                             <div className="max-w-xs">
-                                <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                                <p className="text-[14px] font-semibold text-foreground">
                                     {commerce ? 'Your first sale is close' : 'Your first donation is close'}
                                 </p>
-                                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-1 leading-relaxed">
+                                <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
                                     {commerce
                                         ? (store && store.product_count > 0
                                             ? 'Your products are live. Share your store link and watch the orders roll in.'
@@ -813,7 +813,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                                         navigate(campaigns.length > 0 ? 'orders' : 'content')
                                     }
                                 }}
-                                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] text-[12px] font-semibold hover:opacity-90 transition-opacity"
+                                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold hover:opacity-90 transition-opacity"
                             >
                                 <MSO icon="add" className="text-[16px]" />
                                 {commerce
@@ -826,17 +826,17 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                             <button
                                 key={order.id}
                                 onClick={() => navigate('orders')}
-                                className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-[var(--md-sys-color-outline-variant)] last:border-0 hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors text-left group"
+                                className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-0 hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors text-left group"
                             >
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)] truncate">
+                                    <p className="text-[13px] font-medium text-foreground truncate">
                                         {order.customer_name}
                                     </p>
-                                    <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                                    <p className="text-[11px] text-muted-foreground mt-0.5">
                                         {timeAgo(order.created_at)}
                                     </p>
                                 </div>
-                                <span className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)] tabular-nums shrink-0">
+                                <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0">
                                     {fmt(order.total, store?.currency ?? 'KES')}
                                 </span>
                                 <StatusBadge status={order.status} />

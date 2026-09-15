@@ -67,13 +67,13 @@ try {
             <section className="relative overflow-hidden ">
                 <div className="relative flex flex-col sm:flex-row items-center">
                     <div className="flex-1 min-w-0 space-y-3 text-center sm:text-left">
-                        <p className="text-[12px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-primary)]">
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-primary">
                             {org.name}
                         </p>
-                        <h1 className="text-[1.75rem] sm:text-[2rem] font-bold leading-tight text-[var(--md-sys-color-on-surface)]">
+                        <h1 className="text-[1.75rem] sm:text-[2rem] font-bold leading-tight text-foreground">
                             Manage your servers
                         </h1>
-                        <p className="text-[14px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md mx-auto sm:mx-0">
+                        <p className="text-[14px] leading-relaxed text-muted-foreground max-w-md mx-auto sm:mx-0">
                             New servers might take a few minutes to be accessible. You can check the status on the table below or by clicking on the server name to view the details page.
                         </p>
                     </div>
@@ -91,11 +91,11 @@ try {
         <div className="max-w-4xl mx-auto space-y-6">
             {!error && servers.length !== 0 && (
             <div className="flex items-center justify-between">
-                <h1 className="text-xl font-semibold text-[var(--md-sys-color-on-surface)]">Servers</h1>
+                <h1 className="text-xl font-semibold text-foreground">Servers</h1>
                 {canManage && (
                     <Link
                         href={`/org/${orgSlug}/servers/new`}
-                        className="inline-flex h-9 items-center gap-2 rounded-full bg-[var(--md-sys-color-primary)] px-4 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] hover:opacity-90 transition-opacity"
+                        className="inline-flex h-9 items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
                     >
                         Create a server
                     </Link>
@@ -108,14 +108,14 @@ try {
             )}
 
             {!error && servers.length === 0 && (
-                <div className="flex flex-col items-center justify-center gap-6 p-8 text-sm text-[var(--md-sys-color-on-surface-variant)]">
+                <div className="flex flex-col items-center justify-center gap-6 p-8 text-sm text-muted-foreground">
                     {canManage
                         ? 'No servers yet. Use the button below to create your first server.'
                         : 'No servers yet. If you need access to create servers, please contact your organisation administrator.'}
                     {canManage && (
                     <Link
                         href={`/org/${orgSlug}/servers/new`}
-                        className="flex h-9 w-auto items-center gap-2 rounded-full bg-[var(--md-sys-color-primary)] px-4 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] hover:opacity-90 transition-opacity"
+                        className="flex h-9 w-auto items-center gap-2 rounded-full bg-primary px-4 text-[13px] font-semibold text-primary-foreground hover:opacity-90 transition-opacity"
                     >
                         Create your first server
                     </Link>

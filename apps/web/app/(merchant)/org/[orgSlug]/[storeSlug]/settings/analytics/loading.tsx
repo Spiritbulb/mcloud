@@ -1,7 +1,7 @@
 // Instant skeleton matching the analytics layout — shows the moment you navigate,
 // before the client fetches data, so the tab never feels frozen.
 function Sk({ className }: { className?: string }) {
-    return <span className={`block animate-pulse rounded-lg bg-[var(--md-sys-color-surface-variant)] ${className ?? ''}`} />
+    return <span className={`block animate-pulse rounded-lg bg-muted ${className ?? ''}`} />
 }
 
 export default function Loading() {

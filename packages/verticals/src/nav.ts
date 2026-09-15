@@ -73,9 +73,18 @@ const COMMERCE: NavSection = {
   tabs: [
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
     { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
-    { id: 'customers', label: 'Customers', icon: 'person', beta: true, pro: true },
-    { id: 'blog', label: 'Blog', icon: 'article', beta: true, pro: true },
+    { id: 'customers', label: 'Customers', icon: 'person', pro: true },
+    { id: 'blog', label: 'Blog', icon: 'article', pro: true },
   ],
+}
+
+const LOGISTICS: NavSection = {
+  id: 'logistics',
+  label: 'Logistics',
+  tabs: [
+    { id: 'logistics', label: 'Delivery Options', icon: 'box', beta: true, pro: true },
+    { id: 'tracking', label: 'Track orders', icon: 'map', beta: true, pro: true },
+  ]
 }
 
 /**
@@ -99,7 +108,7 @@ const DONATIONS: NavSection = {
 /** The admin nav for a vertical. */
 export function sectionsFor(vertical: Vertical): NavSection[] {
   return vertical.commerce
-    ? [SITE, CATALOG, COMMERCE, ADVANCED]
+    ? [SITE, CATALOG, COMMERCE, LOGISTICS, ADVANCED]
     : [SITE, DONATIONS, ADVANCED]
 }
 
@@ -117,6 +126,7 @@ export const ALL_TAB_IDS = [
   'content',
   'members', 'domain', 'integrations',
   'billing',
+  'logistics', 'tracking',
 ] as const
 
 export type TabId = (typeof ALL_TAB_IDS)[number]

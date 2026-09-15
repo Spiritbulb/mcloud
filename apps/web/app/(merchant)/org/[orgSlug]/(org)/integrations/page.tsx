@@ -107,48 +107,48 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
         <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
             <div className="max-w-3xl mx-auto space-y-8">
                 <div>
-                    <h1 className="text-[16px] font-semibold text-[var(--md-sys-color-on-surface)]">Integrations</h1>
-                    <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">
+                    <h1 className="text-[16px] font-semibold text-foreground">Integrations</h1>
+                    <p className="text-[12px] text-muted-foreground mt-0.5">
                         Connect third-party services to your organization.
                     </p>
                 </div>
 
                 {CATEGORIES.map(category => (
                     <section key={category} className="space-y-3">
-                        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-on-surface-variant)]">
+                        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
                             {category}
                         </h2>
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             {INTEGRATIONS.filter(i => i.category === category).map(integration => (
                                 <div
                                     key={integration.id}
-                                    className="relative flex items-start gap-4 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-4"
+                                    className="relative flex items-start gap-4 rounded-xl border border-border bg-background p-4"
                                 >
-                                    <div className="w-10 h-10 rounded-xl bg-[var(--md-sys-color-primary-container)] flex items-center justify-center shrink-0">
+                                    <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
                                         <MSO
                                             icon={integration.icon}
-                                            className="text-[20px] text-[var(--md-sys-color-primary)]"
+                                            className="text-[20px] text-primary"
                                             fill={1}
                                         />
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2">
-                                            <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">
+                                            <p className="text-[13px] font-medium text-foreground">
                                                 {integration.name}
                                             </p>
                                             {integration.comingSoon && (
-                                                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]">
+                                                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
                                                     Soon
                                                 </span>
                                             )}
                                         </div>
-                                        <p className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-relaxed">
+                                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                                             {integration.description}
                                         </p>
                                     </div>
                                     {!integration.comingSoon && (
                                         <button
-                                            className="shrink-0 h-7 px-3 rounded-full border border-[var(--md-sys-color-outline-variant)] text-[12px] text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                                            className="shrink-0 h-7 px-3 rounded-full border border-border text-[12px] text-muted-foreground hover:bg-muted transition-colors"
                                             disabled
                                         >
                                             Configure

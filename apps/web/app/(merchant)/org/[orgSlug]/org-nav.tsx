@@ -55,7 +55,7 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
         >
             <span className="material-symbols-outlined">
                 {railMode ? 'menu_open' : 'menu'}
@@ -94,7 +94,7 @@ function NavItem({
                     railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3',
                     isActive
                         ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
-                        : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-[var(--md-sys-color-on-surface)]'
+                        : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-foreground'
                 )}
             >
                 <span className={cn(
@@ -142,7 +142,7 @@ function AccountFooter({
                 title={railMode ? user.name : undefined}
                 className={cn(
                     'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none',
-                    'hover:bg-[var(--md-sys-color-surface-variant)]',
+                    'hover:bg-muted',
                     railMode ? 'justify-center w-10 h-10 mx-auto' : 'w-full px-2 py-1.5'
                 )}
             >
@@ -155,15 +155,15 @@ function AccountFooter({
                 {!railMode && (
                     <>
                         <span className="flex flex-col min-w-0 flex-1 text-left">
-                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate leading-tight">
+                            <span className="text-[12px] font-medium text-foreground truncate leading-tight">
                                 {user.name}
                             </span>
-                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
+                            <span className="text-[11px] text-muted-foreground truncate leading-tight">
                                 {user.email}
                             </span>
                         </span>
                         <span className={cn(
-                            'material-symbols-outlined text-[18px] text-[var(--md-sys-color-on-surface-variant)] transition-transform duration-150',
+                            'material-symbols-outlined text-[18px] text-muted-foreground transition-transform duration-150',
                             open && 'rotate-180'
                         )}>
                             expand_more
@@ -182,15 +182,15 @@ function AccountFooter({
                             }
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
-                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
+                            <span className="text-[12px] font-medium text-foreground truncate">{user.name}</span>
+                            <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
                         </div>
                     </div>
                     <div className="mx-2 my-1 h-px bg-[rgb(var(--border))]" />
                     {user.onSignOut && (
                         <button
                             onClick={() => { setOpen(false); user.onSignOut?.() }}
-                            className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-[var(--md-sys-color-error)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+                            className="flex items-center gap-2.5 w-full px-3 py-2 text-[13px] text-destructive hover:bg-muted transition-colors"
                         >
                             <span className="material-symbols-outlined text-[18px] shrink-0">logout</span>
                             Sign out
@@ -260,10 +260,10 @@ function SidebarShell({
                     </div>
                     {!railMode && (
                         <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)] truncate leading-tight">
+                            <span className="text-[12px] font-semibold text-foreground truncate leading-tight">
                                 {org.name}
                             </span>
-                            <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
+                            <span className="text-[10px] text-muted-foreground truncate leading-tight">
                                 Organization
                             </span>
                         </div>
@@ -396,9 +396,9 @@ export function MobileOrgNav({
                     <button
                         onClick={onOpen}
                         aria-label="Open navigation"
-                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-[var(--md-sys-color-primary-container)] shadow-md active:bg-[var(--md-sys-color-primary)]"
+                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-accent shadow-md active:bg-primary"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">chevron_right</span>
+                        <span className="material-symbols-outlined text-[16px] text-accent-foreground">chevron_right</span>
                     </button>
                 </div>
             )}
@@ -421,7 +421,7 @@ export function MobileOrgNav({
                     <button
                         onClick={onClose}
                         aria-label="Close navigation"
-                        className="p-1.5 rounded-full hover:bg-[var(--md-sys-color-surface-variant)] transition-colors text-[var(--md-sys-color-on-surface-variant)]"
+                        className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
                     >
                         <span className="material-symbols-outlined text-[20px]">close</span>
                     </button>
@@ -437,8 +437,8 @@ export function MobileOrgNav({
                             }
                         </div>
                         <div className="flex flex-col min-w-0 flex-1">
-                            <span className="text-[12px] font-semibold text-[var(--md-sys-color-on-surface)] truncate leading-tight">{org.name}</span>
-                            <span className="text-[10px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">Organization</span>
+                            <span className="text-[12px] font-semibold text-foreground truncate leading-tight">{org.name}</span>
+                            <span className="text-[10px] text-muted-foreground truncate leading-tight">Organization</span>
                         </div>
                     </div>
                 </div>

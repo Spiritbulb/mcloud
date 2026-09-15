@@ -104,7 +104,7 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-md text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)] transition-colors"
+            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
         >
             <MSO icon={railMode ? 'menu_open' : 'menu'} className="text-[20px]" />
         </button>
@@ -140,7 +140,7 @@ function NavItemButton({
                     railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3',
                     isActive
                         ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
-                        : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-[var(--md-sys-color-on-surface)]',
+                        : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-foreground',
                     item.comingSoon && 'opacity-50 cursor-not-allowed'
                 )}
             >
@@ -186,7 +186,7 @@ function NavSectionGroup({
                 ? <div className="mx-2 my-1 h-px bg-[var(--md-sys-color-outline-variant)]" />
                 : (
                     <div className="px-3 py-1.5">
-                        <span className="text-[10px] font-semibold tracking-widest uppercase text-[var(--md-sys-color-on-surface-variant)] opacity-60">
+                        <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground opacity-60">
                             {section.label}
                         </span>
                     </div>
@@ -223,7 +223,7 @@ function ThemeToggle({ railMode }: { railMode: boolean }) {
             title={isDark ? 'Light mode' : 'Dark mode'}
             className={cn(
                 'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
-                'text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-variant)]',
+                'text-muted-foreground hover:bg-muted',
                 railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3'
             )}
         >
@@ -244,7 +244,7 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                         title={railMode ? user.name : undefined}
                         className={cn(
                             'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none w-full',
-                            'hover:bg-[var(--md-sys-color-surface-variant)]',
+                            'hover:bg-muted',
                             railMode ? 'justify-center w-10 h-10 mx-auto' : 'px-2 py-1.5'
                         )}
                     >
@@ -257,14 +257,14 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                         {!railMode && (
                             <>
                                 <div className="flex flex-col min-w-0 flex-1 text-left">
-                                    <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate leading-tight">
+                                    <span className="text-[12px] font-medium text-foreground truncate leading-tight">
                                         {user.name}
                                     </span>
-                                    <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate leading-tight">
+                                    <span className="text-[11px] text-muted-foreground truncate leading-tight">
                                         {user.email}
                                     </span>
                                 </div>
-                                <MSO icon="expand_more" className="text-[18px] text-[var(--md-sys-color-on-surface-variant)]" />
+                                <MSO icon="expand_more" className="text-[18px] text-muted-foreground" />
                             </>
                         )}
                     </button>
@@ -272,7 +272,7 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                 <DropdownMenuContent
                     side={railMode ? 'right' : 'top'}
                     align="start"
-                    className="w-52 bg-[var(--md-sys-color-surface)] border border-[var(--md-sys-color-outline-variant)] shadow-lg rounded-xl p-1"
+                    className="w-52 bg-background border border-border shadow-lg rounded-xl p-1"
                 >
                     <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
                         <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
@@ -282,20 +282,20 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                             }
                         </div>
                         <div className="flex flex-col min-w-0">
-                            <span className="text-[12px] font-medium text-[var(--md-sys-color-on-surface)] truncate">{user.name}</span>
-                            <span className="text-[11px] text-[var(--md-sys-color-on-surface-variant)] truncate">{user.email}</span>
+                            <span className="text-[12px] font-medium text-foreground truncate">{user.name}</span>
+                            <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
                         </div>
                     </div>
                     <DropdownMenuSeparator className="bg-[var(--md-sys-color-outline-variant)]" />
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px] gap-2">
                         <Link href="/org">
-                            <MSO icon="arrow_back" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)]" />
+                            <MSO icon="arrow_back" className="text-[16px] text-muted-foreground" />
                             Back to platform
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[var(--md-sys-color-outline-variant)]" />
                     <DropdownMenuItem
-                        className="rounded-lg cursor-pointer text-[13px] gap-2 text-[var(--md-sys-color-error)] focus:text-[var(--md-sys-color-error)]"
+                        className="rounded-lg cursor-pointer text-[13px] gap-2 text-destructive focus:text-destructive"
                         onSelect={() => { window.location.href = '/auth/logout' }}
                     >
                         <MSO icon="logout" className="text-[16px]" />
@@ -350,7 +350,7 @@ export function SidebarBody({
                         <button
                             onClick={onClose}
                             aria-label="Close navigation"
-                            className="p-1.5 rounded-full hover:bg-[var(--md-sys-color-surface-variant)] transition-colors text-[var(--md-sys-color-on-surface-variant)]"
+                            className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
                         >
                             <MSO icon="close" className="text-[20px]" />
                         </button>
@@ -363,7 +363,7 @@ export function SidebarBody({
             {/* Admin badge */}
             {!railMode && (
                 <div className="px-4 pb-3">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)]">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-destructive/20 text-destructive-foreground">
                         <MSO icon="shield" className="text-[11px]" />
                         Admin Console
                     </span>
@@ -487,9 +487,9 @@ export function AdminMobileNav({
                     <button
                         onClick={onOpen}
                         aria-label="Open navigation"
-                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-[var(--md-sys-color-primary-container)] shadow-md active:bg-[var(--md-sys-color-primary)]"
+                        className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-accent shadow-md active:bg-primary"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-[var(--md-sys-color-on-primary-container)]">
+                        <span className="material-symbols-outlined text-[16px] text-accent-foreground">
                             chevron_right
                         </span>
                     </button>

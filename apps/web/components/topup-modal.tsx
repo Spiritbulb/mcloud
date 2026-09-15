@@ -55,14 +55,14 @@ export function WalletTopupModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] p-6 shadow-xl">
+      <div className="w-full max-w-sm border border-border bg-background p-6 shadow-xl">
         {sent ? (
           <div className="text-center">
-            <p className="text-sm font-semibold text-[var(--md-sys-color-on-surface)]">
+            <p className="text-sm font-semibold text-foreground">
               Check your phone
             </p>
 
-            <p className="mt-2 text-[13px] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="mt-2 text-[13px] text-muted-foreground">
               Enter your M-Pesa PIN to complete the top-up. Your credits will
               reflect within a minute of confirming.
             </p>
@@ -70,18 +70,18 @@ export function WalletTopupModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 w-full bg-[var(--md-sys-color-primary)] px-4 py-2.5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)]"
+              className="mt-5 w-full bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
             >
               Done
             </button>
           </div>
         ) : (
           <form onSubmit={handleSubmit}>
-            <h3 className="text-base font-semibold text-[var(--md-sys-color-on-surface)]">
+            <h3 className="text-base font-semibold text-foreground">
               Add credits
             </h3>
 
-            <p className="mt-1 text-[12px] text-[var(--md-sys-color-on-surface-variant)]">
+            <p className="mt-1 text-[12px] text-muted-foreground">
               You&apos;ll get an M-Pesa prompt on your phone.
             </p>
 
@@ -97,8 +97,8 @@ export function WalletTopupModal({
                     className={[
                       'border px-3 py-2.5 text-left text-[13px] font-semibold transition-colors',
                       selected
-                        ? 'border-[var(--md-sys-color-primary)] bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]'
-                        : 'border-[var(--md-sys-color-outline-variant)] text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)]',
+                        ? 'border-[var(--md-sys-color-primary)] bg-primary text-primary-foreground'
+                        : 'border-border text-foreground hover:bg-[var(--md-sys-color-surface-container)]',
                     ].join(' ')}
                   >
                     KSh {value.toLocaleString()}
@@ -107,7 +107,7 @@ export function WalletTopupModal({
               })}
             </div>
 
-            <label className="mt-4 block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">
+            <label className="mt-4 block text-[12px] font-medium text-foreground">
               Amount (KSh)
               <input
                 type="number"
@@ -116,11 +116,11 @@ export function WalletTopupModal({
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 required
-                className="mt-1 w-full border border-[var(--md-sys-color-outline-variant)] px-3 py-2 text-[14px] text-[var(--md-sys-color-on-surface)]"
+                className="mt-1 w-full border border-border px-3 py-2 text-[14px] text-foreground"
               />
             </label>
 
-            <label className="mt-3 block text-[12px] font-medium text-[var(--md-sys-color-on-surface)]">
+            <label className="mt-3 block text-[12px] font-medium text-foreground">
               M-Pesa phone number
               <input
                 type="tel"
@@ -128,7 +128,7 @@ export function WalletTopupModal({
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 required
-                className="mt-1 w-full border border-[var(--md-sys-color-outline-variant)] px-3 py-2 text-[14px] text-[var(--md-sys-color-on-surface)]"
+                className="mt-1 w-full border border-border px-3 py-2 text-[14px] text-foreground"
               />
             </label>
 
@@ -139,7 +139,7 @@ export function WalletTopupModal({
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="flex-1 border border-[var(--md-sys-color-outline-variant)] px-4 py-2.5 text-[13px] font-medium text-[var(--md-sys-color-on-surface)] disabled:opacity-40"
+                className="flex-1 border border-border px-4 py-2.5 text-[13px] font-medium text-foreground disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -147,7 +147,7 @@ export function WalletTopupModal({
               <button
                 type="submit"
                 disabled={submitting || Number(amount) < 20}
-                className="flex-1 bg-[var(--md-sys-color-primary)] px-4 py-2.5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] disabled:opacity-40"
+                className="flex-1 bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
               >
                 {submitting ? 'Sending…' : 'Done'}
               </button>

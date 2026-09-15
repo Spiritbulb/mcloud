@@ -30,10 +30,10 @@ const textareaClass =
     'flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const ghostButtonClass =
-    'inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-[var(--md-sys-color-outline-variant)] text-[13px] font-medium text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-container)] transition-colors'
+    'inline-flex items-center gap-1.5 h-9 px-3 rounded-md border border-border text-[13px] font-medium text-foreground hover:bg-[var(--md-sys-color-surface-container)] transition-colors'
 
 const removeButtonClass =
-    'inline-flex items-center gap-1 text-[12.5px] font-medium text-[var(--md-sys-color-error)] hover:underline underline-offset-4'
+    'inline-flex items-center gap-1 text-[12.5px] font-medium text-destructive hover:underline underline-offset-4'
 
 export default function ContentClient({
     slug,
@@ -119,7 +119,7 @@ export default function ContentClient({
                     {draft.programs.map((p, i) => (
                         <div
                             key={i}
-                            className="rounded-lg border border-[var(--md-sys-color-outline-variant)] p-4 space-y-4"
+                            className="rounded-lg border border-border p-4 space-y-4"
                         >
                             <SettingsField label="Title">
                                 <input
@@ -295,11 +295,11 @@ export default function ContentClient({
 
             {/* ── Errors ────────────────────────────────────────────────── */}
             {errors.length > 0 && (
-                <div className="rounded-xl border border-[var(--md-sys-color-error)] bg-[var(--md-sys-color-error-container)] px-5 py-4">
-                    <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-error-container)]">
+                <div className="rounded-xl border border-[var(--md-sys-color-error)] bg-destructive/20 px-5 py-4">
+                    <p className="text-[13px] font-semibold text-destructive-foreground">
                         Not saved. Fix these first.
                     </p>
-                    <ul className="mt-2 list-disc pl-5 space-y-1 text-[12.5px] text-[var(--md-sys-color-on-error-container)]">
+                    <ul className="mt-2 list-disc pl-5 space-y-1 text-[12.5px] text-destructive-foreground">
                         {errors.map((e, i) => (
                             <li key={i}>{e}</li>
                         ))}

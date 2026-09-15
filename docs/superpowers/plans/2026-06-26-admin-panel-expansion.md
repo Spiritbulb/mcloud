@@ -342,7 +342,7 @@ export default function UsersClient({ users }: { users: User[] }) {
                                 <td className="px-4 py-3">
                                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                         u.role === 'admin'
-                                            ? 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)]'
+                                            ? 'bg-destructive/20 text-destructive-foreground'
                                             : 'bg-muted text-muted-foreground'
                                     }`}>
                                         {u.role}
@@ -1280,7 +1280,7 @@ export default function WebhooksClient({ logs }: { logs: WebhookLog[] }) {
                                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                                             log.status === 'success'
                                                 ? 'bg-green-100 text-green-800'
-                                                : 'bg-[var(--md-sys-color-error-container)] text-[var(--md-sys-color-on-error-container)]'
+                                                : 'bg-destructive/20 text-destructive-foreground'
                                         }`}>
                                             {log.status}
                                         </span>

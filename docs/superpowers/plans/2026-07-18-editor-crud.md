@@ -894,8 +894,8 @@ Add, inside the preview container JSX (near the `ImagePicker`):
 ```tsx
 {addAt !== null && (
     <div className="absolute inset-0 z-40 grid place-items-center bg-black/30" onClick={() => setAddAt(null)}>
-        <div className="w-72 rounded-xl bg-[var(--md-sys-color-surface)] p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
-            <p className="px-3 py-2 text-[12px] font-semibold text-[var(--md-sys-color-on-surface-variant)]">Add a section</p>
+        <div className="w-72 rounded-xl bg-background p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
+            <p className="px-3 py-2 text-[12px] font-semibold text-muted-foreground">Add a section</p>
             {addableTypes.map((t) => (
                 <button
                     key={t}

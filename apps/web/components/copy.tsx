@@ -11,7 +11,7 @@ export function CopyableIp({ ip }: { ip: string }) {
                 setCopied(true)
                 setTimeout(() => setCopied(false), 1500)
             }}
-            className="font-mono text-[var(--md-sys-color-on-surface-variant)] hover:text-[var(--md-sys-color-primary)] transition-colors cursor-pointer"
+            className="font-mono text-muted-foreground hover:text-primary transition-colors cursor-pointer"
             title="Click to copy"
         >
             {copied ? 'Copied!' : ip}

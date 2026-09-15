@@ -52,13 +52,13 @@ export default async function NewServerPage({
             <section className="relative overflow-hidden">
                 <div className="relative flex flex-col sm:flex-row items-center gap-5">
                     <div className="flex-1 min-w-0 space-y-3 text-center sm:text-left">
-                        <p className="text-[12px] font-semibold uppercase tracking-widest text-[var(--md-sys-color-primary)]">
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-primary">
                             {org.name}
                         </p>
-                        <h1 className="text-[1.75rem] sm:text-[2rem] font-bold leading-tight text-[var(--md-sys-color-on-surface)]">
+                        <h1 className="text-[1.75rem] sm:text-[2rem] font-bold leading-tight text-foreground">
                             Pick a plan and choose an OS, or template
                         </h1>
-                        <p className="text-[14px] leading-relaxed text-[var(--md-sys-color-on-surface-variant)] max-w-md mx-auto sm:mx-0">
+                        <p className="text-[14px] leading-relaxed text-muted-foreground max-w-md mx-auto sm:mx-0">
                             Create infrastructure for {org.name} in a few clicks. Access your servers via SSH, learn how to set it up
                         </p>
                         

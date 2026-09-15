@@ -32,7 +32,7 @@ export default function CampaignCard({
         onChange({ ...campaign, [key]: value })
 
     return (
-        <div className="rounded-lg border border-[var(--md-sys-color-outline-variant)] p-4 space-y-5">
+        <div className="rounded-lg border border-border p-4 space-y-5">
             <SettingsField label="Title" hint="Required. Without it the campaign will not appear on your site.">
                 <input
                     className={inputClass}
@@ -89,7 +89,7 @@ export default function CampaignCard({
                 />
             </SettingsField>
 
-            <label className="flex items-center gap-2 text-[13px] text-[var(--md-sys-color-on-surface)]">
+            <label className="flex items-center gap-2 text-[13px] text-foreground">
                 <input
                     type="checkbox"
                     checked={campaign.allowCustomAmount}
@@ -100,7 +100,7 @@ export default function CampaignCard({
 
             <button
                 type="button"
-                className="inline-flex items-center gap-1 text-[12.5px] font-medium text-[var(--md-sys-color-error)] hover:underline underline-offset-4"
+                className="inline-flex items-center gap-1 text-[12.5px] font-medium text-destructive hover:underline underline-offset-4"
                 onClick={() => {
                     // Donations are tagged with this campaign id. Removing the
                     // campaign does not delete them, but they stop being

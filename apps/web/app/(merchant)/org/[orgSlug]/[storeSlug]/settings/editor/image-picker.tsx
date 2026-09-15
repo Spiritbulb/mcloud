@@ -52,17 +52,17 @@ export default function ImagePicker({
             onClick={onClose}
         >
             <div
-                className="w-full max-w-md rounded-2xl bg-[var(--md-sys-color-surface)] shadow-2xl"
+                className="w-full max-w-md rounded-2xl bg-background shadow-2xl"
                 onClick={(e) => e.stopPropagation()}
             >
-                <header className="flex items-center justify-between px-5 h-14 border-b border-[var(--md-sys-color-outline-variant)]">
-                    <h2 className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                <header className="flex items-center justify-between px-5 h-14 border-b border-border">
+                    <h2 className="text-[14px] font-semibold text-foreground">
                         {value ? 'Change image' : 'Add an image'}
                     </h2>
                     <button
                         onClick={onClose}
                         aria-label="Close"
-                        className="w-8 h-8 grid place-items-center rounded-full text-[var(--md-sys-color-on-surface-variant)] hover:bg-[var(--md-sys-color-surface-container)]"
+                        className="w-8 h-8 grid place-items-center rounded-full text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]"
                     >
                         <X className="w-4 h-4" />
                     </button>
@@ -72,7 +72,7 @@ export default function ImagePicker({
                     {mode === 'url' ? (
                         <>
                             <label className="block">
-                                <span className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface)] mb-1.5">
+                                <span className="block text-[12px] font-medium text-foreground mb-1.5">
                                     Image URL
                                 </span>
                                 <input
@@ -85,12 +85,12 @@ export default function ImagePicker({
                                     }}
                                     placeholder="https://example.org/photo.jpg"
                                     spellCheck={false}
-                                    className="w-full h-9 rounded-lg border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface)] px-3 text-[13px] text-[var(--md-sys-color-on-surface)] focus:outline-none focus:border-[var(--md-sys-color-primary)]"
+                                    className="w-full h-9 rounded-lg border border-border bg-background px-3 text-[13px] text-foreground focus:outline-none focus:border-[var(--md-sys-color-primary)]"
                                 />
                             </label>
 
                             {!valid && (
-                                <p className="text-[12px] text-[var(--md-sys-color-error)]">
+                                <p className="text-[12px] text-destructive">
                                     That needs to be a full web address starting with http:// or https://
                                 </p>
                             )}
@@ -102,14 +102,14 @@ export default function ImagePicker({
                                 <img
                                     src={trimmed}
                                     alt=""
-                                    className="w-full rounded-lg border border-[var(--md-sys-color-outline-variant)] object-cover"
+                                    className="w-full rounded-lg border border-border object-cover"
                                     style={{ aspectRatio: '16/9' }}
                                 />
                             )}
 
                             <button
                                 onClick={() => setMode('upload')}
-                                className="text-[12px] underline underline-offset-4 text-[var(--md-sys-color-on-surface-variant)]"
+                                className="text-[12px] underline underline-offset-4 text-muted-foreground"
                             >
                                 Or upload a file
                             </button>
@@ -128,7 +128,7 @@ export default function ImagePicker({
                             />
                             <button
                                 onClick={() => setMode('url')}
-                                className="text-[12px] underline underline-offset-4 text-[var(--md-sys-color-on-surface-variant)]"
+                                className="text-[12px] underline underline-offset-4 text-muted-foreground"
                             >
                                 Or paste a URL
                             </button>
@@ -136,13 +136,13 @@ export default function ImagePicker({
                     )}
                 </div>
 
-                <footer className="flex items-center justify-between gap-2 px-5 py-4 border-t border-[var(--md-sys-color-outline-variant)]">
+                <footer className="flex items-center justify-between gap-2 px-5 py-4 border-t border-border">
                     {/* Removing an image is a real edit, and there is no other way to do
                         it: an empty slot is what the merchant clicks to add one back. */}
                     {value ? (
                         <button
                             onClick={() => onPick('')}
-                            className="text-[12px] text-[var(--md-sys-color-error)]"
+                            className="text-[12px] text-destructive"
                         >
                             Remove image
                         </button>
@@ -152,7 +152,7 @@ export default function ImagePicker({
                         <button
                             onClick={() => onPick(trimmed)}
                             disabled={!valid}
-                            className="h-9 rounded-full bg-[var(--md-sys-color-primary)] px-5 text-[13px] font-semibold text-[var(--md-sys-color-on-primary)] disabled:opacity-50"
+                            className="h-9 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground disabled:opacity-50"
                         >
                             Use this image
                         </button>

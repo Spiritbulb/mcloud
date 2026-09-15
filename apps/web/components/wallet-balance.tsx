@@ -112,5 +112,5 @@ function cnPill(isLow: boolean) {
 
   return isLow
     ? `${base} bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400`
-    : `${base} text-[var(--md-sys-color-on-surface)] hover:bg-[var(--md-sys-color-surface-variant)]`
+    : `${base} text-foreground hover:bg-muted`
 }

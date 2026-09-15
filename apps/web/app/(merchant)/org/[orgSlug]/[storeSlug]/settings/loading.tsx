@@ -1,6 +1,6 @@
 // Instant skeleton for the store settings overview while the shell + overview load.
 function Sk({ className }: { className?: string }) {
-    return <span className={`block animate-pulse rounded-lg bg-[var(--md-sys-color-surface-variant)] ${className ?? ''}`} />
+    return <span className={`block animate-pulse rounded-lg bg-muted ${className ?? ''}`} />
 }
 
 export default function Loading() {

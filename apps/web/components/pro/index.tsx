@@ -29,7 +29,7 @@ export function ProBadge({ size = 'sm' }: { size?: 'sm' | 'lg' }) {
     return (
         <span className={cn(
             'inline-flex items-center font-bold uppercase tracking-wider rounded-full',
-            'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]',
+            'bg-accent text-primary',
             size === 'sm' && 'text-[9px] px-1.5 py-0.5',
             size === 'lg' && 'text-[11px] px-2 py-1 gap-1',
         )}>
@@ -49,17 +49,17 @@ export function SubscribeCard() {
         <div className={cn(
             'rounded-2xl overflow-hidden',
             'border border-[var(--md-sys-color-primary)]/20',
-            'bg-[var(--md-sys-color-primary-container)]',
+            'bg-accent',
         )}>
             {/* Header */}
             <div className="px-6 pt-6 pb-4">
                 <div className="flex items-center gap-2 mb-3">
-                    <MSO icon="workspace_premium" className="text-[20px] text-[var(--md-sys-color-primary)]" fill={1} />
-                    <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-primary-container)]">
+                    <MSO icon="workspace_premium" className="text-[20px] text-primary" fill={1} />
+                    <p className="text-[15px] font-semibold text-accent-foreground">
                         Upgrade your store
                     </p>
                 </div>
-                <p className="text-[12px] text-[var(--md-sys-color-primary)]/90 leading-relaxed">
+                <p className="text-[12px] text-primary/90 leading-relaxed">
                     Paid plans are chosen and managed in the Menengai Cloud mobile app,
                     where you can compare tiers and prices for your store. Join the beta to
                     get the app and upgrade.
@@ -75,7 +75,7 @@ export function SubscribeCard() {
                     className={cn(
                         'w-full inline-flex items-center justify-center gap-2',
                         'font-semibold rounded-full transition-all duration-150',
-                        'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                        'bg-primary text-primary-foreground',
                         'text-[14px] h-10 px-6',
                         'hover:opacity-90 active:scale-[0.98]',
                     )}
@@ -83,7 +83,7 @@ export function SubscribeCard() {
                     <MSO icon="rocket_launch" className="text-[18px]" fill={1} />
                     Join the beta
                 </a>
-                <p className="text-[11px] text-center text-[var(--md-sys-color-primary)]/70">
+                <p className="text-[11px] text-center text-primary/70">
                     Already in the beta? Subscribe from the app.
                 </p>
             </div>
@@ -131,7 +131,7 @@ export function SubscribeModal({
                             'bottom-0 left-0 right-0 rounded-t-2xl',
                             'md:bottom-auto md:left-1/2 md:top-1/2 md:-translate-x-1/2 md:-translate-y-1/2',
                             'md:w-full md:max-w-sm md:rounded-2xl',
-                            'bg-[var(--md-sys-color-surface)] shadow-xl',
+                            'bg-background shadow-xl',
                         )}
                         onClick={e => e.stopPropagation()}
                     >
@@ -143,7 +143,7 @@ export function SubscribeModal({
                         {/* Close button */}
                         <button
                             onClick={onClose}
-                            className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-full bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)] hover:opacity-80 transition-opacity"
+                            className="absolute top-4 right-4 flex items-center justify-center w-7 h-7 rounded-full bg-muted text-muted-foreground hover:opacity-80 transition-opacity"
                             aria-label="Close"
                         >
                             <MSO icon="close" className="text-[16px]" />
@@ -171,7 +171,7 @@ export function UpgradeButton({ size = 'md' }: { size?: 'md' | 'lg' }) {
                 onClick={() => setModalOpen(true)}
                 className={cn(
                     'inline-flex items-center gap-2 font-semibold rounded-full transition-all duration-150',
-                    'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                    'bg-primary text-primary-foreground',
                     'hover:opacity-90 active:scale-[0.98]',
                     size === 'md' && 'text-[13px] h-9 px-5',
                     size === 'lg' && 'text-[14px] h-10 px-6',
@@ -198,7 +198,7 @@ export function UpgradeChip() {
                 onClick={() => setModalOpen(true)}
                 className={cn(
                     'flex items-center gap-1.5 rounded-full transition-all duration-150',
-                    'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]',
+                    'bg-accent text-primary',
                     'hover:opacity-80 active:scale-[0.97]',
                     'w-8 h-8 justify-center',
                     'md:w-auto md:h-7 md:px-3',
@@ -237,16 +237,16 @@ export function ProGate({
                 <div className="pointer-events-none select-none blur-[3px] opacity-50 saturate-50">
                     {children}
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-[var(--md-sys-color-surface)]/70 backdrop-blur-[2px]">
+                <div className="absolute inset-0 flex items-center justify-center bg-background/70 backdrop-blur-[2px]">
                     <div className="flex flex-col items-center gap-3 text-center px-6 py-6 max-w-xs">
-                        <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-[var(--md-sys-color-primary-container)]">
-                            <MSO icon="workspace_premium" className="text-[22px] text-[var(--md-sys-color-primary)]" fill={1} />
+                        <div className="flex items-center justify-center w-11 h-11 rounded-2xl bg-accent">
+                            <MSO icon="workspace_premium" className="text-[22px] text-primary" fill={1} />
                         </div>
                         <div className="space-y-1">
-                            <p className="text-[14px] font-semibold text-[var(--md-sys-color-on-surface)]">
+                            <p className="text-[14px] font-semibold text-foreground">
                                 {feature} is a Pro feature
                             </p>
-                            <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] leading-relaxed">
+                            <p className="text-[12px] text-muted-foreground leading-relaxed">
                                 {description ?? 'Subscribe to Menengai Cloud Pro in the mobile app to unlock this feature.'}
                             </p>
                         </div>
@@ -254,7 +254,7 @@ export function ProGate({
                             onClick={() => setModalOpen(true)}
                             className={cn(
                                 'inline-flex items-center gap-2 font-semibold rounded-full',
-                                'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                                'bg-primary text-primary-foreground',
                                 'text-[13px] h-9 px-5 hover:opacity-90 active:scale-[0.98] transition-all',
                             )}
                         >
@@ -291,15 +291,15 @@ export function ProGateInline({
         <>
             <div className={cn(
                 'flex flex-col items-center gap-4 text-center',
-                'rounded-2xl border border-[var(--md-sys-color-outline-variant)]',
+                'rounded-2xl border border-border',
                 'bg-[var(--md-sys-color-surface-container-low)] px-6 py-10',
             )}>
-                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-[var(--md-sys-color-primary-container)]">
-                    <MSO icon="workspace_premium" className="text-[24px] text-[var(--md-sys-color-primary)]" fill={1} />
+                <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-accent">
+                    <MSO icon="workspace_premium" className="text-[24px] text-primary" fill={1} />
                 </div>
                 <div className="space-y-1.5 max-w-xs">
-                    <p className="text-[15px] font-semibold text-[var(--md-sys-color-on-surface)]">{feature}</p>
-                    <p className="text-[13px] text-[var(--md-sys-color-on-surface-variant)] leading-relaxed">
+                    <p className="text-[15px] font-semibold text-foreground">{feature}</p>
+                    <p className="text-[13px] text-muted-foreground leading-relaxed">
                         {description ?? 'This feature is available on Menengai Cloud Pro — subscribe in the mobile app.'}
                     </p>
                 </div>
@@ -307,7 +307,7 @@ export function ProGateInline({
                     onClick={() => setModalOpen(true)}
                     className={cn(
                         'inline-flex items-center gap-2 font-semibold rounded-full',
-                        'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)]',
+                        'bg-primary text-primary-foreground',
                         'text-[14px] h-10 px-6 hover:opacity-90 active:scale-[0.98] transition-all',
                     )}
                 >
@@ -341,17 +341,17 @@ export function ProLockRow({
         <>
             <div className={cn(
                 'flex items-center gap-3 px-4 py-3 rounded-xl',
-                'border border-[var(--md-sys-color-outline-variant)]',
+                'border border-border',
                 'bg-[var(--md-sys-color-surface-container-low)]',
             )}>
-                <MSO icon="lock" className="text-[16px] text-[var(--md-sys-color-on-surface-variant)] shrink-0" />
-                <p className="flex-1 text-[13px] text-[var(--md-sys-color-on-surface-variant)] truncate">{label}</p>
+                <MSO icon="lock" className="text-[16px] text-muted-foreground shrink-0" />
+                <p className="flex-1 text-[13px] text-muted-foreground truncate">{label}</p>
                 <button
                     onClick={() => setModalOpen(true)}
                     className={cn(
                         'shrink-0 flex items-center gap-1 text-[11px] font-semibold',
                         'px-2.5 py-1 rounded-full',
-                        'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]',
+                        'bg-accent text-primary',
                         'hover:opacity-80 transition-opacity',
                     )}
                 >

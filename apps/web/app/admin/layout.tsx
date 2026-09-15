@@ -26,8 +26,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         return (
             <div className="min-h-[100dvh] bg-background flex items-center justify-center px-4">
                 <div className="text-center space-y-3 max-w-sm">
-                    <div className="w-12 h-12 rounded-full bg-[var(--md-sys-color-error-container)] flex items-center justify-center mx-auto">
-                        <span className="material-symbols-outlined text-[22px] text-[var(--md-sys-color-on-error-container)]">
+                    <div className="w-12 h-12 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
+                        <span className="material-symbols-outlined text-[22px] text-destructive-foreground">
                             lock
                         </span>
                     </div>

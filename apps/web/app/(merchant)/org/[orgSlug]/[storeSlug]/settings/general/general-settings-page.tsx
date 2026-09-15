@@ -55,19 +55,19 @@ const TIMEZONES = [
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
     return (
-        <label className="block text-[12px] font-medium text-[var(--md-sys-color-on-surface-variant)] mb-1.5">
+        <label className="block text-[12px] font-medium text-muted-foreground mb-1.5">
             {children}
         </label>
     )
 }
 
 const inputCls = cn(
-    'w-full h-10 px-3 rounded-xl border border-[var(--md-sys-color-outline-variant)]',
-    'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]',
+    'w-full h-10 px-3 rounded-xl border border-border',
+    'bg-background text-foreground',
     'text-base sm:text-[13px] outline-none transition-all duration-150',
     'focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15',
-    'disabled:bg-[var(--md-sys-color-surface-variant)] disabled:text-[var(--md-sys-color-on-surface-variant)] disabled:cursor-not-allowed',
-    'placeholder:text-[var(--md-sys-color-on-surface-variant)]/40',
+    'disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed',
+    'placeholder:text-muted-foreground/40',
 )
 
 function FieldInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
@@ -92,7 +92,7 @@ function FieldSelect({ value, onChange, className, children }: {
             </select>
             <MSO
                 icon="expand_more"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--md-sys-color-on-surface-variant)] pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-muted-foreground pointer-events-none"
             />
         </div>
     )
@@ -127,7 +127,7 @@ function CurrencySelect({ value, onChange, children }: {
             </select>
             <MSO
                 icon="expand_more"
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-[var(--md-sys-color-on-surface-variant)] pointer-events-none"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[18px] text-muted-foreground pointer-events-none"
             />
         </div>
     )
@@ -138,12 +138,12 @@ function FieldTextarea(props: React.TextareaHTMLAttributes<HTMLTextAreaElement>)
         <textarea
             {...props}
             className={cn(
-                'w-full px-3 py-2.5 rounded-xl border border-[var(--md-sys-color-outline-variant)]',
-                'bg-[var(--md-sys-color-surface)] text-[var(--md-sys-color-on-surface)]',
+                'w-full px-3 py-2.5 rounded-xl border border-border',
+                'bg-background text-foreground',
                 'text-base sm:text-[13px] leading-relaxed outline-none resize-y',
                 'transition-all duration-150',
                 'focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15',
-                'placeholder:text-[var(--md-sys-color-on-surface-variant)]/40',
+                'placeholder:text-muted-foreground/40',
                 props.className,
             )}
         />
@@ -160,8 +160,8 @@ function Section({ title, description, children }: {
     return (
         <section className="space-y-4">
             <div>
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-surface)]">{title}</p>
-                <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5">{description}</p>
+                <p className="text-[13px] font-semibold text-foreground">{title}</p>
+                <p className="text-[12px] text-muted-foreground mt-0.5">{description}</p>
             </div>
             {children}
         </section>
@@ -208,16 +208,16 @@ function SaveBar({
                     transition={{ duration: 0.2, ease: [0.25, 0.1, 0.25, 1] }}
                     className={cn(
                         'sticky bottom-0 -mx-4 sm:-mx-6 px-4 sm:px-6 py-3 z-10',
-                        'border-t border-[var(--md-sys-color-outline-variant)]',
-                        'bg-[var(--md-sys-color-surface)]/90 backdrop-blur-sm',
+                        'border-t border-border',
+                        'bg-background/90 backdrop-blur-sm',
                         'flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-between',
                     )}
                 >
                     <span className={cn(
                         'text-[12px] flex items-center gap-1.5 text-center sm:text-left transition-colors duration-200',
-                        saveState === 'saved' && 'text-[var(--md-sys-color-primary)]',
-                        saveState === 'error' && 'text-[var(--md-sys-color-error)]',
-                        (saveState === 'idle' || saveState === 'saving') && 'text-[var(--md-sys-color-on-surface-variant)]',
+                        saveState === 'saved' && 'text-primary',
+                        saveState === 'error' && 'text-destructive',
+                        (saveState === 'idle' || saveState === 'saving') && 'text-muted-foreground',
                     )}>
                         {saveState === 'saved' && <MSO icon="check_circle" className="text-[14px]" fill={1} />}
                         {saveState === 'error' && <MSO icon="error" className="text-[14px]" fill={1} />}
@@ -234,8 +234,8 @@ function SaveBar({
                             saveState === 'error'
                                 ? 'bg-[var(--md-sys-color-error)] text-[var(--md-sys-color-on-error)]'
                                 : saveState === 'saved'
-                                    ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
-                                    : 'bg-[var(--md-sys-color-primary)] text-[var(--md-sys-color-on-primary)] hover:opacity-90 active:scale-[0.98]',
+                                    ? 'bg-accent text-primary'
+                                    : 'bg-primary text-primary-foreground hover:opacity-90 active:scale-[0.98]',
                         )}
                     >
                         {saveState === 'saving' ? (
@@ -308,7 +308,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                         <FieldLabel>Site URL</FieldLabel>
                         <div className="relative">
                             <FieldInput value={storefrontDisplayUrl(store.slug)} disabled />
-                            <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-[var(--md-sys-color-on-surface-variant)]/40" />
+                            <MSO icon="lock" className="absolute right-3 top-1/2 -translate-y-1/2 text-[15px] text-muted-foreground/40" />
                         </div>
                     </div>
                 </div>
@@ -351,10 +351,10 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
 
             {/* ── Visibility ───────────────────────────────────────────────── */}
             <Section title="Visibility" description="Control whether your store is open for business">
-                <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-[var(--md-sys-color-outline-variant)] bg-[var(--md-sys-color-surface-container-low)]">
+                <div className="flex items-center justify-between gap-4 px-4 py-3.5 rounded-xl border border-border bg-[var(--md-sys-color-surface-container-low)]">
                     <div className="min-w-0">
-                        <p className="text-[13px] font-medium text-[var(--md-sys-color-on-surface)]">Site active</p>
-                        <p className="text-[12px] text-[var(--md-sys-color-on-surface-variant)] mt-0.5 leading-snug">
+                        <p className="text-[13px] font-medium text-foreground">Site active</p>
+                        <p className="text-[12px] text-muted-foreground mt-0.5 leading-snug">
                             When off, visitors see a coming soon page
                         </p>
                     </div>
@@ -368,13 +368,13 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                 <div className={cn(
                     'inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[12px] font-medium',
                     isActive
-                        ? 'bg-[var(--md-sys-color-primary-container)] text-[var(--md-sys-color-primary)]'
-                        : 'bg-[var(--md-sys-color-surface-variant)] text-[var(--md-sys-color-on-surface-variant)]'
+                        ? 'bg-accent text-primary'
+                        : 'bg-muted text-muted-foreground'
                 )}>
                     <span className={cn(
                         'w-1.5 h-1.5 rounded-full shrink-0',
                         isActive
-                            ? 'bg-[var(--md-sys-color-primary)] animate-pulse'
+                            ? 'bg-primary animate-pulse'
                             : 'bg-[var(--md-sys-color-on-surface-variant)]/40'
                     )} />
                     {isActive ? (

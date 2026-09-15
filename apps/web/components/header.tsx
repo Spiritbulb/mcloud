@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useTheme } from 'next-themes'
 import { useEffect, useState } from 'react'
 
 interface HeaderProps {
@@ -11,11 +10,10 @@ interface HeaderProps {
 
 export function Header({ isLoggedIn = false }: HeaderProps) {
     const router = useRouter()
-    const { resolvedTheme, setTheme } = useTheme()
     const [mounted, setMounted] = useState(false)
     useEffect(() => setMounted(true), [])
 
-    const isDark = resolvedTheme === 'dark'
+
     // Light (blue) logo reads on dark backgrounds; dark logo on light. Default to light before mount.
     const logo = '/logo-light.svg'
 
@@ -49,17 +47,6 @@ export function Header({ isLoggedIn = false }: HeaderProps) {
 
                     {/* CTA */}
                     <div className="flex items-center gap-2">
-                        {/* Theme toggle */}
-                        <button
-                            type="button"
-                            aria-label="Toggle theme"
-                            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-                            className="h-8 w-8 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-foreground/5 transition-colors"
-                        >
-                            <span className="material-symbols-outlined text-[18px]">
-                                {mounted && !isDark ? 'dark_mode' : 'light_mode'}
-                            </span>
-                        </button>
 
                         {isLoggedIn ? (
                             <Link
