@@ -10,13 +10,16 @@
 //   - generates the order_number server-side;
 //   - dedupes on the client's idempotency key (stored in orders.metadata) so a
 //     retry/double-submit returns the SAME order instead of creating a new one.
+//   - resolves the delivery zone/rate from the DB by id — the client sends only
+//     a deliveryZoneId, never a rate, and an unavailable/unknown zone 409s so
+//     checkout is blocked (client is told to use the contact page instead).
 //
 // Guest checkout: no auth required (matches today's behaviour). The customer is
 // upserted by mpesa_phone within the store, exactly as before.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getActiveStoreId } from '@/lib/customer-auth'
-import { createOrderWithPayment, type OrderLineInput } from '@/lib/orders'
+import { createOrderWithPayment, type OrderLineInput, type DeliveryInput } from '@/lib/orders'
 
 
 const corsHeaders = {
@@ -42,6 +45,7 @@ interface CheckoutBody {
     guest: { mpesaPhone?: string; email?: string; whatsapp?: string }
     paymentMethod: 'mpesa' | 'paypal'
     idempotencyKey: string
+    deliveryZoneId?: string | null
 }
 
 export async function POST(
@@ -57,7 +61,7 @@ export async function POST(
         return NextResponse.json({ error: 'Invalid body' }, { status: 400, headers: noStore })
     }
 
-    const { lines, guest = {}, paymentMethod, idempotencyKey } = body
+    const { lines, guest = {}, paymentMethod, idempotencyKey, deliveryZoneId } = body
     if (!Array.isArray(lines) || lines.length === 0) {
         return NextResponse.json({ error: 'Cart is empty' }, { status: 400, headers: noStore })
     }
@@ -70,6 +74,41 @@ export async function POST(
     if (!storeId) return NextResponse.json({ error: 'Store not found' }, { status: 404, headers: noStore })
 
     const admin = await createClient()
+
+    // ── Delivery zone: resolved and rate-authorized server-side. A missing,
+    // unavailable, or foreign-store zone blocks checkout — the storefront UI
+    // is expected to route the customer to the contact page in that case. ──
+    let delivery: DeliveryInput | null = null
+    if (deliveryZoneId) {
+        const { data: zone } = await admin
+            .from('delivery_zones')
+            .select('id, location_name, rate, available, store_id')
+            .eq('id', deliveryZoneId)
+            .eq('store_id', storeId)
+            .maybeSingle()
+
+        if (!zone || !zone.available) {
+            return NextResponse.json(
+                { error: 'Delivery is not available for the selected location. Please use the contact page.' },
+                { status: 409, headers: noStore },
+            )
+        }
+
+        const { data: option } = await admin
+            .from('delivery_options')
+            .select('id')
+            .eq('store_id', storeId)
+            .eq('is_active', true)
+            .limit(1)
+            .maybeSingle()
+
+        delivery = {
+            zoneId: zone.id,
+            optionId: option?.id ?? null,
+            rate: Number(zone.rate ?? 0),
+            locationName: zone.location_name,
+        }
+    }
 
     // ── Price authority: recompute every line from the real product/variant rows. ──
     // Fetch the products + variants referenced, scoped to this store, then price the
@@ -156,6 +195,7 @@ export async function POST(
         paymentMethod: method,
         idempotencyKey,
         source: 'storefront',
+        delivery,
     })
     if (result.error !== null) {
         return NextResponse.json({ error: result.error }, { status: result.status, headers: noStore })

@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'
 import ClassicCheckoutPage from '@mcloud/themes/classic/CheckoutPage'
-import type { MpesaConfig, GuestDetails } from '@mcloud/themes/types'
+import type { MpesaConfig, GuestDetails, DeliveryZone } from '@mcloud/themes/types'
 import { useStoreTheme } from '@/hooks/useStoreTheme'
 import { trackCheckout, trackOrderPlaced } from '../lib/analytics'
 import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
@@ -20,11 +20,11 @@ export default function CheckoutPageContainer() {
     const { themeId } = useStoreTheme(storeSlug)
 
     const [mpesaConfig, setMpesaConfig] = useState<MpesaConfig | null>(null)
+    const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([])
     const [isProcessing, setIsProcessing] = useState(false)
 
     const safeCartItems = Array.isArray(cartItems) ? cartItems : []
 
-    // Empty cart shouldn't sit on checkout — bounce back before doing anything else.
     useEffect(() => {
         if (!loading && safeCartItems.length === 0) {
             router.replace(`/store/${storeSlug}`)
@@ -56,8 +56,19 @@ export default function CheckoutPageContainer() {
             .catch(err => console.error('Failed to load integrations', err))
     }, [storeSlug])
 
-    // Checkout funnel event fires here now — this page IS "started checkout",
-    // separate from cart's trackViewCart.
+    // Delivery zones — same store-scoped fetch pattern as integrations above.
+    // A failed/empty fetch just means no zone picker is shown; checkout still
+    // works with deliveryZoneId: null (matches how the route treats it).
+    useEffect(() => {
+        if (!storeSlug) return
+        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/delivery-zones`, {
+            credentials: 'include',
+        })
+            .then(res => res.json())
+            .then(data => setDeliveryZones(Array.isArray(data.zones) ? data.zones : []))
+            .catch(err => console.error('Failed to load delivery zones', err))
+    }, [storeSlug])
+
     useEffect(() => {
         if (storeSlug) {
             trackCheckout(storeSlug)
@@ -65,13 +76,13 @@ export default function CheckoutPageContainer() {
     }, [storeSlug])
 
     const subtotalKES = safeCartItems.reduce((s, i) => s + i.price * i.quantity, 0)
-    const totalKES = subtotalKES
 
     const createOrder = async (
         guest: GuestDetails,
         paymentMethod: 'mpesa' | 'paypal',
         idempotencyKey: string,
-    ): Promise<string> => {
+        deliveryZoneId: string | null,
+    ): Promise<{ orderNumber: string; total: number }> => {
         if (safeCartItems.length === 0) throw new Error('Your cart is empty')
 
         const res = await fetch(`/api/store/${storeSlug}/checkout`, {
@@ -90,23 +101,27 @@ export default function CheckoutPageContainer() {
                 },
                 paymentMethod,
                 idempotencyKey,
+                deliveryZoneId,
             }),
         })
-        const data = (await res.json().catch(() => ({}))) as { orderNumber?: string; error?: string }
+        const data = (await res.json().catch(() => ({}))) as { orderNumber?: string; total?: number; error?: string }
         if (!res.ok || !data.orderNumber) {
+            // Surfaces the route's 409 ("Delivery is not available…") the same
+            // way as any other checkout failure — the theme component's
+            // handleCheckout catch block puts this straight into its error state.
             throw new Error(data.error ?? 'Failed to create order')
         }
 
         if (storeSlug) {
             trackOrderPlaced(storeSlug, safeCartItems[0]?.productId, data.orderNumber)
         }
-        return data.orderNumber
+        return { orderNumber: data.orderNumber, total: data.total ?? subtotalKES }
     }
 
-    const handleMpesaCheckout = async (guest: GuestDetails) => {
+    const handleMpesaCheckout = async (guest: GuestDetails, deliveryZoneId: string | null) => {
         setIsProcessing(true)
         try {
-            const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
+            const { orderNumber } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
             await submitMpesaCode(storeSlug ?? '', orderNumber, guest.mpesaCode)
             await clearCart()
             router.push(`/store/${storeSlug}/?order=${encodeURIComponent(orderNumber)}`)
@@ -115,7 +130,7 @@ export default function CheckoutPageContainer() {
         }
     }
 
-    const handlePaypalCheckout = async () => {
+    const handlePaypalCheckout = async (deliveryZoneId: string | null) => {
         setIsProcessing(true)
         try {
             const validItems = safeCartItems
@@ -130,25 +145,27 @@ export default function CheckoutPageContainer() {
             if (!validItems.length) throw new Error('No valid items in cart')
 
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
-            const orderNumber = await createOrder(guest, 'paypal', crypto.randomUUID())
+            const { orderNumber, total } = await createOrder(guest, 'paypal', crypto.randomUUID(), deliveryZoneId)
 
-            const approvalUrl = await triggerPaypalOrder(orderNumber, validItems, totalKES)
+            // Use the server-computed total (subtotal + delivery), not the
+            // client's subtotal-only figure, so PayPal charges the right amount.
+            const approvalUrl = await triggerPaypalOrder(orderNumber, validItems, total)
             window.location.href = approvalUrl
         } finally {
             setIsProcessing(false)
         }
     }
 
-    const handlePesapalCheckout = async () => {
+    const handlePesapalCheckout = async (deliveryZoneId: string | null) => {
         setIsProcessing(true)
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
-            const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
+            const { orderNumber, total } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/pesapal/create-order?store=${storeSlug}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
+                body: JSON.stringify({ orderId: orderNumber, amount: total })
             })
             const data = await res.json()
             if (!data.success) throw new Error(data.error || 'Pesapal setup failed')
@@ -158,27 +175,29 @@ export default function CheckoutPageContainer() {
         }
     }
 
-    const handleDarajaCheckout = async (phone: string, amount: number) => {
+    const handleDarajaCheckout = async (phone: string, amount: number, deliveryZoneId: string | null) => {
         setIsProcessing(true)
         try {
             const guest: GuestDetails = { mpesaPhone: phone, mpesaCode: '', whatsapp: '', email: '' }
-            const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
-            return await triggerDarajaStkPush(storeSlug ?? '', orderNumber, phone, amount)
+            const { orderNumber, total } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
+            // `total` is the server-authorized amount; prefer it over the
+            // caller-supplied `amount` so the STK push always matches the order.
+            return await triggerDarajaStkPush(storeSlug ?? '', orderNumber, phone, total)
         } finally {
             setIsProcessing(false)
         }
     }
 
-    const handleIntasendCheckout = async () => {
+    const handleIntasendCheckout = async (deliveryZoneId: string | null) => {
         setIsProcessing(true)
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
-            const orderNumber = await createOrder(guest, 'mpesa', crypto.randomUUID())
+            const { orderNumber, total } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/intasend/create-order?store=${storeSlug}`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ orderId: orderNumber, amount: totalKES })
+                body: JSON.stringify({ orderId: orderNumber, amount: total })
             })
             const data = await res.json()
             if (!data.success) throw new Error(data.error || 'Intasend setup failed')
@@ -194,6 +213,7 @@ export default function CheckoutPageContainer() {
         <PageComponent
             storeSlug={storeSlug ?? ''}
             cartItems={safeCartItems}
+            deliveryZones={deliveryZones}
             loading={loading}
             mpesaConfig={mpesaConfig}
             apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api'}

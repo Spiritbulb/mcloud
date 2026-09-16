@@ -5,6 +5,10 @@
 // recomputing from product rows; /donate authorizes by validating the donor
 // amount against the campaign. Keeping price authority in the callers preserves
 // the checkout invariant "the client never sets a product price."
+//
+// Delivery follows the same invariant: the caller passes a delivery zone's
+// SERVER-FETCHED rate (see the checkout route, which looks the zone up by id
+// and reads its rate from the DB) — never a client-sent shipping number.
 import { createClient } from '@mcloud/db/server'
 import type { Json } from '@mcloud/db/types'
 
@@ -18,6 +22,13 @@ export interface OrderLineInput {
   image_url?: string | null
 }
 
+export interface DeliveryInput {
+  zoneId: string
+  optionId: string | null
+  rate: number
+  locationName: string
+}
+
 export interface CreateOrderInput {
   storeId: string
   guest: { mpesaPhone?: string; email?: string; whatsapp?: string }
@@ -25,6 +36,7 @@ export interface CreateOrderInput {
   paymentMethod: 'mpesa' | 'paypal'
   idempotencyKey: string
   source: 'storefront' | 'donation'
+  delivery?: DeliveryInput | null
   extraOrderMetadata?: Record<string, unknown>
 }
 
@@ -45,7 +57,7 @@ export function buildLineTotals(
 }
 
 export async function createOrderWithPayment(input: CreateOrderInput): Promise<CreateOrderResult> {
-  const { storeId, guest, paymentMethod, idempotencyKey, source, extraOrderMetadata } = input
+  const { storeId, guest, paymentMethod, idempotencyKey, source, extraOrderMetadata, delivery } = input
   const method = paymentMethod === 'paypal' ? 'paypal' : 'mpesa'
   const admin = await createClient()
 
@@ -61,7 +73,8 @@ export async function createOrderWithPayment(input: CreateOrderInput): Promise<C
   }
 
   const { items, subtotal } = buildLineTotals(input.lines)
-  const total = subtotal // tax/shipping/discount are 0 today, matching checkout
+  const shipping = delivery?.rate ?? 0
+  const total = subtotal + shipping // tax/discount are 0 today, matching checkout
 
   // ── Guest customer upsert (matched by mpesa_phone within the store). ──
   const phoneKey = guest.mpesaPhone?.trim() || null
@@ -109,19 +122,22 @@ export async function createOrderWithPayment(input: CreateOrderInput): Promise<C
       fulfillment_status: 'unfulfilled',
       subtotal,
       tax: 0,
-      shipping: 0,
+      shipping,
       discount: 0,
       total,
       currency: 'KES',
       customer_email: emailKey,
       customer_phone: phoneKey,
       source,
+      delivery_zone_id: delivery?.zoneId ?? null,
+      delivery_option_id: delivery?.optionId ?? null,
       metadata: {
         idempotency_key: idempotencyKey,
         payment_method: method === 'mpesa' ? 'MPESA' : 'PayPal',
         payment_status: 'pending',
         mpesa_phone: phoneKey,
         whatsapp_number: whatsapp,
+        ...(delivery ? { delivery_location: delivery.locationName, delivery_rate: delivery.rate } : {}),
         ...(extraOrderMetadata ?? {}),
       } as unknown as Json,
     })

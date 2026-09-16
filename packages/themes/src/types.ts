@@ -419,17 +419,30 @@ export interface CartOnlyPageProps {
     onRemoveItem: (variantId: string) => void
 }
 
+// ── Delivery ─────────────────────────────────────────────────────────────────
+export interface DeliveryZone {
+    id: string
+    location_name: string
+    rate: number
+    available: boolean
+}
+
 // Props for the checkout-only page (payment, no line-item editing)
 export interface CheckoutPageProps {
     storeSlug: string
+    deliveryZones: DeliveryZone[]
     cartItems: CartItem[]
     loading: boolean
     apiBaseUrl: string
     mpesaConfig: MpesaConfig | null
-    onMpesaCheckout: (guest: GuestDetails) => Promise<void>
-    onDarajaCheckout: (phone: string, amount: number) => Promise<{ orderId: string; checkoutRequestId: string }>
-    onPaypalCheckout: () => Promise<void>
-    onPesapalCheckout?: () => Promise<void>
-    onIntasendCheckout?: () => Promise<void>
+    onMpesaCheckout: (guest: GuestDetails, deliveryZoneId: string | null) => Promise<void>
+    onDarajaCheckout: (
+        phone: string,
+        amount: number,
+        deliveryZoneId: string | null,
+    ) => Promise<{ orderId: string; checkoutRequestId: string }>
+    onPaypalCheckout: (deliveryZoneId: string | null) => Promise<void>
+    onPesapalCheckout?: (deliveryZoneId: string | null) => Promise<void>
+    onIntasendCheckout?: (deliveryZoneId: string | null) => Promise<void>
     isProcessing: boolean
 }

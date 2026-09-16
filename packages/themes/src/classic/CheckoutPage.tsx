@@ -24,6 +24,7 @@ type DarajaState =
 
 export default function ClassicCheckoutPage({
     storeSlug,
+    deliveryZones = [],
     cartItems,
     loading,
     mpesaConfig,
@@ -41,6 +42,13 @@ export default function ClassicCheckoutPage({
     const [error, setError] = useState('')
     const [darajaState, setDarajaState] = useState<DarajaState>({ phase: 'idle' })
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+    const availableZones = deliveryZones.filter((z) => z.available)
+    const [deliveryZoneId, setDeliveryZoneId] = useState<string | null>(
+        availableZones[0]?.id ?? null,
+    )
+
+    const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId) ?? null
+    const shippingKES = selectedZone?.rate ?? 0
 
     const stopPolling = useCallback(() => {
         if (pollRef.current) { clearInterval(pollRef.current); pollRef.current = null }
@@ -78,12 +86,16 @@ export default function ClassicCheckoutPage({
         (e: React.ChangeEvent<HTMLInputElement>) =>
             setGuest((prev) => ({ ...prev, [field]: e.target.value }))
 
-    const totalKES = cartItems.reduce((s, i) => s + i.price * i.quantity, 0)
+    const subtotalKES = cartItems.reduce((s, i) => s + i.price * i.quantity, 0)
+    const totalKES = subtotalKES + shippingKES
     const totalUSD = convertKEStoUSD(totalKES)
 
     const isDaraja = paymentMethod === 'mpesa' && mpesaConfig?.darajaEnabled
 
     const validate = (): string | null => {
+        if (deliveryZones.length > 0 && !deliveryZoneId) {
+            return 'Select a delivery location'
+        }
         if (paymentMethod === 'mpesa') {
             if (!guest.mpesaPhone.trim()) return 'M-PESA phone number is required'
             if (!/^(?:\+?254|0)[17]\d{8}$/.test(guest.mpesaPhone.trim()))
@@ -106,17 +118,17 @@ export default function ClassicCheckoutPage({
         setError('')
         try {
             if (paymentMethod === 'mpesa' && isDaraja) {
-                const result = await onDarajaCheckout(guest.mpesaPhone.trim(), totalKES)
+                const result = await onDarajaCheckout(guest.mpesaPhone.trim(), totalKES, deliveryZoneId)
                 setDarajaState({ phase: 'waiting', orderId: result.orderId, checkoutRequestId: result.checkoutRequestId })
                 startPolling(result.orderId)
             } else if (paymentMethod === 'mpesa') {
-                await onMpesaCheckout({ ...guest, mpesaCode: guest.mpesaCode.toUpperCase() })
+                await onMpesaCheckout({ ...guest, mpesaCode: guest.mpesaCode.toUpperCase() }, deliveryZoneId)
             } else if (paymentMethod === 'paypal') {
-                await onPaypalCheckout()
+                await onPaypalCheckout(deliveryZoneId)
             } else if (paymentMethod === 'pesapal' && onPesapalCheckout) {
-                await onPesapalCheckout()
+                await onPesapalCheckout(deliveryZoneId)
             } else if (paymentMethod === 'intasend' && onIntasendCheckout) {
-                await onIntasendCheckout()
+                await onIntasendCheckout(deliveryZoneId)
             }
         } catch (e: any) {
             setError(e.message || 'Checkout failed')
@@ -147,12 +159,61 @@ export default function ClassicCheckoutPage({
 
                 <div className="flex items-center justify-between mb-6">
                     <h1 className="sf-heading text-2xl font-light">Checkout</h1>
-                    <span className="sf-heading text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
-                        {formatKES(totalKES)}
-                    </span>
+                    <div className="text-right">
+    {shippingKES > 0 && (
+        <div className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+            {formatKES(subtotalKES)} + {formatKES(shippingKES)} delivery
+        </div>
+    )}
+    <span className="sf-heading text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
+        {formatKES(totalKES)}
+    </span>
+</div>
                 </div>
 
                 <div className="space-y-4">
+                    {/* Delivery zone — only shown when the store actually has zones. */}
+                    {deliveryZones.length > 0 && (
+                        <div className="space-y-2">
+                            <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                Delivery location
+                            </p>
+                            <div className="space-y-1.5">
+                                {deliveryZones.map((zone) => (
+                                    <button
+                                        key={zone.id}
+                                        type="button"
+                                        disabled={!zone.available || isProcessing}
+                                        onClick={() => setDeliveryZoneId(zone.id)}
+                                        className="w-full flex items-center justify-between px-3 py-2.5 text-sm border transition-colors"
+                                        style={{
+                                            borderColor: deliveryZoneId === zone.id ? 'var(--sf-foreground)' : 'var(--sf-border)',
+                                            background: deliveryZoneId === zone.id ? 'var(--sf-accent)' : 'var(--sf-primary)',
+                                            opacity: zone.available ? 1 : 0.45,
+                                            cursor: zone.available ? 'pointer' : 'not-allowed',
+                                        }}
+                                    >
+                                        <span>{zone.location_name}</span>
+                                        <span>
+                                            {zone.available ? formatKES(zone.rate) : 'Unavailable'}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+                            {!selectedZone && (
+                                <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                    Don't see your area?{' '}
+                                    <Link href={`mailto:joanmadaybusiness@gmail.com`} className="underline underline-offset-2">
+                                        Contact us
+                                    </Link>{' '}
+                                    to arrange delivery.
+                                </p>
+                            )}
+                        </div>
+                    )}
+                </div>
+
+                <div className="mt-4 space-y-4">
                     {/* Payment toggle */}
                     <div className="space-y-2">
                         <p className="text-xs uppercase tracking-wider" style={{ color: 'var(--sf-foreground-subtle)' }}>
@@ -387,7 +448,7 @@ export default function ClassicCheckoutPage({
                     )}
 
                     {darajaState.phase === 'idle' && (
-                        <Button size="lg" className="w-full sf-btn-primary" disabled={isProcessing} onClick={handleCheckout}>
+                        <Button size="lg" className="w-full sf-pill" disabled={isProcessing} onClick={handleCheckout}>
                             {isProcessing ? (
                                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Submitting…</>
                             ) : isDaraja ? (

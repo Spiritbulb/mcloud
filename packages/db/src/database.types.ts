@@ -349,6 +349,54 @@ export type Database = {
           },
         ]
       }
+      contact_submissions: {
+        Row: {
+          created_at: string
+          email: string | null
+          id: string
+          message: string
+          name: string
+          order_ref: string | null
+          phone: string | null
+          store_id: string
+        }
+        Insert: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message: string
+          name: string
+          order_ref?: string | null
+          phone?: string | null
+          store_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string | null
+          id?: string
+          message?: string
+          name?: string
+          order_ref?: string | null
+          phone?: string | null
+          store_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_submissions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "contact_submissions_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       customers: {
         Row: {
           addresses: Json | null
@@ -417,6 +465,99 @@ export type Database = {
           },
           {
             foreignKeyName: "customers_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_options: {
+        Row: {
+          courier_name: string
+          created_at: string
+          id: string
+          is_active: boolean
+          notes: string | null
+          store_id: string
+          tracking_url_template: string | null
+          updated_at: string
+        }
+        Insert: {
+          courier_name: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          store_id: string
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Update: {
+          courier_name?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          notes?: string | null
+          store_id?: string
+          tracking_url_template?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_options_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "delivery_options_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      delivery_zones: {
+        Row: {
+          available: boolean
+          created_at: string
+          id: string
+          location_name: string
+          rate: number | null
+          store_id: string
+          updated_at: string
+        }
+        Insert: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          location_name: string
+          rate?: number | null
+          store_id: string
+          updated_at?: string
+        }
+        Update: {
+          available?: boolean
+          created_at?: string
+          id?: string
+          location_name?: string
+          rate?: number | null
+          store_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "delivery_zones_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "service_details_view"
+            referencedColumns: ["store_id"]
+          },
+          {
+            foreignKeyName: "delivery_zones_store_id_fkey"
             columns: ["store_id"]
             isOneToOne: false
             referencedRelation: "stores"
@@ -785,6 +926,8 @@ export type Database = {
           customer_email: string | null
           customer_id: string | null
           customer_phone: string | null
+          delivery_option_id: string | null
+          delivery_zone_id: string | null
           discount: number | null
           fulfillment_status: string | null
           id: string
@@ -800,6 +943,7 @@ export type Database = {
           tags: string[] | null
           tax: number | null
           total: number
+          tracking_number: string | null
           updated_at: string | null
         }
         Insert: {
@@ -809,6 +953,8 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_phone?: string | null
+          delivery_option_id?: string | null
+          delivery_zone_id?: string | null
           discount?: number | null
           fulfillment_status?: string | null
           id?: string
@@ -824,6 +970,7 @@ export type Database = {
           tags?: string[] | null
           tax?: number | null
           total: number
+          tracking_number?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -833,6 +980,8 @@ export type Database = {
           customer_email?: string | null
           customer_id?: string | null
           customer_phone?: string | null
+          delivery_option_id?: string | null
+          delivery_zone_id?: string | null
           discount?: number | null
           fulfillment_status?: string | null
           id?: string
@@ -848,6 +997,7 @@ export type Database = {
           tags?: string[] | null
           tax?: number | null
           total?: number
+          tracking_number?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -856,6 +1006,20 @@ export type Database = {
             columns: ["customer_id"]
             isOneToOne: false
             referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_option_id_fkey"
+            columns: ["delivery_option_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_options"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "orders_delivery_zone_id_fkey"
+            columns: ["delivery_zone_id"]
+            isOneToOne: false
+            referencedRelation: "delivery_zones"
             referencedColumns: ["id"]
           },
           {
@@ -2866,6 +3030,7 @@ export type Database = {
         Returns: number
       }
       auth0_uid: { Args: never; Returns: string }
+      expire_store_subscriptions: { Args: never; Returns: undefined }
       generate_order_number: { Args: { store_uuid: string }; Returns: string }
       get_store_analytics: {
         Args: { p_end: string; p_start: string; p_store_id: string }

@@ -8,8 +8,10 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
+@layer {
 *,
 ::before,
 ::after {
   box-sizing: border-box;
+}
 }
