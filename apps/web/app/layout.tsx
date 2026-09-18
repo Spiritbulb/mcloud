@@ -6,6 +6,7 @@ import { Suspense } from "react";
 import Analytics from "@/components/analytics";
 import { AuthProvider } from "@mcloud/auth/provider";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
+import StatusBanner from '@mcloud/ui/status-banner'
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -118,6 +119,7 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
+        <StatusBanner/>
         <Script
           id="sw-reg"
           strategy="afterInteractive"
