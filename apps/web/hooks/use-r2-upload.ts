@@ -56,6 +56,10 @@ const useR2Upload = (options: UseR2UploadOptions) => {
   const [loading, setLoading] = useState<boolean>(false)
   const [errors, setErrors] = useState<{ name: string; message: string }[]>([])
   const [successes, setSuccesses] = useState<string[]>([])
+  // NEW: the real public R2 URL for each successfully uploaded file, keyed by file name.
+  // This is the actual fix — the worker already returns this URL on upload; we just
+  // need to keep it instead of throwing it away.
+  const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({})
 
   const isSuccess = useMemo(() => {
     if (errors.length === 0 && successes.length === 0) {
@@ -129,7 +133,19 @@ const useR2Upload = (options: UseR2UploadOptions) => {
             return { name: file.name, message: message || `Upload failed (${res.status})` }
           }
 
-          return { name: file.name, message: undefined }
+          // The worker responds with { success, key, url } — url is the real,
+          // publicly-servable R2 URL. Capture it so callers don't have to
+          // reconstruct (and potentially get wrong) the public URL themselves.
+          let url: string | undefined
+          try {
+            const body = await res.json()
+            url = body?.url
+          } catch {
+            // Worker didn't return JSON for some reason — fall back to undefined;
+            // caller should treat this as "upload succeeded, URL unknown".
+          }
+
+          return { name: file.name, message: undefined, url }
         } catch (err) {
           return { name: file.name, message: err instanceof Error ? err.message : 'Upload failed' }
         }
@@ -144,6 +160,14 @@ const useR2Upload = (options: UseR2UploadOptions) => {
       new Set([...successes, ...responseSuccesses.map((x) => x.name)])
     )
     setSuccesses(newSuccesses)
+
+    setUploadedUrls((prev) => {
+      const next = { ...prev }
+      for (const r of responseSuccesses) {
+        if (r.url) next[r.name] = r.url
+      }
+      return next
+    })
 
     setLoading(false)
   }, [files, path, bucketName, errors, successes, upsert])
@@ -173,6 +197,7 @@ const useR2Upload = (options: UseR2UploadOptions) => {
     files,
     setFiles,
     successes,
+    uploadedUrls,
     isSuccess,
     loading,
     errors,

@@ -20,6 +20,9 @@ coverage/
 .next/
 out/
 
+# node
+/migrate-data.js
+
 # cloudflare
 .open-next/
 .wrangler/

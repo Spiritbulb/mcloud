@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
 import { useR2Upload } from '@/hooks/use-r2-upload'
-import { createClient } from '@mcloud/db/client'
 import { X } from 'lucide-react'
 
 interface ImageUploadProps {
@@ -25,12 +24,10 @@ export default function ImageUpload({
     label,
     aspectRatio = 'square',
 }: ImageUploadProps) {
-    const supabase = createClient()
     const previousPathRef = useRef(pathInDb ?? '')
 
     // Normalise pathPrefix — strip any trailing slash so we never produce
-    // double-slash paths like "storeId/logo//photo.webp", which Supabase
-    // rejects with a 400.
+    // double-slash paths like "storeId/logo//photo.webp".
     const normalizedPrefix = pathPrefix.replace(/\/+$/, '')
 
     const uploadProps = useR2Upload({
@@ -58,26 +55,20 @@ export default function ImageUpload({
         const fileName = uploadProps.successes[0]
         const fullPath = `${normalizedPrefix}/${fileName}`
 
-        const run = async () => {
-            try {
-                // Clean up the old file if it was stored at a different path
-                const prevPath = previousPathRef.current
-                if (prevPath && prevPath !== fullPath) {
-                    await supabase.storage.from(bucket).remove([prevPath])
-                }
+        // FIX: use the real public R2 URL the worker returned on upload,
+        // instead of asking Supabase to build one (which pointed at a bucket
+        // the file was never actually in).
+        const publicUrl = uploadProps.uploadedUrls[fileName]
 
-                const { data } = supabase.storage.from(bucket).getPublicUrl(fullPath)
-                if (data?.publicUrl) {
-                    previousPathRef.current = fullPath
-                    onChange(data.publicUrl, fullPath)
-                }
-            } catch (e) {
-                console.error('ImageUpload post-process error', e)
-            }
+        if (publicUrl) {
+            previousPathRef.current = fullPath
+            onChange(publicUrl, fullPath)
+        } else {
+            // Upload "succeeded" per the hook's bookkeeping but no URL came back —
+            // surface this loudly rather than silently keeping a stale/blank value.
+            console.error('ImageUpload: upload succeeded but no public URL was returned', { fileName, fullPath })
         }
-
-        run()
-    }, [uploadProps.isSuccess, uploadProps.successes])
+    }, [uploadProps.isSuccess, uploadProps.successes, uploadProps.uploadedUrls])
 
     const showExisting = !!value && !uploadProps.loading && uploadProps.files.length === 0
 
@@ -96,12 +87,14 @@ export default function ImageUpload({
                     />
                     <button
                         type="button"
-                        onClick={async () => {
-                            const prevPath = previousPathRef.current
-                            if (prevPath) {
-                                await supabase.storage.from(bucket).remove([prevPath])
-                                previousPathRef.current = ''
-                            }
+                        onClick={() => {
+                            // NOTE: this only clears the reference in the UI/DB — the R2 worker
+                            // doesn't currently expose a delete route, so the old file stays in
+                            // the bucket. Not a functional bug (nothing points at it anymore),
+                            // just means R2 storage isn't reclaimed on replace/remove yet.
+                            // Add a DELETE handler to the worker + call it here if that matters
+                            // for your storage costs later.
+                            previousPathRef.current = ''
                             onChange('', '')
                         }}
                         className="absolute top-1 right-1 bg-background border p-0.5 hover:bg-destructive hover:text-white transition-colors z-10"
