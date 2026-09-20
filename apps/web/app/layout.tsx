@@ -165,7 +165,6 @@ export default async function RootLayout({
           <Analytics />
         </Suspense>
         <AuthProvider>
-          {bannerScript && <div dangerouslySetInnerHTML={{ __html: bannerScript }} />}
           {children}
         </AuthProvider>
       </body>

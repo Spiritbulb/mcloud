@@ -1,4 +1,3 @@
-// app/api/upload/route.ts
 export async function PUT(req: Request) {
   const key = new URL(req.url).searchParams.get('key')!
   const res = await fetch(`${process.env.R2_WORKER_URL}/upload?key=${encodeURIComponent(key)}`, {
@@ -11,5 +10,10 @@ export async function PUT(req: Request) {
     // @ts-ignore - needed for streaming body in Node runtime
     duplex: 'half',
   })
-  return res
+
+  const text = await res.text()
+  return new Response(text, {
+    status: res.status,
+    headers: { 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
+  })
 }

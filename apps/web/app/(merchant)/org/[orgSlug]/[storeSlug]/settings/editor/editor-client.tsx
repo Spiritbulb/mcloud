@@ -188,11 +188,12 @@ export default function EditorClient({
     //   - the selected section (its outline would vanish mid-edit)
     // It also reports clicks, which is the inbound half of the two-way sync.
     useEffect(() => {
+        
         function onMessage(e: MessageEvent) {
             if (e.origin !== storefrontOrigin) return
             const data = e.data
             if (!data) return
-
+            console.log('EDITOR received:', data.type, data)
             if (data.type === 'mcloud:preview-ready') {
                 postTheme()
                 // Replay the outline, or a copy edit (which reloads the frame) would
@@ -294,19 +295,22 @@ export default function EditorClient({
 
             // An image slot was clicked. It has no text to type into, so the admin
             // opens a picker: the storefront never prompts for or receives a file.
-            if (data.type === 'mcloud:image-click') {
-                const { setting, list, index, key, value } = data
-                if (setting && EDITABLE_SETTINGS_IMAGE.has(setting)) {
-                    setPicker({ target: { kind: 'setting', key: setting }, value: String(value ?? '') })
-                } else if (list && key && EDITABLE_LISTS.has(list)) {
-                    const i = Number(index)
-                    if (!Number.isInteger(i) || i < 0) return
-                    setPicker({
-                        target: { kind: 'item', list, index: i, key },
-                        value: String(value ?? ''),
-                    })
-                }
-            }
+if (data.type === 'mcloud:image-click') {
+    const { setting, list, index, key } = data
+    if (setting && EDITABLE_SETTINGS_IMAGE.has(setting)) {
+        const current = String(storeDraft[setting] ?? storeSettings[setting] ?? '')
+        setPicker({ target: { kind: 'setting', key: setting }, value: current })
+    } else if (list && key && EDITABLE_LISTS.has(list)) {
+        const i = Number(index)
+        if (!Number.isInteger(i) || i < 0) return
+        const arr = listFor(list, storeDraft, storeSettings)
+        const item = arr[i]
+        const current = item && typeof item === 'object'
+            ? String((item as Record<string, unknown>)[key] ?? '')
+            : ''
+        setPicker({ target: { kind: 'item', list, index: i, key }, value: current })
+    }
+}
 
             // 3. A repeated record -> stores.settings[list][i][key]  (programs …)
             if (data.type === 'mcloud:item-edit') {
@@ -380,9 +384,10 @@ export default function EditorClient({
                 }
             }
         }
+        
         window.addEventListener('message', onMessage)
         return () => window.removeEventListener('message', onMessage)
-    }, [storefrontOrigin, postTheme, postSelect, sections.length, storeSettings])
+    }, [storefrontOrigin, postTheme, postSelect, sections.length, storeSettings, storeDraft])
 
     useEffect(() => {
   const hasGallerySection = sections.some((s) => s.type === 'gallery')
@@ -427,6 +432,7 @@ export default function EditorClient({
         }
         setSaved(false)
         setPicker(null)
+        console.log('applyImage ran', { target: t, newUrl: url })
     }
 
     // Is there anything to save? Compared against what the page loaded, so undoing an
@@ -622,8 +628,9 @@ export default function EditorClient({
                     value={picker?.value ?? ''}
                     storeId={storeId}
                     pathPrefix={`${storeId}/editor`}
-                    onPick={applyImage}
+                    onPick={applyImage}          // stays for real picks
                     onClose={() => setPicker(null)}
+                    
                 />
 
                 {/* The bridge posted mcloud:section-add-requested for this index:

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useReducer } from 'react'
 import { useDropzone, type FileError, type FileRejection } from 'react-dropzone'
 
 interface FileWithPreview extends File {
@@ -42,6 +42,79 @@ type UseR2UploadOptions = {
 
 type UseR2UploadReturn = ReturnType<typeof useR2Upload>
 
+type UploadResponse = {
+  name: string
+  message?: string
+  url?: string
+}
+
+/**
+ * Everything that changes together on an upload is now ONE piece of state,
+ * updated by ONE reducer action. Previously `successes` and `uploadedUrls`
+ * were separate useState calls set back-to-back in the same async callback —
+ * that's two renders' worth of state that a consumer's effect can observe out
+ * of sync with each other (isSuccess flips true from `successes` while
+ * `uploadedUrls` for that same file is still the value from BEFORE this
+ * upload). A single state object, updated by one dispatch, makes that
+ * ordering bug structurally impossible: there is no render where `successes`
+ * reflects this upload but `uploadedUrls` doesn't.
+ */
+type State = {
+  files: FileWithPreview[]
+  loading: boolean
+  errors: { name: string; message: string }[]
+  successes: string[]
+  uploadedUrls: Record<string, string>
+}
+
+const initialState: State = {
+  files: [],
+  loading: false,
+  errors: [],
+  successes: [],
+  uploadedUrls: {},
+}
+
+type Action =
+  | { type: 'FILES_ADDED'; files: FileWithPreview[] }
+  | { type: 'FILES_SET'; files: FileWithPreview[] } // for the "clear too-many-files error" pass
+  | { type: 'UPLOAD_STARTED' }
+  | { type: 'UPLOAD_FINISHED'; responses: UploadResponse[] }
+
+function reducer(state: State, action: Action): State {
+  switch (action.type) {
+    case 'FILES_ADDED': {
+      return { ...state, files: action.files }
+    }
+    case 'FILES_SET': {
+      return { ...state, files: action.files }
+    }
+    case 'UPLOAD_STARTED': {
+      return { ...state, loading: true }
+    }
+    case 'UPLOAD_FINISHED': {
+      const errors = action.responses
+        .filter((r) => r.message !== undefined)
+        .map((r) => ({ name: r.name, message: r.message! }))
+
+      const succeeded = action.responses.filter((r) => r.message === undefined)
+
+      const successes = Array.from(
+        new Set([...state.successes, ...succeeded.map((r) => r.name)])
+      )
+
+      const uploadedUrls = { ...state.uploadedUrls }
+      for (const r of succeeded) {
+        if (r.url) uploadedUrls[r.name] = r.url
+      }
+
+      return { ...state, loading: false, errors, successes, uploadedUrls }
+    }
+    default:
+      return state
+  }
+}
+
 const useR2Upload = (options: UseR2UploadOptions) => {
   const {
     bucketName,
@@ -52,15 +125,12 @@ const useR2Upload = (options: UseR2UploadOptions) => {
     upsert = true,
   } = options
 
-  const [files, setFiles] = useState<FileWithPreview[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
-  const [errors, setErrors] = useState<{ name: string; message: string }[]>([])
-  const [successes, setSuccesses] = useState<string[]>([])
-  // NEW: the real public R2 URL for each successfully uploaded file, keyed by file name.
-  // This is the actual fix — the worker already returns this URL on upload; we just
-  // need to keep it instead of throwing it away.
-  const [uploadedUrls, setUploadedUrls] = useState<Record<string, string>>({})
+  const [state, dispatch] = useReducer(reducer, initialState)
+  const { files, loading, errors, successes, uploadedUrls } = state
 
+  // isSuccess and uploadedUrls now always come from the SAME state snapshot,
+  // so a consumer reading both in one effect can never see one updated
+  // without the other.
   const isSuccess = useMemo(() => {
     if (errors.length === 0 && successes.length === 0) {
       return false
@@ -89,9 +159,9 @@ const useR2Upload = (options: UseR2UploadOptions) => {
 
       const newFiles = [...files, ...validFiles, ...invalidFiles]
 
-      setFiles(newFiles)
+      dispatch({ type: 'FILES_ADDED', files: newFiles })
     },
-    [files, setFiles]
+    [files]
   )
 
   const dropzoneProps = useDropzone({
@@ -104,10 +174,10 @@ const useR2Upload = (options: UseR2UploadOptions) => {
   })
 
   const onUpload = useCallback(async () => {
-    setLoading(true)
+    dispatch({ type: 'UPLOAD_STARTED' })
 
-    // Same partial-retry behavior as the Supabase version:
-    // if any files errored, retrying only re-attempts those + not-yet-successful ones
+    // Same partial-retry behavior as before: if any files errored, retrying
+    // only re-attempts those + not-yet-successful ones.
     const filesWithErrors = errors.map((x) => x.name)
     const filesToUpload =
       filesWithErrors.length > 0
@@ -117,7 +187,7 @@ const useR2Upload = (options: UseR2UploadOptions) => {
           ]
         : files
 
-    const responses = await Promise.all(
+    const responses: UploadResponse[] = await Promise.all(
       filesToUpload.map(async (file) => {
         const key = path ? `${bucketName}/${path}/${file.name}` : `${bucketName}/${file.name}`
 
@@ -141,8 +211,9 @@ const useR2Upload = (options: UseR2UploadOptions) => {
             const body = await res.json()
             url = body?.url
           } catch {
-            // Worker didn't return JSON for some reason — fall back to undefined;
-            // caller should treat this as "upload succeeded, URL unknown".
+            // Worker didn't return JSON for some reason — fall back to
+            // undefined; caller treats this as "upload succeeded, URL
+            // unknown" (surfaced via a console.error in ImageUpload).
           }
 
           return { name: file.name, message: undefined, url }
@@ -152,32 +223,17 @@ const useR2Upload = (options: UseR2UploadOptions) => {
       })
     )
 
-    const responseErrors = responses.filter((x) => x.message !== undefined) as { name: string; message: string }[]
-    setErrors(responseErrors)
-
-    const responseSuccesses = responses.filter((x) => x.message === undefined)
-    const newSuccesses = Array.from(
-      new Set([...successes, ...responseSuccesses.map((x) => x.name)])
-    )
-    setSuccesses(newSuccesses)
-
-    setUploadedUrls((prev) => {
-      const next = { ...prev }
-      for (const r of responseSuccesses) {
-        if (r.url) next[r.name] = r.url
-      }
-      return next
-    })
-
-    setLoading(false)
+    dispatch({ type: 'UPLOAD_FINISHED', responses })
   }, [files, path, bucketName, errors, successes, upsert])
 
   useEffect(() => {
     if (files.length === 0) {
-      setErrors([])
+      if (errors.length > 0) dispatch({ type: 'UPLOAD_FINISHED', responses: [] })
+      return
     }
 
-    // If the number of files doesn't exceed the maxFiles parameter, remove the error 'Too many files' from each file
+    // If the number of files doesn't exceed maxFiles, drop the "too many
+    // files" error from each file.
     if (files.length <= maxFiles) {
       let changed = false
       const newFiles = files.map((file) => {
@@ -188,20 +244,22 @@ const useR2Upload = (options: UseR2UploadOptions) => {
         return file
       })
       if (changed) {
-        setFiles(newFiles)
+        dispatch({ type: 'FILES_SET', files: newFiles })
       }
     }
-  }, [files.length, setFiles, maxFiles])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [files.length, maxFiles])
 
   return {
     files,
-    setFiles,
+    setFiles: (f: FileWithPreview[]) => dispatch({ type: 'FILES_SET', files: f }),
     successes,
     uploadedUrls,
     isSuccess,
     loading,
     errors,
-    setErrors,
+    setErrors: (e: { name: string; message: string }[]) =>
+      dispatch({ type: 'UPLOAD_FINISHED', responses: e.map((x) => ({ name: x.name, message: x.message })) }),
     onUpload,
     maxFileSize: maxFileSize,
     maxFiles: maxFiles,
