@@ -4,7 +4,7 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
-COPY apps/web/package.json ./apps/web/
+COPY apps/storefront/package.json ./apps/storefront/
 COPY packages ./packages
 RUN npm ci --include=dev
 
@@ -12,7 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx turbo run build --filter=web
+RUN npx turbo run build --filter=storefront
 
 FROM base AS runner
 WORKDIR /app
@@ -21,9 +21,9 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
-COPY --from=builder /app/apps/web/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./.next/static
+COPY --from=builder /app/apps/storefront/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./.next/static
 
 USER nextjs
 EXPOSE 3000
