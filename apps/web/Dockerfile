@@ -12,7 +12,7 @@ FROM base AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-RUN npx turbo run build --filter=/apps/web
+RUN npx turbo run build --filter=./apps/web
 
 FROM base AS runner
 WORKDIR /app
