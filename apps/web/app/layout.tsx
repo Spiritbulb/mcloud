@@ -119,7 +119,6 @@ export default async function RootLayout({
         />
       </head>
       <body className="antialiased">
-        <StatusBanner/>
         <Script
           id="sw-reg"
           strategy="afterInteractive"
