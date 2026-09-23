@@ -698,3 +698,28 @@
 .sf-collection-card:hover .sf-collection-card__name {
     color: var(--sf-primary);
 }
+
+.sf-service-desc__text {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.sf-service-desc:has(.sf-service-desc__details[open]) .sf-service-desc__text {
+  -webkit-line-clamp: unset;
+  overflow: visible;
+}
+.sf-service-desc__details summary {
+  list-style: none;
+  cursor: pointer;
+  display: inline-block;
+  margin-top: 4px;
+  color: var(--sf-primary, var(--sf-foreground));
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.sf-service-desc__details summary::-webkit-details-marker { display: none; }
+
+.sf-service-desc__label-open { display: none; }
+.sf-service-desc__details[open] .sf-service-desc__label-closed { display: none; }
+.sf-service-desc__details[open] .sf-service-desc__label-open { display: inline; }

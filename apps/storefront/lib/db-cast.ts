@@ -3,7 +3,10 @@
 // columns) into the tighter theme prop types used by storefront components.
 // Call these once in each server page — never sprinkle `as any` in pages.
 
-import type { Store, Product, ProductItem, Collection } from '@mcloud/themes/types'
+import type {
+    Store, Product, ProductItem, Collection,
+    ServiceItem, ServiceMediaItem, ServicePackage,
+} from '@mcloud/themes/types'
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -129,4 +132,68 @@ export function castCollection(raw: RawCollection): Collection {
 
 export function castCollections(rows: RawCollection[]): Collection[] {
     return rows.map(castCollection)
+}
+
+// ─── Service (ServiceItem shape — root fields duplicate values also nested in
+// metadata, same convenience pattern ProductDetailData uses) ─────────────────
+
+type RawService = {
+    id: string
+    name: string
+    slug: string
+    description: string | null
+    price: number | null
+    is_active: boolean | null
+    sku: string | null
+    metadata: unknown   // Supabase Json — holds { media, availability, packages, ... }
+}
+
+function isServiceMediaItem(m: unknown): m is ServiceMediaItem {
+    return (
+        !!m &&
+        typeof m === 'object' &&
+        typeof (m as Record<string, unknown>).url === 'string' &&
+        ((m as Record<string, unknown>).type === 'image' || (m as Record<string, unknown>).type === 'video')
+    )
+}
+
+function isAvailability(v: unknown): v is ServiceItem['availability'] {
+    return v === 'available' || v === 'busy' || v === 'unavailable'
+}
+
+export function castService(raw: RawService): ServiceItem {
+    const metadata = (raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata))
+        ? raw.metadata as Record<string, unknown>
+        : {}
+
+    const rawMedia = metadata.media
+    const media = Array.isArray(rawMedia) ? rawMedia.filter(isServiceMediaItem) : []
+    const images = media.filter((m) => m.type === 'image').map((m) => m.url)
+    const availability = isAvailability(metadata.availability) ? metadata.availability : 'available'
+    const packages = Array.isArray(metadata.packages) ? metadata.packages as ServicePackage[] : undefined
+
+    return {
+        id: raw.id,
+        name: raw.name,
+        slug: raw.slug,
+        description: raw.description,
+        item_type: 'service',
+        price: raw.price ?? 0,
+        images,
+        compare_at_price: null, // not a services column today
+        is_active: raw.is_active ?? true,
+        sku: raw.sku,
+        media,
+        availability,
+        packages,
+        metadata: {
+            ...metadata,
+            media,
+            availability,
+        } as ServiceItem['metadata'],
+    }
+}
+
+export function castServices(rows: RawService[]): ServiceItem[] {
+    return rows.map(castService)
 }

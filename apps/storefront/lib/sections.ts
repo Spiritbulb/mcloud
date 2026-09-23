@@ -20,6 +20,7 @@ export type SectionType =
   | 'contact'
   | 'campaigns'
   | 'gallery'
+  | 'services'
 
 export interface PageSection {
   type: string
@@ -32,6 +33,7 @@ export interface PageRenderContext {
   collections: unknown[]
   featuredProducts: unknown[]
   campaigns: unknown[]
+  services: unknown[]
 }
 
 export interface SectionDef {
@@ -153,11 +155,20 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     label: 'Gallery',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: [
-      ...copy('Recent Trails', 'Gallery'),
+      ...copy('Recent Shoots', 'Gallery'),
       { id: 'limit', type: 'number', label: 'Photos to show', default: 8, min: 1, max: 30 },
       { id: 'ctaText', type: 'text', label: 'Link button text', default: 'View full gallery' },
       { id: 'ctaUrl', type: 'text', label: 'Link button URL', default: '' },
     ],
+  },
+    services: {
+    templateKey: 'classic/sections/services',
+    label: 'Services',
+    pickContext: (ctx) => ({ store: ctx.store, services: ctx.services }),
+    schema: [
+     ...copy('What We Offer', 'Services'),
+      { id: 'limit', type: 'number', label: 'Services to show', default: 3, min: 1, max: 12 },
+   ],
   },
 }
 

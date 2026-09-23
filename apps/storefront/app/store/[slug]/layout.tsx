@@ -12,6 +12,7 @@ import PreviewListener from '@/components/store/preview-listener'
 import EditorBridge from '@/components/store/editor-bridge'
 import type { Metadata } from 'next'
 import { headers } from 'next/headers'
+import { notFound } from 'next/navigation'
 
 
 async function getStoreTheme(slug: string) {
@@ -50,8 +51,8 @@ async function getStore(slug: string) {
         .eq('slug', slug)
         .single()
 
-    if (!store) return store
-
+    if (!store) return notFound()
+    
     const { data: subRow } = await supabase
         .from('store_subscriptions')
         .select('plan, status')

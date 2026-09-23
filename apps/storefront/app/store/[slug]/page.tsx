@@ -1,7 +1,7 @@
 import '@/app/store/[slug]/storefront.css'
 import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
-import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import { castStore, castProducts, castCollections, castServices } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import { buildHomeContext } from '@/lib/liquid-context'
@@ -115,7 +115,7 @@ export default async function StorePage({ params, searchParams }: Props) {
     const store = castStore(rawStore)
     const baseProducts = castProducts(rawProducts ?? [])
     const collections = castCollections(rawCollections ?? [])
-    const services = (rawServices ?? []) as any[]
+    const services = castServices(rawServices ?? [])
 
     const baseFeatured = castProducts(
         (featuredRows ?? [])
@@ -196,6 +196,7 @@ export default async function StorePage({ params, searchParams }: Props) {
                 products,
                 collections,
                 featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
+                services,
             }),
             campaigns,
         }
