@@ -32,10 +32,10 @@ type Member = MemberRow
 
 interface Invite {
     id: string
-    email: string
-    role: string
-    created_at: string
-    expires_at: string
+    email: string | null
+    role: string | null
+    created_at: string | null
+    expires_at: string | null
 }
 
 interface Props {
@@ -274,7 +274,7 @@ function InviteRow({
     }
 
     const expiresIn = Math.ceil(
-        (new Date(invite.expires_at).getTime() - Date.now()) / 86400000
+        (new Date(invite.expires_at ?? '-').getTime() - Date.now()) / 86400000
     )
 
     return (
@@ -286,7 +286,7 @@ function InviteRow({
                 <div className="min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
                         <p className="text-sm text-foreground truncate">{invite.email}</p>
-                        <RoleBadge role={invite.role} />
+                        <RoleBadge role={invite.role ?? '-'} />
                     </div>
                     <p className="text-xs text-muted-foreground flex items-center gap-1">
                         <Clock className="w-3 h-3" />

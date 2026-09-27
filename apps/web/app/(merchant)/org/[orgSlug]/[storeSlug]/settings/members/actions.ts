@@ -32,7 +32,7 @@ export async function getMembers(slug: string) {
         .order('created_at', { ascending: true })
 
     // Cast permissions from Json to string[]
-    const safeMembers: MemberRow[] = (members ?? []).map((m) => ({
+    const safeMembers: MemberRow[] = (members ?? []).map((m: any) => ({
         id: m.id,
         role: m.role,
         permissions: (m.permissions as string[] | null) ?? [],

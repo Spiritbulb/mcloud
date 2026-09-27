@@ -2849,6 +2849,10 @@ export type Database = {
         Returns: number
       }
       expire_store_subscriptions: { Args: never; Returns: undefined }
+      get_store_analytics: {
+        Args: { p_end: string; p_start: string; p_store_id: string }
+        Returns: Json
+      }
       match_nuru_chunks: {
         Args: {
           p_match_count?: number
