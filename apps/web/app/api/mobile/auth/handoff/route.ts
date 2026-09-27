@@ -9,7 +9,7 @@ import { fail, requireMobileUser } from '../../_lib'
 import { mintTicket } from '../../../_handoff/tickets'
 import { allowHandoffMint } from '../../../_auth-ratelimit'
 
-const MCLOUD_ORIGIN = process.env.MCLOUD_WEB_ORIGIN ?? 'https://mcloud.co.ke'
+const MCLOUD_ORIGIN = process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'https://mcloud.co.ke'
 
 export async function POST(req: NextRequest) {
     const auth = await requireMobileUser(req)
