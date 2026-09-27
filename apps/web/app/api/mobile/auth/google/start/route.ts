@@ -18,7 +18,7 @@ export async function POST(req: NextRequest) {
     const authorizationUrl = workos.userManagement.getAuthorizationUrl({
         provider: 'GoogleOAuth',
         clientId: process.env.WORKOS_CLIENT_ID!,
-        redirectUri: `${process.env.MCLOUD_WEB_ORIGIN}/api/mobile/auth/google/callback`,
+        redirectUri: `${process.env.NEXT_PUBLIC_API_BASE_URL}/mobile/auth/google/callback`,
         state,
     })
 
