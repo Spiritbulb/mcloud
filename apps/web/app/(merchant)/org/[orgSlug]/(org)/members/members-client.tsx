@@ -16,7 +16,7 @@ import {
     UserX, Mail, Loader2, Clock, Shield, ShieldCheck, ShieldAlert,
 } from 'lucide-react'
 
-type Invite = { id: string; email: string | null; role: string | null; created_at: string; expires_at: string | null }
+type Invite = { id: string; email: string | null; role: string | null; created_at: string | null; expires_at: string | null }
 
 interface Props {
     orgId: string
