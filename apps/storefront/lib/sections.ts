@@ -33,7 +33,7 @@ export interface PageRenderContext {
   collections: unknown[]
   featuredProducts: unknown[]
   campaigns: unknown[]
-  services: unknown[]
+  services?: unknown[]
 }
 
 export interface SectionDef {

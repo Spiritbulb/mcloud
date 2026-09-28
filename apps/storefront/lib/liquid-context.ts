@@ -41,7 +41,7 @@ export interface HomeContext extends Record<string, unknown> {
     products: unknown[]
     collections: unknown[]
     featuredProducts: unknown[]
-    services: unknown[]
+    services?: unknown[]
 }
 
 interface Input {
@@ -56,7 +56,7 @@ interface Input {
     products: unknown[]
     collections: unknown[]
     featuredProducts: unknown[]
-    services: unknown[]
+    services?: unknown[]
 }
 
 export function buildHomeContext(input: Input): HomeContext {
