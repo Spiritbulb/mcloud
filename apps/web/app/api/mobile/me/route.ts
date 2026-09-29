@@ -9,13 +9,17 @@ export async function GET(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const supabase = await createClient()
-    const { data } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', auth.user.id)
-        .single()
+    const { data, error } = await supabase
+    .from('users')
+    .select('role')
+    .eq('id', auth.user.id)
+    .single()
 
-    const role = data?.role ?? 'user'
+if (error) {
+    return NextResponse.json({ error: 'lookup_failed' }, { status: 500 })
+}
+
+const role = data?.role ?? 'user'
     return NextResponse.json(
         { user: { ...auth.user, role } },
         { headers: { 'Cache-Control': 'no-store' } },
