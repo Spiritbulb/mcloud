@@ -8,11 +8,11 @@ export type HandoffTokens = { accessToken: string; refreshToken: string }
 function b64urlEncode(bytes: Uint8Array): string {
   return Buffer.from(bytes).toString('base64url')
 }
-function b64urlDecode(s: string): Uint8Array {
+function b64urlDecode(s: string): Uint8Array<ArrayBuffer> {
   return new Uint8Array(Buffer.from(s, 'base64url'))
 }
 
-async function importKey(): Promise<CryptoKey> {
+async function importKey() {
   const raw = process.env.HANDOFF_ENC_KEY
   if (!raw) throw new Error('HANDOFF_ENC_KEY is not set')
   const keyBytes = new Uint8Array(Buffer.from(raw, 'base64'))

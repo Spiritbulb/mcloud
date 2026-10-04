@@ -11,10 +11,10 @@
     "gen:manifest": "node scripts/build-manifest.mjs"
   },
   "dependencies": {
-    "liquidjs": "^10.25.2",
-    "glob": "^13.0.6"
+    "glob": "^13.0.6",
+    "liquidjs": "^10.30.0"
   },
   "devDependencies": {
-    "@mcloud/config": "*"
+    "@mcloud/config": "^0.0.0"
   }
 }

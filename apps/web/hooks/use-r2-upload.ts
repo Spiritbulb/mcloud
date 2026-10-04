@@ -145,17 +145,19 @@ const useR2Upload = (options: UseR2UploadOptions) => {
     (acceptedFiles: File[], fileRejections: FileRejection[]) => {
       const validFiles = acceptedFiles
         .filter((file) => !files.find((x) => x.name === file.name))
-        .map((file) => {
-          ;(file as FileWithPreview).preview = URL.createObjectURL(file)
-          ;(file as FileWithPreview).errors = []
-          return file as FileWithPreview
-        })
+        .map((file) =>
+          Object.assign(file, {
+            preview: URL.createObjectURL(file),
+            errors: [] as FileError[],
+          })
+        )
 
-      const invalidFiles = fileRejections.map(({ file, errors }) => {
-        ;(file as FileWithPreview).preview = URL.createObjectURL(file)
-        ;(file as FileWithPreview).errors = errors
-        return file as FileWithPreview
-      })
+      const invalidFiles = fileRejections.map(({ file, errors }) =>
+        Object.assign(file, {
+          preview: URL.createObjectURL(file),
+          errors,
+        })
+      )
 
       const newFiles = [...files, ...validFiles, ...invalidFiles]
 

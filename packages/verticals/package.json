@@ -8,6 +8,6 @@
     "./preview": "./src/preview.ts"
   },
   "devDependencies": {
-    "@mcloud/config": "*"
+    "@mcloud/config": "^0.0.0"
   }
 }

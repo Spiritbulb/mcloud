@@ -9,15 +9,15 @@
     "./*": "./src/*.tsx"
   },
   "dependencies": {
-    "@mcloud/ui": "*",
-    "framer-motion": "^12.15.0",
-    "lucide-react": "^0.511.0"
+    "@mcloud/ui": "^0.0.0",
+    "framer-motion": "^14.0.0",
+    "lucide-react": "^1.52.0"
   },
   "peerDependencies": {
-    "next": "*",
-    "react": "*"
+    "next": "^16.3.8",
+    "react": "^19.3.0"
   },
   "devDependencies": {
-    "@mcloud/config": "*"
+    "@mcloud/config": "^0.0.0"
   }
 }

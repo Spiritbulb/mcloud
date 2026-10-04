@@ -12,16 +12,16 @@
     "./types": "./src/types.ts"
   },
   "dependencies": {
-    "@mcloud/db": "*",
-    "@workos-inc/authkit-nextjs": "*",
-    "@auth0/nextjs-auth0": "*",
-    "jose": "^6.2.3"
+    "@auth0/nextjs-auth0": "^4.31.0",
+    "@mcloud/db": "^0.0.0",
+    "@workos-inc/authkit-nextjs": "^4.4.0",
+    "jose": "^6.2.12"
   },
   "peerDependencies": {
-    "next": "*",
-    "react": "*"
+    "next": "^16.3.8",
+    "react": "^19.3.0"
   },
   "devDependencies": {
-    "@mcloud/config": "*"
+    "@mcloud/config": "^0.0.0"
   }
 }

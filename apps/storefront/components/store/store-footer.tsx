@@ -1,4 +1,15 @@
-import { Icon, Instagram, LucideIcon, Twitter } from "lucide-react"
+import type { IconType } from "react-icons"
+import { FaInstagram, FaTiktok, FaWhatsapp, FaXTwitter } from "react-icons/fa6"
+
+function buildSocialLinks(settings: Store['settings']) {
+    const s = settings.socialLinks
+    return [
+        s?.instagram && { href: s.instagram, label: 'Instagram', icon: FaInstagram },
+        s?.tiktok && { href: s.tiktok, label: 'TikTok', icon: FaTiktok },
+        s?.twitter && { href: s.twitter, label: 'Twitter / X', icon: FaXTwitter },
+        s?.whatsapp && { href: `https://wa.me/${s.whatsapp}`, label: 'WhatsApp', icon: FaWhatsapp },
+    ].filter(Boolean) as { href: string; label: string; icon: IconType }[]
+}
 
 interface Store {
     id: string
@@ -37,18 +48,6 @@ interface StoreFooterProps {
     themeId?: string
 }
 
-// ─── Shared: build social link list ───────────────────────────────────────────
-function buildSocialLinks(settings: Store['settings']) {
-    return [
-        settings.socialLinks?.instagram && { href: settings.socialLinks.instagram, label: 'Instagram', icon: Instagram },
-        settings.socialLinks?.tiktok && { href: settings.socialLinks.tiktok, label: 'TikTok' },
-        settings.socialLinks?.twitter && { href: settings.socialLinks.twitter, label: 'Twitter / X', icon: Twitter },
-        settings.socialLinks?.whatsapp && {
-            href: `https://wa.me/${settings.socialLinks.whatsapp}`,
-            label: 'WhatsApp'
-        },
-    ].filter(Boolean) as { href: string; label: string, icon: LucideIcon }[]
-}
 
 // ─── Classic Footer ────────────────────────────────────────────────────────────
 // Colours come entirely from storefront.css sf-* custom properties.
@@ -64,7 +63,7 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
 
                 {links.length > 0 && (
                     <div className="flex items-center gap-5">
-                        {links.map(({ href, label, icon }) => (
+                        {links.map(({ href, label, icon: SocialIcon }) => (
                             <a
                                 key={label}
                                 href={href}
@@ -75,7 +74,7 @@ function ClassicFooter({ store, settings }: { store: Store; settings: Store['set
                                 onMouseEnter={e => (e.currentTarget.style.color = 'var(--sf-foreground)')}
                                 onMouseLeave={e => (e.currentTarget.style.color = 'var(--sf-foreground-subtle)')}
                             >
-
+                                <SocialIcon className="w-4 h-4" />
                             </a>
                         ))}
                     </div>
@@ -173,7 +172,7 @@ function MinimalFooter({ store, settings }: { store: Store; settings: Store['set
                 {/* Social links */}
                 {links.length > 0 && (
                     <div className="flex items-center gap-5">
-                        {links.map(({ href, label }) => (
+                        {links.map(({ href, label}) => (
                             <a
                                 key={label}
                                 href={href}

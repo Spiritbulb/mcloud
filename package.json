@@ -2,7 +2,7 @@
   "name": "mcloud",
   "version": "1.1.0",
   "private": true,
-  "packageManager": "npm@11.7.0",
+  "packageManager": "npm@12.2.0",
   "workspaces": [
     "apps/web",
     "apps/storefront",
@@ -17,7 +17,7 @@
   },
   "devDependencies": {
     "@types/ssh2": "^1.15.6",
-    "turbo": "^2.5.0"
+    "turbo": "^2.11.7"
   },
   "allowScripts": {
     "@firebase/util@1.15.3": true,
@@ -26,7 +26,11 @@
     "ssh2@1.17.0": true
   },
   "dependencies": {
-    "pg": "^8.23.0",
-    "pg-copy-streams": "^7.0.0"
+    "pg": "^8.23.1",
+    "pg-copy-streams": "^7.0.0",
+    "react-icons": "^5.7.0"
+  },
+  "overrides": {
+    "@grpc/grpc-js": "^1.14.5"
   }
 }
