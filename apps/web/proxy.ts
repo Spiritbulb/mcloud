@@ -61,10 +61,51 @@ function isPlatformHost(host: string): boolean {
 
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
+/**
+ * Files that never need a session. Without this they each paid for a full auth
+ * pass (session decrypt + JWT verify + possible refresh call) on every fetch,
+ * notably the service worker's periodic /sw.js revalidation.
+ */
+const NO_AUTH_PATHS = [
+  '/sw.js',
+  '/manifest.json',
+  '/offline.html',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/opengraph-image',
+  '/icons/',
+  '/.well-known/',
+] as const
+
+/** Auth flows that must always go through the provider, cookie or not. */
+const ALWAYS_AUTH_PREFIXES = ['/auth/', '/callback', '/api/auth/', '/dev-login'] as const
+
+// AuthKit's session cookie (WORKOS_COOKIE_NAME overrides). Anonymous visitors have none,
+// so their session is null by definition and the auth pass can be skipped. This is
+// the bulk of marketing and bot traffic. Remove with the provider if auth changes.
+const SESSION_COOKIE = process.env.WORKOS_COOKIE_NAME ?? 'wos-session'
+
+const ANONYMOUS_PREP = {
+  session: null,
+  requestHeaders: undefined,
+  finalize: (res: NextResponse) => res,
+}
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl
+
+  if (NO_AUTH_PATHS.some((p) => pathname === p || (p.endsWith('/') && pathname.startsWith(p)))) {
+    return NextResponse.next()
+  }
+
   // Resolve auth once per request (provider-specific): session for gating below,
   // request headers to forward downstream, and a finalize step for response headers.
-  const { session, requestHeaders, finalize } = await prepareMiddleware(request)
+  const needsAuthPass =
+    request.cookies.has(SESSION_COOKIE) ||
+    ALWAYS_AUTH_PREFIXES.some((p) => pathname.startsWith(p))
+  const { session, requestHeaders, finalize } = needsAuthPass
+    ? await prepareMiddleware(request)
+    : ANONYMOUS_PREP
   return finalize(await handle(request, session, requestHeaders))
 }
 
