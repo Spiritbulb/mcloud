@@ -1,10 +1,22 @@
 import { type NextRequest, NextResponse } from 'next/server'
-import { isPlatformHost, isLocalHost } from '@/lib/host'
+import { prepareMiddleware } from '@mcloud/auth/server'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
+import { isPlatformHost, isLocalHost, webAppOrigin } from '@/lib/host'
 
 
 // ─── Bypass / host helpers ────────────────────────────────────────────────────
 
 const BYPASS_PREFIXES = ['/_next/', '/api/', '/.well-known/'] as const
+
+/**
+ * Merchant area (store settings). Served on the platform host only, behind auth.
+ * Skips tenant resolution entirely: `org` is never a store slug.
+ */
+const MERCHANT_PREFIX = '/org'
+
+function isMerchantPath(pathname: string): boolean {
+  return pathname === MERCHANT_PREFIX || pathname.startsWith(`${MERCHANT_PREFIX}/`)
+}
 
 async function getSupabaseClient() {
   const { createClient } = await import('@mcloud/db/server')
@@ -30,11 +42,47 @@ function withStoreSlug(request: NextRequest, slug: string): Headers {
 }
 
 
+// ─── Merchant area ────────────────────────────────────────────────────────────
+
+/**
+ * /org/* is for signed-in merchants on the platform host. On a custom domain it
+ * does not exist (404, never a redirect: the merchant's domain must not reveal or
+ * serve the admin surface). The session cookie is shared with the web app via
+ * WORKOS_COOKIE_DOMAIN; login itself still happens on the web app, so an
+ * unauthenticated visitor is sent there with an app-relative returnTo, which web
+ * sends back here once authenticated.
+ */
+async function handleMerchant(request: NextRequest, host: string): Promise<NextResponse> {
+  if (!isPlatformHost(host)) {
+    return new NextResponse('Not found', { status: 404 })
+  }
+
+  const { session, requestHeaders, finalize } = await prepareMiddleware(request)
+
+  if (!session?.user) {
+    const returnTo = `${request.nextUrl.pathname}${request.nextUrl.search}`
+    const login = new URL(loginUrlWithReturn(returnTo), webAppOrigin())
+    return finalize(NextResponse.redirect(login, 302))
+  }
+
+  return finalize(
+    requestHeaders
+      ? NextResponse.next({ request: { headers: requestHeaders } })
+      : NextResponse.next(),
+  )
+}
+
+
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl
   const host = request.headers.get('host') ?? ''
+
+  // ── 0. Merchant area (/org/*) ───────────────────────────────────────────────
+  if (isMerchantPath(pathname)) {
+    return handleMerchant(request, host)
+  }
 
   // ── 1. Bypass framework / API / static ──────────────────────────────────────
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
