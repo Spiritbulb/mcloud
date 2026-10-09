@@ -84,8 +84,16 @@ function toWorkOSId(id: string): string | null {
  * lazily at session resolution (covers both web callback and mobile token auth).
  * Returns the user with externalId populated when a link was made.
  */
+// Users with no legacy Auth0 row (everyone created after the WorkOS move) have no
+// externalId, so without this the lookup below re-ran on EVERY session read: a DB
+// round trip per layout/page/API call. Remember "nothing to link" per instance.
+const NO_LEGACY_ROW_TTL_MS = 60 * 60 * 1000
+const noLegacyRow = new Map<string, number>()
+
 async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
     if (u.externalId) return u // already linked
+    const checkedUntil = noLegacyRow.get(u.id)
+    if (checkedUntil && checkedUntil > Date.now()) return u
     try {
         const { createClient } = await import('@mcloud/db/server')
         const supabase = await createClient()
@@ -97,7 +105,10 @@ async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
             .maybeSingle()
 
         const auth0Id = auth0Row?.id
-        if (!auth0Id) return u // brand-new user, nothing to link
+        if (!auth0Id) {
+            noLegacyRow.set(u.id, Date.now() + NO_LEGACY_ROW_TTL_MS)
+            return u // brand-new user, nothing to link
+        }
 
         await getWorkOS().userManagement.updateUser({ userId: u.id, externalId: auth0Id })
         return { ...u, externalId: auth0Id }
