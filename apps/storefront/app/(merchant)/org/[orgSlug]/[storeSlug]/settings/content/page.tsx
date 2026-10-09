@@ -4,6 +4,8 @@ import { getVertical } from '@mcloud/verticals'
 import { getStoreSettingsData } from '@mcloud/merchant/store-data'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import ContentClient from './content-client'
+import { webUrl } from '@/lib/host'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 
 export default async function ContentPage({
     params,
@@ -13,7 +15,7 @@ export default async function ContentPage({
     const { orgSlug, storeSlug } = await params
 
     const session = await getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(webUrl(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings`)))
 
     // getStoreSettingsData returns { error, data } where data is the stores row
     // (selected as `*`) plus user/role/allStores/org. So `type` and `settings`
