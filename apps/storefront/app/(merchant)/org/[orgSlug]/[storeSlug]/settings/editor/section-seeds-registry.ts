@@ -4,7 +4,7 @@
 // `node --experimental-strip-types` test runner cannot resolve — so it is kept
 // OUT of section-seeds.ts (which the unit tests import). Production code imports
 // seedSection from here; it resolves normally under Next/tsc.
-import { SECTION_REGISTRY } from '@mcloud/storefront/lib/sections'
+import { SECTION_REGISTRY } from '@/lib/sections'
 import { fillDefaults } from './section-seeds'
 
 export function seedSection(type: string): { type: string; settings: Record<string, unknown> } {

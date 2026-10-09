@@ -10,7 +10,7 @@ import { createClient } from '@mcloud/db/server'
 import type { TablesUpdate } from '@mcloud/db/types'
 import { canManage, requireStoreAccess } from '@mcloud/merchant/stores'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
-import { SECTION_REGISTRY } from '@mcloud/storefront/lib/sections'
+import { SECTION_REGISTRY } from '@/lib/sections'
 import { validateSectionTypes } from './section-validate'
 
 type ActionResult = { error: string | null }

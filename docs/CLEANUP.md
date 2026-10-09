@@ -275,10 +275,6 @@ References to remove:
 - Rename `apps/storefront/app/(merchant)` route group comments/readme so it is clear it is
   the merchant (signed-in) surface and `(storefront)` is the public surface.
 - `apps/web/components/mcloud-nwlt].png`: stray filename with a bracket; rename or delete.
-- `apps/storefront/package.json` has an `exports` map (`./lib/sections`, `./lib/hero`)
-  only so web could import them; once nothing in web imports them (the settings editor
-  moved), remove it. Likewise the `@mcloud/storefront` dependency in `apps/web/package.json`
-  and its `transpilePackages` entry.
 - `apps/storefront/lib/host.ts`: `PLATFORM_APEX_DOMAINS` is duplicated in
   `apps/web/proxy.ts`. Put it in `@mcloud/merchant` (or `@mcloud/config`).
 
