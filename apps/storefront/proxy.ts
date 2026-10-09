@@ -6,6 +6,35 @@ import { isPlatformHost, isLocalHost } from '@/lib/host'
 
 const BYPASS_PREFIXES = ['/_next/', '/api/', '/.well-known/'] as const
 
+// ─── Lookup cache ─────────────────────────────────────────────────────────────
+// Every storefront request used to hit Supabase from the proxy (host → slug, or
+// slug → custom domain), including bot probes. Cache per instance, negatives too.
+
+const LOOKUP_TTL_MS = 60_000
+const LOOKUP_MAX = 2000
+type Entry<T> = { value: T; expires: number }
+
+async function cached<T>(
+  cache: Map<string, Entry<T>>,
+  key: string,
+  load: () => Promise<T>,
+): Promise<T> {
+  const hit = cache.get(key)
+  if (hit && hit.expires > Date.now()) return hit.value
+  const value = await load()
+  if (cache.size >= LOOKUP_MAX) cache.clear()
+  cache.set(key, { value, expires: Date.now() + LOOKUP_TTL_MS })
+  return value
+}
+
+type DomainRow = { slug: string } | null
+type SlugRow = { slug: string; custom_domain: string | null } | null
+const domainCache = new Map<string, Entry<DomainRow>>()
+const slugCache = new Map<string, Entry<SlugRow>>()
+
+/** Store slugs are lowercase alphanumeric + hyphens (3+ chars). Anything else (robots.txt, wp-login.php) cannot be one. */
+const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/
+
 async function getSupabaseClient() {
   const { createClient } = await import('@mcloud/db/server')
   return createClient()
@@ -43,12 +72,15 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── 2. Custom domain → resolve host to slug ──────────────────────────────────
   if (!isPlatformHost(host)) {
-    const supabase = await getSupabaseClient()
-    const { data: store } = await supabase
-      .from('stores')
-      .select('slug')
-      .eq('custom_domain', host)
-      .single()
+    const store = await cached(domainCache, host, async () => {
+      const supabase = await getSupabaseClient()
+      const { data } = await supabase
+        .from('stores')
+        .select('slug')
+        .eq('custom_domain', host)
+        .single()
+      return data ?? null
+    })
 
     if (!store?.slug) {
       return NextResponse.json({ error: 'Store not found' }, { status: 404 })
@@ -94,12 +126,20 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next()
   }
 
-  const supabase = await getSupabaseClient()
-  const { data: store } = await supabase
-    .from('stores')
-    .select('slug, custom_domain')
-    .eq('slug', candidateSlug)
-    .single()
+  // Not a possible slug (a file probe, a typo): skip the DB round trip entirely.
+  if (!SLUG_RE.test(candidateSlug)) {
+    return NextResponse.next()
+  }
+
+  const store = await cached(slugCache, candidateSlug, async () => {
+    const supabase = await getSupabaseClient()
+    const { data } = await supabase
+      .from('stores')
+      .select('slug, custom_domain')
+      .eq('slug', candidateSlug)
+      .single()
+    return data ?? null
+  })
 
   // Unknown slug — fall through; downstream renders 404.
   if (!store?.slug) {
