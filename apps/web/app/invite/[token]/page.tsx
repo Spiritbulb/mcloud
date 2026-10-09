@@ -1,6 +1,7 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
+import { storeSettingsUrl } from '@mcloud/merchant/storefront-url'
 
 export default async function AcceptInvitePage({
     params,
@@ -52,7 +53,7 @@ export default async function AcceptInvitePage({
     const storeSlug = invite.stores.slug
     const orgSlug = (invite.stores.org as any)?.slug
     if (orgSlug) {
-        redirect(`/org/${orgSlug}/${storeSlug}/settings`)
+        redirect(storeSettingsUrl(orgSlug, storeSlug))
     }
     redirect(`/store/${storeSlug}/settings`)
 }

@@ -35,6 +35,15 @@ export function storefrontDisplayUrl(slug: string, customDomain?: string | null)
   return `${SITE_ORIGIN.replace(/^https?:\/\//, "")}/${slug}`
 }
 
+/**
+ * Absolute URL of a store's merchant settings. Settings are served by the storefront
+ * app on the platform host (never a custom domain, where /org/* is a 404), so links
+ * from the web app must point here directly instead of relying on the proxy forward.
+ */
+export function storeSettingsUrl(orgSlug: string, storeSlug: string, sub = ''): string {
+  return `${SITE_ORIGIN}/org/${orgSlug}/${storeSlug}/settings${sub}`
+}
+
 /** Display form for the host alone, e.g. in placeholder or prefix text. */
 export function siteHost(): string {
   return SITE_ORIGIN.replace(/^https?:\/\//, "")

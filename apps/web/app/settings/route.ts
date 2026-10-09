@@ -5,6 +5,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { getCurrentUser } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { LOGIN_URL, SIGNUP_URL } from '@mcloud/auth/routes'
+import { storeSettingsUrl } from '@mcloud/merchant/storefront-url'
 
 export async function GET(request: NextRequest) {
     const user = await getCurrentUser()
@@ -29,8 +30,9 @@ export async function GET(request: NextRequest) {
     if (!store) return new NextResponse('Not found', { status: 404 })
 
     const orgSlug = (store.org as { slug?: string } | null)?.slug
-    const dest = orgSlug
-        ? `/org/${orgSlug}/${store.slug}/settings`
-        : `/store/${store.slug}/settings`
-    return NextResponse.redirect(new URL(dest, request.url))
+    return NextResponse.redirect(
+        orgSlug
+            ? storeSettingsUrl(orgSlug, store.slug)
+            : new URL(`/store/${store.slug}/settings`, process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? request.url),
+    )
 }
