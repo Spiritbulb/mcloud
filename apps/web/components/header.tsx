@@ -8,10 +8,20 @@ interface HeaderProps {
     isLoggedIn?: boolean
 }
 
-export function Header({ isLoggedIn = false }: HeaderProps) {
+// Hint cookie set by proxy.ts while a session is valid. Reading it here (instead of
+// the session on the server) is what lets marketing pages be statically rendered.
+function hasLoginHint(): boolean {
+    return document.cookie.split('; ').some((c) => c === 'mc_li=1')
+}
+
+export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
     const router = useRouter()
     const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
+    const [isLoggedIn, setIsLoggedIn] = useState(initialLoggedIn)
+    useEffect(() => {
+        setMounted(true)
+        setIsLoggedIn(hasLoginHint())
+    }, [])
 
 
     // Light (blue) logo reads on dark backgrounds; dark logo on light. Default to light before mount.

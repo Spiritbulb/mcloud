@@ -1,10 +1,10 @@
-import { HeaderWrapper } from '@/components/header-wrapper'
+import { Header } from '@/components/header'
 import { Footer } from '@/components/footer'
 
 export default function MarketingLayout({ children }: { children: React.ReactNode }) {
     return (
         <div className="bg-background">
-            <HeaderWrapper />
+            <Header />
             {children}
             <Footer />
         </div>

@@ -106,7 +106,28 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { session, requestHeaders, finalize } = needsAuthPass
     ? await prepareMiddleware(request)
     : ANONYMOUS_PREP
-  return finalize(await handle(request, session, requestHeaders))
+  const res = finalize(await handle(request, session, requestHeaders))
+  syncLoginHint(request, res, !!session?.user)
+  return res
+}
+
+/**
+ * Non-sensitive `mc_li` cookie mirroring "has a valid session", so statically
+ * rendered pages (marketing header) can show the right link client-side. UI hint
+ * only: every protected route still verifies the real session.
+ */
+function syncLoginHint(request: NextRequest, res: NextResponse, loggedIn: boolean): void {
+  const hasHint = request.cookies.get('mc_li')?.value === '1'
+  if (loggedIn && !hasHint) {
+    res.cookies.set('mc_li', '1', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: 'lax',
+      secure: request.nextUrl.protocol === 'https:',
+    })
+  } else if (!loggedIn && request.cookies.has('mc_li')) {
+    res.cookies.delete('mc_li')
+  }
 }
 
 async function handle(
