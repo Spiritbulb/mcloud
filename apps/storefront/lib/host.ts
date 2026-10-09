@@ -53,8 +53,14 @@ export function storeBasePath(host: string, slug: string): string {
  * the API base URL by dropping the trailing "/api". No trailing slash.
  */
 export function webAppOrigin(): string {
+    // Explicit origin wins. NEXT_PUBLIC_API_BASE_URL is only a fallback: on the web app
+    // it is a relative "/api", which has no origin and made new URL() throw (a 500 in
+    // the proxy for every unauthenticated /org request).
+    const explicit = process.env.NEXT_PUBLIC_WEB_ORIGIN
+    if (explicit) return new URL(explicit).origin
     const api = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
-    return new URL(api).origin
+    if (/^https?:\/\//.test(api)) return new URL(api).origin
+    return 'https://mcloud.co.ke'
 }
 
 /**
