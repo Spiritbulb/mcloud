@@ -38,5 +38,9 @@
     "tailwindcss": "^4",
     "typescript": "~6.0.3"
   },
-  "type": "module"
+  "type": "module",
+  "exports": {
+    "./lib/sections": "./lib/sections.ts",
+    "./lib/hero": "./lib/hero.ts"
+  }
 }

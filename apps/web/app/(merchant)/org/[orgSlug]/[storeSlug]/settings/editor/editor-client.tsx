@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { X, Palette, FileText, Layers } from 'lucide-react'
-import { SECTION_REGISTRY } from '../../../../../../../../storefront/lib/sections'
-import { authoredSlides } from '../../../../../../../../storefront/lib/hero'
+import { SECTION_REGISTRY } from '@mcloud/storefront/lib/sections'
+import { authoredSlides } from '@mcloud/storefront/lib/hero'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
 import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../actions'
 import SettingsFields from './settings-fields'
