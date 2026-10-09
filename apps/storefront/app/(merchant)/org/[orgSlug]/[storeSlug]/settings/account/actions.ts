@@ -5,6 +5,7 @@ import { updateUserProfile, deleteUser, getLoginHistory } from '@mcloud/auth/man
 import { createClient } from '@mcloud/db/server'
 import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
+import { webUrl } from '@/lib/host'
 
 // ─── Get account data ──────────────────────────────────────────────────────────
 
@@ -148,5 +149,5 @@ export async function deleteAccount() {
     // 5. Delete from the identity provider LAST (once gone, session is invalid)
     await deleteUser(userId)
 
-    redirect('/auth/logout')
+    redirect(webUrl('/auth/logout'))
 }

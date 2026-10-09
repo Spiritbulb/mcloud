@@ -118,7 +118,7 @@ export default function PaymentSettings({ storeId, slug, plan }: PaymentSettings
         setDarajaTestStatus('testing')
         setDarajaTestError('')
         try {
-            const res = await fetch(`/api/payments/mpesa/test-credentials`, {
+            const res = await fetch(`/api/store/${slug}/payments/mpesa/test-credentials`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },

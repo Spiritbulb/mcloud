@@ -56,3 +56,17 @@ export function webAppOrigin(): string {
     const api = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
     return new URL(api).origin
 }
+
+/**
+ * Absolute URL on the web app for a path that only it serves (login/logout, the org
+ * hub, billing, the marketing site). Settings pages run on the platform host, so a
+ * bare "/auth/logout" would 404 here. Client-safe: reads only NEXT_PUBLIC_* config.
+ */
+export function webUrl(path: string): string {
+    return new URL(path, webAppOrigin()).toString()
+}
+
+/** Origin of the platform host that serves /org/* (settings). Not a merchant custom domain. */
+export function platformOrigin(): string {
+    return process.env.NEXT_PUBLIC_SITE_ORIGIN ?? 'https://app.mcloud.co.ke'
+}

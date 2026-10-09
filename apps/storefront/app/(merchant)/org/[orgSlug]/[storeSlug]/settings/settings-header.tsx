@@ -11,6 +11,7 @@ import {
 } from '@mcloud/ui/dropdown-menu'
 import { UpgradeChip } from '@/components/pro'
 import { cn } from '@mcloud/ui/utils'
+import { webUrl } from '@/lib/host'
 
 const BETA_URL = 'https://mcloud.co.ke/beta'
 
@@ -59,7 +60,7 @@ export function SettingsHeader({
             <div className="flex items-center gap-2 min-w-0 flex-1">
                 {store?.org && (
                     <>
-                    <Link href={`/org`}>
+                    <Link href={webUrl('/org')}>
                         <span
                             className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground max-w-[140px] truncate shrink-0"
                         >

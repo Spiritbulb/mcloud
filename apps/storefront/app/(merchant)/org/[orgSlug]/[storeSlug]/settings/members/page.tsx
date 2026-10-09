@@ -3,6 +3,7 @@ import MembersPage from './members-client'
 import { notFound, redirect } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
+import { webUrl } from '@/lib/host'
 
 export default async function Page({
     params,
@@ -11,7 +12,7 @@ export default async function Page({
 }) {
     const { orgSlug, storeSlug } = await params
     const session = await getSession()
-    if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings/members`))
+    if (!session?.user) redirect(webUrl(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings/members`)))
 
     const data = await getMembers(storeSlug)
     if (data.error === 'Store not found') notFound()

@@ -4,7 +4,7 @@
 // HTTP redirect) so there's no layout-hydration race.
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
-import { webAppOrigin } from '@/lib/host'
+import { isPlatformHost, platformOrigin, webUrl } from '@/lib/host'
 
 export async function GET(
     request: NextRequest,
@@ -21,8 +21,15 @@ export async function GET(
 
     const orgSlug = store ? (store.org as { slug?: string } | null)?.slug : null
     const rest = path?.length ? `/${path.join('/')}` : ''
-    // Merchant settings live on the web-app origin, not the storefront/custom
-    // domain. Resolve against webAppOrigin() so the redirect crosses domains.
-    const dest = orgSlug ? `/org/${orgSlug}/${slug}/settings${rest}` : '/org'
-    return NextResponse.redirect(new URL(dest, webAppOrigin()))
+    const host = request.headers.get('host') ?? ''
+
+    // No org yet: the org hub (still on the web app) sorts it out.
+    if (!orgSlug) return NextResponse.redirect(webUrl('/org'))
+
+    // Settings are served here, on the platform host. On the platform host that is a
+    // same-origin redirect; from a merchant's custom domain (where /org/* is 404)
+    // it must go to the platform origin.
+    const dest = `/org/${orgSlug}/${slug}/settings${rest}${request.nextUrl.search}`
+    const base = isPlatformHost(host) ? request.url : platformOrigin()
+    return NextResponse.redirect(new URL(dest, base))
 }

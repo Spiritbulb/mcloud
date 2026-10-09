@@ -36,10 +36,27 @@ const BYPASS_PREFIXES = ['/auth/', '/_next/', '/api/', '/callback', '/.well-know
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
+function storefrontOrigin(): string {
+  return process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'
+}
+
 function storefrontRedirect(slug: string, subpath: string, search: string): NextResponse {
-  const storefrontOrigin = process.env.NEXT_PUBLIC_STOREFRONT_ORIGIN ?? 'http://localhost:3001'
   const path = subpath === '/' ? '' : subpath
-  return NextResponse.redirect(`${storefrontOrigin}/store/${slug}${path}${search}`, 307)
+  return NextResponse.redirect(`${storefrontOrigin()}/store/${slug}${path}${search}`, 307)
+}
+
+/**
+ * Store settings now live in the storefront app (platform host). Anything that still
+ * links to /org/{org}/{store}/settings on this origin (old bookmarks, emails, the
+ * mobile app) is forwarded there. Temporary (307) until validated, then 308.
+ */
+const STORE_SETTINGS_RE = /^\/org\/[^/]+\/[^/]+\/settings(\/.*)?$/
+
+/** Owner shortcuts -> the settings page they map to inside the storefront. */
+function settingsSubpath(pathname: string): string {
+  if (pathname.startsWith('/orders')) return '/settings/orders'
+  if (pathname.startsWith('/products/new')) return '/settings/products'
+  return pathname // /settings[/...]
 }
 
 /**
@@ -78,7 +95,12 @@ const NO_AUTH_PATHS = [
 ] as const
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
-  const { pathname } = request.nextUrl
+  const { pathname, search } = request.nextUrl
+
+  // Settings moved to the storefront: redirect before spending an auth pass.
+  if (STORE_SETTINGS_RE.test(pathname)) {
+    return NextResponse.redirect(`${storefrontOrigin()}${pathname}${search}`, 307)
+  }
 
   if (NO_AUTH_PATHS.some((p) => pathname === p || (p.endsWith('/') && pathname.startsWith(p)))) {
     return NextResponse.next()
@@ -174,7 +196,7 @@ async function handle(
       url.searchParams.set('next', pathname)
       return rewriteResponse(url, authHeaders)
     }
-    return storefrontRedirect(activeSlug, pathname, search)
+    return storefrontRedirect(activeSlug, settingsSubpath(pathname), search)
   }
 
 

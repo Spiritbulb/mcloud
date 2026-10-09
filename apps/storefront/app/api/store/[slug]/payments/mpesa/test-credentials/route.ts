@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@mcloud/db/server'
+import { getSession } from '@mcloud/auth/server'
 
 // Tests Daraja credentials by hitting the sandbox token endpoint.
 // No real payment is initiated.
 export async function POST(req: NextRequest) {
     try {
-        const { data: { user } } = await (await createClient()).auth.getUser()
-        if (!user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+        const session = await getSession(req)
+        if (!session?.user) return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
 
         const { consumerKey, consumerSecret } = await req.json()
         if (!consumerKey || !consumerSecret) {
