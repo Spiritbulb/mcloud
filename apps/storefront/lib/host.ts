@@ -65,3 +65,8 @@ export function webAppOrigin(): string {
 export function webUrl(path: string): string {
     return new URL(path, webAppOrigin()).toString()
 }
+
+/** Origin of the platform host that serves /org/* (settings). Not a merchant custom domain. */
+export function platformOrigin(): string {
+    return process.env.NEXT_PUBLIC_SITE_ORIGIN ?? 'https://app.mcloud.co.ke'
+}
