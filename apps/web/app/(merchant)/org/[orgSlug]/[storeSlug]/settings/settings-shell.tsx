@@ -12,7 +12,7 @@ import { getVertical, sectionsFor } from '@mcloud/verticals'
 import type { NavSection, TabId } from '@mcloud/verticals'
 
 import { cn } from '@mcloud/ui/utils'
-import { useOrgContext } from '@/app/(merchant)/org/[orgSlug]/org-context'
+import { useOrgContext } from '@mcloud/merchant/org-context'
 
 // The nav model now lives in @mcloud/verticals (it is data about the vertical,
 // not about React). Re-exported here so existing consumers keep their import.

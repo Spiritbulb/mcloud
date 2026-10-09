@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
+    "./org-context": "./src/org-context.tsx",
     "./*": "./src/*.ts"
   },
   "dependencies": {
@@ -12,5 +13,8 @@
   },
   "devDependencies": {
     "@mcloud/config": "^0.0.0"
+  },
+  "peerDependencies": {
+    "react": "^19.3.0"
   }
 }
