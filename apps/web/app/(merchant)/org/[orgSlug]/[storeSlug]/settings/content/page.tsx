@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { getVertical } from '@mcloud/verticals'
-import { getStoreSettingsData } from '@/lib/store-data'
+import { getStoreSettingsData } from '@mcloud/merchant/store-data'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import ContentClient from './content-client'
 

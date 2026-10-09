@@ -1,5 +1,5 @@
 import { getSession } from '@mcloud/auth/server'
-import { getStoreSettingsData } from '@/lib/store-data'
+import { getStoreSettingsData } from '@mcloud/merchant/store-data'
 import { NextResponse, NextRequest } from 'next/server'
 
 export async function GET(

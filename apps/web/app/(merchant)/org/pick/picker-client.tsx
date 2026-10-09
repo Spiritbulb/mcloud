@@ -1,6 +1,6 @@
 'use client'
 
-import { storefrontDisplayUrl } from '@/lib/storefront-url'
+import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import { useState, useTransition } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useRouter } from 'next/navigation'

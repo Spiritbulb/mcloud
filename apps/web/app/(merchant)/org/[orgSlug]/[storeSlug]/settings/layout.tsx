@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
-import { getStoreSettingsData } from '@/lib/store-data'
+import { getStoreSettingsData } from '@mcloud/merchant/store-data'
 import SettingsShell from './settings-shell'
 
 export default async function SettingsLayout({

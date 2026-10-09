@@ -6,7 +6,7 @@ import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { cn } from '@mcloud/ui/utils'
 import { getVertical } from '@mcloud/verticals'
-import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@/lib/storefront-url'
+import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
 import type { TabId } from './settings-shell'
 import GeneralSettingsPage from './general/general-settings-page'
 

@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { cn } from '@mcloud/ui/utils'
-import { storefrontDisplayUrl } from '@/lib/storefront-url'
+import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 

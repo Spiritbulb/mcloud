@@ -1,6 +1,6 @@
 'use client'
 
-import { siteHost } from '@/lib/storefront-url'
+import { siteHost } from '@mcloud/merchant/storefront-url'
 
 // components/getting-started-drawer.tsx
 // Fixed overlay drawer — lives outside the shell's flex layout intentionally.

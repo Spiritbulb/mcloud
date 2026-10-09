@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
-import { upsertDeliveryOption, deleteDeliveryOption, upsertDeliveryZone, deleteDeliveryZone } from '@/lib/logistics-data'
+import { upsertDeliveryOption, deleteDeliveryOption, upsertDeliveryZone, deleteDeliveryZone } from '@mcloud/merchant/logistics-data'
 
 // POST /api/store/[slug]/logistics
 // Body: { options: DeliveryOption[], zones: DeliveryZone[] }

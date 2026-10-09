@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react'
 import type { Tables } from '@mcloud/db/types'
 import { updateStoreSettings } from '../actions'
-import { storefrontUrl, storefrontDisplayUrl } from '@/lib/storefront-url'
+import { storefrontUrl, storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import { Switch } from '@mcloud/ui/switch'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'

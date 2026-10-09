@@ -1,6 +1,6 @@
 'use client'
 
-import { storefrontDisplayUrl } from '@/lib/storefront-url'
+import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 // app/settings/[slug]/blog/blog-client.tsx
 // Full blog management UI: post list sidebar + split markdown editor/preview.
 // Dependencies to install:

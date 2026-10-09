@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
-import { updateOrderTracking } from '@/lib/logistics-data'
+import { updateOrderTracking } from '@mcloud/merchant/logistics-data'
 
 // PATCH /api/store/[slug]/tracking/[orderId]
 // Body: { tracking_number?: string | null, status?: string }

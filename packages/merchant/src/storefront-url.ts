@@ -20,8 +20,6 @@
  * is how a rename becomes a search-and-replace across the UI with a decent chance
  * of breaking a merchant's link to their own site. Import from here.
  */
-import { getSession } from '@mcloud/auth/server'
-import { getStoreHub } from '@mcloud/merchant/stores'
 
 // storefront-links.ts — stays 100% sync, safe for client components
 const SITE_ORIGIN =

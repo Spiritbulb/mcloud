@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { getSession } from '@mcloud/auth/server'
-import { getDeliverySettings } from '@/lib/logistics-data'
+import { getDeliverySettings } from '@mcloud/merchant/logistics-data'
 import LogisticsSettingsClient from './logistics-settings-client'
 
 export const metadata: Metadata = {
