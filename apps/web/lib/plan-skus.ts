@@ -1,6 +1,6 @@
 // Pure Google Play SKU -> plan mapping. Env plumbing lives in the route; this is
 // the testable core so a mis-mapped SKU is caught by a unit test, not in prod.
-import type { Plan } from './plans.ts'
+import type { Plan } from '@mcloud/merchant/plans'
 
 export function planForSku(
   productId: string,

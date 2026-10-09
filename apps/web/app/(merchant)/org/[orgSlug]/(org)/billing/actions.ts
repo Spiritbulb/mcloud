@@ -3,7 +3,7 @@
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { revalidatePath } from 'next/cache'
-import { planPriceCents } from '@/lib/plans'
+import { planPriceCents } from '@mcloud/merchant/plans'
 
 type Plan = 'hobby' | 'pro'
 

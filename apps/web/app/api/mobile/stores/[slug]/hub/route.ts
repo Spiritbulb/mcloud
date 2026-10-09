@@ -2,7 +2,7 @@
 // DELETE /api/mobile/stores/[slug]/hub — delete the store (owner only). The body
 //        must echo { confirm: "<exact store name>" } as a server-side safety gate.
 import { NextResponse, type NextRequest } from 'next/server'
-import { getStoreHub } from '@/lib/merchant/stores'
+import { getStoreHub } from '@mcloud/merchant/stores'
 import { deleteStore } from '@/lib/merchant/store-sections'
 import { fail, requireMobileUser } from '../../../_lib'
 

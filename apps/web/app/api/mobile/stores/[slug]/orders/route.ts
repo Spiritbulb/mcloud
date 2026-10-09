@@ -3,7 +3,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { listOrders, shapeOrder } from '@/lib/merchant/store-sections'
-import { requireStoreAccess, canManage } from '@/lib/merchant/stores'
+import { requireStoreAccess, canManage } from '@mcloud/merchant/stores'
 import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
 import { sendPushToUsers } from '@/lib/merchant/send-push'
 import { fail, requireMobileUser } from '../../../_lib'

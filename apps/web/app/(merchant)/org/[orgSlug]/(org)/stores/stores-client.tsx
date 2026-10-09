@@ -1,6 +1,6 @@
 'use client'
 
-import { storefrontDisplayUrl } from '@/lib/storefront-url'
+import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import { useState, useTransition, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'

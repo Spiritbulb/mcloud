@@ -1,9 +1,9 @@
 // Shared product logic for the mobile API. Access is always gated through the
 // store (requireStoreAccess); writes require owner/admin.
 import { createClient } from '@mcloud/db/server'
-import { canManage, requireStoreAccess, type Role } from './stores'
-import { getStorePlan } from '../plans-server'
-import { PLAN_LIMITS, isOverLimit, limitMessage } from '../plans'
+import { canManage, requireStoreAccess, type Role } from '@mcloud/merchant/stores'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
+import { PLAN_LIMITS, isOverLimit, limitMessage } from '@mcloud/merchant/plans'
 
 export interface MobileProduct {
     id: string
