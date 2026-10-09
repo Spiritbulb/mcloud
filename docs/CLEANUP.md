@@ -35,13 +35,12 @@ scan results.
 that gates on it returns 401 forever. Fixed already: storefront `api/store/domain`
 (POST) and `api/store/[slug]/integrations` (POST). Still present:
 
-- `apps/web/app/api/store/[slug]/integrations/route.ts:94`: duplicate, delete the file (see 3.1).
-- `apps/web/app/api/payments/mpesa/test-credentials/route.ts:8`: duplicate, delete (see 3.2).
+- ~~web `api/store/[slug]/integrations` and `api/payments/mpesa/test-credentials`~~: deleted (duplicates).
 - `apps/storefront/contexts/CustomerAuthContext.tsx:27,42`: this one is the **customer** auth (separate `customer-client`), probably intentional; confirm.
 
 How to find more: `grep -rn "auth\.getUser\|auth\.getSession" apps packages`.
 
-### 1.2 `apps/web/app/api/upload/route.ts` has no auth *(verified in code)*
+### 1.2 ~~`apps/web/app/api/upload/route.ts` has no auth~~ *(resolved: route and `lib/upload.ts` deleted; the storefront copy requires a session)*
 `PUT /api/upload?key=...` streams any body to the R2 worker with the server secret.
 Anyone can write arbitrary keys. The storefront copy now requires a session; web's
 still does not. Callers in web: `lib/upload.ts` (which is itself unused, see 2.1). Delete
@@ -128,9 +127,9 @@ Both apps carry copies of:
 
 | Route | Status |
 |---|---|
-| `api/store/[slug]/integrations` | identical *(verified)*; **delete web's** |
+| `api/store/[slug]/integrations` | **done**: web's copy deleted |
 | `api/payments/{mpesa/{callback,status,stk-push},paypal/{capture-order,create-order}}` (web) vs `api/store/[slug]/payments/*` (storefront) | identical *(verified)* |
-| `api/payments/mpesa/test-credentials` | web's differs (supabase auth, broken); **delete web's** |
+| `api/payments/mpesa/test-credentials` | **done**: web's copy deleted |
 
 For the payments pair, decide which side owns them. Callers and external config point at
 web today: the Daraja callback URL is hard-coded in both copies as
@@ -340,8 +339,7 @@ storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
 ## 8. Suggested order of work
 
 1. P0 items: 1.2 (web upload), 1.3 (CORS), 1.1 leftovers, then 1.5 review.
-2. Delete duplicates with no external wiring: web `api/store/[slug]/integrations`,
-   web `payments/mpesa/test-credentials`, web `api/upload` + `lib/upload.ts`.
+2. ~~Delete duplicates with no external wiring~~ (done: integrations, test-credentials, upload).
 3. Auth0 removal (section 4), after counting unlinked users.
 4. Orphan files (2.1, 2.2) in small batches; unused deps (2.8) one at a time.
 5. Simplify web's org layout (2.3). Consolidate `lib/merchant` duplicates (2.6).
