@@ -1,6 +1,5 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
-import { headers } from "next/headers";
 import Script from "next/script";
 import { Suspense } from "react";
 import Analytics from "@/components/analytics";
@@ -87,17 +86,11 @@ const noFlashThemeScript = `
 `;
 
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const headersList = await headers();
-  const bannerScriptB64 = headersList.get("x-inject-owner-banner");
-  const bannerScript = bannerScriptB64
-    ? Buffer.from(bannerScriptB64, "base64").toString("utf-8")
-    : null;
-
   return (
     <html
       lang="en"
