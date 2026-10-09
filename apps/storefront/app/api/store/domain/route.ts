@@ -1,4 +1,5 @@
 import { createClient } from '@mcloud/db/server'
+import { getSession } from '@mcloud/auth/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { storeHasFeature } from '@mcloud/merchant/plans-server'
 
@@ -36,7 +37,8 @@ async function verifyDomainOnVercel(domain: string) {
 // POST /api/store/domain  → save + register with Vercel
 export async function POST(req: NextRequest) {
     const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    // WorkOS session, not supabase.auth: the db client carries no Supabase user.
+    const user = (await getSession(req))?.user
     if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { storeId, domain } = await req.json()

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { getSession } from '@mcloud/auth/server'
 
 export async function GET(
     request: Request,
@@ -91,7 +92,8 @@ export async function POST(
         const { slug } = await params
         const supabase = await createClient()
 
-        const { data: { user } } = await supabase.auth.getUser()
+        // WorkOS session, not supabase.auth: the db client carries no Supabase user.
+        const user = (await getSession())?.user
         if (!user) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
