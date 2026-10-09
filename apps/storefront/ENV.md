@@ -10,7 +10,8 @@ Names only, never values. Everything below is read at runtime from `.env.local` 
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
-NEXT_PUBLIC_API_BASE_URL=            # web API base; webAppOrigin() derives the web origin from it
+NEXT_PUBLIC_WEB_ORIGIN=              # https://mcloud.co.ke : where login, the org hub and billing live (webAppOrigin())
+NEXT_PUBLIC_API_BASE_URL=            # optional; only used for webAppOrigin() if it is an absolute URL
 NEXT_PUBLIC_ADMIN_ORIGIN=
 PREVIEW_SECRET=                      # must match apps/web
 
