@@ -1,5 +1,3 @@
-import { getPickerData } from '@mcloud/merchant/picker'
-import { OrgContextProvider } from '@mcloud/merchant/org-context'
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { redirect, notFound } from 'next/navigation'
@@ -13,8 +11,6 @@ export default async function OrgLayout({
     params: Promise<{ orgSlug: string }>
 }) {
     const { orgSlug } = await params
-    const { stores } = await getPickerData().catch(() => ({ stores: [], orgs: [], userName: null }))
-
     const session = await getSession()
     if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}`))
 
@@ -27,9 +23,5 @@ export default async function OrgLayout({
 
     if (!org) notFound()
 
-    return (
-        <OrgContextProvider stores={stores} orgSlug={orgSlug}>
-            {children}
-        </OrgContextProvider>
-    )
+    return <>{children}</>
 }

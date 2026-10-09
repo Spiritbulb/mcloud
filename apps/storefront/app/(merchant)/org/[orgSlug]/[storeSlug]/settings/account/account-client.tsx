@@ -245,7 +245,7 @@ function EmailSection({ user }: { user: User }) {
     return (
         <Section
             title="Email address"
-            description="Your email is managed by Auth0 and tied to your login method."
+            description="Your email is tied to your sign-in and cannot be changed here."
         >
             <div className="space-y-2 max-w-sm">
                 <div className="grid gap-1.5">
@@ -255,16 +255,7 @@ function EmailSection({ user }: { user: User }) {
                     </div>
                 </div>
                 <p className="text-xs text-muted-foreground">
-                    To change your email, update it directly in your{' '}
-                    <a
-                        href="https://auth0.com"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="underline underline-offset-2 hover:text-foreground transition-colors"
-                    >
-                        Auth0 account
-                    </a>
-                    .
+                    To change your email, contact support.
                 </p>
             </div>
         </Section>

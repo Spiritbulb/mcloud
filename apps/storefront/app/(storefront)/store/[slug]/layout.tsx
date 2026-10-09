@@ -103,10 +103,6 @@ export default async function StoreLayout({
     // authored page (About, Contact) is reachable only by typing its URL.
     const navPages = store?.id ? await getNavPages(store.id) : []
     const headersList = await headers()
-    const bannerScriptB64 = headersList.get('x-inject-owner-banner')
-    const bannerScript = bannerScriptB64
-        ? Buffer.from(bannerScriptB64, 'base64').toString('utf-8')
-        : null
 
     const cssVars = theme
         ? ({
@@ -160,9 +156,6 @@ export default async function StoreLayout({
                 <WishlistProvider storeSlug={slug}>
                     <CartProvider storeSlug={slug}>
                         <LayoutWrapper store={store} settings={store?.settings} cssVars={cssVars} pages={navPages}>
-                            {bannerScript && (
-                                <div dangerouslySetInnerHTML={{ __html: bannerScript }} />
-                            )}
                             {children}
                         </LayoutWrapper>
                     </CartProvider>

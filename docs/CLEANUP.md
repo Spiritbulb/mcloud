@@ -92,7 +92,6 @@ components/page-loading.tsx    store-carousel.tsx   theme-color-sync.tsx
 components/theme-provider.tsx  upsell.tsx (only a storefront file mentions it)
 components/support/ticket-list.tsx
 components/animate-ui/components/community/playful-todolist.tsx
-components/owner-banner.ts     (nothing sets x-inject-owner-banner, see 2.4)
 hooks/use-blog.ts   lib/auth/intent.ts   lib/beta-email.ts   lib/liquid.ts
 lib/payment-config.ts   lib/pro-gate.ts   lib/upload.ts
 scripts/verify-google-jwt.ts   scripts/verify-google-play.ts   (manual scripts, keep if used)
@@ -110,17 +109,8 @@ components/store/StoreSettingsAppearance.tsx   (moved from web; nothing imports 
 `StoreSettingsAppearance` imports `appearance-settings`; if both are unused the settings
 `appearance` page uses something else. Check before deleting either.
 
-### 2.3 web's org layout does needless work
-`apps/web/app/(merchant)/org/[orgSlug]/layout.tsx` still calls `getPickerData()` (four
-Supabase queries) and wraps children in `OrgContextProvider`, but the only consumer of
-`useOrgContext` was the settings shell, which now runs in the storefront. Remove the
-`getPickerData` call and provider from web's layout (keep the auth + org-exists check).
-This is a per-page DB cost on every org page.
-
-### 2.4 `x-inject-owner-banner` is dead
-Nothing sets the header. Remaining readers: `apps/storefront/app/(storefront)/store/[slug]/layout.tsx:106`
-(web's was removed, which also unblocked static rendering). Remove the storefront read,
-`apps/web/components/owner-banner.ts`, and any `data-dashboard` wiring.
+### 2.3 / 2.4 ~~web org layout queries; dead `x-inject-owner-banner`~~
+Done: web's org layout no longer calls `getPickerData()` or provides the context, and the storefront store layout no longer injects HTML from the `x-inject-owner-banner` request header (it was unauthenticated input rendered with `dangerouslySetInnerHTML`). `components/owner-banner.ts` deleted.
 
 ### 2.5 Duplicate API routes between the apps
 Both apps carry copies of:
@@ -243,9 +233,7 @@ References to remove:
   `components/auth-loading.tsx`, `public/sw.js` (comments / checks);
   `scripts/migrate-users-to-workos.mjs` and `scripts/link-workos-externalids.mjs`
   once migration is confirmed complete.
-- Settings account page: user-facing copy "managed by Auth0" with a link to auth0.com
-  (`apps/storefront/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/account/account-client.tsx`
-  around lines 248 to 265). **This is visible to merchants.**
+- ~~Settings account page copy "managed by Auth0"~~: reworded.
 - `turbo.json` env: `AUTH0_*`.
 - **Identity continuity.** `mapUser()` prefers the WorkOS `externalId` (the old
   `auth0|...` id) as `AuthUser.id`. Do not delete the Auth0 id mapping, or
@@ -286,7 +274,7 @@ Already done on main: auth pass skipped for static files and cookie-less request
 wallet poll slowed to 5 minutes with focus refresh, `ensureLinked` negative cache,
 storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
 
-1. Section 2.3 (web org layout queries) and removing per-request `getSession()` from
+1. ~~Section 2.3 (web org layout queries)~~ done; next, removing per-request `getSession()` from
    layouts that only need "is there a session".
 2. `@mcloud/db` `createClient()` is per-call and reads cookies, so any layout using it is
    dynamic. Use `unstable_cache` / `use cache` for data that is not user-specific
