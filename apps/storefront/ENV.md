@@ -30,5 +30,5 @@ NEXT_PUBLIC_SITE_ORIGIN=             # storefrontUrl() display origin, e.g. http
 NEXT_PUBLIC_STOREFRONT_ORIGIN=       # used by web redirects; listed here for parity
 
 # --- Possibly needed (confirm during Phase 3) ---
-# HANDOFF_ENC_KEY, AUTH0_*  (only if settings code paths touch the SSO handoff / Auth0 adapter)
+# HANDOFF_ENC_KEY (only if settings code paths touch the SSO handoff). Auth0 is being removed; no AUTH0_* vars.
 ```

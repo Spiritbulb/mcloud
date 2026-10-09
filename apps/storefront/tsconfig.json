@@ -1,6 +1,7 @@
 {
   "extends": "@mcloud/config/tsconfig.base.json",
   "compilerOptions": {
+    "allowImportingTsExtensions": true,
     "plugins": [{ "name": "next" }],
     "paths": {
       "@/*": ["./*"]
