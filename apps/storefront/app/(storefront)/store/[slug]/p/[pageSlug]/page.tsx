@@ -1,4 +1,4 @@
-import '@/app/store/[slug]/storefront.css'
+import '@/app/(storefront)/store/[slug]/storefront.css'
 
 import { DonateIsland } from '../../DonateIsland'
 import { castStore } from '@/lib/db-cast'

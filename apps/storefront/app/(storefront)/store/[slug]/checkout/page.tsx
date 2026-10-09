@@ -1,6 +1,6 @@
 'use client'
 
-import '@/app/store/[slug]/storefront.css'
+import '@/app/(storefront)/store/[slug]/storefront.css'
 import { useEffect, useState } from 'react'
 import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'

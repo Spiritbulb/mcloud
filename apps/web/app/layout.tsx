@@ -105,8 +105,6 @@ export default async function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${lora.variable}`}
     >
       <head>
-        {/* Must run before any paint — sets data-theme on <html> synchronously. */}
-        <script dangerouslySetInnerHTML={{ __html: noFlashThemeScript }} />
         <link rel="manifest" href="/manifest.json" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
