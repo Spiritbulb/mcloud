@@ -77,20 +77,6 @@ const NO_AUTH_PATHS = [
   '/.well-known/',
 ] as const
 
-/** Auth flows that must always go through the provider, cookie or not. */
-const ALWAYS_AUTH_PREFIXES = ['/auth/', '/callback', '/api/auth/', '/dev-login'] as const
-
-// AuthKit's session cookie (WORKOS_COOKIE_NAME overrides). Anonymous visitors have none,
-// so their session is null by definition and the auth pass can be skipped. This is
-// the bulk of marketing and bot traffic. Remove with the provider if auth changes.
-const SESSION_COOKIE = process.env.WORKOS_COOKIE_NAME ?? 'wos-session'
-
-const ANONYMOUS_PREP = {
-  session: null,
-  requestHeaders: undefined,
-  finalize: (res: NextResponse) => res,
-}
-
 export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl
 
@@ -100,12 +86,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // Resolve auth once per request (provider-specific): session for gating below,
   // request headers to forward downstream, and a finalize step for response headers.
-  const needsAuthPass =
-    request.cookies.has(SESSION_COOKIE) ||
-    ALWAYS_AUTH_PREFIXES.some((p) => pathname.startsWith(p))
-  const { session, requestHeaders, finalize } = needsAuthPass
-    ? await prepareMiddleware(request)
-    : ANONYMOUS_PREP
+  const { session, requestHeaders, finalize } = await prepareMiddleware(request)
   const res = finalize(await handle(request, session, requestHeaders))
   syncLoginHint(request, res, !!session?.user)
   return res

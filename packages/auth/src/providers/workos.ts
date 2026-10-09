@@ -9,6 +9,7 @@ import {
     withAuth,
     getWorkOS,
     partitionAuthkitHeaders,
+    isAuthkitRequestHeader,
     applyResponseHeaders,
     saveSession,
 } from '@workos-inc/authkit-nextjs'
@@ -84,6 +85,13 @@ function toWorkOSId(id: string): string | null {
  * lazily at session resolution (covers both web callback and mobile token auth).
  * Returns the user with externalId populated when a link was made.
  */
+// AuthKit's session cookie (WORKOS_COOKIE_NAME overrides) and the marker header its
+// withAuth() requires (session.js: middlewareHeaderName). Paths that must always run
+// the full AuthKit pass even when anonymous.
+const SESSION_COOKIE_NAME = process.env.WORKOS_COOKIE_NAME ?? 'wos-session'
+const AUTHKIT_MIDDLEWARE_HEADER = 'x-workos-middleware'
+const ALWAYS_FULL_PASS = ['/auth/', '/callback', '/api/auth/', '/dev-login']
+
 // Users with no legacy Auth0 row (everyone created after the WorkOS move) have no
 // externalId, so without this the lookup below re-ran on EVERY session read: a DB
 // round trip per layout/page/API call. Remember "nothing to link" per instance.
@@ -154,6 +162,19 @@ export const workosProvider: AuthProviderAdapter = {
     },
 
     async prepareMiddleware(req: NextRequest) {
+        // Anonymous fast path. No session cookie means no session, so skip the AuthKit
+        // pass (decrypt, verify, refresh). withAuth() still THROWS unless the
+        // x-workos-middleware marker is on the request, so forward just that and every
+        // server-side getSession() resolves to "signed out" instead of a 500.
+        // Login/callback paths always take the full pass (PKCE state etc.).
+        if (!req.cookies.has(SESSION_COOKIE_NAME) && !ALWAYS_FULL_PASS.some((p) => req.nextUrl.pathname.startsWith(p))) {
+            const requestHeaders = new Headers(req.headers)
+            for (const name of Array.from(requestHeaders.keys())) {
+                if (isAuthkitRequestHeader(name)) requestHeaders.delete(name) // never trust client-sent auth headers
+            }
+            requestHeaders.set(AUTHKIT_MIDDLEWARE_HEADER, 'true')
+            return { session: null, requestHeaders, finalize: (res: NextResponse) => res }
+        }
         // One authkit() pass per request: refreshes the session and yields the
         // headers AuthKit needs. Request headers are forwarded downstream so
         // withAuth() works; response headers carry any refreshed-session cookie.
