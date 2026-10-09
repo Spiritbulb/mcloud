@@ -6,6 +6,7 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
+    "@mcloud/auth": "^0.0.0",
     "@mcloud/db": "^0.0.0",
     "@mcloud/verticals": "^0.0.0"
   },

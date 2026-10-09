@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useContext } from 'react'
-import type { PickerStore } from '@/app/(merchant)/org/actions'
+import type { PickerStore } from '@mcloud/merchant/picker'
 
 type OrgContextValue = {
     stores: PickerStore[]

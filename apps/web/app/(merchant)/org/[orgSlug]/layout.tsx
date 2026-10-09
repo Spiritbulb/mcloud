@@ -1,4 +1,4 @@
-import { getPickerData } from '@/app/(merchant)/org/actions'
+import { getPickerData } from '@mcloud/merchant/picker'
 import { OrgContextProvider } from './org-context'
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
