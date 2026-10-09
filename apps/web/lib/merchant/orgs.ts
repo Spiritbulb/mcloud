@@ -2,7 +2,7 @@
 // Reusable from server actions and the mobile API (no Next-only calls).
 
 import { createClient } from '@mcloud/db/server'
-import { canManage, type Role } from './stores'
+import { canManage, type Role } from '@mcloud/merchant/stores'
 
 export interface UserOrg {
     id: string

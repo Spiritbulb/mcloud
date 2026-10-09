@@ -7,7 +7,7 @@
 // Reuses canManage() from stores.ts so "who counts as a manager" has exactly
 // one definition in the codebase — this file doesn't redecide that.
 import { createClient } from '@mcloud/db/server'
-import { canManage } from './stores'
+import { canManage } from '@mcloud/merchant/stores'
 
 export async function getStoreManagerUserIds(storeId: string): Promise<string[]> {
     const supabase = await createClient()

@@ -3,7 +3,7 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
-import { createStoreForUser, listOrgStores } from '@/lib/merchant/stores'
+import { createStoreForUser, listOrgStores } from '@mcloud/merchant/stores'
 
 export async function getOrgStores(orgSlug: string) {
     const session = await getSession()

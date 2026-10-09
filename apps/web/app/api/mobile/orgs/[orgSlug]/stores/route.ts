@@ -2,9 +2,9 @@
 // POST /api/mobile/orgs/[orgSlug]/stores — create a store (owner/admin only).
 //
 // Reuses the exact same authz + validation logic as the web server actions
-// (lib/merchant/stores.ts), so rules can't drift between web and mobile.
+// (@mcloud/merchant/stores.ts), so rules can't drift between web and mobile.
 import { NextResponse, type NextRequest } from 'next/server'
-import { createStoreForUser, listOrgStores } from '@/lib/merchant/stores'
+import { createStoreForUser, listOrgStores } from '@mcloud/merchant/stores'
 import { fail, requireMobileUser } from '../../../_lib'
 
 export async function GET(

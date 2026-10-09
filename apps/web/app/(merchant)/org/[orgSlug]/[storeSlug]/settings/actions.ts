@@ -4,11 +4,11 @@
 // anon-key table writes from the client (general/social/appearance settings)
 // with cookie-WorkOS-session-authorized, service-role writes — the web analog of
 // the mobile /api/mobile/* routes. Authorization reuses requireStoreAccess +
-// canManage from lib/merchant/stores.
+// canManage from @mcloud/merchant/stores.
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import type { TablesUpdate } from '@mcloud/db/types'
-import { canManage, requireStoreAccess } from '@/lib/merchant/stores'
+import { canManage, requireStoreAccess } from '@mcloud/merchant/stores'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
 import { SECTION_REGISTRY } from '../../../../../../../storefront/lib/sections'
 import { validateSectionTypes } from './section-validate'

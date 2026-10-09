@@ -6,7 +6,8 @@
     "./*": "./src/*.ts"
   },
   "dependencies": {
-    "@mcloud/db": "^0.0.0"
+    "@mcloud/db": "^0.0.0",
+    "@mcloud/verticals": "^0.0.0"
   },
   "devDependencies": {
     "@mcloud/config": "^0.0.0"

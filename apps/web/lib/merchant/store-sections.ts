@@ -1,7 +1,7 @@
 // Orders, branding, manual M-Pesa, analytics, and store deletion for the mobile
 // API. All gated through requireStoreAccess; writes require owner/admin.
 import { createClient } from '@mcloud/db/server'
-import { canManage, requireStoreAccess, type Role } from './stores'
+import { canManage, requireStoreAccess, type Role } from '@mcloud/merchant/stores'
 
 type Guarded<T> =
     | { error: 'not_found' | 'forbidden'; status: number; data: null }
