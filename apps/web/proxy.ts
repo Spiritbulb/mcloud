@@ -61,11 +61,54 @@ function isPlatformHost(host: string): boolean {
 
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
+/**
+ * Files that never need a session. Without this they each paid for a full auth
+ * pass (session decrypt + JWT verify + possible refresh call) on every fetch,
+ * notably the service worker's periodic /sw.js revalidation.
+ */
+const NO_AUTH_PATHS = [
+  '/sw.js',
+  '/manifest.json',
+  '/offline.html',
+  '/robots.txt',
+  '/sitemap.xml',
+  '/opengraph-image',
+  '/icons/',
+  '/.well-known/',
+] as const
+
 export async function proxy(request: NextRequest): Promise<NextResponse> {
+  const { pathname } = request.nextUrl
+
+  if (NO_AUTH_PATHS.some((p) => pathname === p || (p.endsWith('/') && pathname.startsWith(p)))) {
+    return NextResponse.next()
+  }
+
   // Resolve auth once per request (provider-specific): session for gating below,
   // request headers to forward downstream, and a finalize step for response headers.
   const { session, requestHeaders, finalize } = await prepareMiddleware(request)
-  return finalize(await handle(request, session, requestHeaders))
+  const res = finalize(await handle(request, session, requestHeaders))
+  syncLoginHint(request, res, !!session?.user)
+  return res
+}
+
+/**
+ * Non-sensitive `mc_li` cookie mirroring "has a valid session", so statically
+ * rendered pages (marketing header) can show the right link client-side. UI hint
+ * only: every protected route still verifies the real session.
+ */
+function syncLoginHint(request: NextRequest, res: NextResponse, loggedIn: boolean): void {
+  const hasHint = request.cookies.get('mc_li')?.value === '1'
+  if (loggedIn && !hasHint) {
+    res.cookies.set('mc_li', '1', {
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30,
+      sameSite: 'lax',
+      secure: request.nextUrl.protocol === 'https:',
+    })
+  } else if (!loggedIn && request.cookies.has('mc_li')) {
+    res.cookies.delete('mc_li')
+  }
 }
 
 async function handle(

@@ -41,14 +41,22 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
   useEffect(() => {
     void fetchBalance()
 
+    // Each poll is a full proxy + function invocation, so keep it slow and refresh
+    // immediately when the tab becomes visible again instead of polling for it.
     const interval = window.setInterval(() => {
       if (document.visibilityState === 'visible') {
         void fetchBalance()
       }
-    }, 30_000)
+    }, 5 * 60_000)
+
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') void fetchBalance()
+    }
+    document.addEventListener('visibilitychange', onVisible)
 
     return () => {
       window.clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisible)
     }
   }, [fetchBalance])
 
