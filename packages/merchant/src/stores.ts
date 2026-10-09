@@ -171,6 +171,15 @@ export function normalizeSlug(raw: string): string {
     return raw.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
 }
 
+/**
+ * First path segments the storefront serves itself. The platform host resolves
+ * app.mcloud.co.ke/{slug}, so a store with one of these slugs would be unreachable
+ * (or shadow a real route). `org` is the merchant settings area.
+ */
+export const RESERVED_STORE_SLUGS: ReadonlySet<string> = new Set([
+    'org', 'store', 'api', 'auth', 'admin', 'settings', 'orders', 'products', 's',
+])
+
 export function isValidSlug(slug: string): boolean {
     return /^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(slug)
 }
@@ -193,6 +202,7 @@ export async function createStoreForUser(
 
     if (!name || !slug) return { error: 'Name and slug are required', slug: null }
     if (!isValidSlug(slug)) return { error: 'Slug must be lowercase alphanumeric with hyphens', slug: null }
+    if (RESERVED_STORE_SLUGS.has(slug)) return { error: 'That slug is reserved', slug: null }
 
     const supabase = await createClient()
 
