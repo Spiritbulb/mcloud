@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { SettingsSection, SettingsField, SaveBar, SaveToast } from '../../settings-primitives'
 import { updateStoreSettings } from '../../actions'
 import { ProGateInline } from '@/components/pro'
-import { Plan } from '@/lib/plans'
+import { Plan } from '@mcloud/merchant/plans'
 
 export default function SocialSettingsPage({ store, plan }: { store: any; plan: Plan }) {
     const links = store.settings?.socialLinks ?? {}

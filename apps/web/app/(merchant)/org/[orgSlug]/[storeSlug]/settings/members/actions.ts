@@ -5,8 +5,8 @@ import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { Resend } from 'resend'
 import type { MemberRow } from './utils'
-import { getStorePlan } from '@/lib/plans-server'
-import { PLAN_LIMITS, isOverLimit, limitMessage } from '@/lib/plans'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
+import { PLAN_LIMITS, isOverLimit, limitMessage } from '@mcloud/merchant/plans'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 

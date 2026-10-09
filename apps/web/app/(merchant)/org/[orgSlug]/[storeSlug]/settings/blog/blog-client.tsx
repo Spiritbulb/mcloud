@@ -49,7 +49,7 @@ import {
 import { cn } from '@mcloud/ui/utils'
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
 import { ProGateInline } from '@/components/pro'
-import type { Plan } from '@/lib/plans'
+import type { Plan } from '@mcloud/merchant/plans'
 
 // Radix Select forbids empty-string values (it uses "" internally to mean
 // "nothing selected / show placeholder"). Use a sentinel instead.

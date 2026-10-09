@@ -3,7 +3,7 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
-import { storeHasFeature } from '@/lib/plans-server'
+import { storeHasFeature } from '@mcloud/merchant/plans-server'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 }
 

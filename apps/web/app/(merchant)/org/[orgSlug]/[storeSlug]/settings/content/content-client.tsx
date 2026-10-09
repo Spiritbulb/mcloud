@@ -21,7 +21,7 @@ import {
 } from '@/lib/content-draft'
 import CampaignCard from './campaign-card'
 import { ProGateInline } from '@/components/pro'
-import type { Plan } from '@/lib/plans'
+import type { Plan } from '@mcloud/merchant/plans'
 
 const inputClass =
     'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'

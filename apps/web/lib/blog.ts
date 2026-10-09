@@ -4,12 +4,12 @@
 
 import { createClient } from '@mcloud/db/client'   // adjust to your path
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
-// Plain './plans' only (not './plans-server'): plans-server.ts pulls in
+// Plain '@mcloud/merchant/plans' only (not '@mcloud/merchant/plans-server'): plans-server.ts pulls in
 // next/headers via @mcloud/db/server, which would break the client bundle —
 // this file is imported by hooks/use-blog.ts, a 'use client' module. So the
 // feature check below queries store_subscriptions directly with the browser
 // client already in scope and runs the pure decision helpers on the result.
-import { planFromActiveRow, planHasFeature } from './plans'
+import { planFromActiveRow, planHasFeature } from '@mcloud/merchant/plans'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

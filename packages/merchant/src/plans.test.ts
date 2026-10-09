@@ -1,4 +1,4 @@
-// apps/web/lib/plans.test.ts
+// packages/merchant/src/plans.test.ts
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {

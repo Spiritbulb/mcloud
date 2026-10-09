@@ -21,6 +21,7 @@
     "@mcloud/auth": "^0.0.0",
     "@mcloud/db": "^0.0.0",
     "@mcloud/liquid": "^0.0.0",
+    "@mcloud/merchant": "^0.0.0",
     "@mcloud/themes": "^0.0.0",
     "@mcloud/ui": "^0.0.0",
     "@mcloud/verticals": "^0.0.0",

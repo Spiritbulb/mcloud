@@ -1,7 +1,7 @@
 import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import DomainSettings from '@/components/store/domain-settings'
-import { getStorePlan } from '@/lib/plans-server'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 
 export default async function DomainPage({
     params,

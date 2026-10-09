@@ -4,7 +4,7 @@ import { getVertical } from '@mcloud/verticals'
 import { signPreview } from '@mcloud/verticals/preview'
 import { getStoreSettingsData } from '@/lib/store-data'
 import { createClient } from '@mcloud/db/server'
-import { getStorePlan } from '@/lib/plans-server'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 import EditorClient from './editor-client'
 
 /**

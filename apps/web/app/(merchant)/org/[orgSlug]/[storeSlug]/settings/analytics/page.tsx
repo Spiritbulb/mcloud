@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
-import { getStorePlan } from '@/lib/plans-server'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 import AnalyticsClient from './analytics-client'
 
 export const metadata: Metadata = {

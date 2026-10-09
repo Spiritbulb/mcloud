@@ -15,7 +15,7 @@ import { followSlideIndex } from './slide-follow'
 import { applyItemOp, type ItemOp } from './item-ops'
 import { seedRecord } from './section-seeds'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
-import type { Plan } from '@/lib/plans'
+import type { Plan } from '@mcloud/merchant/plans'
 
 type Section = { type: string; settings?: SettingValues }
 

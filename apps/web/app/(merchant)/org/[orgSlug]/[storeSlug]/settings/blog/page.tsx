@@ -4,7 +4,7 @@ import { createClient, getStore } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { BlogSettingsClient } from './blog-client'
 import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
-import { getStorePlan } from '@/lib/plans-server'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 
 interface Props {
     params: Promise<{ orgSlug: string; storeSlug: string }>

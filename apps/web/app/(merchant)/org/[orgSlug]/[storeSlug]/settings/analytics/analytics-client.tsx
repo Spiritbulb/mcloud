@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { ProGateInline } from '@/components/pro'
-import type { Plan } from '@/lib/plans'
+import type { Plan } from '@mcloud/merchant/plans'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 

@@ -1,0 +1,14 @@
+{
+  "name": "@mcloud/merchant",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./*": "./src/*.ts"
+  },
+  "dependencies": {
+    "@mcloud/db": "^0.0.0"
+  },
+  "devDependencies": {
+    "@mcloud/config": "^0.0.0"
+  }
+}

@@ -8,7 +8,7 @@ import { Badge } from '@mcloud/ui/badge'
 import { Separator } from '@mcloud/ui/separator'
 import { Switch } from '@mcloud/ui/switch'
 import { Check, ExternalLink, Phone, Loader2, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { Plan } from '@/lib/plans'
+import { Plan } from '@mcloud/merchant/plans'
 import { ProGateInline } from '../pro'
 
 interface IntegrationData {

@@ -7,7 +7,7 @@ import { Label } from '@mcloud/ui/label'
 import { Card, CardContent } from '@mcloud/ui/card'
 import { Check, CheckCircle, Loader2 } from 'lucide-react'
 import { ProGateInline } from '../pro'
-import type { Plan } from '@/lib/plans'
+import type { Plan } from '@mcloud/merchant/plans'
 
 export default function DomainSettings({
     storeId,

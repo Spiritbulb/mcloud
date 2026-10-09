@@ -2,7 +2,7 @@ import { getStore } from '@mcloud/db/server'
 import { getVertical } from '@mcloud/verticals'
 import { notFound, redirect } from 'next/navigation'
 import CustomersPage from './client'
-import { getStorePlan } from '@/lib/plans-server';
+import { getStorePlan } from '@mcloud/merchant/plans-server';
 
 export default async function Page({ params }: { params: Promise<{ orgSlug: string; storeSlug: string }> }) {
     const { orgSlug, storeSlug } = await params

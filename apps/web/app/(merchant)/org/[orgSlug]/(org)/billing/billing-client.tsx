@@ -12,7 +12,7 @@ import {
   Store,
   Wallet,
 } from 'lucide-react'
-import { PLAN_PRICE_KES } from '@/lib/plans'
+import { PLAN_PRICE_KES } from '@mcloud/merchant/plans'
 import { purchaseStorePlan } from './actions'
 import { WalletTopupModal } from '@/components/topup-modal'
 

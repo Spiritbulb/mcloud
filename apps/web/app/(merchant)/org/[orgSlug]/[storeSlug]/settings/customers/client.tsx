@@ -5,7 +5,7 @@ import { Search, Users } from 'lucide-react'
 import { Input } from '@mcloud/ui/input'
 import { Badge } from '@mcloud/ui/badge'
 import { ProGate } from '../settings-primitives'
-import { Plan } from '@/lib/plans'
+import { Plan } from '@mcloud/merchant/plans'
 import { ProGateInline } from '@/components/pro'
 
 type Customer = {

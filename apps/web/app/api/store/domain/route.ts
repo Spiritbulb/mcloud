@@ -1,6 +1,6 @@
 import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
-import { storeHasFeature } from '@/lib/plans-server'
+import { storeHasFeature } from '@mcloud/merchant/plans-server'
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN!
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID!

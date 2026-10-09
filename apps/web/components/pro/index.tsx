@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { motion, AnimatePresence } from 'framer-motion'
-import { planAllowsRequired, type Plan } from '@/lib/plans'
+import { planAllowsRequired, type Plan } from '@mcloud/merchant/plans'
 
 // Where merchants go to get on Pro now: subscription happens in the mobile app,
 // and the beta is the entry point. Absolute so it works from any merchant origin.
