@@ -102,6 +102,21 @@ async function handleMerchant(request: NextRequest, host: string): Promise<NextR
 }
 
 
+/** Pass through, forwarding auth headers. Never fails the request: public APIs (checkout, etc.) share this path. */
+async function withSessionHeaders(request: NextRequest): Promise<NextResponse> {
+  try {
+    const { requestHeaders, finalize } = await prepareMiddleware(request)
+    return finalize(
+      requestHeaders
+        ? NextResponse.next({ request: { headers: requestHeaders } })
+        : NextResponse.next(),
+    )
+  } catch {
+    return NextResponse.next()
+  }
+}
+
+
 // ─── Proxy Entry Point ────────────────────────────────────────────────────────
 
 export async function proxy(request: NextRequest): Promise<NextResponse> {
@@ -115,6 +130,12 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   // ── 1. Bypass framework / API / static ──────────────────────────────────────
   if (BYPASS_PREFIXES.some((p) => pathname.startsWith(p))) {
+    // Merchant API routes (settings, upload) read the session via withAuth(), which
+    // needs the headers prepareMiddleware injects. Do that for /api/* on the
+    // platform host; custom domains never carry a merchant session.
+    if (pathname.startsWith('/api/') && isPlatformHost(host)) {
+      return withSessionHeaders(request)
+    }
     return NextResponse.next()
   }
 

@@ -6,6 +6,8 @@ import { getStoreSettingsData } from '@mcloud/merchant/store-data'
 import { createClient } from '@mcloud/db/server'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import EditorClient from './editor-client'
+import { webUrl } from '@/lib/host'
+import { loginUrlWithReturn } from '@mcloud/auth/routes'
 
 /**
  * The Editor: one surface for theme and content, with a live preview of the
@@ -22,7 +24,7 @@ export default async function EditorPage({
     const { orgSlug, storeSlug } = await params
 
     const session = await getSession()
-    if (!session?.user) redirect('/auth/login')
+    if (!session?.user) redirect(webUrl(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings`)))
 
     const result = await getStoreSettingsData(session.user.id, storeSlug, orgSlug)
     if (result.error || !result.data) redirect(`/org/${orgSlug}/${storeSlug}/settings`)

@@ -13,6 +13,7 @@ import type { NavSection, TabId } from '@mcloud/verticals'
 
 import { cn } from '@mcloud/ui/utils'
 import { useOrgContext } from '@mcloud/merchant/org-context'
+import { webUrl } from '@/lib/host'
 
 // The nav model now lives in @mcloud/verticals (it is data about the vertical,
 // not about React). Re-exported here so existing consumers keep their import.
@@ -83,8 +84,8 @@ export default function SettingsShell({
             </p>
             <p className="text-sm text-muted-foreground">
                 {error === 'unauthenticated'
-                    ? <a href={`/auth/login`} className="underline underline-offset-4">Sign in</a>
-                    : <a href="/auth/logout" className="underline underline-offset-4">Sign out and try again</a>
+                    ? <a href={webUrl('/auth/login')} className="underline underline-offset-4">Sign in</a>
+                    : <a href={webUrl('/auth/logout')} className="underline underline-offset-4">Sign out and try again</a>
                 }
             </p>
         </div>
@@ -96,7 +97,7 @@ export default function SettingsShell({
         avatarUrl: user?.avatarUrl,
         accountHref:
             `/org/${orgSlug}/${slug}/settings/account`,
-        onSignOut: () => { window.location.href = '/auth/logout' },
+        onSignOut: () => { window.location.href = webUrl('/auth/logout') },
     }
 
     const navStore: NavStore = {

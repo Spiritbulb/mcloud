@@ -11,6 +11,7 @@ import { useRouter } from 'next/navigation'
 // in @mcloud/verticals so it has one home and is unit-testable.
 import type { NavSection, NavTab as Tab, NavSubTab as SubTab, TabId } from '@mcloud/verticals'
 import { Button } from '@/components/retroui/Button'
+import { webUrl } from '@/lib/host'
 
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -452,7 +453,7 @@ function AccountFooter({
 
     const menuItems = [
         ...(user.accountHref ? [{ href: user.accountHref, icon: 'manage_accounts', label: 'Account settings' }] : []),
-        { href: `/org/${orgSlug}/billing`, icon: 'credit_card', label: 'Billing' },
+        { href: webUrl(`/org/${orgSlug}/billing`), icon: 'credit_card', label: 'Billing' },
     ]
 
     return (
@@ -828,7 +829,7 @@ export function MobileSettingsNav({
             >
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3">
-                    <Link href="/" className="flex items-center shrink-0">
+                    <Link href={webUrl('/')} className="flex items-center shrink-0">
                         <img src={src} alt="Logo" className="w-auto h-5" />
                     </Link>
                     <button
