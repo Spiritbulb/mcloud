@@ -155,10 +155,12 @@ export default function OrderSettings({
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const [updating, setUpdating] = useState<string | null>(null)
     const [filter, setFilter] = useState<string>('all')
+    const [loadError, setLoadError] = useState<string | null>(null)
 
     const load = useCallback(async () => {
         setLoading(true)
         const res = await listOrders(storeId)
+        setLoadError(res.ok ? null : res.error)
         const baseOrders = (res.ok ? (res.orders as Order[]) : [])
 
         if (res.ok && baseOrders.length > 0) {
@@ -307,7 +309,11 @@ export default function OrderSettings({
                 </div>
             )}
 
-            {!loading && filtered.length === 0 && (
+            {!loading && loadError && (
+                <p className="text-sm text-rose-600 dark:text-rose-400">{loadError}</p>
+            )}
+
+            {!loading && !loadError && filtered.length === 0 && (
                 <Card className="border-dashed">
                     <CardContent className="py-16 text-center space-y-3">
                         <motion.div

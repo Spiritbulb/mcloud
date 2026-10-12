@@ -5,6 +5,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 import { storeHasFeature } from '@mcloud/merchant/plans-server'
+import { requireStoreAccess } from '@mcloud/merchant/stores'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 }
 
@@ -20,21 +21,17 @@ export async function GET(
     const userId = session.user.id
     const supabase = await createClient()
 
-    // Resolve the store and confirm the caller is a member.
+    // Store member OR member of the store's org (same gate the orders screen uses).
+    const access = await requireStoreAccess(slug, userId)
+    if (access.error === 'not_found') return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+    if (access.error) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
     const { data: store } = await supabase
         .from('stores')
         .select('id, currency')
-        .eq('slug', slug)
+        .eq('id', access.storeId)
         .single()
     if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
-
-    const { data: membership } = await supabase
-        .from('store_members')
-        .select('role')
-        .eq('store_id', store.id)
-        .eq('user_id', userId)
-        .maybeSingle()
-    if (!membership) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     // Resolve the date range.
     const rangeKey = request.nextUrl.searchParams.get('range') ?? '30d'
