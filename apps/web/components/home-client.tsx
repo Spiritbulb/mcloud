@@ -189,6 +189,8 @@ function FeatureShowcase({ items, accent }: { items: Feature[]; accent: string }
                                         src={item.image}
                                         alt={item.title}
                                         loading="lazy"
+                                        width={1050}
+                                        height={700}
                                         className="relative z-10 max-h-82 w-full object-contain"
                                     />
                                 ) : (
@@ -393,7 +395,7 @@ const SERVER_FEATURES: Feature[] = [
         eyebrow: 'Your own server',
         title: 'Home sweet home.',
         body: 'Give your website, application, LLM, database, automation, or game server its own place to run. You get the control of a private virtual machine without the ceremony of a giant cloud platform.',
-        image: '/run-it-online.svg',
+        image: '/run-it-online.webp',
         points: [
             'A private environment for your workloads',
             'Deploy the stack that makes sense for your project',
@@ -405,7 +407,7 @@ const SERVER_FEATURES: Feature[] = [
         eyebrow: 'Built for builders',
         title: 'From first deploy to serious product.',
         body: 'Run the work that cannot stay on your laptop: web applications, background jobs, bots, scheduled tasks, internal tools, and the experiments that turn into businesses.',
-        image: '/marketing-automate.png',
+        image: '/marketing-automate.webp',
         points: [
             'Apps, APIs, workers, databases, and more',
             'A dependable place for always-on services',
@@ -473,7 +475,7 @@ const STORE_FEATURES: Feature[] = [
         eyebrow: 'Ready to sell',
         title: 'Your shop, ready for real customers.',
         body: 'Products, services, checkout, orders, and the pages that make people trust your business all live together. You focus on the offer; the platform is already connected.',
-        image: '/digital-warehouse.svg',
+        image: '/digital-warehouse.webp',
         points: [
             'Add products, services, and collections as you grow',
             'Take orders through a checkout built for your store',
@@ -485,7 +487,7 @@ const STORE_FEATURES: Feature[] = [
         eyebrow: 'Your brand',
         title: 'It should feel unmistakably yours.',
         body: 'Use your logo, colours, words, and—when you are ready—your own domain. Customers see a shop that belongs to your business, not a generic template with someone else’s name on it.',
-        image: '/make-it-yours.svg',
+        image: '/make-it-yours.webp',
         points: [
             'Custom themes, colours, and brand voice',
             'Connect your own domain with SSL included',
@@ -497,7 +499,7 @@ const STORE_FEATURES: Feature[] = [
         eyebrow: 'Built for local checkout',
         title: 'Make paying feel easy.',
         body: 'Give customers a familiar way to complete an order. M-PESA STK Push is built into checkout, so payment requests go to the customer’s phone and paid orders can be confirmed automatically.',
-        image: '/run-it-online.svg',
+        image: '/run-it-online.webp',
         points: [
             'M-PESA STK Push at checkout',
             'Clear order management in one place',
@@ -509,7 +511,7 @@ const STORE_FEATURES: Feature[] = [
         eyebrow: 'What is working',
         title: 'Know where to put your energy.',
         body: 'See the products and pages attracting attention, follow the sales that matter, and make the next promotion with more confidence than guesswork.',
-        image: '/see-what-works.svg',
+        image: '/see-what-works.webp',
         points: [
             'Sales and traffic in one clear view',
             'Your best-performing products at a glance',
@@ -733,7 +735,7 @@ function CloudServers() {
                                     </p>
                                 </div>
                                 <div className="space-y-5 md:justify-self-end md:text-right">
-                                    <img src={'/M-PESA_LOGO-01.svg'} className='w-80 h-auto'/>
+                                    <img src={'/M-PESA_LOGO-01.svg'} alt="M-PESA" width={512} height={273} className='w-80 h-auto'/>
                                     <p className="text-[12px] leading-relaxed text-muted-foreground">
                                         No credit card required
                                     </p>
@@ -950,13 +952,13 @@ export default function HomeClient() {
                             {product === 'servers' ? (
                                 <div key="server-hero" className="animate-fade-in relative z-10 flex h-full flex-col justify-between">
                                     <div className="flex items-center justify-between">
-                                        <img src={'/marketing-digital-warehouse.png'} className='w-240 h-auto'/>
+                                        <img src={'/marketing-digital-warehouse.webp'} alt="" width={1050} height={700} className='w-240 h-auto'/>
                                     </div>
                                 </div>
                             ) : (
                                 <div key="store-hero" className="animate-fade-in relative z-10 flex h-full flex-col justify-between">
                                     <div className="flex items-center justify-between">
-                                        <img src={'/marketing-automate.png'} className='w-240 h-auto'/>
+                                        <img src={'/marketing-automate.webp'} alt="" width={1050} height={700} className='w-240 h-auto'/>
                                     </div>
                                 </div>
                             )}

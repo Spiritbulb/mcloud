@@ -78,7 +78,7 @@ try {
                         </p>
                     </div>
                     <img
-                        src="/digital-warehouse.svg"
+                        src="/digital-warehouse.webp"
                         alt=""
                         aria-hidden="true"
                         className="w-80 sm:w-72 h-auto shrink-0 select-none"

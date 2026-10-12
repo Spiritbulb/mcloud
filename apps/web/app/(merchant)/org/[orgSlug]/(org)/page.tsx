@@ -194,7 +194,7 @@ export default async function OrgHomePage({
                         )}
                     </div>
                     <img
-                        src="/run-it-online.svg"
+                        src="/run-it-online.webp"
                         alt=""
                         aria-hidden="true"
                         className="w-80 sm:w-72 h-auto shrink-0 select-none hidden md:block"

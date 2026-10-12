@@ -7,7 +7,7 @@ export function Footer() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                     <div className="col-span-2 md:col-span-1 space-y-3">
                         <Link href="/" className="flex items-center gap-2">
-                            <img src="/favicon.ico" alt="Menengai Cloud" className="w-6 h-6" />
+                            <img src="/icons/logo-48.png" alt="" width={24} height={24} className="w-6 h-6" />
                             <span className="text-[13px] font-semibold text-foreground/80">Menengai Cloud</span>
                         </Link>
                         <p className="text-[12px] text-muted-foreground/70 leading-relaxed max-w-[180px]">
