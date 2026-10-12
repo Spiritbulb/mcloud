@@ -699,8 +699,9 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
 
 // ─── GallerySection ─────────────────────────────────────────────────────────────
 
-function GalleryPhotoCard({ photo, idx, onChange, onRemove }: {
+function GalleryPhotoCard({ photo, idx, storeId, onChange, onRemove }: {
     photo: GalleryPhoto
+    storeId: string
     idx: number
     onChange: (photo: GalleryPhoto) => void
     onRemove: () => void
@@ -748,7 +749,7 @@ function GalleryPhotoCard({ photo, idx, onChange, onRemove }: {
                         pathInDb={photo.path ?? ''}
                         onChange={(url, path) => onChange({ ...photo, url, path })}
                         bucket="store-assets"
-                        pathPrefix={`__storeId__/gallery/${idx}`}
+                        pathPrefix={`${storeId}/gallery/${idx}`}
                         aspectRatio="square"
                     />
                     <div className="space-y-1.5">
@@ -817,6 +818,7 @@ function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryP
                                 key={photo.id}
                                 photo={photo}
                                 idx={idx}
+                                storeId={store.id}
                                 onChange={updated => {
                                     const next = [...galleryPhotos]; next[idx] = { ...updated, id: photo.id }; setGalleryPhotos(next)
                                 }}

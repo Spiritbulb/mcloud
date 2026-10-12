@@ -51,12 +51,21 @@ export type StoreAccess =
  * gate every store-scoped mobile endpoint calls.
  */
 export async function requireStoreAccess(slug: string, userId: string): Promise<StoreAccess> {
+    return resolveStoreAccess('slug', slug, userId)
+}
+
+/** Same gate as {@link requireStoreAccess}, for callers that hold the store id (e.g. upload keys). */
+export async function requireStoreAccessById(storeId: string, userId: string): Promise<StoreAccess> {
+    return resolveStoreAccess('id', storeId, userId)
+}
+
+async function resolveStoreAccess(by: 'slug' | 'id', value: string, userId: string): Promise<StoreAccess> {
     const supabase = await createClient()
 
     const { data: store } = await supabase
         .from('stores')
         .select('id, org_id')
-        .eq('slug', slug)
+        .eq(by, value)
         .single()
     if (!store) return { error: 'not_found', storeId: null, role: null }
 

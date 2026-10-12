@@ -123,7 +123,7 @@ export default function ImagePicker({
                                     onPick(uploaded)
                                 }}
                                 bucket="store-assets"
-                                pathPrefix={pathPrefix}
+                                pathPrefix={`${storeId}/${pathPrefix}`}
                                 aspectRatio="wide"
                             />
                             <button

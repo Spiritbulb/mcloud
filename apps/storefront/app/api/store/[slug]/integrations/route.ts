@@ -1,6 +1,9 @@
+// @route-kind: public — GET exposes only an allowlist to shoppers (managers get the full non-secret view); POST requires the store owner
 import { NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
+import { canManage, requireStoreAccessById } from '@mcloud/merchant/stores'
+import { publicIntegration } from '@/lib/integration-public'
 
 export async function GET(
     request: Request,
@@ -71,11 +74,18 @@ export async function GET(
             }
         }
 
+        // Managers (the settings form) get every non-secret field. Everyone else, including
+        // anonymous shoppers, gets only what checkout renders: an allowlist, so a config
+        // field added later is private by default.
+        const user = (await getSession(request as any))?.user
+        const manager = user ? canManage((await requireStoreAccessById(store.id, user.id)).role) : false
+        const view = manager ? sanitize : publicIntegration
+
         return NextResponse.json({
-            mpesa: sanitize(dataMap['mpesa']),
-            paypal: sanitize(dataMap['paypal']),
-            pesapal: sanitize(dataMap['pesapal']),
-            intasend: sanitize(dataMap['intasend']),
+            mpesa: view(dataMap['mpesa']),
+            paypal: view(dataMap['paypal']),
+            pesapal: view(dataMap['pesapal']),
+            intasend: view(dataMap['intasend']),
         })
 
     } catch (error) {

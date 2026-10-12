@@ -1,21 +1,14 @@
+// @route-kind: admin
 // app/api/admin/subscriptions/activate/route.ts
-import { getSession } from '@mcloud/auth/server'
+import { requireAdmin } from '@/lib/require-admin'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 
 export async function POST(request: NextRequest) {
-    const session = await getSession(request)
-    if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    const auth = await requireAdmin(request)
+    if (auth instanceof NextResponse) return auth
 
     const supabase = await createClient()
-
-    const { data: user } = await supabase
-        .from('users')
-        .select('role')
-        .eq('id', session.user.id)
-        .single()
-
-    if (user?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
     const { subscription_id, store_id } = await request.json()
 

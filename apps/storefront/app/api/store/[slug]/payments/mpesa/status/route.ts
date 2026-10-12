@@ -1,7 +1,8 @@
+// @route-kind: public — polled by the buyer with the unguessable order number
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 
-// Polls order payment_status by order ID — used by the storefront while
+// Polls order payment_status by order NUMBER (the checkout's ORD-… id) — used by the storefront while
 // waiting for Safaricom's STK push callback to arrive.
 export async function GET(req: NextRequest) {
     const orderId = req.nextUrl.searchParams.get('orderId')
@@ -11,7 +12,7 @@ export async function GET(req: NextRequest) {
     const { data: order } = await supabase
         .from('orders')
         .select('id, status, metadata')
-        .eq('id', orderId)
+        .eq('order_number', orderId)
         .single()
 
     if (!order) return NextResponse.json({ error: 'Order not found' }, { status: 404 })

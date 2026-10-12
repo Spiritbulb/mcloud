@@ -1,38 +1,21 @@
+// @route-kind: admin
 // app/api/docs/route.ts
-// Protected by Auth0 session + role = 'admin' check in your users table.
-// No passphrase needed — remove DOCS_EDITOR_PASSPHRASE from your env.
+// Platform admins only (requireAdmin).
 
-import { getSession } from '@mcloud/auth/server'
-import { createClient } from "@mcloud/db/client"
+import { requireAdmin } from '@/lib/require-admin'
+import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from "next/cache"
 import { NextRequest, NextResponse } from "next/server"
 import type { DocPage } from "@/lib/docs"
-
-// Service-role client — bypasses RLS, only used server-side
-const adminSupabase = createClient()
-
-async function getAdminStatus(userId: string): Promise<boolean> {
-    const { data } = await adminSupabase
-        .from("users")
-        .select("role")
-        .eq("id", userId)
-        .single()
-
-    return data?.role === "admin"
-}
+import type { Json } from '@mcloud/db/types'
 
 export async function POST(req: NextRequest) {
-    // ── 1. Must be logged in ───────────────────────────────────────────────────
-    const session = await getSession(req)
-    if (!session?.user) {
-        return NextResponse.json({ error: "Not authenticated" }, { status: 401 })
-    }
+    // ── 1. Must be a platform admin ─────────────────────────────────────────────
+    const auth = await requireAdmin(req)
+    if (auth instanceof NextResponse) return auth
 
-    // ── 2. Must be an admin in your users table ─────────────────────────────────
-    const isAdmin = await getAdminStatus(session.user.id)
-    if (!isAdmin) {
-        return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    // ── 2. Service-role client: the docs_pages write must not depend on RLS ──────
+    const adminSupabase = await createClient()
 
     // ── 3. Parse and validate body ──────────────────────────────────────────────
     let pages: DocPage[]
@@ -46,7 +29,7 @@ export async function POST(req: NextRequest) {
     // ── 4. Upsert to Supabase ───────────────────────────────────────────────────
     const rows = pages.map((page, i) => ({
         id: page.id,
-        data: page,
+        data: page as unknown as Json,
         position: i,
     }))
 

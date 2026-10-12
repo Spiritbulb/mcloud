@@ -1,5 +1,7 @@
+// @route-kind: public — buyer-initiated; order, store, phone and amount are verified against the stored order
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { mpesaAmountDue, normalizeKenyanPhone, orderIsPayable } from '@mcloud/merchant/payments'
 
 const DARAJA_BASE = process.env.DARAJA_ENV === 'production'
     ? 'https://api.safaricom.co.ke'
@@ -15,12 +17,18 @@ async function getDarajaToken(consumerKey: string, consumerSecret: string): Prom
     return data.access_token
 }
 
+// A second prompt for the same order inside this window is refused, so the route cannot be
+// used to spam a phone with payment prompts.
+const REPUSH_WINDOW_MS = 60_000
+
 export async function POST(req: NextRequest) {
     try {
-        const { storeSlug, phone, orderId, amount } = await req.json()
+        // `amount` from the client is deliberately ignored: the charge is the stored order total.
+        const { storeSlug, phone, orderId } = await req.json()
 
-        if (!storeSlug || !phone || !orderId || !amount) {
-            return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 })
+        const normalizedPhone = normalizeKenyanPhone(phone)
+        if (typeof storeSlug !== 'string' || typeof orderId !== 'string' || !orderId || !normalizedPhone) {
+            return NextResponse.json({ success: false, error: 'Missing or invalid fields' }, { status: 400 })
         }
 
         const supabase = await createClient()
@@ -32,6 +40,29 @@ export async function POST(req: NextRequest) {
             .single()
 
         if (!store) return NextResponse.json({ success: false, error: 'Store not found' }, { status: 404 })
+
+        // `orderId` is the order NUMBER the checkout returned; scoping by store stops one
+        // store's credentials being used to charge another store's order.
+        const { data: order } = await supabase
+            .from('orders')
+            .select('id, status, total, customer_phone, metadata')
+            .eq('store_id', store.id)
+            .eq('order_number', orderId)
+            .maybeSingle()
+
+        if (!order) return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 })
+        if (!orderIsPayable(order)) {
+            return NextResponse.json({ success: false, error: 'Order is not awaiting payment' }, { status: 409 })
+        }
+        // Only the number the order was placed with may be prompted.
+        if (normalizeKenyanPhone(order.customer_phone) !== normalizedPhone) {
+            return NextResponse.json({ success: false, error: 'Phone does not match the order' }, { status: 403 })
+        }
+        const orderMeta = (typeof order.metadata === 'object' && order.metadata ? order.metadata : {}) as Record<string, any>
+        const lastPush = Date.parse(orderMeta.daraja_pushed_at ?? '')
+        if (Number.isFinite(lastPush) && Date.now() - lastPush < REPUSH_WINDOW_MS) {
+            return NextResponse.json({ success: false, error: 'A payment prompt was just sent. Wait a minute to retry.' }, { status: 429 })
+        }
 
         const { data: integration } = await supabase
             .from('store_integrations')
@@ -54,9 +85,6 @@ export async function POST(req: NextRequest) {
         const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)
         const password = Buffer.from(`${cfg.shortcode}${cfg.passkey}${timestamp}`).toString('base64')
 
-        // Normalize phone to 254XXXXXXXXX
-        const normalizedPhone = phone.replace(/^0/, '254').replace(/^\+/, '')
-
         const callbackUrl = 'https://mcloud.co.ke/api/payments/mpesa/callback'
 
         const body = {
@@ -64,7 +92,7 @@ export async function POST(req: NextRequest) {
             Password: password,
             Timestamp: timestamp,
             TransactionType: cfg.mpesa_type === 'paybill' ? 'CustomerPayBillOnline' : 'CustomerBuyGoodsOnline',
-            Amount: Math.ceil(amount),
+            Amount: mpesaAmountDue(order.total),
             PartyA: normalizedPhone,
             PartyB: cfg.shortcode,
             PhoneNumber: normalizedPhone,
@@ -92,21 +120,16 @@ export async function POST(req: NextRequest) {
             }, { status: 502 })
         }
 
-        // Merge CheckoutRequestID into order metadata so the callback can match it
-        const { data: order } = await supabase
-            .from('orders')
-            .select('metadata')
-            .eq('id', orderId)
-            .single()
-
+        // Record the CheckoutRequestID so the callback can match it back to this order.
         await supabase.from('orders').update({
             metadata: {
-                ...(typeof order?.metadata === 'object' && order?.metadata ? order.metadata : {}),
+                ...orderMeta,
                 daraja_checkout_request_id: stkData.CheckoutRequestID,
+                daraja_pushed_at: new Date().toISOString(),
                 payment_method: 'daraja',
                 payment_status: 'pending',
             },
-        }).eq('id', orderId)
+        }).eq('id', order.id)
 
         return NextResponse.json({
             success: true,

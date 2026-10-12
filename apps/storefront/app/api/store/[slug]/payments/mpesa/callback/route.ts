@@ -1,5 +1,7 @@
+// @route-kind: webhook — Safaricom posts unsigned; matched by CheckoutRequestID and amount-checked before settling
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { mpesaPaymentCovers } from '@mcloud/merchant/payments'
 import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
 import { sendPushToUsers } from '@/lib/merchant/send-push'
 
@@ -25,13 +27,18 @@ export async function POST(req: NextRequest) {
         // push needs store_id/order_number/total/currency, not just id/metadata.
         const { data: orders } = await supabase
             .from('orders')
-            .select('id, metadata, store_id, order_number, total, currency')
+            .select('id, status, metadata, store_id, order_number, total, currency')
             .eq('metadata->>daraja_checkout_request_id', CheckoutRequestID)
             .limit(1)
 
         const order = orders?.[0]
         if (!order) {
             console.warn('Daraja callback: no order found for CheckoutRequestID', CheckoutRequestID)
+            return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
+        }
+
+        // Safaricom retries callbacks; a settled order is never processed twice.
+        if (order.status === 'paid') {
             return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
         }
 
@@ -43,6 +50,21 @@ export async function POST(req: NextRequest) {
             const mpesaCode = get('MpesaReceiptNumber')
             const amount = get('Amount')
             const phone = get('PhoneNumber')
+
+            // The callback is unsigned, so never mark an order paid for less than it costs.
+            if (!mpesaPaymentCovers(amount, order.total)) {
+                console.error('Daraja callback: underpayment', { orderId: order.id, amount, total: order.total })
+                await supabase.from('orders').update({
+                    metadata: {
+                        ...(typeof order.metadata === 'object' && order.metadata ? order.metadata : {}),
+                        payment_status: 'underpaid',
+                        mpesa_transaction_code: mpesaCode,
+                        mpesa_amount_paid: amount,
+                        mpesa_phone_used: phone,
+                    },
+                }).eq('id', order.id)
+                return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
+            }
 
             await supabase.from('orders').update({
                 status: 'paid',

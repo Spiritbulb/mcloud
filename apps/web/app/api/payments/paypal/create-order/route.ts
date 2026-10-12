@@ -1,5 +1,8 @@
+// @route-kind: public — buyer-initiated; priced from the stored order, never from the request
 // app/api/payments/paypal/create-order/route.ts
 import { NextRequest, NextResponse } from 'next/server';
+import { createClient } from '@mcloud/db/server';
+import { centsToUsd, orderIsPayable, paypalAmounts } from '@mcloud/merchant/payments';
 
 const PAYPAL_BASE = process.env.PAYPAL_MODE === 'live'
   ? 'https://api-m.paypal.com'
@@ -30,42 +33,41 @@ async function getAccessToken(): Promise<string> {
 
 export async function POST(req: NextRequest) {
   try {
-    const { orderId, items, totalKES } = await req.json();
+    // `items` and `totalKES` from the client are ignored: the order is priced from the
+    // lines stored when the checkout created it.
+    const { orderId } = await req.json();
 
-    console.log('🛒 PayPal create-order:', { orderId, itemCount: items?.length, totalKES });
-
-    if (!orderId || !Array.isArray(items) || items.length === 0 || !totalKES) {
-      return NextResponse.json(
-        { success: false, error: 'Missing orderId, items, or totalKES' },
-        { status: 400 }
-      );
+    if (typeof orderId !== 'string' || !orderId) {
+      return NextResponse.json({ success: false, error: 'Missing orderId' }, { status: 400 });
     }
 
-    // KES → USD (1 KES ≈ 0.0077 USD)
-    const KES_TO_USD = 0.0077;
-    // In create-order/route.ts, replace paypalItems mapping with:
+    const supabase = await createClient();
+    const { data: order } = await supabase
+      .from('orders')
+      .select('id, status, shipping, metadata, stores(slug), order_items(title, price, quantity)')
+      .eq('order_number', orderId)
+      .maybeSingle();
 
-    const paypalItems = items.slice(0, 250).map((item: any, index: number) => {
-      const unitAmountCents = Math.round(item.price * 100 * KES_TO_USD);
-      const unitAmountUSD = (unitAmountCents / 100).toFixed(2);
+    if (!order) return NextResponse.json({ success: false, error: 'Order not found' }, { status: 404 });
+    if (!orderIsPayable(order)) {
+      return NextResponse.json({ success: false, error: 'Order is not awaiting payment' }, { status: 409 });
+    }
 
-      return {
-        name: String((item.name || `Item ${index + 1}`).slice(0, 127)).trim(),
-        sku: item.sku ? String(item.sku).slice(0, 64) : undefined,
-        unit_amount: {
-          currency_code: 'USD',
-          value: unitAmountUSD,
-        },
-        quantity: String(item.quantity || 1),  // ✅ MUST BE STRING
-        description: String(item.name || '').slice(0, 127),  // ✅ Extra safety
-      };
-    });
+    const amounts = paypalAmounts(
+      (order.order_items ?? []).map((i) => ({ title: i.title ?? 'Item', price: Number(i.price), quantity: i.quantity })),
+      Number(order.shipping ?? 0),
+    );
+    if (amounts.lines.length === 0 || amounts.totalCents <= 0) {
+      return NextResponse.json({ success: false, error: 'Order has nothing to pay' }, { status: 400 });
+    }
 
-    const itemsTotalUSD = paypalItems.reduce(
-      (sum, item) => sum + parseFloat(item.unit_amount.value) * parseInt(item.quantity),
-      0
-    ).toFixed(2);
-    const orderTotalUSD = itemsTotalUSD; // no shipping/tax
+    const paypalItems = amounts.lines.slice(0, 250).map((line, index) => ({
+      name: String(line.title || `Item ${index + 1}`).slice(0, 127).trim(),
+      unit_amount: { currency_code: 'USD', value: centsToUsd(line.unitCents) },
+      quantity: String(line.quantity), // PayPal requires a string
+    }));
+    const itemsTotalUSD = centsToUsd(amounts.itemCents);
+    const orderTotalUSD = centsToUsd(amounts.totalCents);
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000';
 
@@ -79,7 +81,7 @@ export async function POST(req: NextRequest) {
           value: orderTotalUSD,
           breakdown: {
             item_total: { currency_code: 'USD', value: itemsTotalUSD },
-            shipping: { currency_code: 'USD', value: '0.00' },
+            shipping: { currency_code: 'USD', value: centsToUsd(amounts.shippingCents) },
             tax_total: { currency_code: 'USD', value: '0.00' },
           },
         },
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
       }],
       application_context: {
         return_url: `${appUrl}/api/payments/paypal/capture-order`,
-        cancel_url: `${appUrl}/store/[slug]/cart?payment=cancelled`, // tenant-aware
+        cancel_url: `${appUrl}/store/${order.stores?.slug ?? ''}/cart?payment=cancelled`,
         brand_name: process.env.NEXT_PUBLIC_STORE_NAME?.slice(0, 127) || "Menengai Store",
         locale: 'en-US',
         landing_page: 'BILLING',
@@ -95,8 +97,6 @@ export async function POST(req: NextRequest) {
         payment_method: 'IMMEDIATE_PAYMENT',
       },
     };
-
-    console.log('💰 PayPal totals:', { orderTotalUSD, itemsTotalUSD, kesTotal: totalKES });
 
     const accessToken = await getAccessToken();
     const orderRes = await fetch(`${PAYPAL_BASE}/v2/checkout/orders`, {
@@ -136,7 +136,6 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'No approval URL from PayPal',
-        debug: orderData,
       }, { status: 500 });
     }
 

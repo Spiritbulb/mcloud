@@ -1,3 +1,4 @@
+// @route-kind: session — signed-in credential check against the Safaricom sandbox; no store data touched
 import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@mcloud/auth/server'
 

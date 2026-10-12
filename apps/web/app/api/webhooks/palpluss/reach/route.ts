@@ -1,3 +1,4 @@
+// @route-kind: webhook — PalPluss webhook; status and amount re-fetched from PalPluss before settling
 // POST /api/webhooks/palpluss/reach — PalPluss result for Reach order payments.
 // Separate from the wallet top-up webhook. The body only tells us which transaction to
 // look at; status and amount are re-fetched from PalPluss before anything is settled.

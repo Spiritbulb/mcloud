@@ -163,13 +163,14 @@ async function handle(
         response = new NextResponse(null, { status: 200 })
       }
       // The web auth routes set the session cookie — they must NOT be callable
-      // cross-origin with credentials (CSRF). They're same-origin form posts, so
-      // skip the reflective CORS headers for them. Mobile/data routes (bearer auth)
-      // keep the reflection.
+      // cross-origin (CSRF). They're same-origin form posts, so skip CORS headers
+      // for them. Other routes are bearer/secret/public and are reflected WITHOUT
+      // Allow-Credentials: browsers then never attach or expose the session cookie
+      // cross-origin, so a third-party site cannot ride a signed-in merchant's cookie.
       const isWebAuthRoute = pathname.startsWith('/api/auth/')
       if (origin && !isWebAuthRoute) {
         response.headers.set('Access-Control-Allow-Origin', origin)
-        response.headers.set('Access-Control-Allow-Credentials', 'true')
+        response.headers.append('Vary', 'Origin')
         response.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS')
         response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization, x-api-key')
       }
