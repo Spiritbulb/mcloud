@@ -9,7 +9,8 @@ import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
 // this file is imported by hooks/use-blog.ts, a 'use client' module. So the
 // feature check below queries store_subscriptions directly with the browser
 // client already in scope and runs the pure decision helpers on the result.
-import { planFromActiveRow, planHasFeature } from '@mcloud/merchant/plans'
+import { planHasFeature } from '@mcloud/merchant/plans'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -166,15 +167,7 @@ export async function upsertPost(
 ): Promise<BlogPost> {
     const supabase = createClient()
 
-    const { data: subRow } = await supabase
-        .from('store_subscriptions')
-        .select('plan, status')
-        .eq('store_id', storeId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-
-    const plan = planFromActiveRow(subRow)
+    const plan = await getStorePlan(storeId)
     if (!planHasFeature(plan, 'blogPages')) {
         throw new Error('Blog and content pages require the Hobby plan or higher.')
     }

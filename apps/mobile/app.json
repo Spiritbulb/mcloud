@@ -43,8 +43,7 @@
       ],
       "./plugins/withReleaseSigning",
       "expo-notifications",
-      "@sentry/react-native",
-      "expo-iap"
+      "@sentry/react-native"
     ],
     "experiments": {
       "typedRoutes": true

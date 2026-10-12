@@ -2,7 +2,7 @@
 // Native: Branding · Manual M-Pesa · Analytics. Web (manage-on-web): Auto-payments
 // · Domain · Members · Design editor. Danger zone uses type-to-confirm delete.
 import * as React from 'react'
-import { Alert, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import { useRouter } from 'expo-router'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { Ionicons } from '@expo/vector-icons'
@@ -14,8 +14,6 @@ import { ProSheet } from '@/components/ProSheet'
 import { useStore } from '@/store/StoreContext'
 import { useTheme, type Theme } from '@/lib/theme'
 
-const PRO_SKU = process.env.EXPO_PUBLIC_PLAY_PRO_SKU
-const PACKAGE_NAME = 'cloud.menengai.twa'
 
 type Row = { key: string; label: string; desc: string; icon: React.ComponentProps<typeof Ionicons>['name']; manageOnly?: boolean; iconColor?: string; iconBg?: string }
 
@@ -43,10 +41,9 @@ export default function MoreTab() {
 
   const isPro = store?.is_pro ?? false
 
-  const openManageSubscription = () => {
-    Linking.openURL(
-      `https://play.google.com/store/account/subscriptions?sku=${PRO_SKU}&package=${PACKAGE_NAME}`,
-    )
+  // Plans are bought and managed on the web, in the organisation's Billing page.
+  const openBilling = () => {
+    if (store?.orgSlug) openOnWeb(`/org/${store.orgSlug}/billing`)
   }
 
   const onDelete = async () => {
@@ -104,14 +101,14 @@ export default function MoreTab() {
               <SettingsRow
                 t={t}
                 icon={isPro ? 'diamond' : 'diamond-outline'}
-                label={isPro ? 'Pro plan' : 'Upgrade to Pro'}
-                desc={isPro ? 'Manage in Google Play' : 'Unlock domain, analytics & more'}
+                label={isPro ? 'Your plan' : 'Upgrade your plan'}
+                desc={isPro ? 'Manage billing on the web' : 'Unlock domain, analytics & more'}
                 external={isPro}
                 divider={false}
                 iconColor="rgb(120 80 0)"
                 iconBg="rgb(255 235 180)"
                 onPress={() => {
-                  if (isPro) openManageSubscription()
+                  if (isPro) openBilling()
                   else if (canManage) setProOpen(true)
                 }}
               />
@@ -165,12 +162,7 @@ export default function MoreTab() {
       </ScrollView>
 
       {store && (
-        <ProSheet
-          visible={proOpen}
-          slug={store.slug}
-          onClose={() => setProOpen(false)}
-          onSuccess={refresh}
-        />
+        <ProSheet visible={proOpen} orgSlug={store.orgSlug} onClose={() => setProOpen(false)} />
       )}
 
       {store && (

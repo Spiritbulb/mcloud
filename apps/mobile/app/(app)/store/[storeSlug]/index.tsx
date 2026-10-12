@@ -298,7 +298,7 @@ export default function TodayTab() {
       )}
 
       {store && (
-        <ProSheet visible={proOpen} slug={store.slug} onClose={() => setProOpen(false)} onSuccess={refreshStore} />
+        <ProSheet visible={proOpen} orgSlug={store.orgSlug} onClose={() => setProOpen(false)} />
       )}
     </SafeAreaView>
   )

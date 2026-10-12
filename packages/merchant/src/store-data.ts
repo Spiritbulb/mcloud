@@ -4,6 +4,8 @@
 // directly removes a full network round-trip on every settings page load.
 
 import { createClient } from '@mcloud/db/server'
+import { isPaidPlan } from './plans'
+import { getStorePlan } from './plans-server'
 
 export type StoreSettingsResult =
     | { error: 'forbidden' | 'not_found' | 'unknown'; data: null }
@@ -88,10 +90,15 @@ export async function getStoreSettingsData(
         }
     })
 
+    // `stores.is_pro` is a legacy cache that drifts; the plan comes from the subscription rows.
+    const plan = await getStorePlan(storeData.id)
+
     return {
         error: null,
         data: {
             ...storeData,
+            is_pro: isPaidPlan(plan),
+            plan,
             user: sessionUser ?? {
                 id: userId,
                 name: '',
@@ -146,6 +153,8 @@ export async function getStoreOverview(
         .select('id')
         .eq('store_id', storeId)
         .gte('created_at', monthStart)
+
+    const plan = await getStorePlan(storeId)
 
     const [
         { data: store },
@@ -320,7 +329,8 @@ export async function getStoreOverview(
                 currency: store.currency,
                 primary_color: (settings.primaryColor as string) ?? null,
                 theme: (settings.themeId as string) ?? null,
-                is_pro: store.is_pro ?? false,
+                is_pro: isPaidPlan(plan),
+                plan,
                 payments_enabled: mpesaEnabled || paypalEnabled || stripeEnabled,
                 mpesa_enabled: mpesaEnabled,
                 paypal_enabled: paypalEnabled,

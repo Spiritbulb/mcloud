@@ -3,7 +3,8 @@ import { CartProvider } from '@/contexts/CartContext'
 import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
 import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
-import { getLatestSubscription, getStoreRow, getStoreTheme } from '@/lib/store-queries'
+import { planHasFeature } from '@mcloud/merchant/plans'
+import { getStorePlanCached, getStoreRow, getStoreTheme } from '@/lib/store-queries'
 import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
 import { getNavPages } from '@/lib/pages'
@@ -15,20 +16,13 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 
-// Pure derivation mirrored from apps/web/lib/plans.ts (planFromActiveRow). The
-// storefront is a separate app with no dependency on apps/web, so this tiny
-// rule is inlined rather than imported: an active row on the 'pro' plan is
-// the only case that hides Menengai Cloud branding.
-function hideBrandingFromRow(row: { plan: string | null; status: string } | null | undefined): boolean {
-    return !!row && row.status === 'active' && row.plan === 'pro'
-}
-
 async function getStore(slug: string) {
     const store = await getStoreRow(slug)
     if (!store) return notFound()
 
-    const subRow = await getLatestSubscription(store.id)
-    return { ...store, hideBranding: hideBrandingFromRow(subRow) }
+    // Pro is the only plan that hides Menengai Cloud branding (PLAN_LIMITS.pro.features.removeBranding).
+    const plan = await getStorePlanCached(store.id)
+    return { ...store, hideBranding: planHasFeature(plan, 'removeBranding') }
 }
 
 

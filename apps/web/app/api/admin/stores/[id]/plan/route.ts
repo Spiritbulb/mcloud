@@ -24,19 +24,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             .eq('id', id)
         if (storeErr) return NextResponse.json({ error: storeErr.message }, { status: 500 })
 
-        const { data: existingSub } = await supabase
+        // An admin grant owns its own row: update this store's active admin grant, or add one.
+        // It never rewrites a paid (wallet) subscription row, which would corrupt billing history.
+        const { data: existingGrant } = await supabase
             .from('store_subscriptions')
             .select('id')
             .eq('store_id', id)
-            .order('created_at', { ascending: false })
+            .eq('provider', 'admin')
+            .eq('status', 'active')
             .limit(1)
-            .single()
+            .maybeSingle()
 
-        if (existingSub) {
-            await supabase
-                .from('store_subscriptions')
-                .update({ status: 'active', plan })
-                .eq('id', existingSub.id)
+        if (existingGrant) {
+            await supabase.from('store_subscriptions').update({ plan }).eq('id', existingGrant.id)
         } else {
             const { data: store } = await supabase
                 .from('stores')

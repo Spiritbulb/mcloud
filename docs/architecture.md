@@ -142,6 +142,23 @@ body is a raster image, and its size. See `lib/upload-key.ts`.
   (Azure OpenAI or Anthropic, with note chunks in `nuru_note_chunks`).
 - Neither is part of the npm workspaces; install inside each app.
 
+## Plans and billing
+
+A store's plan (`free`, `hobby`, `pro`) is decided in **one place**: `resolvePlan()` in
+`packages/merchant/src/plans.ts`, from the store's `store_subscriptions` rows (highest tier among rows
+that are `active` and not past `period_end`; an admin grant has no `period_end`). `getStorePlan(s)` in
+`plans-server.ts` loads the rows. Feature gates, the storefront's branding, the settings dashboard,
+the org pages and the billing page all go through it.
+
+`stores.is_pro` is a **legacy cache**. Do not read it to decide anything; it drifts (it is a boolean, so
+it cannot tell hobby from pro, and several writers set it independently).
+
+The only way a merchant upgrades is the org Billing page (`/org/{org}/billing`), which buys a plan from the
+org **wallet** through the `purchase_store_plan` database function. The mobile app has no in-app purchase;
+it sends people to that page. Platform admins can grant or revoke a plan in the admin console; a grant is
+its own `provider = 'admin'` subscription row. Google Play billing was removed; the
+`/api/mobile/stores/[slug]/subscribe` route remains only as a 410 for app builds already in the field.
+
 ## Other things in `apps/web`
 
 Servers (UpCloud) and the prepaid wallet (PalPluss top-ups, hourly billing), the Reach

@@ -2,6 +2,7 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
+import { effectiveSubscription } from '@mcloud/merchant/plans'
 import BillingClient from './billing-client'
 
 export default async function OrgBillingPage({
@@ -68,15 +69,25 @@ export default async function OrgBillingPage({
             .order('created_at', { ascending: false })
         : { data: [] as SubscriptionRow[] }
 
-    const latestSubByStore = new Map<string, SubscriptionRow>()
+    // Show the row that actually grants the plan (best active, unexpired); a newer pending or
+    // cancelled row must not hide it. With no active row, fall back to the latest for context.
+    const rowsByStore = new Map<string, SubscriptionRow[]>()
     for (const row of subs ?? []) {
-        if (!latestSubByStore.has(row.store_id)) latestSubByStore.set(row.store_id, row)
+        const list = rowsByStore.get(row.store_id) ?? []
+        list.push(row)
+        rowsByStore.set(row.store_id, list)
     }
 
-    const storesWithPlan = storeList.map((s) => ({
-        ...s,
-        subscription: latestSubByStore.get(s.id) ?? null,
-    }))
+    const storesWithPlan = storeList.map((s) => {
+        const rows = rowsByStore.get(s.id) ?? []
+        const effective = effectiveSubscription(rows)
+        return {
+            ...s,
+            // is_pro on the row is a legacy cache; derive it from the subscription instead.
+            is_pro: effective !== null,
+            subscription: effective ?? rows[0] ?? null,
+        }
+    })
 
     return (
         <BillingClient

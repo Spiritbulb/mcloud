@@ -1,3 +1,5 @@
+import { isPaidPlan } from '@mcloud/merchant/plans'
+import { getStorePlans } from '@mcloud/merchant/plans-server'
 import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
@@ -102,7 +104,10 @@ export default async function OrgHomePage({
         .map(m => m.store as any)
         .filter(s => s && s.org_id !== org.id)
 
-    const storeList = stores ?? []
+    // is_pro on the stores row is a legacy cache; the plan comes from the subscription rows.
+    const rawStores = stores ?? []
+    const storePlans = await getStorePlans(rawStores.map((s) => s.id))
+    const storeList = rawStores.map((s) => ({ ...s, is_pro: isPaidPlan(storePlans.get(s.id) ?? 'free') }))
     const memberList = members ?? []
     const serverList = servers ?? []
 

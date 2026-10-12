@@ -73,3 +73,31 @@ test('limitMessage has no dashes and names the plan and noun', () => {
   assert.equal(msg.includes('–'), false)
   assert.equal(msg.includes('—'), false)
 })
+
+test('resolvePlan: best active, unexpired row wins; newer inactive rows do not mask it', async () => {
+  const { resolvePlan, isPaidPlan } = await import('./plans.ts')
+  const now = new Date('2026-10-12T00:00:00Z')
+  assert.equal(resolvePlan([], now), 'free')
+  assert.equal(resolvePlan(null, now), 'free')
+  assert.equal(resolvePlan([{ plan: 'pro', status: 'active' }], now), 'pro')
+  // a newer pending/cancelled row does not hide an active one
+  assert.equal(resolvePlan([
+    { plan: 'pro', status: 'pending' }, { plan: 'hobby', status: 'cancelled' }, { plan: 'pro', status: 'active' },
+  ], now), 'pro')
+  // highest active tier wins regardless of order
+  assert.equal(resolvePlan([{ plan: 'hobby', status: 'active' }, { plan: 'pro', status: 'active' }], now), 'pro')
+  assert.equal(resolvePlan([{ plan: 'pro', status: 'active' }, { plan: 'hobby', status: 'active' }], now), 'pro')
+  // a lapsed active row grants nothing; no period_end never expires
+  assert.equal(resolvePlan([{ plan: 'pro', status: 'active', period_end: '2026-10-01T00:00:00Z' }], now), 'free')
+  assert.equal(resolvePlan([{ plan: 'pro', status: 'active', period_end: '2026-11-01T00:00:00Z' }], now), 'pro')
+  assert.equal(resolvePlan([{ plan: 'pro', status: 'active', period_end: null }], now), 'pro')
+  // expired Pro row, still-valid Hobby row
+  assert.equal(resolvePlan([
+    { plan: 'pro', status: 'active', period_end: '2026-10-01T00:00:00Z' },
+    { plan: 'hobby', status: 'active', period_end: '2026-11-01T00:00:00Z' },
+  ], now), 'hobby')
+  // unknown plan names are free
+  assert.equal(resolvePlan([{ plan: 'enterprise', status: 'active' }], now), 'free')
+  assert.equal(isPaidPlan('free'), false)
+  assert.equal(isPaidPlan('hobby'), true)
+})

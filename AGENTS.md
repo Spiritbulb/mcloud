@@ -115,6 +115,11 @@ turbo docs (see the managed block above) before changing `turbo.json`.
   one sanctioned HTML-injection path and it is store-owner content.
 - Never print, commit, or paste secret values (`.env*.local` and `.dev.vars` are gitignored). Use names only in docs.
 
+## Plans
+
+Decide a store's plan with `getStorePlan()` / `resolvePlan()` (`@mcloud/merchant`), never by reading `stores.is_pro`
+(a drifting legacy cache). The only upgrade path is org Billing (wallet-paid); there is no Google Play billing.
+
 ## Identity
 
 `AuthUser.id` is the WorkOS `externalId` when present (the legacy `auth0|…` id), otherwise the WorkOS

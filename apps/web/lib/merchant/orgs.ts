@@ -1,6 +1,8 @@
 // Shared, framework-agnostic merchant org logic.
 // Reusable from server actions and the mobile API (no Next-only calls).
 
+import { isPaidPlan } from '@mcloud/merchant/plans'
+import { getStorePlans } from '@mcloud/merchant/plans-server'
 import { createClient } from '@mcloud/db/server'
 import { canManage, type Role } from '@mcloud/merchant/stores'
 
@@ -115,6 +117,11 @@ export async function getPickerData(userId: string): Promise<PickerData> {
                 orgName: org?.name ?? null,
             }
         })
+
+    // is_pro on the stores rows is a legacy cache; derive it from the subscription rows.
+    const allStores = [...orgGroups.flatMap((g) => g.stores), ...otherStores]
+    const plans = await getStorePlans(allStores.map((s) => s.id))
+    for (const s of allStores) s.is_pro = isPaidPlan(plans.get(s.id) ?? 'free')
 
     return { orgs: orgGroups, otherStores }
 }

@@ -84,6 +84,52 @@ export function planFromActiveRow(
   return 'free'
 }
 
+export interface SubscriptionRow {
+  plan: string | null
+  status: string
+  period_end?: string | null
+}
+
+/**
+ * The store's effective tier from ALL its subscription rows: the highest plan among rows
+ * that are `active` and not past `period_end` (no period_end = no expiry, e.g. an admin
+ * grant). Unlike "the latest row", a newer pending/cancelled/expired row cannot mask an
+ * active one, and an old row that lapsed cannot keep granting a plan.
+ * This is the one place a store's plan is decided; `stores.is_pro` is only a legacy cache.
+ */
+export function resolvePlan(rows: readonly SubscriptionRow[] | null | undefined, now: Date = new Date()): Plan {
+  const row = effectiveSubscription(rows, now)
+  return row ? planFromActiveRow({ plan: row.plan, status: 'active' }) : 'free'
+}
+
+/**
+ * The subscription row that currently grants the store's plan (highest tier among active,
+ * unexpired rows; the most recent wins a tie), or null. The billing page shows this row so
+ * what it displays matches what resolvePlan enforces.
+ */
+export function effectiveSubscription<T extends SubscriptionRow>(
+  rows: readonly T[] | null | undefined,
+  now: Date = new Date(),
+): T | null {
+  let best: T | null = null
+  let bestRank = 0
+  for (const row of rows ?? []) {
+    if (row.status !== 'active') continue
+    if (row.period_end) {
+      const end = Date.parse(row.period_end)
+      if (Number.isFinite(end) && end <= now.getTime()) continue
+    }
+    const rank = RANK[planFromActiveRow({ plan: row.plan, status: 'active' })]
+    if (rank > bestRank) { best = row; bestRank = rank }
+  }
+  return best
+}
+
+/** True for any paid tier; the "unlocked" state the settings UI shows. */
+export function isPaidPlan(plan: Plan): boolean {
+  return plan !== 'free'
+}
+
 /** True when a finite limit has been reached or exceeded. Infinity is never over. */
 export function isOverLimit(count: number, limit: number): boolean {
   return Number.isFinite(limit) && count >= limit

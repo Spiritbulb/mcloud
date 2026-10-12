@@ -4,6 +4,8 @@
 // touch Next-only APIs (no revalidatePath, no cookies) so they're reusable from
 // route handlers. Callers that need cache revalidation do it themselves.
 
+import { isPaidPlan } from './plans'
+import { getStorePlan, getStorePlans } from './plans-server'
 import { createClient } from '@mcloud/db/server'
 import type { Json } from '@mcloud/db/types'
 import { isVerticalId } from '@mcloud/verticals'
@@ -139,7 +141,7 @@ export async function getStoreHub(slug: string, userId: string): Promise<StoreHu
             name: store.name,
             slug: store.slug,
             logo_url: store.logo_url ?? null,
-            is_pro: !!store.is_pro,
+            is_pro: isPaidPlan(await getStorePlan(store.id)),
             custom_domain: store.custom_domain ?? null,
             orgSlug: org?.slug ?? null,
             role,
@@ -172,7 +174,15 @@ export async function listOrgStores(orgSlug: string, userId: string): Promise<Or
         .eq('org_id', org.id)
         .order('created_at', { ascending: false })
 
-    return { error: null, orgId: org.id, stores: stores ?? [], role }
+    // is_pro is derived from subscription rows, not trusted from the stores column.
+    const list = stores ?? []
+    const plans = await getStorePlans(list.map((s) => s.id))
+    return {
+        error: null,
+        orgId: org.id,
+        stores: list.map((s) => ({ ...s, is_pro: isPaidPlan(plans.get(s.id) ?? 'free') })),
+        role,
+    }
 }
 
 /** Normalize a raw slug to the canonical lowercase-hyphen form. */

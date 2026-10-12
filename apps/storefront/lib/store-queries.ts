@@ -3,6 +3,7 @@
 // instead of one per caller. (Cross-request caching is a separate step.)
 import { cache } from 'react'
 import { createClient, getStore } from '@mcloud/db/server'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
 
 /** The store row by slug (any is_active state), or null. */
 export const getStoreRow = getStore
@@ -17,14 +18,5 @@ export const getStoreTheme = cache(async (storeId: string) => {
     return data
 })
 
-export const getLatestSubscription = cache(async (storeId: string) => {
-    const supabase = await createClient()
-    const { data } = await supabase
-        .from('store_subscriptions')
-        .select('plan, status')
-        .eq('store_id', storeId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
-    return data
-})
+/** The store's effective plan (best active, unexpired subscription), once per request. */
+export const getStorePlanCached = cache(async (storeId: string) => getStorePlan(storeId))

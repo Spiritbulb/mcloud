@@ -37,8 +37,7 @@ add it here.
 | `PARTNER_AUTH_SECRET` | `x-partner-secret` for `/api/partner/*` |
 | `CRON_SECRET` | Authenticates Vercel cron calls |
 | `REVIEW_ACCOUNT_EMAIL`, `REVIEW_ACCOUNT_PASSWORD` | Store-review test login for the mobile app |
-| `GOOGLE_SA_EMAIL`, `GOOGLE_SA_PRIVATE_KEY`, `GOOGLE_ADMIN_SUBJECT` | Google service account (Play Billing verification, beta Google Group) |
-| `GOOGLE_PLAY_HOBBY_SKU`, `GOOGLE_PLAY_PRO_SKU` | Play subscription SKUs |
+| `GOOGLE_SA_EMAIL`, `GOOGLE_SA_PRIVATE_KEY`, `GOOGLE_ADMIN_SUBJECT` | Google service account (adds testers to the beta Google Group) |
 | `BETA_GROUP_EMAIL`, `BETA_PLAY_OPT_IN_URL` | Closed-testing group and opt-in link |
 | `PALPLUSS_API_KEY`, `PALPLUSS_BASE_URL` | PalPluss (wallet top-ups, Reach payments) |
 | `UPCLOUD_API_TOKEN` | UpCloud (servers) |
@@ -60,4 +59,4 @@ add it here.
 
 ## Retired
 
-`AUTH0_*` is gone (Auth0 was removed). Delete any remaining copies from Vercel and local files.
+`AUTH0_*` is gone (Auth0 was removed). `GOOGLE_PLAY_HOBBY_SKU` and `GOOGLE_PLAY_PRO_SKU` (and the mobile `EXPO_PUBLIC_PLAY_*_SKU`) are gone with Google Play billing. Delete any remaining copies from Vercel and local files.
