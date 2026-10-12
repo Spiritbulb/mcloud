@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // PATCH /api/mobile/reach/vendor/products/[productId] — vendor edits their own product
 import { NextResponse, type NextRequest } from 'next/server'
 import { reachDb } from '@/lib/reach/db'

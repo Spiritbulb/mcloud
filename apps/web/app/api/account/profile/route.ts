@@ -1,3 +1,4 @@
+// @route-kind: session — acts only on the caller's own user row
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'

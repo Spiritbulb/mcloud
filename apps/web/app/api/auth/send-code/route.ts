@@ -1,3 +1,4 @@
+// @route-kind: public — web login: issues the session itself, rate-limited per email/IP
 // apps/web/app/api/auth/send-code/route.ts
 // POST /api/auth/send-code  { email }
 // Emails a one-time magic-code (WorkOS Magic Auth) for in-app web login. Always

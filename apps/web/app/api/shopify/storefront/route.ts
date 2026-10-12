@@ -1,3 +1,4 @@
+// @route-kind: public — proxy to a public Shopify Storefront token (no secrets); TODO restrict queries
 // app/api/shopify/storefront/route.ts
 import { NextResponse } from 'next/server';
 

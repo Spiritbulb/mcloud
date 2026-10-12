@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET  /api/mobile/stores/[slug]/orders — list recent orders
 // POST /api/mobile/stores/[slug]/orders — create a manual (in-person/cash) order
 import { NextResponse, type NextRequest } from 'next/server'

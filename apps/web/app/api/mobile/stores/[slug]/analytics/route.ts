@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/stores/[slug]/analytics?days=30 — analytics summary (RPC)
 import { NextResponse, type NextRequest } from 'next/server'
 import { getAnalytics } from '@/lib/merchant/store-sections'

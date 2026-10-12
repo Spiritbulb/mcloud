@@ -1,3 +1,4 @@
+// @route-kind: member
 // apps/web/app/api/org/[orgSlug]/servers/route.ts
 // GET  -> list this org's servers (DB mapping + live UpCloud state)
 // POST -> provision a new server for this org (owner/admin only)

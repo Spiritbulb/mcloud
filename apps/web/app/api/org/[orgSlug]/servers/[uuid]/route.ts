@@ -1,3 +1,4 @@
+// @route-kind: member
 // apps/web/app/api/org/[orgSlug]/servers/[uuid]/route.ts
 import { NextResponse, type NextRequest } from 'next/server'
 import { getSession } from '@mcloud/auth/server'

@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/notes — create a note and ingest it into the KB.
 // multipart/form-data: source ('text'|'file'|'photo'), title?, subject?,
 //   text? (for source='text'), file? (for 'file'|'photo').

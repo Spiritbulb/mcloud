@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // POST /api/mobile/auth/refresh  { refreshToken }
 // Unauthenticated by necessity (the access token may already be expired —
 // that's the whole reason this call exists). The refresh token IS the

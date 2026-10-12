@@ -1,3 +1,4 @@
+// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
 // app/api/store/[slug]/reviews/route.ts
 import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'

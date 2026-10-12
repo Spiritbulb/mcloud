@@ -1,3 +1,4 @@
+// @route-kind: public — public storefront read
 // app/api/store/[slug]/services/[serviceSlug]/route.ts
 // Public service-detail data. Replaces a client-side anon-key read of stores +
 // services. Services are public catalog content, so no auth — service-role read,

@@ -1,3 +1,4 @@
+// @route-kind: member
 // app/api/store/[slug]/analytics/route.ts
 
 import { getSession } from '@mcloud/auth/server'

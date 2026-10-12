@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/reach/orders/[orderId] — payment status for the buyer's own order.
 // The app polls this after the STK push. The webhook is the fast path; if it's been
 // quiet for 15s we ask PalPluss directly so a lost webhook never strands a payment.

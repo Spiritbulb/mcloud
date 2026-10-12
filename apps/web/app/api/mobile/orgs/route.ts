@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET  /api/mobile/orgs — orgs the authenticated mobile user belongs to.
 // POST /api/mobile/orgs — create a new org and add caller as owner.
 import { type NextRequest } from 'next/server'

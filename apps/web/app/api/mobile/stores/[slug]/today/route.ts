@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/stores/[slug]/today — combined unfulfilled orders + today's
 // analytics in one request. Replaces the two parallel fetches the Today tab was
 // making, cutting auth checks and Supabase round trips in half.

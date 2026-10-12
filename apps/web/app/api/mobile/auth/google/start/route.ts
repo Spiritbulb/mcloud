@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // POST /api/mobile/auth/google/start
 // Unauthenticated by necessity (this IS how login begins). Returns the WorkOS
 // authorization URL for the app to open in a browser. State is bound server-side

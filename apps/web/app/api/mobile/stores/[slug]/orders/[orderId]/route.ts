@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // PATCH /api/mobile/stores/[slug]/orders/[orderId] — update fulfillment status
 import { NextResponse, type NextRequest } from 'next/server'
 import { updateOrderStatus } from '@/lib/merchant/store-sections'

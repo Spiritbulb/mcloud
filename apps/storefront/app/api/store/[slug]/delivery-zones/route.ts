@@ -1,3 +1,4 @@
+// @route-kind: public — public storefront read
 // app/api/store/[slug]/delivery-zones/route.ts
 // Read-only list of a store's delivery zones for the checkout UI. Mirrors the
 // same zone shape/lookup the checkout route already trusts server-side.

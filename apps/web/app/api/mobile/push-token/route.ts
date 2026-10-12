@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/push-token — store the caller's Expo push token. Idempotent:
 // upsert on the token so a device re-registering refreshes its row + owner.
 import { NextResponse, type NextRequest } from 'next/server'

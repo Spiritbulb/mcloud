@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/auth/handoff  { refreshToken, redirectTo }
 //   header: Authorization: Bearer <accessToken>
 // mobile -> mcloud.co.ke web SSO handoff. Bearer-authed (no secret, since an app

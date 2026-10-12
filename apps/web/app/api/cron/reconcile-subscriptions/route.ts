@@ -1,3 +1,4 @@
+// @route-kind: cron
 // GET /api/cron/reconcile-subscriptions — daily Vercel Cron job.
 //
 // Re-verifies every active Google Play subscription against the Play API and sets

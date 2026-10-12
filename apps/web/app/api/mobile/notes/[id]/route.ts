@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/notes/[id] — one note (owner only) + a signed URL for the private original.
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'

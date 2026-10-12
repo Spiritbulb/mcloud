@@ -1,3 +1,4 @@
+// @route-kind: member
 // apps/web/app/api/org/[orgSlug]/wallet/balance/route.ts
 // GET -> current credit balance for the org, in cents and KES.
 import { NextResponse, type NextRequest } from 'next/server'

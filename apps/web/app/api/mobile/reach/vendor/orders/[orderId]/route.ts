@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // PATCH /api/mobile/reach/vendor/orders/[orderId] — vendor marks their part delivered.
 // Escrow: this moves their payout from 'held' to 'released' (owed to them, paid out manually).
 import { NextResponse, type NextRequest } from 'next/server'

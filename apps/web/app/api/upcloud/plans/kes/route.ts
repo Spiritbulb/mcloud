@@ -1,3 +1,4 @@
+// @route-kind: session — global hosting catalog, readable by any signed-in user
 // apps/web/app/api/upcloud/plans/kes/route.ts
 import { NextResponse } from 'next/server'
 import { getSession } from '@mcloud/auth/server'

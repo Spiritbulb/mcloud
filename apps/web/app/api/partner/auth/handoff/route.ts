@@ -1,3 +1,4 @@
+// @route-kind: partner
 // POST /api/partner/auth/handoff  { accessToken, refreshToken, redirectTo }
 //   header: x-partner-secret
 // spiritb.uk -> mcloud.co.ke SSO handoff (flow #2). Verifies the caller (partner

@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/reach/confirm-buyer
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser, fail } from '../../_lib'

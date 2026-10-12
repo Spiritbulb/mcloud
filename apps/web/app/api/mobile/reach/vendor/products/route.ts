@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/reach/vendor/products — the logged-in vendor's own products
 import { NextResponse, type NextRequest } from 'next/server'
 import { reachDb } from '@/lib/reach/db'

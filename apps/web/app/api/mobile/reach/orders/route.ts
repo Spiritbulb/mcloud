@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/reach/orders — create a pending order and fire the STK push.
 // The order only becomes 'paid' when PalPluss confirms (see /api/webhooks/palpluss/reach).
 // Prices always come from the database, never from the app.

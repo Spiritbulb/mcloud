@@ -1,3 +1,4 @@
+// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
 // app/api/store/[slug]/checkout/mpesa-code/route.ts
 // Attaches a customer-submitted M-Pesa transaction code to an already-created
 // order (the second half of the manual M-Pesa flow). Server-side so the browser

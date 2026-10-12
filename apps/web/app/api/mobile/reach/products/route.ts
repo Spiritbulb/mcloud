@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/reach/products — active Reach products with vendor, stock and buyer price
 import { NextResponse, type NextRequest } from 'next/server'
 import { reachDb } from '@/lib/reach/db'

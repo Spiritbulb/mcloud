@@ -1,3 +1,4 @@
+// @route-kind: public — public storefront read
 // app/api/store/[slug]/gallery/route.ts
 // Serves TBS's gallery from Supabase Storage — images were downloaded once
 // via the connect-google-photos.mjs script and uploaded to the store-assets

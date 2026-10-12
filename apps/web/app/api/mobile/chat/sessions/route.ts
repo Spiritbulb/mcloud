@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET  → the user's chat sessions (only those with ≥1 message), newest first.
 // POST → create an empty session, return its id ("New chat").
 // Auth: mobile bearer; every query scoped to auth.user.id.

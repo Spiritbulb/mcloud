@@ -1,3 +1,4 @@
+// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
 // app/api/store/[slug]/checkout/route.ts
 // Server-authoritative checkout. Replaces the browser creating customers/orders/
 // order_items directly with the anon key — which let a client set ANY price/total

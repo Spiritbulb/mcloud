@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET   /api/mobile/stores/[slug]/branding — read branding
 // PATCH /api/mobile/stores/[slug]/branding — update name/logo/description (owner/admin)
 import { NextResponse, type NextRequest } from 'next/server'

@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // POST /api/mobile/auth/google/redeem  { ticket }
 import { NextResponse, type NextRequest } from 'next/server'
 import { fail } from '../../../_lib'

@@ -1,3 +1,4 @@
+// @route-kind: session — acts only on the caller's own user row
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
@@ -15,7 +16,7 @@ export async function GET(request: NextRequest) {
         .single()
 
     if (error || !user) {
-        // Fall back to Auth0 claims if the users row doesn't exist yet
+        // Fall back to the session user's claims if the users row doesn't exist yet
         return NextResponse.json({
             id: session.user.id,
             name: session.user.name ?? 'Account',

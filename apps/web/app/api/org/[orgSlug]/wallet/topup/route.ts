@@ -1,3 +1,4 @@
+// @route-kind: member
 // apps/web/app/api/org/[orgSlug]/wallet/topup/route.ts
 // POST -> start an M-Pesa STK Push to add credits to the org's wallet.
 // The wallet is only credited once the PalPluss webhook confirms SUCCESS —

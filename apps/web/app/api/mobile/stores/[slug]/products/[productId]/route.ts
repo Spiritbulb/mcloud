@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // PATCH  /api/mobile/stores/[slug]/products/[productId] — update (owner/admin)
 // DELETE /api/mobile/stores/[slug]/products/[productId] — delete (owner/admin)
 import { NextResponse, type NextRequest } from 'next/server'

@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/reach/vendor/verify-key — check a store key (read-only).
 // Linking a user to a vendor happens in reach_confirm_vendor (your confirm-vendor endpoint),
 // not here. Returns 200 { session: null } for a wrong key.

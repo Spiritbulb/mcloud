@@ -1,3 +1,4 @@
+// @route-kind: public — public beta signup, rate-limited per email/IP, called cross-origin
 // POST /api/beta/join  { email, source? }
 // Public, cross-origin endpoint that adds an email to the beta@spiritbulb.org
 // Google Group (wired to Play Console closed testing) and returns the Play

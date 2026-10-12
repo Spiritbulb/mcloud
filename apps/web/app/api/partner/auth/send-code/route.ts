@@ -1,3 +1,4 @@
+// @route-kind: partner
 // POST /api/partner/auth/send-code  { email }   (header: x-partner-secret)
 // Partner (spiritb.uk) counterpart to /api/mobile/auth/send-code. Emails a
 // one-time magic-code (WorkOS Magic Auth). Gated by the partner shared secret

@@ -1,3 +1,4 @@
+// @route-kind: member
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { NextRequest, NextResponse } from 'next/server'

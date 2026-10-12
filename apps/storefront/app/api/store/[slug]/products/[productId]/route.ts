@@ -1,3 +1,4 @@
+// @route-kind: public — public storefront read
 // app/api/store/[slug]/products/[productId]/route.ts
 // Minimal public product details for client components/external apps that need
 // to display a product's name/price/image without going through the full

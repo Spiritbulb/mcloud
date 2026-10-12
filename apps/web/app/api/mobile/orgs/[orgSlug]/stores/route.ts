@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET  /api/mobile/orgs/[orgSlug]/stores — list stores in an org (member only).
 // POST /api/mobile/orgs/[orgSlug]/stores — create a store (owner/admin only).
 //

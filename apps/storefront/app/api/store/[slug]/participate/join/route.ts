@@ -1,3 +1,4 @@
+// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
 // app/api/store/[slug]/participate/join-request/route.ts
 // Non-members submitting interest in TBS — no payment, no order. Just a
 // record for the team to follow up on manually.

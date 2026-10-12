@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // GET /api/mobile/auth/google/callback
 import { NextResponse, type NextRequest } from 'next/server'
 import { User, WorkOS } from '@workos-inc/node'

@@ -1,3 +1,4 @@
+// @route-kind: customer
 // app/api/store/[slug]/account/route.ts
 // Customer account dashboard data + profile/address updates, server-side. Replaces
 // direct anon-key reads/writes from the browser that were authorized only by a

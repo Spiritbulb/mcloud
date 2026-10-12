@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/reach/vendor/orders — paid orders containing this vendor's items.
 // `total` is what the vendor gets for the order (their prices, no markup or fee), and
 // `fulfillment_status` reflects this vendor's own delivery, not the whole order's.

@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET   /api/mobile/stores/[slug]/mpesa — read manual M-Pesa config
 // PATCH /api/mobile/stores/[slug]/mpesa — update manual fields (owner/admin)
 // Auto/Daraja stays on the web.

@@ -1,3 +1,4 @@
+// @route-kind: public — web login: issues the session itself, rate-limited per email/IP
 // apps/web/app/api/auth/verify/route.ts
 // POST /api/auth/verify  { email, code, returnTo? }
 // Verifies an emailed magic-code and sets the authkit session cookie via the

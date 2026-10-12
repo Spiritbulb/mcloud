@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET    /api/mobile/stores/[slug]/hub — single store + the viewer's role.
 // DELETE /api/mobile/stores/[slug]/hub — delete the store (owner only). The body
 //        must echo { confirm: "<exact store name>" } as a server-side safety gate.

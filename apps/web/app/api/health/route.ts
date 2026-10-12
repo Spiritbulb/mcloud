@@ -1,3 +1,4 @@
+// @route-kind: public — liveness probe
 export async function GET() {
     return new Response(JSON.stringify({ status: 'ok' }), { status: 200 })
 }

@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // GET /api/mobile/picker — the mobile home payload: the user's orgs (each with
 // their stores) + "other workspace" stores they manage elsewhere. Mirrors the
 // web org-page model. Bearer-authed.

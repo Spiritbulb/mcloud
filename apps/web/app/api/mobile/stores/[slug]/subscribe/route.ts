@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/stores/[slug]/subscribe — verify a Google Play subscription
 // purchase and grant the store Pro. Bearer-authed (WorkOS access token).
 //

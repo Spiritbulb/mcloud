@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // POST /api/mobile/upload — upload an image from the mobile app to Supabase Storage.
 // Accepts multipart/form-data: { file, bucket, path }
 // Returns { url: string } — the public URL of the uploaded file.

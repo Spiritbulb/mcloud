@@ -1,3 +1,4 @@
+// @route-kind: public — public storefront read
 // app/api/store/[slug]/info/route.ts
 // Minimal public store info for client components that previously read `stores` /
 // `store_themes` directly with the anon key (e.g. the cart page resolving its

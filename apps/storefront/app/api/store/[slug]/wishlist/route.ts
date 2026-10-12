@@ -1,3 +1,4 @@
+// @route-kind: customer
 // app/api/store/[slug]/wishlist/route.ts
 // Server-mediated wishlist. Replaces direct anon-key table access from the
 // browser (WishlistContext). All DB work uses the service-role client and is

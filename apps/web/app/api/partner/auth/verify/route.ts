@@ -1,3 +1,4 @@
+// @route-kind: partner
 // POST /api/partner/auth/verify  { email, code }   (header: x-partner-secret)
 // Partner (spiritb.uk) counterpart to /api/mobile/auth/verify. Exchanges an
 // emailed magic-code for the WorkOS token pair and provisions the users row.

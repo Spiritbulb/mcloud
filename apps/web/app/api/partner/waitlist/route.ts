@@ -1,3 +1,4 @@
+// @route-kind: partner
 // POST /api/partner/waitlist  { email, product, wantsUpdates? }   (header: x-partner-secret)
 // Partner (spiritb.uk) counterpart for the ecosystem waitlist. Upserts into
 // the waitlist table tagged by product, sends a confirmation via Resend.

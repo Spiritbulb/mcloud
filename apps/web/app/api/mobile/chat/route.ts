@@ -1,3 +1,4 @@
+// @route-kind: mobile
 // /api/mobile/chat — tool-calling chat over the student's notes + general knowledge.
 // POST { text, contextNoteIds? }: streams live status (thinking/searching_notes/
 //   writing) then a final message. The model calls search_notes on demand (Azure

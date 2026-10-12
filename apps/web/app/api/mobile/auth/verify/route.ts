@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // POST /api/mobile/auth/verify  { email, code }
 // Exchanges an emailed magic-code for the WorkOS token pair (the same access +
 // refresh JWTs the mobile app already stores and that /api/mobile/* verify via

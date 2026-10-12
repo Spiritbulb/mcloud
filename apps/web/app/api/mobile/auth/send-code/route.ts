@@ -1,3 +1,4 @@
+// @route-kind: public — mobile login/token exchange: issues or refreshes the bearer token itself
 // POST /api/mobile/auth/send-code  { email }
 // Emails a one-time magic-code to `email` (WorkOS Magic Auth). This is one of the
 // only two UNAUTHENTICATED mobile routes — it mints the login. It always responds

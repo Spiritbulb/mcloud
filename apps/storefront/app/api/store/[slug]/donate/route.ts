@@ -1,3 +1,4 @@
+// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
 // app/api/store/[slug]/donate/route.ts
 // Server-authoritative donation. A donation is a checkout with ONE synthetic
 // line at the donor-chosen amount, validated against the campaign (which lives
