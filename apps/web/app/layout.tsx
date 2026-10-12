@@ -66,7 +66,7 @@ export const viewport: Viewport = {
   // reads `prefers-color-scheme` + `[data-theme]` to pick the real colors.
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#FCFCFF" },
-    { media: "(prefers-color-scheme: dark)", color: "#1A1C1E" },
+    { media: "(prefers-color-scheme: dark)", color: "#0C0D0E" },
   ],
 };
 

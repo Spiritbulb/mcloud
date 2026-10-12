@@ -16,10 +16,10 @@ import { useTheme } from "next-themes"
 // These MUST match the `--background` token in globals.css so the status bar
 // blends into the app surface (no seam). Keep in sync if --background changes:
 //   light :root  --background: 252 252 255  -> #FCFCFF
-//   .dark        --background:  26  28  30  -> #1A1C1E
+//   .dark        --background:  12  13  14  -> #0C0D0E
 const COLORS = {
   light: "#FCFCFF",
-  dark: "#0f1011",
+  dark: "#0C0D0E",
 } as const
 
 export function ThemeColorSync() {

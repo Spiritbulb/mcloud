@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useTheme } from 'next-themes'
+import { ThemedLogo } from '@mcloud/ui/themed-logo'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { cn } from '@mcloud/ui/utils'
@@ -219,11 +219,7 @@ function SidebarShell({
     railMode: boolean
     onToggleRail: () => void
 }) {
-    const { resolvedTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
 
-    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
 
     return (
         <aside className={cn(
@@ -238,7 +234,7 @@ function SidebarShell({
             )}>
                 {!railMode && (
                     <Link href="/org" className="flex items-center shrink-0">
-                        <img src={src} alt="Logo" className="w-auto h-5" />
+                        <ThemedLogo className="w-auto h-5" />
                     </Link>
                 )}
                 <div className="flex items-center">
@@ -339,11 +335,7 @@ export function MobileOrgNav({
     onOpen: () => void
     onClose: () => void
 }) {
-    const { resolvedTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
 
-    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
 
     const touchStartX = useRef<number | null>(null)
     const touchStartY = useRef<number | null>(null)
@@ -416,7 +408,7 @@ export function MobileOrgNav({
             >
                 <div className="flex items-center justify-between px-4 py-3">
                     <Link href="/org" className="flex items-center shrink-0">
-                        <img src={src} alt="Logo" className="w-auto h-5" />
+                        <ThemedLogo className="w-auto h-5" />
                     </Link>
                     <button
                         onClick={onClose}

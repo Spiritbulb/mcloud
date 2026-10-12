@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
+import { ThemedLogo } from '@mcloud/ui/themed-logo'
 import { cn } from '@mcloud/ui/utils'
 import {
     DropdownMenu,
@@ -324,10 +325,6 @@ export function SidebarBody({
     showClose?: boolean
     onClose?: () => void
 }) {
-    const { resolvedTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
-    const logoSrc = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
 
     return (
         <aside className={cn(
@@ -342,7 +339,7 @@ export function SidebarBody({
             )}>
                 {!railMode && (
                     <Link href="/admin" className="flex items-center shrink-0">
-                        <img src={logoSrc} alt="Menengai Cloud" className="w-auto h-5" />
+                        <ThemedLogo className="w-auto h-5" />
                     </Link>
                 )}
                 <div className="flex items-center">

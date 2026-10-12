@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useTheme } from 'next-themes'
+import { ThemedLogo } from '@mcloud/ui/themed-logo'
 import { cn } from '@mcloud/ui/utils'
 import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import Link from 'next/link'
@@ -584,11 +584,7 @@ function SidebarShell({
     notificationCount?: number
     orgSlug: string
 }) {
-    const { resolvedTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
 
-    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
 
     return (
         <aside className={cn(
@@ -602,7 +598,7 @@ function SidebarShell({
                 railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
             )}>
                 <button onClick={onToggleRail} className="flex items-center shrink-0">
-                        <img src={src} alt="Logo" className="w-auto h-5" />
+                        <ThemedLogo className="w-auto h-5" />
                 </button>
                 {!railMode && (
                   <div className="flex items-center">
@@ -716,8 +712,6 @@ export function MobileSettingsNav({
 }) {
     const handleSelect = (id: TabId) => { onSelect(id); onClose() }
     const handleSubSelect = (id: string) => { onSelectSubTab(id); onClose() }
-    const { resolvedTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
 
     // Panel swipe-to-close gesture state
     const touchStartX = useRef<number | null>(null)
@@ -729,9 +723,7 @@ export function MobileSettingsNav({
     const tabTouchStartX = useRef<number | null>(null)
     const [tabDragX, setTabDragX] = useState(0)
 
-    useEffect(() => setMounted(true), [])
 
-    const src = !mounted || resolvedTheme === 'light' ? '/logo-dark.svg' : '/logo-light.svg'
 
     // ── Chevron tab handlers (swipe right to open) ────────────────────────────
     const handleTabTouchStart = (e: React.TouchEvent) => {
@@ -830,7 +822,7 @@ export function MobileSettingsNav({
                 {/* Header */}
                 <div className="flex items-center justify-between px-4 py-3">
                     <Link href={webUrl('/')} className="flex items-center shrink-0">
-                        <img src={src} alt="Logo" className="w-auto h-5" />
+                        <ThemedLogo className="w-auto h-5" />
                     </Link>
                     <button
                         onClick={onClose}
