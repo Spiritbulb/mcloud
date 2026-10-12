@@ -46,7 +46,7 @@ Anyone can write arbitrary keys. The storefront copy now requires a session; web
 still does not. Callers in web: `lib/upload.ts` (which is itself unused, see 2.1). Delete
 the route and `lib/upload.ts`, or add the same session check.
 
-### 1.3 Reflective CORS with credentials on every web `/api/*` response *(verified in code)*
+### 1.3 ~~Reflective CORS with credentials on every web `/api/*` response~~ *(fixed: `Allow-Credentials` dropped, `Vary: Origin` added; origin is still reflected, which is safe without credentials)*
 `apps/web/proxy.ts` (`Access-Control-Allow-Origin: <request Origin>` +
 `Allow-Credentials: true`) for every `/api/*` path except `/api/auth/*`. Any website a
 signed-in merchant visits can call cookie-authenticated web APIs and read the response.
@@ -61,6 +61,8 @@ itself; it is why 1.1 and 1.2 are dangerous. Medium-term: split `createAdminClie
 (explicit, rare) from an RLS-respecting client for user-scoped reads.
 
 ### 1.5 Unauthenticated routes: review each
+*Reviewed:* `webhooks/palpluss` (wallet top-up) **was crediting the amount in the unauthenticated body**; it now re-fetches the transaction from PalPluss and uses that status/amount (fixed). `webhooks/palpluss/reach` already re-fetched. `partner/waitlist` is gated by `x-partner-secret`. `beta/join` and `health` are public by design (rate-limited / trivial). Still open: `payments/mpesa/callback` (Safaricom sends no signature; it matches on `CheckoutRequestID`, consider also checking the paid amount against the order total), `payments/mpesa/status` (leaks status and receipt code to anyone holding an order id), `shopify/storefront` (open GraphQL proxy to a public Storefront token, restrict queries or add auth).
+Original scan:
 Routes under `apps/web/app/api` with no session / signature / secret reference in the
 file (scan result, may be false positives where the check is in a helper):
 `shopify/storefront`, `health`, `partner/waitlist`, `webhooks/palpluss`,
@@ -69,6 +71,32 @@ file (scan result, may be false positives where the check is in a helper):
 at least require the checkout id. Also review the storefront
 `api/store/[slug]/integrations` **GET**, which is public by design (returns non-secret
 flags) but also returns arbitrary non-secret config fields.
+
+### 1.7 API route audit *(heuristic scan + manual read of the risky ones)*
+99 API route files (web 69, storefront 30). By how each authenticates:
+
+| Kind | Count | Notes |
+|---|---|---|
+| Mobile bearer (`requireMobileUser` + `requireStoreAccess`/`canManage`) | ~37 | Good pattern: one shared helper, store access checked per route. |
+| WorkOS session + membership (settings API, org, account) | ~25 | Fine. Admin routes (`admin/*`, `docs`) each re-implement the `users.role === 'admin'` check by hand (4 copies): extract `requireAdmin()`. |
+| Partner secret / cron secret | 5 | `requirePartnerSecret` fails closed. |
+| Public by design (store info, gallery, delivery zones, products, services, health) | ~10 | No cache headers (see perf notes). |
+| Customer-session (shopper) | account, wishlist, reviews | `account` correctly scopes to the verified customer. |
+| Unauthenticated money paths (checkout, mpesa, paypal, donate, webhooks) | ~17 | See below. |
+
+**Findings, highest first:**
+
+1. ~~**Payment amounts are not tied to the order**~~ **fixed** (see `docs/payments.md`): stk-push, create-order and capture-order now work from the stored order; the Daraja callback and PayPal capture refuse underpayment; orders are looked up by store + order number (previously by `id`, which the client never sent). Shared rules in `packages/merchant/src/payments.ts` with tests. **Verify a live STK and PayPal payment after deploying.** Original finding:
+   - `api/store/[slug]/payments/mpesa/stk-push` (and web's copy) takes `orderId` and `amount` from the request body, never checks the order belongs to the store, and never compares `amount` to `orders.total`. The Daraja callback then sets the order `paid` from `CheckoutRequestID` alone without comparing the paid amount to the total. A buyer can place a large order and pay KES 1 for it. The same route lets anyone send STK prompts for any amount to any phone using the merchant's shortcode.
+   - `payments/paypal/create-order` prices the PayPal order from client-sent `items[].price` / `totalKES`; `capture-order` marks the order `paid` without comparing the captured amount to the order total. It is also a state-changing **GET**.
+   - `checkout/route.ts` is correct (it recomputes every price server-side). Fix: have stk-push and create-order load the order by id **and** store, use `orders.total`, reject non-pending orders; have both settlement paths compare paid vs total before marking `paid`.
+2. ~~**`apps/storefront/app/api/upload` lets any signed-in user write any R2 key.**~~ **fixed**: keys must be `<bucket>/<storeId>/…`, the caller must manage that store, raster images only, 5 MB max (`lib/upload-key.ts`, tested). The editor image picker and gallery previously wrote to store-less keys (`store-assets/theme/…`, `__storeId__/…`), shared across tenants; both now include the store id. Original finding: It checks a session only: no store membership, no key namespace (`stores/{id}/…`), no size or content-type limit. Any merchant can overwrite another store's logo or product images. Fix: require `?store=` plus `requireStoreAccess`, and prefix and validate the key server-side.
+3. **`payments/mpesa/test-credentials`** needs only a session; it is a harmless oracle against Safaricom's sandbox but should rate-limit.
+4. **Unscoped `mpesa/status`, open `shopify/storefront` proxy**: see 1.5.
+5. ~~**No uniform shape.**~~ **Partly done:** every route now declares a `@route-kind` that a test checks against the gate it calls (`docs/api.md`); the four copy-pasted admin checks are `requireAdmin()`. Error shapes, validation (no schema library yet) and rate limiting are still per-route.
+6. **`/api/docs` wrote with the browser (anon-key) client.** Fixed to use the service-role client behind `requireAdmin()`. **Check RLS on `docs_pages`:** if anon could write there, anyone with the public key could edit the docs.
+7. **`store/[slug]/integrations` GET** exposed every non-secret config field to anonymous callers (denylist). It now returns an allowlist to shoppers and the full non-secret view to store managers (`lib/integration-public.ts`).
+8. Checkout still calls `pesapal` and `intasend` endpoints that do not exist.
 
 ### 1.6 Production env has Auth0 secrets
 `apps/web/.env.local` (pulled from Vercel) still contains `AUTH0_*`. Remove from the
@@ -80,7 +108,7 @@ hygiene item, not a leak, but check no copy exists in git history:
 
 ## 2. P1: dead code left by the move
 
-### 2.1 Unreferenced files in `apps/web` *(import-graph scan; verify each)*
+### 2.1 ~~Unreferenced files in `apps/web`~~ *(done: removed `picker-client`, `auth/actions`, `feature-steps`, `login-form`, `logout-button`, `page-loading`, `store-carousel`, `upsell`, `support/ticket-list`, `playful-todolist`, `use-blog`, `lib/{auth/intent,beta-email,liquid,payment-config,pro-gate}`; kept `theme-provider`/`theme-color-sync` (used by the root layout); the `scripts/verify-*` manual scripts remain)* — original list:
 Not imported by anything in the app (entry files, tests and framework files excluded):
 
 ```
@@ -99,7 +127,7 @@ scripts/verify-google-jwt.ts   scripts/verify-google-play.ts   (manual scripts, 
 Verify: for each, `grep -rn "<name>" apps packages` (also check `next.config`, scripts,
 docs). Delete in batches and run `tsc --noEmit` + a web build after each batch.
 
-### 2.2 Unreferenced files in `apps/storefront`
+### 2.2 ~~Unreferenced files in `apps/storefront`~~ *(done: removed `Storefront`, `blog`, `StoreSettingsAppearance`, `blog/{list-shell,post-shell,list-inner,post-inner}`. **Kept** `MdxContent` and `animate-ui/.../buttons/copy`: `packages/themes` imports them by relative path, see 2.9. `appearance-settings` is used by the appearance page.)* — original list:
 ```
 components/MdxContent.tsx   components/animate-ui/components/buttons/copy.tsx
 components/store/Storefront.tsx   components/store/blog.tsx
@@ -135,13 +163,16 @@ now depends on which app handles the request. Consolidate into `@mcloud/merchant
 (the storefront ones are used by the mpesa callback and mpesa-code checkout routes). Also
 `apps/web/lib/liquid.ts` vs `packages/liquid`; `apps/web/app/api/upload` vs the storefront one.
 
+### 2.9 `packages/themes` imports from `apps/storefront` *(new)*
+`packages/themes/src/classic/{ProductDetailPage,CheckoutPage,ServiceDetailsPage,ProductsPage,ReviewsSection,CartPage}.tsx` import `MdxContent`, `WishlistButton`, `CopyButton`, `CartContext`, `CustomerAuthContext` and `lib/currency` from `apps/storefront` with `../../../../apps/storefront/...`. A package depending on an app inverts the layering and is why 2.2's "unused" scan was wrong for two files. Move those modules into `packages/themes` (or a new shared package) and import them normally.
+
 ### 2.7 Duplicate stylesheet
 `apps/storefront/app/(merchant)/globals.css` is a ~1000-line copy of
 `apps/web/app/globals.css`. Move the shared tokens into a package (for example
 `packages/ui/src/theme.css`) and `@import` it from both. Until then, token changes must
 be made twice. Also copied: the no-flash theme script and font setup in the root layouts.
 
-### 2.8 Unused dependencies *(name-grep scan; verify each)*
+### 2.8 ~~Unused dependencies~~ *(done, verified with a repo-wide scan, `tsc` and both production builds; `react-icons` was kept because the storefront uses it. Caveat found: a scan scoped to one app wrongly flags deps used by another, so scan the whole repo.)* — original list:
 `apps/web`: `@auth0/nextjs-auth0`, `@codemirror/lang-markdown`, `@uiw/react-codemirror`,
 `@uiw/react-md-editor`, `react-markdown`, `react-dropzone`, `@mcloud/verticals`,
 `@ngrok/ngrok`, `@playwright/test`, `@supabase/ssr`, `class-variance-authority`, `clsx`,
@@ -162,7 +193,7 @@ the builds. Also apply `npm dedupe` afterwards.
 
 ## 3. P1: infrastructure and config
 
-### 3.1 Storefront `Dockerfile` copies the wrong static assets *(verified)*
+### 3.1 ~~Storefront `Dockerfile` copies the wrong static assets~~ *(fixed: correct static path; both Dockerfiles now copy every workspace manifest for `npm ci`. Not build-tested; Dockerfiles still use Node 22 while CI uses 24.)*
 Line 25 copies `apps/web/.next/static` into the storefront image; it should be
 `apps/storefront/.next/static`. The deps stage also copies only
 `apps/storefront/package.json` while the lockfile spans all workspaces. `npm ci` will
@@ -170,35 +201,36 @@ likely fail; copy all workspace manifests or use `turbo prune`. `public/` now ex
 (logos) so line 26 stops being a no-op. Still unused (Vercel deploys), so low urgency, but
 it will bite when Dokploy happens.
 
-### 3.2 Cloudflare leftovers
+### 3.2 ~~Cloudflare leftovers~~ *(done: `wrangler.jsonc` removed; the dependencies were already gone)*
+Original:
 `apps/web/wrangler.jsonc` (OpenNext / Workers) and `.open-next` references: both apps
 deploy to Vercel. Remove the file and any `@opennextjs/cloudflare` / `wrangler`
 dependencies and scripts if unused.
 
 ### 3.3 `turbo.json`
-- No `test` task; none of the packages define a `test` script. Add one per package
-  (`node --test`) and a root task.
+- ~~No `test` task~~ added (`test`, `typecheck` tasks and per-package scripts).
 - Build `env` list is long and partly stale (`APP_BASE_URL`, `API_BASE_URL`,
   `TRADING_VERCEL_*`, `DESKTOP_*`); prune to what each app reads, then split per-app
   using package-level `turbo.json` so a change to a web-only var does not invalidate the
   storefront cache. Remember `NEXT_PUBLIC_*` variables are inlined at build time:
   changing one needs a redeploy.
-- `lint` has `dependsOn: ["^lint"]`; packages have no lint scripts, so this is a no-op.
+- ~~`lint` `dependsOn`~~ removed. Dead env names (`APP_BASE_URL`, `API_BASE_URL`, `DESKTOP_*`, `GOOGLE_CLIENT_*`, `DOCS_ADMIN_PASSPHRASE`, `PALPLUSS_API_TOKEN`, `PAYSTACK_SECRET_KEY`, `UPCLOUD_API_KEY`, `AUTH0_*`) pruned; per-app env split still open.
 - Per AGENTS.md, read the installed turbo docs before editing.
 
-### 3.4 Lint is broken in both apps *(verified)*
+### 3.4 ~~Lint is broken in both apps~~ *(fixed: subpath imports fixed, ESLint pinned to 9 because ESLint 10 breaks `eslint-plugin-react`, storefront got a config and `eslint` script. 0 errors; ~400 warnings remain as the baseline: `no-explicit-any`, new React-compiler hook rules, `@ts-ignore`. Tighten them to errors as they are cleared.)* — original:
 - Web: `eslint.config.mjs` imports `eslint-config-next/core-web-vitals.js`, which the
   installed version no longer exports (`ERR_PACKAGE_PATH_NOT_EXPORTED`).
 - Storefront: script is `next lint`, which Next 16 removed, and there is no ESLint config.
 Fix both (flat config with `eslint-config-next`), then add `lint` to CI.
 
-### 3.5 No CI except `android-build.yml`
+### 3.5 ~~No CI except `android-build.yml`~~ *(partly done: `.github/workflows/ci.yml` runs `typecheck lint test` on PRs and main. It does not run `next build` (needs env vars + fonts); add that once self-hosted fonts or dummy envs exist.)*
+Original:
 Add a workflow running, on PRs: `npm ci`, `turbo run build` (with dummy envs and a font
 stub or network access), `tsc --noEmit` for each app, and `node --test` for the unit
 tests. Today nothing verifies a PR. Note `next build` fetches Google Fonts for both root
 layouts; CI needs network or self-hosted fonts (`next/font/local`).
 
-### 3.6 Failing unit tests *(verified)*
+### 3.6 ~~Failing unit tests~~ *(fixed: `scripts/run-tests.mjs` + `scripts/ts-resolve.mjs` run every `*.test.ts` per workspace via `npm test`; 7 stale tests updated to current product behaviour (services section, NGO seed, hero image toolbar, empty all-products, nav). `turbo run test` is green.)* — original:
 `packages/merchant/src/seed-pages.test.ts`, `apps/storefront/lib/theme-schema.test.ts`
 and `content-draft.test.ts` fail under plain `node --test` because of extensionless
 imports (and `@mcloud/verticals` has extensionless internal imports). Either use explicit
@@ -221,6 +253,9 @@ treats brackets as globs. All 32 editor/actions tests pass.
 ---
 
 ## 4. P1: removing Auth0
+
+**Done in code:** `providers/auth0.ts`, the `@auth0/nextjs-auth0` dependencies, `AUTH0_*` in `turbo.json`, and Auth0 wording in comments. **Still open:** the one-time migration scripts (keep until migration is confirmed), the `ensureLinked()` / `auth0|` identity mapping (needs the unlinked-user count from production), and removing `AUTH0_*` from the Vercel projects and `apps/web/.env.local`.
+
 
 Auth0 is no longer the active provider (`packages/auth/src/index.ts` exports WorkOS).
 References to remove:
@@ -339,3 +374,28 @@ For each batch: `npx tsc --noEmit` in `apps/web` and `apps/storefront`, the buil
 (`npx next build --webpack` in each; fonts need network), the unit tests, and a manual
 pass: sign in, open settings, save a setting, upload an image, add a domain, open the
 org hub from settings and back.
+
+---
+
+## 9. Session log: what the first cleanup pass changed
+
+Security: CORS credentials dropped; PalPluss wallet webhook re-verifies with PalPluss; payment routes priced and
+verified from the stored order (§1.7); upload scoped to the store; integrations GET allowlisted; `/api/docs` uses
+the right client; admin routes share `requireAdmin()`; every API route declares and is checked against a kind.
+
+Hygiene: ~25 orphan files and ~50 unused dependencies removed; Auth0 code and deps removed; lint repaired (ESLint 9);
+CI added; tests runnable (`npm test`) and 7 stale tests updated; Dockerfiles fixed; `wrangler.jsonc` removed;
+dead `turbo.json` env names pruned; service worker disabled in dev.
+
+Performance: store layout/metadata/home share one store, theme and subscription query per request; featured
+products query fixed (`collections!inner`); view counting moved to `after()` and skips previews; `images.remotePatterns`
+no longer allows every https host.
+
+Docs: README, `docs/{architecture,api,payments,environment}.md`, package READMEs, a manifest-sync test, AGENTS.md.
+
+Still open, in rough priority: verify payments in production (§1.7 and `docs/payments.md`); `use cache` + tag
+invalidation for public store pages (then CDN caching for the public read routes, which are `no-store` today); move the
+remaining store pages (`products`, `blog`, `services`, `p/[pageSlug]`) onto `lib/store-queries.ts`; `packages/themes` →
+`apps/storefront` imports (§2.9); consolidate duplicated payment routes and `lib/merchant/*` (§2.5–2.6);
+shared stylesheet (§2.7); schema validation for route input; narrow `no-explicit-any` warnings; remove `AUTH0_*` from
+Vercel; mpesa/status, shopify proxy and the unsigned Daraja callback (§1.5).

@@ -1,0 +1,63 @@
+# Environment variables
+
+Names and purposes only. Never commit values. Locally they live in `apps/<app>/.env.local`
+(gitignored; `vercel env pull` fetches them). In production they are Vercel project
+settings. The list is generated from `process.env.*` usage, so if you add a variable,
+add it here.
+
+`NEXT_PUBLIC_*` values are **inlined at build time**: changing one needs a redeploy.
+`turbo.json` runs in strict env mode: a non-`NEXT_PUBLIC_` variable that code reads **during
+`next build`** must be listed in `tasks.build.env`, or it is invisible to the build.
+
+## Shared by both apps
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role key (server only; bypasses RLS) |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY` | Public anon key for browser clients. Two names are in use (`packages/db`); set both. |
+| `WORKOS_API_KEY`, `WORKOS_CLIENT_ID` | WorkOS AuthKit |
+| `WORKOS_COOKIE_PASSWORD` | Seals the session cookie. **Must be identical in web and storefront.** |
+| `WORKOS_COOKIE_DOMAIN` | `.mcloud.co.ke`, so the session is shared across subdomains |
+| `NEXT_PUBLIC_SITE_ORIGIN` | Display/canonical origin for stores, e.g. `https://app.mcloud.co.ke` |
+| `NEXT_PUBLIC_ADMIN_ORIGIN` | Origin allowed to frame the storefront (the Editor); also used for `postMessage` |
+| `PREVIEW_SECRET` | Signs Editor preview tokens. **Must match in both apps.** |
+| `RESEND_API_KEY` | Transactional email (invites, notifications, waitlist) |
+| `DARAJA_ENV` | `production` for live M-PESA, otherwise sandbox |
+| `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE` | PayPal (`live` or sandbox) |
+| `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_STORE_NAME` | Used to build payment return URLs and client calls to the provider endpoints |
+| `NEXT_PUBLIC_STOREFRONT_ORIGIN` | Where web redirects store traffic |
+
+## `apps/web` only
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_GA_ID` | Google Analytics id |
+| `HANDOFF_ENC_KEY` | Encrypts mobile → web SSO handoff tickets |
+| `PARTNER_AUTH_SECRET` | `x-partner-secret` for `/api/partner/*` |
+| `CRON_SECRET` | Authenticates Vercel cron calls |
+| `REVIEW_ACCOUNT_EMAIL`, `REVIEW_ACCOUNT_PASSWORD` | Store-review test login for the mobile app |
+| `GOOGLE_SA_EMAIL`, `GOOGLE_SA_PRIVATE_KEY`, `GOOGLE_ADMIN_SUBJECT` | Google service account (Play Billing verification, beta Google Group) |
+| `GOOGLE_PLAY_HOBBY_SKU`, `GOOGLE_PLAY_PRO_SKU` | Play subscription SKUs |
+| `BETA_GROUP_EMAIL`, `BETA_PLAY_OPT_IN_URL` | Closed-testing group and opt-in link |
+| `PALPLUSS_API_KEY`, `PALPLUSS_BASE_URL` | PalPluss (wallet top-ups, Reach payments) |
+| `UPCLOUD_API_TOKEN` | UpCloud (servers) |
+| `TRADING_VERCEL_TOKEN`, `TRADING_VERCEL_PROJECT_ID`, `TRADING_VERCEL_TEAM_ID` | Domain management for trading apps |
+| `ANTHROPIC_API_KEY` | Nuru chat (Anthropic path) |
+| `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Nuru chat and embeddings (Azure path) |
+| `AZURE_VISION_ENDPOINT`, `AZURE_VISION_API_KEY` | OCR for Nuru note ingest |
+| `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_PUBLIC_ACCESS_TOKEN` | Shopify Storefront proxy |
+
+## `apps/storefront` only
+
+| Variable | Purpose |
+|---|---|
+| `NEXT_PUBLIC_WEB_ORIGIN` | Where login, the org hub and billing live (`https://mcloud.co.ke`) |
+| `R2_WORKER_URL`, `R2_AUTH_SECRET` | The Cloudflare R2 upload worker and its bearer secret |
+| `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | Custom-domain management (`/api/store/domain`); the project id is the **storefront** project |
+
+`apps/storefront/ENV.md` is the older per-app checklist; this file supersedes it where they differ.
+
+## Retired
+
+`AUTH0_*` is gone (Auth0 was removed). Delete any remaining copies from Vercel and local files.

@@ -1,0 +1,70 @@
+# Payments
+
+Rails: **M-PESA** (Daraja STK push per merchant, or a manually entered M-PESA code),
+**PayPal** (platform account, USD), **PalPluss** (platform wallet top-ups and Reach orders).
+
+Shared decision logic is in [`packages/merchant/src/payments.ts`](../packages/merchant/src/payments.ts)
+(with tests); the routes do the I/O.
+
+## Checkout (all rails)
+
+`POST /api/store/[slug]/checkout` creates the order. It **recomputes every price on the
+server** from `products`/`product_variants` (client prices are ignored), adds the
+delivery rate, stores `order_items`, and returns the `orderNumber` (`ORD-…`) and `total`.
+It is idempotent per `idempotencyKey`. Everything after this keys on the **order number**,
+scoped to the store.
+
+## M-PESA Daraja (STK push)
+
+1. Client → `POST /payments/mpesa/stk-push` with `{ storeSlug, phone, orderId: <orderNumber> }`.
+   Any `amount` in the body is ignored.
+2. Server loads the order **by store and order number**, requires it to be pending, the
+   phone to equal the phone the order was placed with, and no prompt in the last 60 s.
+   It charges `ceil(order.total)`, then stores `daraja_checkout_request_id` and
+   `daraja_pushed_at` on the order.
+3. Safaricom posts the result to `/api/payments/mpesa/callback` (the URL is hard-coded
+   to the **web** app and registered with Safaricom; do not move it casually).
+4. The callback matches the order by `CheckoutRequestID`, ignores orders already `paid`,
+   and marks it `paid` **only if the paid amount covers the total**; otherwise it records
+   `payment_status: 'underpaid'` for a human.
+5. The buyer's browser polls `GET /payments/mpesa/status?orderId=<orderNumber>`.
+
+The manual path (`/api/store/[slug]/checkout/mpesa-code`) attaches a code the buyer typed;
+the merchant confirms it by hand.
+
+## PayPal
+
+1. `POST /payments/paypal/create-order` with `{ orderId: <orderNumber> }`. The PayPal order
+   is **priced from the stored order lines and shipping**, converted to USD at a fixed rate
+   (`KES_TO_USD`). Client-sent `items`/`totalKES` are ignored.
+2. PayPal redirects the buyer to `GET /payments/paypal/capture-order?token=…`. (It is a
+   GET because PayPal's redirect is; capture only succeeds for an order the payer approved.)
+3. The route captures, loads the order, and marks it `paid` only if the captured USD
+   amount equals what the order is priced at; otherwise `payment_status: 'underpaid'`.
+
+## Wallet top-ups and Reach (PalPluss)
+
+`POST /api/webhooks/palpluss` (wallet) and `/api/webhooks/palpluss/reach` treat the body
+as a hint about *which* transaction changed. Status and amount are re-fetched from
+PalPluss (`getTransaction`) before any credit or settlement, and a resolved top-up is
+never processed twice.
+
+## Invariants (do not break)
+
+- An order becomes `paid` only from a provider-confirmed amount that covers its total.
+- The amount charged always comes from the stored order, never the request.
+- A provider callback never changes an order it did not initiate (match on a stored id).
+- Settled orders are never re-processed.
+- Webhook handlers acknowledge quickly and are safe to run twice.
+
+## Known gaps
+
+- The Daraja callback is unsigned (Safaricom does not sign it). Matching on a stored
+  `CheckoutRequestID` plus the amount check is the defence.
+- Web and storefront both carry copies of the payment routes (kept identical). Moving the
+  Daraja callback URL and PayPal return URL would let one app own them; see
+  [CLEANUP.md](CLEANUP.md) §2.5.
+- Orders were previously looked up by `id` while the client sent the order *number*, so
+  the callback may never have matched in production. Verify a live STK payment end to end
+  after deploying this change.
+- The checkout page still references `pesapal` and `intasend` endpoints that do not exist.
