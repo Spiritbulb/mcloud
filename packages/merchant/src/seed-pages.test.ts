@@ -9,16 +9,16 @@ assert.equal(ngo[0].slug, '')
 assert.equal(ngo[0].title, 'Home')
 assert.equal(ngo[0].position, 0)
 assert.equal(ngo[0].is_published, true)
-assert.deepEqual(ngo[0].sections.map(s => s.type), ['mission', 'programs', 'impact', 'contact'])
+assert.deepEqual(ngo[0].sections.map(s => s.type), ['hero', 'programs', 'impact', 'campaigns', 'contact'])
 
 // shop -> the shop Home page
 const shop = seedPageRows('store-2', 'shop')
-assert.deepEqual(shop[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
+assert.deepEqual(shop[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
 assert.equal(shop[0].store_id, 'store-2')
 
 // unknown / null / undefined -> shop set
-assert.deepEqual(seedPageRows('s', 'bogus')[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
-assert.deepEqual(seedPageRows('s', null)[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
-assert.deepEqual(seedPageRows('s', undefined)[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
+assert.deepEqual(seedPageRows('s', 'bogus')[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
+assert.deepEqual(seedPageRows('s', null)[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
+assert.deepEqual(seedPageRows('s', undefined)[0].sections.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
 
 console.log('seed-pages.test.ts: all assertions passed')

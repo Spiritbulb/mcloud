@@ -18,12 +18,12 @@ assert.equal(getVertical(undefined).id, 'shop', 'undefined -> shop')
 assert.equal(VERTICALS.shop.label, 'Shop')
 assert.equal(VERTICALS.ngo.label, 'NGO')
 
-// shop default pages: one Home page with the four shop sections in order
+// shop default pages: one Home page with the shop sections in order
 const shopHome = VERTICALS.shop.defaultPages.find(p => p.slug === '')
 assert.ok(shopHome, 'shop has a home page (slug "")')
 assert.equal(shopHome.title, 'Home')
 assert.equal(shopHome.position, 0)
-assert.deepEqual(shopHome.sections.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
+assert.deepEqual(shopHome.sections.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
 
 // ngo default pages: one Home page with the NGO sections in order. The hero
 // leads (mission headline over the site image, with a Donate CTA), so there is

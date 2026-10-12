@@ -16,5 +16,8 @@
   },
   "peerDependencies": {
     "react": "^19.3.0"
+  },
+  "scripts": {
+    "test": "node ../../scripts/run-tests.mjs"
   }
 }

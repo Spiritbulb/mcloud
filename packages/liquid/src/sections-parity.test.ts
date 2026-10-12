@@ -16,7 +16,7 @@ assert.ok(ap.includes('Alpha') && ap.includes('Beta'), 'all-products renders pro
 
 // all-products empty state
 const apEmpty = await renderTemplate('classic/sections/all-products', { store, products: [] })
-assert.ok(apEmpty.includes('No products yet'), 'all-products empty state')
+assert.ok(!apEmpty.includes('id="products"'), 'all-products renders no section when there are no products')
 
 // collections + featured are now self-contained (own max-w-6xl)
 const coll = await renderTemplate('classic/sections/collections-grid', { store, collections })

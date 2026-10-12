@@ -1,5 +1,5 @@
 // lib/auth/server.ts
-// The public auth API the app calls. Replaces direct `auth0.getSession()` usage.
+// The public auth API the app calls. Apps call these, never the provider SDK directly.
 import type { NextRequest } from 'next/server'
 import { provider } from './index'
 import type { AuthSession, AuthUser, MiddlewarePrep } from './types'

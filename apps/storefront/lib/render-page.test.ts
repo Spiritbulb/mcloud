@@ -250,8 +250,8 @@ assert.ok(
   'slide 1 is addressable, and distinct from slide 0',
 )
 assert.ok(
-  heroCarousel.includes('data-mcloud-list="heroSlides" data-mcloud-index="1" data-mcloud-key="image"'),
-  'and so is its IMAGE — the carousel is where images matter most',
+  heroCarousel.includes('data-mcloud-slide-image="b.jpg"'),
+  'and its IMAGE is exposed to the slide toolbar (the background is not click-to-edit)',
 )
 
 // THE TRAP AGAIN: with no heroTitle the hero falls back to store.name, so it
@@ -332,21 +332,13 @@ const noImgVisitor = await renderPage([{ type: 'programs' }], ngoStore({
 assert.ok(!noImgVisitor.includes('data-mcloud-image'), 'a visitor gets no empty image slot')
 assert.ok(!noImgVisitor.includes('<img'), 'and no broken image')
 
-// The hero's image is a field on a SLIDE, exactly like a programme's — the whole
-// point of collapsing the hero into one shape.
+// The hero's image is a field on a SLIDE, but it is a full-bleed background, so it is
+// NOT click-to-edit (it would steal clicks from the text on top). The editor's slide
+// toolbar changes it instead, reading the current value from data-mcloud-slide-image.
 const heroImg = await renderPage([{ type: 'hero' }], ngoStore({ heroImage: 'https://x.test/h.jpg' }, true))
 assert.ok(
-  heroImg.includes('data-mcloud-image="1"') &&
-  heroImg.includes('data-mcloud-list="heroSlides" data-mcloud-index="0" data-mcloud-key="image" data-mcloud-stored="https://x.test/h.jpg"'),
-  'a legacy hero image is editable as heroSlides[0].image',
-)
-
-// With no hero image the gradient fallback renders — and IT is the click target,
-// or the hero could never get an image at all.
-const heroBareImg = await renderPage([{ type: 'hero' }], ngoStore({}, true))
-assert.ok(
-  heroBareImg.includes('sf-hero-fallback') && heroBareImg.includes('data-mcloud-image="1"'),
-  'the hero fallback is itself the click target',
+  heroImg.includes('data-mcloud-slide-image="https://x.test/h.jpg"') && !heroImg.includes('data-mcloud-image="1"'),
+  'a legacy hero image is exposed to the slide toolbar, not as a click target',
 )
 
 console.log('render-page.test.ts: image assertions passed')

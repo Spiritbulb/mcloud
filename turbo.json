@@ -1,19 +1,20 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
   "tasks": {
     "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"],
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ],
       "env": [
-        "AUTH0_CLIENT_ID",
-        "AUTH0_CLIENT_SECRET",
-        "AUTH0_DOMAIN",
-        "AUTH0_SECRET",
-        "DOCS_ADMIN_PASSPHRASE",
         "SUPABASE_SERVICE_ROLE_KEY",
         "NODE_ENV",
-        "PAYSTACK_SECRET_KEY",
         "RESEND_API_KEY",
         "TRADING_VERCEL_TOKEN",
         "TRADING_VERCEL_PROJECT_ID",
@@ -50,17 +51,9 @@
         "R2_WORKER_URL",
         "R2_AUTH_SECRET",
         "PALPLUSS_API_KEY",
-        "PALPLUSS_API_TOKEN",
-        "UPCLOUD_API_KEY",
         "PAYPAL_CLIENT_ID",
         "PAYPAL_CLIENT_SECRET",
-   "PAYPAL_MODE",
-   "APP_BASE_URL", 
-   "API_BASE_URL",
-   "GOOGLE_CLIENT_ID",
-   "GOOGLE_CLIENT_SECRET",
-   "DESKTOP_CLIENT_ID",
-   "DESKTOP_CLIENT_SECRET"
+        "PAYPAL_MODE"
       ]
     },
     "dev": {
@@ -71,8 +64,8 @@
       "cache": false,
       "persistent": true
     },
-    "lint": {
-      "dependsOn": ["^lint"]
-    }
+    "lint": {},
+    "test": {},
+    "typecheck": {}
   }
 }

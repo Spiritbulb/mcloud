@@ -13,10 +13,11 @@
     "build": "turbo run build",
     "start": "turbo run start",
     "lint": "turbo run lint",
-    "obsidian": "node scripts/obsidian-graph.js"
+    "test": "turbo run test",
+    "obsidian": "node scripts/obsidian-graph.js",
+    "typecheck": "turbo run typecheck"
   },
   "devDependencies": {
-    "@types/ssh2": "^1.15.6",
     "turbo": "^2.11.7"
   },
   "allowScripts": {
@@ -25,11 +26,7 @@
     "unrs-resolver@1.12.2": true,
     "ssh2@1.17.0": true
   },
-  "dependencies": {
-    "pg": "^8.23.1",
-    "pg-copy-streams": "^7.0.0",
-    "react-icons": "^5.7.0"
-  },
+  "dependencies": {},
   "overrides": {
     "@grpc/grpc-js": "^1.14.5"
   }

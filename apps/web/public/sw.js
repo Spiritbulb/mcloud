@@ -41,7 +41,7 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
 
-  // Only handle same-origin requests; let the browser deal with cross-origin (Supabase, Auth0, GA, fonts)
+  // Only handle same-origin requests; let the browser deal with cross-origin (Supabase, WorkOS, GA, fonts)
   if (url.origin !== self.location.origin) return;
 
   // Never cache auth / API

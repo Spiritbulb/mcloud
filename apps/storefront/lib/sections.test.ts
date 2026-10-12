@@ -58,13 +58,13 @@ assert.deepEqual(Object.keys(SECTION_REGISTRY.campaigns.pickContext({
 assert.deepEqual(defaultHomeSections('ngo').map(s => s.type), ['hero', 'programs', 'impact', 'campaigns', 'contact'])
 
 // defaultHomeSections is vertical-aware
-assert.deepEqual(defaultHomeSections('shop').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
-assert.deepEqual(defaultHomeSections('bogus').map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'unknown -> shop')
-assert.deepEqual(defaultHomeSections(null).map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'null -> shop')
-assert.deepEqual(defaultHomeSections(undefined).map(s => s.type), ['hero', 'collections', 'featured', 'all-products'], 'undefined -> shop')
+assert.deepEqual(defaultHomeSections('shop').map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
+assert.deepEqual(defaultHomeSections('bogus').map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'], 'unknown -> shop')
+assert.deepEqual(defaultHomeSections(null).map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'], 'null -> shop')
+assert.deepEqual(defaultHomeSections(undefined).map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'], 'undefined -> shop')
 
 // back-compat constant still equals the shop set
-assert.deepEqual(DEFAULT_HOME_SECTIONS.map(s => s.type), ['hero', 'collections', 'featured', 'all-products'])
+assert.deepEqual(DEFAULT_HOME_SECTIONS.map(s => s.type), ['hero', 'collections', 'featured', 'services', 'all-products'])
 
 console.log('sections.test.ts: all assertions passed')
 

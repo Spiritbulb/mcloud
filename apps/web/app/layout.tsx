@@ -99,7 +99,11 @@ export default function RootLayout({
           strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
-          if ('serviceWorker' in navigator) {
+          if ('serviceWorker' in navigator && ${JSON.stringify(process.env.NODE_ENV !== 'production')}) {
+            // Dev: no worker (it caches pages and reloads on every sw.js edit). Remove any
+            // left over from an earlier visit.
+            navigator.serviceWorker.getRegistrations().then((rs) => rs.forEach((r) => r.unregister()));
+          } else if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/sw.js').then((reg) => {
               reg.addEventListener('updatefound', () => {
                 const sw = reg.installing;

@@ -4,6 +4,8 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
+# npm ci needs every workspace manifest listed in the root package.json
+COPY apps/web/package.json ./apps/web/
 COPY apps/storefront/package.json ./apps/storefront/
 COPY packages ./packages
 RUN npm ci --include=dev
@@ -22,7 +24,7 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/storefront/.next/static
+COPY --from=builder --chown=nextjs:nodejs /app/apps/storefront/.next/static ./apps/storefront/.next/static
 COPY --from=builder /app/apps/storefront/public ./apps/storefront/public
 
 USER nextjs

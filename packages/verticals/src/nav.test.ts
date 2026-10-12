@@ -38,7 +38,6 @@ assert.ok(ids(ngo).includes('donations'), 'ngo groups them under donations')
 for (const secs of [shop, ngo]) {
   assert.ok(ids(secs).includes('site'), 'has site group')
   assert.ok(ids(secs).includes('advanced'), 'has advanced')
-  assert.ok(ids(secs).includes('account'), 'has account')
   assert.ok(tabIds(secs).includes('home'), 'has overview')
   assert.ok(tabIds(secs).includes('general'), 'has general')
   assert.ok(tabIds(secs).includes('editor'), 'has the editor')

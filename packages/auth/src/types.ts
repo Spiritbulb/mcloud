@@ -1,5 +1,5 @@
 // lib/auth/types.ts
-// Provider-agnostic auth shapes. Nothing here knows about Auth0 or WorkOS — the
+// Provider-agnostic auth shapes. Nothing here knows about a specific provider — the
 // active provider adapter (lib/auth/providers/*) maps its native session into these.
 import type { NextRequest, NextResponse } from 'next/server'
 
@@ -18,7 +18,7 @@ export interface AuthSession {
 /**
  * Result of resolving auth state inside the app's middleware. Some providers
  * (WorkOS) must run once per request to refresh the session and inject headers
- * that downstream server code reads; others (Auth0) just read the cookie.
+ * that downstream server code reads; a cookie-only provider would not need this.
  */
 export interface MiddlewarePrep {
     /** Session resolved for in-middleware gating (e.g. /admin guards). */
@@ -54,7 +54,7 @@ export interface LoginEvent {
 
 /**
  * The contract every auth provider adapter implements. Swapping providers
- * (Auth0 → WorkOS) means writing one of these and flipping lib/auth/index.ts.
+ * means writing one of these and changing the export in index.ts.
  */
 export interface AuthProviderAdapter {
     /** Resolve the current session. `req` is passed in API routes. */

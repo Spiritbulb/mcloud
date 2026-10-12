@@ -1,4 +1,4 @@
-// Dark branded loading screen shown during auth redirects (Auth0 round-trip).
+// Dark branded loading screen shown during auth redirects (provider round-trip).
 // Kills the white flash between mcloud.co.ke and auth.mcloud.co.ke.
 export function AuthLoading({ label = 'Signing you in…' }: { label?: string }) {
     return (

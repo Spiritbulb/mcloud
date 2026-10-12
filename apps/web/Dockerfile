@@ -4,7 +4,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 COPY package.json package-lock.json turbo.json ./
+# npm ci needs every workspace manifest listed in the root package.json
 COPY apps/web/package.json ./apps/web/
+COPY apps/storefront/package.json ./apps/storefront/
 COPY packages ./packages
 RUN npm ci --include=dev
 

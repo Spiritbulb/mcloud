@@ -56,6 +56,7 @@ export default function Page() {
   return (
     <>
           <Script
+        id="ld-json"
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />

@@ -12,7 +12,6 @@
     "./types": "./src/types.ts"
   },
   "dependencies": {
-    "@auth0/nextjs-auth0": "^4.31.0",
     "@mcloud/db": "^0.0.0",
     "@workos-inc/authkit-nextjs": "^4.4.0",
     "jose": "^6.2.12"
