@@ -98,6 +98,7 @@ turbo docs (see the managed block above) before changing `turbo.json`.
   scoped to the store. Rules live in `packages/merchant/src/payments.ts`. Read `docs/payments.md`.
 - **Uploads** go through `/api/upload` with keys `<bucket>/<storeId>/…`; callers must prefix paths with the store id.
 
+- **Never query the database from the browser.** All reads and writes are server-side (route handlers, server components, server actions). Merchant screens call the actions in `apps/storefront/lib/admin/*`, which check the session, call `requireManagedStore`, scope every query by `store_id` and enforce plan limits. The browser Supabase clients are for Auth only; `browser-db.test.ts` in each app pins the allowed importers.
 - `createClient()` from `@mcloud/db/server` uses the **service-role key and bypasses RLS**.
   Every route using it must enforce authorization itself: a session (`getSession()` from
   `@mcloud/auth`) **and** a membership/ownership check for the store/org in question. A

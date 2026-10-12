@@ -2,7 +2,7 @@
 // Fetches from Supabase at request time, cached with ISR.
 // Edit via /docs-editor → Supabase updates → page re-fetches within revalidate window.
 
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import { cookies } from "next/headers"
 import DocsClient from "@/components/docs-client"
 import type { DocPage } from "@/lib/docs"
@@ -18,7 +18,7 @@ export const revalidate = 60
 
 async function getDocs(): Promise<DocPage[]> {
     const cookieStore = await cookies()
-    const supabase = createClient()
+    const supabase = await createClient()
 
     const { data, error } = await supabase
         .from("docs_pages")

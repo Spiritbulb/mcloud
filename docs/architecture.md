@@ -97,8 +97,11 @@ Main tables, grouped:
 - **Analytics:** `store_analytics`, `store_visits`
 - **Other products:** `nuru_*` (notes and chat), `reach_*` (Reach vendors/couriers), `trading_apps`, `docs_pages`, `waitlist`, `beta_signups`
 
-**The server client is service-role and bypasses RLS.** Authorization is enforced in
-route code, never by the database. See [api.md](api.md) and the security rules in
+**All database access is server-side.** The server client is service-role and bypasses RLS, so
+authorization is enforced in route code and server actions (`requireManagedStore` in
+`apps/storefront/lib/admin/access.ts`, `requireStoreAccess`, `requireAdmin`), never by the database.
+The public anon key must be able to do nothing with tables (see `migrations/20261012b_*`); the browser
+Supabase clients exist only for Auth calls, and a test pins the files allowed to import them. See [api.md](api.md) and the security rules in
 [AGENTS.md](../AGENTS.md).
 
 ## How a public store page renders

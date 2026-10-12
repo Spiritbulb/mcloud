@@ -1,7 +1,7 @@
 'use client'
 //admin product setting
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@mcloud/db/client'
+import { deleteProduct, listProductVariants, listProducts, saveProduct, setProductActive } from '@/lib/admin/catalog-actions'
 import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
 import { Label } from '@mcloud/ui/label'
@@ -69,13 +69,9 @@ function ProductForm({
 
     useEffect(() => {
         if (!isEdit || !product?.id) return
-        const supabase = createClient()
-        supabase
-            .from('product_variants')
-            .select('*')
-            .eq('product_id', product.id)
-            .order('position')
-            .then(({ data }) => {
+        listProductVariants(storeId, product.id)
+            .then((res) => {
+                const data = res.ok ? res.variants : null
                 if (data?.length) {
                     setVariants(data.map((v) => ({
                         id: v.id,
@@ -85,13 +81,13 @@ function ProductForm({
                         image_url: String(v.image_url ?? ''),
                         compare_at_price: String(v.compare_at_price ?? ''),
                         inventory_quantity: String(v.inventory_quantity),
-                        is_active: v.is_active,
-                        options: v.options ?? {},
+                        is_active: v.is_active ?? true,
+                        options: (v.options ?? {}) as Record<string, string>,
                     })))
                     setShowVariants(true)
                 }
             })
-    }, [isEdit, product?.id])
+    }, [isEdit, product?.id, storeId])
 
     const handleSave = async () => {
         if (!name.trim() || !price.trim()) {
@@ -100,53 +96,37 @@ function ProductForm({
         }
         setError('')
         setSaving(true)
-        const supabase = createClient()
+        const result = await saveProduct(
+            storeId,
+            isEdit ? product?.id ?? null : null,
+            {
+                name: name.trim(),
+                slug: slug.trim() || slugify(name),
+                description: description || null,
+                price: parseFloat(price),
+                compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
+                sku: sku || null,
+                inventory_quantity: parseInt(inventory) || 0,
+                track_inventory: trackInventory,
+                is_active: isActive,
+                images,
+            },
+            variants.map((v) => ({
+                id: v.id,
+                name: v.name,
+                sku: v.sku || null,
+                price: parseFloat(v.price) || parseFloat(price),
+                compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : null,
+                inventory_quantity: parseInt(v.inventory_quantity) || 0,
+                is_active: v.is_active,
+                options: v.options,
+            })),
+        )
 
-        const payload = {
-            store_id: storeId,
-            name: name.trim(),
-            slug: slug.trim() || slugify(name),
-            description: description || null,
-            price: parseFloat(price),
-            compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
-            sku: sku || null,
-            inventory_quantity: parseInt(inventory) || 0,
-            track_inventory: trackInventory,
-            is_active: isActive,
-            images,
-            updated_at: new Date().toISOString(),
-        }
-
-        let productId = product?.id
-
-        if (isEdit) {
-            await supabase.from('products').update(payload).eq('id', productId!)
-        } else {
-            const { data } = await supabase.from('products').insert(payload).select('id').single()
-            productId = data?.id
-        }
-
-        if (productId && variants.length > 0) {
-            for (let i = 0; i < variants.length; i++) {
-                const v = variants[i]
-                const varPayload = {
-                    product_id: productId,
-                    name: v.name,
-                    sku: v.sku || null,
-                    price: parseFloat(v.price) || parseFloat(price),
-                    compare_at_price: v.compare_at_price ? parseFloat(v.compare_at_price) : null,
-                    inventory_quantity: parseInt(v.inventory_quantity) || 0,
-                    is_active: v.is_active,
-                    options: v.options,
-                    position: i,
-                    updated_at: new Date().toISOString(),
-                }
-                if (v.id) {
-                    await supabase.from('product_variants').update(varPayload).eq('id', v.id)
-                } else {
-                    await supabase.from('product_variants').insert(varPayload)
-                }
-            }
+        if (!result.ok) {
+            setError(result.error)
+            setSaving(false)
+            return
         }
 
         setSaving(false)
@@ -442,13 +422,8 @@ export default function ProductSettings({
 
     const load = useCallback(async () => {
         setLoading(true)
-        const supabase = createClient()
-        const { data } = await supabase
-            .from('products')
-            .select('id, name, slug, description, price, compare_at_price, inventory_quantity, is_active, images, sku, track_inventory')
-            .eq('store_id', storeId)
-            .order('created_at', { ascending: false })
-        setProducts((data as Product[]) ?? [])
+        const res = await listProducts(storeId)
+        setProducts(res.ok ? (res.products as Product[]) : [])
         setLoading(false)
     }, [storeId])
 
@@ -456,14 +431,12 @@ export default function ProductSettings({
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this product? This cannot be undone.')) return
-        const supabase = createClient()
-        await supabase.from('products').delete().eq('id', id)
+        await deleteProduct(storeId, id)
         load()
     }
 
     const handleToggleActive = async (product: Product) => {
-        const supabase = createClient()
-        await supabase.from('products').update({ is_active: !product.is_active }).eq('id', product.id)
+        await setProductActive(storeId, product.id, !product.is_active)
         load()
     }
 

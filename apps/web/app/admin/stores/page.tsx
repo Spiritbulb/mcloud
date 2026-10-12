@@ -1,6 +1,6 @@
 import { isPaidPlan } from '@mcloud/merchant/plans'
 import { getStorePlans } from '@mcloud/merchant/plans-server'
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import StoresClient from "@/components/admin/stores-client"
 
@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 }
 
 async function getStores() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("stores")
         .select(`
@@ -25,6 +25,7 @@ async function getStores() {
 
     return (data ?? []).map(row => ({
         ...row,
+        created_at: row.created_at ?? "",
         is_pro: isPaidPlan(plans.get(row.id) ?? 'free'),
         owner: Array.isArray(row.users) ? row.users[0] ?? null : row.users,
     }))

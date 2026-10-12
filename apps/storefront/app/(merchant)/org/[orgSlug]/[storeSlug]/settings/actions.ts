@@ -90,6 +90,7 @@ export async function updateStoreSettings(
     if (patch.timezone !== undefined) update.timezone = patch.timezone
     if (patch.is_active !== undefined) update.is_active = patch.is_active
     if (patch.settings !== undefined) update.settings = patch.settings
+    if (patch.logo_url !== undefined) update.logo_url = patch.logo_url
 
     const supabase = await createClient()
     const { error } = await supabase.from('stores').update(update).eq('id', access.storeId)

@@ -8,7 +8,7 @@ import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 
 import { useState, useEffect, useTransition } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { createClient } from '@mcloud/db/client'
+import { createBlogAuthor, deleteBlogPost, saveBlogPost } from '@/lib/admin/blog-actions'
 // CodeMirror lives in its own isolated module — this is what fixes the
 // Turbopack "negative timestamp" / Failed to fetch errors.
 import { MarkdownEditor } from '@/components/store/blog/editor'
@@ -170,15 +170,10 @@ function AuthorDialog({
         if (!name.trim()) { setError('Name is required'); return }
         setSaving(true)
         setError('')
-        const supabase = createClient()
-        const { data, error: err } = await supabase
-            .from('blog_authors')
-            .insert({ store_id: storeId, name: name.trim(), bio: bio.trim() || null, avatar_url: avatarUrl.trim() || null })
-            .select()
-            .single()
+        const res = await createBlogAuthor(storeId, { name: name.trim(), bio: bio.trim() || null, avatar_url: avatarUrl.trim() || null })
 
-        if (err) { setError(err.message); setSaving(false); return }
-        onSaved(data as BlogAuthor)
+        if (!res.ok) { setError(res.error); setSaving(false); return }
+        onSaved(res.author as BlogAuthor)
         setName(''); setBio(''); setAvatarUrl('')
         onClose()
         setSaving(false)
@@ -320,8 +315,6 @@ function MarkdownPreview({ content }: { content: string }) {
 // ─── Main BlogSettingsClient ──────────────────────────────────────────────────
 
 export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, authors: initialAuthors, plan }: Props) {
-    const supabase = createClient()
-
     const [view, setView] = useState<View>('list')
     const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
     const [authors, setAuthors] = useState<BlogAuthor[]>(initialAuthors)
@@ -396,8 +389,8 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
             .filter(Boolean)
 
         const is_published = publish !== undefined ? publish : form.is_published
-        const payload = {
-            store_id: storeId,
+
+        const res = await saveBlogPost(storeId, form.id ?? null, {
             title: form.title.trim(),
             slug: form.slug.trim(),
             excerpt: form.excerpt.trim() || null,
@@ -406,37 +399,19 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
             author_id: form.author_id || null,
             tags,
             is_published,
-            published_at: is_published && !form.id ? new Date().toISOString() : undefined,
             reading_time_minutes: form.reading_time_minutes,
-        }
+        })
+        if (!res.ok) { showToast(res.error, 'error'); setSaving(false); return }
 
-        let savedPost: BlogPost | null = null
-
+        const savedPost = res.post as unknown as BlogPost
         if (form.id) {
-            // Update
-            const { data, error } = await supabase
-                .from('blog_posts')
-                .update(payload)
-                .eq('id', form.id)
-                .select(`*, author:blog_authors(*)`)
-                .single()
-            if (error) { showToast(error.message, 'error'); setSaving(false); return }
-            savedPost = data as BlogPost
-            setPosts(ps => ps.map(p => p.id === savedPost!.id ? savedPost! : p))
+            setPosts(ps => ps.map(p => p.id === savedPost.id ? savedPost : p))
         } else {
-            // Insert
-            const { data, error } = await supabase
-                .from('blog_posts')
-                .insert(payload)
-                .select(`*, author:blog_authors(*)`)
-                .single()
-            if (error) { showToast(error.message, 'error'); setSaving(false); return }
-            savedPost = data as BlogPost
-            setPosts(ps => [savedPost!, ...ps])
+            setPosts(ps => [savedPost, ...ps])
         }
 
-        setForm(f => ({ ...f, id: savedPost!.id, is_published: savedPost!.is_published }))
-        setActiveId(savedPost!.id)
+        setForm(f => ({ ...f, id: savedPost.id, is_published: savedPost.is_published }))
+        setActiveId(savedPost.id)
         showToast(is_published ? 'Published!' : 'Draft saved')
         setSaving(false)
     }
@@ -444,12 +419,9 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
     // ── Delete ──
     const handleDelete = async () => {
         if (!deleteTarget) return
-        const { error } = await supabase
-            .from('blog_posts')
-            .delete()
-            .eq('id', deleteTarget.id)
+        const res = await deleteBlogPost(storeId, deleteTarget.id)
 
-        if (error) { showToast(error.message, 'error'); setDeleteTarget(null); return }
+        if (!res.ok) { showToast(res.error, 'error'); setDeleteTarget(null); return }
 
         setPosts(ps => ps.filter(p => p.id !== deleteTarget.id))
         if (activeId === deleteTarget.id) {

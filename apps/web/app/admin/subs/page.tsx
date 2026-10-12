@@ -1,4 +1,4 @@
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import SubscriptionsClient from "@/components/subscriptions-client"
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 async function getSubscriptions() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("store_subscriptions")
         .select(`
@@ -30,6 +30,7 @@ async function getSubscriptions() {
 
     return (data ?? []).map(row => ({
         ...row,
+        created_at: row.created_at ?? "",
         stores: Array.isArray(row.stores) ? row.stores[0] ?? null : row.stores,
     }))
 }

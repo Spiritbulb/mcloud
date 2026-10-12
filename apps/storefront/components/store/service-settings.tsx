@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { createClient } from '@mcloud/db/client'
+import { deleteService, listServices, saveService, setServiceActive } from '@/lib/admin/catalog-actions'
 import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
 import { Label } from '@mcloud/ui/label'
@@ -148,19 +148,15 @@ function ServiceForm({
     }, [name, isEdit])
 
     const handleSave = async () => {
-        console.log('1. handleSave fired')
         if (!name.trim()) { setError('Service name is required.'); return }
         if (packages.length === 0 && !basePrice.trim()) {
             setError('Enter a base price or add at least one package.'); return
         }
 
-        console.log('2. validation passed — isEdit:', isEdit, 'service id:', service?.id)
         setError('')
         setSaving(true)
 
         try {
-            const supabase = createClient()
-
             const parsedPackages = packages.map((p, i) => ({
                 id: p.id ?? `pkg-${Date.now()}-${i}`,
                 name: p.name.trim() || `Package ${i + 1}`,
@@ -180,7 +176,6 @@ function ServiceForm({
                 : parseFloat(basePrice) || 0
 
             const payload = {
-                store_id: storeId,
                 name: name.trim(),
                 slug: slug.trim() || slugify(name),
                 description: description || null,
@@ -189,7 +184,6 @@ function ServiceForm({
                 compare_at_price: null,
                 sku: sku || null,
                 is_active: isActive,
-                updated_at: new Date().toISOString(),
                 metadata: {
                     serviceType: serviceType || null,
                     quantityUnit: quantityUnit || '',
@@ -215,16 +209,14 @@ function ServiceForm({
                 },
             }
 
-            console.log('3. payload built:', JSON.stringify(payload, null, 2))
+            const result = await saveService(storeId, isEdit ? service!.id : null, {
+                ...payload,
+                item_type: 'service',
+                compare_at_price: null,
+            })
 
-            const { error: dbError, status } = isEdit
-                ? await supabase.from('services').update(payload).eq('id', service!.id)
-                : await supabase.from('services').insert(payload)
-
-            console.log('4. db response — status:', status, 'error:', dbError)
-
-            if (dbError) {
-                setError(dbError.message || 'Save failed — check console.')
+            if (!result.ok) {
+                setError(result.error)
                 return
             }
 
@@ -927,13 +919,8 @@ export default function ServiceSettings({
 
     const load = useCallback(async () => {
         setLoading(true)
-        const supabase = createClient()
-        const { data } = await supabase
-            .from('services')
-            .select('id, name, slug, description, price, is_active, sku, metadata')
-            .eq('store_id', storeId)
-            .order('created_at', { ascending: false })
-        setServices((data as ServiceItem[]) ?? [])
+        const res = await listServices(storeId)
+        setServices(res.ok ? (res.services as unknown as ServiceItem[]) : [])
         setLoading(false)
     }, [storeId])
 
@@ -941,14 +928,12 @@ export default function ServiceSettings({
 
     const handleDelete = async (id: string) => {
         if (!confirm('Delete this service? This cannot be undone.')) return
-        const supabase = createClient()
-        await supabase.from('services').delete().eq('id', id)
+        await deleteService(storeId, id)
         load()
     }
 
     const handleToggleActive = async (svc: ServiceItem) => {
-        const supabase = createClient()
-        await supabase.from('services').update({ is_active: !svc.is_active }).eq('id', svc.id)
+        await setServiceActive(storeId, svc.id, !svc.is_active)
         load()
     }
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { createClient } from '@mcloud/db/client'
+import { updateStoreSettings, updateStoreTheme } from '../actions'
 import { SaveBar, SaveToast } from '../settings-primitives'
 import AppearanceSettings from '@/components/store/appearance-settings'
 
@@ -41,12 +41,15 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
 
     const [saving, setSaving] = useState(false)
     const [saved, setSaved] = useState(false)
+    const [error, setError] = useState<string | null>(null)
 
     const handleSave = async () => {
         setSaving(true)
-        const supabase = createClient()
+        setError(null)
 
-        await supabase.from('stores').update({
+        // Both writes are server actions: they check the session and store access, and the theme
+        // values are validated against THEME_SCHEMA (they end up in CSS on the public site).
+        const storeResult = await updateStoreSettings(store.slug, {
             logo_url: logoUrl || null,
             settings: {
                 ...store.settings,
@@ -57,11 +60,9 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
                 heroImagePath: heroImagePath || undefined,
                 galleryPhotos: galleryPhotos.length > 0 ? galleryPhotos : undefined,
             },
-        }).eq('id', store.id)
+        })
 
-        await supabase.from('store_themes').upsert({
-            store_id: store.id,
-            theme_id: themeId || 'classic',
+        const themeResult = storeResult.error ? storeResult : await updateStoreTheme(store.slug, {
             primary_color: primaryColor,
             secondary_color: secondaryColor,
             accent_color: accentColor,
@@ -75,8 +76,13 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
             heading_font: headingFont,
             body_font: bodyFont,
             border_radius: borderRadius,
-            updated_at: new Date().toISOString(),
-        }, { onConflict: 'store_id' })
+        })
+
+        if (themeResult.error) {
+            setSaving(false)
+            setError(themeResult.error)
+            return
+        }
 
         setSaving(false)
         setSaved(true)
@@ -112,6 +118,7 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
             />
             <SaveBar onSave={handleSave} saving={saving} />
             <SaveToast saving={saving} saved={saved} />
+            {error && <p role="alert" className="px-4 pb-4 text-sm text-destructive">{error}</p>}
         </>
     )
 }

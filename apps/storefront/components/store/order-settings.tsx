@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { createClient } from '@mcloud/db/client'
+import { listOrderItems, listOrders, setOrderStatus } from '@/lib/admin/order-actions'
 import { Card, CardContent } from '@mcloud/ui/card'
 import {
     Select,
@@ -158,27 +158,12 @@ export default function OrderSettings({
 
     const load = useCallback(async () => {
         setLoading(true)
-        const supabase = createClient()
-        const { data } = await supabase
-            .from('orders')
-            .select('id, order_number, status, fulfillment_status, total, currency, customer_email, customer_phone, subtotal, tax, shipping, discount, notes, created_at')
-            .eq('store_id', storeId)
-            .order('created_at', { ascending: false })
-            .limit(100)
+        const res = await listOrders(storeId)
+        const baseOrders = (res.ok ? (res.orders as Order[]) : [])
 
-        const baseOrders = (data as Order[]) ?? []
-
-        if (baseOrders.length > 0) {
-            const orderIds = baseOrders.map((o) => o.id)
-            // Single batched fetch for preview thumbnails + counts, avoids
-            // an N+1 query per row while still showing images up front.
-            const { data: itemRows } = await supabase
-                .from('order_items')
-                .select('order_id, title, image_url')
-                .in('order_id', orderIds)
-
+        if (res.ok && baseOrders.length > 0) {
             const grouped = new Map<string, OrderPreviewItem[]>()
-            ;(itemRows ?? []).forEach((row: { order_id: string; title: string; image_url: string | null }) => {
+            res.itemRows.forEach((row) => {
                 const list = grouped.get(row.order_id) ?? []
                 list.push({ image_url: row.image_url, title: row.title })
                 grouped.set(row.order_id, list)
@@ -199,13 +184,9 @@ export default function OrderSettings({
 
     const loadItems = async (orderId: string) => {
         if (expandedId === orderId) { setExpandedId(null); return }
-        const supabase = createClient()
-        const { data } = await supabase
-            .from('order_items')
-            .select('id, title, variant_title, quantity, price, total, image_url')
-            .eq('order_id', orderId)
+        const res = await listOrderItems(storeId, orderId)
         setOrders((prev) =>
-            prev.map((o) => o.id === orderId ? { ...o, items: (data as OrderItem[]) ?? [] } : o)
+            prev.map((o) => o.id === orderId ? { ...o, items: res.ok ? (res.items as OrderItem[]) : [] } : o)
         )
         setExpandedId(orderId)
     }
@@ -216,14 +197,12 @@ export default function OrderSettings({
         value: string
     ) => {
         setUpdating(orderId)
-        const supabase = createClient()
-        await supabase
-            .from('orders')
-            .update({ [field]: value, updated_at: new Date().toISOString() })
-            .eq('id', orderId)
-        setOrders((prev) =>
-            prev.map((o) => o.id === orderId ? { ...o, [field]: value } : o)
-        )
+        const res = await setOrderStatus(storeId, orderId, field, value)
+        if (res.ok) {
+            setOrders((prev) =>
+                prev.map((o) => o.id === orderId ? { ...o, [field]: value } : o)
+            )
+        }
         setUpdating(null)
     }
 

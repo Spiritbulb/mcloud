@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import Link from "next/link"
 
 export const metadata: Metadata = {
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 async function getStats() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const [users, stores, activeSubs, pendingSubs] = await Promise.all([
         supabase.from("users").select("id", { count: "exact", head: true }),
         supabase.from("stores").select("id", { count: "exact", head: true }),

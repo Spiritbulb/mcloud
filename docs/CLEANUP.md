@@ -415,3 +415,18 @@ tracked, so migrate or comp them; list them with `select store_id, period_end fr
 `resolvePlan` treats a row past `period_end` as lapsed, but rows stay `status = 'active'`; confirm `purchase_store_plan`
 renews or expires them. (4) Delete the `subscribe` stub once old app builds are gone. (5) The mobile changes were not type
 checked here (no `node_modules` in `apps/mobile`); run `npx tsc --noEmit` there.
+
+### 9.2 Database access is server-only (security, in progress)
+
+Found via the Supabase connection: eight tables had `*_allow_all_temp` policies (ALL, public, `true`), four tables had RLS off,
+and every `public` function (including the SECURITY DEFINER `adjust_org_wallet`) was executable with the anon key, so anyone
+holding the public key could read and write users (including `role`), stores, orders, org membership, subscriptions and wallets.
+The admin pages and the settings screens (products, services, orders, blog, appearance) were querying Supabase from the
+browser and depended on those policies.
+
+Code done: admin pages and the docs page use the server client; the five settings screens call server actions in
+`apps/storefront/lib/admin/*` (authorized per store, scoped by `store_id`, plan limits and blog gating now enforced; appearance
+reuses the validating `updateStoreTheme`); a guard test pins browser-client importers. **Database migrations written, NOT applied:**
+`migrations/20261012_lock_down_privileged_functions_and_wallet_tables.sql` (apply any time) and
+`migrations/20261012b_server_only_database_access.sql` (apply only after this code is deployed). Also: move the `bill-servers`
+cron's bearer token to Vault and rotate it, and delete or replace the legacy Supabase-Auth password forms in `apps/web`.

@@ -1,10 +1,10 @@
 import { getSession } from '@mcloud/auth/server'
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import { redirect } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
 
 async function getAdminUser(sub: string) {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("users")
         .select("id, name, email, avatar_url, role")

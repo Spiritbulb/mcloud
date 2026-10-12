@@ -1,4 +1,4 @@
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import DocsEditorClient from "@/components/docs-editor-client"
 import type { EditablePage } from "@/components/docs-editor-client"
@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 }
 
 async function getDocs(): Promise<EditablePage[]> {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("docs_pages")
         .select("data")

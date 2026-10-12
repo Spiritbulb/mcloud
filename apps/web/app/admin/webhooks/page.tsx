@@ -1,4 +1,4 @@
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import WebhooksClient from "@/components/admin/webhooks-client"
 
@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 async function getWebhookLogs() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("webhook_logs")
         .select(`
@@ -21,6 +21,7 @@ async function getWebhookLogs() {
 
     return (data ?? []).map(row => ({
         ...row,
+        created_at: row.created_at ?? "",
         store: Array.isArray(row.stores) ? row.stores[0] ?? null : row.stores,
     }))
 }

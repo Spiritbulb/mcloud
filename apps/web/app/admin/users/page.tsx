@@ -1,4 +1,4 @@
-import { createClient } from "@mcloud/db/client"
+import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import UsersClient from "@/components/admin/users-client"
 
@@ -8,12 +8,12 @@ export const metadata: Metadata = {
 }
 
 async function getUsers() {
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data } = await supabase
         .from("users")
         .select("id, name, email, avatar_url, role, created_at")
         .order("created_at", { ascending: false })
-    return data ?? []
+    return (data ?? []).map((u) => ({ ...u, created_at: u.created_at ?? "" }))
 }
 
 export default async function UsersPage() {
