@@ -3,7 +3,7 @@ import { CartProvider } from '@/contexts/CartContext'
 import { CustomerAuthProvider } from '@/contexts/CustomerAuthContext'
 import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
-import { createClient } from '@mcloud/db/server'
+import { getLatestSubscription, getStoreRow, getStoreTheme } from '@/lib/store-queries'
 import { googleFontsHref } from '@/lib/fonts'
 import { isCustomDomainHost } from '@/lib/host'
 import { getNavPages } from '@/lib/pages'
@@ -15,26 +15,6 @@ import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
 
-async function getStoreTheme(slug: string) {
-    const supabase = await createClient()
-    const { data: store } = await supabase
-        .from('stores')
-        .select('id')
-        .eq('slug', slug)
-        .single()
-
-    if (!store) return null
-
-    const { data: theme } = await supabase
-        .from('store_themes')
-        .select('*')
-        .eq('store_id', store.id)
-        .single()
-
-    return theme
-}
-
-
 // Pure derivation mirrored from apps/web/lib/plans.ts (planFromActiveRow). The
 // storefront is a separate app with no dependency on apps/web, so this tiny
 // rule is inlined rather than imported: an active row on the 'pro' plan is
@@ -44,23 +24,10 @@ function hideBrandingFromRow(row: { plan: string | null; status: string } | null
 }
 
 async function getStore(slug: string) {
-    const supabase = await createClient()
-    const { data: store } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('slug', slug)
-        .single()
-
+    const store = await getStoreRow(slug)
     if (!store) return notFound()
-    
-    const { data: subRow } = await supabase
-        .from('store_subscriptions')
-        .select('plan, status')
-        .eq('store_id', store.id)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
 
+    const subRow = await getLatestSubscription(store.id)
     return { ...store, hideBranding: hideBrandingFromRow(subRow) }
 }
 
@@ -96,12 +63,15 @@ export default async function StoreLayout({
 }) {
     const { slug } = await params
 
-    const theme = await getStoreTheme(slug)
     const store = await getStore(slug)
+    // Theme and nav pages only need the store id, so they run together.
+    const [theme, navPages] = await Promise.all([
+        getStoreTheme(store.id),
+        // The store's own published pages, linked from the nav. Without this an
+        // authored page (About, Contact) is reachable only by typing its URL.
+        getNavPages(store.id),
+    ])
 
-    // The store's own published pages, linked from the nav. Without this an
-    // authored page (About, Contact) is reachable only by typing its URL.
-    const navPages = store?.id ? await getNavPages(store.id) : []
     const headersList = await headers()
 
     const cssVars = theme

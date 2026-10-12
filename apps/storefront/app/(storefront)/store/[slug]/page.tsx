@@ -1,12 +1,14 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
 import { createClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
+import { after } from 'next/server'
 import { castStore, castProducts, castCollections, castServices } from '@/lib/db-cast'
 import { getReviewAggregates, withReviewAggregates } from '@/lib/reviews'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import { buildHomeContext } from '@/lib/liquid-context'
 import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
+import { getStoreRow } from '@/lib/store-queries'
 import { renderPage } from '@/lib/render-page'
 import { defaultHomeSections } from '@/lib/sections'
 import { verifyPreview } from '@/lib/preview'
@@ -22,16 +24,9 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params
-    const supabase = await createClient()
+    const store = await getStoreRow(slug)
 
-    const { data: store } = await supabase
-        .from('stores')
-        .select('name, description, logo_url, settings')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single()
-
-    if (!store) return { title: 'Store not found' }
+    if (!store || !store.is_active) return { title: 'Store not found' }
 
     const settings = (store.settings && typeof store.settings === 'object' && !Array.isArray(store.settings))
         ? store.settings as Record<string, unknown>
@@ -50,24 +45,14 @@ export async function generateMetadata({ params }: Props) {
     }
 }
 
-async function incrementViews(storeId: string) {
-    const supabase = await createClient()
-    await supabase.rpc('increment_store_views', { store_id: storeId })
-}
-
 export default async function StorePage({ params, searchParams }: Props) {
     const { slug } = await params
     const { preview, token, settings } = await searchParams
     const supabase = await createClient()
 
-    const { data: rawStore } = await supabase
-        .from('stores')
-        .select('*')
-        .eq('slug', slug)
-        .eq('is_active', true)
-        .single()
-
-    if (!rawStore) notFound()
+    // Shared with the layout and generateMetadata (one query per request).
+    const rawStore = await getStoreRow(slug)
+    if (!rawStore || !rawStore.is_active) notFound()
 
     const [
         { data: rawProducts },
@@ -92,8 +77,11 @@ export default async function StorePage({ params, searchParams }: Props) {
 
         supabase
             .from('collection_products')
+            // `!inner` makes the collections.* filters below apply to the join; without the
+            // embed in the select they are ignored and "featured" is wrong or empty.
             .select(`
                 position,
+                collections!inner ( slug, store_id ),
                 products (
                     id, name, slug, description, price, compare_at_price,
                     images, inventory_quantity, track_inventory
@@ -129,8 +117,15 @@ export default async function StorePage({ params, searchParams }: Props) {
     const products = withReviewAggregates(baseProducts, aggregates)
     const featured = withReviewAggregates(baseFeatured, aggregates)
 
-    if (store?.id) {
-        incrementViews(store.id)
+    // Count real visits only: not the editor's preview iframe, and after the response so it
+    // neither delays the page nor gets dropped when the serverless function freezes.
+    if (store?.id && !preview && !settings) {
+        const storeId = store.id
+        // Reuse this render's client: request APIs (cookies) are not available inside after().
+        after(async () => {
+            const { error } = await supabase.rpc('increment_store_views', { store_id: storeId })
+            if (error) console.error('[storefront] view count failed:', error.message)
+        })
     }
 
     const themeId = (store?.settings?.themeId as string) ?? 'classic'
