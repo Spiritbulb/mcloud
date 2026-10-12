@@ -5,6 +5,8 @@ import { Suspense } from "react";
 import Analytics from "@/components/analytics";
 import { AuthProvider } from "@mcloud/auth/provider";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
+import { ThemeColorSync } from "@/components/theme-color-sync";
 import StatusBanner from '@mcloud/ui/status-banner'
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
@@ -68,24 +70,6 @@ export const viewport: Viewport = {
   ],
 };
 
-// Paste into your RootLayout <head>, before any other script.
-// Sets `.dark` on <html> synchronously so there is zero flash and Tailwind's
-// `@custom-variant dark (&:where(.dark, .dark *))` + globals.css `.dark { ... }`
-// block both react off this ONE class — no data-theme, no separate
-// prefers-color-scheme block in CSS, just this.
-const noFlashThemeScript = `
-(function () {
-  try {
-    var stored = localStorage.getItem('theme'); // for when you add a manual toggle later
-    var isDark = stored === 'dark' || stored === 'light'
-      ? stored === 'dark'
-      : window.matchMedia('(prefers-color-scheme: dark)').matches;
-    document.documentElement.classList.toggle('dark', isDark);
-  } catch (e) {}
-})();
-`;
-
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -124,9 +108,12 @@ export default function RootLayout({
                 });
               });
             });
+            // Only reload when an existing worker is replaced. On the first visit there
+            // is no controller yet, and claim() would otherwise force a second load.
             let refreshing = false;
+            const hadController = !!navigator.serviceWorker.controller;
             navigator.serviceWorker.addEventListener('controllerchange', () => {
-              if (refreshing) return;
+              if (refreshing || !hadController) return;
               refreshing = true;
               window.location.reload();
             });
@@ -154,9 +141,12 @@ export default function RootLayout({
         <Suspense fallback={null}>
           <Analytics />
         </Suspense>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeColorSync />
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );
