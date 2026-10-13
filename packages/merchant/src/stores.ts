@@ -10,6 +10,7 @@ import { createClient } from '@mcloud/db/server'
 import type { Json } from '@mcloud/db/types'
 import { isVerticalId } from '@mcloud/verticals'
 import { seedPageRows } from './seed-pages'
+import { normalizeSlug, RESERVED_STORE_SLUGS, isValidSlug, slugFromName } from './slug'
 
 export type Role = 'owner' | 'admin' | 'member' | string
 
@@ -185,23 +186,7 @@ export async function listOrgStores(orgSlug: string, userId: string): Promise<Or
     }
 }
 
-/** Normalize a raw slug to the canonical lowercase-hyphen form. */
-export function normalizeSlug(raw: string): string {
-    return raw.trim().toLowerCase().replace(/[^a-z0-9-]/g, '-')
-}
-
-/**
- * First path segments the storefront serves itself. The platform host resolves
- * app.mcloud.co.ke/{slug}, so a store with one of these slugs would be unreachable
- * (or shadow a real route). `org` is the merchant settings area.
- */
-export const RESERVED_STORE_SLUGS: ReadonlySet<string> = new Set([
-    'org', 'store', 'api', 'auth', 'admin', 'settings', 'orders', 'products', 's',
-])
-
-export function isValidSlug(slug: string): boolean {
-    return /^[a-z0-9][a-z0-9-]{1,}[a-z0-9]$/.test(slug)
-}
+export { normalizeSlug, RESERVED_STORE_SLUGS, isValidSlug } from './slug'
 
 export type CreateStoreResult =
     | { error: string; slug: null }
@@ -262,4 +247,48 @@ export async function createStoreForUser(
     }
 
     return { error: null, slug: store.slug }
+}
+
+/** First org (oldest membership) where the user is owner or admin, or null. */
+export async function findManageableOrg(userId: string): Promise<{ id: string; slug: string } | null> {
+    const supabase = await createClient()
+    const { data } = await supabase
+        .from('org_members')
+        .select('role, org:orgs(id, slug)')
+        .eq('user_id', userId)
+        .in('role', ['owner', 'admin'])
+        .order('created_at', { ascending: true })
+        .limit(1)
+        .maybeSingle()
+    const org = Array.isArray(data?.org) ? data?.org[0] : data?.org
+    return org ? { id: org.id, slug: org.slug } : null
+}
+
+/** Create an org owned by `userId`, with a unique slug derived from `name`. */
+export async function createOrgForUser(
+    name: string,
+    userId: string,
+): Promise<{ error: string; org: null } | { error: null; org: { id: string; slug: string } }> {
+    const trimmed = name.trim()
+    if (trimmed.length < 2) return { error: 'Name must be at least 2 characters', org: null }
+
+    const supabase = await createClient()
+    const base = slugFromName(trimmed) || 'org'
+    const { data: taken } = await supabase.from('orgs').select('slug').eq('slug', base).maybeSingle()
+    const slug = taken ? `${base}-${Math.floor(Math.random() * 10000)}` : base
+    const publicId = `org_${crypto.randomUUID().replace(/-/g, '').slice(0, 12)}`
+
+    const { data: org, error } = await supabase
+        .from('orgs')
+        .insert({ name: trimmed, slug, owner_id: userId, public_id: publicId })
+        .select('id, slug')
+        .single()
+    if (error || !org) return { error: error?.message ?? 'Could not create organisation', org: null }
+
+    const { error: memberError } = await supabase
+        .from('org_members')
+        .insert({ org_id: org.id, user_id: userId, role: 'owner' })
+    if (memberError) return { error: memberError.message, org: null }
+
+    return { error: null, org }
 }

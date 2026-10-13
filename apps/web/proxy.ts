@@ -52,6 +52,12 @@ function storefrontRedirect(slug: string, subpath: string, search: string): Next
  */
 const STORE_SETTINGS_RE = /^\/org\/[^/]+\/[^/]+\/settings(\/.*)?$/
 
+/**
+ * Storefront onboarding lives in the storefront app. Sign-in returns people to an
+ * app-relative `/start`, so forward it there rather than 404ing on this origin.
+ */
+const STOREFRONT_START_RE = /^\/start(\/.*)?$/
+
 /** Owner shortcuts -> the settings page they map to inside the storefront. */
 function settingsSubpath(pathname: string): string {
   if (pathname.startsWith('/orders')) return '/settings/orders'
@@ -98,7 +104,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   const { pathname, search } = request.nextUrl
 
   // Settings moved to the storefront: redirect before spending an auth pass.
-  if (STORE_SETTINGS_RE.test(pathname)) {
+  if (STORE_SETTINGS_RE.test(pathname) || STOREFRONT_START_RE.test(pathname)) {
     return NextResponse.redirect(`${storefrontOrigin()}${pathname}${search}`, 307)
   }
 

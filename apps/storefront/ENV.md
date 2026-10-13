@@ -11,6 +11,7 @@ NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 NEXT_PUBLIC_WEB_ORIGIN=              # https://mcloud.co.ke : where login, the org hub and billing live (webAppOrigin())
+NEXT_PUBLIC_AUTH_ORIGIN=             # optional; where sign-in screens live. Defaults to NEXT_PUBLIC_WEB_ORIGIN. See docs/storefront-domain-move.md
 NEXT_PUBLIC_API_BASE_URL=            # optional; only used for webAppOrigin() if it is an absolute URL
 NEXT_PUBLIC_ADMIN_ORIGIN=
 PREVIEW_SECRET=                      # must match apps/web

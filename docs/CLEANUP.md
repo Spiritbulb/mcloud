@@ -334,8 +334,9 @@ storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
 
 - **Slug conflicts.** New stores cannot use reserved slugs (`org`, `api`, `auth`, ...),
   but existing stores might already: `select slug from stores where slug in (...)` using
-  `RESERVED_STORE_SLUGS` in `packages/merchant/src/stores.ts`. Any hit is unreachable at
-  `app.mcloud.co.ke/{slug}`.
+  `RESERVED_STORE_SLUGS` in `packages/merchant/src/slug.ts`. Any hit is unreachable at
+  `app.mcloud.co.ke/{slug}`. (Checked 2026-10-13 after adding `start`, `login`, `signup`, `moving`,
+  `pricing`, `logout`: no existing store uses any reserved slug.)
 - **Mobile.** The app is native (Expo), not a TWA. `openOnWeb()` mints a handoff URL on
   the web origin; the web proxy then forwards settings paths to the storefront, and the
   shared cookie domain carries the session across. No mobile change is needed. Retest
@@ -355,6 +356,12 @@ storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
   Cross-origin links use `webUrl()` (storefront → web) and `storeSettingsUrl()` (web →
   storefront). Longer term, consider serving the whole merchant area from one app, or a
   single origin via rewrites, to remove `webAppOrigin()` and the two helpers.
+- **Storefront domain move.** Checklist in [storefront-domain-move.md](storefront-domain-move.md).
+- **Pricing copy drift.** `apps/web/components/home-client.tsx` lists Hobby KES 1,499, Pro KES 2,999 and
+  "unlimited products"; `packages/merchant/src/plans.ts` says 795 / 2,795 and 20 / 200 products. The storefront
+  marketing page reads `plans.ts`. Reconcile the web copy.
+- **Org creation is duplicated.** `createOrgForUser` (`@mcloud/merchant/stores`, used by storefront `/start`)
+  and web's `completeOnboarding` + `uniqueOrgSlug` do the same thing. Point web at the package function.
 - **TypeScript 6 / Next 16 / Tailwind 4 upgrades** are in flight; keep `tsc --noEmit` in CI.
 
 ---

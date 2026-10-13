@@ -1,7 +1,8 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { prepareMiddleware } from '@mcloud/auth/server'
-import { loginUrlWithReturn } from '@mcloud/auth/routes'
-import { isPlatformHost, isLocalHost, webAppOrigin } from '@/lib/host'
+import { isPlatformHost, isLocalHost } from '@/lib/host'
+import { loginHref } from '@/lib/auth-urls'
+import { RESERVED_STORE_SLUGS } from '@mcloud/merchant/slug'
 
 
 // ─── Bypass / host helpers ────────────────────────────────────────────────────
@@ -16,6 +17,20 @@ const MERCHANT_PREFIX = '/org'
 
 function isMerchantPath(pathname: string): boolean {
   return pathname === MERCHANT_PREFIX || pathname.startsWith(`${MERCHANT_PREFIX}/`)
+}
+
+/**
+ * Signed-in page of the storefront's own onboarding (app/(marketing)/start). Gated like
+ * the merchant area, but only on the platform host: on a custom domain `/start` belongs to
+ * the store, so it must fall through to tenant resolution.
+ */
+function isOnboardingPath(pathname: string): boolean {
+  return pathname === '/start' || pathname.startsWith('/start/')
+}
+
+/** Entry points that read the session but need no gate: /login and /signup redirect signed-in users onward. */
+function isAuthEntryPath(pathname: string): boolean {
+  return pathname === '/login' || pathname === '/signup'
 }
 
 // ─── Lookup cache ─────────────────────────────────────────────────────────────
@@ -90,8 +105,7 @@ async function handleMerchant(request: NextRequest, host: string): Promise<NextR
 
   if (!session?.user) {
     const returnTo = `${request.nextUrl.pathname}${request.nextUrl.search}`
-    const login = new URL(loginUrlWithReturn(returnTo), webAppOrigin())
-    return finalize(NextResponse.redirect(login, 302))
+    return finalize(NextResponse.redirect(loginHref(returnTo), 302))
   }
 
   return finalize(
@@ -126,6 +140,10 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // ── 0. Merchant area (/org/*) ───────────────────────────────────────────────
   if (isMerchantPath(pathname)) {
     return handleMerchant(request, host)
+  }
+  if (isPlatformHost(host)) {
+    if (isOnboardingPath(pathname)) return handleMerchant(request, host)
+    if (isAuthEntryPath(pathname)) return withSessionHeaders(request)
   }
 
   // ── 1. Bypass framework / API / static ──────────────────────────────────────
@@ -185,6 +203,11 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   }
 
   const isCanonical = segments[0] === 'store'
+
+  // The storefront's own pages (/moving, /pricing, ...) are never store slugs: skip the lookup.
+  if (!isCanonical && RESERVED_STORE_SLUGS.has(segments[0])) {
+    return NextResponse.next()
+  }
   const candidateSlug = isCanonical ? segments[1] : segments[0]
   const rest = isCanonical
     ? '/' + segments.slice(2).join('/')

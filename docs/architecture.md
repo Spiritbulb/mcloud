@@ -34,10 +34,11 @@ storefront's `/org/*`.
 | Concern | Lives in |
 |---|---|
 | Marketing site, docs, changelog, beta signup | `apps/web` |
-| Login/logout/magic-code, SSO handoff, invites | `apps/web` (`app/auth`, `app/api/auth`, `app/api/_handoff`) |
+| Login/logout/magic-code, SSO handoff, invites | `apps/web` (`app/auth`, `app/api/auth`, `app/api/_handoff`). The storefront links to them only through `lib/auth-urls.ts`; see [storefront-domain-move.md](storefront-domain-move.md). |
 | Org hub, org members, billing, servers, wallet | `apps/web` (`app/(merchant)/org`) |
 | Platform admin | `apps/web` (`app/admin`, `app/api/admin`) |
 | Mobile and partner APIs | `apps/web` (`app/api/mobile`, `app/api/partner`) |
+| Storefront marketing (`/`), the `/moving` explainer, `/start` onboarding, `/login` and `/signup` entry points | `apps/storefront` (`app/(marketing)`) |
 | Public stores (home, products, services, blog, cart, checkout, accounts) | `apps/storefront` (`app/(storefront)`) |
 | Store settings UI, the Editor, and the `/api/store/*` routes | `apps/storefront` (`app/(merchant)`, `app/api/store`) |
 | Uploads to R2 | `apps/storefront` (`app/api/upload`) |

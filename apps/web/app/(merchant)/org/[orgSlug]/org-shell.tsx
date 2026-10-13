@@ -6,6 +6,7 @@ import { cn } from '@mcloud/ui/utils'
 import { OrgNav, MobileOrgNav, ORG_TABS } from './org-nav'
 import type { OrgTabId } from './org-nav'
 import { WalletBalancePill } from '@/components/wallet-balance'
+import { StorefrontMoveBanner } from './storefront-move-banner'
 
 type OrgShellOrg = {
     id: string
@@ -89,6 +90,7 @@ export default function OrgShell({
 
             {/* Main content */}
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
+                <StorefrontMoveBanner />
                 {/* Header */}
                 <header className="shrink-0 h-[57px] z-40 flex items-center px-4 md:px-5 gap-3 border-b border-border/40">
                     <button

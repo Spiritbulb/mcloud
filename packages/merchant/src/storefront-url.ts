@@ -44,6 +44,14 @@ export function storeSettingsUrl(orgSlug: string, storeSlug: string, sub = ''): 
   return `${SITE_ORIGIN}/org/${orgSlug}/${storeSlug}/settings${sub}`
 }
 
+/**
+ * Absolute URL of a page the storefront serves itself (marketing, /start, /moving) on the
+ * platform host. For links from the web app; never a merchant's custom domain.
+ */
+export function storefrontSiteUrl(path = '/'): string {
+  return `${SITE_ORIGIN}${path}`
+}
+
 /** Display form for the host alone, e.g. in placeholder or prefix text. */
 export function siteHost(): string {
   return SITE_ORIGIN.replace(/^https?:\/\//, "")

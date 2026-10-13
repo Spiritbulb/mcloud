@@ -17,3 +17,27 @@ export const AUTH_ROUTE_PREFIX = '/auth/'
 export function loginUrlWithReturn(returnTo: string): string {
     return `${LOGIN_URL}?returnTo=${encodeURIComponent(returnTo)}`
 }
+
+function looksLikeHost(path: string): boolean {
+    // Anything a browser would treat as starting a host rather than a path.
+    return !path.startsWith('/') || path.startsWith('//') || path.startsWith('/\\')
+}
+
+/**
+ * Sanitize an untrusted return path to a same-origin relative path, defeating open
+ * redirects via absolute (scheme), protocol-relative (//host) or backslash-normalised
+ * (/\host) URLs, including URL-encoded forms (%5C, %2F) that a browser normalises at
+ * navigation time. Returns `fallback` for anything else.
+ */
+export function sanitizeRelativePath(value: unknown, fallback: string): string {
+    if (typeof value !== 'string') return fallback
+    if (looksLikeHost(value)) return fallback
+    let decoded: string
+    try {
+        decoded = decodeURIComponent(value)
+    } catch {
+        return fallback
+    }
+    if (looksLikeHost(decoded)) return fallback
+    return value
+}
