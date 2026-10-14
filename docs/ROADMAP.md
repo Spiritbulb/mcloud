@@ -24,8 +24,8 @@ Size: **S** under a day, **M** a few days, **L** a week or more. Area tags: `SF`
 | N5 | Nuru note editor silently loses edits | NUR | `app/note/[id].tsx` is editable but `services/notes.ts` has no update or delete. Add the API and a save button, or make the screen read-only. | M |
 | N6 | Reach double-charge on retry | RCH, WEB | A timed-out poll keeps the cart; resubmitting creates a second order and STK push. Add an idempotency key or resume the pending order. | M |
 | N7 | Fix spiritbulb env and tests | SB | 7 failing tests: code reads `MCLOUD_BASE`, tests and `.env.example` say `MCLOUD_AUTH_BASE`. Waitlist route crashes unclearly when env is missing. | S |
-| N8 | Apply the pending DB lockdown migrations | WEB | `20261012_*` (safe now) and `20261012b_*` (after the code deploys). Until then the anon key can read and write core tables. See CLEANUP §9.2. | S |
-| N9 | Unsigned Daraja callback, open `mpesa/status`, open Shopify proxy | WEB | Open items from CLEANUP §1.5. | M |
+| N8 | Close out the DB lockdown: move the `bill-servers` cron token to Vault and rotate it | WEB | Tables and functions are already locked in production (verified 2026-10-14). See CLEANUP §9.2. | S |
+| N9 | Live-test the Daraja STK Query path; add a rate limit on the order-status endpoint | WEB | The code fix is done on a local branch (CLEANUP §1.5). Needs one real payment and a Cloudflare rule. | S |
 | N10 | Login form accessibility and flow (spiritbulb) | SB | No labels, no `autocomplete="one-time-code"`, no `role="alert"` on errors, no resend or change-email. This is the front door for every partner-site user. | S |
 
 ## Next

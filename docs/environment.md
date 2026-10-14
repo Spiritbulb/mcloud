@@ -46,7 +46,6 @@ add it here.
 | `ANTHROPIC_API_KEY` | Nuru chat (Anthropic path) |
 | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Nuru chat and embeddings (Azure path) |
 | `AZURE_VISION_ENDPOINT`, `AZURE_VISION_API_KEY` | OCR for Nuru note ingest |
-| `SHOPIFY_STORE_DOMAIN`, `SHOPIFY_PUBLIC_ACCESS_TOKEN` | Shopify Storefront proxy |
 
 ## `apps/storefront` only
 

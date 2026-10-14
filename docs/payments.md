@@ -24,10 +24,23 @@ scoped to the store.
    `daraja_pushed_at` on the order.
 3. Safaricom posts the result to `/api/payments/mpesa/callback` (the URL is hard-coded
    to the **web** app and registered with Safaricom; do not move it casually).
-4. The callback matches the order by `CheckoutRequestID`, ignores orders already `paid`,
-   and marks it `paid` **only if the paid amount covers the total**; otherwise it records
-   `payment_status: 'underpaid'` for a human.
-5. The buyer's browser polls `GET /payments/mpesa/status?orderId=<orderNumber>`.
+4. The callback matches the order by `CheckoutRequestID` and ignores orders already `paid`.
+   Its body is only a **hint**: the callback is unsigned and the `CheckoutRequestID` is also
+   returned to the buyer's browser, so a forged "success" is possible. The order is marked
+   `paid` only when the paid amount covers the total **and** Safaricom's STK Query
+   (`confirmDarajaPayment`, `packages/merchant/src/daraja.ts`) confirms the transaction with the
+   store's own credentials. A short amount records `payment_status: 'underpaid'` for a human;
+   an unconfirmed success leaves the order pending.
+5. The buyer's browser polls `GET /payments/mpesa/status?orderId=<orderNumber>`. While the order is
+   still pending, the poll runs the same STK Query (at most every 8 s per order, after the prompt is
+   10 s old) and settles it, so a callback that never arrived, or arrived before Safaricom could
+   confirm, cannot strand a paid order. Callback and poll share `settleDarajaOrder`, which only
+   reports success to the call that flipped the order, so the merchant is notified once.
+
+Only web has a callback route (the storefront's copy was removed; Safaricom is registered against
+web, and an unsigned callback endpoint on a second origin was only extra attack surface). The STK
+Query response carries no receipt number, so an order settled by the poll alone has no
+`mpesa_transaction_code`.
 
 The manual path (`/api/store/[slug]/checkout/mpesa-code`) attaches a code the buyer typed;
 the merchant confirms it by hand.
@@ -59,9 +72,11 @@ never processed twice.
 
 ## Known gaps
 
-- The Daraja callback is unsigned (Safaricom does not sign it). Matching on a stored
-  `CheckoutRequestID` plus the amount check is the defence.
-- Web and storefront both carry copies of the payment routes (kept identical). Moving the
+- The Daraja callback is unsigned (Safaricom does not sign it). The defence is confirming each
+  success with STK Query before settling (step 4). A forged callback can still record a bogus
+  receipt number if it arrives after a genuine payment and before the genuine callback.
+  **Verify with a live STK payment**: the STK Query path has unit tests with a stubbed Daraja only.
+- Web and storefront both carry copies of the other payment routes (kept identical). Moving the
   Daraja callback URL and PayPal return URL would let one app own them; see
   [CLEANUP.md](CLEANUP.md) §2.5.
 - Orders were previously looked up by `id` while the client sent the order *number*, so
