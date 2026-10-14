@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
+import { useSearchParam } from '@/hooks/useSearchParam'
 import Link from 'next/link'
 
 export default function RegisterPage() {
@@ -11,6 +12,8 @@ export default function RegisterPage() {
     const { signUp } = useCustomerAuth()
 
     const [email, setEmail] = useState('')
+    // Keep a pending return path when switching between the sign-in and register forms.
+    const next = useSearchParam('next')
     const [password, setPassword] = useState('')
     const [confirm, setConfirm] = useState('')
     const [error, setError] = useState<string | null>(null)
@@ -46,7 +49,7 @@ export default function RegisterPage() {
                     Click it to activate your account, then sign in.
                 </p>
                 <Link
-                    href={href('/account/login')}
+                    href={`${href('/account/login')}${next ? `?next=${encodeURIComponent(next)}` : ''}`}
                     className="inline-block text-sm underline underline-offset-4"
                 >
                     Back to sign in
@@ -112,7 +115,7 @@ export default function RegisterPage() {
 
                 <p className="text-center text-sm text-muted-foreground">
                     Already have an account?{' '}
-                    <Link href={href('/account/login')} className="text-black underline underline-offset-4">
+                    <Link href={`${href('/account/login')}${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="text-black underline underline-offset-4">
                         Sign in
                     </Link>
                 </p>

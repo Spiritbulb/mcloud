@@ -5,8 +5,16 @@ import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect } from 'react'
+import { sanitizeRelativePath } from '@mcloud/auth/routes'
 
 const PUBLIC_PATHS = ['/login', '/register']
+
+// Where sign-in should return to (e.g. the order page that asked for it), if the link carried one.
+// Read from the URL directly: useSearchParams would force a Suspense boundary on a static page.
+function returnTarget(): string | null {
+    const next = sanitizeRelativePath(new URLSearchParams(window.location.search).get('next'), '')
+    return next || null
+}
 
 export default function AccountLayout({
     children,
@@ -22,7 +30,7 @@ export default function AccountLayout({
     useEffect(() => {
         if (loading) return
         if (!user && !isPublicPath) router.replace(href('/account/login'))
-        if (user && isPublicPath) router.replace(href('/account/dashboard'))
+        if (user && isPublicPath) router.replace(returnTarget() ?? href('/account/dashboard'))
     }, [user, loading, isPublicPath, href, router])
 
     if (loading) return (

@@ -231,7 +231,7 @@ export default function DashboardPage() {
                                     </div>
                                 )}
                                 <Link
-                                    href={`/orders/${order.order_number}`}
+                                    href={href(`/orders/${encodeURIComponent(order.order_number)}`)}
                                     className="text-xs underline underline-offset-4 text-muted-foreground hover:text-black"
                                 >
                                     View details →

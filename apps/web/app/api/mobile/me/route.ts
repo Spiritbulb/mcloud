@@ -4,23 +4,23 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser } from '../_lib'
 import { createClient } from '@mcloud/db/server'
+import { resolveMobileRole } from '@/lib/reach-role'
 
 export async function GET(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
 
     const supabase = await createClient()
-    const { data, error } = await supabase
-    .from('users')
-    .select('role')
-    .eq('id', auth.user.id)
-    .single()
+    const [{ data, error }, { data: reach }] = await Promise.all([
+        supabase.from('users').select('role').eq('id', auth.user.id).single(),
+        supabase.from('reach_users').select('role').eq('user_id', auth.user.id).maybeSingle(),
+    ])
 
-if (error) {
-    return NextResponse.json({ error: 'lookup_failed' }, { status: 500 })
-}
+    if (error) {
+        return NextResponse.json({ error: 'lookup_failed' }, { status: 500 })
+    }
 
-const role = data?.role ?? 'user'
+    const role = resolveMobileRole(data?.role, reach?.role)
     return NextResponse.json(
         { user: { ...auth.user, role } },
         { headers: { 'Cache-Control': 'no-store' } },

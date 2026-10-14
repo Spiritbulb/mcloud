@@ -3,6 +3,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser, fail } from '../../_lib'
 import { createClient } from '@mcloud/db/server'
+import { toAppRole } from '@/lib/reach-role'
 
 // match what normalizeKenyanPhone returns
 const MPESA_RE = /^0[71]\d{8}$/
@@ -18,18 +19,26 @@ export async function POST(req: NextRequest) {
     if (!MPESA_RE.test(mpesaPhone)) return fail(400, 'Enter a valid M-Pesa number')
 
     const supabase = await createClient()
-    const { data: updated, error } = await supabase
-        .from('users')
-        .update({ role: 'rch-customer', name, mpesa_number: mpesaPhone })
-        .eq('id', auth.user.id)
-        .in('role', ['user', 'rch-customer'])
-        .select('role')
-        .maybeSingle()
 
-    if (error) return fail(500, 'Could not confirm your account')
-    if (!updated) {
+    // The Reach role lives in reach_users, not users.role, so any platform user can shop here.
+    // Only an existing Reach VENDOR is refused: one account does not hold both Reach roles.
+    const { data: existing, error: lookupError } = await supabase
+        .from('reach_users')
+        .select('role')
+        .eq('user_id', auth.user.id)
+        .maybeSingle()
+    if (lookupError) return fail(500, 'Could not confirm your account')
+    if (existing && existing.role !== 'buyer') {
         return fail(409, 'This account is already registered with another role. Use a different account to shop.')
     }
 
-    return NextResponse.json({ role: 'rch-customer' }, { headers: { 'Cache-Control': 'no-store' } })
+    const { error } = await supabase
+        .from('reach_users')
+        .upsert(
+            { user_id: auth.user.id, role: 'buyer', name, mpesa_number: mpesaPhone, updated_at: new Date().toISOString() },
+            { onConflict: 'user_id' },
+        )
+    if (error) return fail(500, 'Could not confirm your account')
+
+    return NextResponse.json({ role: toAppRole('buyer') }, { headers: { 'Cache-Control': 'no-store' } })
 }

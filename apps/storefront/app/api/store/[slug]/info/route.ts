@@ -14,7 +14,7 @@ export async function GET(
     const admin = await createClient()
     const { data: store } = await admin
         .from('stores')
-        .select('settings, theme:store_themes(theme_id)')
+        .select('id, settings, theme:store_themes(theme_id)')
         .eq('slug', slug)
         .eq('is_active', true)
         .single()
@@ -28,5 +28,25 @@ export async function GET(
         (store.settings as { themeId?: string } | null)?.themeId ??
         'classic'
 
-    return NextResponse.json({ themeId }, { headers: { 'Cache-Control': 'no-store' } })
+    // The cart must not claim "Free" shipping for a store that has delivery zones.
+    const { count: zoneCount } = await admin
+        .from('delivery_zones')
+        .select('id', { count: 'exact', head: true })
+        .eq('store_id', store.id)
+
+    // The store's own public contact points (both are already shown on its site), for the
+    // checkout's "don't see your area?" line.
+    const settings = (store.settings && typeof store.settings === 'object' && !Array.isArray(store.settings)
+        ? store.settings
+        : {}) as { contact?: { email?: unknown }; socialLinks?: { whatsapp?: unknown } }
+    const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null)
+
+    return NextResponse.json(
+        {
+            themeId,
+            hasDeliveryZones: (zoneCount ?? 0) > 0,
+            contact: { email: str(settings.contact?.email), whatsapp: str(settings.socialLinks?.whatsapp) },
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+    )
 }

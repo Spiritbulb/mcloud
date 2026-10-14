@@ -8,6 +8,8 @@ import {
     CheckCircle2, XCircle, ChevronLeft,
 } from 'lucide-react'
 import { convertKEStoUSD, formatKES, formatUSD } from '../../../../apps/storefront/lib/currency'
+import { initialZoneId } from '../../../../apps/storefront/lib/delivery-zones-logic'
+import { useStoreHref } from '../../../../apps/storefront/contexts/StoreContext'
 import { Button } from '@mcloud/ui/button'
 import { Input } from '@mcloud/ui/input'
 import { Label } from '@mcloud/ui/label'
@@ -25,6 +27,7 @@ type DarajaState =
 export default function ClassicCheckoutPage({
     storeSlug,
     deliveryZones = [],
+    contact,
     cartItems,
     loading,
     mpesaConfig,
@@ -42,10 +45,10 @@ export default function ClassicCheckoutPage({
     const [error, setError] = useState('')
     const [darajaState, setDarajaState] = useState<DarajaState>({ phase: 'idle' })
     const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
-    const availableZones = deliveryZones.filter((z) => z.available)
-    const [deliveryZoneId, setDeliveryZoneId] = useState<string | null>(
-        availableZones[0]?.id ?? null,
-    )
+    const href = useStoreHref()
+    // Nothing is preselected when there is a choice: defaulting to the first zone quietly charged
+    // shoppers for an area they never picked. The one-zone case has nothing to choose between.
+    const [deliveryZoneId, setDeliveryZoneId] = useState<string | null>(() => initialZoneId(deliveryZones))
 
     const selectedZone = deliveryZones.find((z) => z.id === deliveryZoneId) ?? null
     const shippingKES = selectedZone?.rate ?? 0
@@ -68,7 +71,7 @@ export default function ClassicCheckoutPage({
                 if (data.paymentStatus === 'completed') {
                     stopPolling()
                     setDarajaState({ phase: 'success', mpesaCode: data.mpesaCode ?? '' })
-                    setTimeout(() => router.push(`/orders/${orderId}`), 1800)
+                    setTimeout(() => router.push(href(`/orders/${encodeURIComponent(orderId)}`)), 1800)
                 } else if (data.paymentStatus === 'failed') {
                     stopPolling()
                     setDarajaState({ phase: 'failed', reason: 'Payment was cancelled or failed. Please try again.' })
@@ -149,7 +152,7 @@ export default function ClassicCheckoutPage({
                 no split layout competing for thumb-reach on a small screen. */}
             <div className="max-w-xl mx-auto px-4 sm:px-6 py-5 sm:py-10">
                 <Link
-                    href={`/store/${storeSlug}/cart`}
+                    href={href('/cart')}
                     className="inline-flex items-center gap-1 text-sm mb-4"
                     style={{ color: 'var(--sf-foreground-subtle)' }}
                 >
@@ -163,6 +166,11 @@ export default function ClassicCheckoutPage({
     {shippingKES > 0 && (
         <div className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
             {formatKES(subtotalKES)} + {formatKES(shippingKES)} delivery
+        </div>
+    )}
+    {deliveryZones.length > 0 && !selectedZone && (
+        <div className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+            + delivery, once you choose a location
         </div>
     )}
     <span className="sf-heading text-xl font-light" style={{ color: 'var(--sf-foreground)' }}>
@@ -202,11 +210,22 @@ export default function ClassicCheckoutPage({
                             </div>
                             {!selectedZone && (
                                 <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
-                                    Don't see your area?{' '}
-                                    <Link href={`mailto:joanmadaybusiness@gmail.com`} className="underline underline-offset-2">
-                                        Contact us
-                                    </Link>{' '}
-                                    to arrange delivery.
+                                    Don&apos;t see your area?{' '}
+                                    {contact?.email || contact?.whatsapp ? (
+                                        <>
+                                            <Link
+                                                href={contact.email
+                                                    ? `mailto:${contact.email}`
+                                                    : `https://wa.me/${(contact.whatsapp ?? '').replace(/\D/g, '')}`}
+                                                className="underline underline-offset-2"
+                                            >
+                                                Contact us
+                                            </Link>{' '}
+                                            to arrange delivery.
+                                        </>
+                                    ) : (
+                                        <>Contact the seller to arrange delivery.</>
+                                    )}
                                 </p>
                             )}
                         </div>

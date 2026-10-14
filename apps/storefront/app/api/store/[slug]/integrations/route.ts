@@ -4,6 +4,7 @@ import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { canManage, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { publicIntegration } from '@/lib/integration-public'
+import { readOptionalSession } from '@/lib/optional-session'
 
 export async function GET(
     request: Request,
@@ -77,7 +78,7 @@ export async function GET(
         // Managers (the settings form) get every non-secret field. Everyone else, including
         // anonymous shoppers, gets only what checkout renders: an allowlist, so a config
         // field added later is private by default.
-        const user = (await getSession(request as any))?.user
+        const user = (await readOptionalSession(() => getSession(request as any)))?.user
         const manager = user ? canManage((await requireStoreAccessById(store.id, user.id)).role) : false
         const view = manager ? sanitize : publicIntegration
 

@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus, Minus, Trash2, ShoppingBag, Shield } from 'lucide-react'
 import { formatKES } from '../../../../apps/storefront/lib/currency'
+import { cartShippingLabel } from '../../../../apps/storefront/lib/delivery-zones-logic'
+import { useStoreHref } from '../../../../apps/storefront/contexts/StoreContext'
 import { Button } from '@mcloud/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@mcloud/ui/card'
 import type { CartOnlyPageProps } from '../types'
@@ -15,8 +17,11 @@ export default function ClassicCartPage({
     itemLoadingStates,
     onUpdateQuantity,
     onRemoveItem,
+    hasDeliveryZones,
 }: CartOnlyPageProps) {
     const router = useRouter()
+    // Host-aware: bare paths on a custom domain, /store/{slug}/... on the platform host.
+    const href = useStoreHref()
 
     const subtotalKES = cartItems.reduce((s, i) => s + i.price * i.quantity, 0)
 
@@ -41,7 +46,7 @@ export default function ClassicCartPage({
                     </p>
                     <button
                         className="sf-btn-primary inline-flex items-center gap-2 px-6 py-3 text-sm mt-2"
-                        onClick={() => router.push(`/store/${storeSlug}/products`)}
+                        onClick={() => router.push(href('/products'))}
                     >
                         <ShoppingBag className="h-4 w-4" />
                         Start Shopping
@@ -147,7 +152,7 @@ export default function ClassicCartPage({
 
                         <div className="pt-2">
                             <Link
-                                href={`/store/${storeSlug}/products`}
+                                href={href('/products')}
                                 className="sf-pill sf-pill-inactive border inline-flex items-center gap-2 px-4 py-2 text-sm"
                             >
                                 ← Continue Shopping
@@ -171,7 +176,7 @@ export default function ClassicCartPage({
                                     </div>
                                     <div className="flex justify-between text-sm" style={{ color: 'var(--sf-foreground-subtle)' }}>
                                         <span>Shipping</span>
-                                        <span style={{ color: 'var(--sf-foreground)' }}>Free</span>
+                                        <span style={{ color: 'var(--sf-foreground)' }}>{cartShippingLabel(hasDeliveryZones)}</span>
                                     </div>
                                     <div style={{ height: '1px', backgroundColor: 'var(--sf-border)' }} />
                                     <div className="flex justify-between items-baseline">
@@ -180,13 +185,18 @@ export default function ClassicCartPage({
                                             {formatKES(subtotalKES)}
                                         </span>
                                     </div>
+                                    {hasDeliveryZones && (
+                                        <p className="text-xs" style={{ color: 'var(--sf-foreground-subtle)' }}>
+                                            Delivery is added once you choose your location.
+                                        </p>
+                                    )}
                                 </CardContent>
                             </Card>
 
                             <Button
                                 size="lg"
                                 className="w-full sf-btn-primary"
-                                onClick={() => router.push(`/store/${storeSlug}/checkout`)}
+                                onClick={() => router.push(href('/checkout'))}
                             >
                                 Proceed to Checkout
                             </Button>

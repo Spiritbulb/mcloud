@@ -4,6 +4,7 @@
 import { useState } from 'react'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
+import { useSearchParam } from '@/hooks/useSearchParam'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -13,6 +14,8 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [error, setError] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    // Carry a pending return path over to the register link, so switching forms does not lose it.
+    const next = useSearchParam('next')
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
@@ -73,7 +76,7 @@ export default function LoginPage() {
 
                 <p className="text-center text-sm text-muted-foreground">
                     No account?{' '}
-                    <Link href={href('/account/register')} className="text-black underline underline-offset-4">
+                    <Link href={`${href('/account/register')}${next ? `?next=${encodeURIComponent(next)}` : ''}`} className="text-black underline underline-offset-4">
                         Create one
                     </Link>
                 </p>

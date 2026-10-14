@@ -417,6 +417,9 @@ export interface CartOnlyPageProps {
     itemLoadingStates: Record<string, boolean>
     onUpdateQuantity: (variantId: string, quantity: number) => void
     onRemoveItem: (variantId: string) => void
+    /** Whether the store has delivery zones. The cart cannot price shipping (the zone is chosen at
+     *  checkout), so it must not say "Free" for a store that charges for delivery. */
+    hasDeliveryZones?: boolean
 }
 
 // ── Delivery ─────────────────────────────────────────────────────────────────
@@ -434,6 +437,8 @@ export interface CheckoutPageProps {
     cartItems: CartItem[]
     loading: boolean
     apiBaseUrl: string
+    /** The store's own public contact points, for "don't see your area?". Either may be absent. */
+    contact?: { email?: string | null; whatsapp?: string | null }
     mpesaConfig: MpesaConfig | null
     onMpesaCheckout: (guest: GuestDetails, deliveryZoneId: string | null) => Promise<void>
     onDarajaCheckout: (

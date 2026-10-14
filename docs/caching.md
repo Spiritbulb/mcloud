@@ -44,6 +44,15 @@ anything that writes outside those paths. The hourly `revalidate` is the backsto
 
 Web's call is fire-and-forget; if `REVALIDATE_SECRET` is unset it silently does nothing.
 
+## The order page
+
+`/store/[slug]/orders/[orderNumber]` is where shoppers land after paying. The page is a cached, empty
+shell (it lives in the store tree like the cart); the order itself comes from `GET /api/store/[slug]/orders/[orderNumber]`,
+which is `no-store` and `noindex`. An order number is treated as a capability: anonymous callers get the
+basic view (status, date, total, item names and quantities). Contact, address, delivery fee, tracking and
+per-line prices need the signed-in owner (Supabase customer session). The line between the tiers is
+`lib/order-view.ts`, pinned by its tests. Sign-in links carry `?next=` so shoppers come back to the order.
+
 ## Limits worth knowing
 
 - The proxy (`apps/storefront/proxy.ts`) still runs on every request, including ones the CDN would serve:

@@ -6,7 +6,8 @@ import { useCart } from '@/contexts/CartContext'
 import { useRouter } from 'next/navigation'
 import ClassicCheckoutPage from '@mcloud/themes/classic/CheckoutPage'
 import type { MpesaConfig, GuestDetails, DeliveryZone } from '@mcloud/themes/types'
-import { useStoreTheme } from '@/hooks/useStoreTheme'
+import { useStoreInfo } from '@/hooks/useStoreInfo'
+import { useStoreHref } from '@/contexts/StoreContext'
 import { trackCheckout, trackOrderPlaced } from '../lib/analytics'
 import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
 
@@ -17,7 +18,8 @@ const THEME_COMPONENTS: Record<string, React.ComponentType<any>> = {
 export default function CheckoutPageContainer() {
     const { cartItems, loading, clearCart, storeSlug } = useCart()
     const router = useRouter()
-    const { themeId } = useStoreTheme(storeSlug)
+    const { themeId, contact } = useStoreInfo(storeSlug)
+    const href = useStoreHref()
 
     const [mpesaConfig, setMpesaConfig] = useState<MpesaConfig | null>(null)
     const [deliveryZones, setDeliveryZones] = useState<DeliveryZone[]>([])
@@ -27,8 +29,9 @@ export default function CheckoutPageContainer() {
 
     useEffect(() => {
         if (!loading && safeCartItems.length === 0) {
-            router.replace(`/store/${storeSlug}`)
+            router.replace(href('/'))
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [loading, safeCartItems.length, storeSlug])
 
     useEffect(() => {
@@ -124,7 +127,7 @@ export default function CheckoutPageContainer() {
             const { orderNumber } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
             await submitMpesaCode(storeSlug ?? '', orderNumber, guest.mpesaCode)
             await clearCart()
-            router.push(`/store/${storeSlug}/?order=${encodeURIComponent(orderNumber)}`)
+            router.push(href(`/orders/${encodeURIComponent(orderNumber)}`))
         } finally {
             setIsProcessing(false)
         }
@@ -214,6 +217,7 @@ export default function CheckoutPageContainer() {
             storeSlug={storeSlug ?? ''}
             cartItems={safeCartItems}
             deliveryZones={deliveryZones}
+            contact={contact}
             loading={loading}
             mpesaConfig={mpesaConfig}
             apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api'}

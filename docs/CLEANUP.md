@@ -436,3 +436,17 @@ reuses the validating `updateStoreTheme`); a guard test pins browser-client impo
 `migrations/20261012_lock_down_privileged_functions_and_wallet_tables.sql` (apply any time) and
 `migrations/20261012b_server_only_database_access.sql` (apply only after this code is deployed). Also: move the `bill-servers`
 cron's bearer token to Vault and rotate it, and delete or replace the legacy Supabase-Auth password forms in `apps/web`.
+
+## Open items (2026-10-14)
+
+- **Reach roles still in `users.role`.** `reach_users` exists and the routes read it, but the two
+  accounts that Reach stamped `rch-vendor` still carry it. After the web deploy, run
+  `migrations/20261014c_remove_rch_roles_from_users.sql`, then drop the column default question
+  (new users get `customer`; Reach no longer depends on it). The mobile app is unchanged.
+- **PayPal return URLs (storefront copy of `capture-order`) redirect to root paths** (`/cart?...`,
+  `/orders/...`) that the platform host reads as a store slug. Providers call web's copy, so this is
+  latent; fix when the two copies are reconciled (section 2.5).
+- **The order status endpoint has no rate limit.** Order numbers are unguessable and the anonymous view
+  is non-identifying, but a limit would stop scraping. A Cloudflare rate-limit rule on
+  `/api/store/*/orders/*` is the cheap way.
+

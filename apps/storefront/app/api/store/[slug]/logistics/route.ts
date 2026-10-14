@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { upsertDeliveryOption, deleteDeliveryOption, upsertDeliveryZone, deleteDeliveryZone } from '@mcloud/merchant/logistics-data'
+import { zoneProblem } from '@/lib/delivery-zones-logic'
 
 // POST /api/store/[slug]/logistics
 // Body: { options: DeliveryOption[], zones: DeliveryZone[] }
@@ -34,6 +35,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     const body = await req.json()
     const incomingOptions = Array.isArray(body.options) ? body.options : []
     const incomingZones = Array.isArray(body.zones) ? body.zones : []
+
+    // Reject before touching anything: a half-applied save (deletes done, writes refused) is worse
+    // than a refused one. A blank rate used to be stored as null and priced as free.
+    const problem = zoneProblem(incomingZones)
+    if (problem) return NextResponse.json({ error: problem }, { status: 400 })
 
     const isTempId = (id: string) => id.startsWith('_new_')
 

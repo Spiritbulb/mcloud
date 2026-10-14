@@ -9,6 +9,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resolveAmount, buildDonatePayload } from './donate-island-logic'
+import { useStoreHref } from '@/contexts/StoreContext'
 import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
 
 interface Integrations {
@@ -104,6 +105,7 @@ export function DonateIsland({ slug }: { slug: string }) {
   const amount = useMemo(() => resolveAmount({ preset, custom }), [preset, custom])
   const isDaraja = paymentMethod === 'mpesa' && integrations?.darajaEnabled
 
+  const href = useStoreHref()
   const submit = useCallback(async () => {
     if (!campaign) return
     if (amount === null) { setStatus({ phase: 'error', message: 'Choose or enter a valid amount' }); return }
@@ -150,16 +152,16 @@ export function DonateIsland({ slug }: { slug: string }) {
         setStatus({ phase: 'stk', phone: phone.trim() })
         // The order is created; the payment confirms out-of-band via the STK
         // prompt. Send the donor to their order page to track it.
-        setTimeout(() => { window.location.href = `/orders/${orderNumber}` }, 1500)
+        setTimeout(() => { window.location.href = href(`/orders/${encodeURIComponent(orderNumber)}`) }, 1500)
         return
       }
 
       await submitMpesaCode(slug, orderNumber, mpesaCode)
-      window.location.href = `/orders/${orderNumber}`
+      window.location.href = href(`/orders/${encodeURIComponent(orderNumber)}`)
     } catch (e: any) {
       setStatus({ phase: 'error', message: e?.message || 'Donation failed' })
     }
-  }, [campaign, amount, paymentMethod, phone, email, dedication, slug, mpesaCode, isDaraja])
+  }, [campaign, amount, paymentMethod, phone, email, dedication, slug, mpesaCode, isDaraja, href])
 
   if (!campaign) return null
 

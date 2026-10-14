@@ -4,6 +4,7 @@
 
 import { useState } from 'react'
 import { cn } from '@mcloud/ui/utils'
+import { zoneProblem } from '@/lib/delivery-zones-logic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -139,8 +140,8 @@ function ZoneRow({ zone, onChange, onDelete }: {
                     type="number"
                     value={zone.rate ?? ''}
                     onChange={(e) => onChange({ rate: e.target.value === '' ? null : Number(e.target.value) })}
-                    placeholder="Rate"
-                    className="w-20 h-9 px-2 rounded-lg border border-border bg-background text-[13px] text-foreground tabular-nums focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Rate (0 = free)"
+                    className="w-28 h-9 px-2 rounded-lg border border-border bg-background text-[13px] text-foreground tabular-nums focus:outline-none focus:ring-1 focus:ring-primary"
                 />
             </div>
             <button
@@ -191,6 +192,7 @@ export default function LogisticsSettingsClient({
     const [zones, setZones] = useState<DeliveryZone[]>(initialData?.zones ?? [])
     const [saving, setSaving] = useState(false)
     const [savedAt, setSavedAt] = useState<number | null>(null)
+    const [error, setError] = useState<string | null>(null)
 
     if (!initialData) {
         return (
@@ -220,6 +222,12 @@ export default function LogisticsSettingsClient({
     const removeZone = (id: string) => setZones((prev) => prev.filter((z) => z.id !== id))
 
     const handleSave = async () => {
+        const problem = zoneProblem(zones)
+        if (problem) {
+            setError(problem)
+            return
+        }
+        setError(null)
         setSaving(true)
         try {
             const res = await fetch(`/api/store/${slug}/logistics`, {
@@ -227,25 +235,27 @@ export default function LogisticsSettingsClient({
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ options, zones }),
             })
-            if (!res.ok) throw new Error('save failed')
+            if (!res.ok) {
+                const body = await res.json().catch(() => null)
+                throw new Error(typeof body?.error === 'string' ? body.error : 'Could not save. Please try again.')
+            }
             const updated = await res.json()
             setOptions(updated.options ?? options)
             setZones(updated.zones ?? zones)
             setSavedAt(Date.now())
-        } catch {
-            // Swallow — button reverts to its normal state, user can retry.
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Could not save. Please try again.')
         } finally {
             setSaving(false)
         }
     }
-
     return (
         <div className="max-w-2xl space-y-6 mx-auto">
             <div className="flex items-center justify-between">
                 <div>
                     <p className="text-[15px] font-semibold text-foreground">Logistics</p>
                     <p className="text-[12px] text-muted-foreground mt-0.5">
-                        Set up couriers and delivery zones. Where you don't deliver, customers reach you directly.
+                        Set up couriers and delivery zones. Every zone needs a rate: enter 0 for free delivery. Where you don't deliver, customers reach you directly.
                     </p>
                 </div>
                 <button
@@ -256,6 +266,10 @@ export default function LogisticsSettingsClient({
                     {saving ? 'Saving…' : savedAt ? 'Saved' : 'Save changes'}
                 </button>
             </div>
+
+            {error && (
+                <p role="alert" className="text-[12px] text-destructive -mt-2">{error}</p>
+            )}
 
             <SectionCard title="Delivery options" icon="local_shipping" onAdd={addOption} addLabel="Add courier">
                 {options.length === 0 ? (

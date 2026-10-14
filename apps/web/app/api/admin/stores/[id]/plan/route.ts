@@ -19,14 +19,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     if (action === 'grant') {
-        const { error: storeErr } = await supabase
-            .from('stores')
-            .update({ is_pro: true, pro_since: new Date().toISOString(), pro_expires_at: null })
-            .eq('id', id)
-        if (storeErr) return NextResponse.json({ error: storeErr.message }, { status: 500 })
-
-        // An admin grant owns its own row: update this store's active admin grant, or add one.
-        // It never rewrites a paid (wallet) subscription row, which would corrupt billing history.
+        // Subscription first, and every write checked. This used to flip the store's legacy is_pro
+        // flag first and ignore the subscription insert's result, so when the insert failed (the
+        // provider check constraint did not allow 'admin') the store was left flagged but with no
+        // subscription: Free, with a "successful" response. The subscription is what grants the plan.
         const { data: existingGrant } = await supabase
             .from('store_subscriptions')
             .select('id')
@@ -36,15 +32,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             .limit(1)
             .maybeSingle()
 
+        // An admin grant owns its own row: update this store's active admin grant, or add one.
+        // It never rewrites a paid (wallet) subscription row, which would corrupt billing history.
         if (existingGrant) {
-            await supabase.from('store_subscriptions').update({ plan }).eq('id', existingGrant.id)
+            const { error } = await supabase.from('store_subscriptions').update({ plan }).eq('id', existingGrant.id)
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 })
         } else {
             const { data: store } = await supabase
                 .from('stores')
                 .select('currency')
                 .eq('id', id)
                 .single()
-            await supabase
+            const { error } = await supabase
                 .from('store_subscriptions')
                 .insert({
                     store_id: id,
@@ -55,7 +54,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
                     plan,
                     period_start: new Date().toISOString(),
                 })
+            if (error) return NextResponse.json({ error: error.message }, { status: 500 })
         }
+
+        const { error: storeErr } = await supabase
+            .from('stores')
+            .update({ is_pro: true, pro_since: new Date().toISOString(), pro_expires_at: null })
+            .eq('id', id)
+        if (storeErr) return NextResponse.json({ error: storeErr.message }, { status: 500 })
     } else {
         const { error: storeErr } = await supabase
             .from('stores')
