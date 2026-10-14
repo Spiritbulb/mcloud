@@ -5,6 +5,7 @@ import { useCart } from '@/contexts/CartContext'
 import type { ProductDetailData, ProductVariant } from '@mcloud/themes/types'
 import type { ThemeComponents } from '@mcloud/themes/resolver'
 import { trackView, trackAddToCart } from '../lib/analytics'
+import { STORE_API } from '@/lib/api-base'
 
 interface Props {
     storeSlug: string
@@ -77,7 +78,7 @@ export default function ProductDetailClient({
             selectedVariant={selectedVariant}
             selectedOptions={selectedOptions}
             quantity={quantity}
-            apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api'}
+            apiBaseUrl={STORE_API}
             currentImageIndex={currentImageIndex}
             onOptionChange={(name, value) => setSelectedOptions(prev => ({ ...prev, [name]: value }))}
             onQuantityChange={setQuantity}

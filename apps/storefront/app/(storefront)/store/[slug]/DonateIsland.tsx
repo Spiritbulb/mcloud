@@ -10,6 +10,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { resolveAmount, buildDonatePayload } from './donate-island-logic'
 import { useStoreHref } from '@/contexts/StoreContext'
+import { STORE_API } from '@/lib/api-base'
 import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
 
 interface Integrations {
@@ -26,8 +27,6 @@ interface OpenCampaign {
 }
 
 type Status = { phase: 'form' } | { phase: 'submitting' } | { phase: 'stk'; phone: string } | { phase: 'error'; message: string }
-
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
 
 function parsePresets(raw: string | null): number[] {
   if (!raw) return []
@@ -86,7 +85,7 @@ export function DonateIsland({ slug }: { slug: string }) {
   // Load the store's configured providers once (same route the cart uses).
   useEffect(() => {
     let alive = true
-    fetch(`${API}/store/${slug}/integrations`, { credentials: 'include' })
+    fetch(`${STORE_API}/store/${slug}/integrations`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
         if (!alive) return

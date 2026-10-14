@@ -1,4 +1,5 @@
 // lib/analytics.ts
+import { STORE_API } from '@/lib/api-base'
 
 const SESSION_KEY = 'mc_session_id'
 const UTM_KEY = 'mc_utm'
@@ -61,7 +62,7 @@ interface TrackOptions {
 function track(opts: TrackOptions) {
     if (typeof window === 'undefined') return  // no SSR tracking
 
-    const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${opts.storeSlug}/analytics`
+    const url = `${STORE_API}/store/${opts.storeSlug}/analytics`
     const payload = JSON.stringify({
         event: opts.event,
         product_id: opts.productId,

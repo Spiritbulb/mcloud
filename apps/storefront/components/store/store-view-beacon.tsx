@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { STORE_API } from '@/lib/api-base'
 
 /**
  * Counts a visit to the store home, once per browser session. The home is served from the
@@ -16,7 +17,7 @@ export default function StoreViewBeacon({ slug }: { slug: string }) {
         } catch {
             // Storage blocked: count this view, we just can't dedupe it.
         }
-        const url = `${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${slug}/view`
+        const url = `${STORE_API}/store/${slug}/view`
         try {
             if (navigator.sendBeacon?.(url)) return
             void fetch(url, { method: 'POST', keepalive: true }).catch(() => {})

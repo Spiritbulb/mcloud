@@ -4,12 +4,14 @@
 // or /donate) plus the provider inputs, and performs ONLY the provider call —
 // order creation, cart state, and navigation stay in the caller.
 //
-// The provider endpoints live in the web app (NEXT_PUBLIC_API_BASE_URL) and are
+// The provider endpoints live in the web app (webApi(), see lib/api-base.ts) and are
 // keyed by orderId/orderNumber, so they are agnostic to the order's source
 // (purchase vs donation). The manual M-PESA code step is a storefront route
 // keyed by orderNumber.
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL
+import { webApi } from './api-base'
+
+const API = webApi()
 
 export interface PaypalItem {
   name: string
@@ -38,7 +40,6 @@ export async function triggerDarajaStkPush(
 ): Promise<{ checkoutRequestId: string; orderId: string }> {
   const res = await fetch(`${API}/payments/mpesa/stk-push`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ storeSlug, phone, orderId: orderNumber, amount }),
   })
@@ -55,7 +56,6 @@ export async function triggerPaypalOrder(
 ): Promise<string> {
   const res = await fetch(`${API}/payments/paypal/create-order`, {
     method: 'POST',
-    credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ orderId: orderNumber, items, totalKES: Number(totalKES.toFixed(2)) }),
   })

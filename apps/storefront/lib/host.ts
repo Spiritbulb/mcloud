@@ -50,16 +50,14 @@ export function storeBasePath(host: string, slug: string): string {
  * Absolute origin of the merchant web app (where /org/* lives). The storefront
  * runs on its own / custom domains, so any link into merchant settings must be
  * absolute — a relative redirect would stay on the storefront host. Derived from
- * the API base URL by dropping the trailing "/api". No trailing slash.
+ * NEXT_PUBLIC_WEB_ORIGIN, else https://mcloud.co.ke. No trailing slash.
  */
 export function webAppOrigin(): string {
-    // Explicit origin wins. NEXT_PUBLIC_API_BASE_URL is only a fallback: on the web app
-    // it is a relative "/api", which has no origin and made new URL() throw (a 500 in
-    // the proxy for every unauthenticated /org request).
+    // NEXT_PUBLIC_API_BASE_URL used to be a fallback here. It is not any more: in production it held
+    // the STOREFRONT's origin, so a missing NEXT_PUBLIC_WEB_ORIGIN would have sent every web link
+    // (sign-in, billing, payments) to the wrong app.
     const explicit = process.env.NEXT_PUBLIC_WEB_ORIGIN
     if (explicit) return new URL(explicit).origin
-    const api = process.env.NEXT_PUBLIC_API_BASE_URL ?? ''
-    if (/^https?:\/\//.test(api)) return new URL(api).origin
     return 'https://mcloud.co.ke'
 }
 

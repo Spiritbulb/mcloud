@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation'
 import ClassicCheckoutPage from '@mcloud/themes/classic/CheckoutPage'
 import type { MpesaConfig, GuestDetails, DeliveryZone } from '@mcloud/themes/types'
 import { useStoreInfo } from '@/hooks/useStoreInfo'
+import { STORE_API, webApi } from '@/lib/api-base'
 import { useStoreHref } from '@/contexts/StoreContext'
 import { trackCheckout, trackOrderPlaced } from '../lib/analytics'
 import { submitMpesaCode, triggerDarajaStkPush, triggerPaypalOrder } from '@/lib/payment-trigger'
@@ -36,7 +37,7 @@ export default function CheckoutPageContainer() {
 
     useEffect(() => {
         if (!storeSlug) return
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/integrations`, {
+        fetch(`${STORE_API}/store/${storeSlug}/integrations`, {
             credentials: 'include',
         })
             .then(res => res.json())
@@ -64,7 +65,7 @@ export default function CheckoutPageContainer() {
     // works with deliveryZoneId: null (matches how the route treats it).
     useEffect(() => {
         if (!storeSlug) return
-        fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/store/${storeSlug}/delivery-zones`, {
+        fetch(`${STORE_API}/store/${storeSlug}/delivery-zones`, {
             credentials: 'include',
         })
             .then(res => res.json())
@@ -164,9 +165,8 @@ export default function CheckoutPageContainer() {
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const { orderNumber, total } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/pesapal/create-order?store=${storeSlug}`, {
+            const res = await fetch(`${webApi()}/payments/pesapal/create-order?store=${storeSlug}`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, amount: total })
             })
@@ -196,9 +196,8 @@ export default function CheckoutPageContainer() {
         try {
             const guest: GuestDetails = { mpesaPhone: '', mpesaCode: '', whatsapp: '', email: '' }
             const { orderNumber, total } = await createOrder(guest, 'mpesa', crypto.randomUUID(), deliveryZoneId)
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_BASE_URL}/payments/intasend/create-order?store=${storeSlug}`, {
+            const res = await fetch(`${webApi()}/payments/intasend/create-order?store=${storeSlug}`, {
                 method: 'POST',
-                credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ orderId: orderNumber, amount: total })
             })
@@ -220,7 +219,7 @@ export default function CheckoutPageContainer() {
             contact={contact}
             loading={loading}
             mpesaConfig={mpesaConfig}
-            apiBaseUrl={process.env.NEXT_PUBLIC_API_BASE_URL ?? '/api'}
+            apiBaseUrl={webApi()}
             onMpesaCheckout={handleMpesaCheckout}
             onDarajaCheckout={handleDarajaCheckout}
             onPaypalCheckout={handlePaypalCheckout}

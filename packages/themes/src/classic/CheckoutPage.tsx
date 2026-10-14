@@ -63,10 +63,8 @@ export default function ClassicCheckoutPage({
         pollRef.current = setInterval(async () => {
             attempts++
             try {
-                const res = await fetch(
-                    `${apiBaseUrl}/payments/mpesa/status?orderId=${orderId}`,
-                    { credentials: 'include' }
-                )
+                // apiBaseUrl is the web app's API: cross-origin, so no credentials.
+                const res = await fetch(`${apiBaseUrl}/payments/mpesa/status?orderId=${orderId}`)
                 const data = await res.json()
                 if (data.paymentStatus === 'completed') {
                     stopPolling()
