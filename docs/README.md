@@ -9,6 +9,8 @@
 | [environment.md](environment.md) | You are setting up a machine or a Vercel project. |
 | [storefront-domain-move.md](storefront-domain-move.md) | You are changing storefront sign-in, hosts or cookies, or planning the move to its own domain. |
 | [CLEANUP.md](CLEANUP.md) | You want the known debt, or are about to refactor something. |
+| [ROADMAP.md](ROADMAP.md) | You are choosing what to build next (Now / Next / Later). |
+| [../FEATURES.md](../FEATURES.md) | You want to know what exists, what is partial, and what is wanted, across all apps. |
 | [../AGENTS.md](../AGENTS.md) | You are an AI agent, or want the working rules in one page. |
 
 `docs/superpowers/**` holds historical design specs and plans. They describe the system
