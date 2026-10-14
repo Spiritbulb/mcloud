@@ -48,3 +48,15 @@ test('the home route takes no search params; only the preview route may', () => 
     const preview = readFileSync(path.join(publicTree, '-preview/page.tsx'), 'utf8')
     assert.match(preview, /dynamic = 'force-dynamic'/)
 })
+
+test("the tagged store lookup is not cached for less time than the pages", () => {
+    // Next gives a page the SHORTEST lifetime of any cached data it reads. A smaller
+    // `revalidate` in getStoreRow once cut every store page from an hour to five minutes.
+    const lookup = Number(/tags: \[storeTag\(slug\)\], revalidate: (\d+)/.exec(readFileSync(path.join(root, 'lib/store-queries.ts'), 'utf8'))?.[1])
+    const pages = walk(publicTree)
+        .filter((f) => /page\.tsx$/.test(f) && !f.includes(`${path.sep}-preview${path.sep}`))
+        .map((f) => Number(/export const revalidate = (\d+)/.exec(readFileSync(f, 'utf8'))?.[1]))
+        .filter((n) => Number.isFinite(n))
+    assert.ok(pages.length > 0, 'expected pages that declare revalidate')
+    assert.ok(lookup >= Math.max(...pages), `lookup revalidate ${lookup} is shorter than a page's ${Math.max(...pages)}`)
+})

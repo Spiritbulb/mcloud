@@ -32,7 +32,10 @@ const loadStoreRow = (slug: string) =>
             return data
         },
         ['store-row', slug],
-        { tags: [storeTag(slug)], revalidate: 300 },
+        // Must not be shorter than the pages' own `revalidate` (3600): Next gives a page the
+        // shortest lifetime of any cached data it reads, so a smaller value here silently
+        // shortens the cache of every page of the store. Edits purge by tag, not by time.
+        { tags: [storeTag(slug)], revalidate: 3600 },
     )()
 
 export const getStoreRow = cache(loadStoreRow)
