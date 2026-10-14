@@ -2,7 +2,7 @@ import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
   orderIsPayable, mpesaAmountDue, mpesaPaymentCovers, normalizeKenyanPhone,
-  paypalAmounts, paypalCaptureMatches, centsToUsd,
+  paypalAmounts, paypalCaptureMatches, centsToUsd, stkQueryOutcome,
 } from './payments.ts'
 
 test('orderIsPayable: only pending, not-yet-completed orders', () => {
@@ -48,4 +48,26 @@ test('paypalCaptureMatches compares in cents', () => {
   assert.equal(paypalCaptureMatches('21.56', 2156), true)
   assert.equal(paypalCaptureMatches('0.01', 2156), false)
   assert.equal(paypalCaptureMatches(undefined, 2156), false)
+})
+
+test('stkQueryOutcome: only an explicit ResultCode 0 for our request id is paid', () => {
+  const ok = { ResponseCode: '0', ResultCode: '0', CheckoutRequestID: 'ws_CO_1' }
+  assert.equal(stkQueryOutcome(ok, 'ws_CO_1'), 'paid')
+  assert.equal(stkQueryOutcome({ ...ok, ResultCode: 0 }, 'ws_CO_1'), 'paid')
+  // cancelled, timed out, wrong PIN, insufficient funds
+  for (const code of ['1032', '1037', '2001', '1']) {
+    assert.equal(stkQueryOutcome({ ...ok, ResultCode: code }, 'ws_CO_1'), 'failed')
+  }
+})
+
+test('stkQueryOutcome: anything unclear is pending, never paid', () => {
+  // still processing: Daraja answers with an error body and no ResultCode
+  assert.equal(stkQueryOutcome({ errorCode: '500.001.1001', errorMessage: 'The transaction is being processed' }, 'ws_CO_1'), 'pending')
+  assert.equal(stkQueryOutcome({ ResponseCode: '0' }, 'ws_CO_1'), 'pending')
+  assert.equal(stkQueryOutcome({ ResponseCode: '1', ResultCode: '0' }, 'ws_CO_1'), 'pending')
+  // an answer about some other transaction must not settle this one
+  assert.equal(stkQueryOutcome({ ResponseCode: '0', ResultCode: '0', CheckoutRequestID: 'ws_CO_2' }, 'ws_CO_1'), 'pending')
+  for (const bad of [null, undefined, 'ok', 0, [], { ResultCode: '0' }]) {
+    assert.equal(stkQueryOutcome(bad, 'ws_CO_1'), 'pending')
+  }
 })

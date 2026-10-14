@@ -1,13 +1,16 @@
-// @route-kind: webhook — Safaricom posts unsigned; matched by CheckoutRequestID and amount-checked before settling
+// @route-kind: webhook — Safaricom posts unsigned; matched by CheckoutRequestID, then confirmed with Safaricom (STK Query) before settling
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import type { Json } from '@mcloud/db/types'
 import { mpesaPaymentCovers } from '@mcloud/merchant/payments'
-import { getStoreManagerUserIds } from '@/lib/merchant/store-managers'
-import { sendPushToUsers } from '@/lib/merchant/send-push'
+import { confirmDarajaPayment, settleDarajaOrder } from '@mcloud/merchant/daraja'
+import { notifyPaidOrder } from '@/lib/merchant/notify-paid-order'
 
 // Safaricom posts to this URL after STK push completes or fails.
-// No auth header — Safaricom doesn't send one. We validate by matching
-// CheckoutRequestID to an order we created.
+// There is no signature, and the CheckoutRequestID is also handed to the buyer's browser,
+// so the body is only a hint: an order is marked paid only after Safaricom itself confirms
+// the transaction (STK Query). If that answer is not yet available the order stays pending
+// and the buyer's status poll (`mpesa/status`) finishes the job.
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json()
@@ -23,8 +26,7 @@ export async function POST(req: NextRequest) {
         // Always ack Safaricom immediately regardless of outcome
         const supabase = await createClient()
 
-        // Find the order by CheckoutRequestID stored in metadata. Widened select —
-        // push needs store_id/order_number/total/currency, not just id/metadata.
+        // Find the order by CheckoutRequestID stored in metadata.
         const { data: orders } = await supabase
             .from('orders')
             .select('id, status, metadata, store_id, order_number, total, currency')
@@ -43,20 +45,20 @@ export async function POST(req: NextRequest) {
         }
 
         if (ResultCode === 0) {
-            // Payment succeeded — extract M-PESA receipt number from metadata items
-            const items: Array<{ Name: string; Value: any }> = CallbackMetadata?.Item ?? []
+            // The body claims success. Extract what it says, but do not act on it yet.
+            const items: Array<{ Name: string; Value: Json }> = CallbackMetadata?.Item ?? []
             const get = (name: string) => items.find(i => i.Name === name)?.Value
 
             const mpesaCode = get('MpesaReceiptNumber')
             const amount = get('Amount')
             const phone = get('PhoneNumber')
+            const meta = (typeof order.metadata === 'object' && order.metadata ? order.metadata : {}) as Record<string, Json | undefined>
 
-            // The callback is unsigned, so never mark an order paid for less than it costs.
             if (!mpesaPaymentCovers(amount, order.total)) {
                 console.error('Daraja callback: underpayment', { orderId: order.id, amount, total: order.total })
                 await supabase.from('orders').update({
                     metadata: {
-                        ...(typeof order.metadata === 'object' && order.metadata ? order.metadata : {}),
+                        ...meta,
                         payment_status: 'underpaid',
                         mpesa_transaction_code: mpesaCode,
                         mpesa_amount_paid: amount,
@@ -66,37 +68,16 @@ export async function POST(req: NextRequest) {
                 return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
             }
 
-            await supabase.from('orders').update({
-                status: 'paid',
-                fulfillment_status: 'unfulfilled',
-                metadata: {
-                    ...(typeof order.metadata === 'object' && order.metadata ? order.metadata : {}),
-                    payment_status: 'completed',
-                    mpesa_transaction_code: mpesaCode,
-                    mpesa_amount_paid: amount,
-                    mpesa_phone_used: phone,
-                },
-            }).eq('id', order.id)
+            const outcome = await confirmDarajaPayment(supabase, order)
+            if (outcome !== 'paid') {
+                // Not confirmed (a forged callback, or Safaricom is still processing). Leave the
+                // order pending; the status poll re-checks with Safaricom.
+                console.warn('Daraja callback: success not confirmed by Safaricom', { orderId: order.id, outcome })
+                return NextResponse.json({ ResultCode: 0, ResultDesc: 'Accepted' })
+            }
 
-            // Notify store managers of the new paid order. Best-effort — payment
-            // is already recorded above regardless of whether this succeeds.
-            // Needs the store's slug (not just id) for the notification's tap
-            // target — resolve it here since `order` only carries store_id.
-            void (async () => {
-                const { data: store } = await supabase
-                    .from('stores')
-                    .select('slug')
-                    .eq('id', order.store_id)
-                    .single()
-                if (!store) return
-                const userIds = await getStoreManagerUserIds(order.store_id)
-                if (!userIds.length) return
-                await sendPushToUsers(userIds, {
-                    title: 'New order',
-                    body: `${order.order_number} · ${order.currency} ${Number(order.total).toLocaleString()}`,
-                    data: { storeSlug: store.slug, type: 'new_order', orderId: order.id },
-                })
-            })().catch(() => {})
+            const settled = await settleDarajaOrder(supabase, order, { mpesaCode, amount, phone })
+            if (settled) void notifyPaidOrder(order)
         } else {
             // Payment failed or cancelled
             await supabase.from('orders').update({

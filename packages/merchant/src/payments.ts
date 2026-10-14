@@ -23,6 +23,22 @@ export function mpesaPaymentCovers(paid: unknown, total: number): boolean {
     return Number.isFinite(n) && n >= mpesaAmountDue(total)
 }
 
+export type StkOutcome = 'paid' | 'failed' | 'pending'
+
+/**
+ * Read Safaricom's STK Query response for one CheckoutRequestID. The Daraja callback is
+ * unsigned, so it is only a hint; this answer (fetched with the merchant's own credentials)
+ * is what decides whether an order is paid. Anything unclear is `pending`, never `paid`:
+ * an in-progress transaction comes back as an error body without a ResultCode.
+ */
+export function stkQueryOutcome(data: unknown, expectedCheckoutRequestId: string): StkOutcome {
+    if (!isRecord(data)) return 'pending'
+    if (String(data.ResponseCode) !== '0') return 'pending'
+    if (data.CheckoutRequestID !== undefined && data.CheckoutRequestID !== expectedCheckoutRequestId) return 'pending'
+    if (data.ResultCode === undefined || data.ResultCode === null || data.ResultCode === '') return 'pending'
+    return String(data.ResultCode) === '0' ? 'paid' : 'failed'
+}
+
 /**
  * Normalise a Kenyan mobile number to 2547XXXXXXXX / 2541XXXXXXXX, or null when it is
  * not one. Accepts 07…, 01…, +254…, 254….
