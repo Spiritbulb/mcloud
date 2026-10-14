@@ -12,6 +12,7 @@ import { canManage, requireStoreAccess } from '@mcloud/merchant/stores'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
 import { SECTION_REGISTRY } from '@/lib/sections'
 import { validateSectionTypes } from './section-validate'
+import { revalidateStore } from '@/lib/revalidate-store'
 
 type ActionResult = { error: string | null }
 
@@ -62,6 +63,7 @@ export async function updateStoreTheme(
             { store_id: access.storeId, ...update, updated_at: new Date().toISOString() },
             { onConflict: 'store_id' },
         )
+    if (!error) revalidateStore(slug)
     return { error: error ? error.message : null }
 }
 
@@ -94,6 +96,7 @@ export async function updateStoreSettings(
 
     const supabase = await createClient()
     const { error } = await supabase.from('stores').update(update).eq('id', access.storeId)
+    if (!error) revalidateStore(slug)
     return { error: error ? error.message : null }
 }
 
@@ -135,6 +138,7 @@ export async function updatePageSections(
         .from('pages')
         .update({ sections: sections as never, updated_at: new Date().toISOString() })
         .eq('id', page.id)
+    if (!error) revalidateStore(slug)
     return { error: error ? error.message : null }
 }
 

@@ -1,11 +1,15 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { markdownToHtml } from '@/lib/md'
 import type { BlogPost } from '@mcloud/themes/types'
 import { resolveTheme } from '@mcloud/themes/resolver'
 
-export const revalidate = 60
+export const revalidate = 3600
+
+export function generateStaticParams() {
+    return []
+}
 
 interface Props {
     params: Promise<{ slug: string; 'post-slug': string }>
@@ -13,7 +17,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
     const { slug, 'post-slug': postSlug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: store } = await supabase
         .from('stores').select('id, name')
@@ -39,7 +43,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function BlogPostRoute({ params }: Props) {
     const { slug, 'post-slug': postSlug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: rawStore } = await supabase
         .from('stores').select('*')

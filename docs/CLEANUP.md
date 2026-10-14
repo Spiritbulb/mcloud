@@ -311,10 +311,9 @@ storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
 
 1. ~~Section 2.3 (web org layout queries)~~ done; next, removing per-request `getSession()` from
    layouts that only need "is there a session".
-2. `@mcloud/db` `createClient()` is per-call and reads cookies, so any layout using it is
-   dynamic. Use `unstable_cache` / `use cache` for data that is not user-specific
-   (store theme, sections) in the storefront, so public store pages can be cached at the
-   edge instead of invoking a function per visit.
+2. ~~Public store pages cached at the edge~~ done, see [caching.md](caching.md). Still open there:
+   the proxy runs for every request (including cached pages), and writes are invalidated
+   from code, not from the database.
 3. `/docs` is dynamic only because of `cookies()` and `searchParams`; make it static and
    move the "edit" affordance to a client check.
 4. The wallet pill could read the balance from the layout's data instead of polling at

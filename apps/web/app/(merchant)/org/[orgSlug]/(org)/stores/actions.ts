@@ -4,6 +4,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { createStoreForUser, listOrgStores } from '@mcloud/merchant/stores'
+import { revalidateStorefront, revalidateStorefrontById } from '@/lib/revalidate-storefront'
 
 export async function getOrgStores(orgSlug: string) {
     const session = await getSession()
@@ -40,7 +41,7 @@ export async function deleteStore(storeId: string, orgSlug: string) {
 
     const { data: store } = await supabase
         .from('stores')
-        .select('owner_id, org_id, orgs(slug)')
+        .select('owner_id, org_id, slug, orgs(slug)')
         .eq('id', storeId)
         .single()
 
@@ -49,6 +50,8 @@ export async function deleteStore(storeId: string, orgSlug: string) {
 
     const { error } = await supabase.from('stores').delete().eq('id', storeId)
     if (error) return { error: error.message }
+
+    await revalidateStorefront(store.slug)
 
     revalidatePath(`/org/${orgSlug}/stores`)
     return { success: true }
@@ -73,6 +76,8 @@ export async function updateStore(storeId: string, orgSlug: string, fields: { na
 
     const { error } = await supabase.from('stores').update(fields).eq('id', storeId)
     if (error) return { error: error.message }
+
+    await revalidateStorefrontById(storeId)
 
     revalidatePath(`/org/${orgSlug}/stores`)
     return { success: true }

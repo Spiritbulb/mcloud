@@ -7,7 +7,7 @@ import { loadCampaignsWithProgress } from '@/lib/campaigns'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { getVertical } from '@mcloud/verticals'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 
@@ -19,10 +19,17 @@ import { notFound } from 'next/navigation'
 // already has a catch-all product route at /[product-slug]. Without the prefix,
 // /about would be swallowed by it and 404 as a missing product.
 
+// Served from the CDN; merchant edits call revalidateStore(), this is the backstop.
+export const revalidate = 3600
+
+export function generateStaticParams() {
+    return []
+}
+
 type Params = Promise<{ slug: string; pageSlug: string }>
 
 async function loadStore(slug: string) {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data } = await supabase
         .from('stores')
         .select('*')

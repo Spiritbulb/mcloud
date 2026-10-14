@@ -1,10 +1,10 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import type { BlogPost } from '@mcloud/themes/types'
 import { resolveTheme } from '@mcloud/themes/resolver'
 
-export const revalidate = 60
+export const revalidate = 3600
 
 interface Props {
     params: Promise<{ slug: string }>
@@ -12,7 +12,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props) {
     const { slug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data: store } = await supabase
         .from('stores').select('name, description')
         .eq('slug', slug).eq('is_active', true).single()
@@ -25,7 +25,7 @@ export async function generateMetadata({ params }: Props) {
 
 export default async function BlogListRoute({ params }: Props) {
     const { slug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: rawStore } = await supabase
         .from('stores').select('*')

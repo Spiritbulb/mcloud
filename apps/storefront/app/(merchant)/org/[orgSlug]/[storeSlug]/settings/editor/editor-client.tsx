@@ -457,7 +457,7 @@ if (data.type === 'mcloud:image-click') {
         params.set('token', previewToken)
         if (sectionsDirty) params.set('preview', toBase64Url(JSON.stringify(sections)))
         if (Object.keys(storeDraft).length > 0) params.set('settings', toBase64Url(JSON.stringify(storeDraft)))
-        const url = `${storefrontOrigin}/store/${slug}?${params.toString()}`
+        const url = `${storefrontOrigin}/store/${slug}/-preview?${params.toString()}`
         return followSlideRef.current !== null ? `${url}#slide=${followSlideRef.current}` : url
     }, [sections, initialSections, storeDraft, slug, previewToken, storefrontOrigin])
 

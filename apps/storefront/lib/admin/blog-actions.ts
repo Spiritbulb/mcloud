@@ -5,6 +5,7 @@ import { createClient } from '@mcloud/db/server'
 import { planHasFeature } from '@mcloud/merchant/plans'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import { requireManagedStore, type ActionResult } from './access'
+import { revalidateStoreById } from '@/lib/revalidate-store'
 
 const text = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '')
 
@@ -95,6 +96,7 @@ export async function saveBlogPost(storeId: string, postId: string | null, input
         : supabase.from('blog_posts').insert(payload)
     const { data, error } = await query.select('*, author:blog_authors(*)').single()
     if (error || !data) return { ok: false as const, error: error?.message || 'Could not save the post.' }
+    await revalidateStoreById(gate.storeId)
     return { ok: true as const, post: data }
 }
 
@@ -103,5 +105,7 @@ export async function deleteBlogPost(storeId: string, postId: string): Promise<A
     if (!gate.ok) return gate
     const supabase = await createClient()
     const { error } = await supabase.from('blog_posts').delete().eq('id', postId).eq('store_id', gate.storeId)
-    return error ? { ok: false, error: 'Could not delete the post.' } : { ok: true }
+    if (error) return { ok: false, error: 'Could not delete the post.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }

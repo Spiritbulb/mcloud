@@ -1,4 +1,4 @@
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import type { Metadata } from 'next'
 
 interface Props {
@@ -7,7 +7,7 @@ interface Props {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
     const { slug, 'product-slug': productSlug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: store } = await supabase
         .from('stores').select('id, name')

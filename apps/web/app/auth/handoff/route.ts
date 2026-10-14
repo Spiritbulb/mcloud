@@ -7,7 +7,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { redeemTicket } from '../../api/_handoff/tickets'
 import { createSessionFromTokens } from '@mcloud/auth/server'
 
-const LOGIN = '/auth/login'
+// `handoff=failed` is the loop breaker: /auth/login normally bounces straight back to the
+// spiritb handoff, which mints a new ticket and lands here again. With this flag the login
+// page stops and shows an error instead of repeating the cycle until the browser gives up.
+const LOGIN = '/auth/login?handoff=failed'
 
 export async function GET(req: NextRequest) {
     const ticket = req.nextUrl.searchParams.get('ticket') ?? ''

@@ -2,6 +2,7 @@
 // API. All gated through requireStoreAccess; writes require owner/admin.
 import { createClient } from '@mcloud/db/server'
 import { canManage, requireStoreAccess, type Role } from '@mcloud/merchant/stores'
+import { revalidateStorefront } from '@/lib/revalidate-storefront'
 
 type Guarded<T> =
     | { error: 'not_found' | 'forbidden'; status: number; data: null }
@@ -148,6 +149,7 @@ export async function updateBranding(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase.from('stores').update(update as any).eq('id', access.storeId)
     if (error) return { error: 'not_found', status: 500, data: null }
+    await revalidateStorefront(slug)
     return getBranding(slug, userId)
 }
 
@@ -323,5 +325,6 @@ export async function deleteStore(
     if (error) {
         return { error: 'Could not delete store. It may still have orders or products attached.', status: 409 }
     }
+    await revalidateStorefront(slug)
     return { error: null, status: 200 }
 }

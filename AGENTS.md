@@ -139,8 +139,13 @@ id. Foreign keys in the database are keyed on that. Do **not** remove the `auth0
 - `apps/storefront/app/(merchant)/globals.css` is a copy of web's `globals.css`; token changes go in both.
 - `packages/liquid/src/themes-manifest.ts` is **generated** from `themes/**/*.liquid`: after editing a template run
   `npm run gen:manifest -w @mcloud/liquid` (a test fails if you forget).
-- Public store pages are uncached and do several queries per view; layout, metadata and the home page share
-  `lib/store-queries.ts` + `getStore` (React `cache()`). Other store pages still query `stores` themselves.
+- **Public store pages are cached** (ISR, `revalidate = 3600`, empty `generateStaticParams`). Nothing under
+  `app/(storefront)/store/[slug]` may read `cookies()`/`headers()`/`searchParams` or use `createClient()`: use
+  `createPublicClient()`. One such read makes the page dynamic again and, because the route is declared
+  cacheable, fails it with `DYNAMIC_SERVER_USAGE` (`public-cache.test.ts` pins this). The Editor preview is the
+  only dynamic route (`store/[slug]/-preview`). After any write that changes what visitors see, call
+  `revalidateStore(slug)` / `revalidateStoreById(id)` (storefront) or `revalidateStorefront(slug)` (web, posts to
+  `/api/revalidate`). See `docs/caching.md`.
 - Both root layouts fetch Google Fonts at build time.
 - `NEXT_PUBLIC_*` values are inlined at build: changing one needs a redeploy.
 - The `(storefront)` route group is the public site; `(merchant)` is the signed-in surface.

@@ -5,6 +5,7 @@ import { getStorePlan } from '@mcloud/merchant/plans-server'
 import { requireAdmin } from '@/lib/require-admin'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
+import { revalidateStorefrontById } from '@/lib/revalidate-storefront'
 
 export async function POST(request: NextRequest) {
     const auth = await requireAdmin(request)
@@ -26,5 +27,6 @@ export async function POST(request: NextRequest) {
         .update({ is_pro: isPaidPlan(plan) })
         .eq('id', store_id)
 
+    await revalidateStorefrontById(store_id)
     return NextResponse.json({ ok: true })
 }

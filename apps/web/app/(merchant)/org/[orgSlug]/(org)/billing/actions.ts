@@ -3,6 +3,7 @@
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { revalidatePath } from 'next/cache'
+import { revalidateStorefrontById } from '@/lib/revalidate-storefront'
 import { planPriceCents } from '@mcloud/merchant/plans'
 
 type Plan = 'hobby' | 'pro'
@@ -169,6 +170,9 @@ export async function purchaseStorePlan(
       error: 'We could not update this subscription. Your wallet was not charged—please try again.',
     }
   }
+
+  // The plan decides whether branding shows on the public store pages.
+  await revalidateStorefrontById(store.id)
 
   const row = (Array.isArray(data) ? data[0] : data) as
     | PurchasePlanRow

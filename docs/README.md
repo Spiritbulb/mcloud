@@ -5,6 +5,7 @@
 | [architecture.md](architecture.md) | You are new, or changing how apps, hosts, auth or data fit together. |
 | [api.md](api.md) | You are adding or changing an API route. |
 | [payments.md](payments.md) | You are touching checkout, M-PESA, PayPal or wallet top-ups. |
+| [caching.md](caching.md) | You are touching public store pages, or adding a write that visitors should see. |
 | [environment.md](environment.md) | You are setting up a machine or a Vercel project. |
 | [storefront-domain-move.md](storefront-domain-move.md) | You are changing storefront sign-in, hosts or cookies, or planning the move to its own domain. |
 | [CLEANUP.md](CLEANUP.md) | You want the known debt, or are about to refactor something. |

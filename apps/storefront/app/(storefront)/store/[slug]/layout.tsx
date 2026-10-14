@@ -6,15 +6,19 @@ import { WishlistProvider } from '@/contexts/WishlistContext'
 import { planHasFeature } from '@mcloud/merchant/plans'
 import { getStorePlanCached, getStoreRow, getStoreTheme } from '@/lib/store-queries'
 import { googleFontsHref } from '@/lib/fonts'
-import { isCustomDomainHost } from '@/lib/host'
 import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import PreviewListener from '@/components/store/preview-listener'
 import EditorBridge from '@/components/store/editor-bridge'
 import type { Metadata } from 'next'
-import { headers } from 'next/headers'
 import { notFound } from 'next/navigation'
 
+
+// No store is prebuilt: each is generated on first visit and then served from the cache.
+// Declaring this is what makes Next treat the dynamic route as cacheable (ISR).
+export function generateStaticParams() {
+    return []
+}
 
 async function getStore(slug: string) {
     const store = await getStoreRow(slug)
@@ -66,8 +70,6 @@ export default async function StoreLayout({
         getNavPages(store.id),
     ])
 
-    const headersList = await headers()
-
     const cssVars = theme
         ? ({
             '--sf-primary': theme.primary_color,
@@ -86,14 +88,6 @@ export default async function StoreLayout({
             '--sf-border-radius': theme.border_radius,
         } as React.CSSProperties)
         : {}
-
-    // On a custom domain the storefront is white-labelled: in-store links must be
-    // bare ("/cart") so the internal slug never appears. On the platform host they
-    // stay slug-prefixed ("/store/{slug}/cart"). Derived from the request host so
-    // every link/button renders the host-correct URL with no client redirect hop.
-    const host = headersList.get('host') ?? ''
-    const onCustomDomain = isCustomDomainHost(host)
-    const basePath = onCustomDomain ? '' : `/store/${slug}`
 
     // A theme names its fonts, but naming one does not make it render: without a
     // webfont the browser silently falls back (a store asking for Quicksand got
@@ -115,7 +109,7 @@ export default async function StoreLayout({
                 -> this scrolls to it. Same containment as PreviewListener, and it
                 never writes to the page. */}
             <EditorBridge adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
-            <StoreProvider slug={slug} basePath={basePath} isCustomDomain={onCustomDomain}>
+            <StoreProvider slug={slug}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>
                     <CartProvider storeSlug={slug}>

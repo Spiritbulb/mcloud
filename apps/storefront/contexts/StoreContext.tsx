@@ -1,6 +1,7 @@
 'use client'
 
-import { createContext, useContext, useCallback, type ReactNode } from 'react'
+import { createContext, useContext, useCallback, useMemo, useSyncExternalStore, type ReactNode } from 'react'
+import { isCustomDomainHost, storeBasePath } from '@/lib/host'
 
 interface StoreContextValue {
     /** The store's internal slug (e.g. "locd26"). */
@@ -17,22 +18,21 @@ interface StoreContextValue {
 
 const StoreContext = createContext<StoreContextValue | null>(null)
 
-export function StoreProvider({
-    children,
-    slug,
-    basePath,
-    isCustomDomain,
-}: {
-    children: ReactNode
-    slug: string
-    basePath: string
-    isCustomDomain: boolean
-}) {
-    return (
-        <StoreContext.Provider value={{ slug, basePath, isCustomDomain }}>
-            {children}
-        </StoreContext.Provider>
-    )
+const subscribeToNothing = () => () => {}
+const readHost = () => window.location.host
+// Server render (and the cached HTML) assumes the platform host; a custom domain
+// corrects itself on hydration. The host is not read on the server on purpose:
+// reading headers() there would make every store page dynamic instead of cacheable.
+const platformHost = () => ''
+
+export function StoreProvider({ children, slug }: { children: ReactNode; slug: string }) {
+    const host = useSyncExternalStore(subscribeToNothing, readHost, platformHost)
+    const value = useMemo(() => {
+        // '' (server snapshot) is not a platform host name, so test it explicitly.
+        const isCustomDomain = host !== '' && isCustomDomainHost(host)
+        return { slug, basePath: host === '' ? `/store/${slug}` : storeBasePath(host, slug), isCustomDomain }
+    }, [host, slug])
+    return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>
 }
 
 function useStore(): StoreContextValue {

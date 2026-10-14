@@ -61,7 +61,7 @@ export function cleanDedication(raw: unknown): string | undefined {
 }
 
 import { formatKES } from './currency'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 
 export interface AugmentedCampaign {
   id: string
@@ -115,7 +115,7 @@ export async function loadCampaignsWithProgress(
 
   const raisedById: Record<string, number> = {}
   try {
-    const admin = await createClient()
+    const admin = createPublicClient()
     const { data, error } = await admin
       .from('orders')
       .select('total, metadata')

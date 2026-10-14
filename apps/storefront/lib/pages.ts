@@ -1,7 +1,7 @@
 // lib/pages.ts
 // Read a store's published page by slug, using the storefront server client
 // (service-role, same access pattern as products/collections). No anon exposure.
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import type { PageSection } from './sections'
 
 export interface PageRow {
@@ -25,7 +25,7 @@ export interface NavPage {
  */
 export async function getNavPages(storeId: string): Promise<NavPage[]> {
   try {
-    const supabase = await createClient()
+    const supabase = createPublicClient()
     const { data, error } = await supabase
       .from('pages')
       .select('slug, title, position')
@@ -43,7 +43,7 @@ export async function getNavPages(storeId: string): Promise<NavPage[]> {
 
 /** A store's published page for `slug`, or null. Pass '' for the home page. */
 export async function getPublishedPage(storeId: string, slug: string): Promise<PageRow | null> {
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('pages')
     .select('id, slug, title, position, sections')

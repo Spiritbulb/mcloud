@@ -2,6 +2,7 @@
 import { requireAdmin } from '@/lib/require-admin'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
+import { revalidateStorefrontById } from '@/lib/revalidate-storefront'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const auth = await requireAdmin(request)
@@ -69,5 +70,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             .eq('status', 'active')
     }
 
+    await revalidateStorefrontById(id)
     return NextResponse.json({ ok: true })
 }

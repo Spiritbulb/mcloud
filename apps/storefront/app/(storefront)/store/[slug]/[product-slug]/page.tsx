@@ -1,5 +1,5 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import type { ProductDetailData, ProductVariant } from '@mcloud/themes/types'
@@ -8,13 +8,20 @@ import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
 
+// Served from the CDN; merchant edits call revalidateStore(), this is the backstop.
+export const revalidate = 3600
+
+export function generateStaticParams() {
+    return []
+}
+
 interface Props {
     params: Promise<{ slug: string; 'product-slug': string }>
 }
 
 export default async function ProductDetailPage({ params }: Props) {
     const { slug, 'product-slug': productSlug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: rawStore } = await supabase
         .from('stores')

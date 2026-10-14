@@ -1,7 +1,7 @@
 // apps/web/lib/plans-server.ts
 // DB-backed plan resolvers. The pure decision logic lives in ./plans.ts and is
 // unit-tested there; these wrappers just fetch the active subscription row.
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import {
   planHasFeature,
   resolvePlan,
@@ -20,7 +20,7 @@ export async function getStorePlans(storeIds: readonly string[]): Promise<Map<st
   const plans = new Map<string, Plan>(storeIds.map((id) => [id, 'free']))
   if (storeIds.length === 0) return plans
 
-  const supabase = await createClient()
+  const supabase = createPublicClient()
   const { data } = await supabase
     .from('store_subscriptions')
     .select('store_id, plan, status, period_end')

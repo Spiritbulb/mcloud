@@ -4,6 +4,7 @@ import { createClient } from '@mcloud/db/server'
 import { canManage, requireStoreAccess, type Role } from '@mcloud/merchant/stores'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import { PLAN_LIMITS, isOverLimit, limitMessage } from '@mcloud/merchant/plans'
+import { revalidateStorefront } from '@/lib/revalidate-storefront'
 
 export interface MobileProduct {
     id: string
@@ -111,6 +112,7 @@ export async function createProduct(
         .single()
 
     if (error || !data) return { error: error?.message ?? 'Failed to create', status: 500, data: null }
+    await revalidateStorefront(slug)
     return { error: null, status: 201, data: data as MobileProduct }
 }
 
@@ -156,6 +158,7 @@ export async function updateProduct(
         .single()
 
     if (error || !data) return { error: error?.message ?? 'Not found', status: 404, data: null }
+    await revalidateStorefront(slug)
     return { error: null, status: 200, data: data as MobileProduct }
 }
 
@@ -176,5 +179,6 @@ export async function deleteProduct(
         .eq('store_id', access.storeId)
 
     if (error) return { error: error.message, status: 500 }
+    await revalidateStorefront(slug)
     return { error: null, status: 200 }
 }

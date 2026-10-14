@@ -3,9 +3,9 @@
 // listings. One query for the whole page, then merged onto each product so cards
 // can show real ratings instead of hardcoded placeholders.
 
-import type { createClient } from '@mcloud/db/server'
+import type { createPublicClient } from '@mcloud/db/server'
 
-type SupabaseClient = Awaited<ReturnType<typeof createClient>>
+type SupabaseClient = Awaited<ReturnType<typeof createPublicClient>>
 
 export interface ReviewAggregate {
     rating: number

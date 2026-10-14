@@ -15,6 +15,7 @@ NEXT_PUBLIC_AUTH_ORIGIN=             # optional; where sign-in screens live. Def
 NEXT_PUBLIC_API_BASE_URL=            # optional; only used for webAppOrigin() if it is an absolute URL
 NEXT_PUBLIC_ADMIN_ORIGIN=
 PREVIEW_SECRET=                      # must match apps/web
+REVALIDATE_SECRET=                   # must match apps/web; authorises POST /api/revalidate (public-page cache purge)
 
 # --- Added for /org/* auth (WorkOS AuthKit) ---
 WORKOS_API_KEY=

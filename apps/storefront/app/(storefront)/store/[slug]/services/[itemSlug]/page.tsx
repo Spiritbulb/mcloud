@@ -1,9 +1,16 @@
 import '@/app/(storefront)/store/[slug]/storefront.css'
-import { createClient } from '@mcloud/db/server'
+import { createPublicClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import type { ServiceItem } from '@mcloud/themes/types'
 import ServiceDetailClient from './service-detail-client'
+
+// Served from the CDN; merchant edits call revalidateStore(), this is the backstop.
+export const revalidate = 3600
+
+export function generateStaticParams() {
+    return []
+}
 
 interface Props {
     params: Promise<{ slug: string; itemSlug: string }>
@@ -11,7 +18,7 @@ interface Props {
 
 export default async function ServiceDetailPage({ params }: Props) {
     const { slug, itemSlug } = await params
-    const supabase = await createClient()
+    const supabase = createPublicClient()
 
     const { data: rawStore } = await supabase
         .from('stores')

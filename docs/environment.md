@@ -22,6 +22,7 @@ add it here.
 | `NEXT_PUBLIC_SITE_ORIGIN` | Display/canonical origin for stores, e.g. `https://app.mcloud.co.ke` |
 | `NEXT_PUBLIC_ADMIN_ORIGIN` | Origin allowed to frame the storefront (the Editor); also used for `postMessage` |
 | `PREVIEW_SECRET` | Signs Editor preview tokens. **Must match in both apps.** |
+| `REVALIDATE_SECRET` | Authorises web's calls to the storefront's `/api/revalidate` (cache purge). **Must match in both apps.** Without it web's edits show on public pages only at the next hourly refresh. |
 | `RESEND_API_KEY` | Transactional email (invites, notifications, waitlist) |
 | `DARAJA_ENV` | `production` for live M-PESA, otherwise sandbox |
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE` | PayPal (`live` or sandbox) |

@@ -7,6 +7,7 @@ import type { Json } from '@mcloud/db/types'
 import { PLAN_LIMITS, isOverLimit, limitMessage } from '@mcloud/merchant/plans'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import { requireManagedStore, type ActionResult } from './access'
+import { revalidateStoreById } from '@/lib/revalidate-store'
 
 const MAX_JSON_BYTES = 200_000
 
@@ -138,6 +139,7 @@ export async function saveProduct(
             await supabase.from('product_variants').insert(varPayload)
         }
     }
+    await revalidateStoreById(gate.storeId)
     return { ok: true, id }
 }
 
@@ -146,7 +148,9 @@ export async function deleteProduct(storeId: string, productId: string): Promise
     if (!gate.ok) return gate
     const supabase = await createClient()
     const { error } = await supabase.from('products').delete().eq('id', productId).eq('store_id', gate.storeId)
-    return error ? { ok: false, error: 'Could not delete the product.' } : { ok: true }
+    if (error) return { ok: false, error: 'Could not delete the product.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }
 
 export async function setProductActive(storeId: string, productId: string, active: boolean): Promise<ActionResult> {
@@ -155,7 +159,9 @@ export async function setProductActive(storeId: string, productId: string, activ
     const supabase = await createClient()
     const { error } = await supabase
         .from('products').update({ is_active: !!active }).eq('id', productId).eq('store_id', gate.storeId)
-    return error ? { ok: false, error: 'Could not update the product.' } : { ok: true }
+    if (error) return { ok: false, error: 'Could not update the product.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }
 
 // ── Services ────────────────────────────────────────────────────────────────
@@ -219,7 +225,9 @@ export async function saveService(
     const { error } = serviceId
         ? await supabase.from('services').update(payload).eq('id', serviceId).eq('store_id', gate.storeId)
         : await supabase.from('services').insert(payload)
-    return error ? { ok: false, error: error.message || 'Could not save the service.' } : { ok: true }
+    if (error) return { ok: false, error: error.message || 'Could not save the service.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }
 
 export async function deleteService(storeId: string, serviceId: string): Promise<ActionResult> {
@@ -227,7 +235,9 @@ export async function deleteService(storeId: string, serviceId: string): Promise
     if (!gate.ok) return gate
     const supabase = await createClient()
     const { error } = await supabase.from('services').delete().eq('id', serviceId).eq('store_id', gate.storeId)
-    return error ? { ok: false, error: 'Could not delete the service.' } : { ok: true }
+    if (error) return { ok: false, error: 'Could not delete the service.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }
 
 export async function setServiceActive(storeId: string, serviceId: string, active: boolean): Promise<ActionResult> {
@@ -236,5 +246,7 @@ export async function setServiceActive(storeId: string, serviceId: string, activ
     const supabase = await createClient()
     const { error } = await supabase
         .from('services').update({ is_active: !!active }).eq('id', serviceId).eq('store_id', gate.storeId)
-    return error ? { ok: false, error: 'Could not update the service.' } : { ok: true }
+    if (error) return { ok: false, error: 'Could not update the service.' }
+    await revalidateStoreById(gate.storeId)
+    return { ok: true }
 }
