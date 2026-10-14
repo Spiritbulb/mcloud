@@ -439,14 +439,86 @@ cron's bearer token to Vault and rotate it, and delete or replace the legacy Sup
 
 ## Open items (2026-10-14)
 
-- **Reach roles still in `users.role`.** `reach_users` exists and the routes read it, but the two
-  accounts that Reach stamped `rch-vendor` still carry it. After the web deploy, run
-  `migrations/20261014c_remove_rch_roles_from_users.sql`, then drop the column default question
-  (new users get `customer`; Reach no longer depends on it). The mobile app is unchanged.
-- **PayPal return URLs (storefront copy of `capture-order`) redirect to root paths** (`/cart?...`,
-  `/orders/...`) that the platform host reads as a store slug. Providers call web's copy, so this is
-  latent; fix when the two copies are reconciled (section 2.5).
-- **The order status endpoint has no rate limit.** Order numbers are unguessable and the anonymous view
-  is non-identifying, but a limit would stop scraping. A Cloudflare rate-limit rule on
-  `/api/store/*/orders/*` is the cheap way.
+Written at the end of a long session so the next one can pick up cold. Ordered: do first, broken or
+dead, infrastructure, other repos. Tick items off (or delete them) as they are done.
 
+### Do first, after the next deploy
+
+- [ ] **Verify the checkout on a custom domain.** Open `https://locdessence.com/checkout` with something in
+  the cart: the three delivery zones (Kisumu 400, Nairobi 380, Nakuru 345) and the M-PESA paybill must show,
+  and no zone should be preselected. The cause was `NEXT_PUBLIC_API_BASE_URL` being an absolute storefront
+  URL in production (cross-origin, no CORS; payment calls aimed at routes only web has). The code no longer
+  reads it (`lib/api-base.ts`, pinned by `api-origin.test.ts`). Verified in the built bundle, **not** in a
+  real browser.
+- [ ] **Delete `NEXT_PUBLIC_API_BASE_URL` from the storefront Vercel project** once the above is confirmed.
+  Leave it on web: web's own client code still uses its relative `/api`.
+- [ ] **Check the cache purge works.** `REVALIDATE_SECRET` was set (sensitive, production + preview) on both
+  Vercel projects on 2026-10-14, and only takes effect on the next deploy of each. Test: edit a product via
+  the mobile app or web, and the public page should change at once rather than within the hour.
+- [ ] **Browser-check the new order page** (`/store/[slug]/orders/[orderNumber]`): anonymous shows the basic
+  view and a sign-in prompt, signed-in owner shows delivery details, and sign-in returns to the order.
+  Verified at API and HTML level only.
+- [ ] **Try Reach sign-up with a brand-new account.** It was broken for every new user (role `'customer'` vs
+  the `'user'` the checks required); the rewritten `confirm-buyer` and `reach_confirm_vendor` should fix it.
+
+### Broken or dead
+
+- **Pesapal and IntaSend are dead in the checkout.** It calls `/payments/pesapal/create-order` and
+  `/payments/intasend/create-order`, which exist in neither app (web has only `mpesa` and `paypal`). The
+  integration flags, theme props and checkout handlers remain. Build them or remove all of it.
+- **`locd26` has a stand-in Pro grant.** Pro until 2026-11-14 via a `provider = 'wallet'`, amount 0 row,
+  written directly in SQL because the admin route could not insert `'admin'`. The constraint now allows it
+  and the route checks its writes; re-grant through the admin screen and delete the stand-in row
+  (`store_subscriptions.id = 5afa9344-53c6-4c0a-b8ac-40336b8d7aee`) if you want the record to be honest.
+- **Orders that are `pending` but `fulfilled`** (21 of 47 at last count). Merchants mark manual M-PESA orders
+  fulfilled before anyone confirms the payment. The order page says "Awaiting payment confirmation" for
+  them. Decide whether manual-code orders need an explicit "confirm payment" step.
+- **Shop stores have no contact email setting.** The checkout's "don't see your area?" line uses
+  `settings.contact.email` (NGO vertical only) or the store's WhatsApp link, else plain text. `locd26` has
+  neither, so it shows plain text. Add the field to the shop settings, or fill WhatsApp in social settings.
+- **PayPal return URLs (storefront copy of `capture-order`) redirect to root paths** (`/cart?...`,
+  `/orders/...`) that the platform host reads as a store slug. Providers call web's copy, so it is latent;
+  fix when the two copies are reconciled (section 2.5).
+- **The order status endpoint has no rate limit.** Order numbers are unguessable and the anonymous view is
+  non-identifying, but a limit would stop scraping. A Cloudflare rate-limit rule on
+  `/api/store/*/orders/*` is the cheap way.
+- **The storefront proxy still runs on every request,** including cached pages (custom-domain lookup and
+  redirect need it). Cheap, not free; see `docs/caching.md`.
+- **Cache purge is invalidated from application code,** not from the database. A trigger that calls the
+  purge endpoint would also catch manual SQL, mobile writes and anything forgotten. Needs a migration and
+  the shared secret. Not wired: new reviews and stock changes from orders (they show within the hour).
+
+### Reach
+
+- Done 2026-10-14: `reach_users` created and backfilled, `/api/mobile/me`, `confirm-buyer` and
+  `reach_confirm_vendor` use it, and no `rch-` value remains in `users.role`. The mobile app is unchanged
+  (`apps/web/lib/reach-role.ts` maps back to `rch-customer` / `rch-vendor`).
+- One Reach role per account (`reach_users.user_id` is the key): an account cannot be both buyer and
+  vendor, as before. A platform admin can now also be a vendor.
+- `reach_vendor_members.user_id` has a unique FK to `users`; deleting a user cascades to `reach_users`.
+
+### Infrastructure (Cloudflare)
+
+Cloudflare proxies `mcloud.co.ke` and `spiritb.uk` (orange cloud). The connector available to Claude is
+**read-only**; to have it apply rules it needs WAF edit permission on those zones.
+
+- [ ] **Check the zones' custom rules.** A "block if country is not KE" rule was applied and then dropped
+  (it would have blocked Vercel's US functions calling `/api/partner/*` and `/api/revalidate`, payment
+  webhooks, certificate renewals via `/.well-known/`, and uptime monitors). Confirm it is gone.
+- [ ] **Raise minimum TLS from 1.0 to 1.2** on both zones.
+- [ ] Replacement for the foreign scanner traffic, one rule per zone, action **Managed Challenge**:
+  `(ip.src.country in {"BE" "FR" "NL" "AU" "KR" "IN" "US" "DE" "PL"}) and not starts_with(http.request.uri.path, "/api/") and not starts_with(http.request.uri.path, "/.well-known/") and not cf.client.bot`.
+  Optionally block `http.user_agent contains "curl/"` outside `/api/`. The 2026-10-13 burst on `spiritb.uk`
+  was one IP (`185.177.72.29`, `curl/8.7.1`) making about 4,000 requests.
+- Do not add "Cache Everything" or Edge TTL rules for HTML: the purge reaches Vercel only (`docs/caching.md`).
+
+### Other repos
+
+- **spiritbulb** (`github.com/Spiritbulb/spiritbulb`): three tests in `lib/auth/mcloud-client.test.ts` expect
+  `MCLOUD_AUTH_BASE` while the code reads `MCLOUD_BASE`; reconcile. The login-loop breaker
+  (`/handoff-failed`, web's `/auth/login?handoff=failed`) and static pages are written; confirm they are
+  deployed together. A zip copy of that repo carried dependency bumps (TypeScript 7, vitest 5, lucide 1.x)
+  that need inline brand icons and a `session-crypto` type tweak if you take them on purpose.
+- **`/moving` page wording** (storefront) says billing, wallet and servers stay on mcloud.co.ke "for now";
+  not yet confirmed by the owner. Web's pricing copy still drifts from `plans.ts`, and web's
+  `completeOnboarding` should call `createOrgForUser` (section 2.x, earlier in this file).

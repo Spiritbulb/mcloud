@@ -55,6 +55,11 @@ per-line prices need the signed-in owner (Supabase customer session). The line b
 
 ## Limits worth knowing
 
+- **Cloudflare sits in front of `mcloud.co.ke` and `spiritb.uk`.** Keep its cache level standard and add no
+  "Cache Everything" or Edge TTL rules for HTML: the purge reaches Vercel's cache only, so a Cloudflare copy
+  of a store page would look stuck after an edit. Static assets are fine. `REVALIDATE_SECRET` is set on both
+  Vercel projects (2026-10-14); web's purge call is rejected by any Cloudflare rule that blocks non-Kenyan IPs,
+  because it comes from Vercel's US servers.
 - The proxy (`apps/storefront/proxy.ts`) still runs on every request, including ones the CDN would serve:
   custom-domain host lookup and the custom-domain redirect need it. Cheap (cached per instance), not free.
 - `/api/store/[slug]/integrations` and `/delivery-zones` are `no-store` on purpose (checkout needs them fresh;

@@ -146,6 +146,11 @@ id. Foreign keys in the database are keyed on that. Do **not** remove the `auth0
   only dynamic route (`store/[slug]/-preview`). After any write that changes what visitors see, call
   `revalidateStore(slug)` / `revalidateStoreById(id)` (storefront) or `revalidateStorefront(slug)` (web, posts to
   `/api/revalidate`). See `docs/caching.md`.
+- **Browser calls choose their origin on purpose** (`apps/storefront/lib/api-base.ts`): `STORE_API` (`/api`,
+  same-origin) for `/api/store/[slug]/*`, `webApi()` for the payment providers (web only, cross-origin, so no
+  `credentials`). Never read `NEXT_PUBLIC_API_BASE_URL`: it once held the storefront's absolute URL and broke
+  every custom-domain checkout (`api-origin.test.ts` pins this).
+- `users.role` is the platform role only (`admin` gates `requireAdmin`). Reach roles live in `reach_users`.
 - Both root layouts fetch Google Fonts at build time.
 - `NEXT_PUBLIC_*` values are inlined at build: changing one needs a redeploy.
 - The `(storefront)` route group is the public site; `(merchant)` is the signed-in surface.
