@@ -73,6 +73,7 @@ const COMMERCE: NavSection = {
   tabs: [
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
     { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
+    { id: 'reach', label: 'Reach marketplace', icon: 'hub' },
     { id: 'customers', label: 'Customers', icon: 'person', pro: true },
     { id: 'blog', label: 'Blog', icon: 'article', pro: true },
   ],
@@ -127,6 +128,7 @@ export const ALL_TAB_IDS = [
   'members', 'domain', 'integrations',
   'billing',
   'logistics', 'tracking',
+  'reach',
 ] as const
 
 export type TabId = (typeof ALL_TAB_IDS)[number]

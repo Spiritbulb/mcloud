@@ -3,6 +3,7 @@
 // Linking a user to a vendor happens in reach_confirm_vendor (your confirm-vendor endpoint),
 // not here. Returns 200 { session: null } for a wrong key.
 import { NextResponse, type NextRequest } from 'next/server'
+import { normalizeStoreKey } from '@mcloud/merchant/reach'
 import { reachDb } from '@/lib/reach/db'
 import { fail, requireMobileUser } from '../../../_lib'
 
@@ -11,7 +12,7 @@ export async function POST(req: NextRequest) {
     if (auth instanceof NextResponse) return auth
 
     const body = (await req.json().catch(() => null)) as { key?: string } | null
-    const key = typeof body?.key === 'string' ? body.key.trim() : ''
+    const key = normalizeStoreKey(body?.key)
     if (!key) return fail(400, 'key is required')
 
     const db = await reachDb()

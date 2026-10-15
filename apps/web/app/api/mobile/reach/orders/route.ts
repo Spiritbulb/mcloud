@@ -4,6 +4,8 @@
 // Prices always come from the database, never from the app.
 import { NextResponse, type NextRequest } from 'next/server'
 import { initiateStkPush } from '@/lib/palpluss'
+import { loadVendorIndex } from '@/lib/reach/catalog'
+import { vendorForProduct } from '@/lib/reach/catalog-logic'
 import { reachDb } from '@/lib/reach/db'
 import { REACH_STORE_ID, priceForBuyer, settingsFor } from '@/lib/reach/store-config'
 import { fail, requireMobileUser } from '../../_lib'
@@ -39,21 +41,21 @@ export async function POST(req: NextRequest) {
 
     const db = await reachDb()
 
+    // Products may belong to any listed store; the vendor is whoever sells that product.
     const { data: products, error: pErr } = await db
         .from('products')
-        .select('id, name, price, images, inventory_quantity, track_inventory')
+        .select('id, store_id, name, price, images, inventory_quantity, track_inventory')
         .in('id', ids)
-        .eq('store_id', REACH_STORE_ID)
         .eq('is_active', true)
     if (pErr) return fail(500, pErr.message)
     if ((products ?? []).length !== ids.length) return fail(400, 'Some items are no longer available')
 
-    const { data: links, error: lErr } = await db
-        .from('reach_product_vendors')
-        .select('product_id, vendor_id')
-        .in('product_id', ids)
-    if (lErr) return fail(500, lErr.message)
-    const vendorOf = new Map<string, string>((links ?? []).map((l: any) => [l.product_id, l.vendor_id]))
+    let index
+    try {
+        index = await loadVendorIndex(db)
+    } catch (e) {
+        return fail(500, e instanceof Error ? e.message : 'Could not load vendors')
+    }
 
     let subtotal = 0
     const items: any[] = []
@@ -61,7 +63,7 @@ export async function POST(req: NextRequest) {
 
     for (const p of products as any[]) {
         const qty = wanted.get(p.id)!
-        const vendorId = vendorOf.get(p.id)
+        const vendorId = vendorForProduct(p, index)?.id
         if (!vendorId) return fail(400, `${p.name} is not available`)
         const tracked = p.track_inventory ?? true
         const left = p.inventory_quantity ?? 0

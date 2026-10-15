@@ -492,6 +492,11 @@ dead, infrastructure, other repos. Tick items off (or delete them) as they are d
 
 ### Reach
 
+- Done 2026-10-15 (code, **migration not yet applied**): stores are Reach vendors; owners list their store and
+  manage store keys from the dashboard. See [reach.md](reach.md). Still open: Reach orders do not appear in a
+  store's own Orders tab; Munch Hub is still a hand-linked legacy vendor; the rebrand; `reach_users`-style
+  tests for the mobile routes (none exist).
+
 - Done 2026-10-14: `reach_users` created and backfilled, `/api/mobile/me`, `confirm-buyer` and
   `reach_confirm_vendor` use it, and no `rch-` value remains in `users.role`. The mobile app is unchanged
   (`apps/web/lib/reach-role.ts` maps back to `rch-customer` / `rch-vendor`).

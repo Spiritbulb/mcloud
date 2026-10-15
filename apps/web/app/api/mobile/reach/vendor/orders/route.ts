@@ -4,23 +4,19 @@
 // `fulfillment_status` reflects this vendor's own delivery, not the whole order's.
 import { NextResponse, type NextRequest } from 'next/server'
 import { reachDb } from '@/lib/reach/db'
-import { vendorIdFor } from '@/lib/reach/vendor'
+import { ownedProductIds } from '@/lib/reach/catalog'
+import { vendorFor } from '@/lib/reach/vendor'
 import { fail, requireMobileUser } from '../../../_lib'
 
 export async function GET(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
 
-    const vendorId = await vendorIdFor(auth.user.id)
-    if (!vendorId) return fail(403, 'Not a vendor')
+    const vendor = await vendorFor(auth.user.id)
+    if (!vendor) return fail(403, 'Not a vendor')
+    const vendorId = vendor.id
 
     const db = await reachDb()
-    const { data: links, error: linkErr } = await db
-        .from('reach_product_vendors')
-        .select('product_id')
-        .eq('vendor_id', vendorId)
-    if (linkErr) return fail(500, linkErr.message)
-    const mine = new Set<string>((links ?? []).map((l: any) => l.product_id))
 
     const { data, error } = await db
         .from('reach_vendor_payouts')
@@ -28,6 +24,17 @@ export async function GET(req: NextRequest) {
         .eq('vendor_id', vendorId)
         .in('status', ['held', 'released', 'paid_out'])
     if (error) return fail(500, error.message)
+
+    // Show only this vendor's lines of each order (an order can hold several vendors' items).
+    const lineProductIds = (data ?? []).flatMap((row: any) =>
+        (row.orders.order_items ?? []).map((i: any) => i.product_id).filter(Boolean),
+    )
+    let mine: Set<string>
+    try {
+        mine = await ownedProductIds(db, vendor, [...new Set<string>(lineProductIds)])
+    } catch (e) {
+        return fail(500, e instanceof Error ? e.message : 'Could not load orders')
+    }
 
     const orders = (data ?? [])
         .map((row: any) => ({

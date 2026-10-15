@@ -14,6 +14,10 @@ assert.ok(tabIds(shop).includes('products'), 'shop has products')
 assert.ok(tabIds(shop).includes('customers'), 'shop has customers')
 assert.ok(!tabIds(shop).includes('content'), 'shop has no content tab')
 
+// Reach (the mobile marketplace) lists goods, so only commerce verticals get its tab.
+assert.ok(tabIds(shop).includes('reach'), 'shop has the Reach marketplace tab')
+assert.ok(!tabIds(ngo).includes('reach'), 'ngo has no Reach tab')
+
 // NGO hides catalog + customers.
 assert.ok(!ids(ngo).includes('catalog'), 'ngo hides catalog')
 assert.ok(!tabIds(ngo).includes('products'), 'ngo hides products')
