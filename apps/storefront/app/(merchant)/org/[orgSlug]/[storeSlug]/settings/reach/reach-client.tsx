@@ -1,5 +1,6 @@
 'use client'
 
+import { QRCodeSVG } from 'qrcode.react'
 import { useState, useTransition } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { maskStoreKey } from '@mcloud/merchant/reach'
@@ -163,6 +164,7 @@ function StatusPill({ status }: { status: ReachStatus }) {
 function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (k: ReachKey) => void }) {
     const [reveal, setReveal] = useState(false)
     const [copied, setCopied] = useState(false)
+    const [qr, setQr] = useState(false)
 
     const copy = async () => {
         try {
@@ -196,6 +198,9 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
                         <button onClick={copy} className="h-8 px-3 rounded-full text-[12px] font-medium border border-border hover:bg-muted">
                             {copied ? 'Copied' : 'Copy'}
                         </button>
+                        <button onClick={() => setQr((v) => !v)} aria-expanded={qr} className="h-8 px-3 rounded-full text-[12px] font-medium border border-border hover:bg-muted">
+                            {qr ? 'Hide QR' : 'QR'}
+                        </button>
                         <button
                             onClick={() => onRevoke(k)}
                             disabled={busy}
@@ -206,6 +211,17 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
                     </div>
                 )}
             </div>
+            {k.active && qr && (
+                <div className="flex items-center gap-4 rounded-lg border border-border p-4 w-fit">
+                    {/* White background and a quiet zone so phone cameras read it on a dark theme too. */}
+                    <div className="bg-white p-3 rounded-md">
+                        <QRCodeSVG value={k.key} size={132} level="M" marginSize={0} />
+                    </div>
+                    <p className="text-[12px] text-muted-foreground max-w-[220px]">
+                        In the Reach app, choose <strong>Selling</strong> then <strong>Scan QR code</strong>. Anyone who scans this can open your store, so only show it to people you trust.
+                    </p>
+                </div>
+            )}
             {k.members.length > 0 && (
                 <p className="text-[12px] text-muted-foreground">
                     In use by {k.members.map((m) => m.name || m.email || 'Someone').join(', ')}

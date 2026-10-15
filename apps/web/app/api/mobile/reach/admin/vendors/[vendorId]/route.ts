@@ -1,7 +1,8 @@
 // @route-kind: mobile
 // PATCH /api/mobile/reach/admin/vendors/[vendorId] — decide a listing request, or change a listed store.
 // Body: { decision: 'approve' | 'reject' | 'suspend' | 'reinstate', note?, areaId? }. `areaId` places the
-// store before approving (needed for grandfathered stores that have none). Platform admins only.
+// store before approving (needed for grandfathered stores that have none). With `areaId` and no
+// `decision` it only places the store, leaving its approval alone. Platform admins only.
 import { NextResponse, type NextRequest } from 'next/server'
 import { adminDecide, type AdminDecision } from '@mcloud/merchant/reach-approval'
 import { requireReachAdmin } from '@/lib/reach/admin'
@@ -18,8 +19,9 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ve
 
     const { vendorId } = await params
     const body = (await req.json().catch(() => null)) as { decision?: string; note?: string; areaId?: string } | null
-    const decision = body?.decision as AdminDecision
-    if (!DECISIONS.includes(decision)) return fail(400, 'Invalid decision')
+    const decision = body?.decision as AdminDecision | undefined
+    if (decision !== undefined && !DECISIONS.includes(decision)) return fail(400, 'Invalid decision')
+    if (decision === undefined && typeof body?.areaId !== 'string') return fail(400, 'Nothing to change')
     const note = typeof body?.note === 'string' ? body.note.trim().slice(0, 300) : null
 
     const db = await reachDb()
@@ -36,6 +38,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ ve
         const areas = await loadAreas(db).catch(() => [])
         if (!areas.some((a) => a.id === body.areaId)) return fail(400, 'That area does not exist')
         areaId = body.areaId
+    }
+
+    // Placing a store without deciding on it.
+    if (decision === undefined) {
+        const { error: areaErr } = await db.from('reach_vendors').update({ area_id: areaId }).eq('id', vendorId)
+        if (areaErr) return fail(500, areaErr.message)
+        return NextResponse.json({ ok: true, approvalStatus: vendor.approval_status })
     }
 
     const next = adminDecide({ approval_status: vendor.approval_status, area_id: areaId }, decision, note)

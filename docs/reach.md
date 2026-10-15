@@ -69,6 +69,24 @@ in the marketplace store and are assigned in `reach_product_vendors`. `vendorFor
 (`lib/reach/catalog-logic.ts`) holds the one rule for who sells a product. To move one onto a real
 store, set its `store_id` and move the products; nothing does that automatically.
 
+## The mobile app (`reach` repo)
+
+Expo SDK 57, expo-router, dark only. Screens use the kit in `src/ui` (tokens, `Button`, inset `Section`/`Row`,
+`Field`, `Banner`, states) and native-stack large titles, so new screens should be built from it.
+
+- **Buyer** (`/buy`): choose an area (curated list, or "use my location" -> nearest area), see approved stores
+  that deliver there grouped by store, cart, then checkout with a delivery address and M-Pesa number.
+- **Seller** (`/deliver`): join with a store key (type, paste, or scan the QR from the dashboard); the
+  dashboard shows approval state, earnings (`/vendor/earnings`), orders with where to deliver, and product
+  editing with camera photos (`/vendor/products/[id]/photo`, resized before upload).
+- **Admin** (`/admin`, platform admins only): review and decide requests, place stores in areas, manage areas,
+  see earnings and record manual payouts.
+
+Native modules (changing these needs an EAS build; everything else ships over the air): `expo-location`,
+`expo-camera`, `expo-notifications`, `expo-haptics`, `expo-image-manipulator`, `expo-clipboard`, `expo-blur`,
+plus the camera permission on `expo-image-picker`. Android push also needs `google-services.json` from an FCM
+project (not in the repo).
+
 ## Rebrand
 
 Not done yet, on purpose. Storefront URLs come from `storefrontUrl()` (`@mcloud/merchant/storefront-url`)
