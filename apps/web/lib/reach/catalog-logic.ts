@@ -1,3 +1,5 @@
+import { vendorServesArea, type Area } from '@mcloud/merchant/reach-areas'
+
 // Which Reach vendor sells a product. Pure so the rule has one tested home; the database
 // loading lives in catalog.ts.
 //
@@ -14,6 +16,16 @@ export interface ListedVendor {
     storeId: string | null
     storeSlug: string | null
     storeUrl: string | null
+    /** Home area plus every area it delivers to. Empty only for legacy vendors. */
+    areaIds: string[]
+    /** Hand-made vendor with no store: sells in every area until an admin places it. */
+    legacy: boolean
+}
+
+/** Whether this vendor delivers to a buyer in `buyerAreaId`. */
+export function vendorDelivers(vendor: ListedVendor, areas: Area[], buyerAreaId: string): boolean {
+    if (vendor.legacy && vendor.areaIds.length === 0) return true
+    return vendorServesArea(areas, vendor.areaIds, buyerAreaId)
 }
 
 export interface VendorIndex {

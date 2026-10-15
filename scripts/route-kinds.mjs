@@ -8,7 +8,7 @@ import path from 'node:path'
 /** kind → regexes, at least one of which must match the file (null = no gate expected). */
 export const KINDS = {
     admin: [/requireAdmin\(/],
-    mobile: [/requireMobileUser\(|getMobileSession\(/],
+    mobile: [/requireMobileUser\(|requireReachAdmin\(|getMobileSession\(/],
     partner: [/requirePartnerSecret\(/],
     cron: [/CRON_SECRET/],
     // signed-in AND a member of the store/org the route touches

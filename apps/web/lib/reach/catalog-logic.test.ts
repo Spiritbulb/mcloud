@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict'
-import { buildVendorIndex, vendorForProduct, type ListedVendor } from './catalog-logic'
+import { buildVendorIndex, vendorDelivers, vendorForProduct, type ListedVendor } from './catalog-logic'
 
 const MARKET = 'store-market'
-const mk = (id: string, storeId: string | null): ListedVendor => ({
+const mk = (id: string, storeId: string | null, areaIds: string[] = []): ListedVendor => ({
     id,
     name: id,
     storeId,
     storeSlug: storeId,
     storeUrl: storeId ? `https://app.example/${storeId}` : null,
+    areaIds,
+    legacy: !storeId,
 })
 
 const shop = mk('v-shop', 'store-a')
@@ -31,5 +33,16 @@ assert.equal(vendorForProduct({ id: 'p-legacy', store_id: MARKET }, delisted), n
 
 // A legacy link cannot be used to sell a product that lives in another store.
 assert.equal(vendorForProduct({ id: 'p-legacy', store_id: 'store-b' }, index), null)
+
+// Delivery areas: a vendor delivers where its home or extra areas reach; a legacy vendor with no
+// area delivers everywhere until an admin places it.
+const area = (id: string, parent: string | null) => ({ id, parent_id: parent, name: id, slug: id, lat: null, lng: null })
+const areas = [area('nbi', null), area('wl', 'nbi'), area('kl', 'nbi'), area('nku', null)]
+assert.equal(vendorDelivers(mk('a', 's', ['wl']), areas, 'wl'), true)
+assert.equal(vendorDelivers(mk('a', 's', ['wl', 'kl']), areas, 'kl'), true)
+assert.equal(vendorDelivers(mk('a', 's', ['wl']), areas, 'kl'), false)
+assert.equal(vendorDelivers(mk('a', 's', ['wl']), areas, 'nku'), false)
+assert.equal(vendorDelivers(mk('old', null, []), areas, 'nku'), true)
+assert.equal(vendorDelivers(mk('s', 's', []), areas, 'wl'), false) // store-backed with no area never delivers
 
 console.log('reach catalog logic ok')

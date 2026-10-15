@@ -20,7 +20,7 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await db
         .from('reach_vendor_payouts')
-        .select('status, amount_kes, orders!inner(id, order_number, status, created_at, order_items(title, quantity, product_id))')
+        .select('status, amount_kes, orders!inner(id, order_number, status, created_at, customer_phone, shipping_address, order_items(title, quantity, product_id))')
         .eq('vendor_id', vendorId)
         .in('status', ['held', 'released', 'paid_out'])
     if (error) return fail(500, error.message)
@@ -44,6 +44,12 @@ export async function GET(req: NextRequest) {
             fulfillment_status: row.status === 'held' ? 'unfulfilled' : 'fulfilled',
             total: row.amount_kes,
             created_at: row.orders.created_at,
+            // Where to take it, and who to call. Only the vendors on the order ever see this.
+            deliver_to: {
+                area: row.orders.shipping_address?.area ?? null,
+                address: row.orders.shipping_address?.address ?? null,
+                phone: row.orders.customer_phone ?? null,
+            },
             items: (row.orders.order_items ?? [])
                 .filter((i: any) => mine.has(i.product_id))
                 .map((i: any) => ({ title: i.title, quantity: i.quantity })),

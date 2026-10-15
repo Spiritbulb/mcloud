@@ -1,5 +1,6 @@
 import { getTransaction } from '@/lib/palpluss'
 import { reachDb } from './db'
+import { notifyOrderPaid } from './notify'
 
 export type PaymentStatus = 'pending' | 'success' | 'failed' | 'cancelled' | 'expired'
 
@@ -19,7 +20,7 @@ export async function reconcilePayment(paymentId: string, receipt?: string | nul
     const db = await reachDb()
     const { data: pay } = await db
         .from('reach_payments')
-        .select('id, status, amount_kes, palpluss_transaction_id')
+        .select('id, order_id, status, amount_kes, palpluss_transaction_id')
         .eq('id', paymentId)
         .single()
     if (!pay) throw new Error('Payment not found')
@@ -36,12 +37,14 @@ export async function reconcilePayment(paymentId: string, receipt?: string | nul
         return 'pending'
     }
 
-    const { error } = await db.rpc('reach_settle_payment', {
+    const { data: settled, error } = await db.rpc('reach_settle_payment', {
         p_payment_id: pay.id,
         p_status: next,
         p_receipt: next === 'success' ? receipt ?? null : null,
         p_reason: next === 'success' ? null : `palpluss:${txn.status}`,
     })
     if (error) throw error
+    // reach_settle_payment is true only for the call that actually settled it, so vendors are told once.
+    if (settled && next === 'success') await notifyOrderPaid(pay.order_id)
     return next
 }

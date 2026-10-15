@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { canListOnReach, generateStoreKey, maskStoreKey, normalizeStoreKey, validateKeyLabel } from './reach'
+import { normalizeKenyanMobile, canListOnReach, generateStoreKey, maskStoreKey, normalizeStoreKey, validateKeyLabel } from './reach'
 
 // Format: RCH-XXXX-XXXX-XXXX from the unambiguous alphabet.
 const key = generateStoreKey()
@@ -34,5 +34,12 @@ assert.equal(canListOnReach({ type: 'shop', is_active: false }).ok, false)
 
 assert.equal(maskStoreKey('RCH-ABCD-EFGH-JKMN'), 'RCH-••••-••••-JKMN')
 assert.equal(maskStoreKey('E874-0421'), 'E874-0421')
+
+assert.equal(normalizeKenyanMobile('0712 345 678'), '0712345678')
+assert.equal(normalizeKenyanMobile('+254712345678'), '0712345678')
+assert.equal(normalizeKenyanMobile('254112345678'), '0112345678')
+assert.equal(normalizeKenyanMobile('0212345678'), null)
+assert.equal(normalizeKenyanMobile('071234567'), null)
+assert.equal(normalizeKenyanMobile(712345678), null)
 
 console.log('reach key logic ok')

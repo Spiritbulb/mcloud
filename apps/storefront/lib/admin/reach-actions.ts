@@ -9,8 +9,12 @@ import {
     MAX_ACTIVE_STORE_KEYS,
     canListOnReach,
     generateStoreKey,
+    normalizeKenyanMobile,
     validateKeyLabel,
 } from '@mcloud/merchant/reach'
+import { MAX_VENDOR_AREAS, type Area } from '@mcloud/merchant/reach-areas'
+import { ownerRequestListing, type ApprovalStatus } from '@mcloud/merchant/reach-approval'
+import { sendPushToUsers } from '@/lib/merchant/send-push'
 import { requireManagedStore, type ActionResult } from './access'
 
 type Db = any
@@ -30,6 +34,15 @@ export interface ReachStatus {
     /** null when the store may be listed, otherwise why not. */
     blocked: string | null
     listed: boolean
+    /** Reach's decision. Buyers only see the store once this is 'approved' (and `listed`). */
+    approvalStatus: ApprovalStatus
+    reviewNote: string | null
+    areaId: string | null
+    /** Other areas it delivers to (the home area is not repeated here). */
+    extraAreaIds: string[]
+    payoutPhone: string | null
+    /** Every active area, for the pickers. */
+    areas: Area[]
     keys: ReachKey[]
     activeKeyCount: number
     maxKeys: number
@@ -41,13 +54,26 @@ async function loadStore(db: Db, storeId: string) {
     return data as { id: string; name: string; type: string | null; is_active: boolean | null } | null
 }
 
-async function vendorOfStore(db: Db, storeId: string): Promise<{ id: string; listed: boolean } | null> {
-    const { data } = await db.from('reach_vendors').select('id, listed').eq('store_id', storeId).maybeSingle()
+interface VendorRow {
+    id: string
+    listed: boolean
+    approval_status: ApprovalStatus
+    review_note: string | null
+    area_id: string | null
+    payout_phone: string | null
+}
+
+async function vendorOfStore(db: Db, storeId: string): Promise<VendorRow | null> {
+    const { data } = await db
+        .from('reach_vendors')
+        .select('id, listed, approval_status, review_note, area_id, payout_phone')
+        .eq('store_id', storeId)
+        .maybeSingle()
     return data ?? null
 }
 
 /** The store's vendor row, created on first use (a store is a vendor once it does anything on Reach). */
-async function ensureVendor(db: Db, store: { id: string; name: string }): Promise<{ id: string; listed: boolean } | null> {
+async function ensureVendor(db: Db, store: { id: string; name: string }): Promise<VendorRow | null> {
     const existing = await vendorOfStore(db, store.id)
     if (existing) return existing
     const { error } = await db.from('reach_vendors').insert({ name: store.name, store_id: store.id })
@@ -72,6 +98,17 @@ export async function getReachStatus(storeId: string): Promise<({ ok: true } & R
         .eq('is_active', true)
 
     const vendor = await vendorOfStore(db, gate.storeId)
+    const { data: areaRows } = await db
+        .from('reach_areas')
+        .select('id, parent_id, name, slug, lat, lng, active')
+        .eq('active', true)
+        .order('sort')
+        .order('name')
+    let extraAreaIds: string[] = []
+    if (vendor) {
+        const { data: extra } = await db.from('reach_vendor_areas').select('area_id').eq('vendor_id', vendor.id)
+        extraAreaIds = (extra ?? []).map((r: { area_id: string }) => r.area_id)
+    }
     let keys: ReachKey[] = []
     if (vendor) {
         const { data, error } = await db
@@ -100,6 +137,12 @@ export async function getReachStatus(storeId: string): Promise<({ ok: true } & R
         ok: true,
         blocked: check.ok ? null : check.error,
         listed: !!vendor?.listed,
+        approvalStatus: vendor?.approval_status ?? 'draft',
+        reviewNote: vendor?.review_note ?? null,
+        areaId: vendor?.area_id ?? null,
+        extraAreaIds,
+        payoutPhone: vendor?.payout_phone ?? null,
+        areas: areaRows ?? [],
         keys,
         activeKeyCount: keys.filter((k) => k.active).length,
         maxKeys: MAX_ACTIVE_STORE_KEYS,
@@ -107,6 +150,57 @@ export async function getReachStatus(storeId: string): Promise<({ ok: true } & R
     }
 }
 
+/**
+ * Where the store delivers from and to, and where Reach sends its money. Changing the home area of a
+ * store that is already approved sends it back for review: approval was for that place.
+ */
+export async function saveReachLocation(
+    storeId: string,
+    input: { areaId: unknown; extraAreaIds: unknown; payoutPhone: unknown },
+): Promise<ActionResult> {
+    const gate = await requireManagedStore(storeId)
+    if (!gate.ok) return gate
+    const db: Db = await createClient()
+
+    const store = await loadStore(db, gate.storeId)
+    if (!store) return { ok: false, error: 'Store not found' }
+    const check = canListOnReach(store)
+    if (!check.ok) return check
+
+    const areaId = typeof input.areaId === 'string' ? input.areaId : ''
+    const extra = Array.isArray(input.extraAreaIds) ? [...new Set(input.extraAreaIds.filter((x): x is string => typeof x === 'string'))] : []
+    if (!areaId) return { ok: false, error: 'Choose the area your store delivers from.' }
+    if (extra.length > MAX_VENDOR_AREAS) return { ok: false, error: `Pick at most ${MAX_VENDOR_AREAS} other areas.` }
+    const phone = input.payoutPhone === '' || input.payoutPhone == null ? null : normalizeKenyanMobile(input.payoutPhone)
+    if (input.payoutPhone && !phone) return { ok: false, error: 'Enter a valid M-Pesa number, like 0712 345 678.' }
+
+    const wanted = [areaId, ...extra.filter((id) => id !== areaId)]
+    const { data: found } = await db.from('reach_areas').select('id').in('id', wanted).eq('active', true)
+    if ((found ?? []).length !== wanted.length) return { ok: false, error: 'One of those areas is not available.' }
+
+    const vendor = await ensureVendor(db, store)
+    if (!vendor) return { ok: false, error: 'Could not save. Try again.' }
+
+    const movedHome = vendor.area_id !== areaId
+    const patch: Record<string, unknown> = { area_id: areaId, payout_phone: phone, name: store.name }
+    if (movedHome && vendor.approval_status === 'approved') {
+        patch.approval_status = 'pending'
+        patch.requested_at = new Date().toISOString()
+        patch.review_note = null
+    }
+    const { error } = await db.from('reach_vendors').update(patch).eq('id', vendor.id)
+    if (error) return { ok: false, error: 'Could not save. Try again.' }
+
+    // Replace the delivery list (small: capped above).
+    await db.from('reach_vendor_areas').delete().eq('vendor_id', vendor.id)
+    if (extra.length) {
+        const rows = extra.filter((id) => id !== areaId).map((area_id) => ({ vendor_id: vendor.id, area_id }))
+        if (rows.length) await db.from('reach_vendor_areas').insert(rows)
+    }
+    return { ok: true }
+}
+
+/** "List my store" is a request. Reach approves it before shoppers see anything. */
 export async function setReachListed(storeId: string, listed: boolean): Promise<ActionResult> {
     const gate = await requireManagedStore(storeId)
     if (!gate.ok) return gate
@@ -120,17 +214,42 @@ export async function setReachListed(storeId: string, listed: boolean): Promise<
         const check = canListOnReach(store)
         if (!check.ok) return check
         const vendor = await ensureVendor(db, store)
-        if (!vendor) return { ok: false, error: 'Could not list your store. Try again.' }
+        if (!vendor) return { ok: false, error: 'Could not send your request. Try again.' }
+
+        const next = ownerRequestListing(vendor)
+        if (!next.ok) return next
+        const asking = next.status === 'pending' && vendor.approval_status !== 'pending'
         const { error } = await db
             .from('reach_vendors')
-            .update({ listed: true, listed_at: new Date().toISOString(), name: store.name })
+            .update({
+                listed: true,
+                listed_at: new Date().toISOString(),
+                name: store.name,
+                approval_status: next.status,
+                ...(asking ? { requested_at: new Date().toISOString(), review_note: null } : {}),
+            })
             .eq('id', vendor.id)
-        if (error) return { ok: false, error: 'Could not list your store. Try again.' }
+        if (error) return { ok: false, error: 'Could not send your request. Try again.' }
+
+        if (asking) {
+            // Tell the Reach admins there is something to review. Best effort.
+            try {
+                const { data: admins } = await db.from('users').select('id').eq('role', 'admin')
+                await sendPushToUsers((admins ?? []).map((u: { id: string }) => u.id), {
+                    title: 'New store to review',
+                    body: `${store.name} asked to be listed on Reach.`,
+                    data: { type: 'review' },
+                })
+            } catch {
+                // never fail the owner's request over a notification
+            }
+        }
         return { ok: true }
     }
 
     // Unlisting never needs a vendor row to exist, and keys keep working: staff can still see and
-    // deliver orders already placed. Only the products leave the marketplace.
+    // deliver orders already placed. Only the products leave the marketplace. Approval is kept, so
+    // listing again does not need a second review.
     const vendor = await vendorOfStore(db, gate.storeId)
     if (!vendor) return { ok: true }
     const { error } = await db.from('reach_vendors').update({ listed: false }).eq('id', vendor.id)

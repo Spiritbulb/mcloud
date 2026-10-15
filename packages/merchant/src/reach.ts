@@ -65,3 +65,14 @@ export function maskStoreKey(key: string): string {
   if (parts.length < 2) return key.length > 4 ? `••••${key.slice(-4)}` : key
   return parts.map((p, i) => (i === 0 || i === parts.length - 1 ? p : '••••')).join('-')
 }
+
+/**
+ * A Kenyan M-Pesa number as `07XXXXXXXX` / `01XXXXXXXX`, from `+254…`, `254…` or `0…` input; null if it
+ * is not one. This is where the admin sends payouts, so a typo here is money sent to a stranger.
+ */
+export function normalizeKenyanMobile(input: unknown): string | null {
+  if (typeof input !== 'string') return null
+  const digits = input.replace(/[\s-]/g, '')
+  const m = /^(?:\+254|254|0)([71]\d{8})$/.exec(digits)
+  return m ? `0${m[1]}` : null
+}

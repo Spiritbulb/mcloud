@@ -6,6 +6,9 @@
 -- would disappear from the marketplace. Its reach_product_vendors rows become redundant and go.
 --
 -- Owner is the Reach store's owner so it can be handed over from the dashboard (Members).
+-- Run 20261016_reach_areas_approvals_finance.sql FIRST: Munch Hub must be placed in a delivery area, or
+-- the marketplace will not show it (a store-backed vendor with no area is never sellable). Set
+-- v_area_slug below to the slug of the town or area it delivers from (e.g. 'nakuru').
 -- Runs in one transaction and aborts unless exactly 11 products move. Not idempotent by design.
 
 do $$
@@ -14,7 +17,11 @@ declare
   v_vendor constant uuid := 'e8743fac-26fd-4a78-84ad-91caa675e6eb';
   v_owner constant text := 'auth0|69b0fc02f5f8370eea772e82';
   v_moved int;
+  v_area_slug constant text := 'CHANGE-ME';
+  v_area uuid;
 begin
+  select id into v_area from reach_areas where slug = v_area_slug and active;
+  if v_area is null then raise exception 'set v_area_slug to a real reach_areas.slug (was %)', v_area_slug; end if;
   if exists (select 1 from stores where slug = 'munch-hub') then raise exception 'slug taken'; end if;
   if exists (select 1 from reach_vendors where id = v_vendor and store_id is not null) then raise exception 'already linked'; end if;
 
@@ -34,7 +41,8 @@ begin
   if v_moved <> 11 then raise exception 'expected to move 11 products, moved %', v_moved; end if;
 
   update reach_vendors
-     set store_id = v_store, listed = true, listed_at = coalesce(listed_at, now())
+     set store_id = v_store, area_id = v_area, listed = true, listed_at = coalesce(listed_at, now()),
+         approval_status = 'approved'
    where id = v_vendor;
   delete from reach_product_vendors where vendor_id = v_vendor;
 end $$;

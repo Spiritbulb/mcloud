@@ -21,8 +21,9 @@ export async function GET(req: NextRequest) {
     }
 
     const role = resolveMobileRole(data?.role, reach?.role)
+    // The app shows the admin screens only to platform admins; every admin route re-checks on the server.
     return NextResponse.json(
-        { user: { ...auth.user, role } },
+        { user: { ...auth.user, role, isAdmin: data?.role === 'admin' } },
         { headers: { 'Cache-Control': 'no-store' } },
     )
 }

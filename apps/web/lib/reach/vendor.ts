@@ -1,4 +1,7 @@
+import { areaLabel } from '@mcloud/merchant/reach-areas'
+import type { ApprovalStatus } from '@mcloud/merchant/reach-approval'
 import { storefrontUrl } from '@mcloud/merchant/storefront-url'
+import { loadAreas } from './catalog'
 import { reachDb } from './db'
 
 export interface VendorContext {
@@ -10,6 +13,13 @@ export interface VendorContext {
     storeUrl: string | null
     /** Whether the owner has the store switched on in the marketplace. */
     listed: boolean
+    /** Reach's decision on the listing request. Buyers only see approved stores. */
+    approvalStatus: ApprovalStatus
+    /** Why a request was sent back (or a store paused). */
+    reviewNote: string | null
+    areaId: string | null
+    /** "Westlands, Nairobi" */
+    areaName: string | null
 }
 
 /**
@@ -24,7 +34,7 @@ export async function vendorFor(userId: string): Promise<VendorContext | null> {
     const { data } = await db
         .from('reach_vendor_members')
         .select(
-            'reach_courier_keys!inner(active), reach_vendors!inner(id, name, active, listed, store_id, stores(name, slug, custom_domain))',
+            'reach_courier_keys!inner(active), reach_vendors!inner(id, name, active, listed, approval_status, review_note, area_id, store_id, stores(name, slug, custom_domain))',
         )
         .eq('user_id', userId)
         .eq('reach_courier_keys.active', true)
@@ -35,6 +45,7 @@ export async function vendorFor(userId: string): Promise<VendorContext | null> {
     const v = data?.reach_vendors
     if (!v) return null
     const store = v.stores
+    const areaName = v.area_id ? areaLabel(await loadAreas(db).catch(() => []), v.area_id) || null : null
     return {
         id: v.id,
         name: store?.name ?? v.name,
@@ -42,6 +53,10 @@ export async function vendorFor(userId: string): Promise<VendorContext | null> {
         storeSlug: store?.slug ?? null,
         storeUrl: store?.slug ? storefrontUrl(store.slug, store.custom_domain) : null,
         listed: !!v.listed,
+        approvalStatus: v.approval_status ?? 'draft',
+        reviewNote: v.review_note ?? null,
+        areaId: v.area_id ?? null,
+        areaName,
     }
 }
 

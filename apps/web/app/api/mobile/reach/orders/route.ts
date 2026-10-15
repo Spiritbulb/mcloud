@@ -4,7 +4,8 @@
 // Prices always come from the database, never from the app.
 import { NextResponse, type NextRequest } from 'next/server'
 import { initiateStkPush } from '@/lib/palpluss'
-import { loadVendorIndex } from '@/lib/reach/catalog'
+import { areaLabel } from '@mcloud/merchant/reach-areas'
+import { loadAreas, loadVendorIndex } from '@/lib/reach/catalog'
 import { vendorForProduct } from '@/lib/reach/catalog-logic'
 import { reachDb } from '@/lib/reach/db'
 import { REACH_STORE_ID, priceForBuyer, settingsFor } from '@/lib/reach/store-config'
@@ -21,12 +22,20 @@ export async function POST(req: NextRequest) {
 
     const body = (await req.json().catch(() => null)) as {
         phone?: string
+        areaId?: string
+        address?: string
         lines?: { product_id?: string; quantity?: number }[]
     } | null
 
     const phone = typeof body?.phone === 'string' ? body.phone.trim() : ''
     if (!PHONE_RE.test(phone)) return fail(400, 'Enter a valid Kenyan phone number')
     if (!body?.lines?.length) return fail(400, 'lines is required')
+
+    // Where to deliver. The vendor needs this to bring the order, so it is not optional.
+    const areaId = typeof body.areaId === 'string' ? body.areaId : ''
+    const address = typeof body.address === 'string' ? body.address.trim().replace(/\s+/g, ' ') : ''
+    if (!areaId) return fail(400, 'Choose where we are delivering to')
+    if (address.length < 4 || address.length > 200) return fail(400, 'Add a street, building or landmark so the seller can find you')
 
     // Merge duplicate lines and validate quantities
     const wanted = new Map<string, number>()
@@ -50,9 +59,14 @@ export async function POST(req: NextRequest) {
     if (pErr) return fail(500, pErr.message)
     if ((products ?? []).length !== ids.length) return fail(400, 'Some items are no longer available')
 
+    // Only vendors that deliver to the buyer's area can sell to them, so a cart built in one area
+    // cannot be paid for into another.
     let index
+    let areas
     try {
-        index = await loadVendorIndex(db)
+        areas = await loadAreas(db)
+        if (!areas.some((a) => a.id === areaId)) return fail(400, 'That delivery area is not available')
+        index = await loadVendorIndex(db, areaId)
     } catch (e) {
         return fail(500, e instanceof Error ? e.message : 'Could not load vendors')
     }
@@ -64,7 +78,7 @@ export async function POST(req: NextRequest) {
     for (const p of products as any[]) {
         const qty = wanted.get(p.id)!
         const vendorId = vendorForProduct(p, index)?.id
-        if (!vendorId) return fail(400, `${p.name} is not available`)
+        if (!vendorId) return fail(400, `${p.name} is not available in your area`)
         const tracked = p.track_inventory ?? true
         const left = p.inventory_quantity ?? 0
         if (tracked && left < qty) return fail(409, `Only ${left} left of ${p.name}`)
@@ -98,6 +112,8 @@ export async function POST(req: NextRequest) {
             total,
             currency: 'KES',
             customer_phone: phone,
+            shipping_address: { area_id: areaId, area: areaLabel(areas, areaId), address, phone },
+            metadata: { reach: { area_id: areaId } },
             source: 'reach',
         })
         .select('id, order_number')
