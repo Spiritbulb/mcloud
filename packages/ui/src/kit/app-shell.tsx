@@ -183,7 +183,14 @@ function Sidebar({
     ...p
 }: SidebarProps & { rail: boolean; onToggleRail?: () => void; onClose?: () => void }) {
     return (
-        <aside className={cn('flex h-full flex-col border-r border-border bg-background transition-[width] duration-200 ease-out', rail ? 'w-[56px]' : 'w-[232px]')}>
+        // In the phone drawer (onClose) the sidebar fills the panel; a fixed width there left a strip
+        // of empty sheet beyond the nav's border.
+        <aside
+            className={cn(
+                'flex h-full flex-col bg-background',
+                onClose ? 'w-full' : cn('border-r border-border transition-[width] duration-200 ease-out', rail ? 'w-[56px]' : 'w-[232px]'),
+            )}
+        >
             <div className={cn('flex h-12 shrink-0 items-center border-b border-border', rail ? 'justify-center px-2' : 'justify-between px-4')}>
                 {!rail && (
                     <AnyLink href={p.brandHref} className="flex shrink-0 items-center gap-2">
@@ -294,7 +301,7 @@ function MobileDrawer({ open, onOpen, onClose, children }: { open: boolean; onOp
             )}
             <div
                 className={cn(
-                    'fixed inset-y-0 left-0 z-50 flex h-dvh w-[280px] flex-col bg-background shadow-xl md:hidden',
+                    'fixed inset-y-0 left-0 z-50 flex h-dvh w-[280px] max-w-[85vw] flex-col border-r border-border bg-background shadow-xl md:hidden',
                     // No transition while a finger is moving the panel, so it tracks the touch.
                     dragX === 0 && tabDragX === 0 && 'transition-transform duration-200 ease-out',
                     open ? 'translate-x-0' : '-translate-x-full',
