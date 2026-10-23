@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@mcloud/ui/utils'
-import { CookieBanner } from './cookie-banner'
 import { BetaSignupForm } from '@/app/(marketing)/beta/beta-signup-form'
 
 type FaqEntry = { q: string; a: string }
@@ -1010,8 +1009,6 @@ export default function HomeClient() {
                     </FadeIn>
                 </div>
             </section>
-
-            <CookieBanner />
         </div>
     )
 }

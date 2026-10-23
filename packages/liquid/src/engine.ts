@@ -8,7 +8,8 @@ export const engine = new Liquid({
     cache: process.env.NODE_ENV === 'production',
     outputEscape: 'escape',
     globals: {
-        ga_tracking_id: process.env.GA_TRACKING_ID || 'G-P7RJ7JW0BM',
+        // No default: falling back to MCloud's own property would send merchants' shoppers' traffic to it.
+        ga_tracking_id: process.env.GA_TRACKING_ID || '',
     },
 })
 

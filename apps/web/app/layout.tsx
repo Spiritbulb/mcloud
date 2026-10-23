@@ -2,7 +2,8 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import Script from "next/script";
 import { Suspense } from "react";
-import Analytics from "@/components/analytics";
+import GoogleAnalytics from "@/components/google-analytics";
+import { CookieBanner } from "@/components/cookie-banner";
 import { AuthProvider } from "@mcloud/auth/provider";
 import { Geist, Geist_Mono, Lora } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -127,26 +128,10 @@ export default function RootLayout({
         `,
           }}
         />
-        <Script
-          strategy="lazyOnload"
-          src="https://www.googletagmanager.com/gtag/js?id=G-P7RJ7JW0BM"
-        />
-        <Script
-          id="ga-init"
-          strategy="lazyOnload"
-          dangerouslySetInnerHTML={{
-            __html: `
-          window.dataLayer = window.dataLayer || [];
-          function gtag(){dataLayer.push(arguments);}
-          gtag('js', new Date());
-          gtag('config', 'G-P7RJ7JW0BM');
-        `,
-          }}
-        />
-
         <Suspense fallback={null}>
-          <Analytics />
+          <GoogleAnalytics />
         </Suspense>
+        <CookieBanner />
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <ThemeColorSync />
           <AuthProvider>
