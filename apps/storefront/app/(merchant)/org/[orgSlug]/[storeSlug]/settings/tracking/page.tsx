@@ -21,5 +21,5 @@ export default async function TrackingPage({
         if (!result.error) initialData = result.data
     }
 
-    return <TrackingClient slug={storeSlug} orgSlug={orgSlug} initialData={initialData} />
+    return <TrackingClient slug={storeSlug} initialData={initialData} />
 }

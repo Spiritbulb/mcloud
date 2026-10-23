@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { getSession } from '@mcloud/auth/server'
+import { getStore } from '@mcloud/db/server'
 import { getDeliverySettings } from '@mcloud/merchant/logistics-data'
 import LogisticsSettingsClient from './logistics-settings-client'
 
@@ -20,6 +21,7 @@ export default async function LogisticsSettingsPage({
         const result = await getDeliverySettings(session.user.id, storeSlug, orgSlug)
         if (!result.error) initialData = result.data
     }
+    const store = initialData ? await getStore(storeSlug) : null
 
-    return <LogisticsSettingsClient slug={storeSlug} orgSlug={orgSlug} initialData={initialData} />
+    return <LogisticsSettingsClient slug={storeSlug} currency={store?.currency ?? 'KES'} initialData={initialData} />
 }

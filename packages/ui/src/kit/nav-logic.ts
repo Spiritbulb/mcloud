@@ -6,6 +6,8 @@ export type ShellNavItem = {
     label: string
     /** Material Symbols name. */
     icon: string
+    /** Square image shown instead of the icon, for a partner's own mark (e.g. Reach). */
+    image?: string
     href: string
     /** Small tag after the label, e.g. "Beta" or "Pro". */
     badge?: string

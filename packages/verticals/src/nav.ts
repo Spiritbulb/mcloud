@@ -12,6 +12,8 @@ export type NavTab = {
   readonly id: string
   readonly label: string
   readonly icon: string
+  /** Square image (a path served by the storefront) shown instead of `icon`, for a partner's own mark. */
+  readonly image?: string
   readonly beta?: boolean
   readonly pro?: boolean
   readonly subTabs?: readonly NavSubTab[]
@@ -73,7 +75,7 @@ const COMMERCE: NavSection = {
   tabs: [
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
     { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
-    { id: 'reach', label: 'Reach marketplace', icon: 'hub' },
+    { id: 'reach', label: 'Reach marketplace', icon: 'hub', image: '/brand/reach.png' },
     { id: 'customers', label: 'Customers', icon: 'person', pro: true },
     { id: 'blog', label: 'Blog', icon: 'article', pro: true },
   ],

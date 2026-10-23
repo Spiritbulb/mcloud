@@ -2,6 +2,14 @@
 
 import { QRCodeSVG } from 'qrcode.react'
 import { useState, useTransition } from 'react'
+import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { Field, Select, TextInput } from '@mcloud/ui/kit/form'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
 import { cn } from '@mcloud/ui/utils'
 import { maskStoreKey } from '@mcloud/merchant/reach'
 import { areaLabel, type Area } from '@mcloud/merchant/reach-areas'
@@ -15,7 +23,6 @@ import {
     type ReachKey,
     type ReachStatus,
 } from '@/lib/admin/reach-actions'
-import { SettingsSection } from '../settings-primitives'
 
 function formatDate(iso: string) {
     return new Date(iso).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })
@@ -53,20 +60,31 @@ function LocationSection({
     const toggle = (id: string) => setExtra((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]))
 
     return (
-        <SettingsSection
+        <Panel
             title="Where you deliver"
-            description="Shoppers on Reach pick where they are, and only see stores that deliver there. Choose the area you deliver from, and any other areas close enough to reach."
+            description="Shoppers on Reach pick where they are, and only see stores that deliver there."
+            footer={
+                <Button
+                    variant="primary"
+                    disabled={pending || !dirty || !areaId}
+                    onClick={() => run(() => saveReachLocation(storeId, { areaId, extraAreaIds: extra, payoutPhone: phone }), onSaved)}
+                >
+                    Save
+                </Button>
+            }
         >
             <div className="flex flex-col gap-5">
-                <label className="flex flex-col gap-1.5">
-                    <span className="text-[12.5px] font-semibold text-foreground">Your area</span>
-                    <select
+                <Field
+                    label="Your area"
+                    hint={status.areas.length === 0 ? 'No areas are set up yet. Reach adds them; check back soon.' : 'The area you deliver from.'}
+                >
+                    <Select
                         value={areaId}
                         onChange={(e) => {
                             setAreaId(e.target.value)
                             setExtra((cur) => cur.filter((x) => x !== e.target.value))
                         }}
-                        className="h-10 rounded-lg border border-border bg-background px-3 text-[13px]"
+                        className="max-w-sm"
                     >
                         <option value="">Choose an area…</option>
                         {groups.map(({ town, children }) => (
@@ -77,21 +95,18 @@ function LocationSection({
                                 ))}
                             </optgroup>
                         ))}
-                    </select>
-                    {status.areas.length === 0 && (
-                        <span className="text-[12px] text-muted-foreground">No areas are set up yet. Reach adds them; check back soon.</span>
-                    )}
-                </label>
+                    </Select>
+                </Field>
 
                 <fieldset className="flex flex-col gap-2">
-                    <legend className="text-[12.5px] font-semibold text-foreground">Also delivers to (optional)</legend>
-                    <div className="flex flex-col gap-3 max-h-64 overflow-y-auto rounded-lg border border-border p-3">
+                    <legend className="mb-1.5 text-[12px] font-medium text-foreground">Also delivers to (optional)</legend>
+                    <div className="flex max-h-64 flex-col gap-3 overflow-y-auto rounded-md border border-border p-3">
                         {groups.map(({ town, children }) => {
                             const options = [town, ...children].filter((a) => a.id !== areaId)
                             if (!options.length) return null
                             return (
                                 <div key={town.id}>
-                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-1.5">{town.name}</p>
+                                    <p className="mb-1.5 text-[12px] font-medium text-muted-foreground">{town.name}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {options.map((a) => (
                                             <button
@@ -100,8 +115,8 @@ function LocationSection({
                                                 onClick={() => toggle(a.id)}
                                                 aria-pressed={extra.includes(a.id)}
                                                 className={cn(
-                                                    'h-8 px-3 rounded-full text-[12px] font-medium border transition-colors',
-                                                    extra.includes(a.id) ? 'bg-primary text-primary-foreground border-primary' : 'border-border hover:bg-muted',
+                                                    'h-7 rounded-md border px-2.5 text-[12px] transition-colors',
+                                                    extra.includes(a.id) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:bg-muted/60',
                                                 )}
                                             >
                                                 {a.id === town.id ? `All of ${a.name}` : a.name}
@@ -114,51 +129,38 @@ function LocationSection({
                     </div>
                 </fieldset>
 
-                <label className="flex flex-col gap-1.5">
-                    <span className="text-[12.5px] font-semibold text-foreground">M-Pesa number for payouts</span>
-                    <input
+                <Field label="M-Pesa number for payouts" hint="Reach sends what you earn here after you mark orders delivered. Double-check it.">
+                    <TextInput
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
                         inputMode="tel"
                         placeholder="0712 345 678"
-                        className="h-10 rounded-lg border border-border bg-background px-3 text-[13px] max-w-xs"
+                        className="max-w-xs"
                     />
-                    <span className="text-[12px] text-muted-foreground">Reach sends what you earn here after you mark orders delivered. Double-check it.</span>
-                </label>
+                </Field>
 
                 {movingApproved && (
-                    <p className="text-[12.5px] text-amber-700 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                    <Notice tone="warning">
                         Changing your area sends your store back for review. It stays hidden from shoppers until Reach approves it again.
-                    </p>
+                    </Notice>
                 )}
-
-                <div>
-                    <button
-                        type="button"
-                        disabled={pending || !dirty || !areaId}
-                        onClick={() => run(() => saveReachLocation(storeId, { areaId, extraAreaIds: extra, payoutPhone: phone }), onSaved)}
-                        className="h-10 px-6 rounded-full bg-primary text-primary-foreground text-[13px] font-semibold disabled:opacity-50"
-                    >
-                        Save
-                    </button>
-                </div>
             </div>
-        </SettingsSection>
+        </Panel>
     )
 }
 
 function StatusPill({ status }: { status: ReachStatus }) {
-    const tone =
+    const tone: BadgeTone =
         status.approvalStatus === 'approved' && status.listed
-            ? 'bg-green-100 text-green-700'
+            ? 'success'
             : status.approvalStatus === 'pending'
-              ? 'bg-amber-100 text-amber-700'
+              ? 'warning'
               : status.approvalStatus === 'rejected' || status.approvalStatus === 'suspended'
-                ? 'bg-red-100 text-red-700'
-                : 'bg-muted text-muted-foreground'
+                ? 'danger'
+                : 'neutral'
     const text =
         status.approvalStatus === 'approved' && !status.listed ? 'Approved · not listed' : approvalLabel(status.approvalStatus)
-    return <span className={cn('inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider', tone)}>{text}</span>
+    return <Badge tone={tone}>{text}</Badge>
 }
 
 function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (k: ReachKey) => void }) {
@@ -177,7 +179,7 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
     }
 
     return (
-        <li className="px-6 py-4 flex flex-col gap-2">
+        <li className="flex flex-col gap-2 px-4 py-3.5">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
                     <p className={cn('text-[13px] font-semibold', k.active ? 'text-foreground' : 'text-muted-foreground line-through')}>
@@ -186,39 +188,27 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
                     <p className="font-mono text-[13px] tracking-wide text-foreground mt-0.5 break-all">
                         {k.active && !reveal ? maskStoreKey(k.key) : k.key}
                     </p>
-                    <p className="text-[11.5px] text-muted-foreground mt-1">
+                    <p className="mt-1 text-[12px] text-muted-foreground">
                         {k.active ? `Created ${formatDate(k.created_at)}` : `Revoked ${formatDate(k.revoked_at ?? k.created_at)}`}
                     </p>
                 </div>
                 {k.active && (
-                    <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => setReveal((v) => !v)} className="h-8 px-3 rounded-full text-[12px] font-medium border border-border hover:bg-muted">
-                            {reveal ? 'Hide' : 'Show'}
-                        </button>
-                        <button onClick={copy} className="h-8 px-3 rounded-full text-[12px] font-medium border border-border hover:bg-muted">
-                            {copied ? 'Copied' : 'Copy'}
-                        </button>
-                        <button onClick={() => setQr((v) => !v)} aria-expanded={qr} className="h-8 px-3 rounded-full text-[12px] font-medium border border-border hover:bg-muted">
-                            {qr ? 'Hide QR' : 'QR'}
-                        </button>
-                        <button
-                            onClick={() => onRevoke(k)}
-                            disabled={busy}
-                            className="h-8 px-3 rounded-full text-[12px] font-medium text-red-600 border border-red-200 hover:bg-red-50 disabled:opacity-50"
-                        >
-                            Revoke
-                        </button>
+                    <div className="flex shrink-0 flex-wrap items-center justify-end gap-1.5">
+                        <Button size="sm" onClick={() => setReveal((v) => !v)}>{reveal ? 'Hide' : 'Show'}</Button>
+                        <Button size="sm" onClick={copy}>{copied ? 'Copied' : 'Copy'}</Button>
+                        <Button size="sm" onClick={() => setQr((v) => !v)} aria-expanded={qr}>{qr ? 'Hide QR' : 'QR'}</Button>
+                        <Button size="sm" variant="danger" onClick={() => onRevoke(k)} disabled={busy}>Revoke</Button>
                     </div>
                 )}
             </div>
             {k.active && qr && (
-                <div className="flex items-center gap-4 rounded-lg border border-border p-4 w-fit">
+                <div className="flex w-fit flex-wrap items-center gap-4 rounded-md border border-border p-4">
                     {/* White background and a quiet zone so phone cameras read it on a dark theme too. */}
                     <div className="bg-white p-3 rounded-md">
                         <QRCodeSVG value={k.key} size={132} level="M" marginSize={0} />
                     </div>
                     <p className="text-[12px] text-muted-foreground max-w-[220px]">
-                        In the Reach app, choose <strong>Selling</strong> then <strong>Scan QR code</strong>. Anyone who scans this can open your store, so only show it to people you trust.
+                        In the Reach app, choose <strong>I&apos;m selling</strong>, then <strong>Scan QR code</strong>. Anyone who scans this can open your store, so only show it to people you trust.
                     </p>
                 </div>
             )}
@@ -246,6 +236,7 @@ export default function ReachClient({
     const [error, setError] = useState<string | null>(initialError)
     const [label, setLabel] = useState('')
     const [pending, startTransition] = useTransition()
+    const [revoking, setRevoking] = useState<ReachKey | null>(null)
 
     const refresh = async () => {
         const next = await getReachStatus(storeId)
@@ -264,21 +255,31 @@ export default function ReachClient({
             await refresh()
         })
 
+    const header = <PageHeader title="Reach marketplace" description="Sell on the Reach app alongside other stores nearby." />
+
     if (!status) {
-        return <p className="text-[13px] text-red-600">{error ?? 'Could not load Reach settings.'}</p>
+        return (
+            <div className="space-y-6">
+                {header}
+                <Panel>
+                    <LoadError title="Couldn't load your Reach settings" message={error ?? undefined} onRetry={() => startTransition(refresh)} />
+                </Panel>
+            </div>
+        )
     }
 
     const active = status.keys.filter((k) => k.active)
     const revoked = status.keys.filter((k) => !k.active)
 
     return (
-        <div className="flex flex-col gap-6 max-w-3xl">
-            {error && <p role="alert" className="text-[13px] text-red-600 rounded-lg border border-red-200 bg-red-50 px-4 py-3">{error}</p>}
+        <div className="space-y-6">
+            {header}
+            {error && <Notice tone="error">{error}</Notice>}
 
-            <SettingsSection
+            <Panel
                 title="Marketplace listing"
-                description="Sell your products to shoppers on the Reach app, alongside other stores nearby."
-                aside={<StatusPill status={status} />}
+                description="Whether shoppers on Reach can see your products."
+                action={<StatusPill status={status} />}
             >
                 {status.blocked ? (
                     <p className="text-[13px] text-muted-foreground">{status.blocked}</p>
@@ -297,12 +298,12 @@ export default function ReachClient({
                             </p>
                         )}
                         {status.approvalStatus === 'rejected' && (
-                            <p className="text-[13px] text-red-700">
+                            <p className="text-[13px] text-red-700 dark:text-red-300">
                                 Reach sent your request back: {status.reviewNote ?? 'please check your details'}. Fix it, then request again.
                             </p>
                         )}
                         {status.approvalStatus === 'suspended' && (
-                            <p className="text-[13px] text-red-700">
+                            <p className="text-[13px] text-red-700 dark:text-red-300">
                                 Reach has paused your store{status.reviewNote ? `: ${status.reviewNote}` : '.'} Contact Reach support to be reinstated.
                             </p>
                         )}
@@ -316,22 +317,17 @@ export default function ReachClient({
 
                         {status.approvalStatus !== 'suspended' && status.approvalStatus !== 'pending' && (
                             <div>
-                                <button
+                                <Button
                                     onClick={() => run(() => setReachListed(storeId, !status.listed || status.approvalStatus === 'rejected'))}
                                     disabled={pending || (!status.areaId && !status.listed)}
-                                    className={cn(
-                                        'h-9 px-5 rounded-full text-[13px] font-semibold transition-opacity disabled:opacity-50',
-                                        status.listed && status.approvalStatus !== 'rejected'
-                                            ? 'bg-accent text-primary border border-border'
-                                            : 'bg-primary text-primary-foreground',
-                                    )}
+                                    variant={status.listed && status.approvalStatus !== 'rejected' ? 'secondary' : 'primary'}
                                 >
                                     {status.listed && status.approvalStatus !== 'rejected'
                                         ? 'Remove from Reach'
                                         : status.approvalStatus === 'approved'
                                           ? 'List my store'
                                           : 'Request to be listed'}
-                                </button>
+                                </Button>
                                 {!status.areaId && !status.listed && (
                                     <p className="text-[12px] text-muted-foreground mt-2">Choose where you deliver first.</p>
                                 )}
@@ -339,44 +335,45 @@ export default function ReachClient({
                         )}
                     </div>
                 )}
-            </SettingsSection>
+            </Panel>
 
             {!status.blocked && (
                 <LocationSection key={`${status.areaId}-${status.extraAreaIds.join()}-${status.payoutPhone}`} storeId={storeId} status={status} onSaved={() => {}} run={run} pending={pending} />
             )}
 
-            <SettingsSection
+            <Panel
                 title="Store keys"
-                description="A store key lets someone open the Reach app as your store to see orders, mark them delivered and update stock. Revoke a key to end that person's access straight away."
-                noPadding
+                description="A key lets someone open the Reach app as your store: see orders, mark them delivered and update stock."
+                flush
+                footer={<p className="mr-auto text-[12px] text-muted-foreground">{status.activeKeyCount} of {status.maxKeys} active keys used.</p>}
             >
                 <form
-                    className="px-6 py-4 flex flex-col sm:flex-row gap-3 border-b border-border"
+                    className="flex flex-col gap-2 border-b border-border px-4 py-3.5 sm:flex-row"
                     onSubmit={(e) => {
                         e.preventDefault()
                         run(() => createStoreKey(storeId, label), () => setLabel(''))
                     }}
                 >
-                    <input
+                    <TextInput
                         value={label}
                         onChange={(e) => setLabel(e.target.value)}
                         maxLength={40}
                         placeholder="Who is this for? e.g. Counter phone"
                         aria-label="Key label"
-                        className="flex-1 h-10 rounded-lg border border-border bg-background px-3 text-[13px] outline-none focus:border-primary"
+                        className="h-8 flex-1"
                     />
-                    <button
+                    <Button
                         type="submit"
+                        variant="primary"
                         disabled={pending || !label.trim() || !!status.blocked || status.activeKeyCount >= status.maxKeys}
-                        className="h-10 px-5 rounded-full bg-primary text-primary-foreground text-[13px] font-semibold disabled:opacity-50"
                     >
                         Create key
-                    </button>
+                    </Button>
                 </form>
 
                 {active.length === 0 ? (
-                    <p className="px-6 py-6 text-[13px] text-muted-foreground">
-                        No keys yet. Create one, then in the Reach app choose <strong>Vendor</strong> and enter it.
+                    <p className="px-4 py-6 text-[13px] text-muted-foreground">
+                        No keys yet. Create one, then in the Reach app choose <strong>I&apos;m selling</strong> and enter it.
                     </p>
                 ) : (
                     <ul className="divide-y divide-border">
@@ -385,11 +382,7 @@ export default function ReachClient({
                                 key={k.id}
                                 k={k}
                                 busy={pending}
-                                onRevoke={(key) => {
-                                    if (window.confirm(`Revoke "${key.label}"? Anyone using it will be signed out of your store on Reach.`)) {
-                                        run(() => revokeStoreKey(storeId, key.id))
-                                    }
-                                }}
+                                onRevoke={setRevoking}
                             />
                         ))}
                     </ul>
@@ -397,7 +390,7 @@ export default function ReachClient({
 
                 {revoked.length > 0 && (
                     <details className="border-t border-border">
-                        <summary className="px-6 py-3 text-[12.5px] text-muted-foreground cursor-pointer">Revoked keys ({revoked.length})</summary>
+                        <summary className="cursor-pointer px-4 py-3 text-[12px] text-muted-foreground hover:text-foreground">Revoked keys ({revoked.length})</summary>
                         <ul className="divide-y divide-border">
                             {revoked.map((k) => (
                                 <KeyRow key={k.id} k={k} busy onRevoke={() => {}} />
@@ -405,10 +398,26 @@ export default function ReachClient({
                         </ul>
                     </details>
                 )}
-                <p className="px-6 py-3 border-t border-border text-[11.5px] text-muted-foreground">
-                    {status.activeKeyCount} of {status.maxKeys} active keys used.
-                </p>
-            </SettingsSection>
+            </Panel>
+
+            <ConfirmDialog
+                open={!!revoking}
+                title={`Revoke "${revoking?.label ?? ''}"?`}
+                description="Anyone using this key is signed out of your store on Reach straight away. This can't be undone; create a new key to give access again."
+                confirmLabel="Revoke key"
+                busy={pending}
+                onCancel={() => setRevoking(null)}
+                onConfirm={() => {
+                    const key = revoking
+                    if (!key) return
+                    // Close either way, so a failure's message on the page is not hidden behind the dialog.
+                    run(async () => {
+                        const res = await revokeStoreKey(storeId, key.id)
+                        setRevoking(null)
+                        return res
+                    })
+                }}
+            />
         </div>
     )
 }

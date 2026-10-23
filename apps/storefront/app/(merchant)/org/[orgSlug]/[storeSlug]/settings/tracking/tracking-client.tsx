@@ -3,7 +3,17 @@
 // app/(merchant)/org/[orgSlug]/[storeSlug]/settings/tracking/tracking-client.tsx
 
 import { useState } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { useRouter } from 'next/navigation'
+import { Badge, fulfillmentTone } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Select, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { Spinner } from '@mcloud/ui/kit/skeleton'
+import { FULFILLMENT_STATUSES, statusLabel } from '@/components/store/order-logic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -12,6 +22,7 @@ type TrackedOrder = {
     order_number: string | number
     customer_name: string
     status: string
+    fulfillment_status: string | null
     tracking_number: string | null
     created_at: string
     delivery_option: { id: string; courier_name: string; tracking_url_template: string | null } | null
@@ -23,22 +34,9 @@ type TrackingData = {
     orders: TrackedOrder[]
 }
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
+type Patch = { tracking_number: string | null; fulfillment_status: string }
 
-function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
-    return (
-        <span
-            className={cn('material-symbols-outlined select-none leading-none', className)}
-            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
-        >
-            {icon}
-        </span>
-    )
-}
-
-function Sk({ className }: { className?: string }) {
-    return <span className={cn('block animate-pulse bg-muted', className)} />
-}
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function timeAgo(iso: string) {
     const diff = Date.now() - new Date(iso).getTime()
@@ -62,78 +60,73 @@ function trackingUrl(template: string | null, trackingNumber: string | null) {
 
 function OrderRow({ order, onSave }: {
     order: TrackedOrder
-    onSave: (patch: { tracking_number?: string | null; status?: string }) => Promise<void>
+    onSave: (patch: Patch) => Promise<string | null>
 }) {
+    const savedFulfillment = order.fulfillment_status ?? 'unfulfilled'
     const [trackingNumber, setTrackingNumber] = useState(order.tracking_number ?? '')
-    const [status, setStatus] = useState(order.status)
+    const [fulfillment, setFulfillment] = useState(savedFulfillment)
     const [saving, setSaving] = useState(false)
-    const dirty = trackingNumber !== (order.tracking_number ?? '') || status !== order.status
+    const [error, setError] = useState<string | null>(null)
+    const dirty = trackingNumber.trim() !== (order.tracking_number ?? '') || fulfillment !== savedFulfillment
 
     const url = trackingUrl(order.delivery_option?.tracking_url_template ?? null, order.tracking_number)
 
     const handleSave = async () => {
         setSaving(true)
-        try {
-            await onSave({ tracking_number: trackingNumber || null, status })
-        } finally {
-            setSaving(false)
-        }
+        setError(null)
+        const problem = await onSave({ tracking_number: trackingNumber.trim() || null, fulfillment_status: fulfillment })
+        setSaving(false)
+        if (problem) setError(problem)
     }
 
     return (
-        <div className="flex flex-col gap-2.5 px-5 py-4 border-b border-border last:border-0">
-            <div className="flex items-center justify-between gap-3">
+        <div className="space-y-2.5 px-4 py-3.5">
+            <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="text-[13px] font-medium text-foreground truncate">
-                        Order #{order.order_number} · {order.customer_name}
+                    <p className="flex items-center gap-2 truncate text-[13px] font-medium text-foreground">
+                        <span className="truncate">#{order.order_number} · {order.customer_name}</span>
+                        <Badge tone={fulfillmentTone(savedFulfillment)}>
+                            {statusLabel(savedFulfillment)}
+                        </Badge>
                     </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="mt-0.5 text-[12px] text-muted-foreground">
                         {order.delivery_option?.courier_name ?? 'No courier set'}
                         {order.delivery_zone ? ` · ${order.delivery_zone.location_name}` : ''}
                         {' · '}{timeAgo(order.created_at)}
                     </p>
                 </div>
                 {url && (
-                    <a
-                        href={url}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="flex items-center gap-1 text-[12px] text-primary hover:underline underline-offset-2 shrink-0"
-                    >
+                    <a href={url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[12px] text-primary underline-offset-2 hover:underline">
                         Track
-                        <MSO icon="open_in_new" className="text-[13px]" />
+                        <Icon name="open_in_new" size={13} />
                     </a>
                 )}
             </div>
-            <div className="flex items-center gap-2">
-                <input
+            <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                <TextInput
+                    aria-label={`Tracking number for order ${order.order_number}`}
                     value={trackingNumber}
                     onChange={(e) => setTrackingNumber(e.target.value)}
-                    placeholder="Tracking / waybill number"
-                    className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="Tracking or waybill number"
+                    className="h-8 min-w-0 flex-1 basis-full sm:basis-auto"
+                    spellCheck={false}
                 />
-                <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value)}
-                    className="h-9 px-2 rounded-lg border border-border bg-background text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                <Select
+                    aria-label={`Delivery status for order ${order.order_number}`}
+                    value={fulfillment}
+                    onChange={(e) => setFulfillment(e.target.value)}
+                    className="h-8 w-auto"
                 >
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="processing">Processing</option>
-                    <option value="shipped">Shipped</option>
-                    <option value="delivered">Delivered</option>
-                    <option value="cancelled">Cancelled</option>
-                </select>
+                    {FULFILLMENT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                </Select>
                 {dirty && (
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="h-9 px-3 rounded-full bg-accent text-primary text-[12px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50 shrink-0"
-                    >
+                    <Button size="sm" variant="primary" onClick={handleSave} disabled={saving}>
+                        {saving && <Spinner size={12} />}
                         {saving ? 'Saving…' : 'Save'}
-                    </button>
+                    </Button>
                 )}
             </div>
+            {error && <p role="alert" className="text-[12px] text-red-700 dark:text-red-300">{error}</p>}
         </div>
     )
 }
@@ -142,59 +135,60 @@ function OrderRow({ order, onSave }: {
 
 export default function TrackingClient({
     slug,
-    orgSlug,
     initialData,
 }: {
     slug: string
-    orgSlug: string
     initialData: TrackingData | null
 }) {
+    const router = useRouter()
     const [orders, setOrders] = useState<TrackedOrder[]>(initialData?.orders ?? [])
 
-    if (!initialData) {
-        return (
-            <div className="max-w-2xl space-y-3">
-                {Array.from({ length: 3 }).map((_, i) => (
-                    <Sk key={i} className="h-24 rounded-2xl" />
-                ))}
-            </div>
-        )
-    }
-
-    const handleSave = async (orderId: string, patch: { tracking_number?: string | null; status?: string }) => {
-        const res = await fetch(`/api/store/${slug}/tracking/${orderId}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(patch),
-        })
-        if (!res.ok) return
-        const updated = await res.json()
-        setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o)))
+    const handleSave = async (orderId: string, patch: Patch): Promise<string | null> => {
+        try {
+            const res = await fetch(`/api/store/${slug}/tracking/${orderId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(patch),
+            })
+            if (res.status === 403) return 'Only store owners and admins can update deliveries.'
+            if (res.status === 404) return 'This order no longer exists. Reload the page.'
+            if (res.status === 400) {
+                const body = await res.json().catch(() => null)
+                return typeof body?.error === 'string' ? `${body.error}.` : 'Could not save. Try again.'
+            }
+            if (!res.ok) return 'Could not save. Try again.'
+            const updated = await res.json()
+            setOrders((prev) => prev.map((o) => (o.id === orderId ? { ...o, ...updated } : o)))
+            return null
+        } catch {
+            return 'Could not save. Check your connection and try again.'
+        }
     }
 
     return (
-        <div className="max-w-2xl space-y-4">
-            <div>
-                <p className="text-[15px] font-semibold text-foreground">Track orders</p>
-                <p className="text-[12px] text-muted-foreground mt-0.5">
-                    Orders with a courier or delivery zone attached. Add a tracking number once the courier picks up.
-                </p>
-            </div>
+        <div className="space-y-6">
+            <PageHeader
+                title="Track orders"
+                description="Orders with a courier or delivery zone. Add the waybill number once the courier picks up."
+            />
 
-            <div className="rounded-2xl border border-border bg-background overflow-hidden">
-                {orders.length === 0 ? (
-                    <div className="flex flex-col items-center gap-2 px-5 py-12 text-center">
-                        <MSO icon="local_shipping" className="text-[24px] text-muted-foreground opacity-40" />
-                        <p className="text-[12px] text-muted-foreground">
-                            No orders need tracking yet. They'll show up here once a delivery zone or courier is attached.
-                        </p>
-                    </div>
+            <Panel flush>
+                {!initialData ? (
+                    <LoadError title="Couldn't load your orders" onRetry={() => router.refresh()} />
+                ) : orders.length === 0 ? (
+                    <EmptyState
+                        icon="local_shipping"
+                        title="Nothing to track yet"
+                        description="Orders show up here once a courier or delivery zone is attached."
+                    />
                 ) : (
-                    orders.map((o) => (
-                        <OrderRow key={o.id} order={o} onSave={(patch) => handleSave(o.id, patch)} />
-                    ))
+                    <div className="divide-y divide-border">
+                        {orders.map((o) => (
+                            <OrderRow key={`${o.id}-${o.tracking_number}-${o.fulfillment_status}`} order={o} onSave={(patch) => handleSave(o.id, patch)} />
+                        ))}
+                    </div>
                 )}
-            </div>
+            </Panel>
         </div>
     )
 }

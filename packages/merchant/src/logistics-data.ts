@@ -143,6 +143,7 @@ export type TrackedOrder = {
     order_number: string | number
     customer_name: string
     status: string
+    fulfillment_status: string | null
     tracking_number: string | null
     created_at: string
     delivery_option: { id: string; courier_name: string; tracking_url_template: string | null } | null
@@ -169,7 +170,7 @@ export async function getTrackingOrders(
     const { data: orders, error } = await supabase
         .from('orders')
         .select(`
-            id, order_number, customer_email, customer_phone, status, tracking_number, created_at,
+            id, order_number, customer_email, customer_phone, status, fulfillment_status, tracking_number, created_at,
             delivery_option:delivery_options ( id, courier_name, tracking_url_template ),
             delivery_zone:delivery_zones ( id, location_name )
         `)
@@ -184,6 +185,7 @@ export async function getTrackingOrders(
         order_number: o.order_number,
         customer_name: o.customer_email ?? o.customer_phone ?? `Order ${o.order_number}`,
         status: o.status,
+        fulfillment_status: o.fulfillment_status ?? null,
         tracking_number: o.tracking_number,
         created_at: o.created_at,
         delivery_option: Array.isArray(o.delivery_option) ? o.delivery_option[0] ?? null : o.delivery_option,
@@ -193,10 +195,16 @@ export async function getTrackingOrders(
     return { error: null, data: { store_id: resolved.storeId, orders: mapped } }
 }
 
+export const FULFILLMENT_STATUSES = ['unfulfilled', 'partially_fulfilled', 'fulfilled'] as const
+
+/**
+ * The delivery side of an order: its waybill number and how far it has been fulfilled. Payment
+ * status is not changed here; that belongs to the Orders screen.
+ */
 export async function updateOrderTracking(
     storeId: string,
     orderId: string,
-    fields: { tracking_number?: string | null; delivery_option_id?: string | null; delivery_zone_id?: string | null; status?: string }
+    fields: { tracking_number?: string | null; fulfillment_status?: (typeof FULFILLMENT_STATUSES)[number] }
 ) {
     const supabase = await createClient()
     const { data, error } = await supabase
@@ -204,7 +212,7 @@ export async function updateOrderTracking(
         .update(fields)
         .eq('id', orderId)
         .eq('store_id', storeId)
-        .select()
+        .select('id, tracking_number, fulfillment_status')
         .single()
     return { data, error }
 }

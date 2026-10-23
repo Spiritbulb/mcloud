@@ -62,7 +62,13 @@ function NavLink({ item, active, rail, onNavigate }: { item: ShellNavItem; activ
                     active ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                 )}
             >
-                <Icon name={item.icon} size={rail ? 20 : 18} className={active ? 'text-foreground' : undefined} />
+                {item.image ? (
+                    // A partner's mark, at the glyph's size. Plain <img>: the kit does not depend on next/image.
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.image} alt="" width={rail ? 20 : 18} height={rail ? 20 : 18} className="shrink-0 rounded-[4px]" />
+                ) : (
+                    <Icon name={item.icon} size={rail ? 20 : 18} className={active ? 'text-foreground' : undefined} />
+                )}
                 {!rail && (
                     <>
                         <span className="flex-1 truncate text-left text-[13px]" aria-current={active ? 'page' : undefined}>{item.label}</span>

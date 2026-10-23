@@ -3,7 +3,17 @@
 // app/(merchant)/org/[orgSlug]/[storeSlug]/settings/logistics/logistics-settings-client.tsx
 
 import { useState } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { useRouter } from 'next/navigation'
+import { Button } from '@mcloud/ui/kit/button'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Field, Switch, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SaveBar, SaveStatus } from '@mcloud/ui/kit/save-bar'
+import { isDirty } from '@mcloud/ui/kit/ui-logic'
 import { zoneProblem } from '@/lib/delivery-zones-logic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -29,49 +39,7 @@ type LogisticsData = {
     zones: DeliveryZone[]
 }
 
-// ─── Primitives (matches settings-home-client conventions) ─────────────────
-
-function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
-    return (
-        <span
-            className={cn('material-symbols-outlined select-none leading-none', className)}
-            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
-        >
-            {icon}
-        </span>
-    )
-}
-
-function Sk({ className }: { className?: string }) {
-    return <span className={cn('block animate-pulse bg-muted', className)} />
-}
-
-function SectionCard({ title, icon, children, onAdd, addLabel }: {
-    title: string; icon: string; children: React.ReactNode; onAdd?: () => void; addLabel?: string
-}) {
-    return (
-        <div className="overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-3.5">
-                <div className="flex items-center gap-2">
-                    <MSO icon={icon} fill={1} className="text-[18px] text-primary" />
-                    <p className="text-[13px] font-semibold text-foreground">{title}</p>
-                </div>
-                {onAdd && (
-                    <button
-                        onClick={onAdd}
-                        className="inline-flex items-center gap-1 h-8 px-3 rounded-full bg-accent text-primary text-[12px] font-semibold hover:opacity-90 transition-opacity"
-                    >
-                        <MSO icon="add" className="text-[15px]" />
-                        {addLabel ?? 'Add'}
-                    </button>
-                )}
-            </div>
-            {children}
-        </div>
-    )
-}
-
-// ─── Delivery option row ─────────────────────────────────────────────────────
+// ─── Rows ─────────────────────────────────────────────────────────────────────
 
 function OptionRow({ option, onChange, onDelete }: {
     option: DeliveryOption
@@ -79,97 +47,77 @@ function OptionRow({ option, onChange, onDelete }: {
     onDelete: () => void
 }) {
     return (
-        <div className="flex flex-col gap-2.5 px-5 py-4">
-            <div className="flex items-center gap-3">
-                <input
-                    value={option.courier_name}
-                    onChange={(e) => onChange({ courier_name: e.target.value })}
-                    placeholder="Courier name (e.g. Fargo Courier)"
-                    className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-                />
-                <button
-                    onClick={() => onChange({ is_active: !option.is_active })}
-                    className={cn(
-                        'h-9 px-3 rounded-full text-[12px] font-semibold transition-colors shrink-0',
-                        option.is_active ? 'bg-accent text-primary' : 'bg-muted text-muted-foreground'
-                    )}
-                >
-                    {option.is_active ? 'Active' : 'Inactive'}
-                </button>
-                <button
-                    onClick={onDelete}
-                    className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors shrink-0"
-                >
-                    <MSO icon="delete" className="text-[16px] text-muted-foreground" />
-                </button>
+        <div className="space-y-3 px-4 py-4">
+            <div className="flex items-end gap-3">
+                <Field label="Courier" className="flex-1">
+                    <TextInput
+                        value={option.courier_name}
+                        onChange={(e) => onChange({ courier_name: e.target.value })}
+                        placeholder="e.g. Fargo Courier"
+                    />
+                </Field>
+                <div className="flex h-8 items-center gap-2 text-[12px] text-muted-foreground">
+                    <Switch checked={option.is_active} onChange={(is_active) => onChange({ is_active })} />
+                    <span className="w-12">{option.is_active ? 'Active' : 'Off'}</span>
+                </div>
+                <Button variant="ghost" aria-label="Remove courier" onClick={onDelete}>
+                    <Icon name="delete" size={16} />
+                </Button>
             </div>
-            <input
-                value={option.tracking_url_template ?? ''}
-                onChange={(e) => onChange({ tracking_url_template: e.target.value })}
-                placeholder="Tracking URL template, e.g. https://fargocourier.co.ke/track?wb={tracking_number}"
-                className="h-9 px-3 rounded-lg border border-border bg-background text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            />
-            <input
-                value={option.notes ?? ''}
-                onChange={(e) => onChange({ notes: e.target.value })}
-                placeholder="Notes (optional) — e.g. contact client's rider directly for this courier"
-                className="h-9 px-3 rounded-lg border border-border bg-background text-[12px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+            <Field label="Tracking link" hint="Use {tracking_number} where the waybill number goes.">
+                <TextInput
+                    value={option.tracking_url_template ?? ''}
+                    onChange={(e) => onChange({ tracking_url_template: e.target.value })}
+                    placeholder="https://fargocourier.co.ke/track?wb={tracking_number}"
+                    spellCheck={false}
+                />
+            </Field>
+            <Field label="Notes">
+                <TextInput
+                    value={option.notes ?? ''}
+                    onChange={(e) => onChange({ notes: e.target.value })}
+                    placeholder="Optional, e.g. call the rider directly for this courier"
+                />
+            </Field>
         </div>
     )
 }
 
-// ─── Delivery zone row ────────────────────────────────────────────────────────
-
-function ZoneRow({ zone, onChange, onDelete }: {
+function ZoneRow({ zone, currency, onChange, onDelete }: {
     zone: DeliveryZone
+    currency: string
     onChange: (patch: Partial<DeliveryZone>) => void
     onDelete: () => void
 }) {
     return (
-        <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-0">
-            <input
+        <div className="flex flex-wrap items-center gap-3 px-4 py-3 sm:flex-nowrap">
+            <TextInput
+                aria-label="Location"
                 value={zone.location_name}
                 onChange={(e) => onChange({ location_name: e.target.value })}
-                placeholder="Location (e.g. Nairobi CBD)"
-                className="flex-1 h-9 px-3 rounded-lg border border-border bg-background text-[13px] text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                placeholder="Location, e.g. Nairobi CBD"
+                className="h-8 min-w-0 flex-1 basis-full sm:basis-auto"
             />
-            <div className="flex items-center gap-1.5 shrink-0">
-                <span className="text-[12px] text-muted-foreground">KES</span>
-                <input
+            <div className="flex items-center gap-1.5">
+                <span className="text-[12px] text-muted-foreground">{currency}</span>
+                <TextInput
+                    aria-label="Rate"
                     type="number"
+                    min={0}
+                    inputMode="decimal"
                     value={zone.rate ?? ''}
                     onChange={(e) => onChange({ rate: e.target.value === '' ? null : Number(e.target.value) })}
-                    placeholder="Rate (0 = free)"
-                    className="w-28 h-9 px-2 rounded-lg border border-border bg-background text-[13px] text-foreground tabular-nums focus:outline-none focus:ring-1 focus:ring-primary"
+                    placeholder="0 = free"
+                    className="h-8 w-28 tabular-nums"
                 />
             </div>
-            <button
-                onClick={() => onChange({ available: !zone.available })}
-                className={cn(
-                    'h-9 px-3 rounded-full text-[12px] font-semibold transition-colors shrink-0',
-                    zone.available ? 'bg-accent text-primary' : 'bg-muted text-muted-foreground'
-                )}
-            >
-                {zone.available ? 'Available' : 'Unavailable'}
-            </button>
-            <button
-                onClick={onDelete}
-                className="h-9 w-9 flex items-center justify-center rounded-full hover:bg-muted transition-colors shrink-0"
-            >
-                <MSO icon="delete" className="text-[16px] text-muted-foreground" />
-            </button>
-        </div>
-    )
-}
-
-// ─── Empty state ──────────────────────────────────────────────────────────────
-
-function Empty({ icon, text }: { icon: string; text: string }) {
-    return (
-        <div className="flex flex-col items-center gap-2 px-5 py-10 text-center">
-            <MSO icon={icon} className="text-[24px] text-muted-foreground opacity-40" />
-            <p className="text-[12px] text-muted-foreground">{text}</p>
+            <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+                <Switch checked={zone.available} onChange={(available) => onChange({ available })} />
+                <span className="w-16">{zone.available ? 'Delivering' : 'Paused'}</span>
+            </div>
+            <Button variant="ghost" aria-label="Remove zone" onClick={onDelete} className="ml-auto sm:ml-0">
+                <Icon name="delete" size={16} />
+            </Button>
         </div>
     )
 }
@@ -181,24 +129,35 @@ const newId = () => `_new_${tempId++}`
 
 export default function LogisticsSettingsClient({
     slug,
-    orgSlug,
+    currency,
     initialData,
 }: {
     slug: string
-    orgSlug: string
+    currency: string
     initialData: LogisticsData | null
 }) {
-    const [options, setOptions] = useState<DeliveryOption[]>(initialData?.options ?? [])
-    const [zones, setZones] = useState<DeliveryZone[]>(initialData?.zones ?? [])
+    const router = useRouter()
+    const [saved, setSaved] = useState(() => ({ options: initialData?.options ?? [], zones: initialData?.zones ?? [] }))
+    const [options, setOptions] = useState<DeliveryOption[]>(saved.options)
+    const [zones, setZones] = useState<DeliveryZone[]>(saved.zones)
     const [saving, setSaving] = useState(false)
-    const [savedAt, setSavedAt] = useState<number | null>(null)
+    const [justSaved, setJustSaved] = useState(false)
     const [error, setError] = useState<string | null>(null)
+
+    const header = (
+        <PageHeader
+            title="Delivery options"
+            description="Couriers you use and the places you deliver to. Every zone needs a rate: enter 0 for free delivery."
+        />
+    )
 
     if (!initialData) {
         return (
-            <div className="max-w-2xl space-y-4">
-                <Sk className="h-40 rounded-2xl" />
-                <Sk className="h-40 rounded-2xl" />
+            <div className="space-y-6">
+                {header}
+                <Panel>
+                    <LoadError title="Couldn't load your delivery settings" onRetry={() => router.refresh()} />
+                </Panel>
             </div>
         )
     }
@@ -240,70 +199,72 @@ export default function LogisticsSettingsClient({
                 throw new Error(typeof body?.error === 'string' ? body.error : 'Could not save. Please try again.')
             }
             const updated = await res.json()
-            setOptions(updated.options ?? options)
-            setZones(updated.zones ?? zones)
-            setSavedAt(Date.now())
+            const next = { options: updated.options ?? options, zones: updated.zones ?? zones }
+            setSaved(next)
+            setOptions(next.options)
+            setZones(next.zones)
+            setJustSaved(true)
+            setTimeout(() => setJustSaved(false), 2500)
         } catch (e) {
             setError(e instanceof Error ? e.message : 'Could not save. Please try again.')
         } finally {
             setSaving(false)
         }
     }
+
+    const addButton = (label: string, onClick: () => void) => (
+        <Button size="sm" onClick={onClick}>
+            <Icon name="add" size={14} />
+            {label}
+        </Button>
+    )
+
     return (
-        <div className="max-w-2xl space-y-6 mx-auto">
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-[15px] font-semibold text-foreground">Logistics</p>
-                    <p className="text-[12px] text-muted-foreground mt-0.5">
-                        Set up couriers and delivery zones. Every zone needs a rate: enter 0 for free delivery. Where you don't deliver, customers reach you directly.
-                    </p>
-                </div>
-                <button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
-                >
-                    {saving ? 'Saving…' : savedAt ? 'Saved' : 'Save changes'}
-                </button>
-            </div>
+        <div className="space-y-6">
+            {header}
 
-            {error && (
-                <p role="alert" className="text-[12px] text-destructive -mt-2">{error}</p>
-            )}
+            {error && <Notice tone="error">{error}</Notice>}
 
-            <SectionCard title="Delivery options" icon="local_shipping" onAdd={addOption} addLabel="Add courier">
+            <Panel title="Couriers" description="Who carries your orders, and where customers can track them." action={addButton('Add courier', addOption)} flush>
                 {options.length === 0 ? (
-                    <Empty icon="local_shipping" text="No couriers yet. Add one to get started." />
+                    <EmptyState icon="local_shipping" title="No couriers yet" description="Add the couriers you send orders with." />
                 ) : (
-                    options.map((o) => (
-                        <OptionRow
-                            key={o.id}
-                            option={o}
-                            onChange={(patch) => patchOption(o.id, patch)}
-                            onDelete={() => removeOption(o.id)}
-                        />
-                    ))
+                    <div className="divide-y divide-border">
+                        {options.map((o) => (
+                            <OptionRow key={o.id} option={o} onChange={(patch) => patchOption(o.id, patch)} onDelete={() => removeOption(o.id)} />
+                        ))}
+                    </div>
                 )}
-            </SectionCard>
+            </Panel>
 
-            <SectionCard title="Delivery zones & rates" icon="map" onAdd={addZone} addLabel="Add zone">
+            <Panel
+                title="Delivery zones and rates"
+                description="Customers outside these zones see no delivery option at checkout and are pointed to your contact page."
+                action={addButton('Add zone', addZone)}
+                flush
+            >
                 {zones.length === 0 ? (
-                    <Empty icon="map" text="No zones yet. Add locations you deliver to and their rates." />
+                    <EmptyState icon="map" title="No zones yet" description="Add the places you deliver to and what each costs." />
                 ) : (
-                    zones.map((z) => (
-                        <ZoneRow
-                            key={z.id}
-                            zone={z}
-                            onChange={(patch) => patchZone(z.id, patch)}
-                            onDelete={() => removeZone(z.id)}
-                        />
-                    ))
+                    <div className="divide-y divide-border">
+                        {zones.map((z) => (
+                            <ZoneRow key={z.id} zone={z} currency={currency} onChange={(patch) => patchZone(z.id, patch)} onDelete={() => removeZone(z.id)} />
+                        ))}
+                    </div>
                 )}
-            </SectionCard>
+            </Panel>
 
-            <p className="text-[19px] text-muted-foreground">
-                Locations outside these zones won't show a delivery option at checkout, customers will be pointed to your contact page instead.
-            </p>
+            <SaveBar
+                dirty={isDirty(saved, { options, zones })}
+                saving={saving}
+                onSave={handleSave}
+                onDiscard={() => {
+                    setOptions(saved.options)
+                    setZones(saved.zones)
+                    setError(null)
+                }}
+            />
+            <SaveStatus saving={saving} saved={justSaved} />
         </div>
     )
 }
