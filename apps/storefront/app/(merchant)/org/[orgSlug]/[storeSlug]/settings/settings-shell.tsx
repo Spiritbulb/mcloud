@@ -1,25 +1,20 @@
 ﻿'use client'
 
-import { useState, useEffect } from 'react'
-import { usePathname, useRouter } from 'next/navigation'
-import { SidebarProvider } from '@mcloud/ui/sidebar'
-import { Store, Palette, Globe, Briefcase, Link2, CreditCard, Bell, Package, ShoppingBag, FileText, User, House, Users } from 'lucide-react'
-import { SettingsNav, MobileSettingsNav } from './settings-nav'
-import type { NavStore } from './settings-nav'
-import { SettingsHeader } from './settings-header'
-import { GettingStartedDrawer } from './notifications-drawer'
+import { usePathname } from 'next/navigation'
+import { AppShell, ContextSwitcher } from '@mcloud/ui/kit/app-shell'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { findNavItem } from '@mcloud/ui/kit/nav-logic'
 import { getVertical, sectionsFor } from '@mcloud/verticals'
-import type { NavSection, TabId } from '@mcloud/verticals'
-
-import { cn } from '@mcloud/ui/utils'
+import type { TabId } from '@mcloud/verticals'
+import { storefrontDisplayUrl, storefrontUrl } from '@mcloud/merchant/storefront-url'
 import { useOrgContext } from '@mcloud/merchant/org-context'
 import { webUrl } from '@/lib/host'
+import { SettingsHeaderActions } from './settings-header'
+import { BARE_TABS, UNLISTED_LABELS, settingsPath, settingsSections, tabFromPath } from './settings-nav-logic'
 
-// The nav model now lives in @mcloud/verticals (it is data about the vertical,
-// not about React). Re-exported here so existing consumers keep their import.
+// The nav model lives in @mcloud/verticals (it is data about the vertical, not about React).
+// Re-exported here so existing consumers keep their import.
 export type { TabId }
-
-// ─── Shell ────────────────────────────────────────────────────────────────────
 
 export default function SettingsShell({
     children,
@@ -37,150 +32,86 @@ export default function SettingsShell({
     const store = initialStore
     const error = initialError
     const { stores: pickerStores, orgSlug: ctxOrgSlug } = useOrgContext()
+    const pathname = usePathname()
 
-    // The nav is a function of the vertical: an NGO has no catalog or customer
-    // accounts, but does have Content and Donations. store.type comes through
-    // because getStoreSettingsData selects stores.*.
-    const vertical = getVertical(store?.type)
-    const SECTIONS: NavSection[] = sectionsFor(vertical)
-    const ALL_TABS = SECTIONS.flatMap((s) => s.tabs)
+    if (error || !store) {
+        return (
+            <div className="flex h-[100dvh] items-center justify-center bg-background px-6">
+                <EmptyState
+                    icon={error === 'unauthenticated' ? 'lock' : 'error'}
+                    title={
+                        error === 'unauthenticated' ? 'You need to be signed in.'
+                            : error === 'forbidden' ? "You don't have access to this store."
+                                : error === 'unknown' ? 'Something went wrong loading your store.'
+                                    : 'Store not found.'
+                    }
+                    description={
+                        error === 'unauthenticated'
+                            ? <a href={webUrl('/auth/login')} className="underline underline-offset-4">Sign in</a>
+                            : <a href={webUrl('/auth/logout')} className="underline underline-offset-4">Sign out and try again</a>
+                    }
+                />
+            </div>
+        )
+    }
 
-    const user = store ? {
+    // The nav is a function of the vertical: an NGO has no catalog or customer accounts, but does
+    // have Donations. store.type comes through because getStoreSettingsData selects stores.*.
+    // store.is_pro is recomputed from the subscription rows there, not the legacy column.
+    const isPaid = !!store.is_pro
+    const sections = settingsSections(sectionsFor(getVertical(store.type)), orgSlug, slug, isPaid)
+    const tab = tabFromPath(pathname)
+    const active = findNavItem(sections, tab)
+    const activeId = active?.id
+
+    const user = {
         name: store.user?.name ?? 'Account',
         email: store.user?.email ?? '',
         avatarUrl: store.user?.avatar_url ?? undefined,
-    } : null
-    const pathname = usePathname()
-    const router = useRouter()
-
-    const activeId = (() => {
-        const isRoot = pathname === `/org/${orgSlug}/${slug}/settings`
-        if (isRoot) return 'home' as TabId
-
-        const matched = ALL_TABS.find((t) => {
-            if (t.id === 'home') return false
-            return pathname.includes(`/settings/${t.id}`)
-        })
-        return (matched?.id ?? 'home') as TabId
-    })()
-
-    const activeLabel = ALL_TABS.find((t) => t.id === activeId)?.label ?? 'Overview'
-
-    const [activeSubTab, setActiveSubTab] = useState<string>('')
-    const [mobileNavOpen, setMobileNavOpen] = useState(false)
-    useEffect(() => {
-        const handler = () => setMobileNavOpen(true)
-        window.addEventListener('mobile-nav-open', handler)
-        return () => window.removeEventListener('mobile-nav-open', handler)
-    }, [])
-
-    if (error || !store) return (
-        <div className="h-[100dvh] flex flex-col items-center justify-center gap-2 text-center px-6">
-            <p className="text-[15px] font-medium text-foreground">
-                {error === 'unauthenticated' && 'You need to be signed in.'}
-                {error === 'forbidden' && "You don't have access to this store."}
-                {error === 'unknown' && 'Something went wrong loading your store.'}
-                {!error && 'Store not found.'}
-            </p>
-            <p className="text-sm text-muted-foreground">
-                {error === 'unauthenticated'
-                    ? <a href={webUrl('/auth/login')} className="underline underline-offset-4">Sign in</a>
-                    : <a href={webUrl('/auth/logout')} className="underline underline-offset-4">Sign out and try again</a>
-                }
-            </p>
-        </div>
-    )
-
-    const navUser = {
-        name: user?.name ?? '…',
-        email: user?.email ?? '',
-        avatarUrl: user?.avatarUrl,
-        accountHref:
-            `/org/${orgSlug}/${slug}/settings/account`,
-        onSignOut: () => { window.location.href = webUrl('/auth/logout') },
     }
 
-    const navStore: NavStore = {
-        name: store.name,
-        slug: store.slug,
-        logo_url: store.logo_url,
-        custom_domain: store.custom_domain,
-        is_pro: store.is_pro,
-    }
-
-    const allStores: NavStore[] = pickerStores.map((s) => ({
-        name: s.name,
-        slug: s.slug,
-        logo_url: s.logo_url,
-        org_slug: ctxOrgSlug,
-    }))
-
-    const navigate = (id: TabId) => router.push(
-        `/org/${orgSlug}/${slug}/settings/${id}`     
+    const context = (
+        <ContextSwitcher
+            name={store.name}
+            detail={storefrontDisplayUrl(store.slug, store.custom_domain)}
+            logo={store.logo_url}
+            menuLabel="Switch store"
+            options={pickerStores.map((s) => ({
+                key: s.slug,
+                name: s.name,
+                logo: s.logo_url,
+                href: settingsPath(ctxOrgSlug ?? orgSlug, s.slug),
+            }))}
+            links={[
+                { label: 'View site', href: storefrontUrl(store.slug, store.custom_domain), icon: 'open_in_new', external: true },
+                { label: 'All stores', href: webUrl(`/org/${orgSlug}/stores`), icon: 'storefront' },
+            ]}
+        />
     )
 
     return (
-        <SidebarProvider
-            defaultOpen={false}
-            style={{
-                display: 'contents',
-                '--sidebar-width': '15rem'
-            } as React.CSSProperties}
+        <AppShell
+            sections={sections}
+            activeId={activeId}
+            brandHref={webUrl(`/org/${orgSlug}`)}
+            context={context}
+            user={user}
+            menuLinks={[
+                { label: 'Account settings', href: settingsPath(orgSlug, slug, 'account'), icon: 'manage_accounts' },
+                { label: 'Billing', href: webUrl(`/org/${orgSlug}/billing`), icon: 'credit_card' },
+                { label: 'Contact', href: 'https://mcloud.co.ke/contact', icon: 'call', external: true },
+                { label: 'Support', href: 'https://mcloud.co.ke/support', icon: 'help', external: true },
+            ]}
+            signOutHref={webUrl('/auth/logout')}
+            crumbs={[
+                ...(store.org ? [{ label: store.org.name as string, href: webUrl(`/org/${orgSlug}`) }] : []),
+                { label: store.name as string, href: settingsPath(orgSlug, slug) },
+                { label: active?.label ?? UNLISTED_LABELS[tab] ?? 'Settings' },
+            ]}
+            actions={<SettingsHeaderActions isPro={isPaid} orgSlug={orgSlug} />}
+            content={BARE_TABS.has(tab) ? 'bare' : 'page'}
         >
-            <div data-settings-shell className="h-[100dvh] overflow-hidden flex bg-background">
-
-                {/* Desktop sidebar */}
-                <SettingsNav
-                    activeTab={activeId}
-                    activeSubTab={activeSubTab}
-                    onSelectSubTab={setActiveSubTab}
-                    onSelect={navigate}
-                    SECTIONS={SECTIONS}
-                    user={navUser}
-                    store={navStore}
-                    allStores={allStores}
-                    orgSlug={orgSlug}
-                />
-
-                {/* Mobile drawer */}
-                <MobileSettingsNav
-                    activeTab={activeId}
-                    activeSubTab={activeSubTab}
-                    onSelectSubTab={setActiveSubTab}
-                    onSelect={navigate}
-                    SECTIONS={SECTIONS}
-                    user={navUser}
-                    store={navStore}
-                    allStores={allStores}
-                    open={mobileNavOpen}
-                    onOpen={() => setMobileNavOpen(true)}
-                    onClose={() => setMobileNavOpen(false)}
-                    orgSlug={orgSlug}
-                />
-
-                {/* Main content */}
-                <div className="flex flex-col flex-1 min-w-0 min-h-0">
-                    <div className=''>
-                        <SettingsHeader
-                            store={store}
-                            activeLabel={activeLabel}
-                            onOpenMobileNav={() => setMobileNavOpen(true)}
-                            mobileOpen={mobileNavOpen}
-                        />
-                    </div>
-                    <main className={cn(
-                        'flex-1 min-h-0',
-                        // The Editor (rail + preview iframe) and the Design tab (id
-                        // 'appearance'; /settings/design is only a redirect alias)
-                        // manage their own scrolling and bleed to the edge.
-                        activeId === 'appearance' || activeId === 'editor'
-                            ? 'overflow-hidden'
-                            : 'overflow-y-auto px-6 md:px-10 py-8'
-                    )}>
-                        {children}
-                    </main>
-                </div>
-            </div>
-        </SidebarProvider>
+            {children}
+        </AppShell>
     )
 }

@@ -178,7 +178,11 @@ Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery,
   fields, button, notice, icon). It lives in a package so the org hub and store settings can adopt it too (SPI-57).
   New admin screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
   `SkeletonRows` in a `Table busy`, `Stat loading`, `SkeletonLines`, `LoadError onRetry`. Forms are `Panel` + `Field`/`FormGrid`
-  + `SaveBar` (shown when `isDirty(saved, draft)`); destructive actions go through `ConfirmDialog`. Gallery: `/dev-ui/kit` (dev only). Always size glyphs with `Icon`: Google's icon font overrides Tailwind
+  + `SaveBar` (shown when `isDirty(saved, draft)`); destructive actions go through `ConfirmDialog`. Gallery: `/dev-ui/kit` (dev only).
+- **One app frame:** `AppShell` (`@mcloud/ui/kit/app-shell`) is the sidebar, phone drawer and breadcrumb header for the admin,
+  the org hub (`org-shell.tsx`) and store settings (`settings-shell.tsx`). Each passes a nav model (`ShellNavSection[]`);
+  the active item is the longest whole-segment match of the URL (`activeNavId` in `nav-logic.ts`). Store settings maps the
+  `@mcloud/verticals` model in `settings-nav-logic.ts`. Always size glyphs with `Icon`: Google's icon font overrides Tailwind
   size classes. Below `md` a `Table` becomes a stack of cards: give each `Td` a `label`, and leave it off the cell that
   identifies the row.
 - **Lists are paginated on the server** (orders, users, webhook logs). The URL is the state (`?q=&status=&page=`), 50 per page.

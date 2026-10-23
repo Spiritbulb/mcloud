@@ -1,7 +1,5 @@
 'use client'
 
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -9,164 +7,58 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from '@mcloud/ui/dropdown-menu'
+import { Icon } from '@mcloud/ui/kit/icon'
 import { UpgradeChip } from '@/components/pro'
-import { cn } from '@mcloud/ui/utils'
 import { webUrl } from '@/lib/host'
 
-const BETA_URL = 'https://mcloud.co.ke/beta'
+const ICON_BUTTON =
+    'flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground'
 
-// ─── MSO ─────────────────────────────────────────────────────────────────────
+const MORE_LINKS = [
+    { href: 'https://mcloud.co.ke/docs', icon: 'menu_book', label: 'Documentation' },
+    { href: 'https://mcloud.co.ke/changelog', icon: 'new_releases', label: 'Changelog' },
+    { href: 'https://status.mcloud.co.ke', icon: 'monitor_heart', label: 'System status' },
+]
 
-function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
+/** Right side of the store settings header: upgrade (free plans only), help, and a "more" menu. */
+export function SettingsHeaderActions({ isPro, orgSlug }: { isPro: boolean; orgSlug: string }) {
     return (
-        <span
-            className={cn('material-symbols-outlined select-none leading-none', className)}
-            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
-        >
-            {icon}
-        </span>
-    )
-}
+        <>
+            {!isPro && <UpgradeChip />}
 
+            <a href="https://mcloud.co.ke/support" target="_blank" rel="noopener noreferrer" title="Support" aria-label="Support" className={`${ICON_BUTTON} max-md:hidden`}>
+                <Icon name="help" size={18} />
+            </a>
 
-// ─── SettingsHeader ───────────────────────────────────────────────────────────
-
-export function SettingsHeader({
-    store,
-    activeLabel,
-    mobileOpen,
-    onOpenMobileNav,
-}: {
-    store: any
-    activeLabel: string
-    mobileOpen: boolean
-    onOpenMobileNav?: () => void
-}) {
-    const isPro = store?.is_pro ?? false
-
-    return (
-        <header className="shrink-0 h-[57px] border-b border-border z-40 flex items-center px-4 md:px-5 gap-3">
-
-            {/* Mobile menu button */}
-            <button
-                onClick={onOpenMobileNav}
-                className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors shrink-0"
-                aria-label="Open navigation"
-            >
-                <MSO icon={mobileOpen ? 'close' : 'menu'} className="text-[20px]" />
-            </button>
-
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 min-w-0 flex-1">
-                {store?.org && (
-                    <>
-                    <Link href={webUrl('/org')}>
-                        <span
-                            className="flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-full bg-muted text-muted-foreground max-w-[140px] truncate shrink-0"
-                        >
-                            <MSO icon="arrow_left" className="text-[12px]" />
-                            Go Back
-                        </span>
-                    </Link>
-                    </>
-                )}
-
-            </div>
-
-            {/* Right actions */}
-            <div className="flex items-center gap-1 shrink-0">
-
-                {/* Upgrade chip — free users only */}
-                {!isPro && <UpgradeChip />}
-
-                {/* Pro badge next to page title if this page is pro-gated */}
-                {isPro && (
-                    <div className="flex items-center gap-1.5 p-1 rounded-full bg-accent">
-                        <MSO icon="workspace_premium" className="text-[13px] text-primary" fill={1} />
-                    </div>
-                )}
-
-                {/* Support — desktop only */}
-                <Link
-                    href="https://mcloud.co.ke/support"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    title="Support"
-                    className="hidden md:flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors"
-                >
-                    <MSO icon="help_outline" className="text-[18px]" />
-                </Link>
-
-                {/* More dropdown — desktop only */}
-                <div className="hidden md:block">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button className="flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors">
-                                <MSO icon="more_horiz" className="text-[18px]" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent
-                            align="end"
-                            className="w-48 bg-background border border-border shadow-lg rounded-xl p-1"
-                        >
-                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
-                                <Link
-                                    href="https://mcloud.co.ke/docs"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2.5"
-                                >
-                                    <MSO icon="menu_book" className="text-[16px] text-muted-foreground" />
-                                    Documentation
-                                </Link>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button type="button" aria-label="More" className={ICON_BUTTON}>
+                        <Icon name="more_horiz" size={18} />
+                    </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-52 rounded-lg border border-border bg-popover p-1 shadow-lg">
+                    {MORE_LINKS.map((l) => (
+                        <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                            <a href={l.href} target="_blank" rel="noopener noreferrer">
+                                <Icon name={l.icon} size={16} className="text-muted-foreground" />
+                                {l.label}
+                            </a>
+                        </DropdownMenuItem>
+                    ))}
+                    {!isPro && (
+                        <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                                {/* Plans are bought from the org wallet in Billing; there is no app-store purchase. */}
+                                <a href={webUrl(`/org/${orgSlug}/billing`)}>
+                                    <Icon name="workspace_premium" size={16} className="text-primary" />
+                                    <span className="font-medium text-primary">Upgrade plan</span>
+                                </a>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
-                                <Link
-                                    href="https://mcloud.co.ke/changelog"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2.5"
-                                >
-                                    <MSO icon="new_releases" className="text-[16px] text-muted-foreground" />
-                                    Changelog
-                                </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
-                            <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
-                                <Link
-                                    href="https://status.mcloud.co.ke"
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="flex items-center gap-2.5"
-                                >
-                                    <span className="w-1.5 h-1.5 rounded-full bg-primary shrink-0" />
-                                    System Status
-                                </Link>
-                            </DropdownMenuItem>
-
-                            {/* Get Pro — only for free users. Subscriptions happen in the
-                                mobile app; point merchants to the beta to get it. */}
-                            {!isPro && (
-                                <>
-                                    <DropdownMenuSeparator className="my-1 bg-[var(--md-sys-color-outline-variant)]" />
-                                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px]">
-                                        <Link
-                                            href={BETA_URL}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="flex items-center gap-2.5"
-                                        >
-                                            <MSO icon="workspace_premium" className="text-[16px] text-primary" fill={1} />
-                                            <span className="text-primary font-medium">Get Pro (mobile app)</span>
-                                        </Link>
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-
-            </div>
-        </header>
+                        </>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </>
     )
 }

@@ -2,6 +2,7 @@
 
 import { useSyncExternalStore } from 'react'
 import { storefrontSiteUrl } from '@mcloud/merchant/storefront-url'
+import { Icon } from '@mcloud/ui/kit/icon'
 
 const DISMISS_KEY = 'mc_storefront_move_dismissed'
 
@@ -42,9 +43,9 @@ export function StorefrontMoveBanner() {
     return (
         <div
             role="status"
-            className="shrink-0 flex items-center gap-3 px-4 md:px-5 py-2.5 text-[13px] bg-[var(--md-sys-color-secondary-container)] text-foreground border-b border-border/40"
+            className="shrink-0 flex items-center gap-3 px-4 md:px-6 py-2 text-[13px] bg-muted/50 text-foreground border-b border-border"
         >
-            <span className="material-symbols-outlined text-[18px] shrink-0">storefront</span>
+            <Icon name="storefront" size={16} className="text-muted-foreground" />
             <p className="flex-1 min-w-0">
                 Storefronts are moving to their own home. Your sites, links and orders are not affected.{' '}
                 <a href={storefrontSiteUrl('/moving')} className="font-medium underline underline-offset-2">
@@ -54,9 +55,9 @@ export function StorefrontMoveBanner() {
             <button
                 onClick={dismiss}
                 aria-label="Dismiss"
-                className="flex items-center justify-center w-7 h-7 rounded-md shrink-0 hover:bg-foreground/10 transition-colors"
+                className="flex items-center justify-center w-7 h-7 rounded-md shrink-0 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
             >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <Icon name="close" size={16} />
             </button>
         </div>
     )

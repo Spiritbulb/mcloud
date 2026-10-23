@@ -11,6 +11,7 @@
     "./use-controlled-state": "./src/use-controlled-state.tsx",
     "./kit/ui-logic": "./src/kit/ui-logic.ts",
     "./kit/list-query": "./src/kit/list-query.ts",
+    "./kit/nav-logic": "./src/kit/nav-logic.ts",
     "./*": "./src/*.tsx"
   },
   "dependencies": {

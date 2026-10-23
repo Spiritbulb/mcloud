@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
-import { cn } from '@mcloud/ui/utils'
-import { OrgNav, MobileOrgNav, ORG_TABS } from './org-nav'
-import type { OrgTabId } from './org-nav'
+import { useTheme } from 'next-themes'
+import { AppShell, ContextSwitcher } from '@mcloud/ui/kit/app-shell'
+import { activeNavId, findNavItem, type ShellNavSection } from '@mcloud/ui/kit/nav-logic'
 import { WalletBalancePill } from '@/components/wallet-balance'
 import { StorefrontMoveBanner } from './storefront-move-banner'
 
@@ -22,6 +21,31 @@ type OrgShellUser = {
     avatarUrl?: string
 }
 
+/** The org hub's nav. Billing has its own entry, so its page is never shown as Overview. */
+export function orgSections(orgSlug: string): ShellNavSection[] {
+    const base = `/org/${orgSlug}`
+    return [
+        {
+            id: 'org',
+            items: [
+                { id: 'home', label: 'Overview', icon: 'home', href: base },
+                { id: 'stores', label: 'Stores', icon: 'storefront', href: `${base}/stores` },
+                { id: 'servers', label: 'Servers', icon: 'dns', href: `${base}/servers` },
+                { id: 'members', label: 'Members', icon: 'group', href: `${base}/members` },
+            ],
+        },
+        {
+            id: 'account',
+            label: 'Account',
+            items: [
+                { id: 'billing', label: 'Billing', icon: 'credit_card', href: `${base}/billing` },
+                { id: 'integrations', label: 'Integrations', icon: 'link', href: `${base}/integrations` },
+                { id: 'settings', label: 'Settings', icon: 'settings', href: `${base}/settings` },
+            ],
+        },
+    ]
+}
+
 export default function OrgShell({
     children,
     org,
@@ -34,88 +58,25 @@ export default function OrgShell({
     orgSlug: string
 }) {
     const pathname = usePathname()
-    const [mobileNavOpen, setMobileNavOpen] = useState(false)
-
-    useEffect(() => {
-        const handler = () => setMobileNavOpen(true)
-        window.addEventListener('mobile-nav-open', handler)
-        return () => window.removeEventListener('mobile-nav-open', handler)
-    }, [])
-
-    const activeId = (() => {
-        const isRoot = pathname === `/org/${orgSlug}` || pathname === `/org/${orgSlug}/`
-        if (isRoot) return 'home' as OrgTabId
-        const matched = ORG_TABS.find((t) => {
-            if (t.id === 'home') return false
-            return pathname.includes(`/org/${orgSlug}/${t.id}`)
-        })
-        return (matched?.id ?? 'home') as OrgTabId
-    })()
-
-    const activeLabel = ORG_TABS.find((t) => t.id === activeId)?.label ?? 'Overview'
-
-    const navOrg = {
-        name: org.name,
-        slug: org.slug,
-        logo_url: org.logo_url,
-    }
-
-    const navUser = {
-        name: user.name,
-        email: user.email,
-        avatarUrl: user.avatarUrl,
-        onSignOut: () => { window.location.href = '/auth/logout' },
-    }
+    const { resolvedTheme, setTheme } = useTheme()
+    const sections = orgSections(orgSlug)
+    const activeId = activeNavId(sections, pathname, 'home')
+    const active = findNavItem(sections, activeId)
 
     return (
-        <div data-org-shell className="h-[100dvh] overflow-hidden flex bg-background">
-            {/* Desktop sidebar */}
-            <OrgNav
-                org={navOrg}
-                user={navUser}
-                activeTab={activeId}
-                orgSlug={orgSlug}
-            />
-
-            {/* Mobile drawer */}
-            <MobileOrgNav
-                org={navOrg}
-                user={navUser}
-                activeTab={activeId}
-                orgSlug={orgSlug}
-                open={mobileNavOpen}
-                onOpen={() => setMobileNavOpen(true)}
-                onClose={() => setMobileNavOpen(false)}
-            />
-
-            {/* Main content */}
-            <div className="flex flex-col flex-1 min-w-0 min-h-0">
-                <StorefrontMoveBanner />
-                {/* Header */}
-                <header className="shrink-0 h-[57px] z-40 flex items-center px-4 md:px-5 gap-3 border-b border-border/40">
-                    <button
-                        onClick={() => setMobileNavOpen(true)}
-                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors shrink-0"
-                        aria-label="Open navigation"
-                    >
-                        <span className="material-symbols-outlined text-[20px]">
-                            {mobileNavOpen ? 'close' : 'menu'}
-                        </span>
-                    </button>
-
-                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                        <span className="text-[13px] text-muted-foreground">{org.name}</span>
-                        <span className="material-symbols-outlined text-[16px] text-muted-foreground opacity-40 shrink-0">chevron_right</span>
-                        <span className="text-[13px] font-medium text-foreground truncate">{activeLabel}</span>
-                    </div>
-
-                    <WalletBalancePill orgSlug={orgSlug} />
-                </header>
-
-                <main className="flex-1 min-h-0 overflow-y-auto px-6 md:px-10 py-8">
-                    {children}
-                </main>
-            </div>
-        </div>
+        <AppShell
+            sections={sections}
+            activeId={activeId}
+            brandHref={`/org/${orgSlug}`}
+            context={<ContextSwitcher name={org.name} detail="Organization" logo={org.logo_url} />}
+            user={user}
+            signOutHref="/auth/logout"
+            crumbs={[{ label: org.name, href: `/org/${orgSlug}` }, { label: active?.label ?? 'Overview' }]}
+            actions={<WalletBalancePill orgSlug={orgSlug} />}
+            banner={<StorefrontMoveBanner />}
+            onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+        >
+            {children}
+        </AppShell>
     )
 }
