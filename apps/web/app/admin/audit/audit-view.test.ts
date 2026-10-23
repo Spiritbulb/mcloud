@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { auditHref, pageRange, parseAuditQuery, totalPages } from './audit-view.ts'
+import { auditHref, auditTone, pageRange, parseAuditQuery, totalPages } from './audit-view.ts'
 
 test('defaults to page 1 with no filters', () => {
     assert.deepEqual(parseAuditQuery({}), { page: 1, action: null, actor: null })
@@ -37,4 +37,13 @@ test('total pages never drops below 1', () => {
 test('links omit defaults', () => {
     assert.equal(auditHref({ page: 1 }), '/admin/audit')
     assert.equal(auditHref({ page: 2, action: 'store.status.set' }), '/admin/audit?page=2&action=store.status.set')
+})
+
+test('actions are coloured by family, unknown ones stay neutral', () => {
+    assert.equal(auditTone('store.plan.grant'), 'info')
+    assert.equal(auditTone('subscription.activate'), 'info')
+    assert.equal(auditTone('store.status.set'), 'warning')
+    assert.equal(auditTone('user.role.set'), 'danger')
+    assert.equal(auditTone('handoff.recovery.send'), 'neutral')
+    assert.equal(auditTone('something.new'), 'neutral')
 })

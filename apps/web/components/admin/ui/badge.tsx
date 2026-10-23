@@ -1,0 +1,32 @@
+import type { ReactNode } from 'react'
+import { cn } from '@mcloud/ui/utils'
+
+export type BadgeTone = 'neutral' | 'success' | 'warning' | 'danger' | 'info'
+
+// Tinted, never solid: status should be readable at a glance without shouting. One map, so every
+// admin screen colours the same state the same way.
+const TONES: Record<BadgeTone, string> = {
+    neutral: 'bg-muted/60 text-muted-foreground',
+    success: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-300',
+    warning: 'bg-amber-100 text-amber-800 dark:bg-amber-500/15 dark:text-amber-300',
+    danger: 'bg-red-100 text-red-800 dark:bg-red-500/15 dark:text-red-300',
+    info: 'bg-sky-100 text-sky-800 dark:bg-sky-500/15 dark:text-sky-300',
+}
+
+export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {
+    return (
+        <span className={cn('inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium leading-4', TONES[tone])}>
+            {children}
+        </span>
+    )
+}
+
+/** Order lifecycle -> badge tone. Unknown statuses fall back to neutral rather than guessing. */
+export function orderStatusTone(status: string | null | undefined): BadgeTone {
+    switch (status) {
+        case 'paid': return 'success'
+        case 'pending': return 'warning'
+        case 'refunded': return 'danger'
+        default: return 'neutral'
+    }
+}

@@ -1,5 +1,6 @@
 // Pure helpers for the audit page: query-string parsing and the page window. No I/O (see audit-view.test.ts).
 import { isAuditAction, type AuditAction } from '@/lib/audit-logic'
+import type { BadgeTone } from '@/components/admin/ui/badge'
 
 export const PAGE_SIZE = 50
 
@@ -39,4 +40,12 @@ export function auditHref(q: Partial<AuditQuery>): string {
     if (q.actor) p.set('actor', q.actor)
     const s = p.toString()
     return s ? `/admin/audit?${s}` : '/admin/audit'
+}
+
+/** Badge colour for an action's family, so the log scans by kind: plans and billing, status, access. */
+export function auditTone(action: string): BadgeTone {
+    if (action.startsWith('store.plan.') || action.startsWith('subscription.')) return 'info'
+    if (action.startsWith('store.status.')) return 'warning'
+    if (action.startsWith('user.role.')) return 'danger'
+    return 'neutral'
 }

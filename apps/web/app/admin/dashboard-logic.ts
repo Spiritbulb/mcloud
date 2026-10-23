@@ -10,6 +10,9 @@ export type CurrencyRevenue = {
     last30: number
     last7: number
     orders30: number
+    /** The 30 days before that (days 31-60), for the period-over-period comparison. */
+    prev30: number
+    ordersPrev30: number
     /** Oldest -> newest, one entry per UTC day, for a sparkline. */
     daily: number[]
 }
@@ -20,22 +23,28 @@ function dayStart(ms: number): number {
 
 /**
  * Roll paid orders up per currency (a store can sell in a non-KES currency, and adding
- * currencies together would be meaningless). Biggest 30-day total first.
+ * currencies together would be meaningless). Biggest 30-day total first. Orders 31-60 days old
+ * only feed the `prev30` comparison.
  */
-export function summarizeRevenue(orders: PaidOrder[], now: number, days = 14): CurrencyRevenue[] {
+export function summarizeRevenue(orders: PaidOrder[], now: number, days = 30): CurrencyRevenue[] {
     const today = dayStart(now)
     const by = new Map<string, CurrencyRevenue>()
 
     for (const o of orders) {
         if (!o.created_at || typeof o.total !== 'number' || !Number.isFinite(o.total)) continue
         const at = Date.parse(o.created_at)
-        if (Number.isNaN(at) || at > now || at <= now - 30 * DAY_MS) continue
+        if (Number.isNaN(at) || at > now || at <= now - 60 * DAY_MS) continue
 
         const currency = (o.currency || 'KES').toUpperCase()
         let row = by.get(currency)
         if (!row) {
-            row = { currency, last30: 0, last7: 0, orders30: 0, daily: new Array(days).fill(0) }
+            row = { currency, last30: 0, last7: 0, orders30: 0, prev30: 0, ordersPrev30: 0, daily: new Array(days).fill(0) }
             by.set(currency, row)
+        }
+        if (at <= now - 30 * DAY_MS) {
+            row.prev30 += o.total
+            row.ordersPrev30 += 1
+            continue
         }
         row.last30 += o.total
         row.orders30 += 1

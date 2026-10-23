@@ -21,10 +21,10 @@ test('sums paid orders per currency, biggest first, and never mixes currencies',
     assert.equal(r[1].last30, 20)
 })
 
-test('ignores orders outside 30 days, in the future, or with no usable total/date', () => {
+test('ignores orders in the future, beyond 60 days, or with no usable total/date', () => {
     const r = summarizeRevenue(
         [
-            { total: 900, currency: 'KES', created_at: ago(31) },
+            { total: 900, currency: 'KES', created_at: ago(61) },
             { total: 900, currency: 'KES', created_at: ago(-1) },
             { total: null, currency: 'KES', created_at: ago(1) },
             { total: Number.NaN, currency: 'KES', created_at: ago(1) },
@@ -34,6 +34,27 @@ test('ignores orders outside 30 days, in the future, or with no usable total/dat
         NOW,
     )
     assert.deepEqual(r, [])
+})
+
+test('days 31-60 feed only the previous-period comparison', () => {
+    const r = summarizeRevenue(
+        [
+            { total: 100, currency: 'KES', created_at: ago(5) },
+            { total: 40, currency: 'KES', created_at: ago(31) },
+            { total: 60, currency: 'KES', created_at: ago(59) },
+        ],
+        NOW,
+    )
+    assert.equal(r[0].last30, 100)
+    assert.equal(r[0].orders30, 1)
+    assert.equal(r[0].prev30, 100)
+    assert.equal(r[0].ordersPrev30, 2)
+    assert.equal(r[0].daily.reduce((a, b) => a + b, 0), 100)
+})
+
+test('a currency that only sold last period still shows, at zero now', () => {
+    const r = summarizeRevenue([{ total: 80, currency: 'USD', created_at: ago(40) }], NOW)
+    assert.deepEqual([r[0].currency, r[0].last30, r[0].prev30], ['USD', 0, 80])
 })
 
 test('a missing currency counts as KES', () => {
