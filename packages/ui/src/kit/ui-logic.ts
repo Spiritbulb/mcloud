@@ -79,3 +79,35 @@ export function timeAgo(iso: string | null | undefined, now: number): string {
     if (months < 12) return `${months}mo ago`
     return `${Math.floor(months / 12)}y ago`
 }
+
+/**
+ * Width of one skeleton bar, as a percentage of its cell. Varies by row and column so a loading
+ * table looks like text rather than a grid of identical blocks, but is deterministic: the same
+ * cell gets the same width on every render, so nothing shimmers between frames or hydration.
+ */
+export function skeletonWidth(row: number, col: number): number {
+    const widths = [72, 48, 86, 60, 40, 78, 54]
+    return widths[(row * 3 + col * 5) % widths.length]
+}
+
+/**
+ * Whether a form's draft differs from what was last saved. Compares plain data (strings, numbers,
+ * booleans, null, arrays and objects); key order does not matter. Drives the save bar.
+ */
+export function isDirty(saved: unknown, draft: unknown): boolean {
+    return !sameValue(saved, draft)
+}
+
+function sameValue(a: unknown, b: unknown): boolean {
+    if (a === b) return true
+    // Treat undefined and null as the same "empty" value, the way form state usually does.
+    if (a == null && b == null) return true
+    if (typeof a !== 'object' || typeof b !== 'object' || a === null || b === null) return false
+    if (Array.isArray(a) !== Array.isArray(b)) return false
+    if (Array.isArray(a) && Array.isArray(b)) return a.length === b.length && a.every((v, i) => sameValue(v, b[i]))
+    // Compare over the union of keys, so a missing key matches one set to undefined or null.
+    const ra = a as Record<string, unknown>
+    const rb = b as Record<string, unknown>
+    const keys = new Set([...Object.keys(ra), ...Object.keys(rb)])
+    return [...keys].every((k) => sameValue(ra[k], rb[k]))
+}

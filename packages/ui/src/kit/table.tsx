@@ -9,10 +9,12 @@ import { cn } from '../utils'
 // label is the card's title and takes the full width. Same markup, so callers write one version.
 // (CSS display overrides drop native table semantics for assistive tech on phones; the data is all
 // still there as text, each value next to its label.)
-export function Table({ children }: { children: ReactNode }) {
+//
+// While data loads, render <SkeletonRows columns={n} /> (./skeleton) as the body and pass `busy`.
+export function Table({ children, busy }: { children: ReactNode; busy?: boolean }) {
     return (
         <div className="overflow-x-auto max-md:[&_table]:block max-md:[&_tbody]:block max-md:[&_thead]:hidden">
-            <table className="w-full text-[13px]">{children}</table>
+            <table aria-busy={busy || undefined} className="w-full text-[13px]">{children}</table>
         </div>
     )
 }

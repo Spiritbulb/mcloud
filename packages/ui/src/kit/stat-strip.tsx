@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react'
 import { cn } from '../utils'
+import { Skeleton } from './skeleton'
 import { deltaTone, formatDelta, percentChange } from './ui-logic'
 
 /**
@@ -21,6 +22,7 @@ export function Stat({
     current,
     previous,
     hint,
+    loading,
 }: {
     label: string
     value: string
@@ -28,16 +30,22 @@ export function Stat({
     current?: number
     previous?: number
     hint?: ReactNode
+    /** Shows a placeholder where the number goes; the label stays so the strip keeps its shape. */
+    loading?: boolean
 }) {
     const pct = current !== undefined && previous !== undefined ? percentChange(current, previous) : undefined
     return (
-        <div className="bg-card p-4">
+        <div className="bg-card p-4" aria-busy={loading || undefined}>
             <p className="text-[12px] text-muted-foreground">{label}</p>
-            <div className="mt-1 flex items-baseline gap-2">
-                <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
-                {pct !== undefined && <Delta pct={pct} />}
-            </div>
-            {hint && <p className="mt-1 text-[12px] text-muted-foreground">{hint}</p>}
+            {loading ? (
+                <Skeleton className="mt-2.5 h-5 w-20" />
+            ) : (
+                <div className="mt-1 flex items-baseline gap-2">
+                    <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
+                    {pct !== undefined && <Delta pct={pct} />}
+                </div>
+            )}
+            {hint && !loading && <p className="mt-1 text-[12px] text-muted-foreground">{hint}</p>}
         </div>
     )
 }

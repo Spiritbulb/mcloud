@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deltaTone, formatDelta, initials, percentChange, sparklinePaths, timeAgo } from './ui-logic.ts'
+import { deltaTone, formatDelta, initials, isDirty, percentChange, skeletonWidth, sparklinePaths, timeAgo } from './ui-logic.ts'
 
 test('percent change is relative to the previous period', () => {
     assert.equal(percentChange(150, 100), 50)
@@ -71,4 +71,28 @@ test('time ago tolerates a future date, a blank and garbage', () => {
     assert.equal(timeAgo(new Date(NOW + DAY).toISOString(), NOW), 'just now')
     assert.equal(timeAgo(null, NOW), '')
     assert.equal(timeAgo('nope', NOW), '')
+})
+
+test('skeleton widths vary across a row and down a column but repeat exactly', () => {
+    const row0 = [0, 1, 2, 3].map((c) => skeletonWidth(0, c))
+    assert.ok(new Set(row0).size > 1, 'columns in one row should differ')
+    const col0 = [0, 1, 2, 3].map((r) => skeletonWidth(r, 0))
+    assert.ok(new Set(col0).size > 1, 'rows in one column should differ')
+    assert.equal(skeletonWidth(4, 2), skeletonWidth(4, 2))
+    for (let r = 0; r < 10; r++) for (let c = 0; c < 10; c++) {
+        const w = skeletonWidth(r, c)
+        assert.ok(w >= 30 && w <= 90, `width ${w} out of range`)
+    }
+})
+
+test('isDirty compares form data by value, ignoring key order and undefined keys', () => {
+    assert.equal(isDirty({ a: 1, b: 'x' }, { b: 'x', a: 1 }), false)
+    assert.equal(isDirty({ a: 1 }, { a: 2 }), true)
+    assert.equal(isDirty({ tags: ['a', 'b'] }, { tags: ['a', 'b'] }), false)
+    assert.equal(isDirty({ tags: ['a', 'b'] }, { tags: ['b', 'a'] }), true)
+    assert.equal(isDirty({ nested: { on: true } }, { nested: { on: false } }), true)
+    assert.equal(isDirty({ a: 1, gone: undefined }, { a: 1 }), false)
+    assert.equal(isDirty({ note: null }, { note: undefined }), false)
+    assert.equal(isDirty({ note: '' }, { note: null }), true)
+    assert.equal(isDirty([], {}), true)
 })

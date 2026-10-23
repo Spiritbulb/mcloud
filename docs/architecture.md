@@ -176,7 +176,9 @@ Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery,
 
 - **UI kit:** `packages/ui/src/kit/*`, imported as `@mcloud/ui/kit/<name>` (page header, panel, stat strip, badge, table,
   fields, button, notice, icon). It lives in a package so the org hub and store settings can adopt it too (SPI-57).
-  New admin screens use it rather than ad hoc markup. Always size glyphs with `Icon`: Google's icon font overrides Tailwind
+  New admin screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
+  `SkeletonRows` in a `Table busy`, `Stat loading`, `SkeletonLines`, `LoadError onRetry`. Forms are `Panel` + `Field`/`FormGrid`
+  + `SaveBar` (shown when `isDirty(saved, draft)`); destructive actions go through `ConfirmDialog`. Gallery: `/dev-ui/kit` (dev only). Always size glyphs with `Icon`: Google's icon font overrides Tailwind
   size classes. Below `md` a `Table` becomes a stack of cards: give each `Td` a `label`, and leave it off the cell that
   identifies the row.
 - **Lists are paginated on the server** (orders, users, webhook logs). The URL is the state (`?q=&status=&page=`), 50 per page.
