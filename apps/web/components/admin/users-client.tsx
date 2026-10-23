@@ -10,6 +10,16 @@ import {
     AlertDialogCancel,
     AlertDialogAction,
 } from '@mcloud/ui/alert-dialog'
+import { PageHeader } from '@/components/admin/ui/page-header'
+import { Panel } from '@/components/admin/ui/panel'
+import { Badge, roleTone } from '@/components/admin/ui/badge'
+import { Avatar } from '@/components/admin/ui/avatar'
+import { Button } from '@/components/admin/ui/button'
+import { SearchField, SelectField, Toolbar } from '@/components/admin/ui/fields'
+import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
+import { EmptyState } from '@/components/admin/ui/empty-state'
+import { Notice } from '@/components/admin/ui/notice'
+import { timeAgo } from '@/components/admin/ui/ui-logic'
 
 type User = {
     id: string
@@ -20,33 +30,21 @@ type User = {
     created_at: string
 }
 
-function getInitials(name: string | null) {
-    if (!name) return '?'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function relativeDate(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime()
-    const days = Math.floor(diff / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 30) return `${days}d ago`
-    const months = Math.floor(days / 30)
-    if (months < 12) return `${months}mo ago`
-    return `${Math.floor(months / 12)}y ago`
-}
-
 export default function UsersClient({ users }: { users: User[] }) {
     const [rows, setRows] = useState(users)
     const [search, setSearch] = useState('')
+    const [roleFilter, setRoleFilter] = useState('')
     const [pending, setPending] = useState<{ user: User; newRole: 'admin' | 'user' } | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const [now] = useState(() => Date.now())
 
-    const filtered = rows.filter(u =>
-        (u.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (u.email ?? '').toLowerCase().includes(search.toLowerCase())
-    )
+    const q = search.toLowerCase()
+    const filtered = rows.filter(u => {
+        const matchSearch = (u.name ?? '').toLowerCase().includes(q) || (u.email ?? '').toLowerCase().includes(q)
+        return matchSearch && (!roleFilter || u.role === roleFilter)
+    })
+    const admins = rows.filter(u => u.role === 'admin').length
 
     async function confirmRoleChange() {
         if (!pending) return
@@ -63,105 +61,86 @@ export default function UsersClient({ users }: { users: User[] }) {
             setRows(prev => prev.map(u => u.id === pending.user.id ? { ...u, role: saved } : u))
             setPending(null)
         } else {
-            const data = await res.json()
-            setError(data.error ?? 'Something went wrong')
+            const data = await res.json().catch(() => null)
+            setError(data?.error ?? 'Something went wrong')
         }
         setLoading(false)
     }
 
     return (
-        <div className="max-w-5xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold text-foreground">Users</h1>
-                <p className="text-sm text-muted-foreground mt-1">{rows.length} total</p>
-            </div>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+            <PageHeader title="Users" description={`${rows.length.toLocaleString()} total · ${admins} ${admins === 1 ? 'admin' : 'admins'}`} />
 
-            <input
-                type="text"
-                placeholder="Search by name or email…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full max-w-sm px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <Toolbar>
+                <SearchField value={search} onChange={setSearch} placeholder="Search name or email" />
+                <SelectField value={roleFilter} onChange={setRoleFilter} label="Filter by role">
+                    <option value="">All roles</option>
+                    <option value="admin">Admin</option>
+                    <option value="client">Client</option>
+                    <option value="customer">Customer</option>
+                </SelectField>
+            </Toolbar>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && !pending && <Notice tone="error">{error}</Notice>}
 
-            <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-sm">
-                    <thead className="bg-muted text-muted-foreground">
-                        <tr>
-                            <th className="text-left px-4 py-3 font-medium">User</th>
-                            <th className="text-left px-4 py-3 font-medium">Email</th>
-                            <th className="text-left px-4 py-3 font-medium">Role</th>
-                            <th className="text-left px-4 py-3 font-medium">Joined</th>
-                            <th className="text-left px-4 py-3 font-medium">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {filtered.map(user => (
-                            <tr key={user.id} className="bg-background hover:bg-muted/40 transition-colors">
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-2.5">
-                                        <div className="store-avatar-fallback w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                                            {user.avatar_url
-                                                ? <img src={user.avatar_url} alt={user.name ?? ''} className="w-full h-full object-cover" />
-                                                : getInitials(user.name)
-                                            }
-                                        </div>
-                                        <span className="font-medium text-foreground">{user.name ?? '—'}</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground">{user.email ?? '—'}</td>
-                                <td className="px-4 py-3">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                        user.role === 'admin'
-                                            ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                            : 'bg-muted text-muted-foreground'
-                                    }`}>
-                                        {user.role ?? 'user'}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground text-xs">{relativeDate(user.created_at)}</td>
-                                <td className="px-4 py-3">
-                                    <button
-                                        onClick={() => setPending({
-                                            user,
-                                            newRole: user.role === 'admin' ? 'user' : 'admin',
-                                        })}
-                                        className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors"
-                                    >
-                                        {user.role === 'admin' ? 'Revoke admin' : 'Make admin'}
-                                    </button>
-                                </td>
-                            </tr>
-                        ))}
-                        {filtered.length === 0 && (
+            <Panel flush>
+                {filtered.length === 0 ? (
+                    <EmptyState icon="people" title="No users found" description={search || roleFilter ? 'Try a different search or filter.' : undefined} />
+                ) : (
+                    <Table>
+                        <thead>
                             <tr>
-                                <td colSpan={5} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                                    No users found
-                                </td>
+                                <Th>User</Th>
+                                <Th>Role</Th>
+                                <Th>Joined</Th>
+                                <Th align="right">Action</Th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {filtered.map(user => (
+                                <Tr key={user.id}>
+                                    <Td>
+                                        <div className="flex items-center gap-2.5">
+                                            <Avatar name={user.name ?? user.email} src={user.avatar_url} shape="circle" />
+                                            <div className="min-w-0">
+                                                <p className="truncate font-medium">{user.name ?? '—'}</p>
+                                                <p className="truncate text-[12px] text-muted-foreground">{user.email ?? '—'}</p>
+                                            </div>
+                                        </div>
+                                    </Td>
+                                    <Td><Badge tone={roleTone(user.role)}>{user.role ?? 'customer'}</Badge></Td>
+                                    <Td muted>{timeAgo(user.created_at, now)}</Td>
+                                    <Td align="right">
+                                        <Button
+                                            size="sm"
+                                            variant={user.role === 'admin' ? 'danger' : 'secondary'}
+                                            onClick={() => setPending({ user, newRole: user.role === 'admin' ? 'user' : 'admin' })}
+                                        >
+                                            {user.role === 'admin' ? 'Revoke admin' : 'Make admin'}
+                                        </Button>
+                                    </Td>
+                                </Tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
 
-            <AlertDialog open={!!pending} onOpenChange={open => { if (!open) setPending(null) }}>
+            <AlertDialog open={!!pending} onOpenChange={open => { if (!open) { setPending(null); setError(null) } }}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
                             {pending?.newRole === 'admin'
-                                ? `Grant admin access to ${pending?.user.name}?`
-                                : `Revoke admin from ${pending?.user.name}?`
-                            }
+                                ? `Grant admin access to ${pending?.user.name ?? pending?.user.email}?`
+                                : `Revoke admin from ${pending?.user.name ?? pending?.user.email}?`}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             {pending?.newRole === 'admin'
                                 ? 'They will have full platform access including this admin console.'
-                                : 'They will lose access to this admin console immediately.'
-                            }
+                                : 'They will lose access to this admin console immediately.'}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
+                    {error && <Notice tone="error">{error}</Notice>}
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmRoleChange} disabled={loading}>

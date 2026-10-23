@@ -52,3 +52,30 @@ export function sparklinePaths(
 function round(n: number): number {
     return Math.round(n * 100) / 100
 }
+
+/** Two-letter initials for an avatar; "?" when there is no name to take them from. */
+export function initials(name: string | null | undefined): string {
+    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean)
+    if (parts.length === 0) return '?'
+    return parts.slice(0, 2).map((p) => p[0]).join('').toUpperCase()
+}
+
+/**
+ * Compact relative time: "just now", "5m ago", "3h ago", "2d ago", then "3mo ago" / "2y ago".
+ * `now` is passed in so callers control (and tests can pin) the clock; an unparseable date is "".
+ */
+export function timeAgo(iso: string | null | undefined, now: number): string {
+    if (!iso) return ''
+    const at = Date.parse(iso)
+    if (Number.isNaN(at)) return ''
+    const mins = Math.max(0, Math.round((now - at) / 60_000))
+    if (mins < 1) return 'just now'
+    if (mins < 60) return `${mins}m ago`
+    const hours = Math.round(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.round(hours / 24)
+    if (days < 30) return `${days}d ago`
+    const months = Math.floor(days / 30)
+    if (months < 12) return `${months}mo ago`
+    return `${Math.floor(months / 12)}y ago`
+}

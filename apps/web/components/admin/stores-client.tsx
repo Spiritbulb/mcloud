@@ -10,6 +10,15 @@ import {
     AlertDialogCancel,
     AlertDialogAction,
 } from '@mcloud/ui/alert-dialog'
+import { PageHeader } from '@/components/admin/ui/page-header'
+import { Panel } from '@/components/admin/ui/panel'
+import { Badge } from '@/components/admin/ui/badge'
+import { Avatar } from '@/components/admin/ui/avatar'
+import { Button } from '@/components/admin/ui/button'
+import { SearchField, SelectField, Toolbar } from '@/components/admin/ui/fields'
+import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
+import { EmptyState } from '@/components/admin/ui/empty-state'
+import { Notice } from '@/components/admin/ui/notice'
 
 type Store = {
     id: string
@@ -26,27 +35,32 @@ type Store = {
     owner: { name: string | null; email: string | null } | null
 }
 
-function getInitials(name: string | null) {
-    if (!name) return '?'
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
 type PlanDialog = { store: Store }
 type StatusDialog = { store: Store; newStatus: boolean }
+
+const DANGER = 'bg-destructive text-destructive-foreground hover:bg-destructive/90'
 
 export default function StoresClient({ stores }: { stores: Store[] }) {
     const [rows, setRows] = useState(stores)
     const [search, setSearch] = useState('')
+    const [planFilter, setPlanFilter] = useState('')
+    const [statusFilter, setStatusFilter] = useState('')
     const [planDialog, setPlanDialog] = useState<PlanDialog | null>(null)
     const [statusDialog, setStatusDialog] = useState<StatusDialog | null>(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
 
-    const filtered = rows.filter(s =>
-        (s.name ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (s.slug ?? '').toLowerCase().includes(search.toLowerCase()) ||
-        (s.owner?.email ?? '').toLowerCase().includes(search.toLowerCase())
-    )
+    const q = search.toLowerCase()
+    const filtered = rows.filter(s => {
+        const matchSearch =
+            (s.name ?? '').toLowerCase().includes(q) ||
+            (s.slug ?? '').toLowerCase().includes(q) ||
+            (s.owner?.email ?? '').toLowerCase().includes(q)
+        const matchPlan = !planFilter || (planFilter === 'pro') === !!s.is_pro
+        const matchStatus = !statusFilter || (statusFilter === 'active') === (s.is_active !== false)
+        return matchSearch && matchPlan && matchStatus
+    })
+    const proCount = rows.filter(s => s.is_pro).length
 
     async function handlePlanAction(action: 'grant' | 'revoke') {
         if (!planDialog) return
@@ -99,102 +113,74 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
     }
 
     return (
-        <div className="max-w-6xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold text-foreground">Stores</h1>
-                <p className="text-sm text-muted-foreground mt-1">{rows.length} total</p>
-            </div>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+            <PageHeader title="Stores" description={`${rows.length.toLocaleString()} total · ${proCount.toLocaleString()} on a paid plan`} />
 
-            <input
-                type="text"
-                placeholder="Search by name, slug or owner email…"
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                className="w-full max-w-sm px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-            />
+            <Toolbar>
+                <SearchField value={search} onChange={setSearch} placeholder="Search name, slug or owner email" />
+                <SelectField value={planFilter} onChange={setPlanFilter} label="Filter by plan">
+                    <option value="">All plans</option>
+                    <option value="pro">Pro</option>
+                    <option value="free">Free</option>
+                </SelectField>
+                <SelectField value={statusFilter} onChange={setStatusFilter} label="Filter by status">
+                    <option value="">All statuses</option>
+                    <option value="active">Active</option>
+                    <option value="suspended">Suspended</option>
+                </SelectField>
+            </Toolbar>
 
-            {error && <p className="text-sm text-red-500">{error}</p>}
+            {error && !planDialog && !statusDialog && <Notice tone="error">{error}</Notice>}
 
-            <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-sm">
-                    <thead className="bg-muted text-muted-foreground">
-                        <tr>
-                            <th className="text-left px-4 py-3 font-medium">Store</th>
-                            <th className="text-left px-4 py-3 font-medium">Slug</th>
-                            <th className="text-left px-4 py-3 font-medium">Owner</th>
-                            <th className="text-left px-4 py-3 font-medium">Pro</th>
-                            <th className="text-left px-4 py-3 font-medium">Status</th>
-                            <th className="text-left px-4 py-3 font-medium">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {filtered.map(store => {
-                            const isActive = store.is_active !== false
-                            return (
-                                <tr key={store.id} className="bg-background hover:bg-muted/40 transition-colors">
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2.5">
-                                            <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                                                {store.logo_url
-                                                    ? <img src={store.logo_url} alt={store.name ?? ''} className="w-full h-full object-cover" />
-                                                    : getInitials(store.name)
-                                                }
-                                            </div>
-                                            <span className="font-medium text-foreground">{store.name ?? '—'}</span>
-                                        </div>
-                                    </td>
-                                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{store.slug ?? '—'}</td>
-                                    <td className="px-4 py-3">
-                                        <span className="text-foreground">{store.owner?.name ?? '—'}</span>
-                                        <p className="text-xs text-muted-foreground">{store.owner?.email ?? ''}</p>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            store.is_pro
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-muted text-muted-foreground'
-                                        }`}>
-                                            {store.is_pro ? 'Pro' : 'Free'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                            isActive
-                                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400'
-                                                : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400'
-                                        }`}>
-                                            {isActive ? 'Active' : 'Suspended'}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <div className="flex items-center gap-2">
-                                            <button
-                                                onClick={() => setPlanDialog({ store })}
-                                                className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors"
-                                            >
-                                                Manage plan
-                                            </button>
-                                            <button
-                                                onClick={() => setStatusDialog({ store, newStatus: !isActive })}
-                                                className="text-xs px-3 py-1.5 rounded-md border border-border hover:bg-muted transition-colors"
-                                            >
-                                                {isActive ? 'Suspend' : 'Unsuspend'}
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            )
-                        })}
-                        {filtered.length === 0 && (
+            <Panel flush>
+                {filtered.length === 0 ? (
+                    <EmptyState icon="storefront" title="No stores found" description={search || planFilter || statusFilter ? 'Try a different search or filter.' : undefined} />
+                ) : (
+                    <Table>
+                        <thead>
                             <tr>
-                                <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                                    No stores found
-                                </td>
+                                <Th>Store</Th>
+                                <Th>Owner</Th>
+                                <Th>Plan</Th>
+                                <Th>Status</Th>
+                                <Th align="right">Actions</Th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {filtered.map(store => {
+                                const isActive = store.is_active !== false
+                                return (
+                                    <Tr key={store.id}>
+                                        <Td>
+                                            <div className="flex items-center gap-2.5">
+                                                <Avatar name={store.name} src={store.logo_url} />
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium">{store.name ?? '—'}</p>
+                                                    <p className="truncate font-mono text-[11px] text-muted-foreground">{store.slug ?? '—'}</p>
+                                                </div>
+                                            </div>
+                                        </Td>
+                                        <Td>
+                                            <p>{store.owner?.name ?? '—'}</p>
+                                            <p className="text-[12px] text-muted-foreground">{store.owner?.email ?? ''}</p>
+                                        </Td>
+                                        <Td><Badge tone={store.is_pro ? 'success' : 'neutral'}>{store.is_pro ? 'Pro' : 'Free'}</Badge></Td>
+                                        <Td><Badge tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Badge></Td>
+                                        <Td align="right">
+                                            <div className="flex items-center justify-end gap-2">
+                                                <Button size="sm" onClick={() => setPlanDialog({ store })}>Manage plan</Button>
+                                                <Button size="sm" variant={isActive ? 'danger' : 'secondary'} onClick={() => setStatusDialog({ store, newStatus: !isActive })}>
+                                                    {isActive ? 'Suspend' : 'Unsuspend'}
+                                                </Button>
+                                            </div>
+                                        </Td>
+                                    </Tr>
+                                )
+                            })}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
 
             {/* Plan Dialog */}
             <AlertDialog open={!!planDialog} onOpenChange={open => { if (!open) { setPlanDialog(null); setError(null) } }}>
@@ -205,22 +191,15 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                             Current plan: <strong>{planDialog?.store.is_pro ? 'Pro' : 'Free'}</strong>
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    {error && <p className="text-sm text-red-500 px-1">{error}</p>}
+                    {error && <Notice tone="error">{error}</Notice>}
                     <AlertDialogFooter className="flex-col sm:flex-row gap-2">
                         <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
                         {planDialog?.store.is_pro ? (
-                            <AlertDialogAction
-                                onClick={() => handlePlanAction('revoke')}
-                                disabled={loading}
-                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
+                            <AlertDialogAction onClick={() => handlePlanAction('revoke')} disabled={loading} className={DANGER}>
                                 {loading ? 'Saving…' : 'Revoke Pro'}
                             </AlertDialogAction>
                         ) : (
-                            <AlertDialogAction
-                                onClick={() => handlePlanAction('grant')}
-                                disabled={loading}
-                            >
+                            <AlertDialogAction onClick={() => handlePlanAction('grant')} disabled={loading}>
                                 {loading ? 'Saving…' : 'Grant Pro'}
                             </AlertDialogAction>
                         )}
@@ -233,26 +212,18 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                 <AlertDialogContent>
                     <AlertDialogHeader>
                         <AlertDialogTitle>
-                            {statusDialog?.newStatus
-                                ? `Unsuspend ${statusDialog?.store.name}?`
-                                : `Suspend ${statusDialog?.store.name}?`
-                            }
+                            {statusDialog?.newStatus ? `Unsuspend ${statusDialog?.store.name}?` : `Suspend ${statusDialog?.store.name}?`}
                         </AlertDialogTitle>
                         <AlertDialogDescription>
                             {statusDialog?.newStatus
                                 ? 'The store will be visible and accessible to customers again.'
-                                : 'The store will be hidden from customers and inaccessible until unsuspended.'
-                            }
+                                : 'The store will be hidden from customers and inaccessible until unsuspended.'}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
-                    {error && <p className="text-sm text-red-500 px-1">{error}</p>}
+                    {error && <Notice tone="error">{error}</Notice>}
                     <AlertDialogFooter>
                         <AlertDialogCancel disabled={loading}>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={confirmStatusChange}
-                            disabled={loading}
-                            className={statusDialog?.newStatus ? '' : 'bg-destructive text-destructive-foreground hover:bg-destructive/90'}
-                        >
+                        <AlertDialogAction onClick={confirmStatusChange} disabled={loading} className={statusDialog?.newStatus ? '' : DANGER}>
                             {loading ? 'Saving…' : statusDialog?.newStatus ? 'Unsuspend' : 'Suspend'}
                         </AlertDialogAction>
                     </AlertDialogFooter>

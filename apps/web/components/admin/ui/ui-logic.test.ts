@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deltaTone, formatDelta, percentChange, sparklinePaths } from './ui-logic.ts'
+import { deltaTone, formatDelta, initials, percentChange, sparklinePaths, timeAgo } from './ui-logic.ts'
 
 test('percent change is relative to the previous period', () => {
     assert.equal(percentChange(150, 100), 50)
@@ -43,4 +43,32 @@ test('a flat series is a level line mid-height; one point does not divide by zer
 
 test('an empty series draws nothing', () => {
     assert.deepEqual(sparklinePaths([], 100, 20), { line: '', area: '' })
+})
+
+test('initials take the first two words, uppercased', () => {
+    assert.equal(initials('ada lovelace'), 'AL')
+    assert.equal(initials('  Nelly  '), 'N')
+    assert.equal(initials('a b c d'), 'AB')
+    assert.equal(initials(null), '?')
+    assert.equal(initials('   '), '?')
+})
+
+const NOW = Date.parse('2026-10-23T12:00:00Z')
+const ago = (ms: number) => new Date(NOW - ms).toISOString()
+const MIN = 60_000
+const DAY = 86_400_000
+
+test('time ago steps up through minutes, hours, days, months, years', () => {
+    assert.equal(timeAgo(ago(20_000), NOW), 'just now')
+    assert.equal(timeAgo(ago(5 * MIN), NOW), '5m ago')
+    assert.equal(timeAgo(ago(3 * 60 * MIN), NOW), '3h ago')
+    assert.equal(timeAgo(ago(2 * DAY), NOW), '2d ago')
+    assert.equal(timeAgo(ago(65 * DAY), NOW), '2mo ago')
+    assert.equal(timeAgo(ago(800 * DAY), NOW), '2y ago')
+})
+
+test('time ago tolerates a future date, a blank and garbage', () => {
+    assert.equal(timeAgo(new Date(NOW + DAY).toISOString(), NOW), 'just now')
+    assert.equal(timeAgo(null, NOW), '')
+    assert.equal(timeAgo('nope', NOW), '')
 })

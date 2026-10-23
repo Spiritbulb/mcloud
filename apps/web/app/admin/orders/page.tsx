@@ -7,6 +7,9 @@ export const metadata: Metadata = {
     robots: { index: false, follow: false },
 }
 
+// Search runs in the browser over what is loaded, so the load is bounded.
+const ORDER_LIMIT = 500
+
 async function getOrders() {
     const supabase = await createClient()
     const { data } = await supabase
@@ -17,6 +20,7 @@ async function getOrders() {
             stores ( name, slug )
         `)
         .order("created_at", { ascending: false })
+        .limit(ORDER_LIMIT)
 
     return (data ?? []).map(row => ({
         ...row,
@@ -29,7 +33,7 @@ export default async function OrdersPage() {
     const orders = await getOrders()
     return (
         <div className="overflow-y-auto flex-1 px-6 md:px-10 py-8">
-            <OrdersClient orders={orders} />
+            <OrdersClient orders={orders} capped={orders.length >= ORDER_LIMIT} />
         </div>
     )
 }

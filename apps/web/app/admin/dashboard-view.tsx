@@ -6,7 +6,9 @@ import { Sparkline } from "@/components/admin/ui/sparkline"
 import { Badge, orderStatusTone } from "@/components/admin/ui/badge"
 import { EmptyState } from "@/components/admin/ui/empty-state"
 import { Table, Td, Th, Tr } from "@/components/admin/ui/table"
-import { percentChange } from "@/components/admin/ui/ui-logic"
+import { percentChange, timeAgo } from "@/components/admin/ui/ui-logic"
+import { buttonClass } from "@/components/admin/ui/button"
+import { Icon } from "@/components/admin/ui/icon"
 import { formatMoney, type AttentionItem, type CurrencyRevenue } from "./dashboard-logic"
 
 export type DashboardData = {
@@ -38,9 +40,9 @@ export default function DashboardView({ data: d }: { data: DashboardData }) {
                 actions={
                     <Link
                         href="/admin/audit"
-                        className="inline-flex h-8 items-center gap-1.5 rounded-md border border-border bg-card px-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted/60"
+                        className={buttonClass("secondary")}
                     >
-                        <span className="material-symbols-outlined select-none text-[16px]" aria-hidden>history</span>
+                        <Icon name="history" size={16} />
                         Audit log
                     </Link>
                 }
@@ -133,7 +135,7 @@ function Attention({ items }: { items: AttentionItem[] }) {
     if (items.length === 0) {
         return (
             <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
-                <span className="material-symbols-outlined select-none text-[16px] text-emerald-600 dark:text-emerald-400" aria-hidden>check_circle</span>
+                <Icon name="check_circle" size={16} className="text-emerald-600 dark:text-emerald-400" />
                 All clear. Nothing is waiting on you.
             </p>
         )
@@ -145,11 +147,11 @@ function Attention({ items }: { items: AttentionItem[] }) {
                 {items.map((a) => (
                     <li key={a.id}>
                         <Link href={a.href} className="group flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors hover:bg-amber-100/60 dark:hover:bg-amber-500/10">
-                            <span className="material-symbols-outlined select-none text-[18px] text-amber-700 dark:text-amber-300" aria-hidden>{a.icon}</span>
+                            <Icon name={a.icon} size={18} className="text-amber-700 dark:text-amber-300" />
                             <span className="min-w-0 flex-1 text-foreground">
                                 <span className="font-semibold tabular-nums">{a.count.toLocaleString()}</span> {a.label}
                             </span>
-                            <span className="material-symbols-outlined select-none text-[16px] text-muted-foreground transition-transform group-hover:translate-x-0.5" aria-hidden>arrow_forward</span>
+                            <Icon name="arrow_forward" size={16} className="text-muted-foreground transition-transform group-hover:translate-x-0.5" />
                         </Link>
                     </li>
                 ))}
@@ -201,13 +203,4 @@ function WeekHint({ n, prev }: { n: number; prev: number }) {
             {prev > 0 && <Delta pct={percentChange(n, prev)} />}
         </span>
     )
-}
-
-function timeAgo(iso: string | null, now: number): string {
-    if (!iso) return ""
-    const mins = Math.max(0, Math.round((now - Date.parse(iso)) / 60_000))
-    if (mins < 1) return "just now"
-    if (mins < 60) return `${mins}m ago`
-    if (mins < 60 * 24) return `${Math.round(mins / 60)}h ago`
-    return `${Math.round(mins / (60 * 24))}d ago`
 }

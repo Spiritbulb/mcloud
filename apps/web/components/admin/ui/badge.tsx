@@ -30,3 +30,38 @@ export function orderStatusTone(status: string | null | undefined): BadgeTone {
         default: return 'neutral'
     }
 }
+
+export function fulfillmentTone(status: string | null | undefined): BadgeTone {
+    switch (status) {
+        case 'fulfilled': return 'success'
+        case 'partial': return 'info'
+        case 'unfulfilled': return 'warning'
+        default: return 'neutral'
+    }
+}
+
+export function subscriptionStatusTone(status: string | null | undefined): BadgeTone {
+    switch (status) {
+        case 'active': return 'success'
+        case 'pending': return 'warning'
+        case 'expired': return 'danger'
+        default: return 'neutral'
+    }
+}
+
+/** users.role: admin (platform), client (owns an org or store), customer (everyone else). */
+export function roleTone(role: string | null | undefined): BadgeTone {
+    switch (role) {
+        case 'admin': return 'info'
+        case 'client': return 'success'
+        default: return 'neutral'
+    }
+}
+
+export function webhookStatusTone(status: string | null | undefined): BadgeTone {
+    switch (status) {
+        case 'success': return 'success'
+        case 'failed': return 'danger'
+        default: return 'neutral'
+    }
+}

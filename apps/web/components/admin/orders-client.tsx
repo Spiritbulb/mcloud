@@ -1,5 +1,13 @@
 'use client'
 import { useState } from 'react'
+import { PageHeader } from '@/components/admin/ui/page-header'
+import { Panel } from '@/components/admin/ui/panel'
+import { Badge, fulfillmentTone, orderStatusTone } from '@/components/admin/ui/badge'
+import { SearchField, SelectField, Toolbar } from '@/components/admin/ui/fields'
+import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
+import { EmptyState } from '@/components/admin/ui/empty-state'
+import { Notice } from '@/components/admin/ui/notice'
+import { timeAgo } from '@/components/admin/ui/ui-logic'
 
 type Order = {
     id: string
@@ -14,131 +22,75 @@ type Order = {
     store: { name: string | null; slug: string | null } | null
 }
 
-function relativeDate(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime()
-    const days = Math.floor(diff / 86400000)
-    if (days === 0) return 'Today'
-    if (days === 1) return 'Yesterday'
-    if (days < 30) return `${days}d ago`
-    const months = Math.floor(days / 30)
-    if (months < 12) return `${months}mo ago`
-    return `${Math.floor(months / 12)}y ago`
-}
-
-const statusColors: Record<string, string> = {
-    pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    paid: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    cancelled: 'bg-muted text-muted-foreground',
-    refunded: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-}
-
-const fulfillmentColors: Record<string, string> = {
-    unfulfilled: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-    fulfilled: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-    partial: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-}
-
-export default function OrdersClient({ orders }: { orders: Order[] }) {
+export default function OrdersClient({ orders, capped }: { orders: Order[]; capped?: boolean }) {
     const [search, setSearch] = useState('')
     const [statusFilter, setStatusFilter] = useState('')
+    const [now] = useState(() => Date.now())
 
+    const q = search.toLowerCase()
     const filtered = orders.filter(o => {
         const matchSearch =
-            (o.order_number ?? '').toLowerCase().includes(search.toLowerCase()) ||
-            (o.customer_email ?? '').toLowerCase().includes(search.toLowerCase()) ||
-            (o.store?.name ?? '').toLowerCase().includes(search.toLowerCase())
-        const matchStatus = !statusFilter || o.status === statusFilter
-        return matchSearch && matchStatus
+            (o.order_number ?? '').toLowerCase().includes(q) ||
+            (o.customer_email ?? '').toLowerCase().includes(q) ||
+            (o.store?.name ?? '').toLowerCase().includes(q)
+        return matchSearch && (!statusFilter || o.status === statusFilter)
     })
 
     return (
-        <div className="max-w-6xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold text-foreground">Orders</h1>
-                <p className="text-sm text-muted-foreground mt-1">{orders.length} total</p>
-            </div>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+            <PageHeader title="Orders" description={`${orders.length.toLocaleString()} ${capped ? 'most recent' : 'total'}`} />
 
-            <div className="flex gap-3 flex-wrap">
-                <input
-                    type="text"
-                    placeholder="Search by order #, customer or store…"
-                    value={search}
-                    onChange={e => setSearch(e.target.value)}
-                    className="w-full max-w-sm px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                />
-                <select
-                    value={statusFilter}
-                    onChange={e => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 text-sm rounded-md border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                >
+            {capped && <Notice tone="warning">Showing the {orders.length.toLocaleString()} most recent orders. Older ones are not searchable here yet.</Notice>}
+
+            <Toolbar>
+                <SearchField value={search} onChange={setSearch} placeholder="Search order #, customer or store" />
+                <SelectField value={statusFilter} onChange={setStatusFilter} label="Filter by status">
                     <option value="">All statuses</option>
                     <option value="pending">Pending</option>
                     <option value="paid">Paid</option>
                     <option value="cancelled">Cancelled</option>
                     <option value="refunded">Refunded</option>
-                </select>
-            </div>
+                </SelectField>
+            </Toolbar>
 
-            <div className="rounded-lg border border-border overflow-hidden">
-                <table className="w-full text-sm">
-                    <thead className="bg-muted text-muted-foreground">
-                        <tr>
-                            <th className="text-left px-4 py-3 font-medium">Order #</th>
-                            <th className="text-left px-4 py-3 font-medium">Store</th>
-                            <th className="text-left px-4 py-3 font-medium">Customer</th>
-                            <th className="text-left px-4 py-3 font-medium">Total</th>
-                            <th className="text-left px-4 py-3 font-medium">Status</th>
-                            <th className="text-left px-4 py-3 font-medium">Fulfillment</th>
-                            <th className="text-left px-4 py-3 font-medium">Date</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                        {filtered.map(order => (
-                            <tr key={order.id} className="bg-background hover:bg-muted/40 transition-colors">
-                                <td className="px-4 py-3 font-mono text-xs text-foreground">
-                                    {order.order_number ?? '—'}
-                                </td>
-                                <td className="px-4 py-3">
-                                    {order.store?.slug ? (
-                                        <a
-                                            href={`/store/${order.store.slug}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="text-foreground hover:text-primary hover:underline"
-                                        >
-                                            {order.store.name ?? '—'}
-                                        </a>
-                                    ) : (
-                                        <span className="text-muted-foreground">—</span>
-                                    )}
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground">{order.customer_email ?? '—'}</td>
-                                <td className="px-4 py-3 font-mono text-xs">
-                                    {order.currency} {order.total?.toLocaleString() ?? '—'}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColors[order.status ?? ''] ?? 'bg-muted text-muted-foreground'}`}>
-                                        {order.status ?? '—'}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${fulfillmentColors[order.fulfillment_status ?? ''] ?? 'bg-muted text-muted-foreground'}`}>
-                                        {order.fulfillment_status ?? '—'}
-                                    </span>
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground text-xs">{relativeDate(order.created_at)}</td>
-                            </tr>
-                        ))}
-                        {filtered.length === 0 && (
+            <Panel flush>
+                {filtered.length === 0 ? (
+                    <EmptyState icon="receipt_long" title="No orders found" description={search || statusFilter ? 'Try a different search or filter.' : undefined} />
+                ) : (
+                    <Table>
+                        <thead>
                             <tr>
-                                <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                                    No orders found
-                                </td>
+                                <Th>Order</Th>
+                                <Th>Store</Th>
+                                <Th>Customer</Th>
+                                <Th align="right">Total</Th>
+                                <Th>Status</Th>
+                                <Th>Fulfillment</Th>
+                                <Th align="right">Placed</Th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
-            </div>
+                        </thead>
+                        <tbody>
+                            {filtered.map(order => (
+                                <Tr key={order.id}>
+                                    <Td><span className="font-mono text-[12px]">{order.order_number ?? '—'}</span></Td>
+                                    <Td>
+                                        {order.store?.slug ? (
+                                            <a href={`/store/${order.store.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:text-primary hover:underline underline-offset-4">
+                                                {order.store.name ?? '—'}
+                                            </a>
+                                        ) : '—'}
+                                    </Td>
+                                    <Td muted>{order.customer_email ?? '—'}</Td>
+                                    <Td align="right">{order.currency} {order.total?.toLocaleString() ?? '—'}</Td>
+                                    <Td><Badge tone={orderStatusTone(order.status)}>{order.status ?? '—'}</Badge></Td>
+                                    <Td><Badge tone={fulfillmentTone(order.fulfillment_status)}>{order.fulfillment_status ?? '—'}</Badge></Td>
+                                    <Td align="right" muted>{timeAgo(order.created_at, now)}</Td>
+                                </Tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
         </div>
     )
 }

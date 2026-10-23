@@ -1,6 +1,14 @@
 // components/subscriptions-client.tsx
 'use client'
 import { useState } from 'react'
+import { PageHeader } from '@/components/admin/ui/page-header'
+import { Panel } from '@/components/admin/ui/panel'
+import { Badge, subscriptionStatusTone } from '@/components/admin/ui/badge'
+import { Button } from '@/components/admin/ui/button'
+import { SelectField, Toolbar } from '@/components/admin/ui/fields'
+import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
+import { EmptyState } from '@/components/admin/ui/empty-state'
+import { Notice } from '@/components/admin/ui/notice'
 
 type Subscription = {
     id: string
@@ -21,9 +29,12 @@ type Subscription = {
 export default function SubscriptionsClient({ subscriptions }: { subscriptions: Subscription[] }) {
     const [rows, setRows] = useState(subscriptions)
     const [loading, setLoading] = useState<string | null>(null)
+    const [statusFilter, setStatusFilter] = useState('')
+    const [error, setError] = useState<string | null>(null)
 
     async function activate(subId: string, storeId: string) {
         setLoading(subId)
+        setError(null)
         const res = await fetch('/api/admin/subscriptions/activate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -33,93 +44,82 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
             setRows(prev => prev.map(r =>
                 r.id === subId ? { ...r, status: 'active', stores: r.stores ? { ...r.stores, is_pro: true } : null } : r
             ))
+        } else {
+            const data = await res.json().catch(() => null)
+            setError(data?.error ?? 'Could not activate that subscription')
         }
         setLoading(null)
     }
 
-    const statusColor: Record<string, string> = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        active: 'bg-green-100 text-green-800',
-        cancelled: 'bg-muted text-muted-foreground',
-        expired: 'bg-red-100 text-red-800',
-    }
+    const pending = rows.filter(r => r.status === 'pending').length
+    const filtered = rows.filter(r => !statusFilter || r.status === statusFilter)
 
     return (
-        <div className="max-w-5xl space-y-6">
-            <div>
-                <h1 className="text-2xl font-semibold text-foreground">Subscriptions</h1>
-                <p className="text-sm text-muted-foreground mt-1">{rows.length} total — manually activate after confirming payment</p>
-            </div>
+        <div className="mx-auto w-full max-w-6xl space-y-6">
+            <PageHeader
+                title="Subscriptions"
+                description={`${rows.length.toLocaleString()} total${pending ? ` · ${pending} pending` : ''} — activate manually after confirming payment`}
+            />
 
-                <div className="rounded-lg border border-border overflow-hidden">
-                    <table className="w-full text-sm">
-                        <thead className="bg-muted text-muted-foreground">
+            <Toolbar>
+                <SelectField value={statusFilter} onChange={setStatusFilter} label="Filter by status">
+                    <option value="">All statuses</option>
+                    <option value="pending">Pending</option>
+                    <option value="active">Active</option>
+                    <option value="cancelled">Cancelled</option>
+                    <option value="expired">Expired</option>
+                </SelectField>
+            </Toolbar>
+
+            {error && <Notice tone="error">{error}</Notice>}
+
+            <Panel flush>
+                {filtered.length === 0 ? (
+                    <EmptyState icon="subscriptions" title="No subscriptions" description={statusFilter ? 'Nothing has that status.' : 'Subscriptions will appear here when stores upgrade.'} />
+                ) : (
+                    <Table>
+                        <thead>
                             <tr>
-                                <th className="text-left px-4 py-3 font-medium">Store</th>
-                                <th className="text-left px-4 py-3 font-medium">Amount</th>
-                                <th className="text-left px-4 py-3 font-medium">Status</th>
-                                <th className="text-left px-4 py-3 font-medium">Order ID</th>
-                                <th className="text-left px-4 py-3 font-medium">Date</th>
-                                <th className="text-left px-4 py-3 font-medium">Action</th>
+                                <Th>Store</Th>
+                                <Th align="right">Amount</Th>
+                                <Th>Status</Th>
+                                <Th>Reference</Th>
+                                <Th>Created</Th>
+                                <Th align="right">Action</Th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
-                            {rows.map(sub => (
-                                <tr key={sub.id} className="bg-background hover:bg-muted/40 transition-colors">
-                                    <td className="px-4 py-3">
-                                        <a
-                                            href={`/store/${sub.stores?.slug}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="font-medium text-foreground hover:text-primary hover:underline"
-                                        >
-                                            {sub.stores?.name ?? '—'}
-                                        </a>
-                                        <p className="text-xs text-muted-foreground">{sub.stores?.slug}</p>
-                                    </td>
-                                    <td className="px-4 py-3 font-mono">
-                                        {sub.currency} {sub.amount.toLocaleString()}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[sub.status] ?? 'bg-muted text-muted-foreground'}`}>
-                                            {sub.status}
-                                        </span>
-                                    </td>
-                                    <td className="px-4 py-3 font-mono text-xs text-muted-foreground">
-                                        {sub.google_play_order_id ?? '—'}
-                                    </td>
-                                    <td className="px-4 py-3 text-muted-foreground text-xs">
-                                        {new Date(sub.created_at).toLocaleDateString('en-KE', {
-                                            day: 'numeric', month: 'short', year: 'numeric',
-                                            hour: '2-digit', minute: '2-digit'
-                                        })}
-                                    </td>
-                                    <td className="px-4 py-3">
-                                        {sub.status !== 'active' && sub.stores && (
-                                            <button
-                                                onClick={() => activate(sub.id, sub.stores!.id)}
-                                                disabled={loading === sub.id}
-                                                className="text-xs px-3 py-1.5 rounded-md bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors"
-                                            >
+                        <tbody>
+                            {filtered.map(sub => (
+                                <Tr key={sub.id}>
+                                    <Td>
+                                        {sub.stores?.slug ? (
+                                            <a href={`/store/${sub.stores.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:text-primary hover:underline underline-offset-4">
+                                                {sub.stores.name}
+                                            </a>
+                                        ) : <span className="font-medium">{sub.stores?.name ?? '—'}</span>}
+                                        <p className="font-mono text-[11px] text-muted-foreground">{sub.stores?.slug}</p>
+                                    </Td>
+                                    <Td align="right">{sub.currency} {sub.amount.toLocaleString()}</Td>
+                                    <Td><Badge tone={subscriptionStatusTone(sub.status)}>{sub.status}</Badge></Td>
+                                    <Td muted><span className="font-mono text-[12px]">{sub.google_play_order_id ?? '—'}</span></Td>
+                                    <Td muted>
+                                        {new Date(sub.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </Td>
+                                    <Td align="right">
+                                        {sub.status !== 'active' && sub.stores ? (
+                                            <Button size="sm" variant="primary" onClick={() => activate(sub.id, sub.stores!.id)} disabled={loading === sub.id}>
                                                 {loading === sub.id ? 'Activating…' : 'Activate Pro'}
-                                            </button>
-                                        )}
-                                        {sub.status === 'active' && (
-                                            <span className="text-xs text-muted-foreground">✓ Active</span>
-                                        )}
-                                    </td>
-                                </tr>
+                                            </Button>
+                                        ) : sub.status === 'active' ? (
+                                            <span className="text-[12px] text-muted-foreground">Active</span>
+                                        ) : null}
+                                    </Td>
+                                </Tr>
                             ))}
-                            {rows.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground text-sm">
-                                        No subscriptions yet
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
-                    </table>
-                </div>
+                    </Table>
+                )}
+            </Panel>
         </div>
     )
 }
