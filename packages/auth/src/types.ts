@@ -56,7 +56,19 @@ export interface LoginEvent {
  * The contract every auth provider adapter implements. Swapping providers
  * means writing one of these and changing the export in index.ts.
  */
+/** One account at the identity provider, as the admin tools see it. `id` is the canonical AuthUser.id. */
+export interface IdentityUser {
+    /** AuthUser.id: the legacy external id when linked, otherwise the provider id. */
+    id: string
+    email: string
+    name?: string
+    createdAt: string
+    lastSignInAt: string | null
+}
+
 export interface AuthProviderAdapter {
+    /** Every account at the identity provider (admin tooling only; paginates internally). */
+    listUsers(): Promise<IdentityUser[]>
     /** Resolve the current session. `req` is passed in API routes. */
     getSession(req?: NextRequest): Promise<AuthSession | null>
     /**

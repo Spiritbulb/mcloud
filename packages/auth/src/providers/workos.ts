@@ -15,7 +15,7 @@ import {
 } from '@workos-inc/authkit-nextjs'
 import { NextResponse, type NextRequest } from 'next/server'
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
-import type { AuthProviderAdapter, AuthSession, AuthUser, LoginEvent, NativeAuthTokens } from '../types'
+import type { AuthProviderAdapter, AuthSession, AuthUser, IdentityUser, LoginEvent, NativeAuthTokens } from '../types'
 import { formatDevice, formatRelativeTime } from '../format'
 
 // ── Bearer-token verification (mobile) ────────────────────────────────────────
@@ -127,6 +127,28 @@ async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
 }
 
 export const workosProvider: AuthProviderAdapter = {
+    async listUsers(): Promise<IdentityUser[]> {
+        const out: IdentityUser[] = []
+        let after: string | undefined
+        // Bounded so a pagination bug can never spin forever (50 x 100 users).
+        for (let page = 0; page < 50; page++) {
+            const res = await getWorkOS().userManagement.listUsers({ limit: 100, ...(after ? { after } : {}) })
+            for (const u of res.data) {
+                const user = u as unknown as WorkOSUserish & { createdAt: string; lastSignInAt?: string | null }
+                out.push({
+                    id: mapUser(user).id,
+                    email: user.email,
+                    name: mapUser(user).name,
+                    createdAt: user.createdAt,
+                    lastSignInAt: user.lastSignInAt ?? null,
+                })
+            }
+            after = res.listMetadata?.after ?? undefined
+            if (!after) break
+        }
+        return out
+    },
+
     async getSession(): Promise<AuthSession | null> {
         // Reads the session from the request headers that prepareMiddleware injected
         // (works in server components, actions, and API routes — all run after the

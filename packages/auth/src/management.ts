@@ -3,8 +3,13 @@
 // own DB writes (Supabase) stay in the calling server actions; these only sync
 // the change to / read it from the identity provider.
 import { provider } from './index'
-import type { AuthUser, LoginEvent, NativeAuthTokens } from './types'
+import type { AuthUser, IdentityUser, LoginEvent, NativeAuthTokens } from './types'
 import type { NextRequest } from 'next/server'
+
+/** Every account at the identity provider, for admin tooling. */
+export function listIdentityUsers(): Promise<IdentityUser[]> {
+    return provider.listUsers()
+}
 
 /** Sync display name and/or avatar to the identity provider. */
 export function updateUserProfile(id: string, data: { name?: string; avatarUrl?: string }): Promise<void> {

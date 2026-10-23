@@ -6,6 +6,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { redeemTicket } from '../../api/_handoff/tickets'
 import { createSessionFromTokens } from '@mcloud/auth/server'
+import { ensureUserRow } from '@mcloud/auth/callback'
 
 // `handoff=failed` is the loop breaker: /auth/login normally bounces straight back to the
 // spiritb handoff, which mints a new ticket and lands here again. With this flag the login
@@ -28,6 +29,16 @@ export async function GET(req: NextRequest) {
     // the session cookie automatically.
     const user = await createSessionFromTokens(redeemed.tokens, req)
     if (!user) return NextResponse.redirect(loginUrl)
+
+    // Mirror the identity into `users` before anything FKs to it (org/store creation).
+    // Spiritbulb's Google sign-in talks to WorkOS directly and never touches MCloud, so
+    // this handoff is the first time MCloud sees that person. Idempotent; a failure here
+    // must not strand a signed-in user on the login page, so log and carry on.
+    try {
+        await ensureUserRow(user)
+    } catch (err) {
+        console.error('[handoff] ensureUserRow failed', err)
+    }
 
     // redeemTicket already sanitized redirect_to at mint; resolve against our origin.
     const dest = new URL(redeemed.redirectTo, req.nextUrl.origin)
