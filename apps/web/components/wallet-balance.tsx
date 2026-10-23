@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
+import { Icon } from '@mcloud/ui/kit/icon'
 import { WalletTopupModal } from './topup-modal'
 
 function formatKes(amount: number) {
@@ -87,12 +88,7 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
         aria-label={ariaLabel}
         title={ariaLabel}
       >
-        <span
-          className="material-symbols-outlined text-[16px] leading-none"
-          aria-hidden="true"
-        >
-          account_balance_wallet
-        </span>
+        <Icon name="account_balance_wallet" size={15} className={isLow ? undefined : 'text-muted-foreground'} />
 
         <span className="whitespace-nowrap">
           {isLow && !loading && balanceKes !== null ? 'Low: ' : null}
@@ -115,10 +111,11 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
 }
 
 function cnPill(isLow: boolean) {
+  // Kit button shape (h-7, rounded-md); amber only when the balance is low.
   const base =
-    'flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2'
+    'flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
 
   return isLow
-    ? `${base} bg-amber-500/10 text-amber-600 hover:bg-amber-500/15 dark:text-amber-400`
-    : `${base} text-foreground hover:bg-muted`
+    ? `${base} border-amber-300/70 bg-amber-50/60 text-amber-800 hover:bg-amber-100/60 dark:border-amber-500/30 dark:bg-amber-500/[0.06] dark:text-amber-300`
+    : `${base} border-border bg-card text-foreground hover:bg-muted/60`
 }

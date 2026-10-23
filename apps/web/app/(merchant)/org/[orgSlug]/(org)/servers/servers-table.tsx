@@ -1,22 +1,22 @@
 // apps/web/app/org/[orgSlug]/servers/servers-table.tsx
 import Link from 'next/link'
+import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
 import type { UpcloudServerDetail } from '@/lib/upcloud'
 import { CopyableIp } from '@/components/copy'
 
 type ServerRow = UpcloudServerDetail
 
-const STATE_STYLES: Record<string, string> = {
-    started: 'bg-green-100 text-green-700',
-    stopped: 'bg-neutral-200 text-neutral-600',
-    maintenance: 'bg-amber-100 text-amber-700',
-    error: 'bg-red-100 text-red-700',
+const STATE_TONE: Record<string, BadgeTone> = {
+    started: 'success',
+    stopped: 'neutral',
+    maintenance: 'warning',
+    error: 'danger',
 }
 
 function publicIp(server: ServerRow) {
     return server.ip_addresses?.ip_address.find((ip) => ip.access === 'public' && ip.family === 'IPv4')?.address
 }
-
-
 
 export default function ServersTable({
     orgSlug,
@@ -27,39 +27,34 @@ export default function ServersTable({
     canManage: boolean
 }) {
     return (
-        <div className="overflow-hidden">
-            <table className="w-full text-sm border border-border ">
-                <thead className="text-left text-xs uppercase text-primary-foreground bg-primary">
-                    <tr>
-                        <th className="px-4 py-2 font-medium">Title</th>
-                        <th className="px-4 py-2 font-medium">Zone</th>
-                        <th className="px-4 py-2 font-medium">Plan</th>
-                        <th className="px-4 py-2 font-medium">State</th>
-                        <th className="px-4 py-2 font-medium">IP Address</th>
-                    </tr>
-                </thead>
-                <tbody className="divide-y divide-[var(--md-sys-color-outline-variant)]/50">
-                    {servers.map((s) => (
-                        <tr key={s.uuid} className="hover:bg-muted transition-colors">
-                            <td className="px-4 py-3 font-medium text-foreground">
-                                <Link href={`/org/${orgSlug}/servers/${s.uuid}`} className="hover:underline">
+        <Table>
+            <thead>
+                <tr>
+                    <Th>Server</Th>
+                    <Th>Zone</Th>
+                    <Th>Plan</Th>
+                    <Th>State</Th>
+                    <Th>IP address</Th>
+                </tr>
+            </thead>
+            <tbody>
+                {servers.map((s) => {
+                    const ip = publicIp(s)
+                    return (
+                        <Tr key={s.uuid}>
+                            <Td>
+                                <Link href={`/org/${orgSlug}/servers/${s.uuid}`} className="font-medium hover:underline">
                                     {s.title}
                                 </Link>
-                            </td>
-                            <td className="px-4 py-3 text-muted-foreground">{s.zone}</td>
-                            <td className="px-4 py-3 text-muted-foreground">{s.plan}</td>
-                            <td className="px-4 py-3">
-                                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STATE_STYLES[s.state] ?? 'bg-neutral-100 text-neutral-600'}`}>
-                                    {s.state}
-                                </span>
-                            </td>
-                            <td className="px-4 py-3 cursor-pointer">
-    {publicIp(s) ? <CopyableIp ip={publicIp(s)!} /> : '—'}
-</td>
-                        </tr>
-                    ))}
-                </tbody>
-            </table>
-        </div>
+                            </Td>
+                            <Td label="Zone" muted>{s.zone}</Td>
+                            <Td label="Plan" muted>{s.plan}</Td>
+                            <Td label="State"><Badge tone={STATE_TONE[s.state] ?? 'neutral'}>{s.state}</Badge></Td>
+                            <Td label="IP address">{ip ? <CopyableIp ip={ip} /> : '—'}</Td>
+                        </Tr>
+                    )
+                })}
+            </tbody>
+        </Table>
     )
 }

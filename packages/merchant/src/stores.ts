@@ -181,7 +181,10 @@ export async function listOrgStores(orgSlug: string, userId: string): Promise<Or
     return {
         error: null,
         orgId: org.id,
-        stores: list.map((s) => ({ ...s, is_pro: isPaidPlan(plans.get(s.id) ?? 'free') })),
+        stores: list.map((s) => {
+            const plan = plans.get(s.id) ?? 'free'
+            return { ...s, plan, is_pro: isPaidPlan(plan) }
+        }),
         role,
     }
 }

@@ -2,17 +2,13 @@ import { redirect, notFound } from 'next/navigation'
 import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
-import OrgShell from '../../org-shell'
-import { cn } from '@mcloud/ui/utils'
+import { Badge } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
 
-function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
-    return (
-        <span className={cn('material-symbols-outlined select-none leading-none', className)}
-            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}>
-            {icon}
-        </span>
-    )
-}
+// Placeholder: nothing here can be configured yet, so the page is not linked from the org nav.
 
 const INTEGRATIONS = [
     {
@@ -81,7 +77,7 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
     const supabase = await createClient()
     const { data: org } = await supabase
         .from('orgs')
-        .select('id, name, slug, logo_url, type, owner_id')
+        .select('id')
         .eq('slug', orgSlug)
         .single()
 
@@ -96,70 +92,32 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
 
     if (!membership) notFound()
 
-    const { data: userRow } = await supabase.from('users').select('name, email, avatar_url').eq('id', session.user.id).single()
-    const shellUser = {
-        name: userRow?.name ?? session.user.name ?? 'Account',
-        email: userRow?.email ?? session.user.email ?? '',
-        avatarUrl: userRow?.avatar_url ?? undefined,
-    }
-
+    // The layout already renders the org shell; this page is only its content.
     return (
-        <OrgShell org={org} user={shellUser} orgSlug={orgSlug}>
-            <div className="max-w-3xl mx-auto space-y-8">
-                <div>
-                    <h1 className="text-[16px] font-semibold text-foreground">Integrations</h1>
-                    <p className="text-[12px] text-muted-foreground mt-0.5">
-                        Connect third-party services to your organization.
-                    </p>
-                </div>
+        <div className="space-y-6">
+            <PageHeader title="Integrations" description="Connect third-party services to your organization." />
 
-                {CATEGORIES.map(category => (
-                    <section key={category} className="space-y-3">
-                        <h2 className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
-                            {category}
-                        </h2>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                            {INTEGRATIONS.filter(i => i.category === category).map(integration => (
-                                <div
-                                    key={integration.id}
-                                    className="relative flex items-start gap-4 rounded-xl border border-border bg-background p-4"
-                                >
-                                    <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center shrink-0">
-                                        <MSO
-                                            icon={integration.icon}
-                                            className="text-[20px] text-primary"
-                                            fill={1}
-                                        />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2">
-                                            <p className="text-[13px] font-medium text-foreground">
-                                                {integration.name}
-                                            </p>
-                                            {integration.comingSoon && (
-                                                <span className="text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded-full bg-muted text-muted-foreground">
-                                                    Soon
-                                                </span>
-                                            )}
-                                        </div>
-                                        <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                                            {integration.description}
-                                        </p>
-                                    </div>
-                                    {!integration.comingSoon && (
-                                        <button
-                                            className="shrink-0 h-7 px-3 rounded-full border border-border text-[12px] text-muted-foreground hover:bg-muted transition-colors"
-                                            disabled
-                                        >
-                                            Configure
-                                        </button>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    </section>
-                ))}
-            </div>
-        </OrgShell>
+            {CATEGORIES.map(category => (
+                <Panel key={category} title={category} flush>
+                    <ul className="divide-y divide-border">
+                        {INTEGRATIONS.filter(i => i.category === category).map(integration => (
+                            <li key={integration.id} className="flex items-start gap-3 px-4 py-3">
+                                <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-muted">
+                                    <Icon name={integration.icon} size={17} className="text-muted-foreground" />
+                                </span>
+                                <span className="min-w-0 flex-1">
+                                    <span className="flex items-center gap-2">
+                                        <span className="text-[13px] font-medium text-foreground">{integration.name}</span>
+                                        {integration.comingSoon && <Badge>Soon</Badge>}
+                                    </span>
+                                    <span className="mt-0.5 block text-[12px] text-muted-foreground">{integration.description}</span>
+                                </span>
+                                {!integration.comingSoon && <Button size="sm" disabled>Configure</Button>}
+                            </li>
+                        ))}
+                    </ul>
+                </Panel>
+            ))}
+        </div>
     )
 }

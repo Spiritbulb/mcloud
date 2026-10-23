@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { AppShell, ContextSwitcher } from '@mcloud/ui/kit/app-shell'
-import { activeNavId, findNavItem, type ShellNavSection } from '@mcloud/ui/kit/nav-logic'
+import { activeNavId, findNavItem, normalizePath, type ShellNavSection } from '@mcloud/ui/kit/nav-logic'
 import { WalletBalancePill } from '@/components/wallet-balance'
 import { StorefrontMoveBanner } from './storefront-move-banner'
 
@@ -39,7 +39,7 @@ export function orgSections(orgSlug: string): ShellNavSection[] {
             label: 'Account',
             items: [
                 { id: 'billing', label: 'Billing', icon: 'credit_card', href: `${base}/billing` },
-                { id: 'integrations', label: 'Integrations', icon: 'link', href: `${base}/integrations` },
+                // /integrations exists but is a placeholder (nothing can be configured yet), so it is not linked.
                 { id: 'settings', label: 'Settings', icon: 'settings', href: `${base}/settings` },
             ],
         },
@@ -60,8 +60,14 @@ export default function OrgShell({
     const pathname = usePathname()
     const { resolvedTheme, setTheme } = useTheme()
     const sections = orgSections(orgSlug)
-    const activeId = activeNavId(sections, pathname, 'home')
+    // Overview only on the org root itself; a page with no nav entry (e.g. /integrations)
+    // highlights nothing rather than claiming to be Overview.
+    const path = normalizePath(pathname)
+    const matched = activeNavId(sections, path)
+    const activeId = matched === 'home' && path !== `/org/${orgSlug}` ? undefined : matched
     const active = findNavItem(sections, activeId)
+    const segment = path.split('/')[3] ?? ''
+    const pageLabel = active?.label ?? (segment ? segment[0].toUpperCase() + segment.slice(1) : 'Overview')
 
     return (
         <AppShell
@@ -71,7 +77,7 @@ export default function OrgShell({
             context={<ContextSwitcher name={org.name} detail="Organization" logo={org.logo_url} />}
             user={user}
             signOutHref="/auth/logout"
-            crumbs={[{ label: org.name, href: `/org/${orgSlug}` }, { label: active?.label ?? 'Overview' }]}
+            crumbs={[{ label: org.name, href: `/org/${orgSlug}` }, { label: pageLabel }]}
             actions={<WalletBalancePill orgSlug={orgSlug} />}
             banner={<StorefrontMoveBanner />}
             onToggleTheme={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
