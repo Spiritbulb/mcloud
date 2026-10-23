@@ -18,6 +18,8 @@ interface PaymentSettingsProps {
     storeId: string
     slug: string
     plan: Plan
+    /** The store's organization, named when the store uses its org-wide M-PESA details. */
+    orgName: string
 }
 
 type Manual = { enabled: boolean; type: 'till' | 'paybill'; number: string; account: string }
@@ -34,7 +36,7 @@ function ExternalLink({ href, children }: { href: string; children: React.ReactN
     )
 }
 
-export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
+export default function PaymentSettings({ slug, plan, orgName }: PaymentSettingsProps) {
     const [loading, setLoading] = useState(true)
     // A failed load must not fall through to the empty form: it would read as "nothing set up"
     // and a save from there would overwrite the real settings.
@@ -46,6 +48,9 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
 
     const [manual, setManual] = useState<Manual>({ enabled: false, type: 'till', number: '', account: '' })
     const [savedManual, setSavedManual] = useState(manual)
+    // True while the store has no M-PESA settings of its own and shows its organization's
+    // (org_integrations), which apply to every store in the org that has not set its own.
+    const [inherited, setInherited] = useState(false)
 
     // Daraja M-PESA STK Push. Secrets are never sent back; `stored` says which ones are saved.
     const [darajaEnabled, setDarajaEnabled] = useState(false)
@@ -78,6 +83,7 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
                 setDarajaEnabled(mpesa?.darajaEnabled ?? false)
                 setShortcode(mpesa?.shortcode ?? '')
                 setStored({ consumerKey: !!mpesa?.hasConsumerKey, consumerSecret: !!mpesa?.hasConsumerSecret, passkey: !!mpesa?.hasPasskey })
+                setInherited(!!mpesa?.inheritedFromOrg)
                 setLoadFailed(false)
             })
             .catch((err) => {
@@ -103,14 +109,10 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
                 body: JSON.stringify({
                     provider: 'mpesa',
                     data: {
-                        enabled: savedManual.enabled,
-                        ...(which === 'manual' && {
-                            enabled: manual.enabled,
-                            mpesa_type: manual.type,
-                            ...(manual.type === 'till'
-                                ? { mpesa_till: manual.number.trim() }
-                                : { mpesa_paybill: manual.number.trim(), mpesa_account: manual.account.trim() }),
-                        }),
+                        // The manual details go with every save: on a store still using its org's
+                        // details, the first save creates the store's own settings, and a Daraja-only
+                        // save would otherwise create them without the till or paybill.
+                        ...manualFields(which === 'manual' ? manual : savedManual),
                         darajaEnabled: daraja.enabled,
                         ...(daraja.withSecrets && {
                             ...(consumerKey.trim() && { consumerKey: consumerKey.trim() }),
@@ -125,6 +127,7 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
                 const body = await res.json().catch(() => null)
                 throw new Error(typeof body?.error === 'string' ? body.error : 'Could not save. Try again.')
             }
+            setInherited(false)
             if (which === 'manual') {
                 const clean = { ...manual, number: manual.number.trim(), account: manual.account.trim() }
                 setManual(clean)
@@ -149,6 +152,16 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
             return false
         } finally {
             setSaving(null)
+        }
+    }
+
+    function manualFields(m: Manual) {
+        return {
+            enabled: m.enabled,
+            mpesa_type: m.type,
+            ...(m.type === 'till'
+                ? { mpesa_till: m.number.trim() }
+                : { mpesa_paybill: m.number.trim(), mpesa_account: m.account.trim() }),
         }
     }
 
@@ -226,6 +239,12 @@ export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
                     </Button>
                 }
             >
+                {inherited && (
+                    <Notice className="mb-4">
+                        These are <strong>{orgName}</strong>&apos;s M-PESA details, shared by every store in the organization that has not set its own.
+                        Saving here gives this store its own details; {orgName} and its other stores keep theirs.
+                    </Notice>
+                )}
                 {manual.enabled ? (
                     <div className="space-y-4">
                         <div role="radiogroup" aria-label="Payment type" className="inline-flex rounded-md border border-border p-0.5">
