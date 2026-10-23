@@ -1,1486 +1,466 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { getPlanEurPrice } from '@/lib/pricing-dc'
+import Link from 'next/link'
+import { Button, buttonClass } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { Field, FormGrid, Select, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { Skeleton, Spinner } from '@mcloud/ui/kit/skeleton'
+import { Tabs } from '@mcloud/ui/kit/tabs'
 import { cn } from '@mcloud/ui/utils'
+import { getPlanEurPrice } from '@/lib/pricing-dc'
+import { centsToKes, hourlyRateCentsForMonthlyKes } from '@/lib/wallet-math'
+import 'flag-icons/css/flag-icons.min.css'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@mcloud/ui/select'
-import 'flag-icons/css/flag-icons.min.css';
+    GREEN_ZONES, OS_FAMILIES, ZONE_META, DEFAULT_ZONE,
+    defaultZone, formatKes, formatMemory, isRecommendedZone, isValidHostname, plansInTier, planUseCase, sortZones, templatesByFamily,
+    type OsFamily, type Plan, type PlanTier, type Template, type Zone,
+} from './new-server-logic'
 
-interface FlagProps {
-  countryCode: string; // e.g., "us", "fr", "gb" (must be lowercase ISO 3166-1 alpha-2)
-}
+type Options = { zones: Zone[]; plans: Plan[]; templates: Template[]; kesPrices: Record<string, number> }
 
-type Zone = {
-  id: string
-  description: string
-}
-
-type Plan = {
-  name: string
-  core_number: number
-  memory_amount: number
-  storage_size: number
-}
-
-type Template = {
-  uuid: string
-  title: string
-  os: string
-}
-
-type PlanTier = 'Starter' | 'Premium'
-
-type ZoneMeta = {
-  country: string
-  city: string
-  flag: string
-  region?: string
-}
-
-const DEFAULT_ZONE = 'nl-ams1'
-const KENYA_RECOMMENDED_ZONES = ['nl-ams1', 'de-fra1', 'uk-lon1'] as const
-
-const GREEN_ZONES = new Set([
-  'de-fra1',
-  'es-mad1',
-  'fi-hel1',
-  'fi-hel2',
-  'dk-cph1',
-  'nl-ams1',
-  'no-svg1',
-  'pl-waw1',
-  'se-sto1',
-  'sg-sin1',
-  'uk-lon1',
-])
-
-const ZONE_META: Record<string, ZoneMeta> = {
-  'au-syd1': {
-    flag: 'au',
-    country: 'Australia',
-    city: 'Sydney',
-    region: 'Asia-Pacific',
-  },
-  'de-fra1': {
-    flag: 'de',
-    country: 'Germany',
-    city: 'Frankfurt',
-    region: 'Europe',
-  },
-  'dk-cph1': {
-    flag: 'dk',
-    country: 'Denmark',
-    city: 'Copenhagen',
-    region: 'Europe',
-  },
-  'es-mad1': {
-    flag: 'es',
-    country: 'Spain',
-    city: 'Madrid',
-    region: 'Europe',
-  },
-  'fi-hel1': {
-    flag: 'fi',
-    country: 'Finland',
-    city: 'Helsinki',
-    region: 'Europe',
-  },
-  'fi-hel2': {
-    flag: 'fi',
-    country: 'Finland',
-    city: 'Helsinki',
-    region: 'Europe',
-  },
-  'nl-ams1': {
-    flag: 'nl',
-    country: 'Netherlands',
-    city: 'Amsterdam',
-    region: 'Europe',
-  },
-  'no-svg1': {
-    flag: 'no',
-    country: 'Norway',
-    city: 'Stavanger',
-    region: 'Europe',
-  },
-  'pl-waw1': {
-    flag: 'pl',
-    country: 'Poland',
-    city: 'Warsaw',
-    region: 'Europe',
-  },
-  'se-sto1': {
-    flag: 'se',
-    country: 'Sweden',
-    city: 'Stockholm',
-    region: 'Europe',
-  },
-  'sg-sin1': {
-    flag: 'sg',
-    country: 'Singapore',
-    city: 'Singapore',
-    region: 'Asia-Pacific',
-  },
-  'uk-lon1': {
-    flag: 'gb',
-    country: 'United Kingdom',
-    city: 'London',
-    region: 'Europe',
-  },
-  'us-chi1': {
-    flag: 'us',
-    country: 'United States',
-    city: 'Chicago',
-    region: 'North America',
-  },
-  'us-nyc1': {
-    flag: 'us',
-    country: 'United States',
-    city: 'New York',
-    region: 'North America',
-  },
-  'us-sjo1': {
-    flag: 'us',
-    country: 'United States',
-    city: 'San Jose',
-    region: 'North America',
-  },
-}
-
-
-
-const OS_FAMILIES = [
-  {
-    key: 'ubuntu',
-    label: 'Ubuntu',
-    recommended: true,
-    icon: '/ubuntu-logo.png',
-  },
-  {
-    key: 'debian',
-    label: 'Debian',
-    recommended: false,
-    icon: '/debian-logo.png',
-  },
-  {
-    key: 'fedora',
-    label: 'Fedora',
-    recommended: false,
-    icon: '/fedora-logo.png',
-  },
-  {
-    key: 'centos',
-    label: 'CentOS',
-    recommended: false,
-    icon: '/centos-logo.png',
-  },
-  {
-    key: 'rocky',
-    label: 'Rocky Linux',
-    recommended: false,
-    icon: '/Rocky-Linux-logo.svg',
-  },
-  {
-    key: 'almalinux',
-    label: 'AlmaLinux',
-    recommended: false,
-    icon: '/almaLinux-logo.png',
-  },
-] as const
-
-const LINUX_KEYWORDS = [
-  'ubuntu',
-  'debian',
-  'fedora',
-  'centos',
-  'rocky',
-  'almalinux',
+const TIERS: { id: PlanTier; label: string; description: string; from: string }[] = [
+    { id: 'Starter', label: 'Starter', description: 'For sites, APIs, bots and development work.', from: 'STARTER-1xCPU-1GB' },
+    { id: 'Premium', label: 'Premium', description: 'For growing production workloads and databases.', from: 'PREMIUM-1xCPU-1GB' },
 ]
 
-function planTier(name: string): PlanTier | 'Other' {
-  if (name.startsWith('PREMIUM-')) return 'Premium'
-  if (name.startsWith('STARTER-')) return 'Starter'
-  return 'Other'
-}
-
-function osFamilyOf(title: string) {
-  const normalizedTitle = title.toLowerCase()
-
-  return (
-    OS_FAMILIES.find((family) => normalizedTitle.includes(family.key))?.key ??
-    null
-  )
-}
-
-function formatMemory(memoryInMb: number) {
-  const memoryInGb = memoryInMb / 1024
-
-  return `${memoryInGb.toFixed(memoryInMb % 1024 === 0 ? 0 : 1)} GB`
-}
-
-function formatKes(amount?: number) {
-  if (!amount) return '—'
-
-  return `KSh ${amount.toLocaleString()}`
-}
-
-function planUseCase(plan: Plan) {
-  const memoryInGb = plan.memory_amount / 1024
-
-  if (plan.core_number <= 1 && memoryInGb <= 1) {
-    return 'Small sites, test environments, and bots'
-  }
-
-  if (plan.core_number <= 2 && memoryInGb <= 4) {
-    return 'Production websites, APIs, and business apps'
-  }
-
-  if (plan.core_number <= 4 && memoryInGb <= 8) {
-    return 'Growing applications, workers, and databases'
-  }
-
-  return 'Demanding workloads and high-traffic services'
-}
-
-function MSO({
-  icon,
-  className,
-}: {
-  icon: string
-  className?: string
+/** A large selectable card (zone, plan, OS). A radio in a group, so arrow keys are not expected. */
+function OptionCard({ selected, onSelect, className, children }: {
+    selected: boolean
+    onSelect: () => void
+    className?: string
+    children: React.ReactNode
 }) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'material-symbols-outlined select-none leading-none',
-        className,
-      )}
-    >
-      {icon}
-    </span>
-  )
-}
-
-function SummaryRow({
-  icon,
-  label,
-  value,
-}: {
-  icon: string
-  label: string
-  value: string
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted">
-        <MSO
-          icon={icon}
-          className="text-[15px] text-muted-foreground"
-        />
-      </span>
-
-      <div className="min-w-0">
-        <p className="text-[11px] text-muted-foreground">
-          {label}
-        </p>
-        <p className="truncate text-[13px] font-medium text-foreground">
-          {value}
-        </p>
-      </div>
-    </div>
-  )
-}
-
-function SectionHeading({
-  eyebrow,
-  title,
-  description,
-  aside,
-}: {
-  eyebrow: string
-  title: string
-  description?: string
-  aside?: React.ReactNode
-}) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div>
-        <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-          {title}
-        </h2>
-        {description && (
-          <p className="mt-1 max-w-2xl text-[13px] leading-relaxed text-muted-foreground">
-            {description}
-          </p>
-        )}
-      </div>
-
-      {aside}
-    </div>
-  )
-}
-
-export default function NewServerForm({ orgSlug }: { orgSlug: string }) {
-  const router = useRouter()
-
-  const [zones, setZones] = useState<Zone[]>([])
-  const [plans, setPlans] = useState<Plan[]>([])
-  const [templates, setTemplates] = useState<Template[]>([])
-  const [kesPrices, setKesPrices] = useState<Record<string, number>>({})
-
-  const [loadingOptions, setLoadingOptions] = useState(true)
-  const [optionsError, setOptionsError] = useState('')
-
-  const [title, setTitle] = useState('')
-  const [hostname, setHostname] = useState('')
-  const [zone, setZone] = useState('')
-  const [planTierTab, setPlanTierTab] = useState<PlanTier>('Starter')
-  const [plan, setPlan] = useState('')
-  const [osFamily, setOsFamily] = useState<string | null>(null)
-  const [templateUuid, setTemplateUuid] = useState('')
-
-  const [showAllLocations, setShowAllLocations] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [error, setError] = useState('')
-
-  const [revealKey, setRevealKey] = useState<{
-    key: string
-    hostname: string
-  } | null>(null)
-
-  const [copied, setCopied] = useState(false)
-  const [copiedSshCommand, setCopiedSshCommand] = useState(false)
-  const TIER_META: Record<
-  PlanTier,
-  {
-    description: string
-    startingPrice: string
-    icon: string
-  }
-> = {
-  Starter: {
-    description: 'For sites, APIs, bots, and development workloads',
-    startingPrice: formatKes(kesPrices['STARTER-1xCPU-1GB'] || 0) + ' /mo',
-    icon: 'rocket_launch',
-  },
-  Premium: {
-    description: 'For growing production workloads and databases',
-    startingPrice: formatKes(kesPrices['PREMIUM-1xCPU-1GB'] || 0) + ' /mo',
-    icon: 'bolt',
-  },
-}
-
-  const osTemplates = useMemo(
-    () =>
-      templates.filter((template) =>
-        LINUX_KEYWORDS.some((keyword) =>
-          template.title.toLowerCase().includes(keyword),
-        ),
-      ),
-    [templates],
-  )
-
-  const templatesByFamily = useMemo(() => {
-    const groups: Record<string, Template[]> = {}
-
-    for (const template of osTemplates) {
-      const family = osFamilyOf(template.title)
-
-      if (!family) continue
-
-      groups[family] = groups[family] ?? []
-      groups[family].push(template)
-    }
-
-    return groups
-  }, [osTemplates])
-
-  const versionsForFamily = useMemo(() => {
-    if (!osFamily) return []
-
-    return templatesByFamily[osFamily] ?? []
-  }, [osFamily, templatesByFamily])
-
-  const sortedZones = useMemo(() => {
-    return [...zones].sort((a, b) => {
-      const aRecommendedIndex = KENYA_RECOMMENDED_ZONES.indexOf(
-        a.id as (typeof KENYA_RECOMMENDED_ZONES)[number],
-      )
-      const bRecommendedIndex = KENYA_RECOMMENDED_ZONES.indexOf(
-        b.id as (typeof KENYA_RECOMMENDED_ZONES)[number],
-      )
-
-      const aIsRecommended = aRecommendedIndex !== -1
-      const bIsRecommended = bRecommendedIndex !== -1
-
-      if (aIsRecommended && bIsRecommended) {
-        return aRecommendedIndex - bRecommendedIndex
-      }
-
-      if (aIsRecommended) return -1
-      if (bIsRecommended) return 1
-
-      const greenDifference =
-        Number(GREEN_ZONES.has(b.id)) - Number(GREEN_ZONES.has(a.id))
-
-      if (greenDifference !== 0) return greenDifference
-
-      return a.id.localeCompare(b.id)
-    })
-  }, [zones])
-
-  const recommendedZones = useMemo(
-    () =>
-      sortedZones.filter((currentZone) =>
-        KENYA_RECOMMENDED_ZONES.includes(
-          currentZone.id as (typeof KENYA_RECOMMENDED_ZONES)[number],
-        ),
-      ),
-    [sortedZones],
-  )
-
-  const otherZones = useMemo(
-    () =>
-      sortedZones.filter(
-        (currentZone) =>
-          !KENYA_RECOMMENDED_ZONES.includes(
-            currentZone.id as (typeof KENYA_RECOMMENDED_ZONES)[number],
-          ),
-      ),
-    [sortedZones],
-  )
-
-  const plansInTab = useMemo(() => {
-    return plans
-      .filter((currentPlan) => planTier(currentPlan.name) === planTierTab)
-      .filter((currentPlan) => getPlanEurPrice(currentPlan.name) !== null)
-      .sort(
-        (a, b) =>
-          a.core_number - b.core_number ||
-          a.memory_amount - b.memory_amount ||
-          a.storage_size - b.storage_size,
-      )
-  }, [plans, planTierTab])
-
-  const selectedZone = useMemo(
-    () => zones.find((currentZone) => currentZone.id === zone),
-    [zone, zones],
-  )
-
-  const selectedZoneMeta = zone ? ZONE_META[zone] : undefined
-
-  const selectedPlan = useMemo(
-    () => plans.find((currentPlan) => currentPlan.name === plan),
-    [plan, plans],
-  )
-
-  const selectedTemplate = useMemo(
-    () =>
-      templates.find((template) => template.uuid === templateUuid),
-    [templateUuid, templates],
-  )
-
-  const derivedStorage = selectedPlan?.storage_size ?? 0
-  const monthlyPrice = selectedPlan ? kesPrices[selectedPlan.name] : undefined
-
-  const formIsComplete = Boolean(
-    title && hostname && zone && plan && templateUuid,
-  )
-
-  useEffect(() => {
-    const controller = new AbortController()
-
-    async function loadOptions() {
-      try {
-        const [zonesResponse, plansResponse, templatesResponse, pricesResponse] =
-          await Promise.all([
-            fetch('/api/upcloud/zones', { signal: controller.signal }),
-            fetch('/api/upcloud/plans', { signal: controller.signal }),
-            fetch('/api/upcloud/templates', { signal: controller.signal }),
-            fetch('/api/upcloud/plans/kes', { signal: controller.signal }),
-          ])
-
-        if (
-          !zonesResponse.ok ||
-          !plansResponse.ok ||
-          !templatesResponse.ok ||
-          !pricesResponse.ok
-        ) {
-          throw new Error('Failed to load creation options')
-        }
-
-        const [zonesData, plansData, templatesData, pricesData] =
-          await Promise.all([
-            zonesResponse.json(),
-            plansResponse.json(),
-            templatesResponse.json(),
-            pricesResponse.json(),
-          ])
-
-        setZones(zonesData.zones ?? [])
-        setPlans(plansData.plans ?? [])
-        setTemplates(templatesData.templates ?? [])
-        setKesPrices(pricesData.prices ?? {})
-      } catch (caughtError) {
-        if (
-          caughtError instanceof DOMException &&
-          caughtError.name === 'AbortError'
-        ) {
-          return
-        }
-
-        setOptionsError(
-          caughtError instanceof Error
-            ? caughtError.message
-            : 'Failed to load creation options',
-        )
-      } finally {
-        if (!controller.signal.aborted) {
-          setLoadingOptions(false)
-        }
-      }
-    }
-
-    void loadOptions()
-
-    return () => controller.abort()
-  }, [])
-
-  useEffect(() => {
-    if (zone || !zones.length) return
-
-    if (zones.some((currentZone) => currentZone.id === DEFAULT_ZONE)) {
-      setZone(DEFAULT_ZONE)
-      return
-    }
-
-    setZone(zones[0].id)
-  }, [zone, zones])
-
-  useEffect(() => {
-    if (osFamily || !templatesByFamily.ubuntu?.length) return
-
-    const ubuntuTemplate = templatesByFamily.ubuntu[0]
-
-    setOsFamily('ubuntu')
-    setTemplateUuid(ubuntuTemplate.uuid)
-  }, [osFamily, templatesByFamily])
-
-  useEffect(() => {
-    if (!plan) return
-
-    const planStillExists = plansInTab.some(
-      (currentPlan) => currentPlan.name === plan,
-    )
-
-    if (!planStillExists) {
-      setPlan('')
-    }
-  }, [plan, plansInTab])
-
-  function selectOsFamily(family: string) {
-    const firstTemplate = templatesByFamily[family]?.[0]
-
-    setOsFamily(family)
-
-    if (firstTemplate) {
-      setTemplateUuid(firstTemplate.uuid)
-    }
-  }
-
-  function selectPlanTier(tier: PlanTier) {
-    setPlanTierTab(tier)
-    setPlan('')
-  }
-
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-
-    if (submitting) return
-
-    if (!formIsComplete) {
-      setError('Complete all required server settings before creating the server.')
-      return
-    }
-
-    setSubmitting(true)
-    setError('')
-
-    try {
-      const response = await fetch(`/api/org/${orgSlug}/servers`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          title,
-          hostname,
-          zone,
-          plan,
-          templateUuid,
-          storageSize: derivedStorage,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error ?? 'Failed to create server')
-      }
-
-      setRevealKey({
-        key: data.privateKey,
-        hostname: data.server.hostname,
-      })
-    } catch (caughtError) {
-      setError(
-        caughtError instanceof Error
-          ? caughtError.message
-          : 'Failed to create server',
-      )
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  function downloadKey() {
-    if (!revealKey) return
-
-    const blob = new Blob([revealKey.key], {
-      type: 'text/plain',
-    })
-
-    const blobUrl = URL.createObjectURL(blob)
-    const anchor = document.createElement('a')
-
-    anchor.href = blobUrl
-    anchor.download = `${revealKey.hostname}.pem`
-    anchor.click()
-
-    URL.revokeObjectURL(blobUrl)
-  }
-
-  async function copyKey() {
-    if (!revealKey) return
-
-    await navigator.clipboard.writeText(revealKey.key)
-
-    setCopied(true)
-
-    window.setTimeout(() => {
-      setCopied(false)
-    }, 2000)
-  }
-
-  async function copySshCommand() {
-    if (!revealKey) return
-
-    await navigator.clipboard.writeText(`ssh root@${revealKey.hostname}`)
-
-    setCopiedSshCommand(true)
-
-    window.setTimeout(() => {
-      setCopiedSshCommand(false)
-    }, 2000)
-  }
-
-  if (revealKey) {
     return (
-      <div className="mx-auto max-w-xl">
-        <div className="overflow-hidden rounded-3xl border border-border bg-background shadow-sm">
-          <div className="border-b border-border bg-accent px-6 py-7 text-center">
-            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-sm">
-              <MSO icon="key" className="text-[24px]" />
-            </div>
-
-            <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-foreground">
-              Server created
-            </p>
-
-            <h2 className="mt-1 text-xl font-semibold tracking-tight text-accent-foreground">
-              Save your private key
-            </h2>
-
-            <p className="mx-auto mt-2 max-w-sm text-[13px] leading-relaxed text-accent-foreground/80">
-              This private key is shown only once. Download it before you
-              continue so you can access your server securely.
-            </p>
-          </div>
-
-          <div className="space-y-5 p-6">
-            <div className="rounded-xl border border-amber-200 bg-amber-50 px-3.5 py-3 text-[12px] leading-relaxed text-amber-900">
-              <div className="flex items-start gap-2">
-                <MSO icon="warning" className="mt-0.5 text-[17px]" />
-                <p>
-                  Store this key in a password manager or secure local folder.
-                  It cannot be displayed again after you leave this page.
-                </p>
-              </div>
-            </div>
-
-            <pre className="max-h-56 overflow-auto rounded-xl border border-border bg-muted p-4 text-[11px] leading-relaxed whitespace-pre-wrap break-all text-foreground">
-              {revealKey.key}
-            </pre>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <button
-                type="button"
-                onClick={downloadKey}
-                className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
-              >
-                <MSO icon="download" className="text-[17px]" />
-                Download .pem key
-              </button>
-
-              <button
-                type="button"
-                onClick={copyKey}
-                className="flex items-center justify-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-[13px] font-medium text-foreground transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2"
-              >
-                <MSO
-                  icon={copied ? 'check' : 'content_copy'}
-                  className="text-[17px]"
-                />
-                {copied ? 'Key copied' : 'Copy private key'}
-              </button>
-            </div>
-
-            <div className="rounded-xl border border-border bg-background p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-                    Connect with SSH
-                  </p>
-                  <code className="mt-2 block text-[13px] text-foreground">
-                    ssh root@{revealKey.hostname}
-                  </code>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={copySshCommand}
-                  className="flex shrink-0 items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[12px] font-medium text-primary transition-colors hover:bg-accent"
-                >
-                  <MSO
-                    icon={copiedSshCommand ? 'check' : 'content_copy'}
-                    className="text-[15px]"
-                  />
-                  {copiedSshCommand ? 'Copied' : 'Copy'}
-                </button>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => router.push(`/org/${orgSlug}/servers`)}
-              className="w-full rounded-xl px-4 py-2.5 text-center text-[13px] font-medium text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-            >
-              I have saved my key — continue to servers
-            </button>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  if (loadingOptions) {
-    return (
-      <div className="mx-auto flex min-h-[360px] max-w-md flex-col items-center justify-center text-center">
-        <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent">
-          <MSO
-            icon="progress_activity"
-            className="animate-spin text-[24px] text-primary"
-          />
-        </span>
-        <p className="mt-4 text-sm font-medium text-foreground">
-          Preparing server options
-        </p>
-        <p className="mt-1 text-[13px] text-muted-foreground">
-          Loading locations, plans, and operating systems…
-        </p>
-      </div>
-    )
-  }
-
-  if (optionsError) {
-    return (
-      <div className="mx-auto max-w-md rounded-2xl border border-red-200 bg-red-50 p-5 text-center">
-        <span className="mx-auto flex h-10 w-10 items-center justify-center rounded-xl bg-red-100">
-          <MSO icon="error" className="text-[21px] text-red-700" />
-        </span>
-        <h2 className="mt-3 text-sm font-semibold text-red-900">
-          We could not load server options
-        </h2>
-        <p className="mt-1 text-[13px] leading-relaxed text-red-700">
-          {optionsError}
-        </p>
         <button
-          type="button"
-          onClick={() => window.location.reload()}
-          className="mt-4 rounded-lg bg-red-700 px-3.5 py-2 text-[13px] font-medium text-white transition-opacity hover:opacity-90"
-        >
-          Try again
-        </button>
-      </div>
-    )
-  }
-
-  return (
-    <form
-      onSubmit={handleSubmit}
-      className="mx-auto max-w-6xl"
-    >
-
-      <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="min-w-0 space-y-10">
-          <section className="mt-4">
-            <SectionHeading
-              eyebrow="01 · Server details"
-              title="Name your server"
-              description="Use a recognizable title for your team and a hostname that you will use to connect."
-            />
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-              <div>
-                <label
-                  htmlFor="server-title"
-                  className="mb-1.5 block text-[13px] font-medium text-foreground"
-                >
-                  Server title
-                </label>
-
-                <input
-                  id="server-title"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  required
-                  placeholder="Production API"
-                  autoComplete="off"
-                  className="w-full bg-background px-3.5 py-2.5 text-[14px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
-                />
-
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  Visible to members of this organisation.
-                </p>
-              </div>
-
-              <div>
-                <label
-                  htmlFor="server-hostname"
-                  className="mb-1.5 block text-[13px] font-medium text-foreground"
-                >
-                  Hostname
-                </label>
-
-                <input
-                  id="server-hostname"
-                  value={hostname}
-                  onChange={(event) => setHostname(event.target.value)}
-                  required
-                  placeholder="api.example.com"
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                  className="w-full bg-background px-3.5 py-2.5 text-[14px] text-foreground outline-none transition-colors placeholder:text-muted-foreground/70 focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15"
-                />
-
-                <p className="mt-1.5 text-[11px] text-muted-foreground">
-                  For example, <code>api.example.com</code>.
-                </p>
-              </div>
-            </div>
-          </section>
-
-          <section className="mt-4">
-            <SectionHeading
-              eyebrow="02 · Location"
-              title="Choose where your server runs"
-              description="Start with the closest recommended region for Kenya, or select another location based on your customers, services, or compliance needs."
-              aside={
-                <span className="hidden items-center gap-1.5 px-2.5 py-1 text-[11px] font-medium text-green-700 sm:flex">
-                  <MSO icon="eco" className="text-[14px] pb-1" />
-                  Green
-                </span>
-              }
-            />
-
-            <div className="mt-6">
-              <div className="grid gap-3 sm:grid-rows-3">
-                {recommendedZones.map((currentZone) => {
-                  const meta = ZONE_META[currentZone.id]
-                  const isSelected = zone === currentZone.id
-                  const isKenyaDefault = currentZone.id === DEFAULT_ZONE
-                  const isFrankfurt = currentZone.id === 'de-fra1'
-
-                  return (
-                    <button
-                      key={currentZone.id}
-                      type="button"
-                      onClick={() => setZone(currentZone.id)}
-                      aria-pressed={isSelected}
-                      className={cn(
-                        'relative min-h-[80px] border-2 p-4 text-left transition-all',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
-                        isSelected
-                          ? 'border-[var(--md-sys-color-primary)]'
-                          : 'border-border hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)] hover:shadow-sm',
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <span
-  className={cn('fi', meta?.flag ? `fi-${meta.flag}` : '', 'w-6 h-4')}
-  aria-hidden="true"
-/>
-
-                        <span
-                          className={cn(
-                            'flex h-5 w-5 items-center justify-center rounded-full border-2',
-                            isSelected
-                              ? 'border-[var(--md-sys-color-primary)]'
-                              : 'border-border',
-                          )}
-                        >
-                          {isSelected && (
-                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                          )}
-                        </span>
-                        
-                      </div>
-
-                    <div className="flex justify-between">
-                      <p className="mt-4 text-sm font-semibold text-foreground">
-                        {meta?.city ?? currentZone.description}
-                      </p>
-
-                      <div className="mt-3">
-                        {isKenyaDefault ? (
-                          <span className="inline-flex rounded-full bg-primary px-2 py-1 text-[10px] font-semibold text-primary-foreground">
-                            Recommended for Kenya
-                          </span>
-                        ) : isFrankfurt ? (
-                          <span className="inline-flex rounded-full bg-[var(--md-sys-color-secondary-container)] px-2 py-1 text-[10px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">
-                            Fast alternative
-                          </span>
-                        ) : (
-                          <span className="inline-flex rounded-full bg-muted px-2 py-1 text-[10px] font-medium text-muted-foreground">
-                            Europe option
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              <div className="mt-4 bg-muted/60 p-3.5">
-                <div className="flex items-start gap-2.5">
-                  <MSO
-                    icon="info"
-                    className="mt-0.5 text-[17px] text-primary"
-                  />
-                  <p className="text-[12px] leading-relaxed text-muted-foreground">
-                    Amsterdam is the recommended default for Kenyan workloads.
-                    Frankfurt is a strong alternative and can be comparable for
-                    some ISP routes. Actual latency depends on the network your
-                    users use.
-                  </p>
-                </div>
-              </div>
-
-              {otherZones.length > 0 && (
-                <div className="mt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowAllLocations((current) => !current)}
-                    aria-expanded={showAllLocations}
-                    className="flex items-center gap-1.5 px-2 py-1.5 text-[12px] font-medium text-primary transition-colors hover:bg-accent cursor-pointer"
-                  >
-                    <MSO
-                      icon={
-                        showAllLocations ? 'expand_less' : 'expand_more'
-                      }
-                      className="text-[17px]"
-                    />
-                    {showAllLocations
-                      ? 'Hide other locations'
-                      : `Show all ${otherZones.length} other locations`}
-                  </button>
-
-                  {showAllLocations && (
-                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                      {otherZones.map((currentZone) => {
-                        const meta = ZONE_META[currentZone.id]
-                        const isSelected = zone === currentZone.id
-                        const isGreen = GREEN_ZONES.has(currentZone.id)
-
-                        return (
-                          <button
-                            key={currentZone.id}
-                            type="button"
-                            onClick={() => setZone(currentZone.id)}
-                            aria-pressed={isSelected}
-                            className={cn(
-                              'flex items-center gap-3 border p-3 text-left transition-colors cursor-pointer',
-                              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
-                              isSelected
-                                ? 'border-[var(--md-sys-color-primary)] bg-accent'
-                                : 'border-border hover:border-[var(--md-sys-color-primary)]/60 hover:bg-muted',
-                            )}
-                          >
-<span
-  className={cn('fi shrink-0', meta?.flag ? `fi-${meta.flag}` : '', 'w-5 h-4')}
-  aria-hidden="true"
-/>
-
-                            <span className="min-w-0 flex-1">
-                              <span className="flex items-center gap-1.5 text-[13px] font-semibold text-foreground">
-                                {meta?.city ?? currentZone.id.toUpperCase()}
-                                {isGreen && (
-                                  <MSO
-                                    icon="eco"
-                                    className="text-[13px] text-green-600"
-                                  />
-                                )}
-                              </span>
-                              <span className="block truncate text-[11px] text-muted-foreground">
-                                {meta?.country ?? currentZone.description}
-                              </span>
-                            </span>
-
-                            {isSelected && (
-                              <MSO
-                                icon="check_circle"
-                                className="text-[18px] text-primary"
-                              />
-                            )}
-                          </button>
-                        )
-                      })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="mt-4">
-            <SectionHeading
-              eyebrow="03 · Compute"
-              title="Choose a server plan"
-              description="Start small and scale as your application grows. Storage is included with every plan."
-            />
-
-            <div
-              className="mt-6 grid grid-cols-2 bg-muted/10 p-1"
-              role="tablist"
-              aria-label="Plan tier"
-            >
-              {(['Starter', 'Premium'] as PlanTier[]).map((tier) => {
-                const isActive = planTierTab === tier
-                const meta = TIER_META[tier]
-
-                return (
-                  <button
-                    key={tier}
-                    id={`${tier.toLowerCase()}-plans-tab`}
-                    type="button"
-                    role="tab"
-                    aria-selected={isActive}
-                    aria-controls={`${tier.toLowerCase()}-plans-panel`}
-                    onClick={() => selectPlanTier(tier)}
-                    className={cn(
-                      'px-3 py-2.5 text-left transition-all',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)]',
-                      isActive
-                        ? 'bg-background text-foreground shadow-sm'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    <span className="flex items-center gap-1.5 text-[13px] font-semibold">
-                      <MSO icon={meta.icon} className="text-[16px]" />
-                      {tier}
-                    </span>
-                    <span className="mt-0.5 block text-[10px] font-normal opacity-75">
-                      {meta.startingPrice}
-                    </span>
-                  </button>
-                )
-              })}
-            </div>
-
-            <div
-              id={`${planTierTab.toLowerCase()}-plans-panel`}
-              role="tabpanel"
-              aria-labelledby={`${planTierTab.toLowerCase()}-plans-tab`}
-              className="mt-5"
-            >
-              <p className="mb-3 text-[12px] text-muted-foreground">
-                {TIER_META[planTierTab].description}
-              </p>
-
-              <div className="grid gap-3 sm:grid-cols-2">
-                {plansInTab.map((currentPlan) => {
-                  const isSelected = plan === currentPlan.name
-                  const price = kesPrices[currentPlan.name]
-
-                  return (
-                    <button
-                      key={currentPlan.name}
-                      type="button"
-                      onClick={() => setPlan(currentPlan.name)}
-                      aria-pressed={isSelected}
-                      className={cn(
-                        'relative min-h-[190px] border p-4 text-left transition-all',
-                        'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
-                        isSelected
-                          ? 'border-[var(--md-sys-color-primary)] bg-accent shadow-sm'
-                          : 'border-border bg-background hover:-translate-y-0.5 hover:border-[var(--md-sys-color-primary)]/60 hover:shadow-sm',
-                      )}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-[14px] font-semibold text-foreground">
-                            {currentPlan.name.replace(
-                              /^(STARTER|PREMIUM)-/,
-                              '',
-                            )}
-                          </p>
-                          <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                            {planUseCase(currentPlan)}
-                          </p>
-                        </div>
-
-                        <span
-                          className={cn(
-                            'flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2',
-                            isSelected
-                              ? 'border-[var(--md-sys-color-primary)]'
-                              : 'border-border',
-                          )}
-                        >
-                          {isSelected && (
-                            <span className="h-2.5 w-2.5 rounded-full bg-primary" />
-                          )}
-                        </span>
-                      </div>
-
-                      <div className="mt-5 grid grid-cols-3 gap-2 border-y border-border/70 py-3">
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                            CPU
-                          </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
-                            {currentPlan.core_number} vCPU
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                            Memory
-                          </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
-                            {formatMemory(currentPlan.memory_amount)}
-                          </p>
-                        </div>
-
-                        <div>
-                          <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                            Storage
-                          </p>
-                          <p className="mt-0.5 text-[12px] font-semibold text-foreground">
-                            {currentPlan.storage_size} GB
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="mt-3 flex items-end justify-between gap-3">
-                        <span className="text-[11px] text-muted-foreground">
-                          Billed monthly
-                        </span>
-                        <span className="text-right text-[17px] font-bold tracking-tight text-foreground">
-                          {formatKes(price)}
-                          <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-                            / mo
-                          </span>
-                        </span>
-                      </div>
-                    </button>
-                  )
-                })}
-              </div>
-
-              {plansInTab.length === 0 && (
-                <div className="rounded-xl border border-dashed border-border px-4 py-8 text-center">
-                  <MSO
-                    icon="inventory_2"
-                    className="text-[22px] text-muted-foreground"
-                  />
-                  <p className="mt-2 text-[13px] text-muted-foreground">
-                    No plans are currently available in this tier.
-                  </p>
-                </div>
-              )}
-            </div>
-          </section>
-
-          <section className="mt-4">
-            <SectionHeading
-              eyebrow="04 · Operating system"
-              title="Choose your operating system"
-              description="Ubuntu LTS is the recommended choice for most websites, APIs, and application workloads."
-            />
-
-            <div className="mt-6 grid grid-cols-2 gap-2 sm:grid-cols-3">
-              {OS_FAMILIES.filter(
-                (family) => templatesByFamily[family.key]?.length,
-              ).map((family) => {
-                const isSelected = osFamily === family.key
-
-                return (
-                  <button
-                    key={family.key}
-                    type="button"
-                    onClick={() => selectOsFamily(family.key)}
-                    aria-pressed={isSelected}
-                    className={cn(
-                      'relative flex min-h-[96px] flex-col items-start border p-3 text-left transition-all',
-                      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--md-sys-color-primary)] focus-visible:ring-offset-2',
-                      isSelected
-                        ? 'border-[var(--md-sys-color-primary)] bg-accent'
-                        : 'border-border bg-background hover:border-[var(--md-sys-color-primary)]/60 hover:bg-muted',
-                    )}
-                  >
-                    <img
-                      src={family.icon}
-                      alt=""
-                      className="h-7 w-7 object-contain"
-                    />
-
-                    <span className="mt-auto text-[12px] font-semibold text-foreground">
-                      {family.label}
-                    </span>
-
-                    {family.recommended && (
-                      <span className="mt-1 text-[10px] text-green-700">
-                        Recommended
-                      </span>
-                    )}
-
-                    {isSelected && (
-                      <MSO
-                        icon="check_circle"
-                        className="absolute right-2.5 top-2.5 text-[18px] text-primary"
-                      />
-                    )}
-                  </button>
-                )
-              })}
-            </div>
-
-            {osFamily && versionsForFamily.length > 1 && (
-              <div className="mt-4">
-                <label
-                  htmlFor="template-version"
-                  className="mb-1.5 block text-[12px] font-medium text-foreground"
-                >
-                  Version
-                </label>
-
-                <Select
-                  value={templateUuid}
-                  onValueChange={(value) => setTemplateUuid(value)}
-                >
-                  <SelectTrigger id="template-version" className="w-full" size="sm">
-                    <SelectValue placeholder="Select a version" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {versionsForFamily.map((template) => (
-                      <SelectItem key={template.uuid} value={template.uuid} className="text-[13px] text-foreground">
-                        {template.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            type="button"
+            aria-pressed={selected}
+            onClick={onSelect}
+            className={cn(
+                'relative rounded-lg border bg-card p-3 text-left transition-colors',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
+                selected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/30',
+                className,
             )}
+        >
+            {children}
+            {selected && <Icon name="check_circle" size={16} className="absolute right-2.5 top-2.5 text-primary" />}
+        </button>
+    )
+}
 
-            <div className="mt-5 flex items-start gap-2 bg-muted/60 p-3.5">
-              <MSO
-                icon="vpn_key"
-                className="mt-0.5 text-[16px] text-primary"
-              />
-              <p className="text-[12px] leading-relaxed text-muted-foreground">
-                A secure SSH private key is generated automatically. You will
-                be able to download it once immediately after creating the server.
-              </p>
-            </div>
-          </section>
+function Flag({ zoneId, className }: { zoneId: string; className?: string }) {
+    const flag = ZONE_META[zoneId]?.flag
+    return <span aria-hidden className={cn('fi shrink-0 rounded-[2px]', flag && `fi-${flag}`, className)} />
+}
 
-          {error && (
-            <div
-              role="alert"
-              className="flex items-start gap-2.5 rounded-xl border border-red-200 bg-red-50 p-4 text-[13px] text-red-800"
+function zoneLabel(zone: Zone | undefined): string {
+    if (!zone) return 'Choose a location'
+    const meta = ZONE_META[zone.id]
+    return meta ? `${meta.city}, ${meta.country}` : zone.description
+}
+
+function SummaryRow({ label, value }: { label: string; value: string }) {
+    return (
+        <div className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]">
+            <span className="shrink-0 text-muted-foreground">{label}</span>
+            <span className="truncate text-right text-foreground">{value}</span>
+        </div>
+    )
+}
+
+// ─── Key reveal (after create) ────────────────────────────────────────────────
+
+function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; privateKey: string; hostname: string }) {
+    const [copied, setCopied] = useState<'key' | 'ssh' | null>(null)
+    const copy = (what: 'key' | 'ssh', text: string) =>
+        navigator.clipboard.writeText(text).then(() => {
+            setCopied(what)
+            window.setTimeout(() => setCopied(null), 2000)
+        }, () => {})
+
+    const download = () => {
+        const url = URL.createObjectURL(new Blob([privateKey], { type: 'text/plain' }))
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `${hostname}.pem`
+        a.click()
+        URL.revokeObjectURL(url)
+    }
+
+    const ssh = `ssh -i ${hostname}.pem root@${hostname}`
+
+    return (
+        <div className="mx-auto max-w-xl space-y-6">
+            <PageHeader title="Server created" description="Save its private key now. It is shown only once and is not stored anywhere." />
+            <Notice tone="warning">Keep the key in a password manager or a safe folder. Without it you cannot sign in to the server.</Notice>
+            <Panel
+                title="Private key"
+                footer={
+                    <>
+                        <Button onClick={() => copy('key', privateKey)}>
+                            <Icon name={copied === 'key' ? 'check' : 'content_copy'} size={14} />
+                            {copied === 'key' ? 'Copied' : 'Copy'}
+                        </Button>
+                        <Button variant="primary" onClick={download}>
+                            <Icon name="download" size={14} />
+                            Download {hostname}.pem
+                        </Button>
+                    </>
+                }
             >
-              <MSO icon="error" className="mt-0.5 text-[18px] text-red-700" />
-              <p>{error}</p>
+                <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-[11px] leading-relaxed text-foreground">{privateKey}</pre>
+            </Panel>
+            <Panel title="Connect" description="New servers can take a few minutes to become reachable.">
+                <div className="flex items-center justify-between gap-3">
+                    <code className="min-w-0 truncate font-mono text-[12px] text-foreground">{ssh}</code>
+                    <Button size="sm" variant="ghost" onClick={() => copy('ssh', ssh)}>
+                        <Icon name={copied === 'ssh' ? 'check' : 'content_copy'} size={14} />
+                        {copied === 'ssh' ? 'Copied' : 'Copy'}
+                    </Button>
+                </div>
+            </Panel>
+            <div className="flex justify-end">
+                <Link href={`/org/${orgSlug}/servers`} className={buttonClass('secondary')}>I&apos;ve saved the key, go to servers</Link>
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={submitting || !formIsComplete}
-            className="hidden w-full items-center justify-center gap-2 bg-primary px-5 py-3.5 text-[14px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40 lg:flex"
-          >
-            {submitting ? 'Creating server…' : 'Create server'}
-            <MSO
-              icon={submitting ? 'progress_activity' : 'arrow_right_alt'}
-              className={cn('text-[19px]', submitting && 'animate-spin')}
-            />
-          </button>
         </div>
+    )
+}
 
-        <aside className="hidden w-full lg:sticky lg:top-6 lg:block">
-          <div className="overflow-hidden border border-border bg-background shadow-sm">
-            <div className="bg-accent px-5 py-4">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-accent-foreground/70">
-                    Your configuration
-                  </p>
-                  <p className="mt-1 truncate text-[15px] font-semibold text-accent-foreground">
-                    {title || 'New server'}
-                  </p>
+// ─── Form ─────────────────────────────────────────────────────────────────────
+
+export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; orgName: string }) {
+    const [options, setOptions] = useState<Options | null>(null)
+    const [optionsError, setOptionsError] = useState<string | null>(null)
+    const [reloadKey, setReloadKey] = useState(0)
+
+    const [title, setTitle] = useState('')
+    const [hostname, setHostname] = useState('')
+    const [zone, setZone] = useState('')
+    const [tier, setTier] = useState<PlanTier>('Starter')
+    const [plan, setPlan] = useState('')
+    const [osFamily, setOsFamily] = useState<OsFamily | null>(null)
+    const [templateUuid, setTemplateUuid] = useState('')
+    const [showAllZones, setShowAllZones] = useState(false)
+
+    const [confirming, setConfirming] = useState(false)
+    const [submitting, setSubmitting] = useState(false)
+    const [error, setError] = useState<{ message: string; topUp?: boolean } | null>(null)
+    const [created, setCreated] = useState<{ privateKey: string; hostname: string } | null>(null)
+
+    useEffect(() => {
+        const controller = new AbortController()
+        const get = (path: string) =>
+            fetch(path, { signal: controller.signal }).then((r) => (r.ok ? r.json() : Promise.reject(new Error(`${path} ${r.status}`))))
+        Promise.all([get('/api/upcloud/zones'), get('/api/upcloud/plans'), get('/api/upcloud/templates'), get('/api/upcloud/plans/kes')])
+            .then(([z, p, t, k]) => {
+                const next: Options = { zones: z.zones ?? [], plans: p.plans ?? [], templates: t.templates ?? [], kesPrices: k.prices ?? {} }
+                // Defaults are chosen once, from the data, rather than by effects reacting to it.
+                const ubuntu = templatesByFamily(next.templates).ubuntu?.[0]
+                setZone(defaultZone(next.zones))
+                if (ubuntu) {
+                    setOsFamily('ubuntu')
+                    setTemplateUuid(ubuntu.uuid)
+                }
+                setOptions(next)
+                setOptionsError(null)
+            })
+            .catch((e) => {
+                if (e instanceof DOMException && e.name === 'AbortError') return
+                setOptionsError('Server locations, plans or operating systems could not be loaded from the provider.')
+            })
+        return () => controller.abort()
+    }, [reloadKey])
+
+    const zones = useMemo(() => sortZones(options?.zones ?? []), [options])
+    const recommended = zones.filter((z) => isRecommendedZone(z.id))
+    const otherZones = zones.filter((z) => !isRecommendedZone(z.id))
+    const groups = useMemo(() => templatesByFamily(options?.templates ?? []), [options])
+    const plans = useMemo(() => plansInTier(options?.plans ?? [], tier, (name) => getPlanEurPrice(name) !== null), [options, tier])
+
+    const selectedZone = zones.find((z) => z.id === zone)
+    const selectedPlan = plans.find((p) => p.name === plan)
+    const selectedTemplate = options?.templates.find((t) => t.uuid === templateUuid)
+    const monthly = selectedPlan ? options?.kesPrices[selectedPlan.name] : undefined
+    const hourlyKes = monthly ? centsToKes(hourlyRateCentsForMonthlyKes(monthly)) : undefined
+
+    const hostnameInvalid = hostname.trim() !== '' && !isValidHostname(hostname.trim())
+    const missing = !title.trim() ? 'a name' : !hostname.trim() ? 'a hostname' : !zone ? 'a location' : !selectedPlan ? 'a plan' : !templateUuid ? 'an operating system' : null
+    const ready = !missing && !hostnameInvalid
+
+    const create = async () => {
+        if (!selectedPlan || submitting) return
+        setSubmitting(true)
+        setError(null)
+        try {
+            const res = await fetch(`/api/org/${orgSlug}/servers`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title: title.trim(), hostname: hostname.trim(), zone, plan, templateUuid, storageSize: selectedPlan.storage_size }),
+            })
+            const data = await res.json().catch(() => ({}))
+            if (!res.ok) {
+                setError({ message: data.error ?? 'The server could not be created. Try again.', topUp: data.code === 'INSUFFICIENT_CREDITS' })
+                return
+            }
+            setCreated({ privateKey: data.privateKey, hostname: data.server.hostname })
+        } catch {
+            setError({ message: 'The server could not be created. Check your connection and try again.' })
+        } finally {
+            setSubmitting(false)
+            setConfirming(false)
+        }
+    }
+
+    if (created) return <KeyReveal orgSlug={orgSlug} privateKey={created.privateKey} hostname={created.hostname} />
+
+    const header = (
+        <PageHeader
+            title="Create a server"
+            description={`A Linux server for ${orgName}, billed hourly from the organization wallet.`}
+            actions={<Link href={`/org/${orgSlug}/servers`} className={buttonClass('ghost')}>Cancel</Link>}
+        />
+    )
+
+    if (optionsError) {
+        return (
+            <div className="space-y-6">
+                {header}
+                <Panel>
+                    <LoadError title="Couldn't load server options" message={optionsError} onRetry={() => { setOptionsError(null); setReloadKey((k) => k + 1) }} />
+                </Panel>
+            </div>
+        )
+    }
+
+    if (!options) {
+        return (
+            <div className="space-y-6">
+                {header}
+                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                    <div className="space-y-6">
+                        {[0, 1, 2].map((i) => <Skeleton key={i} className="h-44 w-full rounded-lg" />)}
+                    </div>
+                    <Skeleton className="h-64 w-full rounded-lg" />
                 </div>
-
-                <span className="flex h-9 w-9 shrink-0 items-center justify-center text-primary">
-                  <MSO icon="dns" className="text-[20px]" />
-                </span>
-              </div>
             </div>
+        )
+    }
 
-            <div className="space-y-4 p-5">
-              <SummaryRow
-                icon="location_on"
-                label="Location"
-                value={
-                  selectedZoneMeta
-                    ? `${selectedZoneMeta.city}, ${selectedZoneMeta.country}`
-                    : selectedZone?.description ?? 'Choose a location'
-                }
-              />
-
-              <SummaryRow
-                icon="memory"
-                label="Compute"
-                value={
-                  selectedPlan
-                    ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} RAM`
-                    : 'Choose a plan'
-                }
-              />
-
-              <SummaryRow
-                icon="storage"
-                label="Storage"
-                value={
-                  selectedPlan
-                    ? `${selectedPlan.storage_size} GB included`
-                    : 'Included with plan'
-                }
-              />
-
-              <SummaryRow
-                icon="terminal"
-                label="Operating system"
-                value={selectedTemplate?.title ?? 'Choose an operating system'}
-              />
-
-              <SummaryRow
-                icon="language"
-                label="Hostname"
-                value={hostname || 'Not set'}
-              />
-            </div>
-
-            <div className="border-t border-border bg-muted/45 p-5">
-              <div className="flex items-end justify-between gap-3">
-                <div>
-                  <p className="text-[12px] text-muted-foreground">
-                    Monthly total
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    No setup fee
-                  </p>
-                </div>
-
-                <p className="text-right text-xl font-bold tracking-tight text-foreground">
-                  {formatKes(monthlyPrice)}
-                  <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-                    / mo
-                  </span>
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4 rounded-xl border border-border bg-background p-4">
-            <div className="flex gap-2.5">
-              <MSO
-                icon="verified_user"
-                className="mt-0.5 text-[18px] text-primary"
-              />
-              <div>
-                <p className="text-[12px] font-semibold text-foreground">
-                  Secure by default
-                </p>
-                <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  Your server is created with key-based SSH access. Backup
-                  and firewall controls can be added later.
-                </p>
-              </div>
-            </div>
-          </div>
-        </aside>
-      </div>
-
-       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 shadow-[0_-8px_24px_rgba(0,0,0,0.08)] backdrop-blur lg:hidden">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
-          <div className="min-w-0">
-            <p className="truncate text-[11px] text-muted-foreground">
-              {selectedPlan
-                ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} · ${selectedPlan.storage_size} GB`
-                : 'Choose a plan to continue'}
-            </p>
-            <p className="text-[16px] font-bold tracking-tight text-foreground">
-              {formatKes(monthlyPrice)}
-              <span className="ml-1 text-[11px] font-normal text-muted-foreground">
-                / mo
-              </span>
-            </p>
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting || !formIsComplete}
-            className="flex shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 py-3 text-[13px] font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            <MSO
-              icon={submitting ? 'progress_activity' : 'add_circle'}
-              className={cn('text-[18px]', submitting && 'animate-spin')}
-            />
+    const createButton = (
+        <Button
+            variant="primary"
+            onClick={() => (ready ? setConfirming(true) : setError({ message: `Choose ${missing ?? 'a valid hostname'} first.` }))}
+            disabled={submitting}
+            className="w-full"
+        >
+            {submitting ? <Spinner size={13} /> : <Icon name="add" size={15} />}
             {submitting ? 'Creating…' : 'Create server'}
-          </button>
+        </Button>
+    )
+
+    return (
+        <div className="space-y-6 pb-20 lg:pb-0">
+            {header}
+
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <div className="min-w-0 space-y-6">
+                    <Panel title="Name" description="A title your team recognizes, and the hostname you will connect to.">
+                        <FormGrid>
+                            <Field label="Title" hint="Visible to members of this organization.">
+                                <TextInput value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Production API" autoComplete="off" maxLength={64} />
+                            </Field>
+                            <Field label="Hostname" error={hostnameInvalid ? 'Letters, digits, hyphens and dots only, like api.example.com.' : undefined} hint="For example api.example.com.">
+                                <TextInput
+                                    value={hostname}
+                                    onChange={(e) => setHostname(e.target.value)}
+                                    placeholder="api.example.com"
+                                    invalid={hostnameInvalid}
+                                    autoCapitalize="none"
+                                    autoCorrect="off"
+                                    spellCheck={false}
+                                    className="font-mono"
+                                />
+                            </Field>
+                        </FormGrid>
+                    </Panel>
+
+                    <Panel
+                        title="Location"
+                        description="Amsterdam is usually closest for users in Kenya, with Frankfurt and London close behind. Latency depends on your users' networks."
+                    >
+                        <div className="space-y-3">
+                            <div className="grid gap-2 sm:grid-cols-3">
+                                {recommended.map((z) => (
+                                    <OptionCard key={z.id} selected={zone === z.id} onSelect={() => setZone(z.id)}>
+                                        <span className="flex items-center gap-2">
+                                            <Flag zoneId={z.id} className="h-3.5 w-5" />
+                                            <span className="text-[13px] font-medium text-foreground">{ZONE_META[z.id]?.city ?? z.description}</span>
+                                        </span>
+                                        <span className="mt-1.5 block text-[12px] text-muted-foreground">
+                                            {z.id === DEFAULT_ZONE ? 'Recommended' : ZONE_META[z.id]?.country ?? z.id}
+                                        </span>
+                                    </OptionCard>
+                                ))}
+                            </div>
+                            {otherZones.length > 0 && (
+                                <>
+                                    <Button size="sm" variant="ghost" onClick={() => setShowAllZones((v) => !v)} aria-expanded={showAllZones}>
+                                        <Icon name={showAllZones ? 'expand_less' : 'expand_more'} size={16} />
+                                        {showAllZones ? 'Fewer locations' : `${otherZones.length} more locations`}
+                                    </Button>
+                                    {showAllZones && (
+                                        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                                            {otherZones.map((z) => (
+                                                <OptionCard key={z.id} selected={zone === z.id} onSelect={() => setZone(z.id)} className="py-2.5">
+                                                    <span className="flex items-center gap-2 pr-5">
+                                                        <Flag zoneId={z.id} className="h-3 w-4" />
+                                                        <span className="truncate text-[13px] text-foreground">{zoneLabel(z)}</span>
+                                                        {GREEN_ZONES.has(z.id) && <Icon name="eco" size={13} className="shrink-0 text-emerald-600 dark:text-emerald-400" />}
+                                                    </span>
+                                                </OptionCard>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {showAllZones && (
+                                        <p className="flex items-center gap-1 text-[12px] text-muted-foreground">
+                                            <Icon name="eco" size={13} className="text-emerald-600 dark:text-emerald-400" />
+                                            Runs on renewable energy.
+                                        </p>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </Panel>
+
+                    <Panel title="Plan" description="Storage is included. Prices are monthly estimates; you are charged by the hour.">
+                        <div className="space-y-4">
+                            <Tabs
+                                label="Plan tier"
+                                value={tier}
+                                onChange={(id) => { setTier(id as PlanTier); setPlan('') }}
+                                items={TIERS.map((t) => ({ id: t.id, label: `${t.label} · from ${formatKes(options.kesPrices[t.from])}` }))}
+                            />
+                            <p className="text-[12px] text-muted-foreground">{TIERS.find((t) => t.id === tier)?.description}</p>
+                            {plans.length === 0 ? (
+                                <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-[13px] text-muted-foreground">No plans are available in this tier right now.</p>
+                            ) : (
+                                <div className="grid gap-2 sm:grid-cols-2">
+                                    {plans.map((p) => (
+                                        <OptionCard key={p.name} selected={plan === p.name} onSelect={() => setPlan(p.name)}>
+                                            <span className="block pr-6 text-[13px] font-medium text-foreground">
+                                                {p.core_number} vCPU · {formatMemory(p.memory_amount)} · {p.storage_size} GB
+                                            </span>
+                                            <span className="mt-0.5 block text-[12px] text-muted-foreground">{planUseCase(p)}</span>
+                                            <span className="mt-2 block text-[13px] font-semibold tabular-nums text-foreground">
+                                                {formatKes(options.kesPrices[p.name])}
+                                                <span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span>
+                                            </span>
+                                        </OptionCard>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </Panel>
+
+                    <Panel title="Operating system" description="Ubuntu LTS suits most websites, APIs and apps.">
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                                {OS_FAMILIES.filter((f) => groups[f.key]?.length).map((f) => (
+                                    <OptionCard
+                                        key={f.key}
+                                        selected={osFamily === f.key}
+                                        onSelect={() => {
+                                            setOsFamily(f.key)
+                                            const first = groups[f.key]?.[0]
+                                            if (first) setTemplateUuid(first.uuid)
+                                        }}
+                                    >
+                                        <span className="flex items-center gap-2.5">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            <img src={f.icon} alt="" className="h-6 w-6 object-contain" />
+                                            <span>
+                                                <span className="block text-[13px] font-medium text-foreground">{f.label}</span>
+                                                {f.recommended && <span className="block text-[11px] text-muted-foreground">Recommended</span>}
+                                            </span>
+                                        </span>
+                                    </OptionCard>
+                                ))}
+                            </div>
+                            {osFamily && (groups[osFamily]?.length ?? 0) > 1 && (
+                                <Field label="Version" className="max-w-sm">
+                                    <Select value={templateUuid} onChange={(e) => setTemplateUuid(e.target.value)}>
+                                        {groups[osFamily]!.map((t) => <option key={t.uuid} value={t.uuid}>{t.title}</option>)}
+                                    </Select>
+                                </Field>
+                            )}
+                            <p className="flex items-start gap-1.5 text-[12px] text-muted-foreground">
+                                <Icon name="key" size={14} className="mt-px shrink-0" />
+                                An SSH key is generated for you. You download its private half once, right after the server is created.
+                            </p>
+                        </div>
+                    </Panel>
+                </div>
+
+                <aside className="space-y-4 lg:sticky lg:top-6">
+                    <Panel title="Summary" footer={<div className="w-full">{createButton}</div>}>
+                        <div className="divide-y divide-border">
+                            <SummaryRow label="Name" value={title.trim() || '—'} />
+                            <SummaryRow label="Hostname" value={hostname.trim() || '—'} />
+                            <SummaryRow label="Location" value={zoneLabel(selectedZone)} />
+                            <SummaryRow label="Plan" value={selectedPlan ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)}` : '—'} />
+                            <SummaryRow label="Storage" value={selectedPlan ? `${selectedPlan.storage_size} GB` : '—'} />
+                            <SummaryRow label="System" value={selectedTemplate?.title ?? '—'} />
+                        </div>
+                        <div className="mt-3 rounded-md bg-muted/50 p-3">
+                            <p className="flex items-baseline justify-between text-[13px]">
+                                <span className="text-muted-foreground">About</span>
+                                <span className="text-lg font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span></span>
+                            </p>
+                            <p className="mt-1 text-[12px] text-muted-foreground">
+                                {hourlyKes !== undefined ? `Charged KSh ${hourlyKes.toFixed(2)} an hour from the wallet, starting with the first hour.` : 'Charged hourly from the organization wallet.'}
+                            </p>
+                        </div>
+                    </Panel>
+                    {error && (
+                        <Notice tone="error">
+                            {error.message}
+                            {error.topUp && <> <Link href={`/org/${orgSlug}/billing`} className="underline underline-offset-2">Top up the wallet</Link>.</>}
+                        </Notice>
+                    )}
+                </aside>
+            </div>
+
+            {/* On small screens the summary is far down; keep the price and the button in reach. */}
+            <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
+                <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                        <p className="truncate text-[12px] text-muted-foreground">{selectedPlan ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} · ${zoneLabel(selectedZone)}` : 'Choose a plan'}</p>
+                        <p className="text-[15px] font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span></p>
+                    </div>
+                    <div className="w-36 shrink-0">{createButton}</div>
+                </div>
+            </div>
+
+            <ConfirmDialog
+                open={confirming}
+                title={`Create ${title.trim() || 'this server'}?`}
+                description={
+                    hourlyKes !== undefined
+                        ? `The first hour (KSh ${hourlyKes.toFixed(2)}) is charged from the ${orgName} wallet now, then KSh ${hourlyKes.toFixed(2)} every hour until you delete the server.`
+                        : `It is charged hourly from the ${orgName} wallet until you delete it.`
+                }
+                confirmLabel="Create server"
+                tone="primary"
+                busy={submitting}
+                onConfirm={create}
+                onCancel={() => setConfirming(false)}
+            />
         </div>
-      </div>
-    </form>
-  )
+    )
 }

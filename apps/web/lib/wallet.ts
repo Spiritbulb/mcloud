@@ -5,21 +5,7 @@
 // avoid float drift across many hourly charges.
 import { createClient } from '@mcloud/db/server'
 
-export const MIN_TOPUP_KES = 20
-export const MIN_TOPUP_CENTS = MIN_TOPUP_KES * 100
-
-export function kesToCents(kes: number) {
-  return Math.round(kes * 100)
-}
-
-export function centsToKes(cents: number) {
-  return cents / 100
-}
-
-/** Hourly rate derived from a monthly KES price. Convention: monthly ÷ 730. */
-export function hourlyRateCentsForMonthlyKes(monthlyKesPrice: number): number {
-  return Math.ceil(kesToCents(monthlyKesPrice) / 730)
-}
+export { MIN_TOPUP_KES, MIN_TOPUP_CENTS, kesToCents, centsToKes, hourlyRateCentsForMonthlyKes } from './wallet-math'
 
 export async function getWalletBalanceCents(orgId: string): Promise<number> {
   const supabase = await createClient()
