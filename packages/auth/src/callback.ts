@@ -15,6 +15,12 @@ import type { AuthUser } from './types'
  * `users` row, and their first createOrg() fails the owner_id/user_id FK.
  */
 export async function ensureUserRow(user: AuthUser): Promise<void> {
+    // Identity could not be resolved (see ensureLinked): writing a row under the raw provider id
+    // would split the account from its real row. Skip; the next request retries the link.
+    if (user.unlinked) {
+        console.warn('[auth] ensureUserRow skipped: account is unlinked', user.id)
+        return
+    }
     const supabase = await createClient()
     await supabase.from('users').upsert(
         {

@@ -46,6 +46,8 @@ type WorkOSUserish = {
     name?: string | null
     profilePictureUrl?: string | null
     externalId?: string | null
+    /** Set by ensureLinked when linking FAILED (not "nothing to link"): identity is unresolved. */
+    linkFailed?: boolean
 }
 
 /**
@@ -64,6 +66,7 @@ function mapUser(u: WorkOSUserish): AuthUser {
         email: u.email,
         name: fullName || undefined,
         avatarUrl: u.profilePictureUrl ?? null,
+        ...(u.linkFailed ? { unlinked: true } : {}),
     }
 }
 
@@ -105,14 +108,20 @@ async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
     try {
         const { createClient } = await import('@mcloud/db/server')
         const supabase = await createClient()
-        const { data: auth0Row } = await supabase
+        // Oldest legacy row wins; limit(1) rather than maybeSingle() so an email that somehow
+        // has two auth0| rows links to one of them instead of erroring. Both spellings are
+        // tried because the legacy rows were written by Auth0, not by us.
+        const emails = [...new Set([u.email, u.email.toLowerCase()])]
+        const { data: rows, error } = await supabase
             .from('users')
             .select('id')
-            .eq('email', u.email)
+            .in('email', emails)
             .like('id', 'auth0|%')
-            .maybeSingle()
+            .order('created_at', { ascending: true })
+            .limit(1)
+        if (error) throw error
 
-        const auth0Id = auth0Row?.id
+        const auth0Id = rows?.[0]?.id
         if (!auth0Id) {
             noLegacyRow.set(u.id, Date.now() + NO_LEGACY_ROW_TTL_MS)
             return u // brand-new user, nothing to link
@@ -120,9 +129,12 @@ async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
 
         await getWorkOS().userManagement.updateUser({ userId: u.id, externalId: auth0Id })
         return { ...u, externalId: auth0Id }
-    } catch {
-        // Never block login on a linking failure — fall back to the WorkOS id.
-        return u
+    } catch (err) {
+        // Never block login on a linking failure. But do not pretend the user is fine: flag it
+        // so ensureUserRow does not mirror the raw WorkOS id into `users` (that is what created
+        // the duplicate 'customer' rows next to the real auth0| row), and say so in the logs.
+        console.error('[auth] ensureLinked failed; session continues unlinked', err)
+        return { ...u, linkFailed: true }
     }
 }
 
@@ -175,7 +187,8 @@ export const workosProvider: AuthProviderAdapter = {
             if (!user) return null
             user = await ensureLinked(user) // Phase 2b auto-link (idempotent)
             const session: AuthSession = { user: mapUser(user) }
-            sessionCache.set(sub, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
+            // Never cache an unlinked session: the next request should retry the link.
+            if (!user.linkFailed) sessionCache.set(sub, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
             return session
         } catch {
             // Invalid signature, expired, wrong issuer, or user lookup failed.

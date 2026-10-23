@@ -9,6 +9,11 @@ export interface AuthUser {
     email: string
     name?: string
     avatarUrl?: string | null
+    /**
+     * True when linking this account to its legacy row failed, so `id` is the raw provider id and
+     * may not match the user's existing rows. Never mirror such a user into `users`.
+     */
+    unlinked?: boolean
 }
 
 export interface AuthSession {
