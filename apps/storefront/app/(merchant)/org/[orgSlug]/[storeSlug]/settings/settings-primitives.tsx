@@ -1,21 +1,12 @@
 'use client'
 
-import { cn } from '@mcloud/ui/utils'
-import { motion, AnimatePresence } from 'framer-motion'
-import '@material/web/progress/circular-progress.js'
+// The settings screens' building blocks, now thin wrappers over the shared UI kit
+// (@mcloud/ui/kit) so every store settings page matches the admin and the org hub.
+// The exports and props are unchanged; new code can use the kit directly.
 
-// ─── Material Web declarations ────────────────────────────────────────────────
-
-declare global {
-    namespace JSX {
-        interface IntrinsicElements {
-            'md-circular-progress': React.HTMLAttributes<HTMLElement> & {
-                indeterminate?: boolean
-                value?: number
-            }
-        }
-    }
-}
+import { FeatureGate } from '@mcloud/ui/kit/feature-gate'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SaveBar as KitSaveBar, SaveStatus } from '@mcloud/ui/kit/save-bar'
 
 // ─── SettingsSection ──────────────────────────────────────────────────────────
 
@@ -33,34 +24,9 @@ export function SettingsSection({
     noPadding?: boolean
 }) {
     return (
-        <motion.section
-            initial={{ opacity: 0, y: 16 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            className="rounded-xl border border-border bg-background overflow-hidden"
-        >
-            {(title || description) && (
-                <div className="px-6 py-4 border-b border-border flex items-start justify-between gap-4">
-                    <div>
-                        {title && (
-                            <h3 className="text-[14px] font-semibold text-foreground leading-snug tracking-tight"
-                                style={{ fontFamily: 'var(--font-lato), system-ui, sans-serif' }}>
-                                {title}
-                            </h3>
-                        )}
-                        {description && (
-                            <p className="text-[12.5px] text-muted-foreground mt-1 leading-snug">
-                                {description}
-                            </p>
-                        )}
-                    </div>
-                    {aside && <div className="shrink-0">{aside}</div>}
-                </div>
-            )}
-            <div className={noPadding ? '' : 'px-6 py-6'}>
-                {children}
-            </div>
-        </motion.section>
+        <Panel title={title} description={description} action={aside} flush={noPadding}>
+            {children}
+        </Panel>
     )
 }
 
@@ -76,144 +42,38 @@ export function SettingsField({
     children: React.ReactNode
 }) {
     return (
-        <div className="space-y-2">
-            <label className="block text-[11px] font-semibold text-muted-foreground uppercase tracking-[0.06em]">
-                {label}
-            </label>
+        <div className="min-w-0">
+            <label className="mb-1.5 block text-[12px] font-medium text-foreground">{label}</label>
             {children}
-            {hint && (
-                <p className="text-[11px] text-muted-foreground opacity-60 leading-snug">
-                    {hint}
-                </p>
-            )}
+            {hint && <p className="mt-1.5 text-[12px] text-muted-foreground">{hint}</p>}
         </div>
     )
 }
 
 // ─── SaveBar ──────────────────────────────────────────────────────────────────
 
-export function SaveBar({
-    onSave,
-    saving,
-}: {
-    onSave: () => void
-    saving: boolean
-}) {
-    return (
-        <div className="sticky bottom-6 md:bottom-8 left-0 right-0 flex justify-center pointer-events-none z-40">
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
-            >
-                <button
-                    onClick={onSave}
-                    disabled={saving}
-                    className={cn(
-                        'pointer-events-auto inline-flex items-center gap-2 h-10 px-6',
-                        'bg-primary text-primary-foreground',
-                        'text-[13px] font-medium rounded-full shadow-lg',
-                        'hover:opacity-90 hover:shadow-xl transition-all duration-150',
-                        saving && 'opacity-60 cursor-not-allowed'
-                    )}
-                >
-                    {saving ? (
-                        <>
-                            {/* @ts-ignore */}
-                            <md-circular-progress
-                                indeterminate
-                                style={{
-                                    '--md-circular-progress-size': '16px',
-                                    '--md-circular-progress-active-indicator-color': 'var(--md-sys-color-on-primary)',
-                                    '--md-circular-progress-active-indicator-width': '3',
-                                }}
-                            />
-                            Saving…
-                        </>
-                    ) : (
-                        <>
-                            <span className="material-symbols-outlined text-[16px]">save</span>
-                            Save changes
-                        </>
-                    )}
-                </button>
-            </motion.div>
-        </div>
-    )
+/**
+ * Always shown: these callers do not track whether the form changed, so it cannot claim there are
+ * unsaved changes. New forms should use the kit's SaveBar with `dirty` (see isDirty).
+ */
+export function SaveBar({ onSave, saving }: { onSave: () => void; saving: boolean }) {
+    return <KitSaveBar saving={saving} onSave={onSave} message="" />
 }
 
 // ─── SaveToast ────────────────────────────────────────────────────────────────
 
 export function SaveToast({ saving, saved }: { saving: boolean; saved: boolean }) {
-    return (
-        <AnimatePresence>
-            {(saving || saved) && (
-                <motion.div
-                    initial={{ opacity: 0, y: 12, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 12, scale: 0.95 }}
-                    transition={{ duration: 0.2, ease: 'easeOut' }}
-                    className="fixed bottom-6 right-6 z-50 pointer-events-none"
-                >
-                    <div className={cn(
-                        'flex items-center gap-3 px-5 py-3 rounded-full text-[13px]',
-                        'border border-border',
-                        'bg-background/95 backdrop-blur shadow-xl',
-                    )}>
-                        {saving ? (
-                            <>
-                                {/* @ts-ignore */}
-                                <md-circular-progress
-                                    indeterminate
-                                    style={{
-                                        '--md-circular-progress-size': '16px',
-                                        '--md-circular-progress-active-indicator-color': 'var(--md-sys-color-on-surface-variant)',
-                                        '--md-circular-progress-active-indicator-width': '3',
-                                    }}
-                                />
-                                <span className="text-muted-foreground font-medium">
-                                    Saving…
-                                </span>
-                            </>
-                        ) : (
-                            <>
-                                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-accent">
-                                    <span className="material-symbols-outlined text-[14px] text-primary">
-                                        check
-                                    </span>
-                                </div>
-                                <span className="text-foreground font-medium">
-                                    Changes saved
-                                </span>
-                            </>
-                        )}
-                    </div>
-                </motion.div>
-            )}
-        </AnimatePresence>
-    )
+    return <SaveStatus saving={saving} saved={saved} />
 }
 
 // ─── ProGate ──────────────────────────────────────────────────────────────────
 
 export function ProGate({ feature }: { feature: string }) {
     return (
-        <SettingsSection>
-            <div className="py-16 flex flex-col items-center gap-4 text-center">
-                <div className="flex items-center justify-center w-12 h-12 rounded-full bg-accent">
-                    <span className="material-symbols-outlined text-[22px] text-primary">
-                        lock
-                    </span>
-                </div>
-                <div className="space-y-1">
-                    <p className="text-[13px] font-medium text-foreground">
-                        {feature} is on its way
-                    </p>
-                    <p className="text-[12px] text-muted-foreground max-w-xs leading-relaxed">
-                        This feature isn't available yet — check back soon.
-                    </p>
-                </div>
-            </div>
-        </SettingsSection>
+        <FeatureGate
+            icon="schedule"
+            title={`${feature} is on its way`}
+            description="This feature isn't available yet. Check back soon."
+        />
     )
 }

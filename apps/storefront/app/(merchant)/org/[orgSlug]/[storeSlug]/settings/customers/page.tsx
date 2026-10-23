@@ -20,5 +20,5 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
         redirect(`/org/${orgSlug}/${storeSlug}/settings`)
     }
 
-    return <CustomersPage slug={storeSlug} plan={plan} />
+    return <CustomersPage slug={storeSlug} plan={plan} currency={store.currency ?? 'KES'} />
 }

@@ -9,8 +9,9 @@ export function settingsPath(orgSlug: string, storeSlug: string, tab?: string) {
 }
 
 /**
- * The vertical's nav as shell sections. Integrations' sub-tabs are not repeated here: its page
- * has its own tabs. Beta tabs say so; Pro tabs say so only to stores not on a paid plan.
+ * The vertical's nav as shell sections. Sub-tabs are not repeated here (Integrations' page has its
+ * own tabs); a tab that has them links straight to the first, since the parent route has no page
+ * of its own. Beta tabs say so; Pro tabs say so only to stores not on a paid plan.
  */
 export function settingsSections(groups: readonly NavSection[], orgSlug: string, storeSlug: string, isPaid: boolean): ShellNavSection[] {
     return groups.map((g) => ({
@@ -20,7 +21,7 @@ export function settingsSections(groups: readonly NavSection[], orgSlug: string,
             id: t.id,
             label: t.label,
             icon: t.icon,
-            href: settingsPath(orgSlug, storeSlug, t.id),
+            href: settingsPath(orgSlug, storeSlug, t.subTabs?.length ? `${t.id}/${t.subTabs[0].id}` : t.id),
             badge: t.beta ? 'Beta' : t.pro && !isPaid ? 'Pro' : undefined,
         })),
     }))

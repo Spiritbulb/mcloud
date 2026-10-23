@@ -1,15 +1,24 @@
 'use client'
 
-// app/(storefront)/store/[slug]/settings/settings-home-client.tsx
+// The store Overview: how the site is doing and what to do next. Data comes from the server render
+// (getStoreOverview); when it could not, the page fetches it and the kit draws the loading state.
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
-import { cn } from '@mcloud/ui/utils'
+import Link from 'next/link'
 import { getVertical } from '@mcloud/verticals'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
-import type { TabId } from './settings-shell'
-import GeneralSettingsPage from './general/general-settings-page'
-
+import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Button, buttonClass } from '@mcloud/ui/kit/button'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { Skeleton, SkeletonLines } from '@mcloud/ui/kit/skeleton'
+import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
+import { timeAgo } from '@mcloud/ui/kit/ui-logic'
+import { webUrl } from '@/lib/host'
+import { formatCurrency, funnelRate, overviewHeadline, overviewSummary } from './overview-logic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -77,543 +86,101 @@ type OverviewData = {
     campaign_progress?: CampaignProgress[]
 }
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const STATUS: Record<Order['status'], { icon: string; label: string; bg: string; fg: string }> = {
-    pending: { icon: 'schedule', label: 'Pending', bg: 'bg-amber-500/10', fg: 'text-amber-600 dark:text-amber-400' },
-    paid: { icon: 'check_circle', label: 'Paid', bg: 'bg-accent', fg: 'text-primary' },
-    processing: { icon: 'autorenew', label: 'Processing', bg: 'bg-violet-500/10', fg: 'text-violet-600 dark:text-violet-400' },
-    shipped: { icon: 'local_shipping', label: 'Shipped', bg: 'bg-sky-500/10', fg: 'text-sky-600 dark:text-sky-400' },
-    delivered: { icon: 'verified', label: 'Delivered', bg: 'bg-accent', fg: 'text-primary' },
-    cancelled: { icon: 'cancel', label: 'Cancelled', bg: 'bg-destructive/20', fg: 'text-destructive' },
-    refunded: { icon: 'currency_exchange', label: 'Refunded', bg: 'bg-muted', fg: 'text-muted-foreground' },
+const STATUS_TONE: Record<Order['status'], BadgeTone> = {
+    pending: 'warning',
+    paid: 'success',
+    processing: 'info',
+    shipped: 'info',
+    delivered: 'success',
+    cancelled: 'danger',
+    refunded: 'neutral',
 }
 
-
-function fmt(n: number, currency: string) {
-    return new Intl.NumberFormat('en-KE', {
-        style: 'currency', currency,
-        minimumFractionDigits: 0, maximumFractionDigits: 0,
-    }).format(n)
+function statusText(s: string) {
+    return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
-function timeAgo(iso: string) {
-    const diff = Date.now() - new Date(iso).getTime()
-    const m = Math.floor(diff / 60000)
-    if (m < 1) return 'just now'
-    if (m < 60) return `${m}m ago`
-    const h = Math.floor(m / 60)
-    if (h < 24) return `${h}h ago`
-    const d = Math.floor(h / 24)
-    if (d === 1) return 'yesterday'
-    if (d < 7) return `${d}d ago`
-    return new Date(iso).toLocaleDateString('en-KE', { month: 'short', day: 'numeric' })
-}
+// ─── Pieces ───────────────────────────────────────────────────────────────────
 
-// ─── Primitives ───────────────────────────────────────────────────────────────
-
-function Sk({ className }: { className?: string }) {
-    return (
-        <span className={cn(
-            'block animate-pulse bg-muted',
-            className
-        )} />
-    )
-}
-
-function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
-    return (
-        <span
-            className={cn('material-symbols-outlined select-none leading-none', className)}
-            style={{ fontVariationSettings: `'FILL' ${fill}, 'wght' 400, 'GRAD' 0, 'opsz' 20` }}
-        >
-            {icon}
-        </span>
-    )
-}
-
-// ─── KPI Card ─────────────────────────────────────────────────────────────────
-
-function KpiCard({ label, value, sub, icon, loading, featured }: {
-    label: string; value: string; sub?: string; icon?: string; loading?: boolean; featured?: boolean
-}) {
-    return (
-        <div className={cn(
-            'relative overflow-hidden p-5 flex flex-col gap-1',
-            featured
-                ? 'bg-accent col-span-2 sm:col-span-1'
-                : 'bg-[var(--md-sys-color-surface-container-low)] border border-border'
-        )}>
-            {icon && (
-                <MSO
-                    icon={icon}
-                    fill={1}
-                    className={cn(
-                        'absolute right-3 top-3 text-[20px]',
-                        featured
-                            ? 'text-primary opacity-70'
-                            : 'text-muted-foreground opacity-30'
-                    )}
-                />
-            )}
-            {loading
-                ? <Sk className="h-8 w-24 mb-1" />
-                : <p className={cn(
-                    'text-[28px] font-semibold tabular-nums leading-none tracking-tight',
-                    featured ? 'text-accent-foreground' : 'text-foreground'
-                )}>{value}</p>
-            }
-            <p className={cn(
-                'text-[12px] font-medium',
-                featured ? 'text-primary' : 'text-muted-foreground'
-            )}>{label}</p>
-            {sub && !loading && (
-                <p className={cn(
-                    'text-[11px]',
-                    featured ? 'text-primary/60' : 'text-muted-foreground opacity-60'
-                )}>{sub}</p>
-            )}
-        </div>
-    )
-}
-
-// ─── Status badge ─────────────────────────────────────────────────────────────
-
-function StatusBadge({ status }: { status: Order['status'] }) {
-    const s = STATUS[status] ?? STATUS.pending
-    return (
-        <span className={cn(
-            'inline-flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-full shrink-0',
-            s.bg, s.fg
-        )}>
-            <MSO icon={s.icon} className="text-[12px]" fill={status === 'delivered' || status === 'paid' ? 1 : 0} />
-            {s.label}
-        </span>
-    )
-}
-
-// ─── Payments callout ─────────────────────────────────────────────────────────
-
-function PaymentsCallout({ onNavigate, commerce }: { onNavigate: () => void; commerce: boolean }) {
-    return (
-        <button
-            onClick={onNavigate}
-            className={cn(
-                'w-full flex items-start gap-4 text-left',
-                'bg-[var(--md-sys-color-secondary-container)]',
-                'px-5 py-4 group',
-                'hover:brightness-95 dark:hover:brightness-110 transition-all duration-150'
-            )}
-        >
-            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-[var(--md-sys-color-on-secondary-container)]/10 shrink-0 mt-0.5">
-                <MSO icon="payments" className="text-[20px] text-[var(--md-sys-color-on-secondary-container)]" fill={1} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-[13px] font-semibold text-[var(--md-sys-color-on-secondary-container)]">Set up payments</p>
-                <p className="text-[12px] text-[var(--md-sys-color-on-secondary-container)]/70 mt-0.5 leading-relaxed">
-                    {commerce
-                        ? 'Connect M-Pesa or PayPal so customers can checkout. Takes about 2 minutes.'
-                        : 'Connect M-Pesa or PayPal so people can donate. Takes about 2 minutes.'}
-                </p>
-            </div>
-            <MSO
-                icon="arrow_forward"
-                className="text-[18px] text-[var(--md-sys-color-on-secondary-container)]/50 group-hover:text-[var(--md-sys-color-on-secondary-container)] group-hover:translate-x-0.5 transition-all shrink-0 mt-0.5"
-            />
-        </button>
-    )
-}
-
-// ─── FunnelRow ────────────────────────────────────────────────────────────────
-
-// Share of Views that reached this step. Rebased against the top of the funnel
-// (not the prior step) so a later step being larger than an earlier one can't
-// yield a nonsensical >100% rate; clamped as a final guard.
-function pct(a: number, b: number) {
-    if (!b) return null
-    const p = Math.min(100, (a / b) * 100)
-    return `${p.toFixed(1)}%`
-}
-
-function FunnelRow({ funnel, loading, onViewAnalytics }: {
-    funnel?: Funnel; loading: boolean; onViewAnalytics: () => void
-}) {
-    const views = funnel?.views ?? 0
-    const steps = [
-        { label: 'Views', value: funnel?.views, rate: null },
-        { label: 'Add to cart', value: funnel?.add_to_carts, rate: pct(funnel?.add_to_carts ?? 0, views) },
-        { label: 'Checkouts Started', value: funnel?.checkouts, rate: pct(funnel?.checkouts ?? 0, views) },
-        { label: 'Orders Placed', value: funnel?.orders, rate: pct(funnel?.orders ?? 0, views) },
-    ]
-
-    return (
-        <div className="border border-border bg-background overflow-hidden">
-            <div className="grid grid-cols-4 divide-x divide-[var(--md-sys-color-outline-variant)]">
-                {steps.map((step, i) => (
-                    <div key={step.label} className="flex flex-col gap-1 px-4 py-4">
-                        <div className="h-1 rounded-full bg-muted mb-2 overflow-hidden">
-                            {!loading && funnel && (
-                                <div
-                                    className="h-full rounded-full bg-primary transition-all duration-500"
-                                    style={{
-                                        width: i === 0 ? '100%' : `${((steps[i].value ?? 0) / (funnel.views || 1)) * 100}%`,
-                                        opacity: 1 - i * 0.15,
-                                    }}
-                                />
-                            )}
-                        </div>
-                        {loading
-                            ? <Sk className="h-5 w-14" />
-                            : <p className="text-[18px] font-semibold tabular-nums leading-none text-foreground">
-                                {(step.value ?? 0).toLocaleString()}
-                            </p>
-                        }
-                        <p className="text-[11px] text-muted-foreground">{step.label}</p>
-                        {step.rate && (
-                            <p className="text-[11px] font-medium text-primary mt-0.5">
-                                {step.rate} conv.
-                            </p>
-                        )}
-                    </div>
-                ))}
-            </div>
-
-            {/* Footer — period label + analytics link */}
-            <div className="px-4 py-2 border-t border-border bg-[var(--md-sys-color-surface-container-low)] flex items-center justify-between">
-                <p className="text-[11px] text-muted-foreground">
-                    Last 7 days · site visits to purchases
-                </p>
-                <button
-                    onClick={onViewAnalytics}
-                    className="flex items-center gap-0.5 text-[11px] text-primary hover:underline underline-offset-2"
-                >
-                    Full report
-                    <MSO icon="chevron_right" className="text-[13px]" />
-                </button>
-            </div>
-        </div>
-    )
-}
-
-// ─── TopProductCard ───────────────────────────────────────────────────────────
-
-function TopProductCard({ product, currency, loading, onNavigate }: {
-    product?: TopProduct; currency: string; loading: boolean; onNavigate: () => void
-}) {
-    if (!loading && !product) return null
-
-    return (
-        <button
-            onClick={onNavigate}
-            className={cn(
-                'w-full flex items-center gap-4 text-left group',
-                'bg-background px-4 py-3.5',
-                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
-            )}
-        >
-            <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-                {loading
-                    ? <Sk className="w-full h-full rounded-none" />
-                    : product?.image_url
-                        ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" />
-                        : <MSO icon="inventory_2" className="text-[18px] text-muted-foreground" />
-                }
-            </div>
-            <div className="flex-1 min-w-0">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-primary">
-                    Top product
-                </span>
-                {loading
-                    ? <Sk className="h-4 w-32 mt-0.5" />
-                    : <p className="text-[13px] font-medium text-foreground truncate">{product!.name}</p>
-                }
-                {!loading && product && (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {product.units_sold} sold this month
-                    </p>
-                )}
-            </div>
-            <div className="shrink-0 text-right">
-                {loading
-                    ? <Sk className="h-5 w-16" />
-                    : <p className="text-[14px] font-semibold tabular-nums text-foreground">
-                        {fmt(product!.revenue, currency)}
-                    </p>
-                }
-                <MSO
-                    icon="chevron_right"
-                    className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-muted-foreground transition-colors mt-0.5 ml-auto"
-                />
-            </div>
-        </button>
-    )
-}
-
-// ─── TopCampaignCard ──────────────────────────────────────────────────────────
-// The non-commerce counterpart of TopProductCard: same card shape and classes,
-// but reports the campaign that has raised the most, with its goal progress.
-
-function TopCampaignCard({ campaign, currency, loading, onNavigate }: {
-    campaign?: CampaignProgress; currency: string; loading: boolean; onNavigate: () => void
-}) {
-    if (!loading && !campaign) return null
-
-    return (
-        <button
-            onClick={onNavigate}
-            className={cn(
-                'w-full flex flex-col gap-3 text-left group',
-                'bg-background px-4 py-3.5',
-                'hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors duration-150'
-            )}
-        >
-            <div className="w-full flex items-center gap-4">
-                <div className="shrink-0 w-10 h-10 rounded-xl overflow-hidden bg-muted flex items-center justify-center">
-                    {loading
-                        ? <Sk className="w-full h-full rounded-none" />
-                        : <MSO icon="volunteer_activism" className="text-[18px] text-muted-foreground" />
-                    }
-                </div>
-                <div className="flex-1 min-w-0">
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-primary">
-                        Top campaign
-                    </span>
-                    {loading
-                        ? <Sk className="h-4 w-32 mt-0.5" />
-                        : <p className="text-[13px] font-medium text-foreground truncate">{campaign!.title}</p>
-                    }
-                    {!loading && campaign && (
-                        <p className="text-[11px] text-muted-foreground mt-0.5">
-                            {campaign.goal > 0
-                                ? `${campaign.percent}% of ${fmt(campaign.goal, currency)} goal`
-                                : 'No goal set'}
-                        </p>
-                    )}
-                </div>
-                <div className="shrink-0 text-right">
-                    {loading
-                        ? <Sk className="h-5 w-16" />
-                        : <p className="text-[14px] font-semibold tabular-nums text-foreground">
-                            {fmt(campaign!.raised, currency)}
-                        </p>
-                    }
-                    <MSO
-                        icon="chevron_right"
-                        className="text-[15px] text-[var(--md-sys-color-outline-variant)] group-hover:text-muted-foreground transition-colors mt-0.5 ml-auto"
-                    />
-                </div>
-            </div>
-
-            {/* Goal progress. Only meaningful when the campaign has a goal. */}
-            {!loading && campaign && campaign.goal > 0 && (
-                <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
-                    <div
-                        className="h-full rounded-full bg-primary transition-all duration-500"
-                        style={{ width: `${campaign.percent}%` }}
-                    />
-                </div>
-            )}
-        </button>
-    )
-}
-
-// ─── Welcome hero ─────────────────────────────────────────────────────────────
-
-function WelcomeHero({ store, totalRaised = 0, loading, onVisit }: {
-    // totalRaised lives on the OverviewData payload, not on the store row, so it
-    // is passed in rather than read off `store`.
-    store?: StoreOverview; totalRaised?: number; loading: boolean; onVisit: () => void
-}) {
-    // A non-commerce site does not sell or earn. It raises.
-    const commerce = getVertical(store?.type).commerce
-    const raised = totalRaised > 0
-    const hasRevenue = !!store && store.revenue_total > 0
-    const hasMoney = commerce ? hasRevenue : raised
-
-    const headline = loading
-        ? null
-        : !store
-            ? 'Your site'
-            : commerce
-                ? (hasRevenue ? `${store.name} is making money.` : `${store.name} is ready to sell.`)
-                : (raised ? `${store.name} is raising money.` : `${store.name} is ready for donations.`)
-
-    const sub = loading
-        ? null
-        : hasMoney
-            ? commerce
-                ? `You've earned ${fmt(store!.revenue_total, store!.currency)} so far. Keep the momentum going.`
-                : `You've raised ${fmt(totalRaised, store!.currency)} so far. Keep the momentum going.`
-            : commerce
-                ? 'Add a product, share your link, and take your first order today. We handle the hosting, SSL, and uptime.'
-                : 'Add a campaign, share your link, and take your first donation today. We handle the hosting, SSL, and uptime.'
-
-    return (
-        <div className="relative overflow-hidden bg-[var(--md-sys-color-surface-container-low)]">
-            {/* brand glow */}
-            <div
-                className="pointer-events-none absolute -right-12 -top-16 h-48 w-48 rounded-full opacity-60 blur-3xl"
-                style={{ background: 'radial-gradient(circle, var(--md-sys-color-primary-container) 0%, transparent 70%)' }}
-            />
-            <div className="relative flex items-start justify-between gap-4 p-5 sm:p-6">
-                <div className="min-w-0 space-y-1.5">
-                    <div className="flex items-center gap-2">
-                        {!loading && store && (
-                            <span className={cn(
-                                'inline-flex items-center gap-1.5 text-[11px] font-medium px-2.5 py-1 rounded-full',
-                                store.active
-                                    ? 'bg-accent text-primary'
-                                    : 'bg-destructive/20 text-destructive'
-                            )}>
-                                <span className={cn(
-                                    'w-1.5 h-1.5 rounded-full',
-                                    store.active ? 'bg-primary' : 'bg-[var(--md-sys-color-error)]'
-                                )} />
-                                {store.active ? 'Live' : 'Offline'}
-                            </span>
-                        )}
-                        <p className="text-[11px] text-muted-foreground truncate">
-                            {loading ? <Sk className="h-3 w-40 inline-block" /> : storefrontDisplayUrl(store?.slug ?? '', store?.custom_domain)}
-                        </p>
-                    </div>
-                    {headline
-                        ? <h1 className="text-[1.4rem] sm:text-[1.6rem] font-bold leading-tight tracking-tight text-foreground">
-                            {headline}
-                        </h1>
-                        : <Sk className="h-7 w-56" />
-                    }
-                    {sub
-                        ? <p className="text-[13px] leading-relaxed text-muted-foreground max-w-md">{sub}</p>
-                        : <Sk className="h-4 w-72" />
-                    }
-                </div>
-
-                {!loading && store && (
-                    <a
-                        href={storefrontUrl(store.slug)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={(e) => {
-                            // Storefront is customer-facing: force it out of the
-                            // TWA shell into the browser rather than navigating
-                            // inside the merchant app.
-                            e.preventDefault()
-                            onVisit()
-                            openExternal(storefrontUrl(store.slug))
-                        }}
-                        className={cn(
-                            'shrink-0 inline-flex items-center gap-1.5 h-9 p-2 rounded-full',
-                            'bg-primary text-primary-foreground',
-                            'text-[12px] font-semibold hover:opacity-90 transition-opacity'
-                        )}
-                    >
-                        <MSO icon="open_in_new" className="text-[15px]" />
-                    </a>
-                )}
-            </div>
-        </div>
-    )
-}
-
-// ─── Share store card ─────────────────────────────────────────────────────────
-
-function ShareStore({ slug, custom_domain }: { slug: string; custom_domain?: string | null }) {
+function CopyLink({ url }: { url: string }) {
     const [copied, setCopied] = useState(false)
-    const url = storefrontDisplayUrl(slug, custom_domain)
-
     const copy = () => {
-        navigator.clipboard?.writeText(storefrontUrl(slug, custom_domain)).then(() => {
+        navigator.clipboard?.writeText(url).then(() => {
             setCopied(true)
             setTimeout(() => setCopied(false), 1800)
         })
     }
-
     return (
-        <div className="bg-background p-4 flex items-center gap-3">
-            <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-accent shrink-0">
-                <MSO icon="share" className="text-[18px] text-primary" fill={1} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-[12px] font-semibold text-foreground">Get more action by sharing your link!</p>
-                <p className="text-[11px] text-muted-foreground truncate">{url}</p>
-            </div>
-            <button
-                onClick={copy}
-                className={cn(
-                    'shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full text-[12px] font-medium transition-colors',
-                    copied
-                        ? 'bg-accent text-primary'
-                        : 'border border-border text-foreground hover:bg-[var(--md-sys-color-surface-container-low)]'
-                )}
-            >
-                <MSO icon={copied ? 'check' : 'content_copy'} className="text-[14px]" />
-                {copied ? 'Copied' : 'Copy link'}
-            </button>
-        </div>
+        <Button onClick={copy}>
+            <Icon name={copied ? 'check' : 'content_copy'} size={15} />
+            {copied ? 'Copied' : 'Copy link'}
+        </Button>
     )
 }
 
-// ─── Pro upsell ───────────────────────────────────────────────────────────────
-
-function ProUpsell({ onNavigate }: { onNavigate: () => void }) {
+function FunnelPanel({ funnel, loading, analyticsHref }: { funnel?: Funnel; loading: boolean; analyticsHref: string }) {
+    const views = funnel?.views ?? 0
+    const steps = [
+        { label: 'Views', value: funnel?.views ?? 0, rate: null },
+        { label: 'Added to cart', value: funnel?.add_to_carts ?? 0, rate: funnelRate(funnel?.add_to_carts ?? 0, views) },
+        { label: 'Checkouts started', value: funnel?.checkouts ?? 0, rate: funnelRate(funnel?.checkouts ?? 0, views) },
+        { label: 'Orders placed', value: funnel?.orders ?? 0, rate: funnelRate(funnel?.orders ?? 0, views) },
+    ]
     return (
-        <button
-            onClick={onNavigate}
-            className="w-full text-left rounded-2xl border border-border bg-background p-5 group hover:border-[var(--md-sys-color-primary)] transition-colors relative overflow-hidden"
+        <Panel
+            title="Last 7 days"
+            description="Site visits to purchases"
+            action={<Link href={analyticsHref} className="text-primary hover:underline">Full report</Link>}
+            flush
         >
-            <div
-                className="pointer-events-none absolute -left-10 -bottom-12 h-40 w-40 rounded-full opacity-40 blur-3xl"
-                style={{ background: 'radial-gradient(circle, var(--md-sys-color-primary-container) 0%, transparent 70%)' }}
-            />
-            <div className="relative flex items-start gap-4">
-                <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-accent shrink-0">
-                    <MSO icon="workspace_premium" className="text-[20px] text-primary" fill={1} />
-                </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-[13px] font-semibold text-foreground">Grow with Pro</p>
-                    <p className="text-[12px] text-muted-foreground mt-0.5 leading-relaxed max-w-sm">
-                        Your own domain, advanced analytics, a blog, and your branding out front. Everything you need to scale.
-                    </p>
-                    <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-primary mt-2 group-hover:gap-1.5 transition-all">
-                        See Pro features
-                        <MSO icon="arrow_forward" className="text-[14px]" />
-                    </span>
-                </div>
+            <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
+                {steps.map((step) => (
+                    <div key={step.label} className="bg-card p-4">
+                        <p className="text-[12px] text-muted-foreground">{step.label}</p>
+                        {loading
+                            ? <Skeleton className="mt-2.5 h-5 w-12" />
+                            : <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{step.value.toLocaleString()}</p>}
+                        {!loading && step.rate && <p className="mt-0.5 text-[12px] text-muted-foreground">{step.rate} of views</p>}
+                    </div>
+                ))}
             </div>
-        </button>
+        </Panel>
     )
 }
 
-// ─── Quick links ──────────────────────────────────────────────────────────────
-
-type QuickLink = { tab: TabId; label: string; icon: string; beta?: boolean }
-
-const QUICK_LINKS: QuickLink[] = [
-    { tab: 'general', label: 'General', icon: 'storefront' },
-    { tab: 'appearance', label: 'Appearance', icon: 'palette' },
-    { tab: 'products', label: 'Products', icon: 'inventory_2' },
-    { tab: 'orders', label: 'Orders', icon: 'receipt_long' },
-    { tab: 'analytics', label: 'Analytics', icon: 'bar_chart' },
-    { tab: 'blog', label: 'Blog', icon: 'article' },
-    { tab: 'integrations', label: 'Integrations', icon: 'link', beta: true },
-    { tab: 'domain', label: 'Custom domain', icon: 'language', beta: true },
-]
-
-/**
- * A non-commerce site has no Products tab (the route redirects away), and its
- * Orders tab is presented as Donations. Swap the two rather than linking the
- * merchant at a page that bounces them straight back here.
- */
-function quickLinksFor(commerce: boolean): QuickLink[] {
-    if (commerce) return QUICK_LINKS
-    return QUICK_LINKS
-        .filter((l) => l.tab !== 'products')
-        .map((l) =>
-            l.tab === 'orders'
-                ? { ...l, label: 'Donations', icon: 'volunteer_activism' }
-                : l
-        )
-        .concat([{ tab: 'content', label: 'Content', icon: 'edit_note' }])
+function HighlightRow({ icon, image, eyebrow, title, detail, value, href, progress }: {
+    icon: string
+    image?: string
+    eyebrow: string
+    title: string
+    detail: string
+    value: string
+    href: string
+    progress?: number
+}) {
+    return (
+        <Link href={href} className="block px-4 py-3 transition-colors hover:bg-muted/40">
+            <div className="flex items-center gap-3">
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-muted">
+                    {image
+                        // eslint-disable-next-line @next/next/no-img-element
+                        ? <img src={image} alt="" className="h-full w-full object-cover" />
+                        : <Icon name={icon} size={17} className="text-muted-foreground" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                    <span className="block text-[11px] text-muted-foreground">{eyebrow}</span>
+                    <span className="block truncate text-[13px] font-medium text-foreground">{title}</span>
+                    <span className="block text-[12px] text-muted-foreground">{detail}</span>
+                </span>
+                <span className="text-[13px] font-semibold tabular-nums text-foreground">{value}</span>
+            </div>
+            {progress !== undefined && (
+                <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted">
+                    <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, progress)}%` }} />
+                </div>
+            )}
+        </Link>
+    )
 }
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
@@ -621,237 +188,222 @@ function quickLinksFor(commerce: boolean): QuickLink[] {
 export default function SettingsHomeClient({ slug, orgSlug, initialData = null }: {
     slug: string; orgSlug: string; initialData?: OverviewData | null
 }) {
-    const router = useRouter()
     const [data, setData] = useState<OverviewData | null>(initialData)
-    // When the server already provided data, render it immediately — no fetch, no skeleton.
+    // When the server already provided data, render it immediately: no fetch, no skeleton.
     const [loading, setLoading] = useState(!initialData)
     const [error, setError] = useState(false)
+    const [now] = useState(() => Date.now())
 
-    useEffect(() => {
-        // Server render supplied the data; skip the redundant client round-trip.
-        if (initialData) return
-        fetch(`/api/store/${slug}/overview?org=${encodeURIComponent(orgSlug)}`, {
-            credentials: 'include',
-        })
-            .then(r => r.ok ? r.json() : Promise.reject())
+    const load = useCallback(() => {
+        setLoading(true)
+        setError(false)
+        fetch(`/api/store/${slug}/overview?org=${encodeURIComponent(orgSlug)}`, { credentials: 'include' })
+            .then((r) => (r.ok ? r.json() : Promise.reject()))
             .then(setData)
             .catch(() => setError(true))
             .finally(() => setLoading(false))
-    }, [slug, initialData])
+    }, [slug, orgSlug])
 
-    const navigate = useCallback((tab: TabId) => {
-        router.push(`/org/${orgSlug}/${slug}/settings/${tab}`)
-    }, [router, orgSlug, slug])
+    useEffect(() => {
+        // Server render supplied the data; skip the redundant client round-trip.
+        if (!initialData) load()
+    }, [initialData, load])
 
+    const settings = (tab: string) => `/org/${orgSlug}/${slug}/settings/${tab}`
     const store = data?.store
-    const orders = data?.recent_orders ?? []
-    // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
-    const paymentsNeeded = !loading && store && !store.payments_enabled
 
-    // Gate on the vertical's `commerce` flag, never on a specific id: a future
-    // non-commerce vertical must inherit the donation dashboard for free. An NGO
-    // has no products, no revenue, and no cart, so the product/revenue tiles and
-    // the add-to-cart funnel measure a journey its visitors never take.
+    // Gate on the vertical's `commerce` flag, never on a specific id: a future non-commerce vertical
+    // must inherit the donation dashboard for free. An NGO has no products, revenue or cart.
     const commerce = getVertical(store?.type).commerce
-
     const campaigns = data?.campaign_progress ?? []
     const topCampaign = campaigns[0]
+    const orders = data?.recent_orders ?? []
+    const currency = store?.currency ?? 'KES'
+    const raised = data?.total_raised ?? 0
+    const hasMoney = commerce ? (store?.revenue_total ?? 0) > 0 : raised > 0
+    // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
+    const paymentsNeeded = !loading && store && !store.payments_enabled
+    const siteUrl = store ? storefrontUrl(store.slug, store.custom_domain) : ''
+
+    if (error && !store) {
+        return (
+            <Panel flush>
+                <LoadError title="Couldn't load your overview" onRetry={load} />
+            </Panel>
+        )
+    }
 
     return (
-        <div className="max-w-3xl mx-auto space-y-6 pb-16 pt-2">
-
-            {/* ── Welcome hero ─────────────────────────────────────────────── */}
-            <div className="animate-rise">
-                <WelcomeHero store={store} totalRaised={data?.total_raised ?? 0} loading={loading} onVisit={() => { }} />
-            </div>
-
-            {/* ── KPIs ─────────────────────────────────────────────────────── */}
-            <div className="animate-rise-1 grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {commerce ? (
-                    <>
-                        <KpiCard
-                            label="Revenue"
-                            value={store ? fmt(store.revenue_total, store.currency) : '—'}
-                            sub="all time"
-                            icon="payments"
-                            loading={loading}
-                            featured
-                        />
-                        <KpiCard label="Orders" value={store?.order_count?.toString() ?? '—'} icon="receipt_long" loading={loading} />
-                        <KpiCard label="Products" value={store?.product_count?.toString() ?? '—'} icon="inventory_2" loading={loading} />
-                    </>
-                ) : (
-                    <>
-                        <KpiCard
-                            label="Total raised"
-                            value={store ? fmt(data?.total_raised ?? 0, store.currency) : '—'}
-                            sub="all time"
-                            icon="volunteer_activism"
-                            loading={loading}
-                            featured
-                        />
-                        <KpiCard
-                            label="Donations"
-                            value={data?.donation_count?.toString() ?? '—'}
-                            icon="favorite"
-                            loading={loading}
-                        />
-                        <KpiCard
-                            label="Campaigns"
-                            value={loading ? '—' : campaigns.length.toString()}
-                            icon="campaign"
-                            loading={loading}
-                        />
-                    </>
-                )}
-            </div>
-
-            {/* ── Share store ──────────────────────────────────────────────── */}
-            {!loading && store && (
-                <div className="animate-rise-4">
-                    <ShareStore slug={store.slug} custom_domain={store.custom_domain} />
+        <div className="space-y-6">
+            {store ? (
+                <PageHeader
+                    title={overviewHeadline(store.name, commerce, hasMoney)}
+                    description={
+                        <span className="flex flex-wrap items-center gap-2">
+                            <Badge tone={store.active ? 'success' : 'danger'}>{store.active ? 'Live' : 'Offline'}</Badge>
+                            <span>{storefrontDisplayUrl(store.slug, store.custom_domain)}</span>
+                        </span>
+                    }
+                    actions={
+                        <>
+                            <CopyLink url={siteUrl} />
+                            <a
+                                href={siteUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                // The storefront is customer-facing: force it out of the TWA shell
+                                // into the browser rather than navigating inside the merchant app.
+                                onClick={(e) => { e.preventDefault(); openExternal(siteUrl) }}
+                                className={buttonClass('primary')}
+                            >
+                                <Icon name="open_in_new" size={15} />
+                                View site
+                            </a>
+                        </>
+                    }
+                />
+            ) : (
+                <div className="space-y-2">
+                    <Skeleton className="h-6 w-64" />
+                    <Skeleton className="h-4 w-40" />
                 </div>
             )}
 
-            {/* ── Funnel (commerce only: an NGO's visitors never add to cart) ─ */}
-            {commerce && (
-                <div className="animate-rise-2">
-                    <FunnelRow
-                        funnel={data?.funnel}
-                        loading={loading}
-                        onViewAnalytics={() => navigate('analytics')}
-                    />
-                </div>
+            {store && (
+                <p className="max-w-2xl text-[13px] text-muted-foreground">
+                    {overviewSummary({ commerce, revenue: store.revenue_total, raised, currency })}
+                </p>
             )}
 
-            {/* ── Top product / Top campaign ───────────────────────────────── */}
-            <div className="animate-rise-3">
+            <StatStrip className="grid-cols-1 sm:grid-cols-3">
                 {commerce ? (
-                    <TopProductCard
-                        product={data?.top_product}
-                        currency={store?.currency ?? 'KES'}
-                        loading={loading}
-                        onNavigate={() => navigate('products')}
-                    />
+                    <>
+                        <Stat label="Revenue" value={formatCurrency(store?.revenue_total ?? 0, currency)} hint="All time" loading={loading} />
+                        <Stat label="Orders" value={String(store?.order_count ?? 0)} loading={loading} />
+                        <Stat label="Products" value={String(store?.product_count ?? 0)} loading={loading} />
+                    </>
                 ) : (
-                    <TopCampaignCard
-                        campaign={topCampaign}
-                        currency={store?.currency ?? 'KES'}
-                        loading={loading}
-                        onNavigate={() => navigate('content')}
-                    />
+                    <>
+                        <Stat label="Total raised" value={formatCurrency(raised, currency)} hint="All time" loading={loading} />
+                        <Stat label="Donations" value={String(data?.donation_count ?? 0)} loading={loading} />
+                        <Stat label="Campaigns" value={String(campaigns.length)} loading={loading} />
+                    </>
                 )}
-            </div>
+            </StatStrip>
 
-            {/* ── Payments callout ─────────────────────────────────────────── */}
             {paymentsNeeded && (
-                <div className="animate-rise">
-                    <PaymentsCallout onNavigate={() => navigate('integrations')} commerce={commerce} />
-                </div>
+                <Panel title="Set up payments">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                        <p className="text-[13px] text-muted-foreground">
+                            {commerce
+                                ? 'Connect M-Pesa or PayPal so customers can check out. Takes about 2 minutes.'
+                                : 'Connect M-Pesa or PayPal so people can donate. Takes about 2 minutes.'}
+                        </p>
+                        <Link href={settings('integrations/payments')} className={buttonClass('primary', 'sm')}>Set up payments</Link>
+                    </div>
+                </Panel>
             )}
 
-            {/* ── Recent orders ─────────────────────────────────────────────── */}
-            <div className="animate-rise-4">
-                <div className="flex items-center justify-between mb-3">
-                    <p className="text-[13px] font-semibold text-foreground">
-                        {commerce ? 'Recent orders' : 'Recent donations'}
-                    </p>
-                    <button
-                        onClick={() => navigate('orders')}
-                        className="flex items-center gap-0.5 text-[12px] text-primary hover:underline underline-offset-2"
-                    >
-                        View all
-                        <MSO icon="chevron_right" className="text-[15px]" />
-                    </button>
-                </div>
+            {/* The funnel is commerce only: an NGO's visitors never add to cart. */}
+            {commerce && <FunnelPanel funnel={data?.funnel} loading={loading} analyticsHref={settings('analytics')} />}
 
-                <div className="rounded-2xl border border-border bg-background overflow-hidden">
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                <Panel
+                    title={commerce ? 'Recent orders' : 'Recent donations'}
+                    action={<Link href={settings('orders')} className="text-primary hover:underline">View all</Link>}
+                    flush
+                >
                     {loading ? (
-                        Array.from({ length: 4 }).map((_, i) => (
-                            <div key={i} className="flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-0">
-                                <Sk className="h-4 w-32 flex-1" />
-                                <Sk className="h-4 w-14" />
-                                <Sk className="h-6 w-20 rounded-full" />
-                            </div>
-                        ))
-                    ) : error ? (
-                        <div className="flex items-center gap-2.5 px-5 py-6 text-[13px] text-muted-foreground">
-                            <MSO icon="error_outline" className="text-[18px] text-destructive" />
-                            {commerce ? 'Could not load orders.' : 'Could not load donations.'}{' '}
-                            <button onClick={() => window.location.reload()} className="text-primary hover:underline">
-                                Retry
-                            </button>
-                        </div>
+                        <div className="p-4"><SkeletonLines lines={4} /></div>
                     ) : orders.length === 0 ? (
-                        <div className="flex flex-col items-center gap-4 px-5 py-12 text-center">
-                            <div className="flex items-center justify-center w-14 h-14 rounded-2xl bg-accent">
-                                <MSO
-                                    icon={commerce ? 'rocket_launch' : 'volunteer_activism'}
-                                    className="text-[26px] text-primary"
-                                    fill={1}
-                                />
-                            </div>
-                            <div className="max-w-xs">
-                                <p className="text-[14px] font-semibold text-foreground">
-                                    {commerce ? 'Your first sale is close' : 'Your first donation is close'}
-                                </p>
-                                <p className="text-[12px] text-muted-foreground mt-1 leading-relaxed">
-                                    {commerce
-                                        ? (store && store.product_count > 0
-                                            ? 'Your products are live. Share your store link and watch the orders roll in.'
-                                            : 'Add a product, then share your link. Orders show up here the moment a customer checks out.')
-                                        : (campaigns.length > 0
-                                            ? 'Your campaigns are live. Share your link and donations show up here.'
-                                            : 'Add a campaign, then share your link. Donations show up here the moment someone gives.')}
-                                </p>
-                            </div>
-                            <button
-                                onClick={() => {
-                                    if (commerce) {
-                                        navigate(store && store.product_count > 0 ? 'orders' : 'products')
-                                    } else {
-                                        navigate(campaigns.length > 0 ? 'orders' : 'content')
-                                    }
-                                }}
-                                className="inline-flex items-center gap-1.5 h-9 px-4 rounded-full bg-primary text-primary-foreground text-[12px] font-semibold hover:opacity-90 transition-opacity"
-                            >
-                                <MSO icon="add" className="text-[16px]" />
-                                {commerce
-                                    ? (store && store.product_count > 0 ? 'View orders' : 'Add your first product')
-                                    : (campaigns.length > 0 ? 'View donations' : 'Add your first campaign')}
-                            </button>
-                        </div>
+                        <EmptyState
+                            icon={commerce ? 'rocket_launch' : 'volunteer_activism'}
+                            title={commerce ? 'Your first sale is close' : 'Your first donation is close'}
+                            description={commerce
+                                ? (store && store.product_count > 0
+                                    ? 'Your products are live. Share your store link and watch the orders roll in.'
+                                    : 'Add a product, then share your link. Orders show up here the moment a customer checks out.')
+                                : (campaigns.length > 0
+                                    ? 'Your campaigns are live. Share your link and donations show up here.'
+                                    : 'Add a campaign, then share your link. Donations show up here the moment someone gives.')}
+                            action={
+                                commerce
+                                    ? (store && store.product_count > 0
+                                        ? <Link href={settings('orders')} className={buttonClass('secondary', 'sm')}>View orders</Link>
+                                        : <Link href={settings('products')} className={buttonClass('primary', 'sm')}>Add your first product</Link>)
+                                    : (campaigns.length > 0
+                                        ? <Link href={settings('orders')} className={buttonClass('secondary', 'sm')}>View donations</Link>
+                                        : <Link href={settings('content')} className={buttonClass('primary', 'sm')}>Add your first campaign</Link>)
+                            }
+                        />
                     ) : (
-                        orders.slice(0, 5).map((order) => (
-                            <button
-                                key={order.id}
-                                onClick={() => navigate('orders')}
-                                className="w-full flex items-center gap-3 px-5 py-3.5 border-b border-border last:border-0 hover:bg-[var(--md-sys-color-surface-container-low)] transition-colors text-left group"
-                            >
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[13px] font-medium text-foreground truncate">
-                                        {order.customer_name}
-                                    </p>
-                                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                                        {timeAgo(order.created_at)}
-                                    </p>
-                                </div>
-                                <span className="text-[13px] font-semibold text-foreground tabular-nums shrink-0">
-                                    {fmt(order.total, store?.currency ?? 'KES')}
-                                </span>
-                                <StatusBadge status={order.status} />
-                            </button>
-                        ))
+                        <ul className="divide-y divide-border">
+                            {orders.slice(0, 5).map((order) => (
+                                <li key={order.id}>
+                                    <Link href={settings('orders')} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
+                                        <span className="min-w-0 flex-1">
+                                            <span className="block truncate text-[13px] font-medium text-foreground">{order.customer_name}</span>
+                                            <span className="block text-[12px] text-muted-foreground">{timeAgo(order.created_at, now)}</span>
+                                        </span>
+                                        <span className="text-[13px] font-medium tabular-nums">{formatCurrency(order.total, currency)}</span>
+                                        <Badge tone={STATUS_TONE[order.status] ?? 'neutral'}>{statusText(order.status)}</Badge>
+                                    </Link>
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </Panel>
+
+                <div className="space-y-6">
+                    {commerce ? (
+                        (loading || data?.top_product) && (
+                            <Panel title="Top product" flush>
+                                {loading || !data?.top_product ? (
+                                    <div className="p-4"><SkeletonLines lines={2} /></div>
+                                ) : (
+                                    <HighlightRow
+                                        icon="inventory_2"
+                                        image={data.top_product.image_url}
+                                        eyebrow="Best seller this month"
+                                        title={data.top_product.name}
+                                        detail={`${data.top_product.units_sold} sold this month`}
+                                        value={formatCurrency(data.top_product.revenue, currency)}
+                                        href={settings('products')}
+                                    />
+                                )}
+                            </Panel>
+                        )
+                    ) : (
+                        (loading || topCampaign) && (
+                            <Panel title="Top campaign" flush>
+                                {loading || !topCampaign ? (
+                                    <div className="p-4"><SkeletonLines lines={2} /></div>
+                                ) : (
+                                    <HighlightRow
+                                        icon="volunteer_activism"
+                                        eyebrow="Raised the most"
+                                        title={topCampaign.title}
+                                        detail={topCampaign.goal > 0 ? `${topCampaign.percent}% of ${formatCurrency(topCampaign.goal, currency)} goal` : 'No goal set'}
+                                        value={formatCurrency(topCampaign.raised, currency)}
+                                        href={settings('content')}
+                                        progress={topCampaign.goal > 0 ? topCampaign.percent : undefined}
+                                    />
+                                )}
+                            </Panel>
+                        )
+                    )}
+
+                    {!loading && store && !store.is_pro && (
+                        <Panel
+                            title="Grow with Pro"
+                            description="Your own domain, advanced analytics, a blog, and your branding out front."
+                            footer={<a href={webUrl(`/org/${orgSlug}/billing`)} className={buttonClass('primary', 'sm')}>See plans</a>}
+                        >
+                            <p className="text-[12px] text-muted-foreground">Plans are paid from your organization wallet in Billing.</p>
+                        </Panel>
                     )}
                 </div>
             </div>
-
-            {/* ── Grow with Pro (non-Pro stores only) ──────────────────────── */}
-            {!loading && store && !store.is_pro && (
-                <div className="animate-rise-5">
-                    <ProUpsell onNavigate={() => navigate('billing')} />
-                </div>
-            )}
         </div>
     )
 }

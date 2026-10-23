@@ -31,6 +31,13 @@ test('every shop tab becomes a link under the store, and the URL finds it again'
     }
 })
 
+test('a tab with sub-tabs links to its first one, and still reads as that tab', () => {
+    const sections = settingsSections(shop, 'acme', 'reach', true)
+    const integrations = findNavItem(sections, 'integrations')
+    assert.equal(integrations?.href, '/org/acme/reach/settings/integrations/payments')
+    assert.equal(tabFromPath('/org/acme/reach/settings/integrations/social'), 'integrations')
+})
+
 test('Pro badges show only to unpaid stores; Beta always shows', () => {
     const paid = settingsSections(shop, 'a', 's', true).flatMap((s) => s.items)
     const free = settingsSections(shop, 'a', 's', false).flatMap((s) => s.items)

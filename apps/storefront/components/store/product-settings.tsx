@@ -2,20 +2,20 @@
 //admin product setting
 import { useState, useEffect, useCallback } from 'react'
 import { deleteProduct, listProductVariants, listProducts, saveProduct, setProductActive } from '@/lib/admin/catalog-actions'
-import { Button } from '@mcloud/ui/button'
-import { Input } from '@mcloud/ui/input'
-import { Label } from '@mcloud/ui/label'
-import { Badge } from '@mcloud/ui/badge'
-import { Switch } from '@mcloud/ui/switch'
-import { Card, CardContent } from '@mcloud/ui/card'
-import { Textarea } from '@mcloud/ui/textarea'
-import { Separator } from '@mcloud/ui/separator'
-import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Trash2, ChevronDown, ChevronUp, Eye, EyeOff, Package } from 'lucide-react'
+import { Badge } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Field, FormGrid, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
+import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
 import ImageUpload from './image-upload'
 import { Product, Variant } from '@mcloud/themes/types'
-
-
 
 const EMPTY_VARIANT: Variant = {
     id: '',
@@ -29,8 +29,21 @@ const EMPTY_VARIANT: Variant = {
     options: {},
 }
 
+type VariantField = 'name' | 'sku' | 'price' | 'inventory_quantity'
+
 function slugify(str: string) {
     return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+}
+
+function Thumb({ src, alt }: { src?: string; alt: string }) {
+    return (
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+            {src
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={src} alt={alt} className="h-full w-full object-cover" />
+                : <Icon name="inventory_2" size={16} className="text-muted-foreground" />}
+        </span>
+    )
 }
 
 function ProductForm({
@@ -59,13 +72,8 @@ function ProductForm({
     const [isActive, setIsActive] = useState(product?.is_active ?? true)
     const [images, setImages] = useState<string[]>(product?.images ?? [])
     const [variants, setVariants] = useState<Variant[]>([])
-    const [showVariants, setShowVariants] = useState(false)
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
-
-    useEffect(() => {
-        if (!isEdit) setSlug(slugify(name))
-    }, [name, isEdit])
 
     useEffect(() => {
         if (!isEdit || !product?.id) return
@@ -84,10 +92,12 @@ function ProductForm({
                         is_active: v.is_active ?? true,
                         options: (v.options ?? {}) as Record<string, string>,
                     })))
-                    setShowVariants(true)
                 }
             })
     }, [isEdit, product?.id, storeId])
+
+    const updateVariant = (i: number, patch: Partial<Variant>) =>
+        setVariants((prev) => prev.map((v, j) => (j === i ? { ...v, ...patch } : v)))
 
     const handleSave = async () => {
         if (!name.trim() || !price.trim()) {
@@ -133,276 +143,153 @@ function ProductForm({
         onSaved()
     }
 
+    const VARIANT_FIELDS: { label: string; key: VariantField; placeholder: string; type?: string }[] = [
+        { label: 'Name', key: 'name', placeholder: 'e.g. Large / Red' },
+        { label: 'SKU', key: 'sku', placeholder: 'VAR-001' },
+        { label: `Price (${currency})`, key: 'price', placeholder: '0.00', type: 'number' },
+        { label: 'Inventory', key: 'inventory_quantity', placeholder: '0', type: 'number' },
+    ]
+
     return (
         <div className="space-y-6">
-            {/* Header — stacks on mobile, row on sm+ */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">
-                        {isEdit ? `Edit: ${product.name}` : 'New product'}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {isEdit ? 'Update product details' : 'Add a new product to your store'}
-                    </p>
+            <PageHeader
+                title={isEdit ? product.name : 'New product'}
+                description={isEdit ? 'Update product details.' : 'Add a new product to your store.'}
+                actions={
+                    <>
+                        <Button onClick={onCancel} disabled={saving}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSave} disabled={saving}>
+                            {saving && <Spinner size={13} />}
+                            {saving ? 'Saving…' : isEdit ? 'Save product' : 'Create product'}
+                        </Button>
+                    </>
+                }
+            />
+
+            {error && <Notice tone="error">{error}</Notice>}
+
+            <div className="grid gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+                <div className="space-y-6">
+                    <Panel title="Details">
+                        <div className="space-y-4">
+                            <Field label="Product name">
+                                <TextInput
+                                    value={name}
+                                    required
+                                    placeholder="e.g. Classic White Tee"
+                                    onChange={(e) => {
+                                        setName(e.target.value)
+                                        // A new product's slug follows its name until saved.
+                                        if (!isEdit) setSlug(slugify(e.target.value))
+                                    }}
+                                />
+                            </Field>
+                            <Field label="URL slug" hint={`yourstore.com/products/${slug || '…'}`}>
+                                <TextInput value={slug} placeholder="classic-white-tee" className="font-mono" onChange={(e) => setSlug(slugify(e.target.value))} />
+                            </Field>
+                            <Field label="Description">
+                                <TextArea value={description} rows={4} placeholder="Describe your product…" className="resize-none" onChange={(e) => setDescription(e.target.value)} />
+                            </Field>
+                        </div>
+                    </Panel>
+
+                    <Panel title="Pricing and inventory">
+                        <div className="space-y-4">
+                            <FormGrid>
+                                <Field label={`Price (${currency})`}>
+                                    <TextInput type="number" min="0" step="0.01" value={price} placeholder="0.00" onChange={(e) => setPrice(e.target.value)} />
+                                </Field>
+                                <Field label={`Compare at (${currency})`} hint="Shown struck through, as the old price.">
+                                    <TextInput type="number" min="0" step="0.01" value={compareAtPrice} placeholder="0.00" onChange={(e) => setCompareAtPrice(e.target.value)} />
+                                </Field>
+                                <Field label="SKU">
+                                    <TextInput value={sku} placeholder="SKU-001" className="font-mono" onChange={(e) => setSku(e.target.value)} />
+                                </Field>
+                                <Field label="Inventory">
+                                    <TextInput type="number" min="0" value={inventory} disabled={!trackInventory} onChange={(e) => setInventory(e.target.value)} />
+                                </Field>
+                            </FormGrid>
+                            <Switch label="Track inventory" checked={trackInventory} onChange={setTrackInventory} />
+                            <Switch label="Product active" description="Inactive products are drafts: hidden from your storefront." checked={isActive} onChange={setIsActive} />
+                        </div>
+                    </Panel>
                 </div>
-                {/* Action buttons — full-width on mobile, auto on sm+ */}
-                <div className="flex gap-2 sm:shrink-0">
-                    <Button
-                        variant="outline"
-                        size="sm"
-                        className="flex-1 sm:flex-none h-8 text-xs"
-                        onClick={onCancel}
-                    >
-                        Cancel
-                    </Button>
-                    <Button
-                        size="sm"
-                        className="flex-1 sm:flex-none h-8 text-xs"
-                        onClick={handleSave}
-                        disabled={saving}
-                    >
-                        {saving ? 'Saving…' : isEdit ? 'Update' : 'Create product'}
-                    </Button>
-                </div>
+
+                <Panel title="Images" description="The first image is the product thumbnail.">
+                    <div className="space-y-3">
+                        {images.length > 0 && (
+                            <ul className="space-y-2">
+                                {images.map((img, i) => (
+                                    <li key={i} className="flex items-center gap-3 rounded-md border border-border p-2">
+                                        <Thumb src={img} alt="" />
+                                        <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted-foreground">{img}</span>
+                                        <Button variant="ghost" size="sm" aria-label="Remove image" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>
+                                            <Icon name="delete" size={15} />
+                                        </Button>
+                                    </li>
+                                ))}
+                            </ul>
+                        )}
+                        <ImageUpload
+                            label="Add image"
+                            value=""
+                            pathInDb=""
+                            onChange={(url) => setImages((prev) => [...prev, url])}
+                            bucket="store-assets"
+                            pathPrefix={`${storeId}/products`}
+                            aspectRatio="square"
+                        />
+                    </div>
+                </Panel>
             </div>
 
-            {error && (
-                <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2 border border-destructive/20">
-                    {error}
-                </p>
-            )}
-
-            {/* Two-column layout — single col on mobile, side-by-side on md+ */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                {/* Left column */}
-                <div className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="product-name">Product name *</Label>
-                        <Input
-                            id="product-name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Classic White Tee"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="slug">URL slug</Label>
-                        <Input
-                            id="slug"
-                            value={slug}
-                            onChange={(e) => setSlug(slugify(e.target.value))}
-                            placeholder="classic-white-tee"
-                            className="font-mono text-xs"
-                        />
-                        <p className="text-xs text-muted-foreground break-all">
-                            yourstore.com/products/{slug || '…'}
-                        </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={4}
-                            placeholder="Describe your product…"
-                            className="resize-none"
-                        />
-                    </div>
-
-                    {/* Price row — always 2 cols, works fine at any width */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label>Price ({currency}) *</Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={price}
-                                onChange={(e) => setPrice(e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Compare at ({currency})</Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={compareAtPrice}
-                                onChange={(e) => setCompareAtPrice(e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
-                    </div>
-
-                    {/* SKU + inventory — stack on xs, side-by-side on sm+ */}
-                    <div className="grid grid-cols-1 xs:grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label>SKU</Label>
-                            <Input
-                                value={sku}
-                                onChange={(e) => setSku(e.target.value)}
-                                placeholder="SKU-001"
-                                className="font-mono text-xs"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label>Inventory</Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                value={inventory}
-                                onChange={(e) => setInventory(e.target.value)}
-                                disabled={!trackInventory}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Toggles */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <Label className="text-sm font-normal cursor-pointer">Track inventory</Label>
-                            <Switch checked={trackInventory} onCheckedChange={setTrackInventory} />
-                        </div>
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <Label className="text-sm font-normal cursor-pointer">Product active</Label>
-                            <Switch checked={isActive} onCheckedChange={setIsActive} />
-                        </div>
-                    </div>
-                </div>
-
-                {/* Right column — images (moves below on mobile, which is natural) */}
-                <div className="space-y-3">
-                    <Label>Product images</Label>
-                    {images.length > 0 && (
-                        <div className="space-y-2">
-                            {images.map((img, i) => (
-                                <div key={i} className="flex items-center gap-3 rounded border bg-muted/30 p-2">
-                                    <img src={img} alt="" className="w-12 h-12 object-cover rounded shrink-0" />
-                                    <p className="text-xs text-muted-foreground font-mono truncate flex-1 min-w-0">{img}</p>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
+            <Panel
+                title={`Variants (${variants.length})`}
+                description="Each variant overrides the base price."
+                footer={
+                    <Button size="sm" onClick={() => setVariants((prev) => [...prev, { ...EMPTY_VARIANT }])}>
+                        <Icon name="add" size={15} />
+                        Add variant
+                    </Button>
+                }
+            >
+                {variants.length === 0 ? (
+                    <p className="text-[13px] text-muted-foreground">No variants. Add one for sizes, colours or other options.</p>
+                ) : (
+                    <div className="space-y-4">
+                        {variants.map((v, i) => (
+                            <div key={i} className="rounded-md border border-border p-3">
+                                <div className="mb-3 flex items-center justify-between">
+                                    <p className="text-[12px] font-medium text-muted-foreground">
+                                        Variant {i + 1}{!v.is_active && ' · hidden'}
+                                    </p>
+                                    <div className="flex items-center gap-1">
+                                        <Button variant="ghost" size="sm" aria-label={v.is_active ? 'Hide variant' : 'Show variant'} onClick={() => updateVariant(i, { is_active: !v.is_active })}>
+                                            <Icon name={v.is_active ? 'visibility' : 'visibility_off'} size={15} />
+                                        </Button>
+                                        <Button variant="ghost" size="sm" aria-label="Remove variant" onClick={() => setVariants((prev) => prev.filter((_, j) => j !== i))}>
+                                            <Icon name="delete" size={15} />
+                                        </Button>
+                                    </div>
                                 </div>
-                            ))}
-                        </div>
-                    )}
-                    <ImageUpload
-                        label="Add image"
-                        value=""
-                        pathInDb=""
-                        onChange={(url) => setImages((prev) => [...prev, url])}
-                        bucket="store-assets"
-                        pathPrefix={`${storeId}/products`}
-                        aspectRatio="square"
-                    />
-                    <p className="text-xs text-muted-foreground">First image is used as the product thumbnail.</p>
-                </div>
-            </div>
-
-            {/* Variants */}
-            <Separator />
-            <div className="space-y-3">
-                <button
-                    onClick={() => setShowVariants(!showVariants)}
-                    className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
-                >
-                    <span>Variants ({variants.length})</span>
-                    {showVariants ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-
-                <AnimatePresence>
-                    {showVariants && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-3 overflow-hidden"
-                        >
-                            <p className="text-xs text-muted-foreground">
-                                Each variant overrides the base price.
-                            </p>
-
-                            {variants.map((v, i) => (
-                                <Card key={i}>
-                                    <CardContent className="pt-4 space-y-3">
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                                                Variant {i + 1}
-                                            </p>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 w-7 p-0 text-muted-foreground"
-                                                    onClick={() => {
-                                                        const next = [...variants]
-                                                        next[i] = { ...next[i], is_active: !next[i].is_active }
-                                                        setVariants(next)
-                                                    }}
-                                                >
-                                                    {v.is_active ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
-                                                </Button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                                    onClick={() => setVariants((prev) => prev.filter((_, j) => j !== i))}
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* Variant fields: 1 col on mobile → 2 on sm → 4 on lg */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                                            {[
-                                                { label: 'Name *', key: 'name', placeholder: 'e.g. Large / Red' },
-                                                { label: 'SKU', key: 'sku', placeholder: 'VAR-001' },
-                                                { label: `Price (${currency})`, key: 'price', placeholder: '0.00', type: 'number' },
-                                                { label: 'Inventory', key: 'inventory_quantity', placeholder: '0', type: 'number' },
-                                            ].map((field) => (
-                                                <div key={field.key} className="space-y-1.5">
-                                                    <Label className="text-xs">{field.label}</Label>
-                                                    <Input
-                                                        type={field.type ?? 'text'}
-                                                        value={(v as any)[field.key]}
-                                                        onChange={(e) => {
-                                                            const next = [...variants]
-                                                            next[i] = { ...next[i], [field.key]: e.target.value }
-                                                            setVariants(next)
-                                                        }}
-                                                        placeholder={field.placeholder}
-                                                        className="h-8 text-xs"
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            ))}
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs"
-                                onClick={() => setVariants((prev) => [...prev, { ...EMPTY_VARIANT }])}
-                            >
-                                <Plus className="w-3.5 h-3.5 mr-1.5" />
-                                Add variant
-                            </Button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
-            </div>
+                                <FormGrid columns={2} className="lg:grid-cols-4">
+                                    {VARIANT_FIELDS.map((field) => (
+                                        <Field key={field.key} label={field.label}>
+                                            <TextInput
+                                                type={field.type ?? 'text'}
+                                                value={v[field.key] ?? ''}
+                                                placeholder={field.placeholder}
+                                                className="h-8"
+                                                onChange={(e) => updateVariant(i, { [field.key]: e.target.value })}
+                                            />
+                                        </Field>
+                                    ))}
+                                </FormGrid>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </Panel>
         </div>
     )
 }
@@ -417,21 +304,28 @@ export default function ProductSettings({
 }) {
     const [products, setProducts] = useState<Product[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState<string | null>(null)
     const [view, setView] = useState<'list' | 'new' | 'edit'>('list')
     const [editProduct, setEditProduct] = useState<Product | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
+    const [deleting, setDeleting] = useState(false)
 
     const load = useCallback(async () => {
         setLoading(true)
         const res = await listProducts(storeId)
         setProducts(res.ok ? (res.products as Product[]) : [])
+        setLoadError(res.ok ? null : res.error)
         setLoading(false)
     }, [storeId])
 
     useEffect(() => { load() }, [load])
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Delete this product? This cannot be undone.')) return
-        await deleteProduct(storeId, id)
+    const confirmDelete = async () => {
+        if (!deleteTarget) return
+        setDeleting(true)
+        await deleteProduct(storeId, deleteTarget.id)
+        setDeleting(false)
+        setDeleteTarget(null)
         load()
     }
 
@@ -465,116 +359,90 @@ export default function ProductSettings({
 
     return (
         <div className="space-y-6">
-            {/* List header */}
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">Products</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {products.length} product{products.length !== 1 ? 's' : ''} in your store
-                    </p>
-                </div>
-                <Button size="sm" className="h-8 text-xs shrink-0" onClick={() => setView('new')}>
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                    <span className="hidden xs:inline">Add product</span>
-                    <span className="xs:hidden">Add</span>
-                </Button>
-            </div>
+            <PageHeader
+                title="Products"
+                description={loading ? 'Loading…' : `${products.length} product${products.length !== 1 ? 's' : ''} in your store`}
+                actions={
+                    <Button variant="primary" onClick={() => setView('new')}>
+                        <Icon name="add" size={16} />
+                        Add product
+                    </Button>
+                }
+            />
 
-            {loading && (
-                <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-16 bg-muted rounded animate-pulse" />
-                    ))}
-                </div>
-            )}
+            <Panel flush>
+                {loadError && !loading ? (
+                    <LoadError message={loadError} onRetry={load} />
+                ) : !loading && products.length === 0 ? (
+                    <EmptyState
+                        icon="inventory_2"
+                        title="No products yet"
+                        description="Add your first product to start selling."
+                        action={<Button variant="primary" size="sm" onClick={() => setView('new')}>Add your first product</Button>}
+                    />
+                ) : (
+                    <Table busy={loading}>
+                        <thead>
+                            <tr>
+                                <Th>Product</Th>
+                                <Th align="right">Price</Th>
+                                <Th>Stock</Th>
+                                <Th>Status</Th>
+                                <Th align="right"><span className="sr-only">Actions</span></Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <SkeletonRows columns={5} rows={3} />
+                            ) : (
+                                products.map((product) => (
+                                    <Tr key={product.id}>
+                                        <Td>
+                                            <div className="flex items-center gap-3">
+                                                <Thumb src={(product.images as string[])?.[0]} alt={product.name} />
+                                                <div className="min-w-0">
+                                                    <p className="truncate font-medium">{product.name}</p>
+                                                    <p className="truncate font-mono text-[12px] text-muted-foreground">{product.slug}</p>
+                                                </div>
+                                            </div>
+                                        </Td>
+                                        <Td label="Price" align="right">{currency} {Number(product.price).toLocaleString()}</Td>
+                                        <Td label="Stock" muted>{product.track_inventory ? `${product.inventory_quantity} in stock` : 'Untracked'}</Td>
+                                        <Td label="Status">
+                                            <button
+                                                type="button"
+                                                onClick={() => handleToggleActive(product)}
+                                                title={product.is_active ? 'Make draft' : 'Make active'}
+                                                className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                                            >
+                                                <Badge tone={product.is_active ? 'success' : 'neutral'}>{product.is_active ? 'Active' : 'Draft'}</Badge>
+                                            </button>
+                                        </Td>
+                                        <Td label="Actions" align="right">
+                                            <div className="inline-flex items-center gap-1">
+                                                <Button size="sm" onClick={() => { setEditProduct(product); setView('edit') }}>Edit</Button>
+                                                <Button variant="ghost" size="sm" aria-label={`Delete ${product.name}`} onClick={() => setDeleteTarget(product)}>
+                                                    <Icon name="delete" size={15} />
+                                                </Button>
+                                            </div>
+                                        </Td>
+                                    </Tr>
+                                ))
+                            )}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
 
-            {!loading && products.length === 0 && (
-                <Card className="border-dashed">
-                    <CardContent className="py-16 text-center space-y-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto">
-                            <Package className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-foreground">No products yet</p>
-                            <p className="text-xs text-muted-foreground mt-1">Add your first product to start selling.</p>
-                        </div>
-                        <Button size="sm" className="h-8 text-xs" onClick={() => setView('new')}>
-                            Add your first product
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
-
-            {!loading && products.length > 0 && (
-                <div className="rounded-lg border divide-y">
-                    {products.map((product) => {
-                        const thumb = (product.images as string[])?.[0]
-                        return (
-                            <div
-                                key={product.id}
-                                className="flex items-center gap-3 px-3 py-3 sm:px-4 bg-background hover:bg-muted/30 transition-colors"
-                            >
-                                {/* Thumbnail */}
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded border bg-muted shrink-0 overflow-hidden">
-                                    {thumb
-                                        ? <img src={thumb} alt={product.name} className="w-full h-full object-cover" />
-                                        : <div className="w-full h-full" />}
-                                </div>
-
-                                {/* Name + slug — takes all remaining space */}
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{product.name}</p>
-                                    {/* Slug hidden on very small screens to save space */}
-                                    <p className="text-xs text-muted-foreground font-mono truncate hidden xs:block">
-                                        {product.slug}
-                                    </p>
-                                </div>
-
-                                {/* Price — hidden on mobile, shown sm+ */}
-                                <p className="text-sm font-medium text-foreground w-20 text-right shrink-0 hidden sm:block">
-                                    {currency} {Number(product.price).toLocaleString()}
-                                </p>
-
-                                {/* Stock — hidden on mobile, shown md+ */}
-                                <p className="text-xs text-muted-foreground w-20 text-right shrink-0 hidden md:block">
-                                    {product.track_inventory ? `${product.inventory_quantity} in stock` : 'Untracked'}
-                                </p>
-
-                                {/* Active badge */}
-                                <button onClick={() => handleToggleActive(product)} className="shrink-0">
-                                    <Badge
-                                        variant={product.is_active ? 'default' : 'secondary'}
-                                        className="text-[10px] cursor-pointer"
-                                    >
-                                        {product.is_active ? 'Active' : 'Draft'}
-                                    </Badge>
-                                </button>
-
-                                {/* Actions */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 px-2 text-xs text-muted-foreground"
-                                        onClick={() => { setEditProduct(product); setView('edit') }}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => handleDelete(product.id)}
-                                        aria-label="Delete product"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title={deleteTarget ? `Delete ${deleteTarget.name}?` : ''}
+                description="The product and its variants are removed from your store. This cannot be undone."
+                confirmLabel="Delete product"
+                busy={deleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     )
 }

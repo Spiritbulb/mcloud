@@ -1,28 +1,30 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo } from 'react'
+import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import { listOrderItems, listOrders, setOrderStatus } from '@/lib/admin/order-actions'
-import { Card, CardContent } from '@mcloud/ui/card'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@mcloud/ui/select'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-    ChevronDown,
-    ShoppingBag,
-    Receipt,
-    Clock,
-    CheckCircle2,
-    Wallet,
-    Loader2,
-    Mail,
-    Phone,
-} from 'lucide-react'
+import { Badge, fulfillmentTone, orderStatusTone } from '@mcloud/ui/kit/badge'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Field, Select } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
+import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
+import { ROW_CLASS, Table, Th } from '@mcloud/ui/kit/table'
+import { Tabs } from '@mcloud/ui/kit/tabs'
 import { cn } from '@mcloud/ui/utils'
+import {
+    FULFILLMENT_STATUSES,
+    ORDER_FILTERS,
+    PAYMENT_STATUSES,
+    filterCounts,
+    filterOrders,
+    formatMoney,
+    itemCount,
+    orderStats,
+    statusLabel,
+} from './order-logic'
 
 interface OrderItem {
     id: string
@@ -59,86 +61,112 @@ interface Order {
     items?: OrderItem[]
 }
 
-const FILTER_TABS = ['all', 'pending', 'paid', 'fulfilled', 'cancelled']
 const MAX_STACK = 3
+const COLUMNS = 5
 
-const STATUS_STYLES: Record<string, string> = {
-    paid: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20',
-    fulfilled: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20',
-    pending: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20',
-    unfulfilled: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 ring-1 ring-inset ring-amber-500/20',
-    partially_paid: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-1 ring-inset ring-sky-500/20',
-    partially_fulfilled: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 ring-1 ring-inset ring-sky-500/20',
-    refunded: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20',
-    voided: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20',
-    cancelled: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 ring-1 ring-inset ring-rose-500/20',
-}
-
-function StatusPill({ status }: { status: string }) {
-    const style = STATUS_STYLES[status] ?? 'bg-muted text-muted-foreground ring-1 ring-inset ring-border'
+function Thumb({ src, alt }: { src: string | null; alt: string }) {
     return (
-        <span
-            className={cn(
-                'inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium capitalize whitespace-nowrap',
-                style
-            )}
-        >
-            <span className="w-1.5 h-1.5 rounded-full bg-current opacity-70" />
-            {status.replace(/_/g, ' ')}
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center overflow-hidden rounded-md border-2 border-card bg-muted ring-1 ring-border">
+            {src
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={src} alt={alt} className="h-full w-full object-cover" />
+                : <Icon name="shopping_bag" size={14} className="text-muted-foreground" />}
         </span>
     )
 }
 
-function formatMoney(currency: string, value: number) {
-    return `${currency} ${Number(value).toLocaleString(undefined, { maximumFractionDigits: 2 })}`
-}
-
-// Overlapping product thumbnail stack — leads the row so merchants recognise
-// the order by what was bought, not just a number. Falls back to a generic
-// bag icon tile when no image is available, and collapses to a +N chip
-// once the item count exceeds MAX_STACK.
+// Overlapping product thumbnails lead the row, so merchants recognise an order by what was
+// bought, not just its number. Collapses to a +N chip past MAX_STACK.
 function ProductStack({ order }: { order: Order }) {
     const items = order.preview_items ?? []
     const shown = items.slice(0, MAX_STACK)
     const extra = Math.max((order.item_count ?? items.length) - shown.length, 0)
+    if (shown.length === 0) return <Thumb src={null} alt="" />
+    return (
+        <span className="flex shrink-0 items-center -space-x-2.5">
+            {shown.map((item, i) => <Thumb key={i} src={item.image_url} alt={item.title} />)}
+            {extra > 0 && (
+                <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-card bg-muted text-[10px] font-medium text-muted-foreground">+{extra}</span>
+            )}
+        </span>
+    )
+}
 
-    if (shown.length === 0) {
-        return (
-            <div className="w-11 h-11 rounded-lg bg-muted/70 flex items-center justify-center shrink-0">
-                <ShoppingBag className="w-4 h-4 text-muted-foreground" />
-            </div>
-        )
-    }
+function OrderDetail({ order, updating, onStatus }: {
+    order: Order
+    updating: boolean
+    onStatus: (field: 'status' | 'fulfillment_status', value: string) => void
+}) {
+    const totals = [
+        { label: 'Subtotal', value: order.subtotal },
+        { label: 'Tax', value: order.tax },
+        { label: 'Shipping', value: order.shipping },
+        { label: 'Discount', value: -order.discount },
+    ].filter((r) => Number(r.value) !== 0)
 
     return (
-        <div className="flex items-center -space-x-3 shrink-0">
-            {shown.map((item, i) => (
-                <div
-                    key={i}
-                    className="w-11 h-11 rounded-lg border-2 border-background shadow-sm overflow-hidden bg-muted shrink-0 ring-1 ring-border/40"
-                    style={{ zIndex: shown.length - i }}
-                >
-                    {item.image_url ? (
-                        <img
-                            src={item.image_url}
-                            alt={item.title}
-                            className="w-full h-full object-cover"
-                        />
-                    ) : (
-                        <div className="w-full h-full flex items-center justify-center">
-                            <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground/50" />
+        <div className="grid gap-6 bg-muted/30 px-4 py-5 md:grid-cols-[minmax(0,1fr)_16rem]">
+            <div className="min-w-0 space-y-4">
+                {order.customer_email || order.customer_phone ? (
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted-foreground">
+                        {order.customer_email && <span className="inline-flex items-center gap-1.5"><Icon name="mail" size={14} />{order.customer_email}</span>}
+                        {order.customer_phone && <span className="inline-flex items-center gap-1.5"><Icon name="call" size={14} />{order.customer_phone}</span>}
+                    </div>
+                ) : (
+                    <p className="text-[12px] text-muted-foreground">Guest checkout: no contact on file.</p>
+                )}
+
+                {order.items && order.items.length > 0 && (
+                    <ul className="divide-y divide-border rounded-md border border-border bg-card">
+                        {order.items.map((item) => (
+                            <li key={item.id} className="flex items-center gap-3 px-3 py-2">
+                                <Thumb src={item.image_url} alt={item.title} />
+                                <span className="min-w-0 flex-1">
+                                    <span className="block truncate text-[13px] text-foreground">{item.title}</span>
+                                    {item.variant_title && <span className="block text-[12px] text-muted-foreground">{item.variant_title}</span>}
+                                </span>
+                                <span className="text-[12px] text-muted-foreground">×{item.quantity}</span>
+                                <span className="w-24 text-right text-[13px] tabular-nums">{formatMoney(order.currency, item.total)}</span>
+                            </li>
+                        ))}
+                    </ul>
+                )}
+
+                {order.notes && (
+                    <div className="rounded-md border border-border bg-card p-3">
+                        <p className="mb-1 text-[12px] font-medium text-muted-foreground">Customer note</p>
+                        <p className="text-[13px] text-foreground">{order.notes}</p>
+                    </div>
+                )}
+            </div>
+
+            <div className="space-y-4">
+                <dl className="space-y-1.5 text-[12px]">
+                    {totals.map((row) => (
+                        <div key={row.label} className="flex justify-between text-muted-foreground">
+                            <dt>{row.label}</dt>
+                            <dd className="tabular-nums">{formatMoney(order.currency, row.value)}</dd>
                         </div>
-                    )}
-                </div>
-            ))}
-            {extra > 0 && (
-                <div
-                    className="w-11 h-11 rounded-lg border-2 border-background bg-muted flex items-center justify-center shrink-0 shadow-sm"
-                    style={{ zIndex: 0 }}
-                >
-                    <span className="text-[10px] font-medium text-muted-foreground">+{extra}</span>
-                </div>
-            )}
+                    ))}
+                    <div className="flex justify-between border-t border-border pt-1.5 text-[13px] font-semibold text-foreground">
+                        <dt>Total</dt>
+                        <dd className="tabular-nums">{formatMoney(order.currency, order.total)}</dd>
+                    </div>
+                </dl>
+                <Field label="Payment status">
+                    <Select value={order.status} disabled={updating} onChange={(e) => onStatus('status', e.target.value)} className="h-8">
+                        {/* Keep a status the merchant cannot set (e.g. cancelled) selectable as the current value. */}
+                        {!PAYMENT_STATUSES.includes(order.status as never) && <option value={order.status}>{statusLabel(order.status)}</option>}
+                        {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                    </Select>
+                </Field>
+                <Field label="Fulfilment status">
+                    <Select value={order.fulfillment_status} disabled={updating} onChange={(e) => onStatus('fulfillment_status', e.target.value)} className="h-8">
+                        {FULFILLMENT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
+                    </Select>
+                </Field>
+                {updating && <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Spinner size={12} />Saving…</p>}
+            </div>
         </div>
     )
 }
@@ -170,7 +198,6 @@ export default function OrderSettings({
                 list.push({ image_url: row.image_url, title: row.title })
                 grouped.set(row.order_id, list)
             })
-
             baseOrders.forEach((o) => {
                 const items = grouped.get(o.id) ?? []
                 o.item_count = items.length
@@ -184,359 +211,113 @@ export default function OrderSettings({
 
     useEffect(() => { load() }, [load])
 
-    const loadItems = async (orderId: string) => {
+    const toggle = async (orderId: string) => {
         if (expandedId === orderId) { setExpandedId(null); return }
         const res = await listOrderItems(storeId, orderId)
-        setOrders((prev) =>
-            prev.map((o) => o.id === orderId ? { ...o, items: res.ok ? (res.items as OrderItem[]) : [] } : o)
-        )
+        setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, items: res.ok ? (res.items as OrderItem[]) : [] } : o))
         setExpandedId(orderId)
     }
 
-    const updateStatus = async (
-        orderId: string,
-        field: 'status' | 'fulfillment_status',
-        value: string
-    ) => {
+    const updateStatus = async (orderId: string, field: 'status' | 'fulfillment_status', value: string) => {
         setUpdating(orderId)
         const res = await setOrderStatus(storeId, orderId, field, value)
-        if (res.ok) {
-            setOrders((prev) =>
-                prev.map((o) => o.id === orderId ? { ...o, [field]: value } : o)
-            )
-        }
+        if (res.ok) setOrders((prev) => prev.map((o) => o.id === orderId ? { ...o, [field]: value } : o))
         setUpdating(null)
     }
 
-    const filtered = filter === 'all'
-        ? orders
-        : orders.filter((o) => o.status === filter || o.fulfillment_status === filter)
-
-    const stats = useMemo(() => ({
-        total: orders.length,
-        pending: orders.filter((o) => o.status === 'pending').length,
-        paid: orders.filter((o) => o.status === 'paid').length,
-        revenue: orders.filter((o) => o.status === 'paid').reduce((s, o) => s + Number(o.total), 0),
-    }), [orders])
-
-    const tabCounts = useMemo(() => {
-        const counts: Record<string, number> = { all: orders.length }
-        FILTER_TABS.slice(1).forEach((f) => {
-            counts[f] = orders.filter((o) => o.status === f || o.fulfillment_status === f).length
-        })
-        return counts
-    }, [orders])
+    const filtered = filterOrders(orders, filter)
+    const stats = useMemo(() => orderStats(orders), [orders])
+    const counts = useMemo(() => filterCounts(orders), [orders])
 
     return (
-        <div className="mx-auto max-w-4xl space-y-7">
-            <div>
-                <h2 className="text-lg font-semibold text-foreground tracking-tight">Orders</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Manage and fulfil incoming orders</p>
-            </div>
+        <div className="space-y-6">
+            <PageHeader title="Orders" description="Manage and fulfil incoming orders." />
 
-            {/* Stats */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {[
-                    { label: 'Total orders', value: stats.total, icon: Receipt, accent: 'text-foreground' },
-                    { label: 'Pending', value: stats.pending, icon: Clock, accent: 'text-amber-600 dark:text-amber-400' },
-                    { label: 'Paid', value: stats.paid, icon: CheckCircle2, accent: 'text-emerald-600 dark:text-emerald-400' },
-                ].map((s) => (
-                    <Card key={s.label} className="border-border/60 hover:border-border transition-colors py-1.5">
-                        <CardContent className="p-4 flex items-start justify-between">
-                            <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">{s.label}</p>
-                                <p className="text-2xl font-semibold text-foreground tabular-nums">{s.value}</p>
-                            </div>
-                            <s.icon className={cn('w-4 h-4 mt-0.5', s.accent)} />
-                        </CardContent>
-                    </Card>
-                ))}
+            <StatStrip className="grid-cols-2 md:grid-cols-4">
+                <Stat label="Total orders" value={String(stats.total)} loading={loading} />
+                <Stat label="Pending" value={String(stats.pending)} loading={loading} />
+                <Stat label="Paid" value={String(stats.paid)} loading={loading} />
+                <Stat label={`Revenue (${currency})`} value={stats.revenue.toLocaleString()} loading={loading} />
+            </StatStrip>
 
-                <Card className="border-emerald-500/20 bg-gradient-to-br from-emerald-500/[0.07] to-transparent py-1.5">
-                    <CardContent className="p-4 flex items-start justify-between">
-                        <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">Revenue ({currency})</p>
-                            <p className="text-2xl font-semibold text-emerald-700 dark:text-emerald-400 tabular-nums">
-                                {stats.revenue.toLocaleString()}
-                            </p>
-                        </div>
-                        <Wallet className="w-4 h-4 mt-0.5 text-emerald-600 dark:text-emerald-400" />
-                    </CardContent>
-                </Card>
-            </div>
+            <Tabs
+                label="Filter orders"
+                value={filter}
+                onChange={setFilter}
+                items={ORDER_FILTERS.map((f) => ({ id: f, label: statusLabel(f), count: loading || counts[f] === 0 ? undefined : counts[f] }))}
+            />
 
-            {/* Filter tabs */}
-            <div className="flex flex-wrap gap-1.5 p-1 bg-muted/50 rounded-lg w-fit">
-                {FILTER_TABS.map((f) => (
-                    <button
-                        key={f}
-                        onClick={() => setFilter(f)}
-                        className={cn(
-                            'relative px-3 py-1.5 text-xs font-medium capitalize rounded-md transition-all',
-                            filter === f
-                                ? 'bg-background text-foreground shadow-sm'
-                                : 'text-muted-foreground hover:text-foreground'
-                        )}
-                    >
-                        {f}
-                        {tabCounts[f] > 0 && (
-                            <span className={cn(
-                                'ml-1.5 text-[10px] tabular-nums',
-                                filter === f ? 'text-muted-foreground' : 'text-muted-foreground/70'
-                            )}>
-                                {tabCounts[f]}
-                            </span>
-                        )}
-                    </button>
-                ))}
-            </div>
-
-            {loading && (
-                <div className="space-y-2">
-                    {[...Array(4)].map((_, i) => (
-                        <div
-                            key={i}
-                            className="h-16 rounded-lg animate-pulse bg-gradient-to-r from-muted via-muted/40 to-muted bg-[length:200%_100%]"
-                            style={{ animationName: 'shimmer', animationDuration: '1.8s', animationIterationCount: 'infinite' }}
-                        />
-                    ))}
-                    <style jsx>{`
-                        @keyframes shimmer {
-                            0% { background-position: 200% 0; }
-                            100% { background-position: -200% 0; }
-                        }
-                    `}</style>
-                </div>
-            )}
-
-            {!loading && loadError && (
-                <p className="text-sm text-rose-600 dark:text-rose-400">{loadError}</p>
-            )}
-
-            {!loading && !loadError && filtered.length === 0 && (
-                <Card className="border-dashed">
-                    <CardContent className="py-16 text-center space-y-3">
-                        <motion.div
-                            initial={{ scale: 0.8, opacity: 0 }}
-                            animate={{ scale: 1, opacity: 1 }}
-                            className="w-11 h-11 rounded-full bg-muted flex items-center justify-center mx-auto"
-                        >
-                            <ShoppingBag className="w-5 h-5 text-muted-foreground" />
-                        </motion.div>
-                        <p className="text-sm font-medium text-foreground">No orders yet</p>
-                        <p className="text-xs text-muted-foreground max-w-[240px] mx-auto">
-                            Orders from your storefront will appear here as customers check out.
-                        </p>
-                    </CardContent>
-                </Card>
-            )}
-
-            {!loading && filtered.length > 0 && (
-                <div className="rounded-xl border border-border/60 divide-y divide-border/60 overflow-hidden shadow-sm">
-                    {filtered.map((order, idx) => (
-                        <motion.div
-                            key={order.id}
-                            initial={{ opacity: 0, y: 4 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: Math.min(idx * 0.02, 0.3), duration: 0.2 }}
-                            className="bg-background"
-                        >
-                            {/* Row — image stack leads, order number is an eyebrow */}
-                            <div
-                                className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-muted/40 transition-colors group"
-                                onClick={() => loadItems(order.id)}
-                            >
-                                <ProductStack order={order} />
-
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-[10px] font-mono uppercase tracking-wide text-muted-foreground">
-                                        #{order.order_number}
-                                    </p>
-                                    <p className="text-sm text-foreground truncate">
-                                        {(order.item_count ?? 0) === 1
-                                            ? '1 item'
-                                            : `${order.item_count ?? 0} items`}
-                                        <span className="text-muted-foreground"> · {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
-                                    </p>
-                                </div>
-
-                                <div className="flex flex-col items-end gap-1 shrink-0">
-                                    <p className="text-sm font-semibold text-foreground tabular-nums">
-                                        {formatMoney(order.currency, order.total)}
-                                    </p>
-                                    <div className="flex items-center gap-1">
-                                        <div className="hidden sm:flex">
-                                            <StatusPill status={order.status} />
-                                        </div>
-                                        <div className="hidden md:flex">
-                                            <StatusPill status={order.fulfillment_status} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <motion.div
-                                    animate={{ rotate: expandedId === order.id ? 180 : 0 }}
-                                    transition={{ duration: 0.2 }}
-                                    className="shrink-0"
-                                >
-                                    <ChevronDown className="w-4 h-4 text-muted-foreground" />
-                                </motion.div>
-                            </div>
-
-                            {/* Expanded detail */}
-                            <AnimatePresence>
-                                {expandedId === order.id && (
-                                    <motion.div
-                                        initial={{ opacity: 0, height: 0 }}
-                                        animate={{ opacity: 1, height: 'auto' }}
-                                        exit={{ opacity: 0, height: 0 }}
-                                        transition={{ duration: 0.25, ease: 'easeInOut' }}
-                                        className="overflow-hidden border-t border-border/60"
-                                    >
-                                        <div className="px-4 py-5 space-y-5 bg-muted/20">
-                                            {/* Customer contact — moved here from the row */}
-                                            {(order.customer_email || order.customer_phone) && (
-                                                <div className="flex flex-wrap gap-4">
-                                                    {order.customer_email && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                            <Mail className="w-3.5 h-3.5" />
-                                                            {order.customer_email}
-                                                        </div>
-                                                    )}
-                                                    {order.customer_phone && (
-                                                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                                            <Phone className="w-3.5 h-3.5" />
-                                                            {order.customer_phone}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            )}
-                                            {!order.customer_email && !order.customer_phone && (
-                                                <p className="text-xs text-muted-foreground italic">Guest checkout — no contact on file</p>
-                                            )}
-
-                                            {/* Line items */}
-                                            {order.items && order.items.length > 0 && (
-                                                <div className="space-y-2.5">
-                                                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                                                        Items ({order.items.length})
-                                                    </p>
-                                                    {order.items.map((item, i) => (
-                                                        <motion.div
-                                                            key={item.id}
-                                                            initial={{ opacity: 0, x: -6 }}
-                                                            animate={{ opacity: 1, x: 0 }}
-                                                            transition={{ delay: i * 0.04 }}
-                                                            className="flex items-center gap-3 bg-background/60 rounded-lg p-2"
-                                                        >
-                                                            {item.image_url ? (
-                                                                <img
-                                                                    src={item.image_url}
-                                                                    alt={item.title}
-                                                                    className="w-10 h-10 object-cover rounded-md border border-border/60 shrink-0"
-                                                                />
-                                                            ) : (
-                                                                <div className="w-10 h-10 rounded-md border border-dashed border-border/60 flex items-center justify-center shrink-0">
-                                                                    <ShoppingBag className="w-3.5 h-3.5 text-muted-foreground/50" />
-                                                                </div>
-                                                            )}
-                                                            <div className="flex-1 min-w-0">
-                                                                <p className="text-sm text-foreground truncate">{item.title}</p>
-                                                                {item.variant_title && (
-                                                                    <p className="text-xs text-muted-foreground">{item.variant_title}</p>
-                                                                )}
-                                                            </div>
-                                                            <p className="text-xs text-muted-foreground shrink-0">×{item.quantity}</p>
-                                                            <p className="text-sm text-foreground w-24 text-right shrink-0 tabular-nums">
-                                                                {formatMoney(order.currency, item.total)}
+            <Panel flush>
+                {loadError && !loading ? (
+                    <LoadError message={loadError} onRetry={load} />
+                ) : !loading && filtered.length === 0 ? (
+                    <EmptyState
+                        icon="receipt_long"
+                        title={filter === 'all' ? 'No orders yet' : `No ${statusLabel(filter).toLowerCase()} orders`}
+                        description={filter === 'all' ? 'Orders from your storefront appear here as customers check out.' : undefined}
+                    />
+                ) : (
+                    <Table busy={loading}>
+                        <thead>
+                            <tr>
+                                <Th>Order</Th>
+                                <Th>Payment</Th>
+                                <Th>Fulfilment</Th>
+                                <Th align="right">Total</Th>
+                                <Th><span className="sr-only">Details</span></Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <SkeletonRows columns={COLUMNS} rows={4} />
+                            ) : (
+                                filtered.map((order) => {
+                                    const open = expandedId === order.id
+                                    return (
+                                        <Fragment key={order.id}>
+                                            <tr
+                                                className={cn(ROW_CLASS, 'cursor-pointer', open && 'bg-muted/40')}
+                                                onClick={() => toggle(order.id)}
+                                                aria-expanded={open}
+                                            >
+                                                <td className="px-4 py-2.5 max-md:block max-md:px-0 max-md:py-1">
+                                                    <div className="flex items-center gap-3">
+                                                        <ProductStack order={order} />
+                                                        <div className="min-w-0">
+                                                            <p className="font-mono text-[11px] text-muted-foreground">#{order.order_number}</p>
+                                                            <p className="truncate text-[13px] text-foreground">
+                                                                {itemCount(order.item_count)}
+                                                                <span className="text-muted-foreground"> · {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
                                                             </p>
-                                                        </motion.div>
-                                                    ))}
-                                                </div>
-                                            )}
-
-                                            {/* Totals */}
-                                            <div className="border-t border-border/60 pt-3 space-y-1.5 max-w-xs ml-auto">
-                                                {[
-                                                    { label: 'Subtotal', value: order.subtotal },
-                                                    { label: 'Tax', value: order.tax },
-                                                    { label: 'Shipping', value: order.shipping },
-                                                    { label: 'Discount', value: -order.discount },
-                                                ].filter(r => Number(r.value) !== 0).map((row) => (
-                                                    <div key={row.label} className="flex justify-between text-xs text-muted-foreground">
-                                                        <span>{row.label}</span>
-                                                        <span className="tabular-nums">{formatMoney(order.currency, row.value)}</span>
+                                                        </div>
                                                     </div>
-                                                ))}
-                                                <div className="flex justify-between text-sm font-semibold text-foreground border-t border-border/60 pt-1.5 mt-1.5">
-                                                    <span>Total</span>
-                                                    <span className="tabular-nums">{formatMoney(order.currency, order.total)}</span>
-                                                </div>
-                                            </div>
-
-                                            {/* Notes */}
-                                            {order.notes && (
-                                                <div className="rounded-lg border border-border/60 bg-background p-3">
-                                                    <p className="text-xs font-medium text-muted-foreground mb-1">Customer note</p>
-                                                    <p className="text-sm text-foreground">{order.notes}</p>
-                                                </div>
+                                                </td>
+                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1 max-md:pr-1.5"><Badge tone={orderStatusTone(order.status)}>{statusLabel(order.status)}</Badge></td>
+                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1"><Badge tone={fulfillmentTone(order.fulfillment_status)}>{statusLabel(order.fulfillment_status)}</Badge></td>
+                                                <td className="px-4 py-2.5 text-right text-[13px] font-medium tabular-nums max-md:block max-md:px-0 max-md:py-1 max-md:text-left">{formatMoney(order.currency, order.total)}</td>
+                                                <td className="w-10 px-4 py-2.5 text-right max-md:hidden">
+                                                    <Icon name={open ? 'expand_less' : 'expand_more'} size={18} className="text-muted-foreground" />
+                                                </td>
+                                            </tr>
+                                            {open && (
+                                                <tr className="border-t border-border max-md:block">
+                                                    <td colSpan={COLUMNS} className="p-0 max-md:block">
+                                                        <OrderDetail
+                                                            order={order}
+                                                            updating={updating === order.id}
+                                                            onStatus={(field, value) => updateStatus(order.id, field, value)}
+                                                        />
+                                                    </td>
+                                                </tr>
                                             )}
-
-                                            {/* Status selects */}
-                                            <div className="flex flex-wrap items-end gap-4 pt-1">
-                                                <div className="space-y-1.5">
-                                                    <p className="text-xs text-muted-foreground">Payment status</p>
-                                                    <Select
-                                                        value={order.status}
-                                                        disabled={updating === order.id}
-                                                        onValueChange={(v) => updateStatus(order.id, 'status', v)}
-                                                    >
-                                                        <SelectTrigger className="h-8 w-44 text-xs">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {['pending', 'paid', 'partially_paid', 'refunded', 'voided'].map((s) => (
-                                                                <SelectItem key={s} value={s} className="text-xs">
-                                                                    {s.replace('_', ' ')}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="space-y-1.5">
-                                                    <p className="text-xs text-muted-foreground">Fulfilment status</p>
-                                                    <Select
-                                                        value={order.fulfillment_status}
-                                                        disabled={updating === order.id}
-                                                        onValueChange={(v) => updateStatus(order.id, 'fulfillment_status', v)}
-                                                    >
-                                                        <SelectTrigger className="h-8 w-44 text-xs">
-                                                            <SelectValue />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            {['unfulfilled', 'partially_fulfilled', 'fulfilled'].map((s) => (
-                                                                <SelectItem key={s} value={s} className="text-xs">
-                                                                    {s.replace('_', ' ')}
-                                                                </SelectItem>
-                                                            ))}
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                {updating === order.id && (
-                                                    <p className="text-xs text-muted-foreground flex items-center gap-1.5 pb-2">
-                                                        <Loader2 className="w-3 h-3 animate-spin" />
-                                                        Saving…
-                                                    </p>
-                                                )}
-                                            </div>
-                                        </div>
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </motion.div>
-                    ))}
-                </div>
-            )}
+                                        </Fragment>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
         </div>
     )
 }

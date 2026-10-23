@@ -26,7 +26,10 @@ export function orderStatusTone(status: string | null | undefined): BadgeTone {
     switch (status) {
         case 'paid': return 'success'
         case 'pending': return 'warning'
-        case 'refunded': return 'danger'
+        case 'partially_paid': return 'info'
+        case 'refunded':
+        case 'voided':
+        case 'cancelled': return 'danger'
         default: return 'neutral'
     }
 }
@@ -34,7 +37,8 @@ export function orderStatusTone(status: string | null | undefined): BadgeTone {
 export function fulfillmentTone(status: string | null | undefined): BadgeTone {
     switch (status) {
         case 'fulfilled': return 'success'
-        case 'partial': return 'info'
+        case 'partial':
+        case 'partially_fulfilled': return 'info'
         case 'unfulfilled': return 'warning'
         default: return 'neutral'
     }

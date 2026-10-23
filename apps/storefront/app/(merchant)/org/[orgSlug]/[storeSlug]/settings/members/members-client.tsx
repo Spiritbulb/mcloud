@@ -2,9 +2,16 @@
 
 import { useState, useTransition } from 'react'
 import { cn } from '@mcloud/ui/utils'
-import { Button } from '@mcloud/ui/button'
-import { Input } from '@mcloud/ui/input'
-import { Label } from '@mcloud/ui/label'
+import { Avatar } from '@mcloud/ui/kit/avatar'
+import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { Field, FormGrid, Select, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { Spinner } from '@mcloud/ui/kit/skeleton'
 import {
     inviteMember,
     removeMember,
@@ -13,18 +20,7 @@ import {
 } from './actions'
 import { PERMISSIONS } from './utils'
 import type { MemberRow } from './utils'
-import {
-    UserX,
-    Mail,
-    ChevronDown,
-    ChevronUp,
-    Loader2,
-    Clock,
-    Shield,
-    ShieldCheck,
-    ShieldAlert,
-} from 'lucide-react'
-
+import { canManageMember, daysUntil, roleLabel } from './members-logic'
 
 // ─── Types ─────────────────────────────────────────────────────────────────────
 
@@ -46,57 +42,22 @@ interface Props {
     slug: string
 }
 
-// ─── Role badge ────────────────────────────────────────────────────────────────
+const ROLE_TONE: Record<string, BadgeTone> = { owner: 'warning', admin: 'info', staff: 'neutral' }
 
-function RoleBadge({ role }: { role: string }) {
-    return (
-        <span className={cn(
-            'inline-flex items-center gap-1 text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full',
-            role === 'owner' && 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-            role === 'admin' && 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-            role === 'staff' && 'bg-muted text-muted-foreground',
-        )}>
-            {role === 'owner' && <ShieldCheck className="w-2.5 h-2.5" />}
-            {role === 'admin' && <Shield className="w-2.5 h-2.5" />}
-            {role === 'staff' && <ShieldAlert className="w-2.5 h-2.5" />}
-            {role}
-        </span>
-    )
-}
-
-// ─── Avatar ────────────────────────────────────────────────────────────────────
-
-function Avatar({ name, url }: { name: string | null; url: string | null }) {
-    const initials = (name ?? '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2)
-    return url ? (
-        <img src={url} alt={name ?? ''} className="w-8 h-8 rounded-full object-cover" />
-    ) : (
-        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-semibold text-muted-foreground">
-            {initials}
-        </div>
-    )
+function RoleBadge({ role }: { role: string | null }) {
+    return <Badge tone={ROLE_TONE[role ?? ''] ?? 'neutral'}>{roleLabel(role)}</Badge>
 }
 
 // ─── Permissions editor ────────────────────────────────────────────────────────
 
-function PermissionsEditor({
-    member,
-    storeId,
-    canEdit,
-}: {
-    member: Member
-    storeId: string
-    canEdit: boolean
-}) {
+function PermissionsEditor({ member, storeId, canEdit }: { member: Member; storeId: string; canEdit: boolean }) {
     const [open, setOpen] = useState(false)
     const [perms, setPerms] = useState<string[]>(member.permissions ?? [])
     const [isPending, startTransition] = useTransition()
     const [saved, setSaved] = useState(false)
 
     const toggle = (key: string) => {
-        setPerms(prev =>
-            prev.includes(key) ? prev.filter(p => p !== key) : [...prev, key]
-        )
+        setPerms((prev) => (prev.includes(key) ? prev.filter((p) => p !== key) : [...prev, key]))
         setSaved(false)
     }
 
@@ -108,65 +69,50 @@ function PermissionsEditor({
         })
     }
 
-    // Owners always have all permissions — no editor needed
+    // Owners always have every permission, so there is nothing to edit.
     if (member.role === 'owner') {
-        return (
-            <p className="text-xs text-muted-foreground mt-1">
-                Owners have full access to all features.
-            </p>
-        )
+        return <p className="mt-1 text-[12px] text-muted-foreground">Owners have full access to every feature.</p>
     }
 
     return (
-        <div className="mt-2">
+        <div className="mt-1.5">
             <button
-                onClick={() => setOpen(o => !o)}
-                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                type="button"
+                onClick={() => setOpen((o) => !o)}
+                aria-expanded={open}
+                className="inline-flex items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
             >
-                {open ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                {open ? 'Hide permissions' : 'Manage permissions'}
+                <Icon name={open ? 'expand_less' : 'expand_more'} size={15} />
+                {open ? 'Hide permissions' : `Permissions (${perms.length})`}
             </button>
 
             {open && (
                 <div className="mt-3 space-y-3">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                        {PERMISSIONS.map(p => (
-                            <label
-                                key={p.key}
-                                className={cn(
-                                    'flex items-start gap-2.5 p-2.5 rounded-lg border cursor-pointer transition-colors',
-                                    perms.includes(p.key)
-                                        ? 'border-primary/40 bg-primary/5'
-                                        : 'border-border bg-background hover:bg-muted/40',
-                                    !canEdit && 'opacity-50 pointer-events-none'
-                                )}
-                            >
-                                <input
-                                    type="checkbox"
-                                    checked={perms.includes(p.key)}
-                                    onChange={() => toggle(p.key)}
-                                    disabled={!canEdit}
-                                    className="mt-0.5 accent-primary"
-                                />
-                                <div>
-                                    <p className="text-xs font-medium text-foreground">{p.label}</p>
-                                    <p className="text-[11px] text-muted-foreground">{p.description}</p>
-                                </div>
-                            </label>
-                        ))}
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                        {PERMISSIONS.map((p) => {
+                            const on = perms.includes(p.key)
+                            return (
+                                <label
+                                    key={p.key}
+                                    className={cn(
+                                        'flex cursor-pointer items-start gap-2.5 rounded-md border p-2.5 transition-colors',
+                                        on ? 'border-primary/40 bg-primary/5' : 'border-border bg-card hover:bg-muted/40',
+                                        !canEdit && 'pointer-events-none opacity-60',
+                                    )}
+                                >
+                                    <input type="checkbox" checked={on} onChange={() => toggle(p.key)} disabled={!canEdit} className="mt-0.5 accent-primary" />
+                                    <span>
+                                        <span className="block text-[12px] font-medium text-foreground">{p.label}</span>
+                                        <span className="block text-[12px] text-muted-foreground">{p.description}</span>
+                                    </span>
+                                </label>
+                            )
+                        })}
                     </div>
-
                     {canEdit && (
-                        <Button
-                            size="sm"
-                            onClick={save}
-                            disabled={isPending}
-                            className="rounded-lg h-8 text-xs"
-                        >
-                            {isPending
-                                ? <><Loader2 className="w-3 h-3 mr-1 animate-spin" />Saving…</>
-                                : saved ? '✓ Saved' : 'Save permissions'
-                            }
+                        <Button size="sm" variant="primary" onClick={save} disabled={isPending}>
+                            {isPending ? <Spinner size={11} /> : saved ? <Icon name="check" size={14} /> : null}
+                            {isPending ? 'Saving…' : saved ? 'Saved' : 'Save permissions'}
                         </Button>
                     )}
                 </div>
@@ -177,12 +123,7 @@ function PermissionsEditor({
 
 // ─── Member row ────────────────────────────────────────────────────────────────
 
-function MemberRow({
-    member,
-    storeId,
-    currentRole,
-    onRemove,
-}: {
+function MemberItem({ member, storeId, currentRole, onRemove }: {
     member: Member
     storeId: string
     currentRole: string | null
@@ -190,81 +131,56 @@ function MemberRow({
 }) {
     const [isPending, startTransition] = useTransition()
     const [error, setError] = useState<string | null>(null)
-
-    const canRemove =
-        member.role !== 'owner' &&
-        (currentRole === 'owner' || (currentRole === 'admin' && member.role === 'staff'))
-
-    const canEditPerms =
-        member.role !== 'owner' &&
-        (currentRole === 'owner' || (currentRole === 'admin' && member.role === 'staff'))
+    const [confirming, setConfirming] = useState(false)
+    const canManage = canManageMember(currentRole, member.role)
+    const name = member.users?.name ?? 'Unknown'
 
     const handleRemove = () => {
         startTransition(async () => {
             const result = await removeMember(member.id, storeId)
-            if (result.error) setError(result.error)
+            if (result.error) { setError(result.error); setConfirming(false) }
             else onRemove(member.id)
         })
     }
 
     return (
-        <div className="py-4 border-b border-border last:border-0">
-            <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3 min-w-0">
-                    <Avatar name={member.users?.name} url={member.users?.avatar_url} />
-                    <div className="min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap">
-                            <p className="text-sm font-medium text-foreground truncate">
-                                {member.users?.name ?? 'Unknown'}
-                            </p>
-                            <RoleBadge role={member.role} />
-                        </div>
-                        <p className="text-xs text-muted-foreground truncate">
-                            {member.users?.email ?? '—'}
-                        </p>
+        <li className="px-4 py-3">
+            <div className="flex items-start gap-3">
+                <Avatar name={member.users?.name ?? null} src={member.users?.avatar_url} shape="circle" />
+                <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                        <p className="truncate text-[13px] font-medium text-foreground">{name}</p>
+                        <RoleBadge role={member.role} />
                     </div>
+                    <p className="truncate text-[12px] text-muted-foreground">{member.users?.email ?? '—'}</p>
+                    {error && <p role="alert" className="mt-1 text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+                    <PermissionsEditor member={member} storeId={storeId} canEdit={canManage} />
                 </div>
-
-                {canRemove && (
-                    <button
-                        onClick={handleRemove}
-                        disabled={isPending}
-                        className="shrink-0 text-muted-foreground hover:text-destructive transition-colors disabled:opacity-50"
-                        aria-label="Remove member"
-                    >
-                        {isPending
-                            ? <Loader2 className="w-4 h-4 animate-spin" />
-                            : <UserX className="w-4 h-4" />
-                        }
-                    </button>
+                {canManage && (
+                    <Button variant="ghost" size="sm" onClick={() => setConfirming(true)} aria-label={`Remove ${name}`}>
+                        <Icon name="person_remove" size={15} />
+                        <span className="max-sm:hidden">Remove</span>
+                    </Button>
                 )}
             </div>
-
-            {error && <p className="text-xs text-destructive mt-1">{error}</p>}
-
-            <div className="ml-11">
-                <PermissionsEditor
-                    member={member}
-                    storeId={storeId}
-                    canEdit={canEditPerms}
-                />
-            </div>
-        </div>
+            <ConfirmDialog
+                open={confirming}
+                title={`Remove ${name}?`}
+                description="They lose access to this store straight away. You can invite them again later."
+                confirmLabel="Remove member"
+                busy={isPending}
+                onConfirm={handleRemove}
+                onCancel={() => setConfirming(false)}
+            />
+        </li>
     )
 }
 
 // ─── Invite row ────────────────────────────────────────────────────────────────
 
-function InviteRow({
-    invite,
-    storeId,
-    onRevoke,
-}: {
-    invite: Invite
-    storeId: string
-    onRevoke: (id: string) => void
-}) {
+function InviteItem({ invite, storeId, now, onRevoke }: { invite: Invite; storeId: string; now: number; onRevoke: (id: string) => void }) {
     const [isPending, startTransition] = useTransition()
+    const days = daysUntil(invite.expires_at, now)
 
     const handleRevoke = () => {
         startTransition(async () => {
@@ -273,47 +189,30 @@ function InviteRow({
         })
     }
 
-    const expiresIn = Math.ceil(
-        (new Date(invite.expires_at ?? '-').getTime() - Date.now()) / 86400000
-    )
-
     return (
-        <div className="flex items-center justify-between py-3 border-b border-border last:border-0">
-            <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <Mail className="w-3.5 h-3.5 text-muted-foreground" />
+        <li className="flex items-center gap-3 px-4 py-3">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted">
+                <Icon name="mail" size={14} className="text-muted-foreground" />
+            </span>
+            <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-[13px] text-foreground">{invite.email}</p>
+                    <RoleBadge role={invite.role} />
                 </div>
-                <div className="min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-sm text-foreground truncate">{invite.email}</p>
-                        <RoleBadge role={invite.role ?? '-'} />
-                    </div>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Clock className="w-3 h-3" />
-                        Expires in {expiresIn}d
-                    </p>
-                </div>
+                {days !== null && (
+                    <p className="text-[12px] text-muted-foreground">{days === 0 ? 'Expires today' : `Expires in ${days} ${days === 1 ? 'day' : 'days'}`}</p>
+                )}
             </div>
-            <button
-                onClick={handleRevoke}
-                disabled={isPending}
-                className="ml-4 text-xs text-muted-foreground hover:text-destructive transition-colors shrink-0 disabled:opacity-50"
-            >
+            <Button variant="ghost" size="sm" onClick={handleRevoke} disabled={isPending}>
                 {isPending ? 'Revoking…' : 'Revoke'}
-            </button>
-        </div>
+            </Button>
+        </li>
     )
 }
 
 // ─── Invite form ───────────────────────────────────────────────────────────────
 
-function InviteForm({
-    storeId,
-    onInvited,
-}: {
-    storeId: string
-    onInvited: (invite: Invite) => void
-}) {
+function InviteForm({ storeId }: { storeId: string }) {
     const [email, setEmail] = useState('')
     const [role, setRole] = useState('staff')
     const [isPending, startTransition] = useTransition()
@@ -343,58 +242,27 @@ function InviteForm({
     }
 
     return (
-        <form onSubmit={handleSubmit} className="space-y-3">
-            <div className="flex gap-2">
-                <div className="flex-1 grid gap-1.5">
-                    <Label htmlFor="invite-email" className="text-xs text-muted-foreground">
-                        Email address
-                    </Label>
-                    <Input
-                        id="invite-email"
-                        type="email"
-                        placeholder="teammate@example.com"
-                        value={email}
-                        onChange={(e) => { setEmail(e.target.value); setError(null) }}
-                        required
-                        className="h-9"
-                    />
-                </div>
-
-                <div className="grid gap-1.5 w-28">
-                    <Label htmlFor="invite-role" className="text-xs text-muted-foreground">
-                        Role
-                    </Label>
-                    <select
-                        id="invite-role"
-                        value={role}
-                        onChange={(e) => setRole(e.target.value)}
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:outline-none focus:ring-1 focus:ring-ring"
-                    >
-                        <option value="admin">Admin</option>
-                        <option value="staff">Staff</option>
-                    </select>
-                </div>
-            </div>
-
-            {error && <p className="text-xs text-destructive">{error}</p>}
-            {success && <p className="text-xs text-green-600 dark:text-green-400">✓ Invite sent!</p>}
-
-            <Button
-                type="submit"
-                size="sm"
-                disabled={isPending || !email}
-                className="rounded-lg h-9"
-            >
-                {isPending
-                    ? <><Loader2 className="w-3 h-3 mr-1.5 animate-spin" />Sending…</>
-                    : 'Send invite'
-                }
-            </Button>
-
-            <p className="text-xs text-muted-foreground">
-                Up to 5 invites per day. Invites expire after 7 days.
-            </p>
-        </form>
+        <Panel title="Invite someone" description="Up to 5 invites per day. Invites expire after 7 days.">
+            <form onSubmit={handleSubmit} className="space-y-3">
+                <FormGrid className="sm:grid-cols-[1fr_9rem_auto] sm:items-end">
+                    <Field label="Email address">
+                        <TextInput type="email" placeholder="teammate@example.com" value={email} required onChange={(e) => { setEmail(e.target.value); setError(null) }} />
+                    </Field>
+                    <Field label="Role">
+                        <Select value={role} onChange={(e) => setRole(e.target.value)}>
+                            <option value="admin">Admin</option>
+                            <option value="staff">Staff</option>
+                        </Select>
+                    </Field>
+                    <Button type="submit" variant="primary" disabled={isPending || !email} className="h-9">
+                        {isPending ? <Spinner size={13} /> : <Icon name="send" size={15} />}
+                        {isPending ? 'Sending…' : 'Send invite'}
+                    </Button>
+                </FormGrid>
+                {error && <Notice tone="error">{error}</Notice>}
+                {success && <Notice>Invite sent.</Notice>}
+            </form>
+        </Panel>
     )
 }
 
@@ -405,72 +273,46 @@ export default function MembersPage({
     members: initialMembers,
     invites: initialInvites,
     currentRole,
-    slug,
 }: Props) {
     const [members, setMembers] = useState<Member[]>(initialMembers)
     const [invites, setInvites] = useState<Invite[]>(initialInvites)
+    // One clock per visit, so invite expiry is stable across re-renders.
+    const [now] = useState(() => Date.now())
 
     return (
-        <div className="max-w-5xl mx-auto px-4 py-8 space-y-10">
+        <div className="space-y-6">
+            <PageHeader title="Members" description="Who has access to this store and what they can do." />
 
-            {/* Header */}
-            <div>
-                <h1 className="text-lg font-semibold text-foreground">Team members</h1>
-                <p className="text-sm text-muted-foreground mt-0.5">
-                    Manage who has access to this store and what they can do.
-                </p>
-            </div>
+            <InviteForm storeId={storeId} />
 
-            {/* Invite form */}
-            <div className="space-y-4">
-                <h2 className="text-sm font-semibold text-foreground">Invite someone</h2>
-                <InviteForm
-                    storeId={storeId}
-                    onInvited={(invite) => setInvites(prev => [invite, ...prev])}
-                />
-            </div>
-
-            {/* Current members */}
-            <div className="space-y-1">
-                <h2 className="text-sm font-semibold text-foreground">
-                    Members
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                        {members.length}
-                    </span>
-                </h2>
-                <div>
-                    {members.map(member => (
-                        <MemberRow
+            <Panel title="Members" description={`${members.length} ${members.length === 1 ? 'person' : 'people'}`} flush>
+                <ul className="divide-y divide-border">
+                    {members.map((member) => (
+                        <MemberItem
                             key={member.id}
                             member={member}
                             storeId={storeId}
                             currentRole={currentRole}
-                            onRemove={(id) => setMembers(prev => prev.filter(m => m.id !== id))}
+                            onRemove={(id) => setMembers((prev) => prev.filter((m) => m.id !== id))}
                         />
                     ))}
-                </div>
-            </div>
+                </ul>
+            </Panel>
 
-            {/* Pending invites */}
             {invites.length > 0 && (
-                <div className="space-y-1">
-                    <h2 className="text-sm font-semibold text-foreground">
-                        Pending invites
-                        <span className="ml-2 text-xs font-normal text-muted-foreground">
-                            {invites.length}
-                        </span>
-                    </h2>
-                    <div>
-                        {invites.map(invite => (
-                            <InviteRow
+                <Panel title="Pending invites" description={`${invites.length} waiting to be accepted`} flush>
+                    <ul className="divide-y divide-border">
+                        {invites.map((invite) => (
+                            <InviteItem
                                 key={invite.id}
                                 invite={invite}
                                 storeId={storeId}
-                                onRevoke={(id) => setInvites(prev => prev.filter(i => i.id !== id))}
+                                now={now}
+                                onRevoke={(id) => setInvites((prev) => prev.filter((i) => i.id !== id))}
                             />
                         ))}
-                    </div>
-                </div>
+                    </ul>
+                </Panel>
             )}
         </div>
     )

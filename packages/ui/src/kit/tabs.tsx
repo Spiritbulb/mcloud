@@ -25,7 +25,7 @@ export function Tabs({
     className?: string
 }) {
     return (
-        <div role="tablist" aria-label={label} className={cn('-mb-px flex gap-4 overflow-x-auto border-b border-border', className)}>
+        <div role="tablist" aria-label={label} className={cn('flex gap-4 overflow-x-auto border-b border-border', className)}>
             {items.map((t) => {
                 const active = t.id === value
                 const cls = cn(

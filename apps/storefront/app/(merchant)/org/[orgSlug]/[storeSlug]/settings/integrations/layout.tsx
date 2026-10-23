@@ -1,8 +1,8 @@
 'use client'
 
-import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { cn } from '@mcloud/ui/utils'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Tabs } from '@mcloud/ui/kit/tabs'
 
 const INTEGRATION_TABS = [
     { id: 'social', label: 'Social' },
@@ -17,41 +17,17 @@ export default function IntegrationsLayout({
 }) {
     const pathname = usePathname()
     const settingsBase = pathname.replace(/\/integrations.*$/, '')
+    const active = INTEGRATION_TABS.find((t) => pathname.includes(`/settings/integrations/${t.id}`))?.id ?? ''
 
     return (
-        <div className="space-y-8 max-w-4xl mx-auto">
-            <div className="flex flex-col gap-1.5">
-                <h2 className="text-3xl font-montserrat font-bold tracking-tight text-foreground">Integrations</h2>
-                <p className="text-[14px] text-muted-foreground">
-                    Manage your store's social links, payment providers, and notifications.
-                </p>
-            </div>
-
-            <div>
-                <nav className="flex flex-wrap gap-2 border-b border-light pb-8" aria-label="Tabs">
-                    {INTEGRATION_TABS.map((tab) => {
-                        const isActive = pathname.includes(`/settings/integrations/${tab.id}`)
-                        return (
-                            <Link
-                                key={tab.id}
-                                href={`${settingsBase}/integrations/${tab.id}`}
-                                className={cn(
-                                    isActive
-                                        ? 'bg-[#425e7b] text-white shadow-sm'
-                                        : 'text-muted-foreground hover:bg-[#425e7b]/60 hover:text-white',
-                                    'px-2 py-1 rounded-md text-[13.5px] font-medium transition-all'
-                                )}
-                            >
-                                {tab.label}
-                            </Link>
-                        )
-                    })}
-                </nav>
-            </div>
-
-            <div className="pt-1">
-                {children}
-            </div>
+        <div className="space-y-6">
+            <PageHeader title="Integrations" description="Your store's social links, payment providers and notifications." />
+            <Tabs
+                label="Integrations"
+                value={active}
+                items={INTEGRATION_TABS.map((t) => ({ ...t, href: `${settingsBase}/integrations/${t.id}` }))}
+            />
+            <div>{children}</div>
         </div>
     )
 }
