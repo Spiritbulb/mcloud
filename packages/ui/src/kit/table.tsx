@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 
 // Plain building blocks, not a data grid: the caller maps its rows. Right-align numbers, keep
 // headers quiet, and let hover do the rest. Used inside <Panel flush>.

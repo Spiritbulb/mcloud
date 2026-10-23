@@ -1,8 +1,8 @@
 import Link from "next/link"
-import { PageHeader } from "@/components/admin/ui/page-header"
-import { Panel } from "@/components/admin/ui/panel"
-import { Badge } from "@/components/admin/ui/badge"
-import { EmptyState } from "@/components/admin/ui/empty-state"
+import { PageHeader } from "@mcloud/ui/kit/page-header"
+import { Panel } from "@mcloud/ui/kit/panel"
+import { Badge } from "@mcloud/ui/kit/badge"
+import { EmptyState } from "@mcloud/ui/kit/empty-state"
 import { AUDIT_ACTIONS } from "@/lib/audit-logic"
 import { PAGE_SIZE, auditHref, auditTone, type AuditQuery } from "./audit-view"
 

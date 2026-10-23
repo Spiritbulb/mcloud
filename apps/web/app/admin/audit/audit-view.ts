@@ -1,8 +1,8 @@
 // Pure helpers for the audit page: query-string parsing and the page window. No I/O (see audit-view.test.ts).
 import { isAuditAction, type AuditAction } from '@/lib/audit-logic'
-import type { BadgeTone } from '@/components/admin/ui/badge'
+import type { BadgeTone } from '@mcloud/ui/kit/badge'
 
-import { PAGE_SIZE, pageRange, totalPages } from '@/components/admin/ui/list-query'
+import { PAGE_SIZE, pageRange, totalPages } from '@mcloud/ui/kit/list-query'
 
 export { PAGE_SIZE, pageRange, totalPages }
 

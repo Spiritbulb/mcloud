@@ -1,4 +1,4 @@
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 import { initials } from './ui-logic'
 
 /** Logo or initials in a small tile. `shape="circle"` for people, "square" for stores. */

@@ -1,5 +1,5 @@
 import type { ChangeEvent, ReactNode } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 import { Icon } from './icon'
 
 const CONTROL =

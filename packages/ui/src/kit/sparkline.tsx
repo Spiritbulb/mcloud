@@ -1,4 +1,4 @@
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 import { sparklinePaths } from './ui-logic'
 
 /** Inline trend line with a soft fill. Colour comes from `currentColor`, so set a text colour on it. */

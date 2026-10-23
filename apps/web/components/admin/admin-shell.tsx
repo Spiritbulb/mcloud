@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AdminDesktopNav, AdminMobileNav, ADMIN_SECTIONS, getActiveId } from './admin-nav'
 import type { AdminUser } from './admin-nav'
-import { Icon } from './ui/icon'
-import { buttonClass } from './ui/button'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { buttonClass } from '@mcloud/ui/kit/button'
 
 export default function AdminShell({
     user,

@@ -1,4 +1,4 @@
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 
 /**
  * Material Symbols glyph. The size is set inline on purpose: Google's icon stylesheet is unlayered

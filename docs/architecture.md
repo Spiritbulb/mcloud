@@ -174,12 +174,13 @@ marketplace (`lib/reach`, `/api/mobile/reach`), trading apps, support, and the a
 `apps/web/app/admin`, gated by `requireAdmin()`. Screens: Overview (revenue and new-user charts, a "needs attention" queue),
 Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery, and the docs editor.
 
-- **UI kit:** `apps/web/components/admin/ui/*` (page header, panel, stat strip, badge, table, fields, button, notice, icon).
+- **UI kit:** `packages/ui/src/kit/*`, imported as `@mcloud/ui/kit/<name>` (page header, panel, stat strip, badge, table,
+  fields, button, notice, icon). It lives in a package so the org hub and store settings can adopt it too (SPI-57).
   New admin screens use it rather than ad hoc markup. Always size glyphs with `Icon`: Google's icon font overrides Tailwind
   size classes. Below `md` a `Table` becomes a stack of cards: give each `Td` a `label`, and leave it off the cell that
   identifies the row.
 - **Lists are paginated on the server** (orders, users, webhook logs). The URL is the state (`?q=&status=&page=`), 50 per page.
-  Pure parsing, links and search sanitising are in `components/admin/ui/list-query.ts`; `FilterBar` and `Pagination` are the UI.
+  Pure parsing, links and search sanitising are in `@mcloud/ui/kit/list-query`; `FilterBar` and `Pagination` are the UI.
   Stores and subscriptions are still filtered in the browser because their sets are small and the plan filter is computed.
 - **Audit log:** `admin_audit_log` (`migrations/20261023b_admin_audit_log.sql`). Rows are written by `recordAudit()`
   (`lib/audit.ts`; row shape and action names in `lib/audit-logic.ts`) and read at `/admin/audit`. A trigger rejects

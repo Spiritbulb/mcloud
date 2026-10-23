@@ -2,7 +2,7 @@ import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import WebhooksClient from "@/components/admin/webhooks-client"
 import { WEBHOOK_STATUSES } from "@/components/admin/webhooks-filters"
-import { orIlike, pageRange, parseListQuery, totalPages } from "@/components/admin/ui/list-query"
+import { orIlike, pageRange, parseListQuery, totalPages } from "@mcloud/ui/kit/list-query"
 
 export const metadata: Metadata = {
     title: "Webhook Logs — Menengai Cloud Admin",

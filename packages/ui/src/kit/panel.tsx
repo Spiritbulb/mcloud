@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 
 /**
  * The one surface the admin is built from: a hairline-bordered card with an optional header row.

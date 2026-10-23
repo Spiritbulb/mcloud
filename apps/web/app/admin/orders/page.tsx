@@ -2,7 +2,7 @@ import { createClient } from "@mcloud/db/server"
 import type { Metadata } from "next"
 import OrdersClient from "@/components/admin/orders-client"
 import { ORDER_FILTERS } from "@/components/admin/orders-filters"
-import { likeTerm, orIlike, pageRange, parseListQuery, totalPages } from "@/components/admin/ui/list-query"
+import { likeTerm, orIlike, pageRange, parseListQuery, totalPages } from "@mcloud/ui/kit/list-query"
 
 export const metadata: Metadata = {
     title: "Orders — Menengai Cloud Admin",

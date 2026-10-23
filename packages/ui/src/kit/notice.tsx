@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 
 const TONES = {
     error: 'border-red-300/70 bg-red-50/60 text-red-800 dark:border-red-500/30 dark:bg-red-500/[0.06] dark:text-red-300',

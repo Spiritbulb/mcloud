@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 import { deltaTone, formatDelta, percentChange } from './ui-logic'
 
 /**

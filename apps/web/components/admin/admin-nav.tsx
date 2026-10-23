@@ -5,8 +5,8 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { ThemedLogo } from '@mcloud/ui/themed-logo'
 import { cn } from '@mcloud/ui/utils'
-import { Icon } from './ui/icon'
-import { Avatar } from './ui/avatar'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { Avatar } from '@mcloud/ui/kit/avatar'
 import {
     DropdownMenu,
     DropdownMenuContent,

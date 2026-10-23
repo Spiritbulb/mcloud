@@ -1,12 +1,12 @@
 "use client"
 
 import { useState, useTransition } from "react"
-import { PageHeader } from "@/components/admin/ui/page-header"
-import { Panel } from "@/components/admin/ui/panel"
-import { Badge } from "@/components/admin/ui/badge"
-import { Button } from "@/components/admin/ui/button"
-import { EmptyState } from "@/components/admin/ui/empty-state"
-import { Notice } from "@/components/admin/ui/notice"
+import { PageHeader } from "@mcloud/ui/kit/page-header"
+import { Panel } from "@mcloud/ui/kit/panel"
+import { Badge } from "@mcloud/ui/kit/badge"
+import { Button } from "@mcloud/ui/kit/button"
+import { EmptyState } from "@mcloud/ui/kit/empty-state"
+import { Notice } from "@mcloud/ui/kit/notice"
 import { sendRecoveryEmails, type SendResult } from "./actions"
 import type { Stranded } from "./recovery-logic"
 

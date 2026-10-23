@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes } from 'react'
-import { cn } from '@mcloud/ui/utils'
+import { cn } from '../utils'
 
 export type ButtonVariant = 'primary' | 'secondary' | 'danger' | 'ghost'
 

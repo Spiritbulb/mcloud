@@ -1,14 +1,14 @@
 // components/subscriptions-client.tsx
 'use client'
 import { useState } from 'react'
-import { PageHeader } from '@/components/admin/ui/page-header'
-import { Panel } from '@/components/admin/ui/panel'
-import { Badge, subscriptionStatusTone } from '@/components/admin/ui/badge'
-import { Button } from '@/components/admin/ui/button'
-import { SelectField, Toolbar } from '@/components/admin/ui/fields'
-import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
-import { EmptyState } from '@/components/admin/ui/empty-state'
-import { Notice } from '@/components/admin/ui/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { Badge, subscriptionStatusTone } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { SelectField, Toolbar } from '@mcloud/ui/kit/fields'
+import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Notice } from '@mcloud/ui/kit/notice'
 
 type Subscription = {
     id: string
