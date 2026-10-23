@@ -3,6 +3,9 @@ import { requireAdmin } from '@/lib/require-admin'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 import { revalidateStorefrontById } from '@/lib/revalidate-storefront'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
+import { recordAudit } from '@/lib/audit'
+import { clientIp } from '@/lib/audit-logic'
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
     const auth = await requireAdmin(request)
@@ -17,6 +20,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (action !== 'grant' && action !== 'revoke') {
         return NextResponse.json({ error: 'action must be "grant" or "revoke"' }, { status: 400 })
     }
+
+    const before = await getStorePlan(id)
 
     if (action === 'grant') {
         // Subscription first, and every write checked. This used to flip the store's legacy is_pro
@@ -77,5 +82,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     }
 
     await revalidateStorefrontById(id)
+    const after = await getStorePlan(id)
+    await recordAudit({
+        actor: auth.user,
+        action: action === 'grant' ? 'store.plan.grant' : 'store.plan.revoke',
+        targetType: 'store',
+        targetId: id,
+        summary: action === 'grant' ? `Granted ${plan} (was ${before})` : `Revoked paid plan (was ${before})`,
+        before: { plan: before },
+        after: { plan: after },
+        ip: clientIp(request.headers),
+    })
     return NextResponse.json({ ok: true })
 }

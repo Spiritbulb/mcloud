@@ -58,7 +58,9 @@ export default function UsersClient({ users }: { users: User[] }) {
             body: JSON.stringify({ role: pending.newRole }),
         })
         if (res.ok) {
-            setRows(prev => prev.map(u => u.id === pending.user.id ? { ...u, role: pending.newRole } : u))
+            // The server decides what a revoked admin becomes (client or customer); show that.
+            const saved = (await res.json().catch(() => null))?.role ?? pending.newRole
+            setRows(prev => prev.map(u => u.id === pending.user.id ? { ...u, role: saved } : u))
             setPending(null)
         } else {
             const data = await res.json()

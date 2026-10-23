@@ -72,6 +72,7 @@ export const ADMIN_SECTIONS: NavSection[] = [
         id: 'system',
         label: 'System',
         items: [
+            { id: 'audit', label: 'Audit log', icon: 'history', href: '/admin/audit' },
             { id: 'webhooks', label: 'Webhook Logs', icon: 'webhook', href: '/admin/webhooks' },
             { id: 'handoff-recovery', label: 'Handoff recovery', icon: 'mark_email_unread', href: '/admin/handoff-recovery' },
         ],

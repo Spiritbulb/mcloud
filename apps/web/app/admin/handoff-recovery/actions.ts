@@ -5,6 +5,9 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { getStranded } from './data'
 import { recoveryEmail } from './recovery-logic'
+import { headers } from 'next/headers'
+import { recordAudit } from '@/lib/audit'
+import { clientIp } from '@/lib/audit-logic'
 
 // Same verified sender the waitlist confirmation uses.
 const FROM = 'Spiritbulb <spiritb@mcloud.co.ke>'
@@ -56,6 +59,13 @@ export async function sendRecoveryEmails(emails: string[]): Promise<SendResult> 
             result.failed.push({ email: person.email, error: err instanceof Error ? err.message : 'Send failed' })
         }
     }
+    await recordAudit({
+        actor: { id: session.user.id, email: session.user.email },
+        action: 'handoff.recovery.send',
+        summary: `Sent ${result.sent.length} recovery email(s); ${result.failed.length} failed, ${result.skipped.length} skipped`,
+        after: { sent: result.sent, failed: result.failed, skipped: result.skipped },
+        ip: clientIp(await headers()),
+    })
     console.info(`[handoff-recovery] by=${session.user.id} sent=${result.sent.length} failed=${result.failed.length} skipped=${result.skipped.length}`)
     return result
 }
