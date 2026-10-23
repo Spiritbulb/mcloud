@@ -45,6 +45,27 @@ Query response carries no receipt number, so an order settled by the poll alone 
 The manual path (`/api/store/[slug]/checkout/mpesa-code`) attaches a code the buyer typed;
 the merchant confirms it by hand.
 
+### Where a store's M-PESA details come from
+
+`GET /api/store/[slug]/integrations` (used by checkout, the donate box and the Payments screen)
+starts from the **org's** row in `org_integrations` and lets the store's own `store_integrations`
+row override it. So a store that never saved its own M-PESA details shows its organization's
+till or paybill at checkout. This is intentional (Spiritbulb's stores share one paybill), but:
+
+- Nothing in the app edits `org_integrations`; rows are added in the database. Choosing which
+  stores use them is SPI-70 (`store_integrations.inherited_from_org` exists but nothing sets it).
+- Only the **manual** details travel this way. STK push, its confirmation and the credential
+  test read `store_integrations` only, so org-level Daraja keys would show as on but never work.
+- The Payments screen says when it is showing the org's details. The first save creates the
+  store's own row, with the manual details always included so a Daraja-only save cannot drop them.
+
+The Daraja credential test (`/api/store/[slug]/payments/mpesa/test-credentials`) asks Safaricom for a
+token against the same environment as real payments (`DARAJA_ENV`), with typed keys or the saved ones.
+
+Merchants set an order's payment status by hand only to `pending`, `paid`, `refunded` or `cancelled`
+(`PAYMENT_STATUSES` in `components/store/order-logic.ts`, which `order-actions` validates against).
+The list must stay inside `orders_status_check`; a test pins it.
+
 ## PayPal
 
 1. `POST /payments/paypal/create-order` with `{ orderId: <orderNumber> }`. The PayPal order

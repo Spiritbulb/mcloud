@@ -137,6 +137,10 @@ id. Foreign keys in the database are keyed on that. Do **not** remove the `auth0
   registered with Safaricom points at **web**, so do not delete web's copies without moving it. See `docs/CLEANUP.md` §2.5–2.6.
 - The Daraja callback and PayPal return URLs are registered externally and point at **web**; the storefront copies of the payment routes are kept identical but are not what providers call.
 - `apps/storefront/app/(merchant)/globals.css` is a copy of web's `globals.css`; token changes go in both.
+- **Store settings pages do not check access themselves**: most read the store with the service-role client and rely on
+  `settings/layout.tsx`, which renders the page only when the user can access the store. Keep it that way: the layout hands
+  the page to `SettingsShell`, a client component, and anything passed to a client component reaches the browser even when
+  it is not rendered (`settings-access.test.ts` pins this). A page that writes, or reads more than its store, still gates.
 - `packages/liquid/src/themes-manifest.ts` is **generated** from `themes/**/*.liquid`: after editing a template run
   `npm run gen:manifest -w @mcloud/liquid` (a test fails if you forget).
 - **Public store pages are cached** (ISR, `revalidate = 3600`, empty `generateStaticParams`). Nothing under

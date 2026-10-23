@@ -175,8 +175,8 @@ marketplace (`lib/reach`, `/api/mobile/reach`), trading apps, support, and the a
 Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery, and the docs editor.
 
 - **UI kit:** `packages/ui/src/kit/*`, imported as `@mcloud/ui/kit/<name>` (page header, panel, stat strip, badge, table,
-  fields, button, notice, icon). It lives in a package so the org hub and store settings can adopt it too (SPI-57).
-  New admin screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
+  fields, button, notice, icon). It lives in a package so the admin, the org hub and store settings all use it (SPI-57; the
+  storefront Editor, Appearance and Content are the exceptions, SPI-63). New screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
   `SkeletonRows` in a `Table busy`, `Stat loading`, `SkeletonLines`, `LoadError onRetry`. Forms are `Panel` + `Field`/`FormGrid`
   + `SaveBar` (shown when `isDirty(saved, draft)`); destructive actions go through `ConfirmDialog`. Gallery: `/dev-ui/kit` (dev only).
 - **One app frame:** `AppShell` (`@mcloud/ui/kit/app-shell`) is the sidebar, phone drawer and breadcrumb header for the admin,
