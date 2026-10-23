@@ -270,7 +270,8 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
         // scoped to this domain — a cross-domain absolute URL would drop it and 401.
         fetch(`/api/store/${slug}/analytics?range=${range}`, { credentials: 'include' })
             .then(r => r.ok ? r.json() : Promise.reject())
-            .then(setData)
+            // A payload without totals (the RPC drifted once, SPI-65) is an error, not a crash.
+            .then((d: Analytics) => d?.totals && d.previous && Array.isArray(d.series) ? setData(d) : Promise.reject())
             .catch(() => setError(true))
             .finally(() => setLoading(false))
     }, [slug, range, reloadKey])

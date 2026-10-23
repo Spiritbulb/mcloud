@@ -9,6 +9,8 @@ import { Separator } from '@mcloud/ui/separator'
 import { Switch } from '@mcloud/ui/switch'
 import { Check, ExternalLink, Phone, Loader2, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
 import { Plan } from '@mcloud/merchant/plans'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Spinner } from '@mcloud/ui/kit/skeleton'
 import { ProGateInline } from '../pro'
 
 interface IntegrationData {
@@ -45,33 +47,40 @@ export default function PaymentSettings({ storeId, slug, plan }: PaymentSettings
     const [darajaTestError, setDarajaTestError] = useState('')
 
 
+    // A failed load must not fall through to the empty form: it would read as "nothing set up"
+    // and a save from there would overwrite the real settings.
+    const [loadFailed, setLoadFailed] = useState(false)
+    const [reloadKey, setReloadKey] = useState(0)
+
     useEffect(() => {
         const fetchData = async () => {
+            setLoading(true)
+            setLoadFailed(false)
             try {
                 const res = await fetch(`/api/store/${slug}/integrations`, {
                     credentials: 'include',
                 })
-                if (res.ok) {
-                    const data = await res.json()
-                    const { mpesa } = data
+                if (!res.ok) throw new Error(`integrations ${res.status}`)
+                const data = await res.json()
+                const { mpesa } = data
 
-                    if (mpesa) {
-                        setMpesaEnabled(mpesa.enabled ?? false)
-                        setMpesaType(mpesa.mpesa_type ?? 'till')
-                        setMpesaNumber(mpesa.mpesa_till ?? mpesa.mpesa_paybill ?? '')
-                        setMpesaAccount(mpesa.mpesa_account ?? '')
-                        setDarajaEnabled(mpesa.darajaEnabled ?? false)
-                        setMpesaShortcode(mpesa.shortcode ?? '')
-                    }
+                if (mpesa) {
+                    setMpesaEnabled(mpesa.enabled ?? false)
+                    setMpesaType(mpesa.mpesa_type ?? 'till')
+                    setMpesaNumber(mpesa.mpesa_till ?? mpesa.mpesa_paybill ?? '')
+                    setMpesaAccount(mpesa.mpesa_account ?? '')
+                    setDarajaEnabled(mpesa.darajaEnabled ?? false)
+                    setMpesaShortcode(mpesa.shortcode ?? '')
                 }
             } catch (err) {
                 console.error(err)
+                setLoadFailed(true)
             } finally {
                 setLoading(false)
             }
         }
         fetchData()
-    }, [slug])
+    }, [slug, reloadKey])
 
     const handleSave = async (provider: string, data: any) => {
         setSaving(provider)
@@ -138,7 +147,22 @@ export default function PaymentSettings({ storeId, slug, plan }: PaymentSettings
     }
 
     if (loading) {
-        return <div className="py-8 flex justify-center"><Loader2 className="animate-spin text-muted-foreground" /></div>
+        return (
+            <div role="status" className="flex items-center justify-center gap-2 py-10 text-[13px] text-muted-foreground">
+                <Spinner />
+                Loading payment settings…
+            </div>
+        )
+    }
+
+    if (loadFailed) {
+        return (
+            <LoadError
+                title="Couldn't load your payment settings"
+                message="Nothing was changed. Try again in a moment."
+                onRetry={() => setReloadKey((k) => k + 1)}
+            />
+        )
     }
 
     return (
