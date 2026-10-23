@@ -8,7 +8,7 @@
 -- Owner is the Reach store's owner so it can be handed over from the dashboard (Members).
 -- Run 20261016_reach_areas_approvals_finance.sql FIRST: Munch Hub must be placed in a delivery area, or
 -- the marketplace will not show it (a store-backed vendor with no area is never sellable). Set
--- v_area_slug below to the slug of the town or area it delivers from (e.g. 'nakuru').
+-- v_area_slug below to the slug of the town or area it delivers from (here 'baraton').
 -- Runs in one transaction and aborts unless exactly 11 products move. Not idempotent by design.
 
 do $$
@@ -17,7 +17,7 @@ declare
   v_vendor constant uuid := 'e8743fac-26fd-4a78-84ad-91caa675e6eb';
   v_owner constant text := 'auth0|69b0fc02f5f8370eea772e82';
   v_moved int;
-  v_area_slug constant text := 'CHANGE-ME';
+  v_area_slug constant text := 'baraton';
   v_area uuid;
 begin
   select id into v_area from reach_areas where slug = v_area_slug and active;
