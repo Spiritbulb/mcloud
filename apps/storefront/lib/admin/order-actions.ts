@@ -2,12 +2,13 @@
 // Orders for the settings screens. Read and manual status changes only: orders are created by
 // the checkout routes and settled by the payment callbacks, never from here.
 import { createClient } from '@mcloud/db/server'
+import { FULFILLMENT_STATUSES, PAYMENT_STATUSES } from '@/components/store/order-logic'
 import { requireManagedStore, type ActionResult } from './access'
 
-// The statuses the settings UI offers (plus 'cancelled', used by the filter tabs). Not exported:
-// a 'use server' file may only export async functions.
-const ORDER_STATUSES = ['pending', 'paid', 'partially_paid', 'refunded', 'voided', 'cancelled'] as const
-const FULFILLMENT_STATUSES = ['unfulfilled', 'partially_fulfilled', 'fulfilled'] as const
+// The lists the Orders screen offers, so the two cannot drift apart. Not re-exported: a
+// 'use server' file may only export async functions.
+const ORDER_STATUSES = PAYMENT_STATUSES
+
 
 const ORDER_COLUMNS =
     'id, order_number, status, fulfillment_status, total, currency, customer_email, customer_phone, subtotal, tax, shipping, discount, notes, created_at'

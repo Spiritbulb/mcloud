@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { filterCounts, filterOrders, formatMoney, itemCount, orderStats, statusLabel } from './order-logic.ts'
+import { FULFILLMENT_STATUSES, PAYMENT_STATUSES, filterCounts, filterOrders, formatMoney, itemCount, orderStats, statusLabel } from './order-logic.ts'
 
 const ORDERS = [
     { id: 'a', status: 'pending', fulfillment_status: 'unfulfilled', total: 4 },
@@ -34,4 +34,13 @@ test('labels and money', () => {
     assert.equal(itemCount(3), '3 items')
     assert.equal(itemCount(undefined), '0 items')
     assert.match(formatMoney('KES', 2795), /^KES 2,795$/)
+})
+
+test('settable statuses stay inside the database check constraints', () => {
+    // Copied from orders_status_check / orders_fulfillment_status_check (2026-10-23). If a migration
+    // widens them, update both: an offered value outside them fails every save.
+    const dbStatus = ['pending', 'paid', 'fulfilled', 'cancelled', 'refunded']
+    const dbFulfillment = ['unfulfilled', 'partially_fulfilled', 'fulfilled']
+    for (const s of PAYMENT_STATUSES) assert.ok(dbStatus.includes(s), s)
+    for (const s of FULFILLMENT_STATUSES) assert.ok(dbFulfillment.includes(s), s)
 })

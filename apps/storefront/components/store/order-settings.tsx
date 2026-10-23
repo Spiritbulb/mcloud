@@ -155,7 +155,7 @@ function OrderDetail({ order, updating, onStatus }: {
                 </dl>
                 <Field label="Payment status">
                     <Select value={order.status} disabled={updating} onChange={(e) => onStatus('status', e.target.value)} className="h-8">
-                        {/* Keep a status the merchant cannot set (e.g. cancelled) selectable as the current value. */}
+                        {/* Keep a status the merchant cannot set (e.g. a legacy "fulfilled") selectable as the current value. */}
                         {!PAYMENT_STATUSES.includes(order.status as never) && <option value={order.status}>{statusLabel(order.status)}</option>}
                         {PAYMENT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                     </Select>

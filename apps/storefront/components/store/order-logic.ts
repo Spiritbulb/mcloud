@@ -4,8 +4,13 @@
 export const ORDER_FILTERS = ['all', 'pending', 'paid', 'fulfilled', 'cancelled'] as const
 export type OrderFilter = (typeof ORDER_FILTERS)[number]
 
-/** The payment and fulfilment values the merchant can set by hand (order-actions allows the same). */
-export const PAYMENT_STATUSES = ['pending', 'paid', 'partially_paid', 'refunded', 'voided'] as const
+/**
+ * The payment and fulfilment values the merchant can set by hand; order-actions validates against
+ * these same lists. They must stay inside the database's check constraints (orders_status_check,
+ * orders_fulfillment_status_check), or the update fails: partially_paid and voided were offered
+ * here once and every save of them errored.
+ */
+export const PAYMENT_STATUSES = ['pending', 'paid', 'refunded', 'cancelled'] as const
 export const FULFILLMENT_STATUSES = ['unfulfilled', 'partially_fulfilled', 'fulfilled'] as const
 
 type OrderLike = { status: string; fulfillment_status: string; total: number | string }
