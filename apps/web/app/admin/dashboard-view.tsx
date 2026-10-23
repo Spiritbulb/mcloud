@@ -9,7 +9,7 @@ import { Table, Td, Th, Tr } from "@/components/admin/ui/table"
 import { percentChange, timeAgo } from "@/components/admin/ui/ui-logic"
 import { buttonClass } from "@/components/admin/ui/button"
 import { Icon } from "@/components/admin/ui/icon"
-import { formatMoney, type AttentionItem, type CurrencyRevenue } from "./dashboard-logic"
+import { formatMoney, type AttentionItem, type CurrencyRevenue, type Signups } from "./dashboard-logic"
 
 export type DashboardData = {
     /** Render time in ms; passed in so the view is deterministic (and previewable with fixtures). */
@@ -19,6 +19,7 @@ export type DashboardData = {
     attention: AttentionItem[]
     revenue: CurrencyRevenue[]
     revenueCapped: boolean
+    signups: Signups
     recentOrders: {
         id: string
         order_number: string | number | null
@@ -50,18 +51,23 @@ export default function DashboardView({ data: d }: { data: DashboardData }) {
 
             <Attention items={d.attention} />
 
-            <section aria-label="Revenue" className="space-y-3">
-                {d.revenue.length === 0 ? (
-                    <Panel title="Paid orders">
-                        <EmptyState icon="receipt_long" title="No paid orders yet" description="Paid orders from the last 30 days will show here." />
-                    </Panel>
-                ) : (
-                    d.revenue.map((r) => <RevenuePanel key={r.currency} r={r} multi={d.revenue.length > 1} />)
-                )}
-                {d.revenueCapped && (
-                    <p className="text-[12px] text-muted-foreground">Showing the most recent 10,000 paid orders; totals are understated.</p>
-                )}
-            </section>
+            <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+                <section aria-label="Revenue" className="space-y-3">
+                    {d.revenue.length === 0 ? (
+                        <Panel title="Paid orders">
+                            <EmptyState icon="receipt_long" title="No paid orders yet" description="Paid orders from the last 30 days will show here." />
+                        </Panel>
+                    ) : (
+                        d.revenue.map((r) => <RevenuePanel key={r.currency} r={r} multi={d.revenue.length > 1} />)
+                    )}
+                    {d.revenueCapped && (
+                        <p className="text-[12px] text-muted-foreground">Showing the most recent 10,000 paid orders; totals are understated.</p>
+                    )}
+                </section>
+                <section aria-label="New users">
+                    <SignupsPanel s={d.signups} />
+                </section>
+            </div>
 
             <StatStrip className="grid-cols-1 sm:grid-cols-3">
                 <Stat label="Users" value={d.totals.users.toLocaleString()} hint={<WeekHint n={d.week.users} prev={d.week.usersPrev} />} />
@@ -163,33 +169,58 @@ function Attention({ items }: { items: AttentionItem[] }) {
 function RevenuePanel({ r, multi }: { r: CurrencyRevenue; multi: boolean }) {
     return (
         <Panel title={multi ? `Paid orders · ${r.currency}` : "Paid orders"} description="Last 30 days, compared with the 30 days before">
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                <div className="md:col-span-1">
-                    <p className="text-[12px] text-muted-foreground">Revenue</p>
-                    <div className="mt-1 flex items-baseline gap-2">
-                        <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(r.last30, r.currency)}</p>
-                        <Delta pct={percentChange(r.last30, r.prev30)} />
-                    </div>
-                    <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
-                        <div>
-                            <dt className="text-[12px] text-muted-foreground">Orders</dt>
-                            <dd className="mt-0.5 flex items-baseline gap-1.5 font-medium text-foreground tabular-nums">
-                                {r.orders30.toLocaleString()}
-                                <Delta pct={percentChange(r.orders30, r.ordersPrev30)} />
-                            </dd>
-                        </div>
-                        <div>
-                            <dt className="text-[12px] text-muted-foreground">Last 7 days</dt>
-                            <dd className="mt-0.5 font-medium text-foreground tabular-nums">{formatMoney(r.last7, r.currency)}</dd>
-                        </div>
-                    </dl>
+            <p className="text-[12px] text-muted-foreground">Revenue</p>
+            <div className="mt-1 flex items-baseline gap-2">
+                <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(r.last30, r.currency)}</p>
+                <Delta pct={percentChange(r.last30, r.prev30)} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
+                <div>
+                    <dt className="text-[12px] text-muted-foreground">Orders</dt>
+                    <dd className="mt-0.5 flex items-baseline gap-1.5 font-medium text-foreground tabular-nums">
+                        {r.orders30.toLocaleString()}
+                        <Delta pct={percentChange(r.orders30, r.ordersPrev30)} />
+                    </dd>
                 </div>
-                <div className="text-[rgb(var(--brand))] md:col-span-2">
-                    <Sparkline values={r.daily} label={`Daily ${r.currency} sales, last ${r.daily.length} days`} height={96} />
-                    <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
-                        <span>{r.daily.length} days ago</span>
-                        <span>Today</span>
-                    </div>
+                <div>
+                    <dt className="text-[12px] text-muted-foreground">Last 7 days</dt>
+                    <dd className="mt-0.5 font-medium text-foreground tabular-nums">{formatMoney(r.last7, r.currency)}</dd>
+                </div>
+            </dl>
+            <div className="mt-5 text-[rgb(var(--brand))]">
+                <Sparkline values={r.daily} label={`Daily ${r.currency} sales, last ${r.daily.length} days`} height={72} />
+                <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                    <span>{r.daily.length} days ago</span>
+                    <span>Today</span>
+                </div>
+            </div>
+        </Panel>
+    )
+}
+
+function SignupsPanel({ s }: { s: Signups }) {
+    return (
+        <Panel title="New users" description="Last 30 days, compared with the 30 days before">
+            <p className="text-[12px] text-muted-foreground">Sign-ups</p>
+            <div className="mt-1 flex items-baseline gap-2">
+                <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">{s.last30.toLocaleString()}</p>
+                <Delta pct={percentChange(s.last30, s.prev30)} />
+            </div>
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
+                <div>
+                    <dt className="text-[12px] text-muted-foreground">Previous 30 days</dt>
+                    <dd className="mt-0.5 font-medium text-foreground tabular-nums">{s.prev30.toLocaleString()}</dd>
+                </div>
+                <div>
+                    <dt className="text-[12px] text-muted-foreground">Last 7 days</dt>
+                    <dd className="mt-0.5 font-medium text-foreground tabular-nums">{s.last7.toLocaleString()}</dd>
+                </div>
+            </dl>
+            <div className="mt-5 text-[rgb(var(--brand))]">
+                <Sparkline values={s.daily} label={`New users per day, last ${s.daily.length} days`} height={72} />
+                <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                    <span>{s.daily.length} days ago</span>
+                    <span>Today</span>
                 </div>
             </div>
         </Panel>

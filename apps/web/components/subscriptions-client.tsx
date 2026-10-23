@@ -99,10 +99,10 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                         ) : <span className="font-medium">{sub.stores?.name ?? '—'}</span>}
                                         <p className="font-mono text-[11px] text-muted-foreground">{sub.stores?.slug}</p>
                                     </Td>
-                                    <Td align="right">{sub.currency} {sub.amount.toLocaleString()}</Td>
-                                    <Td><Badge tone={subscriptionStatusTone(sub.status)}>{sub.status}</Badge></Td>
-                                    <Td muted><span className="font-mono text-[12px]">{sub.google_play_order_id ?? '—'}</span></Td>
-                                    <Td muted>
+                                    <Td align="right" label="Amount">{sub.currency} {sub.amount.toLocaleString()}</Td>
+                                    <Td label="Status"><Badge tone={subscriptionStatusTone(sub.status)}>{sub.status}</Badge></Td>
+                                    <Td muted label="Reference"><span className="font-mono text-[12px]">{sub.google_play_order_id ?? '—'}</span></Td>
+                                    <Td muted label="Created">
                                         {new Date(sub.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </Td>
                                     <Td align="right">

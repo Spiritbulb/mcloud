@@ -160,14 +160,14 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                                                 </div>
                                             </div>
                                         </Td>
-                                        <Td>
+                                        <Td label="Owner">
                                             <p>{store.owner?.name ?? '—'}</p>
                                             <p className="text-[12px] text-muted-foreground">{store.owner?.email ?? ''}</p>
                                         </Td>
-                                        <Td><Badge tone={store.is_pro ? 'success' : 'neutral'}>{store.is_pro ? 'Pro' : 'Free'}</Badge></Td>
-                                        <Td><Badge tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Badge></Td>
+                                        <Td label="Plan"><Badge tone={store.is_pro ? 'success' : 'neutral'}>{store.is_pro ? 'Pro' : 'Free'}</Badge></Td>
+                                        <Td label="Status"><Badge tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Badge></Td>
                                         <Td align="right">
-                                            <div className="flex items-center justify-end gap-2">
+                                            <div className="flex flex-wrap items-center justify-end gap-2 max-md:justify-start max-md:pt-1">
                                                 <Button size="sm" onClick={() => setPlanDialog({ store })}>Manage plan</Button>
                                                 <Button size="sm" variant={isActive ? 'danger' : 'secondary'} onClick={() => setStatusDialog({ store, newStatus: !isActive })}>
                                                     {isActive ? 'Suspend' : 'Unsuspend'}

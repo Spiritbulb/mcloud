@@ -3,11 +3,14 @@ import { useState } from 'react'
 import { PageHeader } from '@/components/admin/ui/page-header'
 import { Panel } from '@/components/admin/ui/panel'
 import { Badge, fulfillmentTone, orderStatusTone } from '@/components/admin/ui/badge'
-import { SearchField, SelectField, Toolbar } from '@/components/admin/ui/fields'
+import { FilterBar } from '@/components/admin/ui/filter-bar'
+import { Pagination } from '@/components/admin/ui/pagination'
+import { isFiltered, type ListQuery } from '@/components/admin/ui/list-query'
 import { Table, Td, Th, Tr } from '@/components/admin/ui/table'
 import { EmptyState } from '@/components/admin/ui/empty-state'
 import { Notice } from '@/components/admin/ui/notice'
 import { timeAgo } from '@/components/admin/ui/ui-logic'
+import { ORDER_STATUSES } from './orders-filters'
 
 type Order = {
     id: string
@@ -22,40 +25,36 @@ type Order = {
     store: { name: string | null; slug: string | null } | null
 }
 
-export default function OrdersClient({ orders, capped }: { orders: Order[]; capped?: boolean }) {
-    const [search, setSearch] = useState('')
-    const [statusFilter, setStatusFilter] = useState('')
+export default function OrdersClient({
+    orders,
+    total,
+    pages,
+    q,
+    error,
+}: {
+    orders: Order[]
+    total: number
+    pages: number
+    q: ListQuery<'status'>
+    error: string | null
+}) {
     const [now] = useState(() => Date.now())
-
-    const q = search.toLowerCase()
-    const filtered = orders.filter(o => {
-        const matchSearch =
-            (o.order_number ?? '').toLowerCase().includes(q) ||
-            (o.customer_email ?? '').toLowerCase().includes(q) ||
-            (o.store?.name ?? '').toLowerCase().includes(q)
-        return matchSearch && (!statusFilter || o.status === statusFilter)
-    })
+    const filtered = isFiltered(q)
 
     return (
         <div className="mx-auto w-full max-w-6xl space-y-6">
-            <PageHeader title="Orders" description={`${orders.length.toLocaleString()} ${capped ? 'most recent' : 'total'}`} />
+            <PageHeader title="Orders" description={`${total.toLocaleString()} ${filtered ? (total === 1 ? 'match' : 'matches') : 'total'}`} />
 
-            {capped && <Notice tone="warning">Showing the {orders.length.toLocaleString()} most recent orders. Older ones are not searchable here yet.</Notice>}
+            <FilterBar
+                searchPlaceholder="Search order #, customer or store"
+                filters={[{ name: 'status', label: 'Filter by status', allLabel: 'All statuses', options: ORDER_STATUSES }]}
+            />
 
-            <Toolbar>
-                <SearchField value={search} onChange={setSearch} placeholder="Search order #, customer or store" />
-                <SelectField value={statusFilter} onChange={setStatusFilter} label="Filter by status">
-                    <option value="">All statuses</option>
-                    <option value="pending">Pending</option>
-                    <option value="paid">Paid</option>
-                    <option value="cancelled">Cancelled</option>
-                    <option value="refunded">Refunded</option>
-                </SelectField>
-            </Toolbar>
+            {error && <Notice tone="error">Could not load orders: {error}</Notice>}
 
             <Panel flush>
-                {filtered.length === 0 ? (
-                    <EmptyState icon="receipt_long" title="No orders found" description={search || statusFilter ? 'Try a different search or filter.' : undefined} />
+                {orders.length === 0 ? (
+                    <EmptyState icon="receipt_long" title="No orders found" description={filtered ? 'Try a different search or filter.' : undefined} />
                 ) : (
                     <Table>
                         <thead>
@@ -70,27 +69,29 @@ export default function OrdersClient({ orders, capped }: { orders: Order[]; capp
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map(order => (
+                            {orders.map(order => (
                                 <Tr key={order.id}>
-                                    <Td><span className="font-mono text-[12px]">{order.order_number ?? '—'}</span></Td>
-                                    <Td>
+                                    <Td><span className="font-mono text-[12px] max-md:font-medium">{order.order_number ?? '—'}</span></Td>
+                                    <Td label="Store">
                                         {order.store?.slug ? (
                                             <a href={`/store/${order.store.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:text-primary hover:underline underline-offset-4">
                                                 {order.store.name ?? '—'}
                                             </a>
                                         ) : '—'}
                                     </Td>
-                                    <Td muted>{order.customer_email ?? '—'}</Td>
-                                    <Td align="right">{order.currency} {order.total?.toLocaleString() ?? '—'}</Td>
-                                    <Td><Badge tone={orderStatusTone(order.status)}>{order.status ?? '—'}</Badge></Td>
-                                    <Td><Badge tone={fulfillmentTone(order.fulfillment_status)}>{order.fulfillment_status ?? '—'}</Badge></Td>
-                                    <Td align="right" muted>{timeAgo(order.created_at, now)}</Td>
+                                    <Td muted label="Customer">{order.customer_email ?? '—'}</Td>
+                                    <Td align="right" label="Total">{order.currency} {order.total?.toLocaleString() ?? '—'}</Td>
+                                    <Td label="Status"><Badge tone={orderStatusTone(order.status)}>{order.status ?? '—'}</Badge></Td>
+                                    <Td label="Fulfillment"><Badge tone={fulfillmentTone(order.fulfillment_status)}>{order.fulfillment_status ?? '—'}</Badge></Td>
+                                    <Td align="right" muted label="Placed">{timeAgo(order.created_at, now)}</Td>
                                 </Tr>
                             ))}
                         </tbody>
                     </Table>
                 )}
             </Panel>
+
+            <Pagination basePath="/admin/orders" q={q} pages={pages} total={total} newestFirst />
         </div>
     )
 }

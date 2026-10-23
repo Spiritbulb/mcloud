@@ -36,6 +36,10 @@ function screen(name: string) {
                         { id: "4", order_number: "1039", store_id: "1", customer_email: "otieno@example.org", total: 9100, currency: "KES", status: "refunded", fulfillment_status: "partial", created_at: iso(96), store: { name: "Loc'd Essence", slug: "locd26" } },
                         { id: "5", order_number: "1038", store_id: "2", customer_email: null, total: 650, currency: "KES", status: "cancelled", fulfillment_status: null, created_at: iso(400), store: null },
                     ]}
+                    total={120}
+                    pages={3}
+                    q={{ page: 2, q: null, filters: { status: null } }}
+                    error={null}
                 />
             )
         case "users":
@@ -47,6 +51,11 @@ function screen(name: string) {
                         { id: "3", name: null, email: "tehillahkachila@gmail.com", avatar_url: null, role: "customer", created_at: iso(900) },
                         { id: "4", name: "Elizabeth Nalwakho", email: "elizabethnalwakho80@gmail.com", avatar_url: null, role: "client", created_at: iso(60) },
                     ]}
+                    total={35}
+                    admins={1}
+                    pages={1}
+                    q={{ page: 1, q: null, filters: { role: null } }}
+                    error={null}
                 />
             )
         case "subs":
@@ -67,6 +76,12 @@ function screen(name: string) {
                         { id: "2", provider: "palpluss", event_type: "payment.failed", status: "failed", store_id: "2", created_at: iso(5), error_message: "Amount does not cover order total", payload: { amount: 100 }, store: { name: "Techtunes" } },
                         { id: "3", provider: "paypal", event_type: "capture.completed", status: "success", store_id: null, created_at: iso(50), error_message: null, payload: {}, store: null },
                     ]}
+                    total={3}
+                    failed={1}
+                    providers={["daraja", "palpluss", "paypal"]}
+                    pages={1}
+                    q={{ page: 1, q: null, filters: { provider: null, status: null } }}
+                    error={null}
                 />
             )
         case "recovery":

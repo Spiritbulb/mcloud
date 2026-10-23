@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { summarizeRevenue, attentionItems, formatMoney } from './dashboard-logic.ts'
+import { summarizeRevenue, summarizeSignups, attentionItems, formatMoney } from './dashboard-logic.ts'
 
 const NOW = Date.parse('2026-10-23T12:00:00Z')
 const ago = (days: number) => new Date(NOW - days * 86_400_000).toISOString()
@@ -89,4 +89,18 @@ test('attention queue lists only non-empty queues; empty means all clear', () =>
 
 test('formats whole units with grouping', () => {
     assert.equal(formatMoney(12400.4, 'KES'), 'KES 12,400')
+})
+
+test('signups are counted per day, with windows for 7 days, 30 days and the 30 before', () => {
+    const s = summarizeSignups([ago(0.1), ago(0.2), ago(3), ago(20), ago(40), ago(59), ago(61), null, 'garbage', new Date(NOW + 86_400_000).toISOString()], NOW)
+    assert.equal(s.last30, 4)
+    assert.equal(s.last7, 3)
+    assert.equal(s.prev30, 2)
+    assert.equal(s.daily.length, 30)
+    assert.equal(s.daily[29], 2)
+    assert.equal(s.daily.reduce((a, b) => a + b, 0), s.last30)
+})
+
+test('no signups is a flat zero series, not an error', () => {
+    assert.deepEqual(summarizeSignups([], NOW), { last30: 0, last7: 0, prev30: 0, daily: new Array(30).fill(0) })
 })

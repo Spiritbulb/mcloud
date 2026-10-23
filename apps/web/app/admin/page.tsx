@@ -1,7 +1,7 @@
 import type { Metadata } from "next"
 import { createClient } from "@mcloud/db/server"
 import { reachDb } from "@/lib/reach/db"
-import { attentionItems, summarizeRevenue } from "./dashboard-logic"
+import { attentionItems, summarizeRevenue, summarizeSignups } from "./dashboard-logic"
 import DashboardView, { type DashboardData } from "./dashboard-view"
 
 export const metadata: Metadata = {
@@ -23,7 +23,7 @@ async function getDashboard(): Promise<DashboardData> {
 
     const [
         users, stores, activeSubs, pendingSubs, newUsers7, newUsersPrev7, newStores7, newStoresPrev7, failedWebhooks,
-        paidOrders, recentOrders, recentStores,
+        paidOrders, recentOrders, recentStores, signups,
     ] = await Promise.all([
         supabase.from("users").select("id", head),
         supabase.from("stores").select("id", head),
@@ -45,6 +45,7 @@ async function getDashboard(): Promise<DashboardData> {
             .select("id, name, created_at")
             .order("created_at", { ascending: false })
             .limit(6),
+        supabase.from("users").select("created_at").gte("created_at", iso(60)).order("created_at", { ascending: false }).limit(ORDER_CAP),
     ])
 
     // reach_vendors.approval_status is newer than the generated DB types, hence reachDb().
@@ -68,6 +69,7 @@ async function getDashboard(): Promise<DashboardData> {
             failedWebhooks: failedWebhooks.count ?? 0,
         }),
         revenue: summarizeRevenue(paidOrders.data ?? [], now),
+        signups: summarizeSignups((signups.data ?? []).map((u) => u.created_at), now),
         revenueCapped: (paidOrders.data?.length ?? 0) >= ORDER_CAP,
         recentOrders: (recentOrders.data ?? []).map((o) => {
             const store = Array.isArray(o.stores) ? o.stores[0] : o.stores

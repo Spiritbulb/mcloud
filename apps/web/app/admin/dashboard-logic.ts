@@ -55,6 +55,35 @@ export function summarizeRevenue(orders: PaidOrder[], now: number, days = 30): C
     return [...by.values()].sort((a, b) => b.last30 - a.last30)
 }
 
+export type Signups = {
+    last30: number
+    last7: number
+    /** The 30 days before that, for the period-over-period comparison. */
+    prev30: number
+    /** Oldest -> newest, one entry per UTC day, for a sparkline. */
+    daily: number[]
+}
+
+/** New sign-ups per day over the last `days` days, with the 30 days before for comparison. */
+export function summarizeSignups(createdAt: (string | null)[], now: number, days = 30): Signups {
+    const today = dayStart(now)
+    const out: Signups = { last30: 0, last7: 0, prev30: 0, daily: new Array(days).fill(0) }
+    for (const iso of createdAt) {
+        if (!iso) continue
+        const at = Date.parse(iso)
+        if (Number.isNaN(at) || at > now || at <= now - 60 * DAY_MS) continue
+        if (at <= now - 30 * DAY_MS) {
+            out.prev30 += 1
+            continue
+        }
+        out.last30 += 1
+        if (at > now - 7 * DAY_MS) out.last7 += 1
+        const ago = (today - dayStart(at)) / DAY_MS
+        if (ago < days) out.daily[days - 1 - ago] += 1
+    }
+    return out
+}
+
 export type AttentionCounts = {
     pendingSubs: number
     pendingVendors: number

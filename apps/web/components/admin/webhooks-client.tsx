@@ -3,10 +3,14 @@ import { Fragment, useState } from 'react'
 import { PageHeader } from '@/components/admin/ui/page-header'
 import { Panel } from '@/components/admin/ui/panel'
 import { Badge, webhookStatusTone } from '@/components/admin/ui/badge'
-import { SelectField, Toolbar } from '@/components/admin/ui/fields'
-import { Table, Td, Th } from '@/components/admin/ui/table'
+import { FilterBar } from '@/components/admin/ui/filter-bar'
+import { Pagination } from '@/components/admin/ui/pagination'
+import { isFiltered, type ListQuery } from '@/components/admin/ui/list-query'
+import { Notice } from '@/components/admin/ui/notice'
+import { ROW_CLASS, Table, Td, Th } from '@/components/admin/ui/table'
 import { EmptyState } from '@/components/admin/ui/empty-state'
 import { timeAgo } from '@/components/admin/ui/ui-logic'
+import { WEBHOOK_STATUSES } from './webhooks-filters'
 
 type WebhookLog = {
     id: string
@@ -20,35 +24,44 @@ type WebhookLog = {
     store: { name: string | null } | null
 }
 
-export default function WebhooksClient({ logs }: { logs: WebhookLog[] }) {
-    const [providerFilter, setProviderFilter] = useState('')
-    const [statusFilter, setStatusFilter] = useState('')
+export default function WebhooksClient({
+    logs,
+    total,
+    failed,
+    providers,
+    pages,
+    q,
+    error,
+}: {
+    logs: WebhookLog[]
+    total: number
+    failed: number
+    providers: string[]
+    pages: number
+    q: ListQuery<'provider' | 'status'>
+    error: string | null
+}) {
     const [expanded, setExpanded] = useState<string | null>(null)
     const [now] = useState(() => Date.now())
-
-    const providers = Array.from(new Set(logs.map(l => l.provider).filter(Boolean))) as string[]
-    const filtered = logs.filter(l => (!providerFilter || l.provider === providerFilter) && (!statusFilter || l.status === statusFilter))
-    const failed = logs.filter(l => l.status === 'failed').length
+    const filtered = isFiltered(q)
 
     return (
         <div className="mx-auto w-full max-w-6xl space-y-6">
-            <PageHeader title="Webhook logs" description={`${logs.length.toLocaleString()} recent events${failed ? ` · ${failed} failed` : ''}`} />
+            <PageHeader title="Webhook logs" description={`${total.toLocaleString()} ${filtered ? (total === 1 ? 'match' : 'matches') : 'events'}${failed ? ` · ${failed.toLocaleString()} failed overall` : ''}`} />
 
-            <Toolbar>
-                <SelectField value={providerFilter} onChange={setProviderFilter} label="Filter by provider">
-                    <option value="">All providers</option>
-                    {providers.map(p => <option key={p} value={p}>{p}</option>)}
-                </SelectField>
-                <SelectField value={statusFilter} onChange={setStatusFilter} label="Filter by status">
-                    <option value="">All statuses</option>
-                    <option value="success">Success</option>
-                    <option value="failed">Failed</option>
-                </SelectField>
-            </Toolbar>
+            <FilterBar
+                searchPlaceholder="Search event, provider or error"
+                filters={[
+                    { name: 'provider', label: 'Filter by provider', allLabel: 'All providers', options: providers.map(p => ({ value: p, label: p })) },
+                    { name: 'status', label: 'Filter by status', allLabel: 'All statuses', options: WEBHOOK_STATUSES },
+                ]}
+            />
+
+            {error && <Notice tone="error">Could not load webhook logs: {error}</Notice>}
 
             <Panel flush>
-                {filtered.length === 0 ? (
-                    <EmptyState icon="webhook" title="No webhook logs" description="Provider callbacks will be listed here once they are recorded." />
+                {logs.length === 0 ? (
+                    <EmptyState icon="webhook" title="No webhook logs" description={filtered ? 'Try a different search or filter.' : 'Provider callbacks will be listed here once they are recorded.'} />
                 ) : (
                     <Table>
                         <thead>
@@ -61,22 +74,22 @@ export default function WebhooksClient({ logs }: { logs: WebhookLog[] }) {
                             </tr>
                         </thead>
                         <tbody>
-                            {filtered.map(log => (
+                            {logs.map(log => (
                                 <Fragment key={log.id}>
                                     <tr
                                         onClick={() => setExpanded(expanded === log.id ? null : log.id)}
-                                        className="cursor-pointer border-t border-border transition-colors hover:bg-muted/40"
+                                        className={`cursor-pointer ${ROW_CLASS}`}
                                         aria-expanded={expanded === log.id}
                                     >
                                         <Td><span className="font-mono text-[12px]">{log.provider ?? '—'}</span></Td>
-                                        <Td muted>{log.event_type ?? '—'}</Td>
-                                        <Td><Badge tone={webhookStatusTone(log.status)}>{log.status ?? '—'}</Badge></Td>
-                                        <Td muted>{log.store?.name ?? '—'}</Td>
-                                        <Td align="right" muted>{timeAgo(log.created_at, now)}</Td>
+                                        <Td muted label="Event">{log.event_type ?? '—'}</Td>
+                                        <Td label="Status"><Badge tone={webhookStatusTone(log.status)}>{log.status ?? '—'}</Badge></Td>
+                                        <Td muted label="Store">{log.store?.name ?? '—'}</Td>
+                                        <Td align="right" muted label="When">{timeAgo(log.created_at, now)}</Td>
                                     </tr>
                                     {expanded === log.id && (
-                                        <tr className="border-t border-border bg-muted/20">
-                                            <td colSpan={5} className="space-y-3 px-4 py-4">
+                                        <tr className="border-t border-border bg-muted/20 max-md:block">
+                                            <td colSpan={5} className="space-y-3 px-4 py-4 max-md:block">
                                                 {log.error_message && (
                                                     <div>
                                                         <p className="mb-1 text-[12px] font-medium text-red-700 dark:text-red-300">Error</p>
@@ -100,6 +113,8 @@ export default function WebhooksClient({ logs }: { logs: WebhookLog[] }) {
                     </Table>
                 )}
             </Panel>
+
+            <Pagination basePath="/admin/webhooks" q={q} pages={pages} total={total} newestFirst />
         </div>
     )
 }

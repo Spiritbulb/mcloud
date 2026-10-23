@@ -3,7 +3,7 @@
 import { notFound } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
 import DashboardView, { type DashboardData } from "../admin/dashboard-view"
-import { attentionItems, summarizeRevenue } from "../admin/dashboard-logic"
+import { attentionItems, summarizeRevenue, summarizeSignups } from "../admin/dashboard-logic"
 
 export const dynamic = "force-dynamic"
 
@@ -25,6 +25,7 @@ function fixture(clear: boolean): DashboardData {
         attention: clear ? [] : attentionItems({ pendingSubs: 2, pendingVendors: 3, failedWebhooks: 0 }),
         revenue: summarizeRevenue(orders, now),
         revenueCapped: false,
+        signups: summarizeSignups(Array.from({ length: 90 }, (_, i) => new Date(now - ((i * 0.61) % 58) * DAY).toISOString()), now),
         recentOrders: [
             { id: "1", order_number: 1042, total: 4800, currency: "KES", status: "paid", created_at: ago(6), storeName: "Loc'd Essence" },
             { id: "2", order_number: 1041, total: 12500, currency: "KES", status: "pending", created_at: ago(48), storeName: "Techtunes" },

@@ -2,7 +2,9 @@
 import { isAuditAction, type AuditAction } from '@/lib/audit-logic'
 import type { BadgeTone } from '@/components/admin/ui/badge'
 
-export const PAGE_SIZE = 50
+import { PAGE_SIZE, pageRange, totalPages } from '@/components/admin/ui/list-query'
+
+export { PAGE_SIZE, pageRange, totalPages }
 
 export type AuditQuery = { page: number; action: AuditAction | null; actor: string | null }
 
@@ -20,16 +22,6 @@ export function parseAuditQuery(raw: Raw): AuditQuery {
         action: action && isAuditAction(action) ? action : null,
         actor: actor ? actor.slice(0, 200) : null,
     }
-}
-
-/** Inclusive row range for PostgREST `.range(from, to)`. */
-export function pageRange(page: number): { from: number; to: number } {
-    const from = (page - 1) * PAGE_SIZE
-    return { from, to: from + PAGE_SIZE - 1 }
-}
-
-export function totalPages(total: number): number {
-    return Math.max(1, Math.ceil(total / PAGE_SIZE))
 }
 
 /** Query string for a link, omitting defaults so URLs stay short. */
