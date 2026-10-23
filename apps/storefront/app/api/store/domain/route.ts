@@ -4,7 +4,7 @@ import { getSession } from '@mcloud/auth/server'
 import { NextRequest, NextResponse } from 'next/server'
 import { storeHasFeature } from '@mcloud/merchant/plans-server'
 import { canManage, requireStoreAccessById } from '@mcloud/merchant/stores'
-import { isValidDomain, normalizeDomain } from '@/components/store/domain-logic'
+import { isValidDomain, normalizeDomain } from '@mcloud/merchant/custom-domain'
 
 const VERCEL_TOKEN = process.env.VERCEL_TOKEN!
 const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID!

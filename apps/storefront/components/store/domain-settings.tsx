@@ -11,7 +11,7 @@ import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
 import { ProGateInline } from '../pro'
-import { dnsRecordFor, isValidDomain, normalizeDomain } from './domain-logic'
+import { dnsRecordFor, isValidDomain, normalizeDomain } from '@mcloud/merchant/custom-domain'
 
 type Status = {
     domain: string | null

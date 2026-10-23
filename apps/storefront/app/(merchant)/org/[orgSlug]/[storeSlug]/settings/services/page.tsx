@@ -10,7 +10,8 @@ export default async function ServicePage({
 }) {
     const { orgSlug, storeSlug: slug } = await params
     const store = await getStore(slug)
-    if (!store || !store.is_active) notFound()
+    // A store that is switched off still manages its catalog; only a missing store is a 404.
+    if (!store) notFound()
 
     // This surface only exists for verticals that sell things. The nav already
     // hides it for the others, but hidden is not the same as unreachable.

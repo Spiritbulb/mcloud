@@ -22,16 +22,28 @@
  */
 
 // storefront-links.ts — stays 100% sync, safe for client components
+import { subdomainOf } from './custom-domain'
+
 const SITE_ORIGIN =
   process.env.NEXT_PUBLIC_SITE_ORIGIN ?? "https://app.mcloud.co.ke"
 
+/**
+ * The host a custom domain is served on. An apex (locdessence.com) is linked as www., which is how
+ * it has always been linked; a subdomain (shop.example.com) as itself, since www.shop.example.com
+ * does not exist.
+ */
+function customHost(customDomain: string): string {
+  return subdomainOf(customDomain) ? customDomain : `www.${customDomain}`
+}
+
 export function storefrontUrl(slug: string, customDomain?: string | null): string {
-  if (customDomain) return `https://www.${customDomain}`
+  if (customDomain) return `https://${customHost(customDomain)}`
   return`${SITE_ORIGIN}/${slug}`
 }
 
+/** The same address without the scheme, for showing to people. */
 export function storefrontDisplayUrl(slug: string, customDomain?: string | null): string {
-  if (customDomain) return `https://www.${customDomain}`
+  if (customDomain) return customHost(customDomain)
   return `${SITE_ORIGIN.replace(/^https?:\/\//, "")}/${slug}`
 }
 

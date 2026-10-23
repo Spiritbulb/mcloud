@@ -1,5 +1,5 @@
-// Custom-domain rules shared by the Domain settings screen and /api/store/domain. Pure, tested in
-// domain-logic.test.ts.
+// Custom-domain rules: the Domain settings screen, /api/store/domain and storefront URLs. Pure, tested in
+// custom-domain.test.ts.
 
 /** What the merchant typed, as a bare hostname: no scheme, path, port or trailing dot. */
 export function normalizeDomain(input: string): string {

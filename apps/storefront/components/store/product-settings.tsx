@@ -309,6 +309,7 @@ export default function ProductSettings({
     const [editProduct, setEditProduct] = useState<Product | undefined>()
     const [deleteTarget, setDeleteTarget] = useState<Product | null>(null)
     const [deleting, setDeleting] = useState(false)
+    const [actionError, setActionError] = useState<string | null>(null)
 
     const load = useCallback(async () => {
         setLoading(true)
@@ -323,14 +324,16 @@ export default function ProductSettings({
     const confirmDelete = async () => {
         if (!deleteTarget) return
         setDeleting(true)
-        await deleteProduct(storeId, deleteTarget.id)
+        const res = await deleteProduct(storeId, deleteTarget.id)
         setDeleting(false)
         setDeleteTarget(null)
+        setActionError(res.ok ? null : res.error)
         load()
     }
 
     const handleToggleActive = async (product: Product) => {
-        await setProductActive(storeId, product.id, !product.is_active)
+        const res = await setProductActive(storeId, product.id, !product.is_active)
+        setActionError(res.ok ? null : res.error)
         load()
     }
 
@@ -369,6 +372,8 @@ export default function ProductSettings({
                     </Button>
                 }
             />
+
+            {actionError && <Notice tone="error">{actionError}</Notice>}
 
             <Panel flush>
                 {loadError && !loading ? (

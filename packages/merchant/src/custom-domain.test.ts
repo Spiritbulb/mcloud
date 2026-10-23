@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dnsRecordFor, isValidDomain, normalizeDomain, subdomainOf } from './domain-logic.ts'
+import { dnsRecordFor, isValidDomain, normalizeDomain, subdomainOf } from './custom-domain.ts'
 
 test('normalizes what merchants paste', () => {
     assert.equal(normalizeDomain('  https://Shop.Example.com/ '), 'shop.example.com')

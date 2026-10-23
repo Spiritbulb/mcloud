@@ -1,73 +1,128 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useCallback, useEffect, useState } from 'react'
+import type { ServiceItem } from '@mcloud/themes/types'
+import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Field, FormGrid, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
+import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
+import { cn } from '@mcloud/ui/utils'
 import { deleteService, listServices, saveService, setServiceActive } from '@/lib/admin/catalog-actions'
-import { Button } from '@mcloud/ui/button'
-import { Input } from '@mcloud/ui/input'
-import { Label } from '@mcloud/ui/label'
-import { Badge } from '@mcloud/ui/badge'
-import { Switch } from '@mcloud/ui/switch'
-import { Card, CardContent } from '@mcloud/ui/card'
-import { Textarea } from '@mcloud/ui/textarea'
-import { Separator } from '@mcloud/ui/separator'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@mcloud/ui/select'
-import { motion, AnimatePresence } from 'framer-motion'
-import {
-    Plus, Trash2, ChevronDown, ChevronUp,
-    Briefcase, Star, MapPin, Clock, RefreshCw,
-    BadgePercent, Tag, Zap, Video, Image as ImageIcon,
-} from 'lucide-react'
 import ImageUpload from './image-upload'
-import { ServiceItem, ServicePackage, ServiceMediaItem } from '@mcloud/themes/types'
+import {
+    draftFromService, draftProblem, emptyDraft, emptyPackage, newId, servicePayload, slugify, startingPrice,
+    type Availability, type Booking, type DraftPackage, type ServiceDraft,
+} from './service-logic'
 
-// Local draft type — all fields are strings so HTML inputs bind freely.
-// On save, fields are parsed to their ServicePackage types.
-type DraftPackage = {
-    id: string
-    name: string
-    price: string
-    description: string | null
-    deliverables: string
-    delivery_days: string
-    revisions: string
-    is_featured?: boolean
+const AVAILABILITY: { value: Availability; label: string; tone: BadgeTone }[] = [
+    { value: 'available', label: 'Available', tone: 'success' },
+    { value: 'busy', label: 'Busy', tone: 'warning' },
+    { value: 'unavailable', label: 'Unavailable', tone: 'neutral' },
+]
+
+const BOOKING: { value: Booking; label: string; hint: string }[] = [
+    { value: 'instant', label: 'Book instantly', hint: 'Customers book and pay straight away.' },
+    { value: 'scheduled', label: 'Pick a time', hint: 'Customers choose a date and time.' },
+    { value: 'quote_only', label: 'Request a quote', hint: 'Customers ask, and you reply with a price.' },
+]
+
+function Segmented<T extends string>({ value, options, onChange, label }: {
+    value: T
+    options: { value: T; label: string }[]
+    onChange: (v: T) => void
+    label: string
+}) {
+    return (
+        <div role="radiogroup" aria-label={label} className="inline-flex flex-wrap rounded-md border border-border p-0.5">
+            {options.map((o) => (
+                <button
+                    key={o.value}
+                    type="button"
+                    role="radio"
+                    aria-checked={value === o.value}
+                    onClick={() => onChange(o.value)}
+                    className={cn(
+                        'h-7 rounded px-2.5 text-[12px] transition-colors',
+                        value === o.value ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
+                    )}
+                >
+                    {o.label}
+                </button>
+            ))}
+        </div>
+    )
 }
 
-function slugify(str: string) {
-    return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')
+function Thumb({ src }: { src?: string }) {
+    return (
+        <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
+            {src
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={src} alt="" className="h-full w-full object-cover" />
+                : <Icon name="home_repair_service" size={16} className="text-muted-foreground" />}
+        </span>
+    )
 }
 
-const EMPTY_PACKAGE: DraftPackage = {
-    id: '',
-    name: '',
-    price: '',
-    description: '',
-    deliverables: '',
-    delivery_days: '3',
-    revisions: '1',
-    is_featured: false,
+// ─── Package editor ───────────────────────────────────────────────────────────
+
+function PackageCard({ pkg, index, currency, onChange, onFeature, onRemove }: {
+    pkg: DraftPackage
+    index: number
+    currency: string
+    onChange: (patch: Partial<DraftPackage>) => void
+    onFeature: () => void
+    onRemove: () => void
+}) {
+    return (
+        <div className={cn('space-y-3 rounded-md border p-3', pkg.is_featured ? 'border-primary/50' : 'border-border')}>
+            <div className="flex items-center justify-between gap-2">
+                <p className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
+                    Package {index + 1}
+                    {pkg.is_featured && <Badge tone="info">Featured</Badge>}
+                </p>
+                <div className="flex items-center gap-1">
+                    <Button size="sm" variant="ghost" onClick={onFeature}>{pkg.is_featured ? 'Unfeature' : 'Feature'}</Button>
+                    <Button size="sm" variant="ghost" aria-label={`Remove package ${index + 1}`} onClick={onRemove}>
+                        <Icon name="delete" size={15} />
+                    </Button>
+                </div>
+            </div>
+            <FormGrid columns={2} className="sm:grid-cols-4">
+                <Field label="Name">
+                    <TextInput value={pkg.name} onChange={(e) => onChange({ name: e.target.value })} placeholder="e.g. Basic" />
+                </Field>
+                <Field label={`Price (${currency})`}>
+                    <TextInput type="number" min={0} step="0.01" inputMode="decimal" value={pkg.price} onChange={(e) => onChange({ price: e.target.value })} placeholder="0" />
+                </Field>
+                <Field label="Delivery (days)">
+                    <TextInput type="number" min={1} value={pkg.delivery_days} onChange={(e) => onChange({ delivery_days: e.target.value })} placeholder="3" />
+                </Field>
+                <Field label="Revisions">
+                    <TextInput type="number" min={0} value={pkg.revisions} onChange={(e) => onChange({ revisions: e.target.value })} placeholder="Unlimited" />
+                </Field>
+            </FormGrid>
+            <Field label="Short description">
+                <TextInput value={pkg.description} onChange={(e) => onChange({ description: e.target.value })} placeholder="e.g. For small businesses getting started" />
+            </Field>
+            <Field label="Deliverables" hint="One per line.">
+                <TextArea value={pkg.deliverables} onChange={(e) => onChange({ deliverables: e.target.value })} rows={3} placeholder={'Logo in PNG and SVG\nColour palette'} />
+            </Field>
+        </div>
+    )
 }
 
-const AVAILABILITY_OPTIONS = [
-    { value: 'available', label: 'Available', color: 'text-green-600' },
-    { value: 'busy', label: 'Currently Busy', color: 'text-yellow-600' },
-    { value: 'unavailable', label: 'Unavailable', color: 'text-red-500' },
-] as const
+// ─── Form ─────────────────────────────────────────────────────────────────────
 
-const BOOKING_OPTION = [
-    { value: 'instant', label: 'Instant', color: 'text-red-500' },
-    { value: 'scheduled', label: 'Scheduled', color: 'text-yellow-600' },
-    { value: 'quote_only', label: 'Send Quote', color: 'text-red-500' },
-
-] as const
-
-function ServiceForm({
-    storeId,
-    currency,
-    service,
-    onSaved,
-    onCancel,
-}: {
+function ServiceForm({ storeId, currency, service, onSaved, onCancel }: {
     storeId: string
     currency: string
     service?: ServiceItem
@@ -75,1036 +130,427 @@ function ServiceForm({
     onCancel: () => void
 }) {
     const isEdit = !!service
-
-    // ── Core fields ────────────────────────────────────────────────────────────
-    const [name, setName] = useState(service?.name ?? '')
-    const [slug, setSlug] = useState(service?.slug ?? '')
-    const [description, setDescription] = useState(service?.description ?? '')
-    const [sku, setSku] = useState(service?.sku ?? '')
-    const [isActive, setIsActive] = useState(service?.is_active ?? true)
-    const [basePrice, setBasePrice] = useState(String(service?.price ?? ''))
-
-    // ── Availability ───────────────────────────────────────────────────────────
-    const [availability, setAvailability] = useState<'available' | 'busy' | 'unavailable'>(
-        service?.metadata?.availability ?? 'available'
-    )
-
-    // ── Quantity & Duration ───────────────────
-    const [quantityUnit, setQuantityUnit] = useState(service?.metadata?.quantityUnit ?? '')
-    const [minQuantity, setMinQuantity] = useState(String(service?.metadata?.minQuantity ?? ''))
-    const [maxQuantity, setMaxQuantity] = useState(String(service?.metadata?.maxQuantity ?? ''))
-    const [quantityStep, setQuantityStep] = useState(String(service?.metadata?.quantityStep ?? ''))
-    const [durationMinutes, setDurationMinutes] = useState(String(service?.metadata?.durationMinutes ?? ''))
-    const [durationHours, setDurationHours] = useState(String(service?.metadata?.durationHours ?? ''))
-    const [durationDay, setDurationDay] = useState(String(service?.metadata?.durationDay ?? ''))
-
-    // ── Booking ───────────────────────────────────────────────────────────
-    const [booking, setBooking] = useState<'instant' | 'scheduled' | 'quote_only'>(
-        service?.metadata?.booking ?? 'instant'
-    )
-
-    // ── Metadata ───────────────────────────────────────────────────────────────
-    const [serviceType, setServiceType] = useState(service?.metadata?.serviceType ?? '')
-    const [location, setLocation] = useState(service?.metadata?.location ?? '')
-    const [deliveryDays, setDeliveryDays] = useState(String(service?.metadata?.deliveryDays ?? ''))
-    const [tags, setTags] = useState((service?.metadata?.tags ?? []).join(', '))
-    const [features, setFeatures] = useState((service?.metadata?.features ?? []).join('\n'))
-    const [requiresDeposit, setRequiresDeposit] = useState(service?.metadata?.requiresDeposit ?? false)
-    const [depositPercent, setDepositPercent] = useState(String(service?.metadata?.depositPercent ?? '50'))
-    const [rating, setRating] = useState(String(service?.metadata?.rating ?? ''))
-    const [reviews, setReviews] = useState(String(service?.metadata?.reviews ?? ''))
-
-    // ── Media (images + videos) ────────────────────────────────────────────────
-    // Stored as { url, type } so videos are distinguishable from images
-    const [media, setMedia] = useState<ServiceMediaItem[]>(
-        service?.metadata?.media ??
-        (service?.images ?? []).map((url, i) => ({
-            id: `img-${i}`,
-            url,
-            type: 'image' as const
-        }))
-    )
+    const [draft, setDraft] = useState<ServiceDraft>(() => (service ? draftFromService(service) : emptyDraft()))
     const [videoUrl, setVideoUrl] = useState('')
-
-    // ── Packages ───────────────────────────────────────────────────────────────
-    const [packages, setPackages] = useState<DraftPackage[]>(
-        (service?.metadata?.packages ?? []).map((p: any) => ({
-            ...p,
-            price: String(p.price ?? ''),
-            delivery_days: String(p.delivery_days ?? '3'),
-            revisions: p.revisions == null ? '' : String(p.revisions),
-            deliverables: Array.isArray(p.deliverables) ? p.deliverables.join('\n') : '',
-        }))
-    )
-    const [showPackages, setShowPackages] = useState(packages.length > 0)
-
-    // ── UI state ───────────────────────────────────────────────────────────────
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState('')
+    const [error, setError] = useState<string | null>(null)
 
-    // Auto-slug from name (new only)
-    useEffect(() => {
-        if (!isEdit) setSlug(slugify(name))
-    }, [name, isEdit])
+    const set = (patch: Partial<ServiceDraft>) => setDraft((d) => ({ ...d, ...patch }))
+    const setPackage = (id: string, patch: Partial<DraftPackage>) =>
+        setDraft((d) => ({ ...d, packages: d.packages.map((p) => (p.id === id ? { ...p, ...patch } : p)) }))
+
+    const setName = (name: string) =>
+        // A new service's URL follows its name until the URL is edited by hand.
+        setDraft((d) => ({ ...d, name, slug: !isEdit && d.slug === slugify(d.name) ? slugify(name) : d.slug }))
 
     const handleSave = async () => {
-        if (!name.trim()) { setError('Service name is required.'); return }
-        if (packages.length === 0 && !basePrice.trim()) {
-            setError('Enter a base price or add at least one package.'); return
+        const problem = draftProblem(draft)
+        if (problem) {
+            setError(problem)
+            return
         }
-
-        setError('')
+        setError(null)
         setSaving(true)
-
         try {
-            const parsedPackages = packages.map((p, i) => ({
-                id: p.id ?? `pkg-${Date.now()}-${i}`,
-                name: p.name.trim() || `Package ${i + 1}`,
-                price: parseFloat(p.price) || 0,
-                description: p.description || null,
-                deliverables: p.deliverables
-                    .split('\n')
-                    .map((d: string) => d.trim())
-                    .filter(Boolean),
-                delivery_days: parseInt(p.delivery_days) || 3,
-                revisions: p.revisions ? parseInt(p.revisions) : null,
-                is_featured: p.is_featured,
-            }))
-
-            const derivedBasePrice = parsedPackages.length > 0
-                ? Math.min(...parsedPackages.map((p) => p.price))
-                : parseFloat(basePrice) || 0
-
-            const payload = {
-                name: name.trim(),
-                slug: slug.trim() || slugify(name),
-                description: description || null,
-                item_type: 'service',
-                price: derivedBasePrice,
-                compare_at_price: null,
-                sku: sku || null,
-                is_active: isActive,
-                metadata: {
-                    serviceType: serviceType || null,
-                    quantityUnit: quantityUnit || '',
-                    booking,
-                    rating: rating ? parseFloat(rating) : null,
-                    reviews: reviews ? parseInt(reviews) : null,
-                    features: features.split('\n').map((f) => f.trim()).filter(Boolean),
-                    descriptionHtml: null,
-                    durationMinutes: durationMinutes ? parseInt(durationMinutes) : null,
-                    durationHours: durationHours ? parseInt(durationHours) : null,
-                    durationDay: durationDay ? parseInt(durationDay) : null,
-                    minQuantity: minQuantity ? parseInt(minQuantity) : null,
-                    maxQuantity: maxQuantity ? parseInt(maxQuantity) : null,
-                    quantityStep: quantityStep ? parseInt(quantityStep) : null,
-                    deliveryDays: deliveryDays ? parseInt(deliveryDays) : null,
-                    location: location || null,
-                    requiresDeposit,
-                    depositPercent: requiresDeposit ? parseInt(depositPercent) || 50 : null,
-                    tags: tags.split(',').map((t) => t.trim()).filter(Boolean),
-                    packages: parsedPackages,   // ✅ also store inside metadata
-                    media,                      // ✅ also store inside metadata
-                    availability,               // ✅ also store inside metadata
-                },
-            }
-
-            const result = await saveService(storeId, isEdit ? service!.id : null, {
-                ...payload,
-                item_type: 'service',
-                compare_at_price: null,
-            })
-
+            const result = await saveService(storeId, service?.id ?? null, servicePayload(draft))
             if (!result.ok) {
                 setError(result.error)
                 return
             }
-
             onSaved()
         } catch (e) {
-            console.error('CAUGHT EXCEPTION:', e)
-            setError('Unexpected error — check console.')
+            console.error('saveService failed', e)
+            setError('Could not save the service. Check your connection and try again.')
         } finally {
             setSaving(false)
         }
     }
 
-    // ── Render ─────────────────────────────────────────────────────────────────
+    const hasPackages = draft.packages.length > 0
+
     return (
         <div className="space-y-6">
-            {/* Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">
-                        {isEdit ? `Edit: ${service!.name}` : 'New service'}
-                    </h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {isEdit ? 'Update service details' : 'Add a new service to your store'}
-                    </p>
-                </div>
-                <div className="flex gap-2 sm:shrink-0">
-                    <Button variant="outline" size="sm" className="flex-1 sm:flex-none h-8 text-xs" onClick={onCancel}>
-                        Cancel
-                    </Button>
-                    <Button size="sm" className="flex-1 sm:flex-none h-8 text-xs" onClick={handleSave} disabled={saving}>
-                        {saving ? 'Saving…' : isEdit ? 'Update' : 'Create service'}
-                    </Button>
-                </div>
-            </div>
+            <PageHeader
+                title={isEdit ? `Edit ${service!.name}` : 'New service'}
+                description={isEdit ? 'Change what customers see and how they book.' : 'Something customers can book or request from you.'}
+                actions={
+                    <>
+                        <Button onClick={onCancel} disabled={saving}>Cancel</Button>
+                        <Button variant="primary" onClick={handleSave} disabled={saving}>
+                            {saving && <Spinner size={13} />}
+                            {saving ? 'Saving…' : isEdit ? 'Save' : 'Create service'}
+                        </Button>
+                    </>
+                }
+            />
 
-            {error && (
-                <p className="text-sm text-destructive bg-destructive/10 rounded px-3 py-2 border border-destructive/20">
-                    {error}
-                </p>
-            )}
+            {error && <Notice tone="error">{error}</Notice>}
 
-            {/* ── Section 1: Core info ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                {/* Left */}
-                <div className="space-y-4">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="service-name">Service name *</Label>
-                        <Input
-                            id="service-name"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            placeholder="e.g. Brand Identity Design"
-                        />
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="slug">URL slug</Label>
-                        <Input
-                            id="slug"
-                            value={slug}
-                            onChange={(e) => setSlug(slugify(e.target.value))}
-                            placeholder="brand-identity-design"
-                            className="font-mono text-xs"
-                        />
-                        <p className="text-xs text-muted-foreground break-all">
-                            yourstore.com/services/{slug || '…'}
-                        </p>
-                    </div>
-
-                    <div className="space-y-1.5">
-                        <Label htmlFor="description">Description</Label>
-                        <Textarea
-                            id="description"
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={4}
-                            placeholder="Describe what this service includes…"
-                            className="resize-none"
-                        />
-                    </div>
-
-                    {/* Service type + location */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label className="flex items-center gap-1.5">
-                                <Briefcase className="w-3.5 h-3.5" /> Type
-                            </Label>
-                            <Input
-                                value={serviceType}
-                                onChange={(e) => setServiceType(e.target.value)}
-                                placeholder="e.g. Design, Consulting"
-                            />
+            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <div className="space-y-6">
+                    <Panel title="Details">
+                        <div className="space-y-4">
+                            <FormGrid>
+                                <Field label="Name">
+                                    <TextInput value={draft.name} onChange={(e) => setName(e.target.value)} placeholder="e.g. Brand identity design" />
+                                </Field>
+                                <Field label="URL" hint={`…/services/${draft.slug || '…'}`}>
+                                    <TextInput value={draft.slug} onChange={(e) => set({ slug: slugify(e.target.value) })} placeholder="brand-identity-design" className="font-mono" spellCheck={false} />
+                                </Field>
+                            </FormGrid>
+                            <Field label="Description">
+                                <TextArea value={draft.description} onChange={(e) => set({ description: e.target.value })} rows={4} placeholder="What this service includes…" />
+                            </Field>
+                            <FormGrid>
+                                <Field label="Type">
+                                    <TextInput value={draft.serviceType} onChange={(e) => set({ serviceType: e.target.value })} placeholder="e.g. Design, Consulting" />
+                                </Field>
+                                <Field label="Location">
+                                    <TextInput value={draft.location} onChange={(e) => set({ location: e.target.value })} placeholder="e.g. Nairobi or Remote" />
+                                </Field>
+                            </FormGrid>
+                            <Field label="What's included" hint="One item per line.">
+                                <TextArea value={draft.features} onChange={(e) => set({ features: e.target.value })} rows={4} placeholder={'1-on-1 consultation call\nSource files included'} />
+                            </Field>
+                            <Field label="Tags" hint="Separate with commas.">
+                                <TextInput value={draft.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="branding, logo, design" />
+                            </Field>
                         </div>
-                        <div className="space-y-1.5">
-                            <Label className="flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5" /> Location
-                            </Label>
-                            <Input
-                                value={location}
-                                onChange={(e) => setLocation(e.target.value)}
-                                placeholder="e.g. Nairobi / Remote"
-                            />
-                        </div>
-                    </div>
+                    </Panel>
 
-                    <div className="space-y-1.5">
-
-
-                        {/* Quantity Unit */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Quantity Unit</Label>
-                            <Input
-                                type="text"
-                                value={quantityUnit}
-                                onChange={(e) => setQuantityUnit(e.target.value)}
-                                placeholder="hours, pieces, kg"
-                                className="h-8 text-xs"
-                            />
-                        </div>
-
-                        {/* Min / Max Quantity */}
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-1.5">
-                                <Label className="text-xs">Min Quantity</Label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={minQuantity}
-                                    onChange={(e) => setMinQuantity(e.target.value)}
-                                    placeholder="1"
-                                    className="h-8 text-xs"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <Label className="text-xs">Max Quantity</Label>
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={maxQuantity}
-                                    onChange={(e) => setMaxQuantity(e.target.value)}
-                                    placeholder="10"
-                                    className="h-8 text-xs"
-                                />
-                            </div>
-                        </div>
-
-                        {/* Quantity Step */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Quantity Step</Label>
-                            <Input
-                                type="number"
-                                min="1"
-                                value={quantityStep}
-                                onChange={(e) => setQuantityStep(e.target.value)}
-                                placeholder="1"
-                                className="h-8 text-xs"
-                            />
-                        </div>
-
-                        {/* Duration Toggle */}
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Service Duration</Label>
-                            <div className="flex items-center gap-4">
-                                {/* Minutes option */}
-                                <label className="flex items-center gap-1.5 text-xs">
-                                    <input
-                                        type="radio"
-                                        name="durationUnit"
-                                        value="minutes"
-                                        checked={!!durationMinutes}
-                                        onChange={() => {
-                                            setDurationMinutes(durationMinutes || "60") // default to 60
-                                            setDurationDay("") // clear days
-                                            setDurationHours("")
-                                        }}
-                                    />
-                                    Minutes
-                                </label>
-
-                                {/* Days option */}
-                                <label className="flex items-center gap-1.5 text-xs">
-                                    <input
-                                        type="radio"
-                                        name="durationUnit"
-                                        value="days"
-                                        checked={!!durationDay}
-                                        onChange={() => {
-                                            setDurationDay(durationDay || "1") // default to 1
-                                            setDurationMinutes("") // clear minutes
-                                            setDurationHours("")
-                                        }}
-                                    />
-                                    Days
-                                </label>
-
-                                {/* hrs option */}
-                                <label className="flex items-center gap-1.5 text-xs">
-                                    <input
-                                        type="radio"
-                                        name="durationUnit"
-                                        value="hours"
-                                        checked={!!durationHours}
-                                        onChange={() => {
-                                            setDurationHours(durationHours || "5") // default to 1
-                                            setDurationMinutes("") // clear minutes
-                                            setDurationDay("")
-                                        }}
-                                    />
-                                    Hours
-                                </label>
-                            </div>
-
-                            {/* Conditional input */}
-                            {durationMinutes && (
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={durationMinutes}
-                                    onChange={(e) => setDurationMinutes(e.target.value)}
-                                    placeholder="60"
-                                    className="h-8 text-xs mt-2"
-                                />
-                            )}
-                            {durationDay && (
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={durationDay}
-                                    onChange={(e) => setDurationDay(e.target.value)}
-                                    placeholder="3"
-                                    className="h-8 text-xs mt-2"
-                                />
-                            )}
-                            {durationHours && (
-                                <Input
-                                    type="number"
-                                    min="0"
-                                    value={durationHours}
-                                    onChange={(e) => setDurationHours(e.target.value)}
-                                    placeholder="1"
-                                    className="h-8 text-xs mt-2"
-                                />
-                            )}
-                        </div>
-                    </div>
-
-
-
-                    {/* Base price + delivery days */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label>
-                                Base price ({currency})
-                                <span className="text-muted-foreground font-normal ml-1 text-xs">
-                                    {packages.length > 0 ? '(auto from packages)' : '*'}
-                                </span>
-                            </Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                value={packages.length > 0
-                                    ? String(Math.min(...packages.map((p) => parseFloat(p.price) || 0)))
-                                    : basePrice
-                                }
-                                onChange={(e) => setBasePrice(e.target.value)}
-                                placeholder="0.00"
-                                disabled={packages.length > 0}
-                                className={packages.length > 0 ? 'opacity-60' : ''}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                Shown as "starting from" when no package selected.
-                            </p>
-                        </div>
-
-                    </div>
-
-                    {/* SKU */}
-                    <div className="space-y-1.5">
-                        <Label>Reference / SKU</Label>
-                        <Input
-                            value={sku}
-                            onChange={(e) => setSku(e.target.value)}
-                            placeholder="SVC-001"
-                            className="font-mono text-xs"
-                        />
-                    </div>
-
-                    {/* Toggles */}
-                    <div className="space-y-2">
-                        {/* Availability */}
-                        <div className="rounded-lg border p-3 space-y-2">
-                            <Label className="text-sm font-medium">Availability</Label>
-                            <div className="flex gap-2 flex-wrap">
-                                {AVAILABILITY_OPTIONS.map((opt) => (
-                                    <button
-                                        key={opt.value}
-                                        onClick={() => setAvailability(opt.value)}
-                                        className={`px-3 py-1.5 rounded-md text-xs border transition-all ${availability === opt.value
-                                            ? 'bg-foreground text-background border-foreground font-medium'
-                                            : 'border-border text-muted-foreground hover:border-foreground/40'
-                                            }`}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Bookings */}
-                        <div className="rounded-lg border p-3 space-y-2">
-                            <Label className="text-sm font-medium">Bookings</Label>
-                            <div className="flex gap-2 flex-wrap">
-                                {BOOKING_OPTION.map((opt) => (
-                                    <button
-                                        key={opt.value}
-                                        onClick={() => setBooking(opt.value)}
-                                        className={`px-3 py-1.5 rounded-md text-xs border transition-all ${booking === opt.value
-                                            ? 'bg-foreground text-background border-foreground font-medium'
-                                            : 'border-border text-muted-foreground hover:border-foreground/40'
-                                            }`}
-                                    >
-                                        {opt.label}
-                                    </button>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Service active */}
-                        <div className="flex items-center justify-between rounded-lg border p-3">
-                            <Label className="text-sm font-normal cursor-pointer">Service active (visible on store)</Label>
-                            <Switch checked={isActive} onCheckedChange={setIsActive} />
-                        </div>
-
-                        {/* Deposit */}
-                        <div className="rounded-lg border p-3 space-y-3">
-                            <div className="flex items-center justify-between">
-                                <Label className="text-sm font-normal flex items-center gap-1.5 cursor-pointer">
-                                    <BadgePercent className="w-3.5 h-3.5" />
-                                    Requires deposit
-                                </Label>
-                                <Switch checked={requiresDeposit} onCheckedChange={setRequiresDeposit} />
-                            </div>
-                            {requiresDeposit && (
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Deposit percentage (%)</Label>
-                                    <Input
+                    <Panel
+                        title="Pricing"
+                        description={hasPackages ? 'The cheapest package is shown as the "from" price.' : 'One price, or add packages like Basic, Standard and Premium.'}
+                    >
+                        <div className="space-y-4">
+                            <FormGrid columns={3}>
+                                <Field label={`Price (${currency})`} hint={hasPackages ? 'Set by your packages.' : undefined}>
+                                    <TextInput
                                         type="number"
-                                        min="1"
-                                        max="100"
-                                        value={depositPercent}
-                                        onChange={(e) => setDepositPercent(e.target.value)}
-                                        placeholder="50"
-                                        className="h-8 text-xs w-28"
+                                        min={0}
+                                        step="0.01"
+                                        inputMode="decimal"
+                                        value={hasPackages ? String(startingPrice(draft)) : draft.basePrice}
+                                        onChange={(e) => set({ basePrice: e.target.value })}
+                                        disabled={hasPackages}
+                                        placeholder="0"
                                     />
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                                </Field>
+                                <Field label="Delivery time (days)" hint="Shown as “3d delivery”.">
+                                    <TextInput type="number" min={0} value={draft.deliveryDays} onChange={(e) => set({ deliveryDays: e.target.value })} placeholder="Optional" />
+                                </Field>
+                                <Field label="Reference / SKU">
+                                    <TextInput value={draft.sku} onChange={(e) => set({ sku: e.target.value })} placeholder="SVC-001" className="font-mono" />
+                                </Field>
+                            </FormGrid>
 
-                {/* Right — media + discovery */}
-                <div className="space-y-4">
-                    {/* Media upload */}
-                    <div className="space-y-2">
-                        <Label className="flex items-center gap-1.5">
-                            <ImageIcon className="w-3.5 h-3.5" /> Media
-                            <span className="text-muted-foreground font-normal text-xs ml-1">(images & videos)</span>
-                        </Label>
-
-                        {media.length > 0 && (
-                            <div className="space-y-2">
-                                {media.map((item, i) => (
-                                    <div key={i} className="flex items-center gap-3 rounded border bg-muted/30 p-2">
-                                        {item.type === 'image' ? (
-                                            <img src={item.url} alt="" className="w-12 h-12 object-cover rounded shrink-0" />
-                                        ) : (
-                                            <div className="w-12 h-12 rounded bg-muted flex items-center justify-center shrink-0">
-                                                <Video className="w-5 h-5 text-muted-foreground" />
-                                            </div>
-                                        )}
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-xs text-muted-foreground font-mono truncate">{item.url}</p>
-                                            <p className="text-[10px] text-muted-foreground/60 uppercase tracking-wide mt-0.5">
-                                                {item.type}
-                                                {i === 0 && item.type === 'image' && ' · thumbnail'}
-                                            </p>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            className="h-7 w-7 p-0 shrink-0 text-muted-foreground hover:text-destructive"
-                                            onClick={() => setMedia((prev) => prev.filter((_, j) => j !== i))}
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Image upload */}
-                        <ImageUpload
-                            label="Add image"
-                            value=""
-                            pathInDb=""
-                            onChange={(url) => setMedia((prev) => [...prev, { id: `img-${Date.now()}`, url, type: 'image' }])}
-                            bucket="store-assets"
-                            pathPrefix={`${storeId}/services`}
-                            aspectRatio="square"
-                        />
-
-                        {/* Video URL input */}
-                        <div className="flex gap-2">
-                            <Input
-                                value={videoUrl}
-                                onChange={(e) => setVideoUrl(e.target.value)}
-                                placeholder="Paste video URL (mp4, YouTube…)"
-                                className="text-xs h-8 flex-1"
-                            />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs shrink-0"
-                                disabled={!videoUrl.trim()}
-                                onClick={() => {
-                                    setMedia((prev) => [...prev, { id: `video-${Date.now()}`, url: videoUrl.trim(), type: 'video' }])
-                                    setVideoUrl('')
-                                }}
-                            >
-                                <Video className="w-3.5 h-3.5 mr-1" />
-                                Add video
-                            </Button>
-                        </div>
-                        <p className="text-xs text-muted-foreground">First image is the thumbnail. Videos play inline.</p>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="space-y-1.5">
-                        <Label className="flex items-center gap-1.5">
-                            <Tag className="w-3.5 h-3.5" /> Tags
-                        </Label>
-                        <Input
-                            value={tags}
-                            onChange={(e) => setTags(e.target.value)}
-                            placeholder="branding, logo, design (comma-separated)"
-                            className="text-xs"
-                        />
-                    </div>
-
-                    {/* Features / what's included */}
-                    <div className="space-y-1.5">
-                        <Label className="flex items-center gap-1.5">
-                            <Zap className="w-3.5 h-3.5" /> What's included
-                        </Label>
-                        <Textarea
-                            value={features}
-                            onChange={(e) => setFeatures(e.target.value)}
-                            rows={4}
-                            placeholder={"1-on-1 consultation call\nSource files included\nUnlimited email support"}
-                            className="resize-none text-xs"
-                        />
-                        <p className="text-xs text-muted-foreground">One item per line.</p>
-                    </div>
-
-                    {/* Rating + reviews (manual override) */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <div className="space-y-1.5">
-                            <Label className="flex items-center gap-1.5 text-xs">
-                                <Star className="w-3.5 h-3.5" /> Rating (0–5)
-                            </Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                max="5"
-                                step="0.1"
-                                value={rating}
-                                onChange={(e) => setRating(e.target.value)}
-                                placeholder="4.8"
-                                className="h-8 text-xs"
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label className="text-xs">Review count</Label>
-                            <Input
-                                type="number"
-                                min="0"
-                                value={reviews}
-                                onChange={(e) => setReviews(e.target.value)}
-                                placeholder="24"
-                                className="h-8 text-xs"
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* ── Section 2: Packages (price tiers) ── */}
-            <Separator />
-            <div className="space-y-3">
-                <button
-                    onClick={() => setShowPackages(!showPackages)}
-                    className="flex items-center justify-between w-full text-sm font-medium text-foreground hover:text-muted-foreground transition-colors"
-                >
-                    <span>
-                        Packages / pricing tiers ({packages.length})
-                        {packages.length === 0 && (
-                            <span className="text-xs font-normal text-muted-foreground ml-2">
-                                — add tiers like Basic / Standard / Premium
-                            </span>
-                        )}
-                    </span>
-                    {showPackages ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-                </button>
-
-                <AnimatePresence>
-                    {showPackages && (
-                        <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: 'auto' }}
-                            exit={{ opacity: 0, height: 0 }}
-                            className="space-y-4 overflow-hidden"
-                        >
-                            <p className="text-xs text-muted-foreground">
-                                Each package has its own price, delivery time and deliverables.
-                                The lowest package price becomes the "starting from" price on the storefront.
-                                Mark one as <strong>Featured</strong> to highlight it.
-                            </p>
-
-                            {packages.map((pkg, i) => (
-                                <Card key={i} className={pkg.is_featured ? 'border-foreground/40' : ''}>
-                                    <CardContent className="pt-4 space-y-4">
-                                        {/* Package header */}
-                                        <div className="flex items-center justify-between">
-                                            <p className="text-xs text-muted-foreground uppercase tracking-wide font-medium">
-                                                Package {i + 1}
-                                                {pkg.is_featured && (
-                                                    <span className="ml-2 text-[10px] bg-foreground text-background px-1.5 py-0.5 rounded">
-                                                        Featured
-                                                    </span>
-                                                )}
-                                            </p>
-                                            <div className="flex items-center gap-2">
-                                                <button
-                                                    className="text-xs text-muted-foreground hover:text-foreground transition-colors"
-                                                    onClick={() => {
-                                                        const next = packages.map((p, j) => ({
-                                                            ...p,
-                                                            is_featured: j === i ? !p.is_featured : false,
-                                                        }))
-                                                        setPackages(next)
-                                                    }}
-                                                >
-                                                    {pkg.is_featured ? 'Unfeature' : 'Mark as featured'}
-                                                </button>
-                                                <Button
-                                                    variant="ghost"
-                                                    size="sm"
-                                                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                                    onClick={() => setPackages((prev) => prev.filter((_, j) => j !== i))}
-                                                >
-                                                    <Trash2 className="w-3.5 h-3.5" />
-                                                </Button>
-                                            </div>
-                                        </div>
-
-                                        {/* Row 1: name + price + delivery + revisions */}
-                                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs">Package name *</Label>
-                                                <Input
-                                                    value={pkg.name}
-                                                    onChange={(e) => {
-                                                        const next = [...packages]
-                                                        next[i] = { ...next[i], name: e.target.value }
-                                                        setPackages(next)
-                                                    }}
-                                                    placeholder="e.g. Basic"
-                                                    className="h-8 text-xs"
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs">Price ({currency}) *</Label>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    step="0.01"
-                                                    value={pkg.price}
-                                                    onChange={(e) => {
-                                                        const next = [...packages]
-                                                        next[i] = { ...next[i], price: e.target.value }
-                                                        setPackages(next)
-                                                    }}
-                                                    placeholder="0.00"
-                                                    className="h-8 text-xs"
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs flex items-center gap-1">
-                                                    <Clock className="w-3 h-3" /> Delivery (days)
-                                                </Label>
-                                                <Input
-                                                    type="number"
-                                                    min="1"
-                                                    value={pkg.delivery_days}
-                                                    onChange={(e) => {
-                                                        const next = [...packages]
-                                                        next[i] = { ...next[i], delivery_days: e.target.value }
-                                                        setPackages(next)
-                                                    }}
-                                                    placeholder="3"
-                                                    className="h-8 text-xs"
-                                                />
-                                            </div>
-                                            <div className="space-y-1.5">
-                                                <Label className="text-xs flex items-center gap-1">
-                                                    <RefreshCw className="w-3 h-3" /> Revisions
-                                                </Label>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    value={pkg.revisions ?? ''}
-                                                    onChange={(e) => {
-                                                        const next = [...packages]
-                                                        next[i] = { ...next[i], revisions: e.target.value }
-                                                        setPackages(next)
-                                                    }}
-                                                    placeholder="Unlimited if blank"
-                                                    className="h-8 text-xs"
-                                                />
-                                            </div>
-                                        </div>
-
-                                        {/* Row 2: short description */}
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs">Short description</Label>
-                                            <Input
-                                                value={pkg.description ?? ''}
-                                                onChange={(e) => {
-                                                    const next = [...packages]
-                                                    next[i] = { ...next[i], description: e.target.value }
-                                                    setPackages(next)
-                                                }}
-                                                placeholder="e.g. Perfect for small businesses just getting started"
-                                                className="h-8 text-xs"
-                                            />
-                                        </div>
-
-                                        {/* Row 3: deliverables */}
-                                        <div className="space-y-1.5">
-                                            <Label className="text-xs">Deliverables (one per line)</Label>
-                                            <Textarea
-                                                value={pkg.deliverables}
-                                                onChange={(e) => {
-                                                    const next = [...packages]
-                                                    next[i] = { ...next[i], deliverables: e.target.value }
-                                                    setPackages(next)
-                                                }}
-                                                rows={3}
-                                                placeholder={"Logo in PNG/SVG\nBrand colour palette\nFont recommendations"}
-                                                className="resize-none text-xs"
-                                            />
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                            {draft.packages.map((pkg, i) => (
+                                <PackageCard
+                                    key={pkg.id}
+                                    pkg={pkg}
+                                    index={i}
+                                    currency={currency}
+                                    onChange={(patch) => setPackage(pkg.id, patch)}
+                                    onFeature={() => set({ packages: draft.packages.map((p) => ({ ...p, is_featured: p.id === pkg.id ? !p.is_featured : false })) })}
+                                    onRemove={() => set({ packages: draft.packages.filter((p) => p.id !== pkg.id) })}
+                                />
                             ))}
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 text-xs"
-                                onClick={() => setPackages((prev) => [...prev, { ...EMPTY_PACKAGE }])}
-                            >
-                                <Plus className="w-3.5 h-3.5 mr-1.5" />
+                            <Button size="sm" onClick={() => set({ packages: [...draft.packages, emptyPackage()] })}>
+                                <Icon name="add" size={14} />
                                 Add package
                             </Button>
-                        </motion.div>
-                    )}
-                </AnimatePresence>
+
+                            <div className="space-y-3 border-t border-border pt-4">
+                                <Switch label="Ask for a deposit" description="Customers pay part of the price up front." checked={draft.requiresDeposit} onChange={(requiresDeposit) => set({ requiresDeposit })} />
+                                {draft.requiresDeposit && (
+                                    <Field label="Deposit (%)" className="max-w-[8rem]">
+                                        <TextInput type="number" min={1} max={100} value={draft.depositPercent} onChange={(e) => set({ depositPercent: e.target.value })} />
+                                    </Field>
+                                )}
+                            </div>
+                        </div>
+                    </Panel>
+
+                    <Panel title="Quantity and duration" description="Optional. For services sold by the hour, piece or session.">
+                        <div className="space-y-4">
+                            <FormGrid columns={2} className="sm:grid-cols-4">
+                                <Field label="Unit">
+                                    <TextInput value={draft.quantityUnit} onChange={(e) => set({ quantityUnit: e.target.value })} placeholder="hours, pieces" />
+                                </Field>
+                                <Field label="Minimum">
+                                    <TextInput type="number" min={0} value={draft.minQuantity} onChange={(e) => set({ minQuantity: e.target.value })} placeholder="1" />
+                                </Field>
+                                <Field label="Maximum">
+                                    <TextInput type="number" min={0} value={draft.maxQuantity} onChange={(e) => set({ maxQuantity: e.target.value })} placeholder="10" />
+                                </Field>
+                                <Field label="Step">
+                                    <TextInput type="number" min={1} value={draft.quantityStep} onChange={(e) => set({ quantityStep: e.target.value })} placeholder="1" />
+                                </Field>
+                            </FormGrid>
+                            <Field label="How long it takes" as="div">
+                                <div className="flex max-w-xs items-center gap-2">
+                                    <TextInput
+                                        aria-label="Duration"
+                                        type="number"
+                                        min={0}
+                                        value={draft.duration}
+                                        onChange={(e) => set({ duration: e.target.value, durationUnit: draft.durationUnit || 'hours' })}
+                                        placeholder="Optional"
+                                    />
+                                    <Select aria-label="Duration unit" value={draft.durationUnit || 'hours'} onChange={(e) => set({ durationUnit: e.target.value as ServiceDraft['durationUnit'] })} className="w-28">
+                                        <option value="minutes">minutes</option>
+                                        <option value="hours">hours</option>
+                                        <option value="days">days</option>
+                                    </Select>
+                                </div>
+                            </Field>
+                        </div>
+                    </Panel>
+                </div>
+
+                <div className="space-y-6">
+                    <Panel title="Status">
+                        <div className="space-y-4">
+                            <Switch label="Visible on your store" description="Off keeps it as a draft." checked={draft.isActive} onChange={(isActive) => set({ isActive })} />
+                            <Field label="Availability" as="div">
+                                <Segmented label="Availability" value={draft.availability} options={AVAILABILITY} onChange={(availability) => set({ availability })} />
+                            </Field>
+                            <Field label="Booking" as="div" hint={BOOKING.find((b) => b.value === draft.booking)?.hint}>
+                                <Select aria-label="Booking" value={draft.booking} onChange={(e) => set({ booking: e.target.value as Booking })}>
+                                    {BOOKING.map((b) => <option key={b.value} value={b.value}>{b.label}</option>)}
+                                </Select>
+                            </Field>
+                        </div>
+                    </Panel>
+
+                    <Panel title="Images and video" description="The first image is the thumbnail.">
+                        <div className="space-y-3">
+                            {draft.media.length > 0 && (
+                                <ul className="space-y-2">
+                                    {draft.media.map((item, i) => (
+                                        <li key={item.id} className="flex items-center gap-2 rounded-md border border-border p-1.5">
+                                            {item.type === 'image' ? <Thumb src={item.url} /> : <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted"><Icon name="movie" size={16} className="text-muted-foreground" /></span>}
+                                            <span className="min-w-0 flex-1">
+                                                <span className="block truncate font-mono text-[11px] text-muted-foreground">{item.url}</span>
+                                                <span className="text-[11px] text-muted-foreground">{item.type === 'video' ? 'Video' : i === 0 ? 'Image · thumbnail' : 'Image'}</span>
+                                            </span>
+                                            <Button size="sm" variant="ghost" aria-label="Remove" onClick={() => set({ media: draft.media.filter((m) => m.id !== item.id) })}>
+                                                <Icon name="close" size={15} />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                            <ImageUpload
+                                label="Add image"
+                                value=""
+                                pathInDb=""
+                                onChange={(url) => setDraft((d) => ({ ...d, media: [...d.media, { id: newId('img'), url, type: 'image' }] }))}
+                                bucket="store-assets"
+                                pathPrefix={`${storeId}/services`}
+                                aspectRatio="square"
+                            />
+                            <div className="flex gap-2">
+                                <TextInput aria-label="Video URL" value={videoUrl} onChange={(e) => setVideoUrl(e.target.value)} placeholder="Video link (mp4, YouTube)" className="h-8" spellCheck={false} />
+                                <Button
+                                    size="sm"
+                                    disabled={!/^https?:\/\//.test(videoUrl.trim())}
+                                    onClick={() => {
+                                        set({ media: [...draft.media, { id: newId('video'), url: videoUrl.trim(), type: 'video' }] })
+                                        setVideoUrl('')
+                                    }}
+                                >
+                                    Add
+                                </Button>
+                            </div>
+                        </div>
+                    </Panel>
+
+                    <Panel title="Rating" description="Shown to customers next to the service.">
+                        <FormGrid>
+                            <Field label="Rating (0–5)">
+                                <TextInput type="number" min={0} max={5} step="0.1" value={draft.rating} onChange={(e) => set({ rating: e.target.value })} placeholder="None" />
+                            </Field>
+                            <Field label="Reviews">
+                                <TextInput type="number" min={0} value={draft.reviews} onChange={(e) => set({ reviews: e.target.value })} placeholder="None" />
+                            </Field>
+                        </FormGrid>
+                    </Panel>
+                </div>
             </div>
         </div>
     )
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// ServiceSettings — list view
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── List ─────────────────────────────────────────────────────────────────────
 
-export default function ServiceSettings({
-    storeId,
-    currency,
-}: {
-    storeId: string
-    currency: string
-}) {
+export default function ServiceSettings({ storeId, currency }: { storeId: string; currency: string }) {
     const [services, setServices] = useState<ServiceItem[]>([])
     const [loading, setLoading] = useState(true)
+    const [loadError, setLoadError] = useState<string | null>(null)
+    const [actionError, setActionError] = useState<string | null>(null)
     const [view, setView] = useState<'list' | 'new' | 'edit'>('list')
     const [editService, setEditService] = useState<ServiceItem | undefined>()
+    const [deleteTarget, setDeleteTarget] = useState<ServiceItem | null>(null)
+    const [deleting, setDeleting] = useState(false)
 
     const load = useCallback(async () => {
-        setLoading(true)
         const res = await listServices(storeId)
         setServices(res.ok ? (res.services as unknown as ServiceItem[]) : [])
+        setLoadError(res.ok ? null : res.error)
         setLoading(false)
     }, [storeId])
 
-    useEffect(() => { load() }, [load])
+    useEffect(() => {
+        let cancelled = false
+        listServices(storeId).then((res) => {
+            if (cancelled) return
+            setServices(res.ok ? (res.services as unknown as ServiceItem[]) : [])
+            setLoadError(res.ok ? null : res.error)
+            setLoading(false)
+        })
+        return () => {
+            cancelled = true
+        }
+    }, [storeId])
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Delete this service? This cannot be undone.')) return
-        await deleteService(storeId, id)
-        load()
+    const reload = () => {
+        setLoading(true)
+        void load()
     }
 
-    const handleToggleActive = async (svc: ServiceItem) => {
-        await setServiceActive(storeId, svc.id, !svc.is_active)
-        load()
+    const confirmDelete = async () => {
+        if (!deleteTarget) return
+        setDeleting(true)
+        const res = await deleteService(storeId, deleteTarget.id)
+        setDeleting(false)
+        setDeleteTarget(null)
+        setActionError(res.ok ? null : res.error)
+        reload()
     }
 
-    if (view === 'new') {
+    const toggleActive = async (svc: ServiceItem) => {
+        const res = await setServiceActive(storeId, svc.id, !svc.is_active)
+        setActionError(res.ok ? null : res.error)
+        reload()
+    }
+
+    if (view !== 'list') {
+        const done = () => {
+            setView('list')
+            setEditService(undefined)
+        }
         return (
             <ServiceForm
+                key={editService?.id ?? 'new'}
                 storeId={storeId}
                 currency={currency}
-                onSaved={() => { load(); setView('list') }}
-                onCancel={() => setView('list')}
+                service={view === 'edit' ? editService : undefined}
+                onSaved={() => { done(); reload() }}
+                onCancel={done}
             />
         )
     }
 
-    if (view === 'edit' && editService) {
-        return (
-            <ServiceForm
-                storeId={storeId}
-                currency={currency}
-                service={editService}
-                onSaved={() => { load(); setView('list'); setEditService(undefined) }}
-                onCancel={() => { setView('list'); setEditService(undefined) }}
-            />
-        )
-    }
-
-    // ── List ───────────────────────────────────────────────────────────────────
     return (
         <div className="space-y-6">
-            <div className="flex items-center justify-between gap-4">
-                <div>
-                    <h2 className="text-base font-semibold text-foreground">Services</h2>
-                    <p className="text-sm text-muted-foreground mt-0.5">
-                        {services.length} service{services.length !== 1 ? 's' : ''} in your store
-                    </p>
-                </div>
-                <Button size="sm" className="h-8 text-xs shrink-0" onClick={() => setView('new')}>
-                    <Plus className="w-3.5 h-3.5 mr-1.5" />
-                    <span className="hidden xs:inline">Add service</span>
-                    <span className="xs:hidden">Add</span>
-                </Button>
-            </div>
+            <PageHeader
+                title="Services"
+                description={loading ? 'Loading…' : `${services.length} service${services.length === 1 ? '' : 's'} in your store`}
+                actions={
+                    <Button variant="primary" onClick={() => setView('new')}>
+                        <Icon name="add" size={16} />
+                        Add service
+                    </Button>
+                }
+            />
 
-            {loading && (
-                <div className="space-y-2">
-                    {[...Array(3)].map((_, i) => (
-                        <div key={i} className="h-16 bg-muted rounded animate-pulse" />
-                    ))}
-                </div>
-            )}
+            {actionError && <Notice tone="error">{actionError}</Notice>}
 
-            {!loading && services.length === 0 && (
-                <Card className="border-dashed">
-                    <CardContent className="py-16 text-center space-y-3">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center mx-auto">
-                            <Briefcase className="w-5 h-5 text-muted-foreground" />
-                        </div>
-                        <div>
-                            <p className="text-sm font-medium text-foreground">No services yet</p>
-                            <p className="text-xs text-muted-foreground mt-1">
-                                Add your first service to start accepting bookings.
-                            </p>
-                        </div>
-                        <Button size="sm" className="h-8 text-xs" onClick={() => setView('new')}>
-                            Add your first service
-                        </Button>
-                    </CardContent>
-                </Card>
-            )}
+            <Panel flush>
+                {loadError && !loading ? (
+                    <LoadError message={loadError} onRetry={reload} />
+                ) : !loading && services.length === 0 ? (
+                    <EmptyState
+                        icon="home_repair_service"
+                        title="No services yet"
+                        description="Add something customers can book, like a consultation or a design package."
+                        action={<Button variant="primary" size="sm" onClick={() => setView('new')}>Add your first service</Button>}
+                    />
+                ) : (
+                    <Table busy={loading}>
+                        <thead>
+                            <tr>
+                                <Th>Service</Th>
+                                <Th align="right">Price</Th>
+                                <Th>Availability</Th>
+                                <Th>Status</Th>
+                                <Th align="right"><span className="sr-only">Actions</span></Th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {loading ? (
+                                <SkeletonRows columns={5} rows={3} />
+                            ) : (
+                                services.map((svc) => {
+                                    const draft = draftFromService(svc)
+                                    const thumb = draft.media.find((m) => m.type === 'image')?.url
+                                    const prices = draft.packages.map((p) => parseFloat(p.price)).filter((n) => Number.isFinite(n))
+                                    const price = prices.length >= 2
+                                        ? `${currency} ${Math.min(...prices).toLocaleString()} – ${Math.max(...prices).toLocaleString()}`
+                                        : `${currency} ${Number(svc.price).toLocaleString()}`
+                                    const avail = AVAILABILITY.find((a) => a.value === draft.availability) ?? AVAILABILITY[0]
+                                    return (
+                                        <Tr key={svc.id}>
+                                            <Td>
+                                                <div className="flex items-center gap-3">
+                                                    <Thumb src={thumb} />
+                                                    <div className="min-w-0">
+                                                        <p className="truncate font-medium">{svc.name}</p>
+                                                        <p className="truncate text-[12px] text-muted-foreground">
+                                                            {[draft.serviceType, draft.packages.length ? `${draft.packages.length} package${draft.packages.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || svc.slug}
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                            </Td>
+                                            <Td label="Price" align="right">{price}</Td>
+                                            <Td label="Availability"><Badge tone={avail.tone}>{avail.label}</Badge></Td>
+                                            <Td label="Status">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => toggleActive(svc)}
+                                                    title={svc.is_active ? 'Make draft' : 'Make active'}
+                                                    className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                                                >
+                                                    <Badge tone={svc.is_active ? 'success' : 'neutral'}>{svc.is_active ? 'Active' : 'Draft'}</Badge>
+                                                </button>
+                                            </Td>
+                                            <Td label="Actions" align="right">
+                                                <div className="inline-flex items-center gap-1">
+                                                    <Button size="sm" onClick={() => { setEditService(svc); setView('edit') }}>Edit</Button>
+                                                    <Button variant="ghost" size="sm" aria-label={`Delete ${svc.name}`} onClick={() => setDeleteTarget(svc)}>
+                                                        <Icon name="delete" size={15} />
+                                                    </Button>
+                                                </div>
+                                            </Td>
+                                        </Tr>
+                                    )
+                                })
+                            )}
+                        </tbody>
+                    </Table>
+                )}
+            </Panel>
 
-            {!loading && services.length > 0 && (
-                <div className="rounded-lg border divide-y">
-                    {services.map((svc) => {
-                        const thumb = svc.metadata?.media?.find((m: ServiceMediaItem) => m.type === 'image')?.url
-                        const pkgs = svc.metadata?.packages ?? []
-                        const availability = svc.metadata?.availability ?? 'available'
-                        const availColor = {
-                            available: 'bg-green-500',
-                            busy: 'bg-yellow-500',
-                            unavailable: 'bg-red-500',
-                        }[availability]
-
-
-                        // Price display: show range if multiple packages
-                        const prices = pkgs.map((p: any) => parseFloat(p.price) || 0).filter(Boolean)
-                        const priceDisplay = prices.length >= 2
-                            ? `${currency} ${Math.min(...prices).toLocaleString()} – ${Math.max(...prices).toLocaleString()}`
-                            : `${currency} ${Number(svc.price).toLocaleString()}`
-
-                        return (
-                            <div
-                                key={svc.id}
-                                className="flex items-center gap-3 px-3 py-3 sm:px-4 bg-background hover:bg-muted/30 transition-colors"
-                            >
-                                {/* Thumbnail */}
-                                <div className="w-9 h-9 sm:w-10 sm:h-10 rounded border bg-muted shrink-0 overflow-hidden">
-                                    {thumb
-                                        ? <img src={thumb} alt={svc.name} className="w-full h-full object-cover" />
-                                        : <div className="w-full h-full flex items-center justify-center">
-                                            <Briefcase className="w-4 h-4 text-muted-foreground/40" />
-                                        </div>
-                                    }
-                                </div>
-
-                                {/* Name + type */}
-                                <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-medium text-foreground truncate">{svc.name}</p>
-                                    <p className="text-xs text-muted-foreground truncate hidden xs:block">
-                                        {svc.metadata?.serviceType
-                                            ? `${svc.metadata.serviceType} · ${svc.slug}`
-                                            : svc.slug}
-                                    </p>
-                                </div>
-
-                                {/* Price range */}
-                                <p className="text-sm font-medium text-foreground shrink-0 hidden sm:block">
-                                    {priceDisplay}
-                                </p>
-
-                                {/* Packages count */}
-                                {pkgs.length > 0 && (
-                                    <p className="text-xs text-muted-foreground shrink-0 hidden md:block">
-                                        {pkgs.length} package{pkgs.length !== 1 ? 's' : ''}
-                                    </p>
-                                )}
-
-                                {/* Availabilityflex dot */}
-                                <div className=" items-center gap-1.5 shrink-0 hidden sm:flex">
-                                    <span className={`w-1.5 h-1.5 rounded-full ${availColor}`} />
-                                    <span className="text-xs text-muted-foreground capitalize hidden lg:inline">
-                                        {availability}
-                                    </span>
-                                </div>
-
-
-
-                                {/* Active badge */}
-                                <button onClick={() => handleToggleActive(svc)} className="shrink-0">
-                                    <Badge
-                                        variant={svc.is_active ? 'default' : 'secondary'}
-                                        className="text-[10px] cursor-pointer"
-                                    >
-                                        {svc.is_active ? 'Active' : 'Draft'}
-                                    </Badge>
-                                </button>
-
-                                {/* Actions */}
-                                <div className="flex items-center gap-1 shrink-0">
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 px-2 text-xs text-muted-foreground"
-                                        onClick={() => { setEditService(svc); setView('edit') }}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
-                                        onClick={() => handleDelete(svc.id)}
-                                        aria-label="Delete service"
-                                    >
-                                        <Trash2 className="w-3.5 h-3.5" />
-                                    </Button>
-                                </div>
-                            </div>
-                        )
-                    })}
-                </div>
-            )}
+            <ConfirmDialog
+                open={deleteTarget !== null}
+                title={deleteTarget ? `Delete ${deleteTarget.name}?` : ''}
+                description="The service and its packages are removed from your store. This cannot be undone."
+                confirmLabel="Delete service"
+                busy={deleting}
+                onConfirm={confirmDelete}
+                onCancel={() => setDeleteTarget(null)}
+            />
         </div>
     )
 }
