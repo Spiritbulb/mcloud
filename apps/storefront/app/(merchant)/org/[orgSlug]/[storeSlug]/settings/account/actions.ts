@@ -65,11 +65,13 @@ export async function updateAvatar(formData: FormData) {
     const file = formData.get('avatar') as File
     if (!file || file.size === 0) return { error: 'No file provided' }
     if (file.size > 2 * 1024 * 1024) return { error: 'Image must be under 2MB' }
-    if (!file.type.startsWith('image/')) return { error: 'File must be an image' }
+    // Raster formats only: the bucket is public, and an SVG can carry script.
+    const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' }
+    const ext = EXT[file.type]
+    if (!ext) return { error: 'Use a JPG, PNG or WebP image' }
 
     const supabase = await createClient()
     const userId = session.user.id
-    const ext = file.type.split('/')[1] ?? 'jpg'
     const safeUserId = userId.replace(/\|/g, '-')
     const path = `avatars/${safeUserId}.${ext}`
 

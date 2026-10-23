@@ -1,61 +1,29 @@
 'use client'
 
-import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
-// app/settings/[slug]/blog/blog-client.tsx
-// Full blog management UI: post list sidebar + split markdown editor/preview.
-// Dependencies to install:
-//   npm install @uiw/react-codemirror @codemirror/lang-markdown
+// Blog management: the post list, and an editor with write/preview and the post's settings beside it.
 
-import { useState, useEffect, useTransition } from 'react'
+import { useState } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { createBlogAuthor, deleteBlogPost, saveBlogPost } from '@/lib/admin/blog-actions'
-// CodeMirror lives in its own isolated module — this is what fixes the
-// Turbopack "negative timestamp" / Failed to fetch errors.
-import { MarkdownEditor } from '@/components/store/blog/editor'
-import {
-    Plus, Eye, Edit3, Trash2, Save, Loader2,
-    Globe, Lock, User, Clock, Tag, X,
-    BookOpen, AlertCircle, CheckCircle2, ArrowLeft, Users,
-} from 'lucide-react'
-import { Button } from '@mcloud/ui/button'
-import { Input } from '@mcloud/ui/input'
-import { Label } from '@mcloud/ui/label'
-import { Textarea } from '@mcloud/ui/textarea'
-import { Badge } from '@mcloud/ui/badge'
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@mcloud/ui/select'
-import {
-    Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle,
-    DialogFooter,
-} from '@mcloud/ui/dialog'
-import {
-    AlertDialog,
-    AlertDialogAction,
-    AlertDialogCancel,
-    AlertDialogContent,
-    AlertDialogDescription,
-    AlertDialogFooter,
-    AlertDialogHeader,
-    AlertDialogTitle,
-} from '@mcloud/ui/alert-dialog'
-import { cn } from '@mcloud/ui/utils'
-import type { BlogPost, BlogAuthor } from '@mcloud/themes/types'
-import { ProGateInline } from '@/components/pro'
 import type { Plan } from '@mcloud/merchant/plans'
-
-// Radix Select forbids empty-string values (it uses "" internally to mean
-// "nothing selected / show placeholder"). Use a sentinel instead.
-const NO_AUTHOR = '__none__'
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
+import type { BlogAuthor, BlogPost } from '@mcloud/themes/types'
+import { Badge } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { EmptyState } from '@mcloud/ui/kit/empty-state'
+import { Field, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SaveStatus } from '@mcloud/ui/kit/save-bar'
+import { Spinner } from '@mcloud/ui/kit/skeleton'
+import { Tabs } from '@mcloud/ui/kit/tabs'
+import { ProGateInline } from '@/components/pro'
+// The Markdown editor lives in its own module and loads lazily (it fixed Turbopack fetch errors).
+import { MarkdownEditor } from '@/components/store/blog/editor'
+import { createBlogAuthor, deleteBlogPost, saveBlogPost } from '@/lib/admin/blog-actions'
+import { emptyForm, estimateReadingTime, formChanged, formFromPost, nextSlug, splitTags, type PostForm } from './blog-logic'
 
 interface Props {
     storeId: string
@@ -65,96 +33,14 @@ interface Props {
     plan: Plan
 }
 
-type View = 'list' | 'editor'
-type EditorTab = 'write' | 'preview'
-
-interface PostForm {
-    id: string | null       // null = new post
-    title: string
-    slug: string
-    excerpt: string
-    content: string
-    cover_image: string
-    author_id: string
-    tags: string            // comma-separated in the form, split on save
-    is_published: boolean
-    reading_time_minutes: number
-}
-
-function emptyForm(): PostForm {
-    return {
-        id: null,
-        title: '',
-        slug: '',
-        excerpt: '',
-        content: '',
-        cover_image: '',
-        author_id: '',
-        tags: '',
-        is_published: false,
-        reading_time_minutes: 1,
-    }
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-function slugify(s: string) {
-    return s
-        .toLowerCase()
-        .trim()
-        .replace(/[^\w\s-]/g, '')
-        .replace(/\s+/g, '-')
-        .replace(/-+/g, '-')
-}
-
-function estimateReadingTime(content: string) {
-    return Math.max(1, Math.round(content.trim().split(/\s+/).length / 200))
-}
-
 function formatDate(iso: string | null) {
     if (!iso) return '—'
-    return new Date(iso).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric', year: 'numeric',
-    })
-}
-
-// ─── Toast (minimal inline) ───────────────────────────────────────────────────
-
-function Toast({ message, type, onDismiss }: {
-    message: string
-    type: 'success' | 'error'
-    onDismiss: () => void
-}) {
-    useEffect(() => {
-        const t = setTimeout(onDismiss, 4000)
-        return () => clearTimeout(t)
-    }, [onDismiss])
-
-    return (
-        <div className={cn(
-            'fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-md shadow-lg text-sm font-medium border',
-            type === 'success'
-                ? 'bg-background border-border text-foreground'
-                : 'bg-destructive/10 border-destructive/20 text-destructive'
-        )}>
-            {type === 'success'
-                ? <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-                : <AlertCircle className="w-4 h-4 shrink-0" />
-            }
-            {message}
-            <button onClick={onDismiss} className="ml-1 opacity-50 hover:opacity-100"><X className="w-3.5 h-3.5" /></button>
-        </div>
-    )
+    return new Date(iso).toLocaleDateString('en-KE', { month: 'short', day: 'numeric', year: 'numeric' })
 }
 
 // ─── Author dialog ────────────────────────────────────────────────────────────
 
-function AuthorDialog({
-    open,
-    onClose,
-    onSaved,
-    storeId,
-}: {
+function AuthorDialog({ open, onClose, onSaved, storeId }: {
     open: boolean
     onClose: () => void
     onSaved: (author: BlogAuthor) => void
@@ -166,100 +52,54 @@ function AuthorDialog({
     const [saving, setSaving] = useState(false)
     const [error, setError] = useState('')
 
+    const close = () => {
+        setError('')
+        onClose()
+    }
+
     const handleSave = async () => {
-        if (!name.trim()) { setError('Name is required'); return }
+        if (!name.trim()) {
+            setError('Enter a name.')
+            return
+        }
         setSaving(true)
         setError('')
         const res = await createBlogAuthor(storeId, { name: name.trim(), bio: bio.trim() || null, avatar_url: avatarUrl.trim() || null })
-
-        if (!res.ok) { setError(res.error); setSaving(false); return }
-        onSaved(res.author as BlogAuthor)
-        setName(''); setBio(''); setAvatarUrl('')
-        onClose()
         setSaving(false)
+        if (!res.ok) {
+            setError(res.error)
+            return
+        }
+        onSaved(res.author as BlogAuthor)
+        setName('')
+        setBio('')
+        setAvatarUrl('')
+        onClose()
     }
 
     return (
-        <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
-            <DialogContent className="max-w-sm bg-[#fff] dark:bg-[#111]">
-                <DialogHeader>
-                    <DialogTitle>New author</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-3 pt-1">
-                    <div className="space-y-1.5">
-                        <Label htmlFor="author-name" className="text-xs">Name *</Label>
-                        <Input id="author-name" value={name} onChange={e => setName(e.target.value)} placeholder="Jane Doe" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="author-bio" className="text-xs">Short bio</Label>
-                        <Textarea id="author-bio" value={bio} onChange={e => setBio(e.target.value)} placeholder="Editor & stylist based in Nairobi" rows={2} className="resize-none" />
-                    </div>
-                    <div className="space-y-1.5">
-                        <Label htmlFor="author-avatar" className="text-xs">Avatar URL</Label>
-                        <Input id="author-avatar" value={avatarUrl} onChange={e => setAvatarUrl(e.target.value)} placeholder="https://…" />
-                    </div>
-                    {error && <p className="text-xs text-destructive">{error}</p>}
-                </div>
-                <DialogFooter>
-                    <Button variant="outline" onClick={onClose} disabled={saving} className='cursor-pointer'>Cancel</Button>
-                    <Button onClick={handleSave} disabled={saving} className='cursor-pointer'>
-                        {saving && <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />}
-                        Create author
-                    </Button>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
-    )
-}
-
-// ─── Post list item ───────────────────────────────────────────────────────────
-
-function PostListItem({
-    post,
-    isActive,
-    onSelect,
-}: {
-    post: BlogPost
-    isActive: boolean
-    onSelect: () => void
-}) {
-    return (
-        <button
-            onClick={onSelect}
-            className={cn(
-                'w-full text-left px-3 py-3 rounded-md transition-colors group',
-                isActive
-                    ? 'bg-accent text-accent-foreground'
-                    : 'hover:bg-accent/50 text-foreground'
-            )}
+        <ConfirmDialog
+            open={open}
+            title="New author"
+            description="Shown on the posts you assign them to."
+            confirmLabel="Create author"
+            tone="primary"
+            busy={saving}
+            onConfirm={handleSave}
+            onCancel={close}
         >
-            <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0 flex-1">
-                    <p className="text-[13px] font-medium truncate leading-snug">
-                        {post.title || <span className="text-muted-foreground italic">Untitled</span>}
-                    </p>
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
-                        {formatDate(post.published_at ?? post.created_at)}
-                        {post.reading_time_minutes ? ` · ${post.reading_time_minutes} min` : ''}
-                    </p>
-                </div>
-                <div className="shrink-0 mt-0.5">
-                    {post.is_published
-                        ? <Globe className="w-3.5 h-3.5 text-green-600" />
-                        : <Lock className="w-3.5 h-3.5 text-muted-foreground" />
-                    }
-                </div>
+            <div className="space-y-3">
+                <Field label="Name" error={error || undefined}>
+                    <TextInput value={name} onChange={(e) => setName(e.target.value)} placeholder="Jane Doe" invalid={!!error} />
+                </Field>
+                <Field label="Short bio">
+                    <TextArea value={bio} onChange={(e) => setBio(e.target.value)} placeholder="Editor and stylist based in Nairobi" rows={2} />
+                </Field>
+                <Field label="Photo URL">
+                    <TextInput value={avatarUrl} onChange={(e) => setAvatarUrl(e.target.value)} placeholder="https://…" spellCheck={false} />
+                </Field>
             </div>
-            {post.tags.length > 0 && (
-                <div className="flex flex-wrap gap-1 mt-1.5">
-                    {post.tags.slice(0, 3).map(t => (
-                        <span key={t} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-                            {t}
-                        </span>
-                    ))}
-                </div>
-            )}
-        </button>
+        </ConfirmDialog>
     )
 }
 
@@ -267,41 +107,30 @@ function PostListItem({
 
 function MarkdownPreview({ content }: { content: string }) {
     if (!content.trim()) {
-        return (
-            <div className="flex items-center justify-center h-full text-muted-foreground">
-                <div className="text-center space-y-2">
-                    <Eye className="w-8 h-8 mx-auto opacity-20" />
-                    <p className="text-sm">Nothing to preview yet</p>
-                </div>
-            </div>
-        )
+        return <p className="py-16 text-center text-[13px] text-muted-foreground">Nothing to preview yet.</p>
     }
-
     return (
-        <div className="prose prose-sm max-w-none px-6 py-4 overflow-auto h-full prose-headings:font-semibold prose-a:text-primary prose-code:text-sm">
+        <div className="max-w-none px-1 py-2 text-[14px] text-foreground/90">
             <ReactMarkdown
                 components={{
-                    h2: ({ children }) => <h2 className="text-xl font-semibold mt-6 mb-3">{children}</h2>,
-                    h3: ({ children }) => <h3 className="text-lg font-semibold mt-5 mb-2">{children}</h3>,
-                    p: ({ children }) => <p className="mb-4 leading-relaxed text-foreground/90">{children}</p>,
-                    ul: ({ children }) => <ul className="mb-4 ml-4 space-y-1 list-disc">{children}</ul>,
-                    ol: ({ children }) => <ol className="mb-4 ml-4 space-y-1 list-decimal">{children}</ol>,
+                    h1: ({ children }) => <h1 className="mb-3 mt-6 text-2xl font-semibold text-foreground">{children}</h1>,
+                    h2: ({ children }) => <h2 className="mb-3 mt-6 text-xl font-semibold text-foreground">{children}</h2>,
+                    h3: ({ children }) => <h3 className="mb-2 mt-5 text-lg font-semibold text-foreground">{children}</h3>,
+                    p: ({ children }) => <p className="mb-4 leading-relaxed">{children}</p>,
+                    a: ({ children, href }) => <a href={href} target="_blank" rel="noreferrer" className="text-primary underline underline-offset-2">{children}</a>,
+                    ul: ({ children }) => <ul className="mb-4 ml-5 list-disc space-y-1">{children}</ul>,
+                    ol: ({ children }) => <ol className="mb-4 ml-5 list-decimal space-y-1">{children}</ol>,
                     li: ({ children }) => <li className="leading-relaxed">{children}</li>,
-                    blockquote: ({ children }) => (
-                        <blockquote className="border-l-2 border-border pl-4 italic text-muted-foreground my-4">
-                            {children}
-                        </blockquote>
-                    ),
-                    code: ({ children, className }) => {
-                        const isBlock = className?.includes('language-')
-                        return isBlock
-                            ? <code className="block bg-muted rounded p-3 text-xs font-mono overflow-x-auto">{children}</code>
-                            : <code className="bg-muted px-1.5 py-0.5 rounded text-xs font-mono">{children}</code>
-                    },
+                    blockquote: ({ children }) => <blockquote className="my-4 border-l-2 border-border pl-4 italic text-muted-foreground">{children}</blockquote>,
+                    code: ({ children, className }) =>
+                        className?.includes('language-')
+                            ? <code className="block overflow-x-auto rounded-md bg-muted p-3 font-mono text-[12px]">{children}</code>
+                            : <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px]">{children}</code>,
                     img: ({ src, alt }) => (
                         <figure className="my-4">
-                            <img src={src} alt={alt ?? ''} className="rounded-md w-full object-cover" />
-                            {alt && <figcaption className="text-xs text-muted-foreground text-center mt-1">{alt}</figcaption>}
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={typeof src === 'string' ? src : undefined} alt={alt ?? ''} className="w-full rounded-md object-cover" />
+                            {alt && <figcaption className="mt-1 text-center text-[12px] text-muted-foreground">{alt}</figcaption>}
                         </figure>
                     ),
                 }}
@@ -312,544 +141,311 @@ function MarkdownPreview({ content }: { content: string }) {
     )
 }
 
-// ─── Main BlogSettingsClient ──────────────────────────────────────────────────
+// ─── Post settings (beside the editor; under it on small screens) ─────────────
+
+function PostSettings({ form, set, authors, onNewAuthor, onDelete }: {
+    form: PostForm
+    set: (patch: Partial<PostForm>) => void
+    authors: BlogAuthor[]
+    onNewAuthor: () => void
+    onDelete?: () => void
+}) {
+    const tags = splitTags(form.tags)
+    return (
+        <Panel
+            title="Post settings"
+            action={<Badge tone={form.is_published ? 'success' : 'neutral'}>{form.is_published ? 'Published' : 'Draft'}</Badge>}
+            footer={onDelete && (
+                <Button variant="danger" size="sm" onClick={onDelete} className="mr-auto">
+                    <Icon name="delete" size={14} />
+                    Delete post
+                </Button>
+            )}
+        >
+            <div className="space-y-4">
+                <Field label="Author" as="div">
+                    <div className="flex items-center gap-2">
+                        <Select aria-label="Author" value={form.author_id} onChange={(e) => set({ author_id: e.target.value })}>
+                            <option value="">No author</option>
+                            {authors.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+                        </Select>
+                        <Button size="sm" variant="ghost" onClick={onNewAuthor} aria-label="New author" title="New author">
+                            <Icon name="person_add" size={16} />
+                        </Button>
+                    </div>
+                </Field>
+                <Field label="Excerpt" hint="A short summary for the blog list.">
+                    <TextArea value={form.excerpt} onChange={(e) => set({ excerpt: e.target.value })} rows={3} />
+                </Field>
+                <Field label="Cover image URL">
+                    <TextInput value={form.cover_image} onChange={(e) => set({ cover_image: e.target.value })} placeholder="https://…" spellCheck={false} />
+                </Field>
+                {form.cover_image.trim() && (
+                    <div className="aspect-video overflow-hidden rounded-md border border-border bg-muted">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={form.cover_image} alt="" className="h-full w-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }} />
+                    </div>
+                )}
+                <Field label="Tags" hint="Separate with commas.">
+                    <TextInput value={form.tags} onChange={(e) => set({ tags: e.target.value })} placeholder="style, hair care, tips" />
+                </Field>
+                {tags.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                        {tags.map((t) => <Badge key={t}>{t}</Badge>)}
+                    </div>
+                )}
+                <Switch label="Featured" description="Shown first on your blog page." checked={form.featured} onChange={(featured) => set({ featured })} />
+            </div>
+        </Panel>
+    )
+}
+
+// ─── Main ─────────────────────────────────────────────────────────────────────
 
 export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, authors: initialAuthors, plan }: Props) {
-    const [view, setView] = useState<View>('list')
+    const [view, setView] = useState<'list' | 'editor'>('list')
     const [posts, setPosts] = useState<BlogPost[]>(initialPosts)
     const [authors, setAuthors] = useState<BlogAuthor[]>(initialAuthors)
-    const [activeId, setActiveId] = useState<string | null>(null)
-    const [form, setForm] = useState<PostForm>(emptyForm())
-    const [editorTab, setEditorTab] = useState<EditorTab>('write')
+    const [saved, setSaved] = useState<PostForm>(emptyForm)
+    const [form, setForm] = useState<PostForm>(emptyForm)
+    const [tab, setTab] = useState<'write' | 'preview'>('write')
     const [saving, setSaving] = useState(false)
+    const [justSaved, setJustSaved] = useState(false)
+    const [error, setError] = useState<string | null>(null)
     const [deleteTarget, setDeleteTarget] = useState<BlogPost | null>(null)
+    const [deleting, setDeleting] = useState(false)
     const [authorDialog, setAuthorDialog] = useState(false)
-    const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
-    const [isPending, startTransition] = useTransition()
+    const [leaving, setLeaving] = useState(false)
 
-    const showToast = (message: string, type: 'success' | 'error' = 'success') =>
-        setToast({ message, type })
+    const dirty = view === 'editor' && formChanged(saved, form)
+    const set = (patch: Partial<PostForm>) => setForm((f) => ({ ...f, ...patch }))
 
-    // ── Open a post in editor ──
-    const openPost = (post: BlogPost) => {
-        setForm({
-            id: post.id,
-            title: post.title,
-            slug: post.slug,
-            excerpt: post.excerpt ?? '',
-            content: post.content,
-            cover_image: post.cover_image ?? '',
-            author_id: post.author_id ?? '',
-            tags: post.tags.join(', '),
-            is_published: post.is_published,
-            reading_time_minutes: post.reading_time_minutes ?? 1,
-        })
-        setActiveId(post.id)
+    const openEditor = (next: PostForm) => {
+        setSaved(next)
+        setForm(next)
+        setTab('write')
+        setError(null)
         setView('editor')
-        setEditorTab('write')
     }
 
-    const newPost = () => {
-        setForm(emptyForm())
-        setActiveId(null)
-        setView('editor')
-        setEditorTab('write')
+    const backToList = () => {
+        setLeaving(false)
+        setError(null)
+        setView('list')
     }
 
-    // ── Auto-slug from title ──
-    const setTitle = (title: string) => {
-        setForm(f => ({
-            ...f,
-            title,
-            // Only auto-generate slug if it's a new post or slug is still in sync
-            slug: (f.id === null || f.slug === slugify(f.title))
-                ? slugify(title)
-                : f.slug,
-        }))
-    }
-
-    // ── Update reading time when content changes ──
-    const setContent = (content: string) => {
-        setForm(f => ({
-            ...f,
-            content,
-            reading_time_minutes: estimateReadingTime(content),
-        }))
-    }
-
-    // ── Save ──
     const handleSave = async (publish?: boolean) => {
-        if (!form.title.trim()) { showToast('Title is required', 'error'); return }
-        if (!form.slug.trim()) { showToast('Slug is required', 'error'); return }
+        if (!form.title.trim()) return setError('Give the post a title.')
+        if (!form.slug.trim()) return setError('Give the post a URL.')
 
         setSaving(true)
-        const tags = form.tags
-            .split(',')
-            .map(t => t.trim())
-            .filter(Boolean)
-
-        const is_published = publish !== undefined ? publish : form.is_published
-
-        const res = await saveBlogPost(storeId, form.id ?? null, {
+        setError(null)
+        const is_published = publish ?? form.is_published
+        const res = await saveBlogPost(storeId, form.id, {
             title: form.title.trim(),
             slug: form.slug.trim(),
             excerpt: form.excerpt.trim() || null,
             content: form.content,
             cover_image: form.cover_image.trim() || null,
             author_id: form.author_id || null,
-            tags,
+            tags: splitTags(form.tags),
             is_published,
-            reading_time_minutes: form.reading_time_minutes,
+            reading_time_minutes: estimateReadingTime(form.content),
+            featured: form.featured,
         })
-        if (!res.ok) { showToast(res.error, 'error'); setSaving(false); return }
-
-        const savedPost = res.post as unknown as BlogPost
-        if (form.id) {
-            setPosts(ps => ps.map(p => p.id === savedPost.id ? savedPost : p))
-        } else {
-            setPosts(ps => [savedPost, ...ps])
-        }
-
-        setForm(f => ({ ...f, id: savedPost.id, is_published: savedPost.is_published }))
-        setActiveId(savedPost.id)
-        showToast(is_published ? 'Published!' : 'Draft saved')
         setSaving(false)
+        if (!res.ok) return setError(res.error)
+
+        const post = res.post as unknown as BlogPost
+        setPosts((ps) => (form.id ? ps.map((p) => (p.id === post.id ? post : p)) : [post, ...ps]))
+        const next = formFromPost(post)
+        setSaved(next)
+        setForm(next)
+        setJustSaved(true)
+        setTimeout(() => setJustSaved(false), 2500)
     }
 
-    // ── Delete ──
     const handleDelete = async () => {
         if (!deleteTarget) return
+        setDeleting(true)
         const res = await deleteBlogPost(storeId, deleteTarget.id)
-
-        if (!res.ok) { showToast(res.error, 'error'); setDeleteTarget(null); return }
-
-        setPosts(ps => ps.filter(p => p.id !== deleteTarget.id))
-        if (activeId === deleteTarget.id) {
-            setView('list')
-            setActiveId(null)
-            setForm(emptyForm())
-        }
+        setDeleting(false)
+        const target = deleteTarget
         setDeleteTarget(null)
-        showToast('Post deleted')
+        if (!res.ok) return setError(res.error)
+        setPosts((ps) => ps.filter((p) => p.id !== target.id))
+        if (form.id === target.id) backToList()
     }
 
-    // ── Author created ──
     const handleAuthorSaved = (author: BlogAuthor) => {
-        setAuthors(a => [...a, author].sort((a, b) => a.name.localeCompare(b.name)))
-        setForm(f => ({ ...f, author_id: author.id }))
-        showToast(`Author "${author.name}" created`)
+        setAuthors((a) => [...a, author].sort((x, y) => x.name.localeCompare(y.name)))
+        if (view === 'editor') set({ author_id: author.id })
     }
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Render
-    // ─────────────────────────────────────────────────────────────────────────
+    const published = posts.filter((p) => p.is_published).length
 
     return (
         <ProGateInline
             plan={plan}
             requires="hobby"
-            feature="Blog & content pages"
-            description="Publish blog posts and custom content pages on the Hobby plan and higher."
+            feature="Blog"
+            description="Publish blog posts on your store on the Hobby plan and higher."
         >
-        <div className="h-[90.2vh] flex flex-col -mx-6 md:-mx-10 -my-8">
-
-            {/* ── View: Post list ── */}
-            {view === 'list' && (
-                <div className="flex flex-col h-full">
-                    {/* Header */}
-                    <div className="flex items-center justify-between px-6 md:px-10 py-5 border-b border-border">
-                        <div>
-                            <h2 className="text-[15px] font-semibold">Blog</h2>
-                            <p className="text-xs text-muted-foreground mt-0.5">
-                                {posts.length} post{posts.length !== 1 ? 's' : ''} · {posts.filter(p => p.is_published).length} published
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => setAuthorDialog(true)}
-                                className="gap-1.5 text-xs cursor-pointer"
-                            >
-                                <Users className="w-3.5 h-3.5" />
-                                Authors
-                            </Button>
-                            <Button size="sm" onClick={newPost} className="gap-1.5 text-xs cursor-pointer bg-[#425E7B] text-white hover:bg-[#425e7b]/80">
-                                <Plus className="w-3.5 h-3.5" />
-                                New post
-                            </Button>
-                        </div>
-                    </div>
-
-                    {/* Post list */}
-                    <div className="flex-1 overflow-y-auto px-3 md:px-6 py-3">
-                        {posts.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center h-48 text-center space-y-3">
-                                <div>
-                                    <p className="text-sm font-medium">No posts yet</p>
-                                    <p className="text-xs text-muted-foreground mt-0.5">Create your first blog post</p>
-                                </div>
-                                <Button size="sm" onClick={newPost} className="gap-1.5 text-xs cursor-pointer bg-[#425e7b] text-white">
-                                    <Plus className="w-3.5 h-3.5" />
-                                    New post
-                                </Button>
-                            </div>
-                        ) : (
-                            <div className="grid gap-1">
-                                {posts.map(post => (
-                                    <div key={post.id} className="group relative">
-                                        <PostListItem
-                                            post={post}
-                                            isActive={activeId === post.id}
-                                            onSelect={() => openPost(post)}
-                                        />
-                                        {/* Delete button — appears on hover */}
-                                        <button
-                                            onClick={() => setDeleteTarget(post)}
-                                            className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
-
-            {/* ── View: Editor ── */}
-            {view === 'editor' && (
-                <div className="flex flex-col h-full overflow-hidden">
-
-                    {/* Editor toolbar */}
-                    <div className="flex items-center justify-between gap-3 px-4 py-2.5 border-b border-border bg-background shrink-0">
-                        <div className="flex items-center gap-2 min-w-0">
-                            <button
-                                onClick={() => setView('list')}
-                                className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors shrink-0"
-                            >
-                                <ArrowLeft className="w-3.5 h-3.5" />
-                                Posts
-                            </button>
-                            <span className="text-muted-foreground/40">/</span>
-                            <span className="text-xs font-medium truncate">
-                                {form.title || 'New post'}
-                            </span>
-                        </div>
-
-                        {/* Write / Preview tabs */}
-                        <div className="flex items-center bg-muted rounded-md p-0.5 shrink-0 gap-4">
-                            <button
-                                onClick={() => setEditorTab('write')}
-                                className={cn(
-                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
-                                    editorTab === 'write'
-                                        ? 'bg-[#425E7B] text-white shadow-sm'
-                                        : 'bg-[#425E7B]/40 text-white hover:bg-[#425E7B]/80 hover:text-white'
-                                )}
-                            >
-                                <Edit3 className="w-3 h-3" />
-                                Write
-                            </button>
-                            <button
-                                onClick={() => setEditorTab('preview')}
-                                className={cn(
-                                    'flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-medium transition-colors cursor-pointer',
-                                    editorTab === 'preview'
-                                        ? 'bg-[#425E7B] text-white shadow-sm'
-                                        : 'bg-[#425E7B]/40 text-white hover:bg-[#425E7B]/80 hover:text-white'
-                                )}
-                            >
-                                <Eye className="w-3 h-3" />
-                                Preview
-                            </button>
-                        </div>
-
-                        {/* Save actions */}
-                        <div className="flex items-center gap-2 shrink-0">
-                            {form.is_published ? (
+            <div className="space-y-6">
+                {view === 'list' ? (
+                    <>
+                        <PageHeader
+                            title="Blog"
+                            description={`${posts.length} post${posts.length === 1 ? '' : 's'}, ${published} published.`}
+                            actions={
                                 <>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-xs h-7 gap-1 cursor-pointer"
-                                        onClick={() => handleSave(false)}
-                                        disabled={saving}
-                                    >
-                                        <Lock className="w-3 h-3" />
-                                        Unpublish
+                                    <Button onClick={() => setAuthorDialog(true)}>
+                                        <Icon name="person_add" size={15} />
+                                        New author
                                     </Button>
-                                    <Button
-                                        size="sm"
-                                        className="text-xs h-7 gap-1 cursor-pointer"
-                                        onClick={() => handleSave()}
-                                        disabled={saving}
-                                    >
-                                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                                        Save
+                                    <Button variant="primary" onClick={() => openEditor(emptyForm())}>
+                                        <Icon name="add" size={15} />
+                                        New post
                                     </Button>
                                 </>
-                            ) : (
-                                <>
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        className="text-xs h-7 gap-1 cursor-pointer"
-                                        onClick={() => handleSave(false)}
-                                        disabled={saving}
-                                    >
-                                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
-                                        Save draft
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        className="text-xs h-7 gap-1 bg-green-600 hover:bg-green-700 text-white cursor-pointer"
-                                        onClick={() => handleSave(true)}
-                                        disabled={saving}
-                                    >
-                                        {saving ? <Loader2 className="w-3 h-3 animate-spin" /> : <Globe className="w-3 h-3" />}
-                                        Publish
-                                    </Button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-
-                    {/* Editor body: two columns on large, stacked on small */}
-                    <div className="flex flex-1 overflow-hidden">
-
-                        {/* ── Left: content area ── */}
-                        <div className="flex-1 flex flex-col min-w-0 overflow-hidden border-r border-border">
-                            {/* Title */}
-                            <div className="px-6 pt-5 pb-3 border-b border-border/50">
-                                <input
-                                    type="text"
-                                    value={form.title}
-                                    onChange={e => setTitle(e.target.value)}
-                                    placeholder="Post title…"
-                                    className="w-full text-2xl font-semibold bg-transparent outline-none placeholder:text-muted-foreground/40 text-foreground"
+                            }
+                        />
+                        {error && <Notice tone="error">{error}</Notice>}
+                        <Panel flush>
+                            {posts.length === 0 ? (
+                                <EmptyState
+                                    icon="article"
+                                    title="No posts yet"
+                                    description="Write about what you sell, news, or tips for your customers."
+                                    action={<Button variant="primary" onClick={() => openEditor(emptyForm())}>New post</Button>}
                                 />
-                                <div className="flex items-center mt-2">
-                                    <span className="text-xs text-muted-foreground">{`${storefrontDisplayUrl(storeSlug)}/blog/`}</span>
-                                    <input
-                                        type="text"
-                                        value={form.slug}
-                                        onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
-                                        className="text-xs text-muted-foreground"
-                                        placeholder="post-slug"
-                                    />
-                                    <Clock className="w-3 h-3 text-muted-foreground/50" />
-                                    <span className="text-xs text-muted-foreground/50">{form.reading_time_minutes} min read</span>
-                                </div>
-                            </div>
-
-                            {/* Write / Preview */}
-                            <div className="flex-1 overflow-hidden">
-                                {editorTab === 'write' ? (
-                                    <div className="h-full">
-                                        <MarkdownEditor
-                                            value={form.content}
-                                            onChange={setContent}
-                                        />
-                                    </div>
-                                ) : (
-                                    <div className="h-full overflow-auto">
-                                        <MarkdownPreview content={form.content} />
-                                    </div>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* ── Right: metadata sidebar ── */}
-                        <div className="w-72 xl:w-80 shrink-0 overflow-y-auto border-l border-border hidden md:flex flex-col">
-                            <div className="px-4 py-4 space-y-5">
-
-                                {/* Status badge */}
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Status</span>
-                                    <Badge variant={form.is_published ? 'default' : 'secondary'} className="text-[11px]">
-                                        {form.is_published ? 'Published' : 'Draft'}
-                                    </Badge>
-                                </div>
-
-                                <div className="h-px bg-border" />
-
-                                {/* Author */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                        <User className="w-3 h-3" />Author
-                                    </Label>
-                                    <div className="flex items-center gap-2">
-                                        <Select
-                                            value={form.author_id || NO_AUTHOR}
-                                            onValueChange={v => setForm(f => ({ ...f, author_id: v === NO_AUTHOR ? '' : v }))}
-                                        >
-                                            <SelectTrigger className="h-8 text-xs flex-1">
-                                                <SelectValue placeholder="No author" />
-                                            </SelectTrigger>
-                                            <SelectContent>
-                                                <SelectItem value={NO_AUTHOR} className="text-xs">No author</SelectItem>
-                                                {authors.map(a => (
-                                                    <SelectItem key={a.id} value={a.id} className="text-xs">
-                                                        {a.name}
-                                                    </SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                        <button
-                                            onClick={() => setAuthorDialog(true)}
-                                            className="p-1.5 rounded-md text-muted-foreground hover:text-foreground hover:bg-accent transition-colors shrink-0"
-                                            title="New author"
-                                        >
-                                            <Plus className="w-3.5 h-3.5" />
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Excerpt */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Excerpt</Label>
-                                    <Textarea
-                                        value={form.excerpt}
-                                        onChange={e => setForm(f => ({ ...f, excerpt: e.target.value }))}
-                                        placeholder="Short summary shown in the post list…"
-                                        rows={3}
-                                        className="text-xs resize-none"
-                                    />
-                                </div>
-
-                                {/* Cover image */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground">Cover image URL</Label>
-                                    <Input
-                                        value={form.cover_image}
-                                        onChange={e => setForm(f => ({ ...f, cover_image: e.target.value }))}
-                                        placeholder="https://…"
-                                        className="text-xs h-8"
-                                    />
-                                    {form.cover_image && (
-                                        <div className="relative aspect-video overflow-hidden rounded-md border border-border mt-1.5">
-                                            <img
-                                                src={form.cover_image}
-                                                alt=""
-                                                className="w-full h-full object-cover"
-                                                onError={e => { (e.target as HTMLImageElement).style.display = 'none' }}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Tags */}
-                                <div className="space-y-1.5">
-                                    <Label className="text-xs text-muted-foreground flex items-center gap-1.5">
-                                        <Tag className="w-3 h-3" />Tags
-                                    </Label>
-                                    <Input
-                                        value={form.tags}
-                                        onChange={e => setForm(f => ({ ...f, tags: e.target.value }))}
-                                        placeholder="style, hair care, tips"
-                                        className="text-xs h-8"
-                                    />
-                                    <p className="text-[10px] text-muted-foreground">Comma-separated</p>
-                                    {form.tags && (
-                                        <div className="flex flex-wrap gap-1 mt-1">
-                                            {form.tags.split(',').map(t => t.trim()).filter(Boolean).map(t => (
-                                                <span key={t} className="text-[10px] bg-muted text-muted-foreground px-1.5 py-0.5 rounded">
-                                                    {t}
+                            ) : (
+                                <ul className="divide-y divide-border">
+                                    {posts.map((post) => (
+                                        <li key={post.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
+                                            <button type="button" onClick={() => openEditor(formFromPost(post))} className="min-w-0 flex-1 text-left">
+                                                <span className="flex items-center gap-2">
+                                                    <span className="truncate text-[13px] font-medium text-foreground">{post.title || 'Untitled'}</span>
+                                                    {post.metadata?.featured && <Badge tone="info">Featured</Badge>}
                                                 </span>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Featured toggle */}
-                                <div className="flex items-center justify-between py-1">
-                                    <div>
-                                        <p className="text-xs font-medium">Featured</p>
-                                        <p className="text-[10px] text-muted-foreground">Pin to top of journal</p>
-                                    </div>
-                                    <button
-                                        onClick={() => setForm(f => ({
-                                            ...f,
-                                            // Store featured in metadata — matches BlogPost.metadata.featured
-                                        }))}
-                                        className="text-xs text-muted-foreground"
-                                    >
-                                        {/* Replace with your Switch component if available */}
-                                        <input
-                                            type="checkbox"
-                                            className="w-4 h-4 accent-primary cursor-pointer"
-                                            checked={!!(form as any).metadata?.featured}
-                                            onChange={e => setForm(f => ({
-                                                ...f,
-                                                metadata: { ...((f as any).metadata ?? {}), featured: e.target.checked },
-                                            } as any))}
-                                        />
-                                    </button>
-                                </div>
-
-                                <div className="h-px bg-border" />
-
-                                {/* Danger zone */}
-                                {form.id && (
-                                    <div>
-                                        <button
-                                            onClick={() => {
-                                                const post = posts.find(p => p.id === form.id)
-                                                if (post) setDeleteTarget(post)
-                                            }}
-                                            className="flex items-center gap-1.5 text-xs text-destructive hover:text-destructive/80 transition-colors"
-                                        >
-                                            <Trash2 className="w-3.5 h-3.5" />
-                                            Delete this post
-                                        </button>
-                                    </div>
+                                                <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                                                    {formatDate(post.published_at ?? post.created_at)}
+                                                    {post.reading_time_minutes ? ` · ${post.reading_time_minutes} min read` : ''}
+                                                    {post.tags?.length ? ` · ${post.tags.slice(0, 3).join(', ')}` : ''}
+                                                </span>
+                                            </button>
+                                            <Badge tone={post.is_published ? 'success' : 'neutral'}>{post.is_published ? 'Published' : 'Draft'}</Badge>
+                                            <Button size="sm" variant="ghost" aria-label={`Delete ${post.title || 'post'}`} onClick={() => setDeleteTarget(post)}>
+                                                <Icon name="delete" size={15} />
+                                            </Button>
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </Panel>
+                    </>
+                ) : (
+                    <>
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <button
+                                type="button"
+                                onClick={() => (dirty ? setLeaving(true) : backToList())}
+                                className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
+                            >
+                                <Icon name="arrow_back" size={15} />
+                                All posts
+                            </button>
+                            <div className="flex items-center gap-2">
+                                <SaveStatus saving={saving} saved={justSaved} />
+                                {form.is_published ? (
+                                    <>
+                                        <Button onClick={() => handleSave(false)} disabled={saving}>Unpublish</Button>
+                                        <Button variant="primary" onClick={() => handleSave()} disabled={saving || !dirty}>
+                                            {saving ? <Spinner size={13} /> : <Icon name="check" size={15} />}
+                                            Save
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Button onClick={() => handleSave(false)} disabled={saving}>Save draft</Button>
+                                        <Button variant="primary" onClick={() => handleSave(true)} disabled={saving}>
+                                            {saving ? <Spinner size={13} /> : <Icon name="public" size={15} />}
+                                            Publish
+                                        </Button>
+                                    </>
                                 )}
                             </div>
                         </div>
-                    </div>
-                </div>
-            )}
 
-            {/* ── Author dialog ── */}
-            <AuthorDialog
-                open={authorDialog}
-                onClose={() => setAuthorDialog(false)}
-                onSaved={handleAuthorSaved}
-                storeId={storeId}
-            />
+                        {error && <Notice tone="error">{error}</Notice>}
 
-            {/* ── Delete confirm ── */}
-            <AlertDialog open={!!deleteTarget} onOpenChange={v => { if (!v) setDeleteTarget(null) }}>
-                <AlertDialogContent className='z-[10000] bg-[#fff] dark:bg-[#111]'>
-                    <AlertDialogHeader>
-                        <AlertDialogTitle>Delete post?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                            &ldquo;{deleteTarget?.title || 'This post'}&rdquo; will be permanently deleted. This cannot be undone.
-                        </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                        <AlertDialogCancel className='cursor-pointer'>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                            onClick={handleDelete}
-                            className="bg-red-500 text-white hover:bg-red-500/90 cursor-pointer"
-                        >
-                            Delete
-                        </AlertDialogAction>
-                    </AlertDialogFooter>
-                </AlertDialogContent>
-            </AlertDialog>
+                        <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_18rem]">
+                            <Panel>
+                                <div className="space-y-4">
+                                    <input
+                                        aria-label="Title"
+                                        value={form.title}
+                                        onChange={(e) => set({ title: e.target.value, slug: nextSlug(form, e.target.value) })}
+                                        placeholder="Post title"
+                                        className="w-full bg-transparent text-xl font-semibold text-foreground outline-none placeholder:text-muted-foreground/50"
+                                    />
+                                    <div className="flex flex-wrap items-center gap-x-1 gap-y-2 text-[12px] text-muted-foreground">
+                                        <span className="truncate">{storefrontDisplayUrl(storeSlug)}/blog/</span>
+                                        <TextInput
+                                            aria-label="Post URL"
+                                            value={form.slug}
+                                            onChange={(e) => set({ slug: e.target.value })}
+                                            placeholder="post-url"
+                                            className="h-7 w-auto min-w-0 flex-1 font-mono text-[12px] sm:max-w-xs"
+                                            spellCheck={false}
+                                        />
+                                        <span className="ml-auto">{estimateReadingTime(form.content)} min read</span>
+                                    </div>
+                                    <Tabs
+                                        label="Editor"
+                                        value={tab}
+                                        onChange={(id) => setTab(id as 'write' | 'preview')}
+                                        items={[{ id: 'write', label: 'Write' }, { id: 'preview', label: 'Preview' }]}
+                                    />
+                                    <div className="min-h-[28rem]">
+                                        {tab === 'write'
+                                            ? <MarkdownEditor value={form.content} onChange={(content) => set({ content })} minHeight="28rem" />
+                                            : <MarkdownPreview content={form.content} />}
+                                    </div>
+                                </div>
+                            </Panel>
+                            <PostSettings
+                                form={form}
+                                set={set}
+                                authors={authors}
+                                onNewAuthor={() => setAuthorDialog(true)}
+                                onDelete={form.id ? () => setDeleteTarget(posts.find((p) => p.id === form.id) ?? null) : undefined}
+                            />
+                        </div>
+                    </>
+                )}
 
-            {/* ── Toast ── */}
-            {toast && (
-                <Toast
-                    message={toast.message}
-                    type={toast.type}
-                    onDismiss={() => setToast(null)}
+                <AuthorDialog open={authorDialog} onClose={() => setAuthorDialog(false)} onSaved={handleAuthorSaved} storeId={storeId} />
+
+                <ConfirmDialog
+                    open={!!deleteTarget}
+                    title="Delete this post?"
+                    description={`"${deleteTarget?.title || 'This post'}" is deleted for good, and its link stops working.`}
+                    confirmLabel="Delete post"
+                    busy={deleting}
+                    onConfirm={handleDelete}
+                    onCancel={() => setDeleteTarget(null)}
                 />
-            )}
-        </div>
+
+                <ConfirmDialog
+                    open={leaving}
+                    title="Leave without saving?"
+                    description="Your changes to this post will be lost."
+                    confirmLabel="Discard changes"
+                    onConfirm={backToList}
+                    onCancel={() => setLeaving(false)}
+                />
+            </div>
         </ProGateInline>
     )
 }

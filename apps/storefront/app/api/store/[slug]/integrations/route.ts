@@ -2,7 +2,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
-import { canManage, requireStoreAccessById } from '@mcloud/merchant/stores'
+import { canManage, requireStoreAccess, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { publicIntegration } from '@/lib/integration-public'
 import { readOptionalSession } from '@/lib/optional-session'
 
@@ -109,22 +109,21 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { data: store, error: storeError } = await supabase
-            .from('stores')
-            .select('id, owner_id')
-            .eq('slug', slug)
-            .single()
-
-        if (storeError || !store) {
-            return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+        // Store member or member of the store's org, with a managing role (it was owner-only, which
+        // locked org admins and store admins out of Payments).
+        const access = await requireStoreAccess(slug, user.id)
+        if (access.error === 'not_found') return NextResponse.json({ error: 'Store not found' }, { status: 404 })
+        if (access.error || !canManage(access.role)) {
+            return NextResponse.json({ error: 'Only store owners and admins can change payment settings.' }, { status: 403 })
         }
+        const store = { id: access.storeId }
 
-        if (store.owner_id !== user.id) {
-            return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        const body = await request.json().catch(() => null)
+        const provider = body?.provider
+        const data = body?.data
+        if (!data || typeof data !== 'object' || Array.isArray(data)) {
+            return NextResponse.json({ error: 'Invalid settings' }, { status: 400 })
         }
-
-        const body = await request.json()
-        const { provider, data } = body
 
         if (!['mpesa', 'paypal', 'pesapal', 'intasend'].includes(provider)) {
             return NextResponse.json({ error: 'Invalid provider' }, { status: 400 })
@@ -145,13 +144,12 @@ export async function POST(
         // Strip the enabled flag from config — it lives in is_active
         const { enabled, ...configOnly } = mergedConfig
 
-        if (existing) {
-            await supabase
+        const { error: saveError } = existing
+            ? await supabase
                 .from('store_integrations')
                 .update({ config: configOnly, is_active: data.enabled ?? true, updated_at: new Date().toISOString() })
                 .eq('id', existing.id)
-        } else {
-            await supabase
+            : await supabase
                 .from('store_integrations')
                 .insert({
                     store_id: store.id,
@@ -159,6 +157,9 @@ export async function POST(
                     is_active: data.enabled ?? true,
                     config: configOnly,
                 })
+        if (saveError) {
+            console.error('Error saving integration:', saveError.code, saveError.message)
+            return NextResponse.json({ error: 'Could not save. Try again.' }, { status: 500 })
         }
 
         return NextResponse.json({ success: true })

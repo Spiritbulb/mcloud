@@ -25,6 +25,8 @@ export interface BlogPostInput {
     tags: string[]
     is_published: boolean
     reading_time_minutes: number
+    /** Pins the post at the top of the blog (metadata.featured). Left out = unchanged. */
+    featured?: boolean
 }
 
 async function requireBlogAccess(storeId: string) {
@@ -76,6 +78,15 @@ export async function saveBlogPost(storeId: string, postId: string | null, input
         if (!author) return { ok: false as const, error: 'Author not found' }
     }
 
+    // The stored row, for what an update must keep: its other metadata and its first publish date.
+    const { data: existing } = postId
+        ? await supabase.from('blog_posts').select('metadata, published_at').eq('id', postId).eq('store_id', gate.storeId).maybeSingle()
+        : { data: null }
+    if (postId && !existing) return { ok: false as const, error: 'Post not found' }
+    const metadata = existing?.metadata && typeof existing.metadata === 'object' && !Array.isArray(existing.metadata)
+        ? (existing.metadata as Record<string, unknown>)
+        : {}
+
     const is_published = !!input.is_published
     const payload = {
         store_id: gate.storeId,
@@ -87,7 +98,9 @@ export async function saveBlogPost(storeId: string, postId: string | null, input
         author_id: input.author_id || null,
         tags: (Array.isArray(input.tags) ? input.tags : []).filter((t) => typeof t === 'string').slice(0, 30),
         is_published,
-        published_at: is_published && !postId ? new Date().toISOString() : undefined,
+        // Set when a post is first published (a draft published later included), then kept.
+        published_at: is_published && !existing?.published_at ? new Date().toISOString() : undefined,
+        ...(typeof input.featured === 'boolean' && { metadata: { ...metadata, featured: input.featured } }),
         reading_time_minutes: Math.max(1, Math.floor(Number(input.reading_time_minutes) || 1)),
     }
 

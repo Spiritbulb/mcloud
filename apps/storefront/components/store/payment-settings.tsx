@@ -1,22 +1,18 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Button } from '@mcloud/ui/button'
-import { Input } from '@mcloud/ui/input'
-import { Label } from '@mcloud/ui/label'
-import { Badge } from '@mcloud/ui/badge'
-import { Separator } from '@mcloud/ui/separator'
-import { Switch } from '@mcloud/ui/switch'
-import { Check, ExternalLink, Phone, Loader2, X, ChevronRight, AlertCircle, CheckCircle2 } from 'lucide-react'
-import { Plan } from '@mcloud/merchant/plans'
+import { planAllowsRequired, type Plan } from '@mcloud/merchant/plans'
+import { Badge } from '@mcloud/ui/kit/badge'
+import { Button } from '@mcloud/ui/kit/button'
+import { Field, FormGrid, Switch, TextInput } from '@mcloud/ui/kit/form'
+import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { Panel } from '@mcloud/ui/kit/panel'
+import { SaveStatus } from '@mcloud/ui/kit/save-bar'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
+import { cn } from '@mcloud/ui/utils'
 import { ProGateInline } from '../pro'
-
-interface IntegrationData {
-    enabled?: boolean
-    [key: string]: any
-}
 
 interface PaymentSettingsProps {
     storeId: string
@@ -24,126 +20,159 @@ interface PaymentSettingsProps {
     plan: Plan
 }
 
-export default function PaymentSettings({ storeId, slug, plan }: PaymentSettingsProps) {
+type Manual = { enabled: boolean; type: 'till' | 'paybill'; number: string; account: string }
+type Stored = { consumerKey: boolean; consumerSecret: boolean; passkey: boolean }
+
+const STEPS = ['API keys', 'Shortcode and passkey', 'Test and turn on']
+
+function ExternalLink({ href, children }: { href: string; children: React.ReactNode }) {
+    return (
+        <a href={href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-0.5 text-foreground underline underline-offset-2">
+            {children}
+            <Icon name="open_in_new" size={12} />
+        </a>
+    )
+}
+
+export default function PaymentSettings({ slug, plan }: PaymentSettingsProps) {
     const [loading, setLoading] = useState(true)
-    const [saving, setSaving] = useState<string | null>(null)
-    const [saved, setSaved] = useState<string | null>(null)
-    const [error, setError] = useState<string | null>(null)
-
-    const [mpesaEnabled, setMpesaEnabled] = useState(false)
-    const [mpesaType, setMpesaType] = useState<'paybill' | 'till'>('till')
-    const [mpesaNumber, setMpesaNumber] = useState('')
-    const [mpesaAccount, setMpesaAccount] = useState('')
-
-    // Daraja M-PESA STK Push
-    const [darajaEnabled, setDarajaEnabled] = useState(false)
-    const [darajaSheetOpen, setDarajaSheetOpen] = useState(false)
-    const [darajaStep, setDarajaStep] = useState(0)
-    const [mpesaConsumerKey, setMpesaConsumerKey] = useState('')
-    const [mpesaConsumerSecret, setMpesaConsumerSecret] = useState('')
-    const [mpesaPasskey, setMpesaPasskey] = useState('')
-    const [mpesaShortcode, setMpesaShortcode] = useState('')
-    const [darajaTestStatus, setDarajaTestStatus] = useState<'idle' | 'testing' | 'ok' | 'fail'>('idle')
-    const [darajaTestError, setDarajaTestError] = useState('')
-
-
     // A failed load must not fall through to the empty form: it would read as "nothing set up"
     // and a save from there would overwrite the real settings.
     const [loadFailed, setLoadFailed] = useState(false)
     const [reloadKey, setReloadKey] = useState(0)
+    const [saving, setSaving] = useState<'manual' | 'daraja' | null>(null)
+    const [justSaved, setJustSaved] = useState(false)
+    const [error, setError] = useState<string | null>(null)
+
+    const [manual, setManual] = useState<Manual>({ enabled: false, type: 'till', number: '', account: '' })
+    const [savedManual, setSavedManual] = useState(manual)
+
+    // Daraja M-PESA STK Push. Secrets are never sent back; `stored` says which ones are saved.
+    const [darajaEnabled, setDarajaEnabled] = useState(false)
+    const [stored, setStored] = useState<Stored>({ consumerKey: false, consumerSecret: false, passkey: false })
+    const [setupOpen, setSetupOpen] = useState(false)
+    const [step, setStep] = useState(0)
+    const [consumerKey, setConsumerKey] = useState('')
+    const [consumerSecret, setConsumerSecret] = useState('')
+    const [passkey, setPasskey] = useState('')
+    const [shortcode, setShortcode] = useState('')
+    const [enableDraft, setEnableDraft] = useState(false)
+    const [test, setTest] = useState<{ state: 'idle' | 'testing' | 'ok' | 'fail'; error?: string }>({ state: 'idle' })
+
+    const darajaAllowed = planAllowsRequired(plan, 'hobby')
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true)
-            setLoadFailed(false)
-            try {
-                const res = await fetch(`/api/store/${slug}/integrations`, {
-                    credentials: 'include',
-                })
-                if (!res.ok) throw new Error(`integrations ${res.status}`)
-                const data = await res.json()
-                const { mpesa } = data
-
-                if (mpesa) {
-                    setMpesaEnabled(mpesa.enabled ?? false)
-                    setMpesaType(mpesa.mpesa_type ?? 'till')
-                    setMpesaNumber(mpesa.mpesa_till ?? mpesa.mpesa_paybill ?? '')
-                    setMpesaAccount(mpesa.mpesa_account ?? '')
-                    setDarajaEnabled(mpesa.darajaEnabled ?? false)
-                    setMpesaShortcode(mpesa.shortcode ?? '')
+        let cancelled = false
+        fetch(`/api/store/${slug}/integrations`, { credentials: 'include' })
+            .then((res) => (res.ok ? res.json() : Promise.reject(new Error(`integrations ${res.status}`))))
+            .then(({ mpesa }) => {
+                if (cancelled) return
+                const next: Manual = {
+                    enabled: mpesa?.enabled ?? false,
+                    type: mpesa?.mpesa_type === 'paybill' ? 'paybill' : 'till',
+                    number: mpesa?.mpesa_till ?? mpesa?.mpesa_paybill ?? '',
+                    account: mpesa?.mpesa_account ?? '',
                 }
-            } catch (err) {
+                setManual(next)
+                setSavedManual(next)
+                setDarajaEnabled(mpesa?.darajaEnabled ?? false)
+                setShortcode(mpesa?.shortcode ?? '')
+                setStored({ consumerKey: !!mpesa?.hasConsumerKey, consumerSecret: !!mpesa?.hasConsumerSecret, passkey: !!mpesa?.hasPasskey })
+                setLoadFailed(false)
+            })
+            .catch((err) => {
                 console.error(err)
-                setLoadFailed(true)
-            } finally {
-                setLoading(false)
-            }
+                if (!cancelled) setLoadFailed(true)
+            })
+            .finally(() => {
+                if (!cancelled) setLoading(false)
+            })
+        return () => {
+            cancelled = true
         }
-        fetchData()
     }, [slug, reloadKey])
 
-    const handleSave = async (provider: string, data: any) => {
-        setSaving(provider)
+    const save = async (which: 'manual' | 'daraja', daraja: { enabled: boolean; withSecrets: boolean }) => {
+        setSaving(which)
         setError(null)
-        setSaved(null)
         try {
             const res = await fetch(`/api/store/${slug}/integrations`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ provider, data })
+                body: JSON.stringify({
+                    provider: 'mpesa',
+                    data: {
+                        enabled: savedManual.enabled,
+                        ...(which === 'manual' && {
+                            enabled: manual.enabled,
+                            mpesa_type: manual.type,
+                            ...(manual.type === 'till'
+                                ? { mpesa_till: manual.number.trim() }
+                                : { mpesa_paybill: manual.number.trim(), mpesa_account: manual.account.trim() }),
+                        }),
+                        darajaEnabled: daraja.enabled,
+                        ...(daraja.withSecrets && {
+                            ...(consumerKey.trim() && { consumerKey: consumerKey.trim() }),
+                            ...(consumerSecret.trim() && { consumerSecret: consumerSecret.trim() }),
+                            ...(passkey.trim() && { passkey: passkey.trim() }),
+                            ...(shortcode.trim() && { shortcode: shortcode.trim() }),
+                        }),
+                    },
+                }),
             })
             if (!res.ok) {
-                throw new Error('Failed to save')
+                const body = await res.json().catch(() => null)
+                throw new Error(typeof body?.error === 'string' ? body.error : 'Could not save. Try again.')
             }
-            setSaved(provider)
-            setTimeout(() => setSaved(null), 2500)
-        } catch (err: any) {
-            setError(err.message)
+            if (which === 'manual') {
+                const clean = { ...manual, number: manual.number.trim(), account: manual.account.trim() }
+                setManual(clean)
+                setSavedManual(clean)
+            }
+            setDarajaEnabled(daraja.enabled)
+            if (daraja.withSecrets) {
+                setStored((s) => ({
+                    consumerKey: s.consumerKey || !!consumerKey.trim(),
+                    consumerSecret: s.consumerSecret || !!consumerSecret.trim(),
+                    passkey: s.passkey || !!passkey.trim(),
+                }))
+                setConsumerKey('')
+                setConsumerSecret('')
+                setPasskey('')
+            }
+            setJustSaved(true)
+            setTimeout(() => setJustSaved(false), 2500)
+            return true
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Could not save. Try again.')
+            return false
         } finally {
             setSaving(null)
         }
     }
 
-    const saveMpesa = () => {
-        handleSave('mpesa', {
-            enabled: mpesaEnabled,
-            darajaEnabled: darajaEnabled,
-            mpesa_type: mpesaType,
-            ...(mpesaType === 'till' ? { mpesa_till: mpesaNumber } : { mpesa_paybill: mpesaNumber, mpesa_account: mpesaAccount }),
-            ...(mpesaConsumerKey && { consumerKey: mpesaConsumerKey }),
-            ...(mpesaConsumerSecret && { consumerSecret: mpesaConsumerSecret }),
-            ...(mpesaPasskey && { passkey: mpesaPasskey }),
-            ...(mpesaShortcode && { shortcode: mpesaShortcode }),
-        })
-    }
-
-    const testDarajaConnection = async () => {
-        if (!mpesaConsumerKey || !mpesaConsumerSecret) {
-            setDarajaTestError('Enter Consumer Key and Secret first')
-            setDarajaTestStatus('fail')
-            return
-        }
-        setDarajaTestStatus('testing')
-        setDarajaTestError('')
+    const testConnection = async () => {
+        setTest({ state: 'testing' })
         try {
             const res = await fetch(`/api/store/${slug}/payments/mpesa/test-credentials`, {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ consumerKey: mpesaConsumerKey, consumerSecret: mpesaConsumerSecret }),
+                body: JSON.stringify({ consumerKey: consumerKey.trim(), consumerSecret: consumerSecret.trim() }),
             })
-            const data = await res.json()
-            if (data.success) {
-                setDarajaTestStatus('ok')
-            } else {
-                setDarajaTestStatus('fail')
-                setDarajaTestError(data.error || 'Connection failed')
-            }
+            const data = await res.json().catch(() => ({}))
+            setTest(data.success ? { state: 'ok' } : { state: 'fail', error: data.error || 'Connection failed.' })
         } catch {
-            setDarajaTestStatus('fail')
-            setDarajaTestError('Network error — check your credentials and try again')
+            setTest({ state: 'fail', error: 'Network error. Check your connection and try again.' })
         }
+    }
+
+    const openSetup = () => {
+        setStep(0)
+        setEnableDraft(darajaEnabled || !stored.consumerKey)
+        setTest({ state: 'idle' })
+        setSetupOpen(true)
     }
 
     if (loading) {
@@ -157,284 +186,204 @@ export default function PaymentSettings({ storeId, slug, plan }: PaymentSettings
 
     if (loadFailed) {
         return (
-            <LoadError
-                title="Couldn't load your payment settings"
-                message="Nothing was changed. Try again in a moment."
-                onRetry={() => setReloadKey((k) => k + 1)}
-            />
+            <Panel>
+                <LoadError
+                    title="Couldn't load your payment settings"
+                    message="Nothing was changed. Try again in a moment."
+                    onRetry={() => {
+                        setLoading(true)
+                        setReloadKey((k) => k + 1)
+                    }}
+                />
+            </Panel>
         )
     }
 
+    const manualDirty =
+        manual.enabled !== savedManual.enabled ||
+        manual.type !== savedManual.type ||
+        manual.number.trim() !== savedManual.number ||
+        (manual.type === 'paybill' && manual.account.trim() !== savedManual.account)
+    const manualInvalid = manual.enabled && !manual.number.trim()
+
+    const hasKeys = (stored.consumerKey || !!consumerKey.trim()) && (stored.consumerSecret || !!consumerSecret.trim())
+    const hasPasskey = stored.passkey || !!passkey.trim()
+    const canContinue = step === 0 ? hasKeys : step === 1 ? hasPasskey && !!shortcode.trim() : true
+    const savedHint = (has: boolean) => (has ? 'Saved. Leave blank to keep it.' : undefined)
+
     return (
-        <div className="space-y-8">
-            <div>
-                <h2 className="text-lg font-semibold text-foreground">Payment Integrations</h2>
-                <p className="text-sm text-muted-foreground mt-0.5">Configure how customers pay in your store</p>
-                {error && <p className="text-sm text-red-500 mt-2">{error}</p>}
-            </div>
+        <div className="space-y-6">
+            {error && <Notice tone="error">{error}</Notice>}
 
-            {/* M-PESA */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-md bg-green-600 flex items-center justify-center shrink-0">
-                        <Phone className="w-4 h-4 text-white" />
+            <Panel
+                title="Manual M-PESA"
+                description="Customers pay to your till or paybill, and you confirm each payment yourself."
+                action={<Switch checked={manual.enabled} onChange={(enabled) => setManual((m) => ({ ...m, enabled }))} />}
+                footer={
+                    <Button variant="primary" onClick={() => save('manual', { enabled: darajaEnabled, withSecrets: false })} disabled={!manualDirty || manualInvalid || saving !== null}>
+                        {saving === 'manual' && <Spinner size={13} />}
+                        {saving === 'manual' ? 'Saving…' : 'Save'}
+                    </Button>
+                }
+            >
+                {manual.enabled ? (
+                    <div className="space-y-4">
+                        <div role="radiogroup" aria-label="Payment type" className="inline-flex rounded-md border border-border p-0.5">
+                            {(['till', 'paybill'] as const).map((t) => (
+                                <button
+                                    key={t}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={manual.type === t}
+                                    onClick={() => setManual((m) => ({ ...m, type: t }))}
+                                    className={cn(
+                                        'h-7 rounded px-3 text-[12px] transition-colors',
+                                        manual.type === t ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
+                                    )}
+                                >
+                                    {t === 'till' ? 'Till number' : 'Paybill'}
+                                </button>
+                            ))}
+                        </div>
+                        <FormGrid>
+                            <Field label={manual.type === 'till' ? 'Till number' : 'Paybill number'}>
+                                <TextInput
+                                    value={manual.number}
+                                    onChange={(e) => setManual((m) => ({ ...m, number: e.target.value }))}
+                                    placeholder={manual.type === 'till' ? '4202518' : '123456'}
+                                    inputMode="numeric"
+                                    className="font-mono"
+                                    invalid={manualInvalid}
+                                />
+                            </Field>
+                            {manual.type === 'paybill' && (
+                                <Field label="Account number" hint="What customers enter as the account.">
+                                    <TextInput
+                                        value={manual.account}
+                                        onChange={(e) => setManual((m) => ({ ...m, account: e.target.value }))}
+                                        placeholder="e.g. your shop name"
+                                    />
+                                </Field>
+                            )}
+                        </FormGrid>
                     </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">Manual M-PESA</p>
-                        <p className="text-xs text-muted-foreground">Receive payments via Safaricom M-PESA (manual verification)</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={mpesaEnabled ? 'default' : 'secondary'} className="text-[10px]">
-                            {mpesaEnabled ? 'Active' : 'Not configured'}
-                        </Badge>
-                        <Switch checked={mpesaEnabled} onCheckedChange={setMpesaEnabled} />
-                    </div>
-                </div>
+                ) : (
+                    <p className="text-[13px] text-muted-foreground">Off. Turn it on to show your till or paybill at checkout.</p>
+                )}
+            </Panel>
 
-                {mpesaEnabled && (
-                    <div className="space-y-4 max-w-sm pl-12">
-                        <div className="space-y-1.5">
-                            <Label className="text-sm">Payment type</Label>
-                            <div className="flex rounded-md border overflow-hidden">
-                                {(['till', 'paybill'] as const).map((t) => (
-                                    <button
-                                        key={t}
-                                        onClick={() => setMpesaType(t)}
-                                        className={`flex-1 h-9 text-xs transition-colors ${mpesaType === t
-                                            ? 'bg-[#425e7b] text-white font-medium'
-                                            : 'text-muted-foreground hover:text-white hover:bg-[#425e7b]/60 cursor-pointer'
-                                            }`}
-                                    >
-                                        {t === 'till' ? 'Till Number' : 'Paybill'}
-                                    </button>
-                                ))}
+            <Panel
+                title="M-PESA STK Push (Daraja)"
+                description="Customers get a payment prompt on their phone, and orders are confirmed automatically."
+                action={darajaAllowed ? <Badge tone={darajaEnabled ? 'success' : 'neutral'}>{darajaEnabled ? 'On' : stored.consumerKey ? 'Off' : 'Not set up'}</Badge> : undefined}
+                footer={
+                    darajaAllowed && !setupOpen ? (
+                        <Button onClick={openSetup}>
+                            <Icon name={stored.consumerKey ? 'edit' : 'settings'} size={14} />
+                            {stored.consumerKey ? 'Edit' : 'Set up'}
+                        </Button>
+                    ) : undefined
+                }
+            >
+                {!darajaAllowed ? (
+                    <ProGateInline plan={plan} requires="hobby" feature="Automatic M-PESA payments" description="STK Push is on the Hobby plan and higher." />
+                ) : !setupOpen ? (
+                    <p className="text-[13px] text-muted-foreground">
+                        {stored.consumerKey
+                            ? `Using shortcode ${shortcode || 'not set'}. ${darajaEnabled ? 'Shown at checkout.' : 'Not shown at checkout.'}`
+                            : 'Connect your Safaricom Daraja app to send payment prompts.'}
+                    </p>
+                ) : (
+                    <div className="space-y-5">
+                        <ol className="flex gap-1.5" aria-label="Setup steps">
+                            {STEPS.map((label, i) => (
+                                <li key={label} className="flex-1 space-y-1" aria-current={i === step ? 'step' : undefined}>
+                                    <div className={cn('h-1 rounded-full', i <= step ? 'bg-primary' : 'bg-muted')} />
+                                    <p className={cn('text-[11px]', i === step ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</p>
+                                </li>
+                            ))}
+                        </ol>
+
+                        {step === 0 && (
+                            <div className="space-y-4">
+                                <Notice>
+                                    In <ExternalLink href="https://developer.safaricom.co.ke/MyApps">Daraja, My Apps</ExternalLink>, open your app and copy the Consumer Key and Consumer Secret.
+                                </Notice>
+                                <FormGrid>
+                                    <Field label="Consumer Key" hint={savedHint(stored.consumerKey)}>
+                                        <TextInput type="password" value={consumerKey} onChange={(e) => setConsumerKey(e.target.value)} placeholder={stored.consumerKey ? '••••••••' : 'Paste your Consumer Key'} autoComplete="off" />
+                                    </Field>
+                                    <Field label="Consumer Secret" hint={savedHint(stored.consumerSecret)}>
+                                        <TextInput type="password" value={consumerSecret} onChange={(e) => setConsumerSecret(e.target.value)} placeholder={stored.consumerSecret ? '••••••••' : 'Paste your Consumer Secret'} autoComplete="off" />
+                                    </Field>
+                                </FormGrid>
                             </div>
-                        </div>
+                        )}
 
-                        <div className="space-y-1.5">
-                            <Label>{mpesaType === 'till' ? 'Till Number' : 'Paybill Number'}</Label>
-                            <Input
-                                value={mpesaNumber}
-                                onChange={(e) => setMpesaNumber(e.target.value)}
-                                placeholder={mpesaType === 'till' ? '4202518' : '123456'}
-                                className="font-mono"
-                            />
-                        </div>
+                        {step === 1 && (
+                            <div className="space-y-4">
+                                <Notice>
+                                    The shortcode is the till or paybill number registered on Daraja. Safaricom gives you the passkey when STK Push is set up; see <ExternalLink href="https://developer.safaricom.co.ke/docs#lipa-na-m-pesa-online">their docs</ExternalLink>.
+                                </Notice>
+                                <FormGrid>
+                                    <Field label="Business shortcode">
+                                        <TextInput value={shortcode} onChange={(e) => setShortcode(e.target.value)} placeholder="e.g. 174379" inputMode="numeric" className="font-mono" />
+                                    </Field>
+                                    <Field label="Passkey" hint={savedHint(stored.passkey)}>
+                                        <TextInput type="password" value={passkey} onChange={(e) => setPasskey(e.target.value)} placeholder={stored.passkey ? '••••••••' : 'Paste your STK Push passkey'} autoComplete="off" />
+                                    </Field>
+                                </FormGrid>
+                            </div>
+                        )}
 
-                        {mpesaType === 'paybill' && (
-                            <div className="space-y-1.5">
-                                <Label>Account Number</Label>
-                                <Input
-                                    value={mpesaAccount}
-                                    onChange={(e) => setMpesaAccount(e.target.value)}
-                                    placeholder="e.g. Account Name"
+                        {step === 2 && (
+                            <div className="space-y-4">
+                                <div className="flex flex-wrap items-center gap-3">
+                                    <Button onClick={testConnection} disabled={test.state === 'testing'}>
+                                        {test.state === 'testing' ? <Spinner size={13} /> : <Icon name="network_check" size={14} />}
+                                        {test.state === 'testing' ? 'Testing…' : 'Test the keys'}
+                                    </Button>
+                                    {test.state === 'ok' && <Badge tone="success">Safaricom accepted them</Badge>}
+                                    <span className="text-[12px] text-muted-foreground">No payment is made.</span>
+                                </div>
+                                {test.state === 'fail' && test.error && <Notice tone="error">{test.error}</Notice>}
+                                <Switch
+                                    checked={enableDraft}
+                                    onChange={setEnableDraft}
+                                    label="Show STK Push at checkout"
+                                    description="Turn this off to keep your keys saved without offering it."
                                 />
                             </div>
                         )}
-                        <Button onClick={saveMpesa} disabled={saving === 'mpesa'} className="w-full h-9 text-sm cursor-pointer bg-[#425e7b] hover:bg-[#425e7b]/60 text-white">
-                            {saving === 'mpesa' ? <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" /> : saved === 'mpesa' ? <Check className="w-3.5 h-3.5 mr-1.5" /> : 'Save Manual M-PESA settings'}
-                        </Button>
+
+                        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border pt-4">
+                            <Button variant="ghost" onClick={() => setSetupOpen(false)} disabled={saving !== null}>Cancel</Button>
+                            <div className="flex items-center gap-2">
+                                {step > 0 && <Button onClick={() => setStep((s) => s - 1)} disabled={saving !== null}>Back</Button>}
+                                {step < 2 ? (
+                                    <Button variant="primary" onClick={() => setStep((s) => s + 1)} disabled={!canContinue}>
+                                        Continue
+                                        <Icon name="chevron_right" size={14} />
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        variant="primary"
+                                        disabled={saving !== null}
+                                        onClick={async () => {
+                                            if (await save('daraja', { enabled: enableDraft, withSecrets: true })) setSetupOpen(false)
+                                        }}
+                                    >
+                                        {saving === 'daraja' && <Spinner size={13} />}
+                                        {saving === 'daraja' ? 'Saving…' : 'Save'}
+                                    </Button>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
-            </div>
+            </Panel>
 
-            <Separator />
-
-            {/* Daraja M-PESA STK Push */}
-            <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-md bg-green-700 flex items-center justify-center shrink-0">
-                        <Phone className="w-4 h-4 text-white" />
-                    </div>
-                    <div className="flex-1">
-                        <p className="text-sm font-medium text-foreground">M-PESA STK Push (Daraja)</p>
-                        <p className="text-xs text-muted-foreground">Automated payment prompts via Safaricom Daraja API</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Badge variant={darajaEnabled ? 'default' : 'secondary'} className="text-[10px]">
-                            {darajaEnabled ? 'Active' : 'Not configured'}
-                        </Badge>
-                        <button
-                            onClick={() => { setDarajaSheetOpen(true); setDarajaStep(0) }}
-                            className="h-7 px-3 rounded-full border border-border text-[12px] text-muted-foreground hover:bg-muted transition-colors"
-                        >
-                            {darajaEnabled ? 'Edit' : 'Configure'}
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            {/* Daraja guided setup sheet */}
-            {darajaSheetOpen && (
-                <ProGateInline
-                    plan={plan}
-                    requires="hobby"
-                    feature="Automate your M-PESA payments"
-                    description="Manage your M-PESA payments on the Hobby plan and higher."
-        >
-                <div className="fixed inset-0 z-50 flex">
-                    {/* Backdrop */}
-                    <div className="flex-1 bg-black/40" onClick={() => setDarajaSheetOpen(false)} />
-                    {/* Sheet */}
-                    <div className="w-full max-w-md bg-background flex flex-col shadow-2xl overflow-y-auto">
-                        {/* Header */}
-                        <div className="flex items-center gap-3 px-6 py-5 border-b border-border shrink-0">
-                            <div className="w-10 h-10 rounded-xl bg-green-700 flex items-center justify-center shrink-0">
-                                <Phone className="w-5 h-5 text-white" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-semibold text-foreground">Set up Daraja STK Push</p>
-                                <p className="text-xs text-muted-foreground">Step {darajaStep + 1} of 3</p>
-                            </div>
-                            <button onClick={() => setDarajaSheetOpen(false)} className="p-1.5 rounded-lg hover:bg-muted transition-colors">
-                                <X className="w-4 h-4 text-muted-foreground" />
-                            </button>
-                        </div>
-
-                        {/* Step indicator */}
-                        <div className="flex gap-1.5 px-6 pt-4 shrink-0">
-                            {['API Credentials', 'Shortcode & Passkey', 'Test & Enable'].map((label, i) => (
-                                <div key={i} className="flex-1 space-y-1">
-                                    <div className={`h-1 rounded-full transition-colors ${i <= darajaStep ? 'bg-green-600' : 'bg-muted'}`} />
-                                    <p className={`text-[10px] ${i === darajaStep ? 'text-foreground font-medium' : 'text-muted-foreground'}`}>{label}</p>
-                                </div>
-                            ))}
-                        </div>
-
-                        {/* Step content */}
-                        <div className="flex-1 px-6 py-6 space-y-5">
-                            {darajaStep === 0 && (
-                                <>
-                                    <div className="rounded-xl bg-muted/50 p-4 text-xs space-y-2 text-muted-foreground leading-relaxed">
-                                        <p className="font-medium text-foreground">Where to find these</p>
-                                        <p>Go to <a href="https://developer.safaricom.co.ke/MyApps" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-foreground inline-flex items-center gap-0.5">developer.safaricom.co.ke/MyApps <ExternalLink className="w-3 h-3" /></a>, open your app, and copy the Consumer Key and Consumer Secret from the Keys tab.</p>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs">Consumer Key</Label>
-                                        <Input
-                                            type="password"
-                                            value={mpesaConsumerKey}
-                                            onChange={(e) => setMpesaConsumerKey(e.target.value)}
-                                            placeholder="Paste your Consumer Key"
-                                            autoComplete="off"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs">Consumer Secret</Label>
-                                        <Input
-                                            type="password"
-                                            value={mpesaConsumerSecret}
-                                            onChange={(e) => setMpesaConsumerSecret(e.target.value)}
-                                            placeholder="Paste your Consumer Secret"
-                                            autoComplete="off"
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {darajaStep === 1 && (
-                                <>
-                                    <div className="rounded-xl bg-muted/50 p-4 text-xs space-y-2 text-muted-foreground leading-relaxed">
-                                        <p className="font-medium text-foreground">Finding your Shortcode & Passkey</p>
-                                        <p>Your <strong className="text-foreground">Business Shortcode</strong> is your Till or Paybill number registered on Daraja.</p>
-                                        <p>Your <strong className="text-foreground">Passkey</strong> is provided by Safaricom when you set up STK Push — check your Daraja app's STK Push section or <a href="https://developer.safaricom.co.ke/docs#lipa-na-m-pesa-online" target="_blank" rel="noopener noreferrer" className="underline underline-offset-2 text-foreground inline-flex items-center gap-0.5">the docs <ExternalLink className="w-3 h-3" /></a>.</p>
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs">Business Shortcode</Label>
-                                        <Input
-                                            value={mpesaShortcode}
-                                            onChange={(e) => setMpesaShortcode(e.target.value)}
-                                            placeholder="e.g. 174379"
-                                            inputMode="numeric"
-                                        />
-                                    </div>
-                                    <div className="space-y-1.5">
-                                        <Label className="text-xs">Passkey</Label>
-                                        <Input
-                                            type="password"
-                                            value={mpesaPasskey}
-                                            onChange={(e) => setMpesaPasskey(e.target.value)}
-                                            placeholder="Paste your STK Push passkey"
-                                            autoComplete="off"
-                                        />
-                                    </div>
-                                </>
-                            )}
-
-                            {darajaStep === 2 && (
-                                <>
-                                    <div className="rounded-xl bg-muted/50 p-4 text-xs text-muted-foreground leading-relaxed">
-                                        <p>Test that your credentials connect to Safaricom's sandbox before going live. No real payment is made.</p>
-                                    </div>
-
-                                    <button
-                                        onClick={testDarajaConnection}
-                                        disabled={darajaTestStatus === 'testing'}
-                                        className="w-full h-9 rounded-lg border border-border text-sm text-foreground hover:bg-muted transition-colors flex items-center justify-center gap-2 disabled:opacity-50"
-                                    >
-                                        {darajaTestStatus === 'testing' && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                                        {darajaTestStatus === 'ok' && <CheckCircle2 className="w-3.5 h-3.5 text-green-600" />}
-                                        {darajaTestStatus === 'fail' && <AlertCircle className="w-3.5 h-3.5 text-destructive" />}
-                                        {darajaTestStatus === 'idle' ? 'Test connection' :
-                                            darajaTestStatus === 'testing' ? 'Testing…' :
-                                            darajaTestStatus === 'ok' ? 'Connected successfully' : 'Test failed — try again'}
-                                    </button>
-
-                                    {darajaTestStatus === 'fail' && darajaTestError && (
-                                        <p className="text-xs text-destructive">{darajaTestError}</p>
-                                    )}
-
-                                    <div className="flex items-center gap-3 pt-2">
-                                        <Switch
-                                            checked={darajaEnabled}
-                                            onCheckedChange={setDarajaEnabled}
-                                            id="daraja-enable"
-                                        />
-                                        <Label htmlFor="daraja-enable" className="text-sm cursor-pointer">
-                                            Enable Daraja STK Push at checkout
-                                        </Label>
-                                    </div>
-                                </>
-                            )}
-                        </div>
-
-                        {/* Footer */}
-                        <div className="px-6 py-4 border-t border-border flex gap-3 shrink-0">
-                            {darajaStep > 0 && (
-                                <button
-                                    onClick={() => setDarajaStep(s => s - 1)}
-                                    className="flex-1 h-9 rounded-lg border border-border text-sm text-muted-foreground hover:bg-muted transition-colors"
-                                >
-                                    Back
-                                </button>
-                            )}
-                            {darajaStep < 2 ? (
-                                <button
-                                    onClick={() => setDarajaStep(s => s + 1)}
-                                    disabled={
-                                        (darajaStep === 0 && (!mpesaConsumerKey || !mpesaConsumerSecret)) ||
-                                        (darajaStep === 1 && (!mpesaShortcode || !mpesaPasskey))
-                                    }
-                                    className="flex-1 h-9 rounded-lg bg-foreground text-background text-sm font-medium hover:opacity-90 transition-opacity flex items-center justify-center gap-1.5 disabled:opacity-40"
-                                >
-                                    Continue <ChevronRight className="w-3.5 h-3.5" />
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => { saveMpesa(); setDarajaSheetOpen(false) }}
-                                    disabled={saving === 'mpesa'}
-                                    className="flex-1 h-9 rounded-lg bg-green-700 text-white text-sm font-medium hover:bg-green-800 transition-colors flex items-center justify-center gap-1.5 disabled:opacity-50"
-                                >
-                                    {saving === 'mpesa' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : saved === 'mpesa' ? <><Check className="w-3.5 h-3.5" /> Saved</> : 'Save & finish'}
-                                </button>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                </ProGateInline>
-            )}
-
-
+            <SaveStatus saving={saving !== null} saved={justSaved} />
         </div>
     )
 }

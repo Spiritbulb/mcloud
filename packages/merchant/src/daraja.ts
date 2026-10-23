@@ -6,7 +6,8 @@ import { stkQueryOutcome, type StkOutcome } from './payments'
 
 type Db = Awaited<ReturnType<typeof createClient>>
 
-const darajaBase = () =>
+/** Safaricom's API for this deployment: live when DARAJA_ENV=production, the sandbox otherwise. */
+export const darajaBase = () =>
     process.env.DARAJA_ENV === 'production' ? 'https://api.safaricom.co.ke' : 'https://sandbox.safaricom.co.ke'
 
 interface DarajaConfig {
