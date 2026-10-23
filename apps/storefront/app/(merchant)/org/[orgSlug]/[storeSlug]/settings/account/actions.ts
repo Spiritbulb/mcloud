@@ -117,6 +117,32 @@ export async function deleteAccount() {
     const userId = session.user.id
     const supabase = await createClient()
 
+    // 0. Refuse before touching anything if the user row cannot be deleted. These tables reference
+    //    users with ON DELETE NO ACTION, so the final delete would fail AFTER the stores below were
+    //    already gone (with their orders and customers): every merchant owns an org, so that was
+    //    every merchant. Closing or handing over an organization is not built yet.
+    const blockers: { table: 'orgs' | 'org_members' | 'servers' | 'wallet_topups' | 'org_invites' | 'reach_vendor_members' | 'nuru_notes' | 'nuru_chat_sessions'; column: string }[] = [
+        { table: 'orgs', column: 'owner_id' },
+        { table: 'org_members', column: 'user_id' },
+        { table: 'servers', column: 'created_by' },
+        { table: 'wallet_topups', column: 'requested_by' },
+        { table: 'org_invites', column: 'invited_by' },
+        { table: 'reach_vendor_members', column: 'user_id' },
+        { table: 'nuru_notes', column: 'uploader_id' },
+        { table: 'nuru_chat_sessions', column: 'user_id' },
+    ]
+    for (const { table, column } of blockers) {
+        const { count, error } = await supabase.from(table).select('*', { count: 'exact', head: true }).eq(column, userId)
+        if (error) return { error: 'Could not check your account. Nothing was deleted; try again.' }
+        if (count) {
+            return {
+                error: table === 'orgs' || table === 'org_members'
+                    ? 'You own or belong to an organization, so your account cannot be deleted here yet. Nothing was deleted. Contact support to close your account.'
+                    : 'Your account has activity that cannot be removed here yet. Nothing was deleted. Contact support to close your account.',
+            }
+        }
+    }
+
     // 1. Delete owned stores (cascades to products, orders, members etc.)
     const { error: storesError } = await supabase
         .from('stores')
