@@ -42,7 +42,7 @@ export function Stat({
             ) : (
                 <div className="mt-1 flex items-baseline gap-2">
                     <p className="text-2xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
-                    {pct !== undefined && <Delta pct={pct} />}
+                    {pct !== undefined && pct !== null && <Delta pct={pct} />}
                 </div>
             )}
             {hint && !loading && <p className="mt-1 text-[12px] text-muted-foreground">{hint}</p>}
