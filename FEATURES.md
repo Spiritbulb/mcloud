@@ -98,7 +98,8 @@ last column. Add new features as rows; keep the **ID** stable so the roadmap can
 | ID | Feature | Status | Notes |
 |---|---|---|---|
 | PL-1 | Magic-code login, WorkOS AuthKit, SSO handoff | ✅ | Cookie shared on `.mcloud.co.ke` |
-| PL-2 | Admin console: stores, users, subscriptions, orders, webhooks, docs editor | ✅ | `requireAdmin()` |
+| PL-2 | Admin console: overview charts, stores, users, subscriptions, orders, webhooks, docs editor | ✅ | `requireAdmin()`. Orders, users and webhook logs paginate on the server. Webhook logs are empty until something writes to `webhook_logs`. |
+| PL-2a | Admin audit log (append-only) and handoff recovery email | ✅ | `/admin/audit`, `/admin/handoff-recovery` |
 | PL-3 | Docs, changelog, support, beta signup | ✅ | |
 | PL-4 | Mobile API (`/api/mobile/*`) | ✅ | Bearer tokens |
 | PL-5 | Partner API (`/api/partner/*`) | ✅ | `x-partner-secret` |

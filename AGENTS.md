@@ -150,7 +150,8 @@ id. Foreign keys in the database are keyed on that. Do **not** remove the `auth0
   same-origin) for `/api/store/[slug]/*`, `webApi()` for the payment providers (web only, cross-origin, so no
   `credentials`). Never read `NEXT_PUBLIC_API_BASE_URL`: it once held the storefront's absolute URL and broke
   every custom-domain checkout (`api-origin.test.ts` pins this).
-- `users.role` is the platform role only (`admin` gates `requireAdmin`). Reach roles live in `reach_users`.
+- `users.role` is the platform role only: `admin` gates `requireAdmin`; `client` means the person owns an org or store (set by the `orgs_promote_owner` / `stores_promote_owner` triggers, `migrations/20261023_owner_role_client.sql`); `customer` is everyone else. Reach roles live in `reach_users`. Shoppers are not in `users`; they are in `customers`.
+- **Every admin write is audited.** A state-changing `app/api/admin/*` route or admin server action calls `recordAudit()` (`apps/web/lib/audit.ts`) after it succeeds. It never throws, so it cannot fail the change it records. The log is append-only (`admin_audit_log`, see `docs/architecture.md`).
 - Both root layouts fetch Google Fonts at build time.
 - `NEXT_PUBLIC_*` values are inlined at build: changing one needs a redeploy.
 - The `(storefront)` route group is the public site; `(merchant)` is the signed-in surface.

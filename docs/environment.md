@@ -33,7 +33,7 @@ add it here.
 
 | Variable | Purpose |
 |---|---|
-| `NEXT_PUBLIC_GA_ID` | Google Analytics id |
+| `NEXT_PUBLIC_GA_ID` | Optional. Overrides the built-in production GA4 property (e.g. a staging property). Inlined at build, so changing it needs a redeploy. |
 | `HANDOFF_ENC_KEY` | Encrypts mobile → web SSO handoff tickets |
 | `PARTNER_AUTH_SECRET` | `x-partner-secret` for `/api/partner/*` |
 | `CRON_SECRET` | Authenticates Vercel cron calls |

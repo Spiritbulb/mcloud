@@ -36,7 +36,7 @@ storefront's `/org/*`.
 | Marketing site, docs, changelog, beta signup | `apps/web` |
 | Login/logout/magic-code, SSO handoff, invites | `apps/web` (`app/auth`, `app/api/auth`, `app/api/_handoff`). The storefront links to them only through `lib/auth-urls.ts`; see [storefront-domain-move.md](storefront-domain-move.md). |
 | Org hub, org members, billing, servers, wallet | `apps/web` (`app/(merchant)/org`) |
-| Platform admin | `apps/web` (`app/admin`, `app/api/admin`) |
+| Platform admin | `apps/web` (`app/admin`, `app/api/admin`); see [Admin console](#admin-console) |
 | Mobile and partner APIs | `apps/web` (`app/api/mobile`, `app/api/partner`) |
 | Storefront marketing (`/`), the `/moving` explainer, `/start` onboarding, `/login` and `/signup` entry points | `apps/storefront` (`app/(marketing)`) |
 | Public stores (home, products, services, blog, cart, checkout, accounts) | `apps/storefront` (`app/(storefront)`) |
@@ -96,6 +96,7 @@ Main tables, grouped:
 - **Site content:** `pages`, `store_themes`, `blog_posts`, `blog_authors`, `store_integrations`, `org_integrations`
 - **Plans and money:** `store_subscriptions`, `org_wallets`, `wallet_ledger_entries`, `wallet_topups`, `servers`, `server_billing`
 - **Analytics:** `store_analytics`, `store_visits`
+- **Admin:** `admin_audit_log` (append-only; RLS on, no grants)
 - **Other products:** `nuru_*` (notes and chat), `reach_*` (Reach vendors/couriers), `trading_apps`, `docs_pages`, `waitlist`, `beta_signups`
 
 **All database access is server-side.** The server client is service-role and bypasses RLS, so
@@ -167,3 +168,38 @@ its own `provider = 'admin'` subscription row. Google Play billing was removed; 
 
 Servers (UpCloud) and the prepaid wallet (PalPluss top-ups, hourly billing), the Reach
 marketplace (`lib/reach`, `/api/mobile/reach`), trading apps, support, and the admin console.
+
+## Admin console
+
+`apps/web/app/admin`, gated by `requireAdmin()`. Screens: Overview (revenue and new-user charts, a "needs attention" queue),
+Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery, and the docs editor.
+
+- **UI kit:** `apps/web/components/admin/ui/*` (page header, panel, stat strip, badge, table, fields, button, notice, icon).
+  New admin screens use it rather than ad hoc markup. Always size glyphs with `Icon`: Google's icon font overrides Tailwind
+  size classes. Below `md` a `Table` becomes a stack of cards: give each `Td` a `label`, and leave it off the cell that
+  identifies the row.
+- **Lists are paginated on the server** (orders, users, webhook logs). The URL is the state (`?q=&status=&page=`), 50 per page.
+  Pure parsing, links and search sanitising are in `components/admin/ui/list-query.ts`; `FilterBar` and `Pagination` are the UI.
+  Stores and subscriptions are still filtered in the browser because their sets are small and the plan filter is computed.
+- **Audit log:** `admin_audit_log` (`migrations/20261023b_admin_audit_log.sql`). Rows are written by `recordAudit()`
+  (`lib/audit.ts`; row shape and action names in `lib/audit-logic.ts`) and read at `/admin/audit`. A trigger rejects
+  UPDATE and DELETE; RLS is on and `anon`/`authenticated` have no grants.
+- **Roles:** changing a role goes through `PATCH /api/admin/users/[id]/role`. Revoking an admin resolves to `client` or
+  `customer` from ownership, and the last admin cannot be removed (409).
+- **Handoff recovery** (`/admin/handoff-recovery`): lists people who signed in on spiritb.uk but have no `users` row (the handoff
+  failed for them) and can email them a link back through Resend. The link is `https://spiritb.uk/go/mcloud?to=%2Forg`.
+- **Identity linking:** `ensureLinked()` (`packages/auth/src/providers/workos.ts`) links a WorkOS user to the legacy `auth0|` row
+  by email. If linking fails it logs and flags the user (`unlinked`), and `ensureUserRow` will not mirror an unlinked user, so a
+  failed link cannot create a duplicate row. `/auth/handoff` also calls `ensureUserRow`.
+- **Dev previews:** `/dev-ui` and `/dev-ui/<stores|orders|users|subs|webhooks|recovery|audit>` render the screens with fixture
+  data and no login. They 404 in production.
+- **`webhook_logs`** has no writer yet, so the Webhook logs page is empty until a provider callback records into it.
+
+## Google Analytics (apps/web)
+
+GA4, loaded once from `app/layout.tsx` (`components/google-analytics.tsx`, logic in `lib/analytics-logic.ts`). The property id
+defaults to the production one; `NEXT_PUBLIC_GA_ID` overrides it. Consent Mode v2: analytics storage is denied until the visitor
+accepts the banner (`mng_cookie_ok` in localStorage). `send_page_view` is off and one sanitised `page_view` is sent per route:
+only `utm_*`, `gclid` and `ref` survive in the reported URL, so invite tokens and similar never reach Google. `/admin`, `/auth`,
+`/callback`, `/invite`, `/dev-login`, `/api` and `/settings` are not tracked. The cross-domain linker covers the platform and
+storefront hosts. spiritb.uk has no analytics yet, and storefronts have no per-store analytics beyond `store_analytics`.

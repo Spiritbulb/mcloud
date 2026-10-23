@@ -39,6 +39,9 @@ in each app.
 | `public` | Intentionally unauthenticated | none; **reason required** |
 | `webhook` | Called by a provider, unauthenticated | none; **reason required** |
 
+Every state-changing `admin` route also calls `recordAudit()` (`apps/web/lib/audit.ts`) once the change has succeeded; see
+[architecture.md](architecture.md#admin-console).
+
 For `session`, `public` and `webhook` the line must carry a reason:
 
 ```ts

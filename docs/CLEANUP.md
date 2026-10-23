@@ -430,14 +430,13 @@ holding the public key could read and write users (including `role`), stores, or
 The admin pages and the settings screens (products, services, orders, blog, appearance) were querying Supabase from the
 browser and depended on those policies.
 
-**State checked against production on 2026-10-14:** the lockdown is in effect. Every public table has RLS on; `anon` and `authenticated` hold **zero** table grants; neither can execute any SECURITY DEFINER function; only 8 policies remain. The `20261012*` migrations are not in `supabase_migrations` (they were applied some other way), so do not re-run them blindly; the migration files document intent, the database is the truth. Still open from this section: the `bill-servers-every-10-min` cron job carries a literal bearer token in its command (move it to Vault and rotate the token, which also needs the matching secret changed in the Vercel project it calls), and the legacy Supabase-Auth password forms in `apps/web`.
+**State checked against production on 2026-10-14:** the lockdown is in effect. Every public table has RLS on; `anon` and `authenticated` hold **zero** table grants; neither can execute any SECURITY DEFINER function; only 8 policies remain. The `20261012*` migrations are not in `supabase_migrations` (they were applied some other way), so do not re-run them blindly; the migration files document intent, the database is the truth. Since then: the `bill-servers-every-10-min` cron job reads its bearer token from Vault (`bill_servers_cron_token`) instead of carrying it in the command (2026-10-23). **Still open:** rotate that token, which means setting a new value as the function's own secret and in Vault at the same time (any run in between gets a 401), and the legacy Supabase-Auth password forms in `apps/web`.
 
 Code done: admin pages and the docs page use the server client; the five settings screens call server actions in
 `apps/storefront/lib/admin/*` (authorized per store, scoped by `store_id`, plan limits and blog gating now enforced; appearance
 reuses the validating `updateStoreTheme`); a guard test pins browser-client importers. **Database migrations written, NOT applied:**
 `migrations/20261012_lock_down_privileged_functions_and_wallet_tables.sql` (apply any time) and
-`migrations/20261012b_server_only_database_access.sql` (apply only after this code is deployed). Also: move the `bill-servers`
-cron's bearer token to Vault and rotate it, and delete or replace the legacy Supabase-Auth password forms in `apps/web`.
+`migrations/20261012b_server_only_database_access.sql` (apply only after this code is deployed). Also: delete or replace the legacy Supabase-Auth password forms in `apps/web`, and remove `POST /api/mobile/upload` if nothing uses it (any signed-in user can write to any path in an allowed bucket, with overwrite).
 
 ## Open items (2026-10-14)
 
