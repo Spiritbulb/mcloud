@@ -1,9 +1,12 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { AdminDesktopNav, AdminMobileNav, ADMIN_SECTIONS, getActiveId } from './admin-nav'
 import type { AdminUser } from './admin-nav'
+import { Icon } from './ui/icon'
+import { buttonClass } from './ui/button'
 
 export default function AdminShell({
     user,
@@ -16,9 +19,14 @@ export default function AdminShell({
     const activeId = getActiveId(pathname)
     const [mobileNavOpen, setMobileNavOpen] = useState(false)
 
-    const activeLabel = ADMIN_SECTIONS
-        .flatMap(s => s.items)
-        .find(i => i.id === activeId)?.label ?? 'Dashboard'
+    // "Admin › Platform › Users". The overview page has no section worth naming.
+    const section = ADMIN_SECTIONS.find(s => s.items.some(i => i.id === activeId))
+    const item = section?.items.find(i => i.id === activeId)
+    const crumbs = [
+        'Admin',
+        ...(section && section.id !== 'overview' ? [section.label] : []),
+        item?.label ?? 'Dashboard',
+    ]
 
     return (
         <div className="h-[100dvh] overflow-hidden flex bg-background">
@@ -39,24 +47,33 @@ export default function AdminShell({
             <div className="flex flex-col flex-1 min-w-0 min-h-0">
 
                 {/* Top header */}
-                <header className="shrink-0 h-[57px] bg-background z-40 flex items-center px-4 md:px-5 gap-3">
+                <header className="shrink-0 h-12 z-40 flex items-center gap-3 border-b border-border bg-background px-4 md:px-6">
                     <button
                         onClick={() => setMobileNavOpen(true)}
-                        className="md:hidden flex items-center justify-center w-8 h-8 rounded-md text-muted-foreground hover:bg-muted transition-colors shrink-0"
+                        className="md:hidden flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
                         aria-label="Open navigation"
                     >
-                        <span className="material-symbols-outlined select-none leading-none text-[20px]">menu</span>
+                        <Icon name="menu" size={20} />
                     </button>
 
-                    <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-[13px] text-muted-foreground">Admin</span>
-                        <span className="material-symbols-outlined select-none leading-none text-[16px] text-muted-foreground opacity-40">
-                            chevron_right
-                        </span>
-                        <span className="text-[13px] font-medium text-foreground truncate">
-                            {activeLabel}
-                        </span>
-                    </div>
+                    <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px]">
+                        {crumbs.map((c, i) => (
+                            <span key={`${c}-${i}`} className="flex min-w-0 items-center gap-1.5">
+                                {i > 0 && <Icon name="chevron_right" size={14} className="text-muted-foreground/50" />}
+                                <span
+                                    aria-current={i === crumbs.length - 1 ? 'page' : undefined}
+                                    className={i === crumbs.length - 1 ? 'truncate font-medium text-foreground' : 'text-muted-foreground'}
+                                >
+                                    {c}
+                                </span>
+                            </span>
+                        ))}
+                    </nav>
+
+                    <Link href="/org" className={buttonClass('ghost', 'sm')}>
+                        <Icon name="arrow_back" size={14} />
+                        <span className="hidden sm:inline">Back to platform</span>
+                    </Link>
                 </header>
 
                 {/* Page content */}

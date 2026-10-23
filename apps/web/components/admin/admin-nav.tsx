@@ -1,10 +1,12 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { ThemedLogo } from '@mcloud/ui/themed-logo'
 import { cn } from '@mcloud/ui/utils'
+import { Icon } from './ui/icon'
+import { Avatar } from './ui/avatar'
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -88,18 +90,6 @@ export function getActiveId(pathname: string): string {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function getInitials(name: string) {
-    return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
-}
-
-function MSO({ icon, className }: { icon: string; className?: string }) {
-    return (
-        <span className={cn('material-symbols-outlined select-none leading-none', className)}>
-            {icon}
-        </span>
-    )
-}
-
 // ─── RailToggle ───────────────────────────────────────────────────────────────
 
 function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () => void }) {
@@ -107,9 +97,10 @@ function RailToggle({ railMode, onToggle }: { railMode: boolean; onToggle: () =>
         <button
             onClick={onToggle}
             title={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
-            className="p-1.5 rounded-md text-muted-foreground hover:bg-muted transition-colors"
+            aria-label={railMode ? 'Expand sidebar' : 'Collapse sidebar'}
+            className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
         >
-            <MSO icon={railMode ? 'menu_open' : 'menu'} className="text-[20px]" />
+            <Icon name={railMode ? 'left_panel_open' : 'left_panel_close'} size={18} />
         </button>
     )
 }
@@ -140,21 +131,14 @@ function NavItemButton({
                 }}
                 className={cn(
                     'flex items-center gap-2.5 w-full transition-colors duration-100 rounded-md',
-                    railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3',
+                    railMode ? 'justify-center w-9 h-9 mx-auto' : 'h-8 px-2.5',
                     isActive
-                        ? 'bg-brand-container text-[rgb(var(--foreground))] font-medium'
-                        : 'text-[rgb(var(--muted-foreground))] hover:bg-[rgb(var(--background))] hover:text-foreground',
+                        ? 'bg-muted text-foreground font-medium'
+                        : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
                     item.comingSoon && 'opacity-50 cursor-not-allowed'
                 )}
             >
-                <MSO
-                    icon={item.icon}
-                    className={cn(
-                        'shrink-0',
-                        railMode ? 'text-[20px]' : 'text-[18px]',
-                        isActive ? 'text-[rgb(var(--brand))]' : 'text-[rgb(var(--foreground))]'
-                    )}
-                />
+                <Icon name={item.icon} size={railMode ? 20 : 18} className={isActive ? 'text-foreground' : undefined} />
                 {!railMode && (
                     <>
                         <span className="flex-1 text-left text-[13px] truncate">{item.label}</span>
@@ -184,18 +168,18 @@ function NavSectionGroup({
     onClose?: () => void
 }) {
     return (
-        <div className="mb-1">
+        <div>
             {railMode
-                ? <div className="mx-2 my-1 h-px bg-[var(--md-sys-color-outline-variant)]" />
+                ? <div className="mx-2 my-2 h-px bg-border" />
                 : (
-                    <div className="px-3 py-1.5">
-                        <span className="text-[10px] font-semibold tracking-widest uppercase text-muted-foreground opacity-60">
+                    <div className="px-3.5 pt-3 pb-1">
+                        <span className="text-[11px] font-medium text-muted-foreground">
                             {section.label}
                         </span>
                     </div>
                 )
             }
-            <ul className={cn('space-y-0.5 list-none p-0', !railMode && 'px-1')}>
+            <ul className={cn('space-y-0.5 list-none p-0', !railMode && 'px-2')}>
                 {section.items.map(item => (
                     <NavItemButton
                         key={item.id}
@@ -213,25 +197,28 @@ function NavSectionGroup({
 // ─── ThemeToggle ──────────────────────────────────────────────────────────────
 
 function ThemeToggle({ railMode }: { railMode: boolean }) {
-    const { theme, setTheme } = useTheme()
-    const [mounted, setMounted] = useState(false)
-    useEffect(() => setMounted(true), [])
-    if (!mounted) return <div className={railMode ? 'w-10 h-10' : 'h-8'} />
-
-    const isDark = theme === 'dark'
+    const { resolvedTheme, setTheme } = useTheme()
 
     return (
         <button
-            onClick={() => setTheme(isDark ? 'light' : 'dark')}
-            title={isDark ? 'Light mode' : 'Dark mode'}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
+            title="Toggle theme"
             className={cn(
                 'flex items-center gap-2.5 w-full rounded-md transition-colors duration-100',
-                'text-muted-foreground hover:bg-muted',
-                railMode ? 'justify-center w-10 h-10 mx-auto' : 'h-8 px-3'
+                'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                railMode ? 'justify-center w-9 h-9 mx-auto' : 'h-8 px-2.5'
             )}
         >
-            <MSO icon={isDark ? 'light_mode' : 'dark_mode'} className={cn('shrink-0', railMode ? 'text-[20px]' : 'text-[18px]')} />
-            {!railMode && <span className="text-[13px]">{isDark ? 'Light mode' : 'Dark mode'}</span>}
+            {/* Both are rendered; the .dark class decides which shows, so server and client agree.
+                Wrappers do the hiding: the icon font's own CSS would override `hidden` on the glyph. */}
+            <span className="inline-flex dark:hidden"><Icon name="dark_mode" size={railMode ? 20 : 18} /></span>
+            <span className="hidden dark:inline-flex"><Icon name="light_mode" size={railMode ? 20 : 18} /></span>
+            {!railMode && (
+                <span className="text-[13px]">
+                    <span className="dark:hidden">Dark mode</span>
+                    <span className="hidden dark:inline">Light mode</span>
+                </span>
+            )}
         </button>
     )
 }
@@ -240,7 +227,7 @@ function ThemeToggle({ railMode }: { railMode: boolean }) {
 
 function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean }) {
     return (
-        <div className="px-2 py-2.5">
+        <div className="border-t border-border px-2 py-2">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                     <button
@@ -248,15 +235,10 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                         className={cn(
                             'flex items-center gap-2.5 rounded-md transition-colors duration-100 outline-none w-full',
                             'hover:bg-muted',
-                            railMode ? 'justify-center w-10 h-10 mx-auto' : 'px-2 py-1.5'
+                            railMode ? 'justify-center w-9 h-9 mx-auto' : 'px-2 py-1.5'
                         )}
                     >
-                        <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                            {user.avatarUrl
-                                ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover" />
-                                : getInitials(user.name)
-                            }
-                        </div>
+                        <Avatar name={user.name} src={user.avatarUrl} shape="circle" />
                         {!railMode && (
                             <>
                                 <div className="flex flex-col min-w-0 flex-1 text-left">
@@ -267,7 +249,7 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                                         {user.email}
                                     </span>
                                 </div>
-                                <MSO icon="expand_more" className="text-[18px] text-muted-foreground" />
+                                <Icon name="unfold_more" size={16} className="text-muted-foreground" />
                             </>
                         )}
                     </button>
@@ -278,12 +260,7 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                     className="w-52 bg-background border border-border shadow-lg rounded-xl p-1"
                 >
                     <div className="flex items-center gap-2 px-2 py-1.5 mb-1">
-                        <div className="store-avatar-fallback w-7 h-7 rounded-md shrink-0 flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                            {user.avatarUrl
-                                ? <img src={user.avatarUrl} alt={user.name} className="w-full h-full object-cover rounded-md" />
-                                : getInitials(user.name)
-                            }
-                        </div>
+                        <Avatar name={user.name} src={user.avatarUrl} shape="circle" />
                         <div className="flex flex-col min-w-0">
                             <span className="text-[12px] font-medium text-foreground truncate">{user.name}</span>
                             <span className="text-[11px] text-muted-foreground truncate">{user.email}</span>
@@ -292,17 +269,17 @@ function AccountFooter({ user, railMode }: { user: AdminUser; railMode: boolean 
                     <DropdownMenuSeparator className="bg-[var(--md-sys-color-outline-variant)]" />
                     <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px] gap-2">
                         <Link href="/org">
-                            <MSO icon="arrow_back" className="text-[16px] text-muted-foreground" />
+                            <Icon name="arrow_back" size={16} className="text-muted-foreground" />
                             Back to platform
                         </Link>
                     </DropdownMenuItem>
                     <DropdownMenuSeparator className="bg-[var(--md-sys-color-outline-variant)]" />
-                    <DropdownMenuItem
-                        className="rounded-lg cursor-pointer text-[13px] gap-2 text-destructive focus:text-destructive"
-                        onSelect={() => { window.location.href = '/auth/logout' }}
-                    >
-                        <MSO icon="logout" className="text-[16px]" />
-                        Sign out
+                    <DropdownMenuItem asChild className="rounded-lg cursor-pointer text-[13px] gap-2 text-destructive focus:text-destructive">
+                        {/* A real link: sign-out is a route, and this needs no client-side navigation. */}
+                        <a href="/auth/logout">
+                            <Icon name="logout" size={16} />
+                            Sign out
+                        </a>
                     </DropdownMenuItem>
                 </DropdownMenuContent>
             </DropdownMenu>
@@ -330,47 +307,36 @@ export function SidebarBody({
 
     return (
         <aside className={cn(
-            'flex flex-col h-[90dvh] md:h-[98dvh] my-auto ml-2 rounded-md bg-card',
-            'transition-all duration-200 ease-out',
-            railMode ? 'w-[56px]' : 'w-[220px]'
+            'flex flex-col h-full border-r border-border bg-background',
+            'transition-[width] duration-200 ease-out',
+            railMode ? 'w-[56px]' : 'w-[232px]'
         )}>
-            {/* Logo + toggle */}
+            {/* Logo + toggle. "Admin" is a quiet tag, not a banner. */}
             <div className={cn(
-                'flex items-center shrink-0',
-                railMode ? 'justify-center py-3 px-2' : 'justify-between px-4 py-3'
+                'flex h-12 shrink-0 items-center border-b border-border',
+                railMode ? 'justify-center px-2' : 'justify-between px-4'
             )}>
                 {!railMode && (
-                    <Link href="/admin" className="flex items-center shrink-0">
+                    <Link href="/admin" className="flex items-center gap-2 shrink-0">
                         <ThemedLogo className="w-auto h-5" />
+                        <span className="rounded border border-border px-1.5 py-px text-[10px] font-medium text-muted-foreground">Admin</span>
                     </Link>
                 )}
-                <div className="flex items-center">
-                    {showClose ? (
-                        <button
-                            onClick={onClose}
-                            aria-label="Close navigation"
-                            className="p-1.5 rounded-full hover:bg-muted transition-colors text-muted-foreground"
-                        >
-                            <MSO icon="close" className="text-[20px]" />
-                        </button>
-                    ) : onToggleRail && (
-                        <RailToggle railMode={railMode} onToggle={onToggleRail} />
-                    )}
-                </div>
+                {showClose ? (
+                    <button
+                        onClick={onClose}
+                        aria-label="Close navigation"
+                        className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                    >
+                        <Icon name="close" size={18} />
+                    </button>
+                ) : onToggleRail && (
+                    <RailToggle railMode={railMode} onToggle={onToggleRail} />
+                )}
             </div>
 
-            {/* Admin badge */}
-            {!railMode && (
-                <div className="px-4 pb-3">
-                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-destructive/20 text-destructive-foreground">
-                        <MSO icon="shield" className="text-[11px]" />
-                        Admin Console
-                    </span>
-                </div>
-            )}
-
             {/* Nav sections */}
-            <nav className="flex-1 overflow-y-auto overflow-x-hidden py-1">
+            <nav className="flex-1 overflow-y-auto overflow-x-hidden pb-2">
                 {ADMIN_SECTIONS.map(section => (
                     <NavSectionGroup
                         key={section.id}
@@ -383,7 +349,7 @@ export function SidebarBody({
             </nav>
 
             {/* Theme toggle */}
-            <div className={cn('pb-1', !railMode && 'px-1')}>
+            <div className={cn('pb-1', !railMode && 'px-2')}>
                 <ThemeToggle railMode={railMode} />
             </div>
 
@@ -398,7 +364,7 @@ export function AdminDesktopNav({ user, activeId }: { user: AdminUser; activeId:
     const [railMode, setRailMode] = useState(false)
 
     return (
-        <div className="hidden md:flex shrink-0">
+        <div className="hidden md:flex h-full shrink-0">
             <SidebarBody
                 railMode={railMode}
                 onToggleRail={() => setRailMode(v => !v)}
@@ -488,19 +454,17 @@ export function AdminMobileNav({
                         aria-label="Open navigation"
                         className="flex items-center justify-center w-6 h-14 rounded-r-xl bg-accent shadow-md active:bg-primary"
                     >
-                        <span className="material-symbols-outlined text-[16px] text-accent-foreground">
-                            chevron_right
-                        </span>
+                        <Icon name="chevron_right" size={16} className="text-accent-foreground" />
                     </button>
                 </div>
             )}
 
             <div
                 className={cn(
-                    'md:hidden fixed inset-y-0 left-0 z-50 flex flex-col h-[98dvh] w-[300px] my-auto ml-2 rounded-lg',
-                    'bg-card shadow-xl',
+                    'md:hidden fixed inset-y-0 left-0 z-50 flex h-dvh w-[280px] flex-col',
+                    'bg-background shadow-xl',
                     dragging.current ? '' : 'transition-transform duration-200 ease-out',
-                    open ? 'translate-x-0' : '-translate-x-[calc(100%+0.5rem)]',
+                    open ? 'translate-x-0' : '-translate-x-full',
                 )}
                 style={panelTranslate ? { transform: panelTranslate } : undefined}
                 onTouchStart={handlePanelTouchStart}
