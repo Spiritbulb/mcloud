@@ -42,9 +42,12 @@ export default async function SettingsLayout({
         }
     }
 
+    // Without access, the page must not reach the browser at all. SettingsShell is a client
+    // component: anything passed to it is serialized into the response even when it renders only
+    // the error screen, and most pages read the store (or its drafts) with the service-role client.
     return (
         <SettingsShell orgSlug={orgSlug} slug={storeSlug} initialStore={initialStore} initialError={initialError}>
-            {children}
+            {initialError || !initialStore ? null : children}
         </SettingsShell>
     )
 }

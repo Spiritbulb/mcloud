@@ -18,9 +18,9 @@ export default async function BlogSettingsPage({ params }: Props) {
     const supabase = await createClient()
     const plan = await getStorePlan(store.id)
 
-    // Fetch posts (all, including drafts) + authors in parallel.
-    // RLS on blog_posts has a member-write policy so only store members
-    // will get draft rows back — no extra membership query needed.
+    // Fetch posts (all, including drafts) + authors in parallel. This is the service-role client,
+    // so RLS does not apply: access is checked by the settings layout, which does not render this
+    // page for someone without access (settings-access.test.ts).
     const [{ data: posts }, { data: authors }] = await Promise.all([
         supabase
             .from('blog_posts')
