@@ -4,9 +4,10 @@
 import { createClient } from '@mcloud/db/server'
 import { requireManagedStore, type ActionResult } from './access'
 
-// The statuses the settings UI offers (plus 'cancelled', used by the filter tabs).
-export const ORDER_STATUSES = ['pending', 'paid', 'partially_paid', 'refunded', 'voided', 'cancelled'] as const
-export const FULFILLMENT_STATUSES = ['unfulfilled', 'partially_fulfilled', 'fulfilled'] as const
+// The statuses the settings UI offers (plus 'cancelled', used by the filter tabs). Not exported:
+// a 'use server' file may only export async functions.
+const ORDER_STATUSES = ['pending', 'paid', 'partially_paid', 'refunded', 'voided', 'cancelled'] as const
+const FULFILLMENT_STATUSES = ['unfulfilled', 'partially_fulfilled', 'fulfilled'] as const
 
 const ORDER_COLUMNS =
     'id, order_number, status, fulfillment_status, total, currency, customer_email, customer_phone, subtotal, tax, shipping, discount, notes, created_at'

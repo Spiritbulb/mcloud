@@ -4,6 +4,7 @@ const nextConfig: NextConfig = {
     output: 'standalone',
     transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/themes', '@mcloud/auth', '@mcloud/merchant'],
     turbopack: {},
+    agentRules: false,
     allowedDevOrigins: ['http://localhost:3001', 'http://localhost:3000'],
     images: {
         remotePatterns: [
