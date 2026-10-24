@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0](https://github.com/Spiritbulb/mcloud/compare/v1.3.0...v1.4.0) (2026-10-24)
+
+### Features
+
+* **logos:** a square icon beside the logo for tabs, home screens and tiles
+* **web:** the marketing page lives at /home so signed-in users can open it
+* **payments:** say when a store uses its organization's M-PESA details
+* **servers:** create-server form on the UI kit
+* **settings:** services on the UI kit; custom-domain links
+* **settings:** analytics, payments, account and blog on the UI kit
+* **settings:** domain, social, delivery, tracking and Reach on the UI kit
+* **settings:** store settings screens on the UI kit
+* **org:** org hub screens on the UI kit
+* **ui:** one app shell for the admin, the org hub and store settings
+* **ui:** kit loading states, form controls, save bar, tabs and confirm dialog
+* **security:** add functions for bill-servers token validation and UpCloud API key retrieval
+* **admin:** server-side pagination, mobile card tables, new-users graph
+* **admin:** flush sidebar and a real header
+* **admin:** move stores, orders, users, subscriptions, webhooks and recovery onto the UI kit
+* **admin:** shared UI kit; rebuild the dashboard and audit log on it
+* **admin:** append-only audit log for admin changes
+* **admin:** needs-attention queue, revenue and recent activity on the dashboard
+* add QR code functionality for Reach keys and enhance vendor earnings API
+* add mobile admin API for managing areas, finance, payouts, and vendor approvals
+* introduce Reach marketplace integration for store vendors
+* **plans:** one resolver for a store's plan; remove Google Play billing
+
+### Bug Fixes
+
+* **logos:** wide logos are fitted, not cropped to a square
+* **storefront:** the selected delivery zone and pill options look selected
+* **themes:** draw an empty tile for missing images instead of a 404
+* **themes:** products that don't track inventory are always in stock
+* **storefront:** primary buttons were styled as transparent outline buttons
+* **db:** createClient no longer passes request cookies to supabase
+* **ui:** phone drawer ends at the nav instead of a strip beyond it
+* **ui:** Stat shows no change badge when there is no previous value
+* **account:** refuse account deletion before deleting anything it cannot finish
+* **orders:** offer only payment statuses the database accepts
+* **security:** don't send settings pages to people without store access
+* **analytics:** restore get_store_analytics shape; payments load errors
+* **docs:** update cleanup and roadmap for bill-servers token handling and UpCloud key retrieval
+* **analytics:** stop leaking invite tokens to GA, report one sanitised page view
+* **auth:** stop a failed account link from creating a duplicate users row
+* **auth:** create the users row on SSO handoff, promote owners to client
+* **payments:** confirm Daraja callbacks with STK Query before marking paid
+* **storefront:** - Cart page shipping bug -  Merchant form save errors - Contact line change - Cart cleanup
+* **security:** move all merchant database access to the server
+
+### Refactoring
+
+* **ui:** states are a dot and text, panels and tables draw one line per edge
+* **ui:** move the admin UI kit into @mcloud/ui/kit
+* **config:** move order statuses to local scope and add agentRules to next.config
+
+### Documentation
+
+* org-wide M-PESA fallback, settings access rule, credential test, kit adoption
+* **cleanup:** bill-servers has been returning 401; record the fix
+* bring architecture, api, roadmap and cleanup up to date
+* record the callback fix and the verified DB lockdown state
+* oct 14 maintenance
+
+### Maintenance
+
+* **ui:** quieter dividers, controls keep the stronger edge
+
+All notable changes to this project will be documented in this file.
+
 ## [1.3.0](https://github.com/Spiritbulb/mcloud/compare/v1.2.0...v1.3.0) (2026-10-12)
 
 ### Features
