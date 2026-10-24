@@ -21,7 +21,9 @@ export async function generateMetadata({ params }: Props) {
         ? store.settings as Record<string, unknown>
         : {}
 
-    const ogImage = store.logo_url ?? (settings.heroImage as string | undefined) ?? null
+    // Link previews are wide and cropped by each platform: the hero photo makes a far better card
+    // than a logo, which is often a wordmark that ends up cut off or tiny.
+    const ogImage = (settings.heroImage as string | undefined) || store.logo_url || null
 
     return {
         title: store.name,

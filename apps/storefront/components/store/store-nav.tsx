@@ -54,7 +54,7 @@ export default function StoreNav({ store, pages = [] }: { store: Store; pages?: 
                         <img
                             src={store.logo_url}
                             alt={store.name}
-                            className="object-cover h-10 w-auto"
+                            className="h-10 w-auto max-w-[160px] object-contain object-left"
                             style={{ borderRadius: 'var(--sf-border-radius)' }}
                         />
                     ) : (
