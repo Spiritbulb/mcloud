@@ -27,6 +27,7 @@ import { Button } from '@mcloud/ui/button'
 import { Card, CardContent } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ServiceDetailsPageProps, ServicePackage } from '../types'
+import { imageOrNull } from '../image-logic'
 
 // ─── Availability badge ───────────────────────────────────────────────────────
 function AvailabilityBadge({ status }: { status: 'available' | 'busy' | 'unavailable' }) {
@@ -72,12 +73,16 @@ function MediaGallery({
                             poster={media.find((m) => m.type === 'image')?.url}
                         />
                     </div>
-                ) : (
+                ) : imageOrNull(current?.url) ? (
                     <img
-                        src={current?.url ?? '/api/placeholder/800/600'}
+                        src={imageOrNull(current?.url)!}
                         alt={current?.alt ?? serviceName}
                         className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
                     />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Package className="sf-product-card__bag-icon" aria-hidden />
+                    </div>
                 )}
 
                 {/* Navigation arrows */}

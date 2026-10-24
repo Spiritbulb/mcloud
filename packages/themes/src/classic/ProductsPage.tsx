@@ -10,16 +10,14 @@ import { Card, CardContent } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ProductsPageProps, ProductItem, ServiceItem } from '../types'
 import { isInStock } from '../stock-logic'
+import { firstImage } from '../image-logic'
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({ product }: { product: ProductItem }) {
     const { addToCart, storeSlug } = useCart()
     const [isLoading, setIsLoading] = useState(false)
 
-    const imageUrl =
-        Array.isArray(product.images) && product.images.length > 0
-            ? product.images[0]
-            : '/api/placeholder/400/500'
+    const imageUrl = firstImage(product.images)
 
     const inStock = isInStock(product)
     const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
@@ -35,7 +33,7 @@ function ProductCard({ product }: { product: ProductItem }) {
                 productId: product.id,
                 name: product.name,
                 price: product.price,
-                image: imageUrl,
+                image: imageUrl ?? '',
                 quantity: 1,
             })
         } finally {
@@ -46,11 +44,17 @@ function ProductCard({ product }: { product: ProductItem }) {
     return (
         <div className="sf-tile group flex flex-col h-full">
             <Link href={`/store/${storeSlug}/${product.slug}`} className="block relative overflow-hidden aspect-[4/5] sf-bg-muted">
-                <img
-                    src={imageUrl}
-                    alt={product.name}
-                    className="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
-                />
+                {imageUrl ? (
+                    <img
+                        src={imageUrl}
+                        alt={product.name}
+                        className="object-cover group-hover:scale-105 transition-transform duration-500 w-full h-full"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center">
+                        <Package className="sf-product-card__bag-icon" aria-hidden />
+                    </div>
+                )}
                 {hasDiscount && (
                     <span className="sf-badge-sale absolute top-3 left-3 z-10 shadow-lg inline-flex items-center px-2.5 py-0.5 text-xs font-medium">
                         -{discount}%

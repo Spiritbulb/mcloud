@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { Loader2, Plus, Minus, Trash2, ShoppingBag, Shield } from 'lucide-react'
+import { imageOrNull } from '../image-logic'
 import { formatKES } from '../../../../apps/storefront/lib/currency'
 import { cartShippingLabel } from '../../../../apps/storefront/lib/delivery-zones-logic'
 import { useStoreHref } from '../../../../apps/storefront/contexts/StoreContext'
@@ -84,11 +85,17 @@ export default function ClassicCartPage({
                                             className="relative flex-shrink-0 w-20 h-20 sm:w-24 sm:h-24 overflow-hidden"
                                             style={{ backgroundColor: 'var(--sf-muted)' }}
                                         >
-                                            <img
-                                                src={item.image || `/api/placeholder/200/200`}
-                                                alt={item.name}
-                                                className="object-cover w-full h-full"
-                                            />
+                                            {imageOrNull(item.image) ? (
+                                                <img
+                                                    src={imageOrNull(item.image)!}
+                                                    alt={item.name}
+                                                    className="object-cover w-full h-full"
+                                                />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <ShoppingBag className="sf-product-card__bag-icon" aria-hidden />
+                                                </div>
+                                            )}
                                         </div>
                                         <div className="flex-1 min-w-0 space-y-1">
                                             <div className="flex items-start justify-between gap-2">
