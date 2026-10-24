@@ -1,38 +1,21 @@
-import { createServerClient } from '@supabase/ssr'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { cache } from 'react'
 import type { Database } from './database.types'
 
 /**
- * If using Fluid compute: Don't put this client in a global variable. Always create a new client within each
- * function when using it.
+ * Service-role client for request-time server code. Bypasses RLS: the caller authorizes.
+ *
+ * It reads `cookies()` only so that callers stay dynamic (pages and layouts rely on that), and
+ * never hands those cookies to Supabase. It used to (an `@supabase/ssr` cookie client): a request
+ * carrying a shopper's Supabase Auth cookie then sent the shopper's JWT instead of the service
+ * key, so every "service-role" query ran as `authenticated` under RLS and failed or came back
+ * short (seen as `permission denied for table users`). Shopper sessions belong to
+ * `@mcloud/db/customer-server`.
  */
 export async function createClient() {
-  const cookieStore = await cookies()
-
-  return createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return cookieStore.getAll()
-        },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
-          } catch {
-            // The `setAll` method was called from a Server Component.
-            // This can be ignored if you have middleware refreshing
-            // user sessions.
-          }
-        },
-      },
-    }
-  )
+  await cookies()
+  return createPublicClient()
 }
 
 // Deduplicated per-render store lookup. React cache() ensures that even if

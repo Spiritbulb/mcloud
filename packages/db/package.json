@@ -2,6 +2,9 @@
   "name": "@mcloud/db",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "test": "node ../../scripts/run-tests.mjs"
+  },
   "exports": {
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
