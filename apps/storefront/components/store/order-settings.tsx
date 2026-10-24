@@ -2,7 +2,7 @@
 
 import { Fragment, useState, useEffect, useCallback, useMemo } from 'react'
 import { listOrderItems, listOrders, setOrderStatus } from '@/lib/admin/order-actions'
-import { Badge, fulfillmentTone, orderStatusTone } from '@mcloud/ui/kit/badge'
+import { Status, fulfillmentTone, orderStatusTone } from '@mcloud/ui/kit/badge'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Field, Select } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
@@ -292,8 +292,8 @@ export default function OrderSettings({
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1 max-md:pr-1.5"><Badge tone={orderStatusTone(order.status)}>{statusLabel(order.status)}</Badge></td>
-                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1"><Badge tone={fulfillmentTone(order.fulfillment_status)}>{statusLabel(order.fulfillment_status)}</Badge></td>
+                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1 max-md:pr-1.5"><Status tone={orderStatusTone(order.status)}>{statusLabel(order.status)}</Status></td>
+                                                <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1"><Status tone={fulfillmentTone(order.fulfillment_status)}>{statusLabel(order.fulfillment_status)}</Status></td>
                                                 <td className="px-4 py-2.5 text-right text-[13px] font-medium tabular-nums max-md:block max-md:px-0 max-md:py-1 max-md:text-left">{formatMoney(order.currency, order.total)}</td>
                                                 <td className="w-10 px-4 py-2.5 text-right max-md:hidden">
                                                     <Icon name={open ? 'expand_less' : 'expand_more'} size={18} className="text-muted-foreground" />

@@ -36,7 +36,7 @@ export function Tabs({
                     <>
                         {t.label}
                         {t.count !== undefined && (
-                            <span className={cn('rounded-full px-1.5 text-[11px] tabular-nums', active ? 'bg-muted text-foreground' : 'bg-muted/60')}>
+                            <span className={cn('text-[12px] tabular-nums', active ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
                                 {t.count}
                             </span>
                         )}

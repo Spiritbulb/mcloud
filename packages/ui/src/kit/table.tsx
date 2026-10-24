@@ -11,10 +11,16 @@ import { cn } from '../utils'
 // still there as text, each value next to its label.)
 //
 // While data loads, render <SkeletonRows columns={n} /> (./skeleton) as the body and pass `busy`.
+//
+// Rules: each body row is ruled above, except the first, so it never doubles the line the header
+// row (or, without a header row, the Panel header) already draws.
 export function Table({ children, busy }: { children: ReactNode; busy?: boolean }) {
     return (
         <div className="overflow-x-auto max-md:[&_table]:block max-md:[&_tbody]:block max-md:[&_thead]:hidden">
-            <table aria-busy={busy || undefined} className="w-full text-[13px]">{children}</table>
+            <table
+                aria-busy={busy || undefined}
+                className="w-full text-[13px] [&_thead_tr]:border-b [&_thead_tr]:border-border [&_tbody>tr:first-child]:border-t-0"
+            >{children}</table>
         </div>
     )
 }

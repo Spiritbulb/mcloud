@@ -4,7 +4,7 @@ import { useState } from 'react'
 import type { Tables } from '@mcloud/db/types'
 import { updateStoreSettings } from '../actions'
 import { storefrontUrl, storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Status } from '@mcloud/ui/kit/badge'
 import { Field, FormGrid, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
@@ -142,7 +142,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                     <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground">
                         {saved.isActive ? (
                             <>
-                                <Badge tone="success">Live</Badge>
+                                <Status tone="success">Live</Status>
                                 <a href={storefrontUrl(store.slug)} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 underline underline-offset-2 hover:text-foreground">
                                     {storefrontDisplayUrl(store.slug)}
                                     <Icon name="open_in_new" size={13} />
@@ -150,7 +150,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
                             </>
                         ) : (
                             <>
-                                <Badge>Hidden</Badge>
+                                <Status>Hidden</Status>
                                 <span>Visitors see the coming soon page.</span>
                             </>
                         )}

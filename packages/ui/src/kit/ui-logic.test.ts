@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { deltaTone, formatDelta, initials, isDirty, percentChange, skeletonWidth, sparklinePaths, timeAgo } from './ui-logic.ts'
+import { deltaTone, formatDelta, humanize, initials, isDirty, percentChange, skeletonWidth, sparklinePaths, timeAgo } from './ui-logic.ts'
 
 test('percent change is relative to the previous period', () => {
     assert.equal(percentChange(150, 100), 50)
@@ -95,4 +95,12 @@ test('isDirty compares form data by value, ignoring key order and undefined keys
     assert.equal(isDirty({ note: null }, { note: undefined }), false)
     assert.equal(isDirty({ note: '' }, { note: null }), true)
     assert.equal(isDirty([], {}), true)
+})
+
+test('humanize turns raw statuses into labels', () => {
+    assert.equal(humanize('paid'), 'Paid')
+    assert.equal(humanize('partially_paid'), 'Partially paid')
+    assert.equal(humanize('partially-fulfilled'), 'Partially fulfilled')
+    assert.equal(humanize(null), '—')
+    assert.equal(humanize(''), '—')
 })

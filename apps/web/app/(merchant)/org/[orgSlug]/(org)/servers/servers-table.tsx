@@ -1,6 +1,7 @@
 // apps/web/app/org/[orgSlug]/servers/servers-table.tsx
 import Link from 'next/link'
-import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { humanize } from '@mcloud/ui/kit/ui-logic'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
 import type { UpcloudServerDetail } from '@/lib/upcloud'
 import { CopyableIp } from '@/components/copy'
@@ -49,7 +50,7 @@ export default function ServersTable({
                             </Td>
                             <Td label="Zone" muted>{s.zone}</Td>
                             <Td label="Plan" muted>{s.plan}</Td>
-                            <Td label="State"><Badge tone={STATE_TONE[s.state] ?? 'neutral'}>{s.state}</Badge></Td>
+                            <Td label="State"><Status tone={STATE_TONE[s.state] ?? 'neutral'}>{humanize(s.state)}</Status></Td>
                             <Td label="IP address">{ip ? <CopyableIp ip={ip} /> : '—'}</Td>
                         </Tr>
                     )

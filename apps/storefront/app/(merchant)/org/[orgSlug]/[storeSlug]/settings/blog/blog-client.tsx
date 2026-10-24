@@ -7,7 +7,7 @@ import ReactMarkdown from 'react-markdown'
 import type { Plan } from '@mcloud/merchant/plans'
 import { storefrontDisplayUrl } from '@mcloud/merchant/storefront-url'
 import type { BlogAuthor, BlogPost } from '@mcloud/themes/types'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Badge, Status } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
@@ -154,7 +154,7 @@ function PostSettings({ form, set, authors, onNewAuthor, onDelete }: {
     return (
         <Panel
             title="Post settings"
-            action={<Badge tone={form.is_published ? 'success' : 'neutral'}>{form.is_published ? 'Published' : 'Draft'}</Badge>}
+            action={<Status tone={form.is_published ? 'success' : 'neutral'}>{form.is_published ? 'Published' : 'Draft'}</Status>}
             footer={onDelete && (
                 <Button variant="danger" size="sm" onClick={onDelete} className="mr-auto">
                     <Icon name="delete" size={14} />
@@ -334,7 +334,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                                     {post.tags?.length ? ` · ${post.tags.slice(0, 3).join(', ')}` : ''}
                                                 </span>
                                             </button>
-                                            <Badge tone={post.is_published ? 'success' : 'neutral'}>{post.is_published ? 'Published' : 'Draft'}</Badge>
+                                            <Status tone={post.is_published ? 'success' : 'neutral'}>{post.is_published ? 'Published' : 'Draft'}</Status>
                                             <Button size="sm" variant="ghost" aria-label={`Delete ${post.title || 'post'}`} onClick={() => setDeleteTarget(post)}>
                                                 <Icon name="delete" size={15} />
                                             </Button>

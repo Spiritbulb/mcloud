@@ -73,7 +73,7 @@ function NavLink({ item, active, rail, onNavigate }: { item: ShellNavItem; activ
                     <>
                         <span className="flex-1 truncate text-left text-[13px]" aria-current={active ? 'page' : undefined}>{item.label}</span>
                         {item.badge && (
-                            <span className="rounded border border-border px-1 py-px text-[10px] font-medium leading-3 text-muted-foreground">{item.badge}</span>
+                            <span className="rounded bg-muted px-1 py-px text-[10px] font-medium leading-3 text-muted-foreground">{item.badge}</span>
                         )}
                         {item.external && <Icon name="open_in_new" size={13} className="text-muted-foreground/70" />}
                     </>
@@ -196,7 +196,7 @@ function Sidebar({
                     <AnyLink href={p.brandHref} className="flex shrink-0 items-center gap-2">
                         <ThemedLogo className="h-5 w-auto" />
                         {p.brandTag && (
-                            <span className="rounded border border-border px-1.5 py-px text-[10px] font-medium text-muted-foreground">{p.brandTag}</span>
+                            <span className="rounded bg-muted px-1.5 py-px text-[10px] font-medium text-muted-foreground">{p.brandTag}</span>
                         )}
                     </AnyLink>
                 )}

@@ -2,14 +2,14 @@
 import { useState } from 'react'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
-import { Badge, fulfillmentTone, orderStatusTone } from '@mcloud/ui/kit/badge'
+import { Status, fulfillmentTone, orderStatusTone } from '@mcloud/ui/kit/badge'
 import { FilterBar } from '@mcloud/ui/kit/filter-bar'
 import { Pagination } from '@mcloud/ui/kit/pagination'
 import { isFiltered, type ListQuery } from '@mcloud/ui/kit/list-query'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Notice } from '@mcloud/ui/kit/notice'
-import { timeAgo } from '@mcloud/ui/kit/ui-logic'
+import { timeAgo, humanize } from '@mcloud/ui/kit/ui-logic'
 import { ORDER_STATUSES } from './orders-filters'
 
 type Order = {
@@ -81,8 +81,8 @@ export default function OrdersClient({
                                     </Td>
                                     <Td muted label="Customer">{order.customer_email ?? '—'}</Td>
                                     <Td align="right" label="Total">{order.currency} {order.total?.toLocaleString() ?? '—'}</Td>
-                                    <Td label="Status"><Badge tone={orderStatusTone(order.status)}>{order.status ?? '—'}</Badge></Td>
-                                    <Td label="Fulfillment"><Badge tone={fulfillmentTone(order.fulfillment_status)}>{order.fulfillment_status ?? '—'}</Badge></Td>
+                                    <Td label="Status"><Status tone={orderStatusTone(order.status)}>{humanize(order.status)}</Status></Td>
+                                    <Td label="Fulfillment" muted={!order.fulfillment_status}>{order.fulfillment_status ? <Status tone={fulfillmentTone(order.fulfillment_status)}>{humanize(order.fulfillment_status)}</Status> : '—'}</Td>
                                     <Td align="right" muted label="Placed">{timeAgo(order.created_at, now)}</Td>
                                 </Tr>
                             ))}

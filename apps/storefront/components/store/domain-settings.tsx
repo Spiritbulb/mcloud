@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { Plan } from '@mcloud/merchant/plans'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Status } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { Field, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
@@ -182,11 +182,11 @@ export default function DomainSettings({
                             description={verified ? 'Visitors can reach your store at this domain.' : 'Add this record where you bought the domain, then check again.'}
                             action={
                                 checking ? (
-                                    <Badge tone="neutral">Checking…</Badge>
+                                    <Status tone="neutral">Checking…</Status>
                                 ) : verified ? (
-                                    <Badge tone="success">Connected</Badge>
+                                    <Status tone="success">Connected</Status>
                                 ) : status ? (
-                                    <Badge tone="warning">Waiting for DNS</Badge>
+                                    <Status tone="warning">Waiting for DNS</Status>
                                 ) : null
                             }
                             footer={

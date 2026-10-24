@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { planAllowsRequired, type Plan } from '@mcloud/merchant/plans'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Status } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { Field, FormGrid, Switch, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
@@ -294,7 +294,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
             <Panel
                 title="M-PESA STK Push (Daraja)"
                 description="Customers get a payment prompt on their phone, and orders are confirmed automatically."
-                action={darajaAllowed ? <Badge tone={darajaEnabled ? 'success' : 'neutral'}>{darajaEnabled ? 'On' : stored.consumerKey ? 'Off' : 'Not set up'}</Badge> : undefined}
+                action={darajaAllowed ? <Status tone={darajaEnabled ? 'success' : 'neutral'}>{darajaEnabled ? 'On' : stored.consumerKey ? 'Off' : 'Not set up'}</Status> : undefined}
                 footer={
                     darajaAllowed && !setupOpen ? (
                         <Button onClick={openSetup}>
@@ -362,7 +362,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                                         {test.state === 'testing' ? <Spinner size={13} /> : <Icon name="network_check" size={14} />}
                                         {test.state === 'testing' ? 'Testing…' : 'Test the keys'}
                                     </Button>
-                                    {test.state === 'ok' && <Badge tone="success">Safaricom accepted them</Badge>}
+                                    {test.state === 'ok' && <Status tone="success">Safaricom accepted them</Status>}
                                     <span className="text-[12px] text-muted-foreground">No payment is made.</span>
                                 </div>
                                 {test.state === 'fail' && test.error && <Notice tone="error">{test.error}</Notice>}

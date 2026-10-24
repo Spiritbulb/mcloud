@@ -2,14 +2,14 @@
 import { Fragment, useState } from 'react'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
-import { Badge, webhookStatusTone } from '@mcloud/ui/kit/badge'
+import { Status, webhookStatusTone } from '@mcloud/ui/kit/badge'
 import { FilterBar } from '@mcloud/ui/kit/filter-bar'
 import { Pagination } from '@mcloud/ui/kit/pagination'
 import { isFiltered, type ListQuery } from '@mcloud/ui/kit/list-query'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { ROW_CLASS, Table, Td, Th } from '@mcloud/ui/kit/table'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
-import { timeAgo } from '@mcloud/ui/kit/ui-logic'
+import { timeAgo, humanize } from '@mcloud/ui/kit/ui-logic'
 import { WEBHOOK_STATUSES } from './webhooks-filters'
 
 type WebhookLog = {
@@ -83,7 +83,7 @@ export default function WebhooksClient({
                                     >
                                         <Td><span className="font-mono text-[12px]">{log.provider ?? '—'}</span></Td>
                                         <Td muted label="Event">{log.event_type ?? '—'}</Td>
-                                        <Td label="Status"><Badge tone={webhookStatusTone(log.status)}>{log.status ?? '—'}</Badge></Td>
+                                        <Td label="Status"><Status tone={webhookStatusTone(log.status)}>{humanize(log.status)}</Status></Td>
                                         <Td muted label="Store">{log.store?.name ?? '—'}</Td>
                                         <Td align="right" muted label="When">{timeAgo(log.created_at, now)}</Td>
                                     </tr>

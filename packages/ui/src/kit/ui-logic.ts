@@ -111,3 +111,10 @@ function sameValue(a: unknown, b: unknown): boolean {
     const keys = new Set([...Object.keys(ra), ...Object.keys(rb)])
     return [...keys].every((k) => sameValue(ra[k], rb[k]))
 }
+
+/** A raw status value as a label: "partially_paid" -> "Partially paid". Empty -> "—". */
+export function humanize(value: string | null | undefined): string {
+    if (!value) return '—'
+    const s = value.replace(/[_-]+/g, ' ').trim()
+    return s.charAt(0).toUpperCase() + s.slice(1)
+}

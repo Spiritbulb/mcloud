@@ -7,7 +7,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getVertical } from '@mcloud/verticals'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
-import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button, buttonClass } from '@mcloud/ui/kit/button'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Icon } from '@mcloud/ui/kit/icon'
@@ -240,7 +240,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                     title={overviewHeadline(store.name, commerce, hasMoney)}
                     description={
                         <span className="flex flex-wrap items-center gap-2">
-                            <Badge tone={store.active ? 'success' : 'danger'}>{store.active ? 'Live' : 'Offline'}</Badge>
+                            <Status tone={store.active ? 'success' : 'danger'}>{store.active ? 'Live' : 'Offline'}</Status>
                             <span>{storefrontDisplayUrl(store.slug, store.custom_domain)}</span>
                         </span>
                     }
@@ -346,7 +346,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                                             <span className="block text-[12px] text-muted-foreground">{timeAgo(order.created_at, now)}</span>
                                         </span>
                                         <span className="text-[13px] font-medium tabular-nums">{formatCurrency(order.total, currency)}</span>
-                                        <Badge tone={STATUS_TONE[order.status] ?? 'neutral'}>{statusText(order.status)}</Badge>
+                                        <Status tone={STATUS_TONE[order.status] ?? 'neutral'}>{statusText(order.status)}</Status>
                                     </Link>
                                 </li>
                             ))}

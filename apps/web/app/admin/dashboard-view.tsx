@@ -3,10 +3,10 @@ import { PageHeader } from "@mcloud/ui/kit/page-header"
 import { Panel } from "@mcloud/ui/kit/panel"
 import { Stat, StatStrip, Delta } from "@mcloud/ui/kit/stat-strip"
 import { Sparkline } from "@mcloud/ui/kit/sparkline"
-import { Badge, orderStatusTone } from "@mcloud/ui/kit/badge"
+import { Status, orderStatusTone } from "@mcloud/ui/kit/badge"
 import { EmptyState } from "@mcloud/ui/kit/empty-state"
 import { Table, Td, Th, Tr } from "@mcloud/ui/kit/table"
-import { percentChange, timeAgo } from "@mcloud/ui/kit/ui-logic"
+import { percentChange, timeAgo, humanize } from "@mcloud/ui/kit/ui-logic"
 import { buttonClass } from "@mcloud/ui/kit/button"
 import { Icon } from "@mcloud/ui/kit/icon"
 import { formatMoney, type AttentionItem, type CurrencyRevenue, type Signups } from "./dashboard-logic"
@@ -101,7 +101,7 @@ export default function DashboardView({ data: d }: { data: DashboardData }) {
                                             <span className="font-medium">{o.storeName ?? "Unknown store"}</span>
                                             <span className="text-muted-foreground"> · #{o.order_number}</span>
                                         </Td>
-                                        <Td><Badge tone={orderStatusTone(o.status)}>{o.status ?? "unknown"}</Badge></Td>
+                                        <Td><Status tone={orderStatusTone(o.status)}>{humanize(o.status)}</Status></Td>
                                         <Td align="right">{formatMoney(o.total ?? 0, (o.currency ?? "KES").toUpperCase())}</Td>
                                         <Td align="right" muted>{timeAgo(o.created_at, d.now)}</Td>
                                     </Tr>

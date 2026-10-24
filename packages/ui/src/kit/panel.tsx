@@ -4,6 +4,10 @@ import { cn } from '../utils'
 /**
  * The one surface the admin is built from: a hairline-bordered card with an optional header row.
  * `flush` drops the body padding, for tables and lists that run edge to edge.
+ *
+ * One border per boundary: the card's own edge separates it from the page, and inside, space does
+ * the separating. The header gets a rule only when `flush` content (a list or table, whose rows are
+ * ruled) starts right under it; a padded body follows its title without one.
  */
 export function Panel({
     title,
@@ -26,7 +30,7 @@ export function Panel({
     return (
         <section className={cn('flex flex-col overflow-hidden rounded-lg border border-border bg-card', className)}>
             {(title || action) && (
-                <header className="flex items-center justify-between gap-4 border-b border-border px-4 py-3">
+                <header className={cn('flex items-center justify-between gap-4 px-4', flush ? 'border-b border-border py-3' : 'pb-1 pt-4')}>
                     <div className="min-w-0">
                         {title && <h2 className="font-sans text-[13px] font-medium text-foreground">{title}</h2>}
                         {description && <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>}
@@ -35,7 +39,7 @@ export function Panel({
                 </header>
             )}
             {/* flex-1: when a grid stretches the panel, the body grows and the footer stays at the bottom. */}
-            <div className={cn('flex-1', !flush && 'p-4')}>{children}</div>
+            <div className={cn('flex-1', !flush && (title || action ? 'px-4 pb-4 pt-3' : 'p-4'))}>{children}</div>
             {footer && <footer className="flex flex-wrap items-center justify-end gap-2 border-t border-border bg-muted/30 px-4 py-3">{footer}</footer>}
         </section>
     )

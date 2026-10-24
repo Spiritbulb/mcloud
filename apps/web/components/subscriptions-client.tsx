@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
-import { Badge, subscriptionStatusTone } from '@mcloud/ui/kit/badge'
+import { Status, subscriptionStatusTone } from '@mcloud/ui/kit/badge'
+import { humanize } from '@mcloud/ui/kit/ui-logic'
 import { Button } from '@mcloud/ui/kit/button'
 import { SelectField, Toolbar } from '@mcloud/ui/kit/fields'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
@@ -100,7 +101,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                         <p className="font-mono text-[11px] text-muted-foreground">{sub.stores?.slug}</p>
                                     </Td>
                                     <Td align="right" label="Amount">{sub.currency} {sub.amount.toLocaleString()}</Td>
-                                    <Td label="Status"><Badge tone={subscriptionStatusTone(sub.status)}>{sub.status}</Badge></Td>
+                                    <Td label="Status"><Status tone={subscriptionStatusTone(sub.status)}>{humanize(sub.status)}</Status></Td>
                                     <Td muted label="Reference"><span className="font-mono text-[12px]">{sub.google_play_order_id ?? '—'}</span></Td>
                                     <Td muted label="Created">
                                         {new Date(sub.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}

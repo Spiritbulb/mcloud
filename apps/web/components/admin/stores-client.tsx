@@ -12,7 +12,7 @@ import {
 } from '@mcloud/ui/alert-dialog'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Badge, Status } from '@mcloud/ui/kit/badge'
 import { Avatar } from '@mcloud/ui/kit/avatar'
 import { Button } from '@mcloud/ui/kit/button'
 import { SearchField, SelectField, Toolbar } from '@mcloud/ui/kit/fields'
@@ -165,7 +165,7 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                                             <p className="text-[12px] text-muted-foreground">{store.owner?.email ?? ''}</p>
                                         </Td>
                                         <Td label="Plan"><Badge tone={store.is_pro ? 'success' : 'neutral'}>{store.is_pro ? 'Pro' : 'Free'}</Badge></Td>
-                                        <Td label="Status"><Badge tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Badge></Td>
+                                        <Td label="Status"><Status tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Status></Td>
                                         <Td align="right">
                                             <div className="flex flex-wrap items-center justify-end gap-2 max-md:justify-start max-md:pt-1">
                                                 <Button size="sm" onClick={() => setPlanDialog({ store })}>Manage plan</Button>

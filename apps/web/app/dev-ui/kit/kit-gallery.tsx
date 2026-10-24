@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Badge, Status } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
@@ -80,8 +80,8 @@ export default function KitGallery() {
                             <SkeletonRows columns={4} rows={3} />
                         ) : (
                             <>
-                                <Tr><Td>#RCH-MVAOKAQO</Td><Td label="Status"><Badge tone="warning">Pending</Badge></Td><Td label="Placed" muted>16 Oct</Td><Td label="Total" align="right">KES 4</Td></Tr>
-                                <Tr><Td>#RCH-MUNQ325D</Td><Td label="Status"><Badge tone="success">Paid</Badge></Td><Td label="Placed" muted>30 Sept</Td><Td label="Total" align="right">KES 141</Td></Tr>
+                                <Tr><Td>#RCH-MVAOKAQO</Td><Td label="Status"><Status tone="warning">Pending</Status></Td><Td label="Placed" muted>16 Oct</Td><Td label="Total" align="right">KES 4</Td></Tr>
+                                <Tr><Td>#RCH-MUNQ325D <Badge tone="info">Featured</Badge></Td><Td label="Status"><Status tone="success">Paid</Status></Td><Td label="Placed" muted>30 Sept</Td><Td label="Total" align="right">KES 141</Td></Tr>
                             </>
                         )}
                     </tbody>

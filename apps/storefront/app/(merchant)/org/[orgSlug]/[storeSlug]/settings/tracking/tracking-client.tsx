@@ -4,7 +4,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Badge, fulfillmentTone } from '@mcloud/ui/kit/badge'
+import { Status, fulfillmentTone } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Select, TextInput } from '@mcloud/ui/kit/form'
@@ -85,9 +85,9 @@ function OrderRow({ order, onSave }: {
                 <div className="min-w-0">
                     <p className="flex items-center gap-2 truncate text-[13px] font-medium text-foreground">
                         <span className="truncate">#{order.order_number} · {order.customer_name}</span>
-                        <Badge tone={fulfillmentTone(savedFulfillment)}>
+                        <Status tone={fulfillmentTone(savedFulfillment)}>
                             {statusLabel(savedFulfillment)}
-                        </Badge>
+                        </Status>
                     </p>
                     <p className="mt-0.5 text-[12px] text-muted-foreground">
                         {order.delivery_option?.courier_name ?? 'No courier set'}

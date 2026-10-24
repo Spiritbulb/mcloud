@@ -2,7 +2,7 @@
 
 import { QRCodeSVG } from 'qrcode.react'
 import { useState, useTransition } from 'react'
-import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { Field, Select, TextInput } from '@mcloud/ui/kit/form'
@@ -160,7 +160,7 @@ function StatusPill({ status }: { status: ReachStatus }) {
                 : 'neutral'
     const text =
         status.approvalStatus === 'approved' && !status.listed ? 'Approved · not listed' : approvalLabel(status.approvalStatus)
-    return <Badge tone={tone}>{text}</Badge>
+    return <Status tone={tone}>{text}</Status>
 }
 
 function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (k: ReachKey) => void }) {

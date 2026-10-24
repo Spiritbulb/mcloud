@@ -2,7 +2,7 @@
 //admin product setting
 import { useState, useEffect, useCallback } from 'react'
 import { deleteProduct, listProductVariants, listProducts, saveProduct, setProductActive } from '@/lib/admin/catalog-actions'
-import { Badge } from '@mcloud/ui/kit/badge'
+import { Status } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
@@ -420,7 +420,7 @@ export default function ProductSettings({
                                                 title={product.is_active ? 'Make draft' : 'Make active'}
                                                 className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                                             >
-                                                <Badge tone={product.is_active ? 'success' : 'neutral'}>{product.is_active ? 'Active' : 'Draft'}</Badge>
+                                                <Status tone={product.is_active ? 'success' : 'neutral'}>{product.is_active ? 'Active' : 'Draft'}</Status>
                                             </button>
                                         </Td>
                                         <Td label="Actions" align="right">

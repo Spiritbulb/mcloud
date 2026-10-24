@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import type { ServiceItem } from '@mcloud/themes/types'
-import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Badge, Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
@@ -514,7 +514,7 @@ export default function ServiceSettings({ storeId, currency }: { storeId: string
                                                 </div>
                                             </Td>
                                             <Td label="Price" align="right">{price}</Td>
-                                            <Td label="Availability"><Badge tone={avail.tone}>{avail.label}</Badge></Td>
+                                            <Td label="Availability"><Status tone={avail.tone}>{avail.label}</Status></Td>
                                             <Td label="Status">
                                                 <button
                                                     type="button"
@@ -522,7 +522,7 @@ export default function ServiceSettings({ storeId, currency }: { storeId: string
                                                     title={svc.is_active ? 'Make draft' : 'Make active'}
                                                     className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                                                 >
-                                                    <Badge tone={svc.is_active ? 'success' : 'neutral'}>{svc.is_active ? 'Active' : 'Draft'}</Badge>
+                                                    <Status tone={svc.is_active ? 'success' : 'neutral'}>{svc.is_active ? 'Active' : 'Draft'}</Status>
                                                 </button>
                                             </Td>
                                             <Td label="Actions" align="right">
