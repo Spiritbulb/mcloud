@@ -20,9 +20,9 @@
 {%- endif -%}
 
 {%- comment -%}
-  `slides` and `authored` come from SECTION_REGISTRY.hero.pickContext (lib/hero.ts),
+  `slides` comes from SECTION_REGISTRY.hero.pickContext (lib/hero.ts),
   which is the only place that knows how a hero is stored. A caller that renders this
-  template without them gets an empty <section> rather than a broken one — the loop
+  template without it gets an empty <section> rather than a broken one — the loop
   simply runs zero times. That is a contract, and lib/sections.test.ts pins it.
 {%- endcomment -%}
 {%- assign multi = false -%}
@@ -31,26 +31,12 @@
 <section class="sf-hero relative w-full overflow-hidden" style="height: 70vh; min-height: 480px">
   <div class="sf-hero__track" id="sf-hero-track">
     {%- for slide in slides -%}
-      {%- comment -%}
-        `slide` is what the visitor SEES (defaults substituted in). `authored_slide`
-        is what is actually STORED (no defaults). They are different, and the editable
-        snippets must report the STORED one: a hero with no title displays the store's
-        name, so reporting the rendered value would save "KFS" as though the merchant
-        had typed it, and "Donate" as their button text.
-      {%- endcomment -%}
-      {%- assign authored_slide = authored[forloop.index0] -%}
       <div
         class="sf-hero__slide absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
         data-index="{{ forloop.index0 }}"
-        {% render 'classic/snippets/record-anchor', editing: store.editing, list: 'heroSlides', index: forloop.index0 %}
-        {%- if store.editing -%} data-mcloud-slide-image="{{ authored_slide.image | escape }}"{%- endif -%}
       >
         {%- comment -%}
-          The image is a full-bleed BACKGROUND. It is NOT click-to-edit: a
-          full-bleed layer over the whole slide would steal clicks meant for the
-          text on top (the hero lesson). Changing the background is a control on the
-          slide toolbar instead (data-mcloud-slide-image above carries the current
-          value). So the background is inert and can be pointer-events:none.
+          The image is a full-bleed BACKGROUND behind the text.
         {%- endcomment -%}
         {%- if slide.image and slide.image != '' -%}
           <img
@@ -66,20 +52,17 @@
         <div class="absolute inset-0 flex items-end md:items-center">
           <div class="sf-hero__content w-full px-4 pb-16 md:pb-0" style="padding-left: clamp(1rem, 5vw, 3rem)">
             <div class="sf-hero-card max-w-xl space-y-4 p-5 sf-hero__card-animate{% if forloop.first %} sf-hero__card-animate--load{% endif %}">
-              {%- if slide.accent and slide.accent != '' or store.editing -%}
-                <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium"
-                  {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'accent', value: authored_slide.accent %}>{{ slide.accent }}</span>
+              {%- if slide.accent and slide.accent != '' -%}
+                <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{{ slide.accent }}</span>
               {%- endif -%}
 
               <h1
                 class="sf-heading font-bold tracking-tight"
                 style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1"
-                {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'title', value: authored_slide.title %}
               >{{ slide.title }}</h1>
 
-              {%- if slide.subtitle and slide.subtitle != '' or store.editing -%}
-                <p class="font-light" style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)"
-                  {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'subtitle', value: authored_slide.subtitle %}>{{ slide.subtitle }}</p>
+              {%- if slide.subtitle and slide.subtitle != '' -%}
+                <p class="font-light" style="color: var(--sf-foreground-subtle); font-size: clamp(0.95rem, 2vw, 1.125rem)">{{ slide.subtitle }}</p>
               {%- endif -%}
 
               {%- if is_giving -%}
@@ -91,7 +74,7 @@
                   data-presets="{{ lead_campaign.presets | join: ',' }}"
                   data-allow-custom="{% if lead_campaign.allowCustomAmount == false %}false{% else %}true{% endif %}"
                 >
-                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <span>{{ slide.buttonText }}</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
@@ -103,7 +86,7 @@
                   class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
                   onclick="document.getElementById('products')?.scrollIntoView({behavior:'smooth'}); return false;"
                 >
-                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <span>{{ slide.buttonText }}</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
@@ -118,7 +101,7 @@
                   class="sf-btn-primary sf-hero__btn inline-flex items-center gap-2 border rounded-none px-6 py-3 text-sm font-medium"
                   onclick="document.querySelector('.sf-contact')?.scrollIntoView({behavior:'smooth'}); return false;"
                 >
-                  <span {% render 'classic/snippets/editable-item', editing: store.editing, list: 'heroSlides', index: forloop.index0, key: 'buttonText', value: authored_slide.buttonText %}>{{ slide.buttonText }}</span>
+                  <span>{{ slide.buttonText }}</span>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M5 12h14M12 5l7 7-7 7"/>
                   </svg>
@@ -131,42 +114,17 @@
     {%- endfor -%}
   </div>
 
-  {%- comment -%}
-    DOT INDICATORS. For a visitor they only matter with 2+ slides. In the EDITOR
-    the row also shows for a single slide, and carries an add-slide control, so the
-    merchant can page between slides to edit them and grow the carousel — the dots
-    are the slide filmstrip.
-  {%- endcomment -%}
-  {%- if multi or store.editing -%}
-    <div class="sf-hero__dots absolute bottom-6 flex items-center gap-2 z-30{% if store.editing %} sf-hero__dots--editing{% endif %}" style="left: 50%; transform: translateX(-50%)">
+  {%- comment -%} DOT INDICATORS: only with 2+ slides. {%- endcomment -%}
+  {%- if multi -%}
+    <div class="sf-hero__dots absolute bottom-6 flex items-center gap-2 z-30" style="left: 50%; transform: translateX(-50%)">
       {%- for slide in slides -%}
-        {%- if store.editing -%}
-          {%- comment -%} Editor: a numbered dot that pages to this slide, plus its
-            OWN delete so removing one slide is clearly distinct from deleting the
-            whole hero section. The delete is a sibling, not nested in the dot. {%- endcomment -%}
-          <span class="sf-hero__slide-cell">
-            <button
-              class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
-              data-index="{{ forloop.index0 }}"
-              aria-label="Go to slide {{ forloop.index }}"
-              style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
-            ><span class="sf-hero__dot-num">{{ forloop.index }}</span></button>
-            <button type="button" class="sf-hero__slide-del" data-mcloud-del-slide="{{ forloop.index0 }}" aria-label="Delete slide {{ forloop.index }}">×</button>
-          </span>
-        {%- else -%}
-          <button
-            class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
-            data-index="{{ forloop.index0 }}"
-            aria-label="Go to slide {{ forloop.index }}"
-            style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
-          ></button>
-        {%- endif -%}
+        <button
+          class="sf-hero__dot transition-all duration-300 rounded-none border-0 p-0 cursor-pointer{% if forloop.first %} sf-hero__dot--active{% endif %}"
+          data-index="{{ forloop.index0 }}"
+          aria-label="Go to slide {{ forloop.index }}"
+          style="height: 2px; background: {% if forloop.first %}#fff{% else %}rgba(255,255,255,0.35){% endif %}; width: {% if forloop.first %}3rem{% else %}1.5rem{% endif %}"
+        ></button>
       {%- endfor -%}
-      {%- if store.editing -%}
-        {%- comment -%} Editor-only: add a slide after the last. The bridge routes
-          the click to an item-op add on heroSlides. {%- endcomment -%}
-        <button type="button" class="sf-hero__add-slide" data-mcloud-add-slide="1" aria-label="Add slide">+</button>
-      {%- endif -%}
     </div>
   {%- endif -%}
 </section>
@@ -225,9 +183,9 @@
         setTimeout(function () { firstCard.classList.add('sf-hero__card-animate--in'); }, 80);
       }
 
-      // In the Editor the carousel must HOLD STILL: auto-advancing would slide the
-      // text out from under a merchant halfway through typing it.
-      var editing = {% if store.editing %}true{% else %}false{% endif %};
+      // Framed means the Editor's preview (CSP frame-ancestors allows only the admin).
+      // There the carousel holds still, so the slide being edited stays on screen.
+      var editing = window.self !== window.top;
       var timer = editing ? null : setInterval(function () { goTo((current + 1) % slides.length); }, 5000);
 
       function resetTimer() {

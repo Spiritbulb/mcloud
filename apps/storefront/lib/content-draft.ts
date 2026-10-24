@@ -81,7 +81,8 @@ export function draftFromSettings(settings: unknown): NgoDraft {
       description: str(c.description),
       image: str(c.image),
       goalAmount: str(c.goalAmount),
-      presets: Array.isArray(c.presets) ? c.presets.join(', ') : '',
+      // An unsaved Editor draft holds the comma string the merchant is typing.
+      presets: Array.isArray(c.presets) ? c.presets.join(', ') : str(c.presets),
       allowCustomAmount: c.allowCustomAmount !== false,   // default true
       minAmount: str(c.minAmount),
     })),

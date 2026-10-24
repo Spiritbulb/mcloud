@@ -8,10 +8,12 @@ import { getStorePlan } from '@mcloud/merchant/plans-server'
 import EditorClient from './editor-client'
 import { webUrl } from '@/lib/host'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
+import { defaultHomeSections } from '@/lib/sections'
+import { storefrontUrl } from '@mcloud/merchant/storefront-url'
 
 /**
- * The Editor: one surface for theme and content, with a live preview of the
- * merchant's real site. Replaces the separate Appearance and Content tabs.
+ * The Editor: one surface for the home page's sections, their content and the
+ * theme, with a live preview of the merchant's real site.
  *
  * Everything the rail edits is schema-declared (THEME_SCHEMA, SECTION_REGISTRY),
  * so this page only loads the VALUES; it knows nothing about which fields exist.
@@ -30,9 +32,10 @@ export default async function EditorPage({
     if (result.error || !result.data) redirect(`/org/${orgSlug}/${storeSlug}/settings`)
     const store = result.data
 
-    // The home page's section list is what the rail edits. A site with no page
-    // row yet has no sections to configure; the preview still renders (the
-    // storefront falls back to the vertical's default sections).
+    // The home page's section list is what the sidebar edits. A store with no page
+    // row (or an empty one) is rendered from the vertical's defaults, so the Editor
+    // starts from those same defaults: what the merchant sees in the list is what
+    // the preview shows, and the first save writes the row.
     const supabase = await createClient()
     const { data: page } = await supabase
         .from('pages')
@@ -61,9 +64,10 @@ export default async function EditorPage({
     const theme =
         themeRow && typeof themeRow === 'object' ? (themeRow as Record<string, unknown>) : {}
 
-    const sections = Array.isArray(page?.sections)
+    const stored = Array.isArray(page?.sections)
         ? (page.sections as unknown as { type: string; settings?: Record<string, unknown> }[])
         : []
+    const sections = stored.length ? stored : defaultHomeSections(store.type)
 
     const plan = await getStorePlan(store.id)
 
@@ -78,6 +82,7 @@ export default async function EditorPage({
             commerce={getVertical(store.type).commerce}
             storeSettings={settings}
             plan={plan}
+            liveUrl={storefrontUrl(store.slug, store.custom_domain)}
         />
     )
 }

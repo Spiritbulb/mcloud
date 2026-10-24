@@ -9,6 +9,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import type { TablesUpdate } from '@mcloud/db/types'
 import { canManage, requireStoreAccess } from '@mcloud/merchant/stores'
+import { seedPageRows } from '@mcloud/merchant/seed-pages'
 import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
 import { SECTION_REGISTRY } from '@/lib/sections'
 import { validateSectionTypes } from './section-validate'
@@ -102,11 +103,51 @@ export async function updateStoreSettings(
 }
 
 /**
- * Replace a page's section list. Used by the Editor to save section copy. Only
- * the `settings` of each section may differ from what the page already has: the
- * Editor does not add, remove or reorder sections (that is a later sub-project),
- * so the section TYPES are checked against the stored page and a mismatch is
- * rejected rather than silently restructuring the merchant's page.
+ * Merge `patch` into stores.settings, key by key, onto the row as it is NOW. The
+ * Editor sends only the keys it changed, so a setting saved from another screen (or
+ * another tab) since the Editor loaded is not overwritten with a stale copy.
+ */
+export async function patchStoreSettings(
+    slug: string,
+    patch: Record<string, unknown>,
+): Promise<ActionResult> {
+    const session = await getSession()
+    if (!session?.user) return { error: 'Not signed in' }
+
+    const access = await requireStoreAccess(slug, session.user.id)
+    if (access.error) return { error: 'Store not found' }
+    if (!canManage(access.role)) return { error: 'Not authorized' }
+
+    if (!patch || typeof patch !== 'object' || Array.isArray(patch)) return { error: 'Nothing to save' }
+    if (Object.keys(patch).length === 0) return { error: null }
+
+    const supabase = await createClient()
+    const { data: row, error: readError } = await supabase
+        .from('stores')
+        .select('settings')
+        .eq('id', access.storeId)
+        .single()
+    if (readError) return { error: readError.message }
+
+    const current =
+        row?.settings && typeof row.settings === 'object' && !Array.isArray(row.settings)
+            ? (row.settings as Record<string, unknown>)
+            : {}
+    const { error } = await supabase
+        .from('stores')
+        .update({ settings: { ...current, ...patch } as never })
+        .eq('id', access.storeId)
+    if (!error) revalidateStore(slug)
+    return { error: error ? error.message : null }
+}
+
+/**
+ * Replace a page's section list: the Editor's add, remove, reorder and section
+ * copy. Section TYPES are checked against the registry (or the stored page, for a
+ * retired type), so a stale or hostile tab cannot inject an arbitrary type.
+ *
+ * A store created before pages were seeded has no row yet (the storefront renders
+ * the vertical's defaults), so the first save creates it.
  */
 export async function updatePageSections(
     slug: string,
@@ -119,6 +160,7 @@ export async function updatePageSections(
     const access = await requireStoreAccess(slug, session.user.id)
     if (access.error) return { error: 'Site not found' }
     if (!canManage(access.role)) return { error: 'Not authorized' }
+    if (!Array.isArray(sections)) return { error: 'Nothing to save' }
 
     const supabase = await createClient()
 
@@ -128,7 +170,20 @@ export async function updatePageSections(
         .eq('store_id', access.storeId)
         .eq('slug', pageSlug)
         .maybeSingle()
-    if (!page) return { error: 'Page not found' }
+
+    if (!page) {
+        if (!validateSectionTypes(sections, [], Object.keys(SECTION_REGISTRY))) {
+            return { error: 'That section type is not allowed. Reload and try again.' }
+        }
+        const { data: store } = await supabase.from('stores').select('type').eq('id', access.storeId).single()
+        const seed = seedPageRows(access.storeId, store?.type).find((r) => r.slug === pageSlug)
+        if (!seed) return { error: 'Page not found' }
+        const { error } = await supabase
+            .from('pages')
+            .insert({ ...seed, sections: sections as never })
+        if (!error) revalidateStore(slug)
+        return { error: error ? error.message : null }
+    }
 
     const stored = (Array.isArray(page.sections) ? page.sections : []) as { type: string }[]
     if (!validateSectionTypes(sections, stored, Object.keys(SECTION_REGISTRY))) {

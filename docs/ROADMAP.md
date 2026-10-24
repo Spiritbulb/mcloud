@@ -43,7 +43,7 @@ Size: **S** under a day, **M** a few days, **L** a week or more. Area tags: `SF`
 | X9 | Push reliability | WEB, MOB | `send-push.ts` swallows failures, has no receipts check, no dead-token pruning; the `device_push_tokens` table is missing from generated types. Notification tap should open the order (`orderId` is already in the payload). | M |
 | X10 | SEO basics for stores | SF | No sitemap, robots or JSON-LD for stores; OG data only on home, product and blog. Add per-page SEO fields and `sitemap.xml` per store domain. | M |
 | X11 | Accessibility pass | SF, MOB, NUR, RCH | Checkout and cart have no labels; mobile and nuru have almost no `accessibilityLabel`; Reach has none outside login. Fix touch targets under 44px (Reach stepper) and low-contrast text (Reach `_theme.ts`). | M |
-| X12 | Replace `window.confirm/alert` with the app's dialog | SF | Used for destructive actions in services, editor and campaigns. | S |
+| X12 | Replace `window.confirm/alert` with the app's dialog | SF | Used for destructive actions in services and campaigns (the Editor no longer uses them). | S |
 | X13 | Onboarding: first-run checklist | SF, WEB | `/start` is three fields (good), then an empty store. Add a checklist: add product, set payment, set delivery, share link. | M |
 | X14 | Consolidate duplicated payment routes and `lib/merchant/*` | WEB, SF | Divergence is already causing bugs. CLEANUP §2.5–2.6. | L |
 | X15 | Rate-limit and validate route input | WEB, SF | No schema library yet; order status endpoint is unlimited. | M |

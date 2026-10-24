@@ -14,7 +14,8 @@ NEXT_PUBLIC_WEB_ORIGIN=              # https://mcloud.co.ke : where login, the o
 NEXT_PUBLIC_AUTH_ORIGIN=             # optional; where sign-in screens live. Defaults to NEXT_PUBLIC_WEB_ORIGIN. See docs/storefront-domain-move.md
 # NEXT_PUBLIC_API_BASE_URL is no longer read. Store calls are same-origin (/api) and payment calls go to
 # NEXT_PUBLIC_WEB_ORIGIN (lib/api-base.ts). It can be deleted from the Vercel project.
-NEXT_PUBLIC_ADMIN_ORIGIN=
+# NEXT_PUBLIC_ADMIN_ORIGIN is no longer read here: the Editor lives on the storefront and frames its own
+# preview (CSP frame-ancestors 'self'). It can be deleted from the storefront's Vercel project (web still uses it).
 PREVIEW_SECRET=                      # must match apps/web
 REVALIDATE_SECRET=                   # must match apps/web; authorises POST /api/revalidate (public-page cache purge)
 

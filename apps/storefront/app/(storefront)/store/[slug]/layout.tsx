@@ -5,7 +5,7 @@ import { StoreProvider } from '@/contexts/StoreContext'
 import { WishlistProvider } from '@/contexts/WishlistContext'
 import { planHasFeature } from '@mcloud/merchant/plans'
 import { getStorePlanCached, getStoreRow, getStoreTheme } from '@/lib/store-queries'
-import { googleFontsHref } from '@/lib/fonts'
+import { fontScalePercent, googleFontsHref } from '@/lib/fonts'
 import { getNavPages } from '@/lib/pages'
 import LayoutWrapper from '@/components/store/layout-wrapper'
 import PreviewListener from '@/components/store/preview-listener'
@@ -93,20 +93,24 @@ export default async function StoreLayout({
     // real. System stacks are skipped since they need no fetch.
     const fontHref = googleFontsHref([theme?.heading_font, theme?.body_font])
 
+    // Text size. Templates size text in rem, which follows <html>, so the scale is
+    // applied there; a variable on the wrapper could not reach it. Re-checked here
+    // because the value is written into a stylesheet.
+    const textScale = fontScalePercent(theme?.font_scale)
+
     return (
         // CustomerAuthProvider has no server deps — sits at the top
         <CustomerAuthProvider>
             {fontHref && (
                 <link rel="stylesheet" href={fontHref} />
             )}
+            {textScale !== null && <style>{`html{font-size:${textScale}%}`}</style>}
             {/* Applies unsaved theme values from the Editor. Inert unless framed by
-                the admin origin: a real visitor is never framed, so for them this
-                listener never activates. */}
-            <PreviewListener adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
-            {/* Click a section here -> the Editor opens its drawer; select one there
-                -> this scrolls to it. Same containment as PreviewListener, and it
-                never writes to the page. */}
-            <EditorBridge adminOrigin={process.env.NEXT_PUBLIC_ADMIN_ORIGIN ?? 'http://localhost:3000'} />
+                this app (CSP frame-ancestors 'self'): a visitor is never framed. */}
+            <PreviewListener />
+            {/* Click a section here -> the Editor opens it; select one there -> this
+                outlines it. Same containment as PreviewListener. */}
+            <EditorBridge />
             <StoreProvider slug={slug}>
                 {/* WishlistProvider resolves the store + customer server-side via the slug. */}
                 <WishlistProvider storeSlug={slug}>

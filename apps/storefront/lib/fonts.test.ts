@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { googleFontsHref } from './fonts'
+import { fontScalePercent, googleFontsHref } from './fonts'
 
 // Nothing to fetch.
 assert.equal(googleFontsHref([]), null)
@@ -34,3 +34,13 @@ assert.equal(googleFontsHref(['Foo&family=Bar']), null, 'rejects url injection')
 assert.ok(googleFontsHref(["'Quicksand'"])!.includes('family=Quicksand:'))
 
 console.log('fonts.test.ts OK')
+
+// Text size: a percentage for <html>, or null for the default. It is written into
+// CSS, so anything that is not a plain number comes out as null, never as text.
+assert.equal(fontScalePercent('1'), null)
+assert.equal(fontScalePercent(undefined), null)
+assert.equal(fontScalePercent('1.15'), 115)
+assert.equal(fontScalePercent(0.9), 90)
+assert.equal(fontScalePercent('3'), 140, 'clamped to the Editor range')
+assert.equal(fontScalePercent('1;}body{display:none'), null)
+assert.equal(fontScalePercent('calc(2)'), null)

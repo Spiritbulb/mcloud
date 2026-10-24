@@ -16,7 +16,7 @@ User-facing explanation: `/moving` on the storefront (`app/(marketing)/moving`).
 | Return path after sign-in is app-relative | web forwards `/start` and `/org/*/settings` back (`apps/web/proxy.ts`) | Becomes unnecessary once sign-in is on the storefront origin. Remove the forwards after the old links stop arriving. |
 | "Platform host" = `mcloud.co.ke` family | `lib/host.ts` `PLATFORM_APEX_DOMAINS` (and the same list in `apps/web/proxy.ts`) | Add the new apex. Keep `mcloud.co.ke` while old links exist. |
 | Link origins | `NEXT_PUBLIC_SITE_ORIGIN` (`storefrontUrl`, `storeSettingsUrl`, `storefrontSiteUrl`), `NEXT_PUBLIC_WEB_ORIGIN` | Change the env, redeploy (build-time values). `shop.` and `app.` must keep resolving. |
-| Editor preview framing | `NEXT_PUBLIC_ADMIN_ORIGIN` and CSP `frame-ancestors` in `next.config.ts` | Must name whichever origin hosts the editor. |
+| Editor preview framing | CSP `frame-ancestors 'self'` in `next.config.ts` | The editor frames its own preview on the same origin, so nothing to change. |
 | WorkOS redirect URI | WorkOS dashboard, `NEXT_PUBLIC_WORKOS_REDIRECT_URI` | Register the new origin's `/callback`. The storefront has no callback route yet; web's is `apps/web/app/callback/route.ts`. |
 
 ## Checklist

@@ -128,9 +128,20 @@ with programs, campaigns and donations (donations are orders tagged `isDonation`
 Settings → Editor edits a store's theme and sections with a live preview. The preview is
 the real storefront in an iframe. A signed preview token (`PREVIEW_SECRET`, `lib/preview.ts`)
 lets unsaved values render; `PreviewListener` and `EditorBridge` in the storefront talk to
-the editor over `postMessage`, and only when framed by `NEXT_PUBLIC_ADMIN_ORIGIN` (the CSP
-`frame-ancestors` in `next.config.ts` enforces who may frame the storefront). Edits are pure
-functions with tests (`settings/editor/*-ops.ts`).
+the editor over `postMessage`. The editor and its preview are the same app and origin, so the
+storefront's CSP is `frame-ancestors 'self'` (`next.config.ts`) and messages are accepted only
+from that origin.
+
+The preview only displays: every edit is made in the sidebar. `EditorBridge` reports which
+section was clicked, outlines the selected one, and blocks navigation; templates take no editing
+flag, so the preview renders exactly what a visitor gets (`render-page.test.ts` pins this). One
+draft document (theme, home sections, `stores.settings`) with undo/redo lives in
+`settings/editor/editor-state.ts` (pure, tested); the sidebar and the image picker dispatch into it. Save writes only what changed: `updateStoreTheme`, `updatePageSections`
+(creates the home `pages` row if the store has none) and `patchStoreSettings`, which merges the
+changed keys onto the current row so a setting saved elsewhere meanwhile survives. The preview is
+double-buffered (`preview-frame.tsx`): a new draft loads in a hidden frame, gets the unsaved theme,
+scroll position and selection replayed, then swaps in. Structural edits are pure functions with
+tests (`settings/editor/*-ops.ts`).
 
 ## Uploads
 
@@ -176,7 +187,7 @@ Users, Stores, Subscriptions, Orders, Webhook logs, Audit log, Handoff recovery,
 
 - **UI kit:** `packages/ui/src/kit/*`, imported as `@mcloud/ui/kit/<name>` (page header, panel, stat strip, badge, table,
   fields, button, notice, icon). It lives in a package so the admin, the org hub and store settings all use it (SPI-57; the
-  storefront Editor, Appearance and Content are the exceptions, SPI-63). New screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
+  storefront Appearance and Content screens are the exceptions, SPI-63). New screens use it rather than ad hoc markup. Screens that fetch on the client let the kit draw loading and failure:
   `SkeletonRows` in a `Table busy`, `Stat loading`, `SkeletonLines`, `LoadError onRetry`. Forms are `Panel` + `Field`/`FormGrid`
   + `SaveBar` (shown when `isDirty(saved, draft)`); destructive actions go through `ConfirmDialog`. Gallery: `/dev-ui/kit` (dev only).
 - **One app frame:** `AppShell` (`@mcloud/ui/kit/app-shell`) is the sidebar, phone drawer and breadcrumb header for the admin,

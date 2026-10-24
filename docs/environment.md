@@ -20,7 +20,6 @@ add it here.
 | `WORKOS_COOKIE_PASSWORD` | Seals the session cookie. **Must be identical in web and storefront.** |
 | `WORKOS_COOKIE_DOMAIN` | `.mcloud.co.ke`, so the session is shared across subdomains |
 | `NEXT_PUBLIC_SITE_ORIGIN` | Display/canonical origin for stores, e.g. `https://app.mcloud.co.ke` |
-| `NEXT_PUBLIC_ADMIN_ORIGIN` | Origin allowed to frame the storefront (the Editor); also used for `postMessage` |
 | `PREVIEW_SECRET` | Signs Editor preview tokens. **Must match in both apps.** |
 | `REVALIDATE_SECRET` | Authorises web's calls to the storefront's `/api/revalidate` (cache purge). **Must match in both apps.** Without it web's edits show on public pages only at the next hourly refresh. |
 | `RESEND_API_KEY` | Transactional email (invites, notifications, waitlist) |
@@ -35,6 +34,7 @@ add it here.
 |---|---|
 | `NEXT_PUBLIC_GA_ID` | Optional. Overrides the built-in production GA4 property (e.g. a staging property). Inlined at build, so changing it needs a redeploy. |
 | `HANDOFF_ENC_KEY` | Encrypts mobile → web SSO handoff tickets |
+| `NEXT_PUBLIC_ADMIN_ORIGIN` | Web's own public origin (`https://www.mcloud.co.ke`): SSO handoff redirects and payment return URLs (wallet top-up, Reach orders). The storefront no longer reads it. |
 | `PARTNER_AUTH_SECRET` | `x-partner-secret` for `/api/partner/*` |
 | `CRON_SECRET` | Authenticates Vercel cron calls |
 | `REVIEW_ACCOUNT_EMAIL`, `REVIEW_ACCOUNT_PASSWORD` | Store-review test login for the mobile app |

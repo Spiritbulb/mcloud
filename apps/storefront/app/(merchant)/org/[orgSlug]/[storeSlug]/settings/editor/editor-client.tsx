@@ -1,92 +1,82 @@
 'use client'
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { X, Palette, FileText, Layers } from 'lucide-react'
+import { Button, buttonClass } from '@mcloud/ui/kit/button'
+import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
+import { Icon } from '@mcloud/ui/kit/icon'
+import { Notice } from '@mcloud/ui/kit/notice'
+import { Spinner } from '@mcloud/ui/kit/skeleton'
+import { cn } from '@mcloud/ui/utils'
+import type { SettingField } from '@mcloud/verticals'
+import type { Plan } from '@mcloud/merchant/plans'
 import { SECTION_REGISTRY } from '@/lib/sections'
-import { authoredSlides } from '@/lib/hero'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
-import { updateStoreTheme, updatePageSections, updateStoreSettings } from '../actions'
-import SettingsFields from './settings-fields'
-import ImagePicker from './image-picker'
-import ContentClient from '../content/content-client'
-import { applySectionOp, type SectionOp } from './section-ops'
+import { patchStoreSettings, updatePageSections, updateStoreTheme } from '../actions'
+import {
+    contentErrors, editorReducer, initEditor, isDocDirty, listFor,
+    remapIndex, sameValue, settingsPatch, themePatch,
+    type EditorAction, type EditorDoc, type EditorState, type Section,
+} from './editor-state'
+import type { SectionOp } from './section-ops'
+import type { ItemOp } from './item-ops'
 import { seedSection } from './section-seeds-registry'
 import { followSlideIndex } from './slide-follow'
-import { applyItemOp, type ItemOp } from './item-ops'
-import { seedRecord } from './section-seeds'
-import type { SettingField, SettingValues } from '@mcloud/verticals'
-import type { Plan } from '@mcloud/merchant/plans'
+import SettingsFields from './settings-fields'
+import SectionContent, { IconAction, hasSectionContent } from './section-content'
+import ImagePicker from './image-picker'
+import AddSectionDialog, { SECTION_ICONS } from './add-section-dialog'
+import PreviewFrame, { type Device, type PreviewHandle } from './preview-frame'
+import type { PickImage } from './image-field'
 
-type Section = { type: string; settings?: SettingValues }
+type SectionDef = { label: string; description?: string; schema?: readonly SettingField[] }
 
 /**
- * A page's section `type` is whatever is stored in the DB, so it is a plain
- * string, not a SectionType. Look it up leniently: an unknown type (a section
- * retired from the registry, say) must render as an inert rail entry, never
- * crash the Editor.
+ * A page's section `type` is whatever is stored in the DB, so it is a plain string.
+ * Look it up leniently: an unknown type (a section retired from the registry) must
+ * show as an inert entry, never crash the Editor.
  */
-function sectionDef(type: string | undefined) {
+function sectionDef(type: string | undefined): SectionDef | undefined {
     if (!type) return undefined
-    return (SECTION_REGISTRY as Record<string, { label: string; schema?: readonly SettingField[] }>)[type]
+    return (SECTION_REGISTRY as Record<string, SectionDef>)[type]
 }
 
-// Three kinds of thing a merchant edits:
-//   theme   -> store_themes columns (colours, fonts)
-//   content -> stores.settings (mission, programs, campaigns). SP5's editor,
-//              mounted here rather than living on its own nav tab.
-//   section -> that section's own config (heading, eyebrow) in pages.sections
-// `null` = drawer closed, preview at full width.
-type Selection = { kind: 'theme' } | { kind: 'content' } | { kind: 'section'; index: number } | null
+/** What each vertical may add. A shop is not offered programs; an NGO is not offered products. */
+const ADDABLE: Record<'shop' | 'ngo', string[]> = {
+    shop: ['hero', 'collections', 'featured', 'all-products', 'services', 'gallery'],
+    ngo: ['hero', 'mission', 'programs', 'impact', 'campaigns', 'contact', 'gallery'],
+}
+
+const THEME_GROUPS: { title: string; hint?: string; match: (id: string) => boolean }[] = [
+    { title: 'Colours', match: (id) => id.endsWith('_color') && !id.startsWith('dark_') },
+    {
+        title: 'Dark mode colours',
+        hint: 'Used when a visitor\'s device is set to dark mode, so the preview shows them only if yours is.',
+        match: (id) => id.startsWith('dark_'),
+    },
+    { title: 'Typography', match: (id) => id.endsWith('_font') || id === 'font_scale' },
+    { title: 'Layout', match: (id) => id === 'border_radius' },
+]
 
 /**
- * What a template may edit in stores.settings from the preview. The message comes
- * from the framed storefront, so it is checked rather than trusted: an unexpected
- * key is dropped instead of being written blindly into the merchant's settings.
- * Must match the keys passed to the `editable-setting` / `editable-item` snippets.
+ * useReducer, except the latest state is readable synchronously. Messages from the
+ * preview arrive between renders; reading a render's `state` there would act on a
+ * stale document (the bug behind "undo restored an old copy").
  */
-const EDITABLE_SETTINGS = new Set(['missionHeadline', 'mission'])
-const EDITABLE_LISTS = new Set(['programs', 'campaigns', 'impactStats', 'heroSlides', 'galleryPhotos'])
-/** Store settings that hold an IMAGE, so a click opens the picker. */
-const EDITABLE_SETTINGS_IMAGE = new Set<string>([])
-
-/** Where a picked image belongs: a store setting, or a field on a repeated record. */
-type PickTarget =
-    | { kind: 'setting'; key: string }
-    | { kind: 'item'; list: string; index: number; key: string }
-
-/**
- * The current value of a repeated list, ready to be edited.
- *
- * heroSlides is the special one. The hero used to be stored TWO ways — a heroSlides
- * array, or flat keys the renderer falls back through — so a legacy store has NO
- * heroSlides and an edit to heroSlides[0] would land in an empty array and vanish.
- * It is therefore normalised into a one-slide list the first time it is touched.
- *
- * That normalisation is authoredSlides(), NOT a copy of it. This function used to
- * re-implement the fallback chain and got it wrong: it read heroTitle/heroSubtitle
- * but not missionHeadline/mission, so a store whose hero text came from the mission
- * fields had it silently dropped the moment an image was saved — and because
- * heroSlides then existed, the renderer stopped falling back, so the copy was gone
- * with nothing left to click. One owner for that chain, in lib/hero.ts.
- */
-function listFor(
-    list: string,
-    draft: Record<string, unknown>,
-    saved: Record<string, unknown>,
-): unknown[] {
-    // Already being edited in this session: that is the truth.
-    if (Array.isArray(draft[list])) return [...(draft[list] as unknown[])]
-    // Saved in the modern shape.
-    if (Array.isArray(saved[list])) return [...(saved[list] as unknown[])]
-    // A legacy hero: the renderer's own normalisation, so nothing is lost.
-    if (list === 'heroSlides') return authoredSlides(saved)
-    if (list === 'galleryPhotos') return [seedRecord('galleryPhotos')]
-    return []
+function useEditorState(initial: EditorDoc) {
+    const [state, setState] = useState(() => initEditor(initial))
+    const ref = useRef(state)
+    const dispatch = useCallback((action: EditorAction) => {
+        const next = editorReducer(ref.current, action)
+        if (next === ref.current) return
+        ref.current = next
+        setState(next)
+    }, [])
+    return [state, dispatch, ref as React.RefObject<EditorState>] as const
 }
 
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
-    commerce, storeSettings, plan,
+    commerce, storeSettings, plan, liveUrl,
 }: {
     slug: string
     storeId: string
@@ -94,682 +84,648 @@ export default function EditorClient({
     sections: Section[]
     previewToken: string
     storefrontOrigin: string
-    /** From getVertical(store.type).commerce. A shop has no NGO content rail. */
+    /** From getVertical(store.type).commerce: decides which sections can be added. */
     commerce: boolean
-    /** stores.settings, for the Content rail (SP5's editor). */
+    /** stores.settings: hero slides, mission, programs, campaigns ... */
     storeSettings: Record<string, unknown>
-    /** Threaded to ContentClient's ProGateInline (Content rail is Hobby+). */
+    /** NGO content editing is Hobby+. */
     plan: Plan
+    liveUrl: string
 }) {
-    // The registry is vertical-agnostic; a shop should not be offered
-    // programs/impact/campaigns/contact, and an NGO should not be offered
-    // collections/featured/all-products.
-    const ADDABLE_BY_COMMERCE: Record<'shop' | 'ngo', string[]> = {
-        shop: ['hero', 'collections', 'featured', 'all-products'],
-        ngo: ['hero', 'mission', 'programs', 'impact', 'campaigns', 'contact'],
-    }
-    const addableTypes = commerce ? ADDABLE_BY_COMMERCE.shop : ADDABLE_BY_COMMERCE.ngo
+    const [state, dispatch, stateRef] = useEditorState({ theme, sections: initialSections, settings: storeSettings })
+    const doc = state.present
+    const dirty = isDocDirty(state)
 
-    const [selection, setSelection] = useState<Selection>(null)
-    // Which section the preview is showing as selected. Separate from `selection`,
-    // because clicking a section in the page should HIGHLIGHT it in the rail without
-    // opening the drawer over the very page the merchant is editing.
-    const [railFocus, setRailFocus] = useState<number | null>(null)
-    const [themeValues, setThemeValues] = useState<SettingValues>(() => ({ ...theme }))
-    const [sections, setSections] = useState<Section[]>(() => initialSections)
-    // stores.settings edited FROM THE PREVIEW (hero title, mission, programme
-    // copy). The Content drawer writes the same table through its own action, so
-    // this holds only what the preview changed and merges on save.
-    const [storeDraft, setStoreDraft] = useState<Record<string, unknown>>({})
-    // The image slot the merchant clicked in the preview, if any.
-    const [picker, setPicker] = useState<{ target: PickTarget; value: string } | null>(null)
+    const [tab, setTab] = useState<'sections' | 'theme'>('sections')
+    const [openSection, setOpenSection] = useState<number | null>(null)
+    const [device, setDevice] = useState<Device>('desktop')
+    const [mobilePane, setMobilePane] = useState<'edit' | 'preview'>('edit')
     const [saving, setSaving] = useState(false)
-    const [error, setError] = useState<string | null>(null)
-    const [saved, setSaved] = useState(false)
-    // A one-shot "Deleted. Undo?" safety net. Set right before a delete is applied
-    // (with a snapshot to restore), auto-dismisses after a few seconds. This is the
-    // net for an accidental delete — e.g. removing the whole hero when you meant one
-    // slide. `restore` puts the exact pre-delete state back.
-    const [undo, setUndo] = useState<{ label: string; restore: () => void } | null>(null)
-    // The index the bridge asked to insert a new section at, or null when the
-    // add-section picker is closed.
+    const [justSaved, setJustSaved] = useState(false)
+    const [errors, setErrors] = useState<string[]>([])
+    /** `undoAt`: the state version right after the removal; Undo is offered only until anything else changes. */
+    const [toast, setToast] = useState<{ label: string; undoAt: number | null } | null>(null)
     const [addAt, setAddAt] = useState<number | null>(null)
+    const [confirmDiscard, setConfirmDiscard] = useState(false)
+    const [picker, setPicker] = useState<{ value: string; apply: (url: string) => void } | null>(null)
 
-    const iframeRef = useRef<HTMLIFrameElement>(null)
+    const preview = useRef<PreviewHandle>(null)
+    /** Last scroll position the visible preview reported, replayed into the next one. */
+    const scrollY = useRef(0)
+    /** The hero slide being edited, so the preview shows it (and keeps showing it after a reload). */
+    const activeSlide = useRef<number | null>(null)
+    /** A section just added: the next preview scrolls to it instead of restoring the old position. */
+    const revealSection = useRef<number | null>(null)
 
-    // The message handler must NOT be torn down and rebuilt on every keystroke: a
-    // preview reload landing between teardown and rebuild would miss its handshake,
-    // and the merchant's unsaved theme would silently vanish. Refs let one stable
-    // handler see current values.
-    const themeRef = useRef(themeValues)
-    themeRef.current = themeValues
-    const selectionRef = useRef(selection)
-    selectionRef.current = selection
-    const railFocusRef = useRef(railFocus)
-    railFocusRef.current = railFocus
+    // An index can go stale under undo/redo; treat it as closed rather than crash.
+    const open = openSection !== null && openSection < doc.sections.length ? openSection : null
 
-    const postTheme = useCallback(() => {
-        const win = iframeRef.current?.contentWindow
-        if (!win) return
+    const pickImage: PickImage = useCallback((value, apply) => setPicker({ value, apply }), [])
+
+    // ── Preview addressing ──────────────────────────────────────────────────────
+
+    const buildSrc = useCallback((st: EditorState) => {
+        const params = new URLSearchParams({ token: previewToken })
+        if (!sameValue(st.saved.sections, st.present.sections)) params.set('preview', toBase64Url(JSON.stringify(st.present.sections)))
+        const patch = settingsPatch(st.saved.settings, st.present.settings)
+        if (Object.keys(patch).length) params.set('settings', toBase64Url(JSON.stringify(patch)))
+        return `${storefrontOrigin}/store/${slug}/-preview?${params.toString()}`
+    }, [previewToken, storefrontOrigin, slug])
+
+    const src = useMemo(() => buildSrc(state), [buildSrc, state])
+    const [load, setLoad] = useState({ src, version: 0 })
+    /** The draft the preview was last asked to show. */
+    const requested = useRef(src)
+
+    // Copy and structure need the page re-rendered server-side, so reload after a
+    // short pause. The swap is invisible (PreviewFrame double-buffers).
+    useEffect(() => {
+        if (src === requested.current) return
+        const t = setTimeout(() => {
+            requested.current = src
+            setLoad((l) => ({ src, version: l.version + 1 }))
+        }, 300)
+        return () => clearTimeout(t)
+    }, [src])
+
+    // Theme values are CSS custom properties: post them, no reload.
+    const themeMessage = useCallback(() => {
         const values: Record<string, string> = {}
         for (const f of THEME_SCHEMA) {
-            const v = themeRef.current[f.id]
-            if (typeof v === 'string' && v) values[cssVarName(f.id)] = v
-            else if (typeof v === 'number') values[cssVarName(f.id)] = String(v)
+            const v = stateRef.current.present.theme[f.id]
+            const value = v === undefined || v === null || v === '' ? ('default' in f ? f.default : undefined) : v
+            if (value !== undefined) values[cssVarName(f.id)] = String(value)
         }
-        // A cross-origin post to a frame that has not loaded yet simply lands
-        // nowhere. That is fine: the preview announces itself when it mounts and we
-        // replay on that handshake. A preview failure never blocks saving.
-        try {
-            win.postMessage({ type: 'mcloud:theme', values }, storefrontOrigin)
-        } catch {
-            // Preview is an aid, not a gate.
-        }
-    }, [storefrontOrigin])
+        return { type: 'mcloud:theme', values }
+    }, [stateRef])
 
-    /** Tell the preview which section the rail is editing: scroll to it, outline it. */
-    const postSelect = useCallback((index: number) => {
-        const win = iframeRef.current?.contentWindow
-        if (!win) return
-        try {
-            win.postMessage({ type: 'mcloud:select-section', index }, storefrontOrigin)
-        } catch {
-            // Preview is an aid, not a gate.
-        }
-    }, [storefrontOrigin])
+    useEffect(() => { preview.current?.post(themeMessage()) }, [doc.theme, themeMessage])
 
-    // Theme -> instant. These are CSS custom properties, so the preview needs no
-    // re-render: post them and the listener sets them on documentElement.
-    useEffect(() => { postTheme() }, [themeValues, postTheme])
+    // The preview outlines the open section, and scrolls to it when it is opened.
+    const postSelect = useCallback((index: number | null, scroll: boolean) => {
+        preview.current?.post({ type: 'mcloud:select-section', index: index ?? -1, scroll })
+    }, [])
 
-    // The preview announces itself on mount (including after a debounced reload).
-    // Two things must be replayed there, or a copy edit silently undoes them:
-    //   - the unsaved theme (an in-progress colour would revert)
-    //   - the selected section (its outline would vanish mid-edit)
-    // It also reports clicks, which is the inbound half of the two-way sync.
-    useEffect(() => {
-        
-        function onMessage(e: MessageEvent) {
-            if (e.origin !== storefrontOrigin) return
-            const data = e.data
-            if (!data) return
-            console.log('EDITOR received:', data.type, data)
-            if (data.type === 'mcloud:preview-ready') {
-                postTheme()
-                // Replay the outline, or a copy edit (which reloads the frame) would
-                // silently drop the selection mid-edit. railFocus is the truth here:
-                // it is set by a rail click AND by a preview click.
-                const i = railFocusRef.current
-                if (i !== null) postSelect(i)
-                return
-            }
-
-            if (data.type === 'mcloud:section-click' && Number.isInteger(data.index)) {
-                // Trust the index only as far as it goes: one the rail does not have
-                // is ignored.
-                if (data.index < 0 || data.index >= sections.length) return
-
-                // Highlight it in the rail, but do NOT open the drawer. The merchant
-                // clicked into the page to edit it THERE, and a panel sliding over the
-                // preview is the thing they were avoiding by doing so. The drawer is
-                // opened from the rail, for what the page cannot show.
-                setRailFocus(data.index)
-            }
-
-            // The merchant clicked ＋ on a section in the preview: open the
-            // type-picker so they choose what to insert at that index.
-            if (data.type === 'mcloud:section-add-requested' && Number.isInteger(data.index)) {
-                setAddAt(data.index)
-            }
-
-            // ── The merchant typed into the preview itself ────────────────────────
-            // Three channels, because copy lives in three places. Each folds into the
-            // same state the drawer writes, so the two surfaces always agree.
-
-            // 1. A section's own config -> pages.sections[i].settings
-            if (data.type === 'mcloud:field-edit') {
-                const { index, field, value } = data
-                if (!Number.isInteger(index) || index < 0 || index >= sections.length) return
-                if (typeof field !== 'string' || typeof value !== 'string') return
-
-                // The edit came FROM the preview, which is already showing it. Reloading
-                // the iframe would destroy the node being typed into and throw the caret
-                // away mid-word, so this edit must not re-render the frame it came from.
-                skipReloadRef.current = true
-
-                setSections((prev) => {
-                    const next = [...prev]
-                    next[index] = {
-                        ...next[index],
-                        settings: { ...next[index].settings, [field]: value },
-                    }
-                    return next
-                })
-                setSaved(false)
-            }
-
-            // Structural op on page sections -> mutate `sections`.
-            if (data.type === 'mcloud:section-op') {
-                const op = data.op
-                if (op === 'add' && typeof data.sectionType !== 'string') return
-                if (op === 'move' && !Number.isInteger(data.to)) return
-                if (!['move', 'delete', 'duplicate', 'add'].includes(op)) return
-                if (!Number.isInteger(data.index)) return
-
-                // move reorders in place in the preview (no reload); the others
-                // must redraw, so let the debounced reload run.
-                if (op === 'move') skipReloadRef.current = true
-
-                // Snapshot BEFORE applying a delete, so the undo toast can restore
-                // the exact prior sections (the accidental "deleted the whole hero"
-                // case). Captured here, not in the setState updater, so the closure
-                // holds the pre-delete value.
-                if (op === 'delete') {
-                    const prevSections = sections
-                    setUndo({ label: 'Section deleted.', restore: () => { setSections(prevSections); setSaved(false) } })
-                }
-
-                setSections((prev) => applySectionOp(prev, {
-                    op, index: data.index, to: data.to, sectionType: data.sectionType,
-                } as SectionOp, seedSection))
-                setSaved(false)
-
-                if (op === 'move' && Number.isInteger(data.to)) {
-                    // Tell the preview to shuffle the existing nodes now.
-                    const win = iframeRef.current?.contentWindow
-                    try { win?.postMessage({ type: 'mcloud:reorder-preview', from: data.index, to: data.to }, storefrontOrigin) } catch {}
-                }
-            }
-
-            // 2. A store setting -> stores.settings[key]  (hero title, mission …)
-            if (data.type === 'mcloud:setting-edit') {
-                const { key, value } = data
-                if (typeof key !== 'string' || typeof value !== 'string') return
-                // Only keys a template actually marked editable. An unexpected key is
-                // ignored rather than written blindly into the merchant's settings.
-                if (!EDITABLE_SETTINGS.has(key)) return
-
-                setStoreDraft((prev) => ({ ...prev, [key]: value }))
-                setSaved(false)
-            }
-
-            // An image slot was clicked. It has no text to type into, so the admin
-            // opens a picker: the storefront never prompts for or receives a file.
-if (data.type === 'mcloud:image-click') {
-    const { setting, list, index, key } = data
-    if (setting && EDITABLE_SETTINGS_IMAGE.has(setting)) {
-        const current = String(storeDraft[setting] ?? storeSettings[setting] ?? '')
-        setPicker({ target: { kind: 'setting', key: setting }, value: current })
-    } else if (list && key && EDITABLE_LISTS.has(list)) {
-        const i = Number(index)
-        if (!Number.isInteger(i) || i < 0) return
-        const arr = listFor(list, storeDraft, storeSettings)
-        const item = arr[i]
-        const current = item && typeof item === 'object'
-            ? String((item as Record<string, unknown>)[key] ?? '')
-            : ''
-        setPicker({ target: { kind: 'item', list, index: i, key }, value: current })
-    }
-}
-
-            // 3. A repeated record -> stores.settings[list][i][key]  (programs …)
-            if (data.type === 'mcloud:item-edit') {
-                const { list, index, key, value } = data
-                if (typeof list !== 'string' || typeof key !== 'string') return
-                if (typeof value !== 'string' || !Number.isInteger(index) || index < 0) return
-                if (!EDITABLE_LISTS.has(list)) return
-
-                setStoreDraft((prev) => {
-                    // Reads the draft, else what was SAVED, else (for a legacy hero)
-                    // normalises the flat keys into a slide. Reading only the draft would
-                    // make the first edit to a list start from an empty array, dropping
-                    // every other record in it on save.
-                    const arr = listFor(list, prev, storeSettings)
-                    // An index past the end means the preview and the draft have drifted
-                    // (a record was removed in the drawer). Drop the edit rather than
-                    // growing the array with a hole.
-                    if (index >= arr.length) return prev
-                    const item = arr[index]
-                    if (typeof item !== 'object' || item === null) return prev
-                    arr[index] = { ...(item as Record<string, unknown>), [key]: value }
-                    return { ...prev, [list]: arr }
-                })
-                setSaved(false)
-            }
-
-            // Structural op on a repeated record -> mutate storeDraft[list].
-            if (data.type === 'mcloud:item-op') {
-                const { list, op } = data
-                if (typeof list !== 'string' || !EDITABLE_LISTS.has(list)) return
-                if (!['move', 'delete', 'duplicate', 'add'].includes(op)) return
-                if (!Number.isInteger(data.index)) return
-                if (op === 'move' && !Number.isInteger(data.to)) return
-
-                const itemOp = { op, index: data.index, to: data.to, list } as ItemOp
-
-                // The hero is a CAROUSEL: its slides are stacked, not laid out in a
-                // grid, so the instant in-place node shuffle used for grid records
-                // does not apply. Every heroSlides op reloads the preview, and we set
-                // the slide to FOLLOW (via #slide=N, read by the carousel on init) so
-                // the reload lands on the slide the merchant acted on rather than
-                // snapping to slide 0.
-                const isHero = list === 'heroSlides'
-
-                // A grid-record move keeps the COUNT the same, so it can shuffle nodes
-                // in place with no reload. Hero move must reload (to re-stack + follow).
-                if (op === 'move' && !isHero) skipReloadRef.current = true
-
-                // Snapshot the affected list BEFORE deleting, so undo restores it.
-                // listFor resolves the current value (incl. a legacy hero normalised
-                // to a slide), so the restore is faithful whatever the draft state.
-                if (op === 'delete') {
-                    const prevList = listFor(list, storeDraft, storeSettings)
-                    const label = isHero ? 'Slide deleted.' : 'Item deleted.'
-                    setUndo({ label, restore: () => { setStoreDraft((p) => ({ ...p, [list]: prevList })); setSaved(false) } })
-                }
-
-                setStoreDraft((prev) => {
-                    const arr = listFor(list, prev, storeSettings)
-                    const applied = applyItemOp(arr, itemOp, seedRecord)
-                    if (isHero) followSlideRef.current = followSlideIndex(itemOp, applied.length)
-                    return { ...prev, [list]: applied }
-                })
-                setSaved(false)
-
-                if (op === 'move' && Number.isInteger(data.to) && !isHero) {
-                    // Grid record: shuffle the DOM nodes now so a reorder feels instant.
-                    // Keyed by `list` so only that list's records move.
-                    const win = iframeRef.current?.contentWindow
-                    try { win?.postMessage({ type: 'mcloud:reorder-preview-item', list, from: data.index, to: data.to }, storefrontOrigin) } catch {}
-                }
-            }
-        }
-        
-        window.addEventListener('message', onMessage)
-        return () => window.removeEventListener('message', onMessage)
-    }, [storefrontOrigin, postTheme, postSelect, sections.length, storeSettings, storeDraft])
-
-    useEffect(() => {
-  const hasGallerySection = sections.some((s) => s.type === 'gallery')
-  const hasPhotos = Array.isArray(storeSettings.galleryPhotos) && storeSettings.galleryPhotos.length > 0
-  if (hasGallerySection && !hasPhotos && storeDraft.galleryPhotos === undefined) {
-    setStoreDraft((prev) => ({ ...prev, galleryPhotos: [seedRecord('galleryPhotos')] }))
-  }
-}, []) // eslint-disable-line react-hooks/exhaustive-deps -- run once on mount only
-
-    /** Rail -> preview. */
-    function selectSection(index: number) {
-        // From the RAIL: open the drawer and outline it in the preview. (A click in
-        // the preview does the opposite — it outlines without opening the drawer.)
-        setSelection({ kind: 'section', index })
-        setRailFocus(index)
-        postSelect(index)
+    function openSectionPanel(index: number) {
+        setTab('sections')
+        setOpenSection(index)
+        postSelect(index, true)
     }
 
-    /**
-     * Apply a picked image. It writes through the SAME store-settings draft the text
-     * edits use — an image is just a string field whose editor is a picker rather
-     * than a caret, so it needs no new save path.
-     *
-     * Unlike a text edit, this DOES let the iframe reload: the preview is not already
-     * showing the new image, and there is no caret to protect.
-     */
-    function applyImage(url: string) {
-        if (!picker) return
-        const t = picker.target
-
-        if (t.kind === 'setting') {
-            setStoreDraft((prev) => ({ ...prev, [t.key]: url }))
-        } else {
-            setStoreDraft((prev) => {
-                const arr = listFor(t.list, prev, storeSettings)
-                if (t.index >= arr.length) return prev
-                const item = arr[t.index]
-                if (typeof item !== 'object' || item === null) return prev
-                arr[t.index] = { ...(item as Record<string, unknown>), [t.key]: url }
-                return { ...prev, [t.list]: arr }
-            })
-        }
-        setSaved(false)
-        setPicker(null)
-        console.log('applyImage ran', { target: t, newUrl: url })
+    function closeSectionPanel() {
+        setOpenSection(null)
+        postSelect(null, false)
     }
 
-    // Is there anything to save? Compared against what the page loaded, so undoing an
-    // edit by hand correctly makes the button go away again.
-    const dirty =
-        Object.keys(storeDraft).length > 0 ||
-        JSON.stringify(sections) !== JSON.stringify(initialSections) ||
-        THEME_SCHEMA.some((f) => (themeValues[f.id] ?? '') !== (theme[f.id] ?? ''))
+    /** Page the preview's carousel to a slide; remembered so the next preview opens on it. */
+    const showSlide = useCallback((index: number) => {
+        activeSlide.current = index
+        preview.current?.post({ type: 'mcloud:show-slide', index })
+    }, [])
 
-    // After a hero slide op, the carousel should open on the slide the merchant
-    // acted on. The item-op handler sets this (synchronously, before its
-    // setStoreDraft), and previewSrc appends `#slide=N` on the next render — which
-    // storeDraft (a previewSrc dep) guarantees. Reset once the reload has fired so a
-    // later unrelated reload does not re-jump. null = no follow.
-    const followSlideRef = useRef<number | null>(null)
+    // ── Edits that touch structure ──────────────────────────────────────────────
 
-    // Copy -> debounced reload. A copy change needs Liquid re-run server-side
-    // (~1.6s warm), so reloading per keystroke is unusable. Wait for a pause.
-    const previewSrc = useMemo(() => {
-        const sectionsDirty = JSON.stringify(sections) !== JSON.stringify(initialSections)
-        const params = new URLSearchParams()
-        params.set('token', previewToken)
-        if (sectionsDirty) params.set('preview', toBase64Url(JSON.stringify(sections)))
-        if (Object.keys(storeDraft).length > 0) params.set('settings', toBase64Url(JSON.stringify(storeDraft)))
-        const url = `${storefrontOrigin}/store/${slug}/-preview?${params.toString()}`
-        return followSlideRef.current !== null ? `${url}#slide=${followSlideRef.current}` : url
-    }, [sections, initialSections, storeDraft, slug, previewToken, storefrontOrigin])
-
-    // An edit made IN the preview is already visible there, so it must not reload
-    // the frame; an edit made in the DRAWER must. Same state, two origins, and only
-    // one of them needs a re-render.
-    const skipReloadRef = useRef(false)
-    const [debouncedSrc, setDebouncedSrc] = useState(previewSrc)
-    useEffect(() => {
-        if (skipReloadRef.current) {
-            skipReloadRef.current = false
+    const sectionOp = useCallback((op: SectionOp) => {
+        const before = stateRef.current.present.sections
+        if (op.op === 'delete' && before.length <= 1) {
+            setToast({ label: 'A page needs at least one section.', undoAt: null })
             return
         }
-        const t = setTimeout(() => { setDebouncedSrc(previewSrc); followSlideRef.current = null }, 400)
-        return () => clearTimeout(t)
-    }, [previewSrc])
+        const action: EditorAction = op.op === 'add'
+            ? { type: 'section-op', op, section: seedSection(op.sectionType) }
+            : { type: 'section-op', op }
+        dispatch(action)
+        setOpenSection((i) => (i === null ? null : remapIndex(i, op)))
+        if (op.op === 'delete') {
+            const label = sectionDef(before[op.index]?.type)?.label ?? 'Section'
+            setToast({ label: `${label} removed.`, undoAt: stateRef.current.version })
+        }
+    }, [dispatch, stateRef])
 
-    // The undo toast auto-dismisses. A new delete replaces the pending one (this
-    // effect re-runs and resets the timer), so only the most recent delete is
-    // undoable — matching the "quick safety net", not a full history.
-    useEffect(() => {
-        if (!undo) return
-        const t = setTimeout(() => setUndo(null), 6000)
-        return () => clearTimeout(t)
-    }, [undo])
+    const itemOp = useCallback((list: string, op: ItemOp) => {
+        const before = listFor(list, stateRef.current.present.settings).length
+        dispatch({ type: 'item-op', list, op })
+        const after = listFor(list, stateRef.current.present.settings).length
+        if (list === 'heroSlides') showSlide(followSlideIndex(op, after))
+        if (op.op === 'delete' && after < before) {
+            setToast({ label: list === 'heroSlides' ? 'Slide removed.' : 'Item removed.', undoAt: stateRef.current.version })
+        }
+    }, [dispatch, stateRef, showSlide])
 
-    async function onSave() {
-        setSaving(true)
-        setError(null)
+    // Sidebar list edits go through itemOp too, so slide-follow and the undo toast apply.
+    const sidebarDispatch = useCallback((action: EditorAction) => {
+        if (action.type === 'item-op') itemOp(action.list, action.op)
+        else dispatch(action)
+    }, [dispatch, itemOp])
 
-        const themePatch: Record<string, string> = {}
-        for (const f of THEME_SCHEMA) {
-            const v = themeValues[f.id]
-            if (v !== undefined && v !== '') themePatch[f.id] = String(v)
+    // ── Saving ──────────────────────────────────────────────────────────────────
+
+    // A ref, not the `saving` state: two quick Ctrl+S presses land before a re-render.
+    const inFlight = useRef(false)
+    const save = useCallback(async () => {
+        const st = stateRef.current
+        if (inFlight.current || !isDocDirty(st)) return
+        const snapshot = st.present
+        const base = st.saved
+
+        // A campaign that would silently vanish or never take money is caught here,
+        // because the live site will not complain.
+        const problems = contentErrors(base.settings, snapshot.settings)
+        if (problems.length) {
+            setErrors(problems)
+            return
         }
 
-        const a = await updateStoreTheme(slug, themePatch)
-        const b = sections.length ? await updatePageSections(slug, '', sections) : { error: null }
+        inFlight.current = true
+        setSaving(true)
+        setErrors([])
+        const ok = { error: null as string | null }
+        const theme = themePatch(base.theme, snapshot.theme, THEME_SCHEMA)
+        const settings = settingsPatch(base.settings, snapshot.settings)
+        const sectionsChanged = !sameValue(base.sections, snapshot.sections)
 
-        // Copy edited in the preview that lives in stores.settings. Merged onto the
-        // settings this page loaded, so keys the Editor never touched survive.
-        const c = Object.keys(storeDraft).length
-            ? await updateStoreSettings(slug, { settings: { ...storeSettings, ...storeDraft } as never })
-            : { error: null }
+        const [a, b, c] = await Promise.all([
+            Object.keys(theme).length ? updateStoreTheme(slug, theme) : ok,
+            sectionsChanged ? updatePageSections(slug, '', snapshot.sections) : ok,
+            Object.keys(settings).length ? patchStoreSettings(slug, settings) : ok,
+        ]).catch((e: unknown) => {
+            const failed = { error: e instanceof Error ? e.message : 'Could not reach the server.' }
+            return [failed, failed, failed]
+        })
 
+        // Each part is marked saved only if its write succeeded; the draft is kept
+        // on failure, so the merchant never loses what they typed.
+        dispatch({ type: 'saved', snapshot, theme: !a.error, sections: !b.error, settingsPatch: c.error ? null : settings })
+        inFlight.current = false
         setSaving(false)
-        const err = a.error ?? b.error ?? c.error
-        // The draft is retained on failure: the merchant never loses typed copy.
-        if (err) setError(err)
+        const failed = [...new Set([a.error, b.error, c.error].filter((e): e is string => !!e))]
+        if (failed.length) setErrors(failed)
         else {
-            setSaved(true)
-            setTimeout(() => setSaved(false), 2500)
+            setJustSaved(true)
+            setTimeout(() => setJustSaved(false), 2500)
+        }
+    }, [slug, dispatch, stateRef])
+
+    const undo = useCallback(() => dispatch({ type: 'undo' }), [dispatch])
+    const redo = useCallback(() => dispatch({ type: 'redo' }), [dispatch])
+
+    // ── Messages from the preview ───────────────────────────────────────────────
+    // The preview only displays, so it reports clicks, scroll and shortcuts. Every
+    // value is checked, not trusted: the message comes from the framed storefront.
+
+    function onPreviewMessage(data: Record<string, unknown>) {
+        switch (data.type) {
+            case 'mcloud:scroll':
+                if (typeof data.y === 'number') scrollY.current = data.y
+                return
+            case 'mcloud:shortcut':
+                if (data.key === 'save') void save()
+                else if (data.key === 'undo') undo()
+                else if (data.key === 'redo') redo()
+                return
+            case 'mcloud:section-click': {
+                const index = data.index
+                if (!Number.isInteger(index) || (index as number) < 0 || (index as number) >= stateRef.current.present.sections.length) return
+                setTab('sections')
+                setOpenSection(index as number)
+                setMobilePane('edit')
+                return
+            }
         }
     }
 
-    // `content` renders SP5's ContentClient instead of a schema form, so it needs
-    // no schema here.
-    const active =
-        selection?.kind === 'theme'
-            ? { label: 'Theme', schema: THEME_SCHEMA, values: themeValues as SettingValues }
-            : selection?.kind === 'section'
-                ? {
-                    label: sectionDef(sections[selection.index]?.type)?.label ?? 'Section',
-                    schema: sectionDef(sections[selection.index]?.type)?.schema ?? ([] as readonly SettingField[]),
-                    values: sections[selection.index]?.settings ?? {},
-                }
-                : { label: 'Content', schema: [] as readonly SettingField[], values: {} as SettingValues }
+    // A fresh preview page: replay what it cannot know (unsaved theme, scroll, outline).
+    function onPreviewReady(post: (msg: Record<string, unknown>) => void, data: Record<string, unknown>) {
+        post(themeMessage())
+        // Scroll and outline belong to the bridge; the theme listener's announcement
+        // may arrive before the bridge is listening.
+        if (data.from !== 'bridge') return
+        if (revealSection.current !== null) {
+            post({ type: 'mcloud:select-section', index: revealSection.current, scroll: true })
+            revealSection.current = null
+            return
+        }
+        post({ type: 'mcloud:scroll-to', y: scrollY.current })
+        // PreviewFrame always calls the latest render's handler, so `open` is current.
+        if (open !== null) post({ type: 'mcloud:select-section', index: open, scroll: false })
+        if (activeSlide.current !== null) post({ type: 'mcloud:show-slide', index: activeSlide.current })
+    }
+
+    // ── Keyboard, leaving with unsaved work, toast ──────────────────────────────
+
+    useEffect(() => {
+        function onKey(e: KeyboardEvent) {
+            if (!(e.metaKey || e.ctrlKey) || e.altKey) return
+            const k = e.key.toLowerCase()
+            if (k === 's') {
+                e.preventDefault()
+                void save()
+                return
+            }
+            // Inside a text box, undo belongs to the box.
+            const t = e.target as HTMLElement | null
+            if (t && (t.closest('input, textarea, select') || t.isContentEditable)) return
+            if (k === 'z' && !e.shiftKey) { e.preventDefault(); undo() }
+            else if ((k === 'z' && e.shiftKey) || k === 'y') { e.preventDefault(); redo() }
+        }
+        window.addEventListener('keydown', onKey)
+        return () => window.removeEventListener('keydown', onKey)
+    }, [save, undo, redo])
+
+    useEffect(() => {
+        if (!dirty) return
+        const warn = (e: BeforeUnloadEvent) => {
+            e.preventDefault()
+            e.returnValue = ''
+        }
+        window.addEventListener('beforeunload', warn)
+        return () => window.removeEventListener('beforeunload', warn)
+    }, [dirty])
+
+    useEffect(() => {
+        if (!toast) return
+        const t = setTimeout(() => setToast(null), 6000)
+        return () => clearTimeout(t)
+    }, [toast])
+
+    // ── Render ──────────────────────────────────────────────────────────────────
+
+    const addable = (commerce ? ADDABLE.shop : ADDABLE.ngo).map((type) => ({
+        type,
+        label: sectionDef(type)?.label ?? type,
+        description: sectionDef(type)?.description,
+    }))
+    const canUndoToast = toast?.undoAt != null && toast.undoAt === state.version
 
     return (
-        <div className="relative flex h-full min-h-0">
-
-            {/* ── Rail: a list, nothing more. Picking something opens the drawer. ── */}
-            <aside className="w-56 shrink-0 border-r border-border overflow-y-auto p-3 space-y-4">
-                <div className="space-y-1">
-                    <RailItem
-                        icon={<Palette className="w-4 h-4 shrink-0" />}
-                        label="Theme"
-                        active={selection?.kind === 'theme'}
-                        onClick={() => setSelection({ kind: 'theme' })}
-                    />
-                    {/* SP5's store-settings content (mission, programs, impact stats,
-                        contact, campaigns) lives in stores.settings, not in a section's
-                        config, so no section schema covers it. It gets a rail entry
-                        rather than its own nav tab. */}
-                    {!commerce && (
-                        <RailItem
-                            icon={<FileText className="w-4 h-4 shrink-0" />}
-                            label="Content"
-                            active={selection?.kind === 'content'}
-                            onClick={() => setSelection({ kind: 'content' })}
-                        />
-                    )}
+        <div className="flex h-full min-h-0 flex-col bg-background">
+            {/* ── Toolbar ── */}
+            <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
+                <div className="flex min-w-0 items-center gap-2">
+                    <Icon name="home" size={16} className="text-muted-foreground" />
+                    <span className="truncate text-[13px] font-medium">Home page</span>
                 </div>
 
-                <div>
-                    <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground mb-2 px-2">
-                        <Layers className="w-3.5 h-3.5" />
-                        Sections
-                    </p>
-                    <div className="space-y-1">
-                        {sections.length === 0 && (
-                            <p className="px-2 text-[12px] text-muted-foreground">
-                                This site uses the default layout. Nothing to configure yet.
-                            </p>
-                        )}
-                        {sections.map((s, i) => (
-                            <RailItem
-                                key={i}
-                                label={sectionDef(s.type)?.label ?? s.type}
-                                // Highlighted by a click in EITHER surface. A preview
-                                // click sets railFocus alone (no drawer); a rail click
-                                // sets both.
-                                active={railFocus === i || (selection?.kind === 'section' && selection.index === i)}
-                                onClick={() => selectSection(i)}
-                            />
+                <div className="mx-auto hidden items-center rounded-md border border-border bg-muted/40 p-0.5 md:flex" role="group" aria-label="Preview size">
+                    {(['desktop', 'tablet', 'mobile'] as const).map((d) => (
+                        <button
+                            key={d}
+                            type="button"
+                            aria-pressed={device === d}
+                            title={d === 'desktop' ? 'Desktop' : d === 'tablet' ? 'Tablet' : 'Mobile'}
+                            onClick={() => setDevice(d)}
+                            className={cn(
+                                'grid h-7 w-8 place-items-center rounded transition-colors',
+                                device === d ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
+                            )}
+                        >
+                            <Icon name={d === 'desktop' ? 'desktop_windows' : d === 'tablet' ? 'tablet' : 'smartphone'} size={16} />
+                        </button>
+                    ))}
+                </div>
+
+                <div className="ml-auto flex items-center gap-1 md:ml-0">
+                    <div className="mr-1 flex rounded-md border border-border bg-muted/40 p-0.5 md:hidden" role="group" aria-label="Show">
+                        {(['edit', 'preview'] as const).map((p) => (
+                            <button
+                                key={p}
+                                type="button"
+                                aria-pressed={mobilePane === p}
+                                onClick={() => setMobilePane(p)}
+                                className={cn('h-7 rounded px-2.5 text-[12px] font-medium', mobilePane === p ? 'bg-card shadow-sm' : 'text-muted-foreground')}
+                            >
+                                {p === 'edit' ? 'Edit' : 'Preview'}
+                            </button>
                         ))}
                     </div>
+                    <IconAction icon="undo" label="Undo (Ctrl+Z)" onClick={undo} disabled={state.past.length === 0} className="h-8 w-8" />
+                    <IconAction icon="redo" label="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={state.future.length === 0} className="h-8 w-8" />
+                    <span className="mx-2 hidden text-[12px] text-muted-foreground lg:inline" role="status">
+                        {saving ? 'Saving…' : justSaved ? 'All changes saved' : dirty ? 'Unsaved changes' : ''}
+                    </span>
+                    <a href={liveUrl} target="_blank" rel="noreferrer" className={cn(buttonClass('ghost'), 'hidden sm:inline-flex')}>
+                        <Icon name="open_in_new" size={15} />
+                        View site
+                    </a>
+                    {dirty && !saving && (
+                        <Button variant="ghost" onClick={() => setConfirmDiscard(true)}>Discard</Button>
+                    )}
+                    <Button variant="primary" onClick={() => void save()} disabled={!dirty || saving} title="Save (Ctrl+S)">
+                        {saving ? <Spinner size={13} /> : justSaved && !dirty ? <Icon name="check" size={15} /> : null}
+                        {saving ? 'Saving…' : justSaved && !dirty ? 'Saved' : 'Save'}
+                    </Button>
                 </div>
+            </header>
 
-                {sections.length > 0 && (
-                    <p className="px-2 pt-1 text-[11px] leading-relaxed text-muted-foreground">
-                        Click any heading in the preview to edit it directly.
-                    </p>
-                )}
-            </aside>
-
-            {/* Preview. A preview failure must never block saving, so a missing
-                token degrades to a message rather than an error state. */}
-            <div className="relative flex-1 min-w-0 bg-muted p-0.5">
-                {/* Editing happens IN the preview now, so Save cannot live only in the
-                    drawer: a merchant who never opens one would have no way to keep
-                    their work. It floats over the preview whenever there is something
-                    unsaved. */}
-                {dirty && selection?.kind !== 'content' && (
-                    <div className="absolute bottom-5 right-5 z-30 flex items-center gap-3">
-                        {error && (
-                            <span className="rounded-lg bg-destructive/20 px-3 py-1.5 text-[12px] text-destructive-foreground shadow">
-                                {error}
+            {errors.length > 0 && (
+                <div className="shrink-0 border-b border-border px-3 py-2">
+                    <Notice tone="error">
+                        <span className="font-medium">Not saved. </span>
+                        {errors.length === 1 ? errors[0] : (
+                            <span className="mt-1 block">
+                                {errors.map((e) => <span key={e} className="block">{e}</span>)}
                             </span>
                         )}
-                        <button
-                            onClick={onSave}
-                            disabled={saving}
-                            className="h-10 rounded-full bg-primary px-5 text-[13px] font-semibold text-primary-foreground shadow-lg disabled:opacity-50"
-                        >
-                            {saving ? 'Saving...' : saved ? 'Saved' : 'Save changes'}
-                        </button>
-                    </div>
-                )}
-                {/* Undo safety net for a delete. Bottom-centre so it never sits under
-                    the Save button. Auto-dismisses; Undo restores the prior state. */}
-                {undo && (
-                    <div className="absolute bottom-5 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 rounded-full bg-[var(--md-sys-color-inverse-surface)] pl-4 pr-2 py-1.5 shadow-lg">
-                        <span className="text-[13px] text-[var(--md-sys-color-inverse-on-surface)]">{undo.label}</span>
-                        <button
-                            onClick={() => { undo.restore(); setUndo(null) }}
-                            className="rounded-full bg-[var(--md-sys-color-inverse-primary)] px-3 h-8 text-[13px] font-semibold text-primary-foreground"
-                        >
-                            Undo
-                        </button>
-                    </div>
-                )}
-                {/* Clicking an image in the preview opens this. URL first, upload
-                    second: a merchant migrating a site already has their images
-                    hosted somewhere. */}
-                <ImagePicker
-                    open={!!picker}
-                    value={picker?.value ?? ''}
-                    storeId={storeId}
-                    pathPrefix={`${storeId}/editor`}
-                    onPick={applyImage}          // stays for real picks
-                    onClose={() => setPicker(null)}
-                    
-                />
-
-                {/* The bridge posted mcloud:section-add-requested for this index:
-                    let the merchant pick what kind of section to insert there. */}
-                {addAt !== null && (
-                    <div className="absolute inset-0 z-40 grid place-items-center bg-black/30" onClick={() => setAddAt(null)}>
-                        <div className="w-72 rounded-xl bg-background p-2 shadow-xl" onClick={(e) => e.stopPropagation()}>
-                            <p className="px-3 py-2 text-[12px] font-semibold text-muted-foreground">Add a section</p>
-                            {addableTypes.map((t) => (
-                                <button
-                                    key={t}
-                                    onClick={() => {
-                                        setSections((prev) => applySectionOp(prev, { op: 'add', index: addAt, sectionType: t }, seedSection))
-                                        setSaved(false)
-                                        setAddAt(null)
-                                    }}
-                                    className="w-full text-left px-3 h-9 rounded-lg text-[13px] hover:bg-[var(--md-sys-color-surface-container)]"
-                                >
-                                    {sectionDef(t)?.label ?? t}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                )}
-
-                {previewToken ? (
-                    <iframe
-                        ref={iframeRef}
-                        src={debouncedSrc}
-                        className="w-full h-full border border-border bg-background"
-                        title="Site preview"
-                    />
-                ) : (
-                    <div className="w-full h-full rounded-xl border border-border flex items-center justify-center">
-                        <p className="text-[13px] text-muted-foreground">
-                            The preview is unavailable. Your changes still save normally.
-                        </p>
-                    </div>
-                )}
-            </div>
-
-            {/* ── Drawer: slides over the preview. Wide enough for the Content form,
-                   which was the thing actually suffering in a narrow rail. ── */}
-            {selection && (
-                <div
-                    className="absolute inset-y-0 left-56 z-20 w-[26rem] flex flex-col
-                               bg-background
-                               border-r border-border
-                               shadow-xl"
-                >
-                    <header className="shrink-0 flex items-center justify-between gap-2 px-4 h-14 border-b border-border">
-                        <h2 className="text-[14px] font-semibold text-foreground truncate">
-                            {active.label}
-                        </h2>
-                        <button
-                            onClick={() => setSelection(null)}
-                            aria-label="Close"
-                            className="shrink-0 w-8 h-8 grid place-items-center rounded-full text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]"
-                        >
-                            <X className="w-4 h-4" />
-                        </button>
-                    </header>
-
-                    <div className="flex-1 min-h-0 overflow-y-auto p-4">
-                        {selection.kind === 'content' ? (
-                            // SP5's editor, reused wholesale. It owns its own save (it
-                            // writes stores.settings through updateStoreSettings), so it
-                            // is mounted as-is rather than folded into this page's Save.
-                            <ContentClient
-                                slug={slug}
-                                storeId={storeId}
-                                initialSettings={storeSettings}
-                                plan={plan}
-                            />
-                        ) : (
-                            <SettingsFields
-                                schema={active.schema}
-                                values={active.values}
-                                storeId={storeId}
-                                pathPrefix={selection.kind === 'theme' ? 'theme' : `sections/${selection.index}`}
-                                onChange={(id, value) => {
-                                    if (selection.kind === 'theme') {
-                                        setThemeValues((v) => ({ ...v, [id]: value }))
-                                    } else if (selection.kind === 'section') {
-                                        setSections((prev) => {
-                                            const next = [...prev]
-                                            next[selection.index] = {
-                                                ...next[selection.index],
-                                                settings: { ...next[selection.index].settings, [id]: value },
-                                            }
-                                            return next
-                                        })
-                                    }
-                                    setSaved(false)
-                                }}
-                            />
-                        )}
-                    </div>
-
-                    {/* Save floats over the preview instead of living here, so that a
-                        merchant editing directly in the page (never opening a drawer)
-                        still has one. The Content drawer saves itself. */}
+                    </Notice>
                 </div>
             )}
+
+            <div className="flex min-h-0 flex-1">
+                {/* ── Sidebar ── */}
+                <aside
+                    className={cn(
+                        // On the right: the settings shell's own nav already sits on the left.
+                        'flex min-h-0 w-full shrink-0 flex-col border-l border-border bg-card md:order-last md:w-80',
+                        mobilePane === 'preview' && 'hidden md:flex',
+                    )}
+                >
+                    {open === null ? (
+                        <>
+                            <div role="tablist" className="flex shrink-0 gap-1 border-b border-border px-3">
+                                {(['sections', 'theme'] as const).map((t) => (
+                                    <button
+                                        key={t}
+                                        role="tab"
+                                        type="button"
+                                        aria-selected={tab === t}
+                                        onClick={() => setTab(t)}
+                                        className={cn(
+                                            '-mb-px border-b-2 px-2 py-2.5 text-[13px] font-medium transition-colors',
+                                            tab === t ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
+                                        )}
+                                    >
+                                        {t === 'sections' ? 'Sections' : 'Theme'}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                                {tab === 'sections' ? (
+                                    <SectionList
+                                        sections={doc.sections}
+                                        onOpen={openSectionPanel}
+                                        onOp={(op) => sectionOp(op)}
+                                        onAdd={() => setAddAt(doc.sections.length)}
+                                    />
+                                ) : (
+                                    <div className="space-y-6">
+                                        {THEME_GROUPS.map((g) => (
+                                            <section key={g.title}>
+                                                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</h3>
+                                                {g.hint && <p className="-mt-1.5 mb-3 text-[12px] text-muted-foreground">{g.hint}</p>}
+                                                <SettingsFields
+                                                    schema={THEME_SCHEMA.filter((f) => g.match(f.id))}
+                                                    values={doc.theme}
+                                                    pickImage={pickImage}
+                                                    onChange={(id, value) => dispatch({ type: 'theme', id, value })}
+                                                />
+                                            </section>
+                                        ))}
+                                        <p className="text-[12px] text-muted-foreground">Clear a field to go back to the theme default.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    ) : (
+                        <SectionPanel
+                            key={open}
+                            index={open}
+                            section={doc.sections[open]}
+                            count={doc.sections.length}
+                            settings={doc.settings}
+                            plan={plan}
+                            pickImage={pickImage}
+                            dispatch={sidebarDispatch}
+                            onShowRecord={(list, i) => { if (list === 'heroSlides') showSlide(i) }}
+                            onBack={closeSectionPanel}
+                            onOp={(op) => {
+                                sectionOp(op)
+                                if (op.op === 'move') postSelect(op.to, true)
+                            }}
+                        />
+                    )}
+                </aside>
+
+                {/* ── Preview ── */}
+                <main className={cn('relative min-w-0 flex-1 bg-muted/50 p-2 md:p-3', mobilePane === 'edit' && 'hidden md:block')}>
+                    {previewToken ? (
+                        <PreviewFrame
+                            ref={preview}
+                            src={load.src}
+                            version={load.version}
+                            origin={storefrontOrigin}
+                            device={device}
+                            onMessage={onPreviewMessage}
+                            onReady={onPreviewReady}
+                        />
+                    ) : (
+                        <div className="grid h-full place-items-center rounded-md border border-dashed border-border">
+                            <p className="max-w-xs text-center text-[13px] text-muted-foreground">
+                                The preview is unavailable right now. Your changes still save normally.
+                            </p>
+                        </div>
+                    )}
+
+                    {toast && (
+                        <div role="status" className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md bg-foreground py-1.5 pl-3.5 pr-1.5 text-[13px] text-background shadow-lg">
+                            <span>{toast.label}</span>
+                            {canUndoToast ? (
+                                <button type="button" onClick={() => { undo(); setToast(null) }} className="h-7 rounded px-2.5 font-semibold hover:bg-background/15">
+                                    Undo
+                                </button>
+                            ) : (
+                                <button type="button" aria-label="Dismiss" onClick={() => setToast(null)} className="grid h-7 w-7 place-items-center rounded hover:bg-background/15">
+                                    <Icon name="close" size={14} />
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </main>
+            </div>
+
+            <AddSectionDialog
+                open={addAt !== null}
+                choices={addable}
+                onClose={() => setAddAt(null)}
+                onPick={(type) => {
+                    const at = addAt ?? doc.sections.length
+                    setAddAt(null)
+                    sectionOp({ op: 'add', index: at, sectionType: type })
+                    setTab('sections')
+                    setOpenSection(at)
+                    revealSection.current = at
+                }}
+            />
+
+            {/* Mounted per pick, so it always opens on THAT slot's image. */}
+            {picker && (
+                <ImagePicker
+                    value={picker.value}
+                    storeId={storeId}
+                    onPick={(url) => { picker.apply(url); setPicker(null) }}
+                    onClose={() => setPicker(null)}
+                />
+            )}
+
+            <ConfirmDialog
+                open={confirmDiscard}
+                title="Discard unsaved changes?"
+                description="Everything since your last save goes back to how it was. You can still undo this."
+                confirmLabel="Discard changes"
+                onCancel={() => setConfirmDiscard(false)}
+                onConfirm={() => {
+                    dispatch({ type: 'discard' })
+                    setErrors([])
+                    setConfirmDiscard(false)
+                }}
+            />
         </div>
     )
 }
 
-function RailItem({
-    label, active, onClick, icon,
+// ── Sidebar: the section list ───────────────────────────────────────────────────
+
+function SectionList({
+    sections, onOpen, onOp, onAdd,
 }: {
-    label: string
-    active: boolean
-    onClick: () => void
-    icon?: React.ReactNode
+    sections: Section[]
+    onOpen: (index: number) => void
+    onOp: (op: SectionOp) => void
+    onAdd: () => void
 }) {
+    const [drag, setDrag] = useState<{ from: number; over: number | null } | null>(null)
+
     return (
-        <button
-            onClick={onClick}
-            className={[
-                'w-full flex items-center gap-2 text-left px-3 h-9 rounded-lg text-[13px] transition-colors',
-                active
-                    ? 'bg-[var(--md-sys-color-secondary-container)] text-[var(--md-sys-color-on-secondary-container)] font-medium'
-                    : 'text-muted-foreground hover:bg-[var(--md-sys-color-surface-container)]',
-            ].join(' ')}
-        >
-            {icon}
-            <span className="truncate">{label}</span>
-        </button>
+        <div>
+            <ol className="space-y-1">
+                {sections.map((s, i) => {
+                    const def = sectionDef(s.type)
+                    const heading = typeof s.settings?.heading === 'string' ? s.settings.heading : ''
+                    const dropHere = drag && drag.over === i && drag.from !== i
+                    return (
+                        <li
+                            key={i}
+                            draggable
+                            onDragStart={(e) => { setDrag({ from: i, over: null }); e.dataTransfer.effectAllowed = 'move' }}
+                            onDragOver={(e) => { if (drag) { e.preventDefault(); if (drag.over !== i) setDrag({ ...drag, over: i }) } }}
+                            onDrop={(e) => {
+                                e.preventDefault()
+                                if (drag && drag.from !== i) onOp({ op: 'move', index: drag.from, to: i })
+                                setDrag(null)
+                            }}
+                            onDragEnd={() => setDrag(null)}
+                            className={cn(
+                                'group relative flex items-center gap-1 rounded-md border border-transparent bg-card pr-1 transition-colors hover:border-border hover:bg-muted/40',
+                                drag?.from === i && 'opacity-40',
+                                dropHere && (drag!.from < i ? 'shadow-[0_2px_0_0_var(--color-primary)]' : 'shadow-[0_-2px_0_0_var(--color-primary)]'),
+                            )}
+                        >
+                            <span className="grid h-9 w-5 cursor-grab place-items-center text-muted-foreground/60 active:cursor-grabbing" aria-hidden>
+                                <Icon name="drag_indicator" size={16} />
+                            </span>
+                            <button
+                                type="button"
+                                onClick={() => onOpen(i)}
+                                onKeyDown={(e) => {
+                                    // Keyboard reordering, since dragging needs a mouse.
+                                    if (e.altKey && e.key === 'ArrowUp' && i > 0) { e.preventDefault(); onOp({ op: 'move', index: i, to: i - 1 }) }
+                                    if (e.altKey && e.key === 'ArrowDown' && i < sections.length - 1) { e.preventDefault(); onOp({ op: 'move', index: i, to: i + 1 }) }
+                                }}
+                                title="Alt+↑ / Alt+↓ to reorder"
+                                className="flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left"
+                            >
+                                <Icon name={SECTION_ICONS[s.type] ?? 'view_agenda'} size={16} className="text-muted-foreground" />
+                                <span className="min-w-0">
+                                    <span className="block truncate text-[13px] font-medium">{def?.label ?? s.type}</span>
+                                    {heading && <span className="block truncate text-[11px] text-muted-foreground">{heading}</span>}
+                                </span>
+                            </button>
+                            <span className="flex opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
+                                <IconAction icon="content_copy" label="Duplicate section" onClick={() => onOp({ op: 'duplicate', index: i })} />
+                                <IconAction icon="delete" label="Remove section" disabled={sections.length <= 1} onClick={() => onOp({ op: 'delete', index: i })} />
+                            </span>
+                        </li>
+                    )
+                })}
+            </ol>
+            <Button className="mt-3 w-full" onClick={onAdd}>
+                <Icon name="add" size={16} />
+                Add section
+            </Button>
+            <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+                Click a section in the preview to edit it. Drag sections here to reorder them.
+            </p>
+        </div>
+    )
+}
+
+// ── Sidebar: one section's settings ─────────────────────────────────────────────
+
+function SectionPanel({
+    index, section, count, settings, plan, pickImage, dispatch, onShowRecord, onBack, onOp,
+}: {
+    index: number
+    section: Section
+    count: number
+    settings: Record<string, unknown>
+    plan: Plan
+    pickImage: PickImage
+    dispatch: (a: EditorAction) => void
+    onShowRecord: (list: string, index: number) => void
+    onBack: () => void
+    onOp: (op: SectionOp) => void
+}) {
+    const def = sectionDef(section.type)
+    const schema = def?.schema ?? []
+    const content = hasSectionContent(section.type)
+
+    return (
+        <>
+            <div className="flex h-11 shrink-0 items-center gap-1 border-b border-border px-1.5">
+                <IconAction icon="arrow_back" label="Back to sections" onClick={onBack} className="h-8 w-8" />
+                <Icon name={SECTION_ICONS[section.type] ?? 'view_agenda'} size={16} className="ml-1 text-muted-foreground" />
+                <h2 className="min-w-0 flex-1 truncate pl-1 text-[13px] font-semibold">{def?.label ?? section.type}</h2>
+                <IconAction icon="arrow_upward" label="Move up" disabled={index === 0} onClick={() => onOp({ op: 'move', index, to: index - 1 })} />
+                <IconAction icon="arrow_downward" label="Move down" disabled={index === count - 1} onClick={() => onOp({ op: 'move', index, to: index + 1 })} />
+                <IconAction icon="content_copy" label="Duplicate section" onClick={() => onOp({ op: 'duplicate', index })} />
+            </div>
+            <div className="min-h-0 flex-1 space-y-6 overflow-y-auto p-4">
+                {!def && (
+                    <Notice tone="warning">This section type is no longer available. It still shows on your site; you can remove it.</Notice>
+                )}
+                {schema.length > 0 && (
+                    <SettingsFields
+                        schema={schema}
+                        values={section.settings ?? {}}
+                        pickImage={pickImage}
+                        onChange={(field, value) => dispatch({ type: 'section-field', index, field, value })}
+                    />
+                )}
+                {content && (
+                    <div className={cn(schema.length > 0 && 'border-t border-border pt-5')}>
+                        <SectionContent type={section.type} settings={settings} dispatch={dispatch} pickImage={pickImage} plan={plan} onShowRecord={onShowRecord} />
+                    </div>
+                )}
+                {def && schema.length === 0 && !content && (
+                    <p className="text-[13px] text-muted-foreground">{def.description ?? 'This section has nothing to configure.'}</p>
+                )}
+                {(def?.description && (schema.length > 0 || content)) && (
+                    <p className="text-[12px] text-muted-foreground">{def.description}</p>
+                )}
+            </div>
+            <div className="shrink-0 border-t border-border p-3">
+                <Button variant="danger" className="w-full" disabled={count <= 1} onClick={() => { onOp({ op: 'delete', index }); onBack() }}>
+                    <Icon name="delete" size={15} />
+                    Remove section
+                </Button>
+            </div>
+        </>
     )
 }
 
 /**
  * The storefront decodes the preview payload with Buffer.from(x, 'base64url'), so
- * this must produce base64URL, not base64.
- *
- * It must also survive non-Latin1 copy: bare btoa() THROWS on a single accented
- * character, which would break the preview for any merchant not writing in ASCII.
- * So UTF-8 encode first.
+ * this must produce base64URL. It must also survive non-Latin1 copy: bare btoa()
+ * throws on a single accented character, so UTF-8 encode first.
  */
 function toBase64Url(input: string): string {
     const bytes = new TextEncoder().encode(input)
@@ -779,11 +735,9 @@ function toBase64Url(input: string): string {
 }
 
 /**
- * store_themes column -> the --sf-* var the storefront reads.
- *
- * The regex alone is WRONG for four of them: the storefront reads --sf-font-heading
- * and --sf-font-body (not --sf-heading-font), so those flip. Verified against the
- * cssVars block in apps/storefront/app/store/[slug]/layout.tsx.
+ * store_themes column -> the --sf-* var the storefront reads. The regex alone is
+ * wrong for four of them (the storefront reads --sf-font-heading, not
+ * --sf-heading-font), so those are listed.
  */
 const CSS_VAR_NAMES: Record<string, string> = {
     heading_font: 'font-heading',
@@ -793,10 +747,5 @@ const CSS_VAR_NAMES: Record<string, string> = {
 }
 
 function cssVarName(columnId: string): string {
-    const explicit = CSS_VAR_NAMES[columnId]
-    if (explicit) return explicit
-    return columnId
-        .replace(/_color$/, '')
-        .replace(/^dark_/, 'dark-')
-        .replace(/_/g, '-')
+    return CSS_VAR_NAMES[columnId] ?? columnId.replace(/_color$/, '').replace(/^dark_/, 'dark-').replace(/_/g, '-')
 }

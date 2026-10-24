@@ -1,146 +1,155 @@
 'use client'
 
-import ImageUpload from '@/components/store/image-upload'
+import { useId } from 'react'
+import { Field, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
+import ImageField, { type PickImage } from './image-field'
 
-const inputCls =
-    'w-full h-9 rounded-lg border border-border ' +
-    'bg-background px-3 text-[13px] text-foreground ' +
-    'focus:outline-none focus:border-[var(--md-sys-color-primary)]'
+/** Families offered for a font field. Any other name can still be typed. */
+const FONT_SUGGESTIONS = [
+    'Inter', 'DM Sans', 'Poppins', 'Montserrat', 'Lato', 'Open Sans', 'Roboto', 'Nunito', 'Work Sans',
+    'Raleway', 'Quicksand', 'Space Grotesk', 'Playfair Display', 'Lora', 'Merriweather',
+    'Libre Baskerville', 'Cormorant Garamond', 'EB Garamond', 'Source Serif 4', 'Fraunces',
+]
 
 /**
- * Renders a form from a schema. The ONE place a SettingField becomes a control.
- * Both the theme rail and every section rail use this, so adding a configurable
- * field anywhere is a registry change with no admin code.
+ * Renders a form from a schema. The ONE place a SettingField becomes a control:
+ * the theme panel and every section panel use it, so adding a configurable field
+ * anywhere is a registry change with no admin code.
+ *
+ * A blank value means "use the default", so the default is shown as the
+ * placeholder rather than pre-filled: clearing a box restores it.
  */
 export default function SettingsFields({
     schema,
     values,
     onChange,
-    storeId,
-    pathPrefix,
+    pickImage,
 }: {
     schema: readonly SettingField[]
     values: SettingValues
     onChange: (id: string, value: unknown) => void
-    storeId: string
-    pathPrefix: string
+    pickImage: PickImage
 }) {
-    if (schema.length === 0) {
-        return (
-            <p className="text-[12px] text-muted-foreground">
-                Nothing to configure here yet.
-            </p>
-        )
-    }
-
+    if (schema.length === 0) return null
     return (
         <div className="space-y-4">
-            {schema.map((f) => {
-                // A blank value means "use the default", so show the default as the
-                // placeholder rather than pre-filling it. The merchant sees what the
-                // site says today, and clearing the box restores it.
-                const raw = values[f.id]
-                const str = typeof raw === 'string' ? raw : raw === undefined ? '' : String(raw)
-
-                return (
-                    <label key={f.id} className="block">
-                        <span className="block text-[12px] font-medium text-foreground mb-1.5">
-                            {f.label}
-                        </span>
-
-                        {f.type === 'text' && (
-                            <input
-                                className={inputCls}
-                                value={str}
-                                placeholder={f.placeholder ?? f.default ?? ''}
-                                onChange={(e) => onChange(f.id, e.target.value)}
-                            />
-                        )}
-
-                        {f.type === 'textarea' && (
-                            <textarea
-                                className={inputCls.replace('h-9', 'min-h-20 py-2')}
-                                rows={3}
-                                value={str}
-                                placeholder={f.placeholder ?? f.default ?? ''}
-                                onChange={(e) => onChange(f.id, e.target.value)}
-                            />
-                        )}
-
-                        {f.type === 'color' && (
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="color"
-                                    value={str || f.default || '#000000'}
-                                    onChange={(e) => onChange(f.id, e.target.value)}
-                                    className="w-9 h-9 rounded-lg border border-border cursor-pointer bg-transparent p-0"
-                                />
-                                <input
-                                    className={inputCls + ' font-mono flex-1'}
-                                    value={str}
-                                    placeholder={f.default ?? ''}
-                                    spellCheck={false}
-                                    onChange={(e) => onChange(f.id, e.target.value)}
-                                />
-                            </div>
-                        )}
-
-                        {f.type === 'font' && (
-                            <input
-                                className={inputCls}
-                                value={str}
-                                placeholder={f.default ?? ''}
-                                onChange={(e) => onChange(f.id, e.target.value)}
-                            />
-                        )}
-
-                        {f.type === 'number' && (
-                            <input
-                                type="range"
-                                className="w-full"
-                                min={f.min ?? 0}
-                                max={f.max ?? 10}
-                                step={f.step ?? 1}
-                                // The range's value is always a string, so nothing here
-                                // can write a number into a string column (font_scale).
-                                value={str || String(f.default ?? f.min ?? 0)}
-                                onChange={(e) => onChange(f.id, e.target.value)}
-                            />
-                        )}
-
-                        {f.type === 'select' && (
-                            <select
-                                className={inputCls}
-                                value={str || f.default || ''}
-                                onChange={(e) => onChange(f.id, e.target.value)}
-                            >
-                                {f.options.map((o) => (
-                                    <option key={o.value} value={o.value}>{o.label}</option>
-                                ))}
-                            </select>
-                        )}
-
-                        {f.type === 'toggle' && (
-                            <input
-                                type="checkbox"
-                                checked={raw === undefined ? !!f.default : !!raw}
-                                onChange={(e) => onChange(f.id, e.target.checked)}
-                            />
-                        )}
-
-                        {f.type === 'image' && (
-                            <ImageUpload
-                                value={str}
-                                onChange={(url) => onChange(f.id, url)}
-                                bucket="store-assets"
-                                pathPrefix={`${storeId}/${pathPrefix}/${f.id}`}
-                                aspectRatio="wide"
-                            />
-                        )}
-                    </label>
-                )
-            })}
+            {schema.map((f) => (
+                <SettingControl key={f.id} field={f} raw={values[f.id]} onChange={(v) => onChange(f.id, v)} pickImage={pickImage} />
+            ))}
         </div>
     )
+}
+
+function SettingControl({
+    field: f,
+    raw,
+    onChange,
+    pickImage,
+}: {
+    field: SettingField
+    raw: unknown
+    onChange: (value: unknown) => void
+    pickImage: PickImage
+}) {
+    const id = useId()
+    const str = typeof raw === 'string' ? raw : raw === undefined || raw === null ? '' : String(raw)
+    const fallback = 'default' in f && f.default !== undefined ? String(f.default) : ''
+
+    switch (f.type) {
+        case 'text':
+            return (
+                <Field label={f.label}>
+                    <TextInput value={str} placeholder={f.placeholder ?? fallback} onChange={(e) => onChange(e.target.value)} />
+                </Field>
+            )
+        case 'textarea':
+            return (
+                <Field label={f.label}>
+                    <TextArea value={str} placeholder={f.placeholder ?? fallback} onChange={(e) => onChange(e.target.value)} />
+                </Field>
+            )
+        case 'color':
+            return (
+                <Field label={f.label} htmlFor={id}>
+                    <div className="flex items-center gap-2">
+                        <input
+                            type="color"
+                            aria-label={`${f.label} colour`}
+                            value={/^#[0-9a-fA-F]{6}$/.test(str) ? str : /^#[0-9a-fA-F]{6}$/.test(fallback) ? fallback : '#000000'}
+                            onChange={(e) => onChange(e.target.value)}
+                            className="h-9 w-9 shrink-0 cursor-pointer rounded-md border border-input bg-card p-0.5"
+                        />
+                        <TextInput
+                            id={id}
+                            className="font-mono"
+                            value={str}
+                            placeholder={fallback}
+                            spellCheck={false}
+                            invalid={str !== '' && !/^#[0-9a-fA-F]{3,8}$/.test(str)}
+                            onChange={(e) => onChange(e.target.value)}
+                        />
+                    </div>
+                </Field>
+            )
+        case 'font':
+            return (
+                <Field label={f.label} hint={str || fallback ? undefined : 'Pick from the list or type any Google Font name.'}>
+                    <TextInput
+                        list={`${id}-fonts`}
+                        value={str}
+                        placeholder={fallback}
+                        style={{ fontFamily: `'${str || fallback}', system-ui` }}
+                        onChange={(e) => onChange(e.target.value)}
+                    />
+                    <datalist id={`${id}-fonts`}>
+                        {FONT_SUGGESTIONS.map((name) => <option key={name} value={name} />)}
+                    </datalist>
+                </Field>
+            )
+        case 'number': {
+            const value = str || String(f.default ?? f.min ?? 0)
+            return (
+                <Field label={<span className="flex items-center justify-between"><span>{f.label}</span><span className="font-mono text-muted-foreground">{value}</span></span>}>
+                    <input
+                        type="range"
+                        className="w-full accent-primary"
+                        min={f.min ?? 0}
+                        max={f.max ?? 10}
+                        step={f.step ?? 1}
+                        // A range's value is always a string, so nothing here can write
+                        // a number into a string column (font_scale).
+                        value={value}
+                        onChange={(e) => onChange(e.target.value)}
+                    />
+                </Field>
+            )
+        }
+        case 'select':
+            return (
+                <Field label={f.label}>
+                    <Select value={str || fallback} onChange={(e) => onChange(e.target.value)}>
+                        {/* A stored value the options no longer list (an old "Pill" radius) stays selectable. */}
+                        {str && !f.options.some((o) => o.value === str) && <option value={str}>{str}</option>}
+                        {f.options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                    </Select>
+                </Field>
+            )
+        case 'toggle':
+            return (
+                <Switch
+                    label={f.label}
+                    checked={raw === undefined ? !!f.default : !!raw}
+                    onChange={onChange}
+                />
+            )
+        case 'image':
+            return (
+                <Field label={f.label} as="div">
+                    <ImageField value={str} onChange={onChange} pickImage={pickImage} />
+                </Field>
+            )
+        default:
+            return null
+    }
 }

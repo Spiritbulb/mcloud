@@ -108,9 +108,9 @@ export async function StoreHome({ slug, preview, token, settings }: HomeProps) {
             : defaultHomeSections(rawStore.type as string | null | undefined)
 
         // Is this the Editor's preview? A VALID token is the only way to be one.
-        // This gates both the unsaved-copy override and the `editing` render flag,
-        // so a visitor cannot get edit affordances by guessing a query parameter.
-        const editing =
+        // It gates the unsaved-draft overrides below. The page itself renders the same
+        // either way: the preview only displays, all editing is in the Editor.
+        const previewing =
             !!token &&
             !!process.env.PREVIEW_SECRET &&
             verifyPreview(token, store.id, process.env.PREVIEW_SECRET)
@@ -118,7 +118,7 @@ export async function StoreHome({ slug, preview, token, settings }: HomeProps) {
         // The Editor previews UNSAVED copy. Honoured only with that same token:
         // otherwise a crafted URL would let anyone serve a merchant's customers a
         // re-worded version of their own site.
-        if (editing && preview) {
+        if (previewing && preview) {
             try {
                 const parsed = JSON.parse(Buffer.from(preview, 'base64url').toString('utf-8'))
                 if (Array.isArray(parsed)) sections = parsed
@@ -128,13 +128,13 @@ export async function StoreHome({ slug, preview, token, settings }: HomeProps) {
         }
 
         // The Editor also previews UNSAVED record edits/CRUD (programs, campaigns,
-        // impact stats, hero slides), which live in the Editor's `storeDraft` state
-        // and are never persisted until Save. Same token gate as `preview` above:
-        // honoured only for a verified editing session, merged over saved settings
+        // impact stats, hero slides), which live in the Editor's draft and are never
+        // persisted until Save. Same token gate as `preview` above: honoured only for
+        // a verified preview, merged over saved settings
         // so any key the draft doesn't touch still comes from the real store.
         let previewStore = store
         let previewSettingsForCampaigns: unknown = rawStore.settings
-        if (editing && settings) {
+        if (previewing && settings) {
             try {
                 const override = JSON.parse(Buffer.from(settings, 'base64url').toString('utf-8'))
                 if (override && typeof override === 'object' && !Array.isArray(override)) {
@@ -155,7 +155,6 @@ export async function StoreHome({ slug, preview, token, settings }: HomeProps) {
             ...buildHomeContext({
                 store: previewStore,
                 storeType: rawStore.type as string | null | undefined,
-                editing,
                 products,
                 collections,
                 featuredProducts: featured.length > 0 ? featured : products.slice(0, 8),
