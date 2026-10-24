@@ -88,7 +88,7 @@ stays on `localhost:3000`. `/auth/logout` is the WorkOS sign-out route. (The old
 
 **Auth-gated pages** (`/admin`, `/org/...`, `/org/onboarding`) need a real WorkOS session cookie
 — you can't screenshot them headless without one; they redirect to `/auth/login`. Use the
-public pages (`/`, `/docs`, `/changelog`, `/support`, and storefront `/store/<slug>`) for UI
+public pages (`/`, `/home`, `/docs`, `/support`, and storefront `/store/<slug>`) for UI
 verification, or do the magic-code login flow manually first.
 
 **Health check** (no browser needed):
@@ -129,9 +129,9 @@ schema — refine it as we learn what's useful.
   `C:/Program Files/Git/support` when passed as a CLI arg. The driver auto-corrects this for
   both `screenshot` and `nav`. To disable globally in Git Bash, prefix with `MSYS_NO_PATHCONV=1`.
   PowerShell does not do this conversion.
-- **`/changelog` renders blank on first load** — client component, ~1.5s to hydrate. The
-  driver's `waitForTimeout(1500)` covers it; `networkidle` alone is insufficient (Next fires
-  it before hydration completes).
+- **Client pages can render blank on first load** — hydration takes ~1.5s. The driver's
+  `waitForTimeout(1500)` covers it; `networkidle` alone is insufficient (Next fires it before
+  hydration completes).
 - **Benign hydration console warnings** — pages may log a React "hydration mismatch" warning
   (often a browser-extension `caret-color` tweak). The smoke test flags these with ⚠ but they
   are not failures.

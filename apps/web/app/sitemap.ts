@@ -7,7 +7,7 @@ const BASE = "https://mcloud.co.ke"
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const now = new Date()
-  const routes = ["", "/beta", "/contact", "/docs", "/support", "/changelog"]
+  const routes = ["", "/beta", "/contact", "/docs", "/support"]
   return routes.map((path) => ({
     url: `${BASE}${path}`,
     lastModified: now,

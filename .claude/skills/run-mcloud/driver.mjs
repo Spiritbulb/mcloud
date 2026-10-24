@@ -70,8 +70,8 @@ async function screenshot(urlPath, outPath) {
 async function smoke() {
   const routes = [
     '/',
+    '/home',
     '/docs',
-    '/changelog',
     '/support',
     '/auth/login',
   ];

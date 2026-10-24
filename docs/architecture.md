@@ -33,7 +33,7 @@ storefront's `/org/*`.
 
 | Concern | Lives in |
 |---|---|
-| Marketing site, docs, changelog, beta signup | `apps/web` |
+| Marketing site (`/home`, served at `/`), docs, beta signup | `apps/web` |
 | Login/logout/magic-code, SSO handoff, invites | `apps/web` (`app/auth`, `app/api/auth`, `app/api/_handoff`). The storefront links to them only through `lib/auth-urls.ts`; see [storefront-domain-move.md](storefront-domain-move.md). |
 | Org hub, org members, billing, servers, wallet | `apps/web` (`app/(merchant)/org`) |
 | Platform admin | `apps/web` (`app/admin`, `app/api/admin`); see [Admin console](#admin-console) |

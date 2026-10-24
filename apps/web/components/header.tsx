@@ -41,7 +41,6 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
                     <nav className="hidden md:flex items-center gap-6">
                         {[
                             { href: '/docs', label: 'Docs' },
-                            { href: '/changelog', label: 'Changelog' },
                             { href: '/support', label: 'Support' },
                             { href: '/contact', label: 'Contact' },
                         ].map(({ href, label }) => (

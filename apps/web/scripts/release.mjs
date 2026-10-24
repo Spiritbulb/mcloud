@@ -2,6 +2,8 @@
 // scripts/release.mjs
 //
 // Generates/updates CHANGELOG.md from conventional commits.
+// CHANGELOG.md is the developer record and is not published: commit subjects name internals
+// (auth, tokens, providers). Customer-facing release notes, when there are any, are hand-written.
 // Usage:
 //   node scripts/release.mjs           → auto patch bump (0.1.0 → 0.1.1)
 //   node scripts/release.mjs minor     → minor bump  (0.1.0 → 0.2.0)
