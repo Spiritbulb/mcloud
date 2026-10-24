@@ -59,7 +59,7 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
 
                         {isLoggedIn ? (
                             <Link
-                                href="/admin/org"
+                                href="/org"
                                 className="h-8 px-4 rounded-full bg-foreground text-background text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
                             >
                                 Dashboard
