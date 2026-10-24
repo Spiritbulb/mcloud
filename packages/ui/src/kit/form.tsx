@@ -14,7 +14,7 @@ function controlClass(invalid?: boolean) {
         CONTROL,
         invalid
             ? 'border-red-400 focus:border-red-500 focus:ring-red-500/25 dark:border-red-500/60'
-            : 'border-border focus:border-ring focus:ring-ring/30',
+            : 'border-input focus:border-ring focus:ring-ring/30',
     )
 }
 

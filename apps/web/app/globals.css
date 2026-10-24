@@ -53,7 +53,8 @@
   --destructive: 186 26 26;
   --destructive-foreground: 255 255 255;
 
-  --border: 194 199 207;
+  /* Dividers and card edges: quiet. Controls (inputs, secondary buttons) use --input, which stays stronger. */
+  --border: 229 231 236;
   --input: 194 199 207;
   --ring: 0 99 153;
 
@@ -61,7 +62,7 @@
 
   --sidebar: 243 243 246;
   --sidebar-foreground: 26 28 30;
-  --sidebar-border: 194 199 207;
+  --sidebar-border: 229 231 236;
   --sidebar-accent: 205 229 255;
 
   --brand: 0 99 153;
@@ -112,13 +113,13 @@
   --destructive: 255 180 171;
   --destructive-foreground: 105 0 5;
 
-  --border: 66 71 78;
+  --border: 38 41 46;
   --input: 66 71 78;
   --ring: 149 204 255;
 
   --sidebar: 26 28 30;
   --sidebar-foreground: 226 226 229;
-  --sidebar-border: 66 71 78;
+  --sidebar-border: 38 41 46;
   --sidebar-accent: 0 74 117;
 
   --brand: 149 204 255;

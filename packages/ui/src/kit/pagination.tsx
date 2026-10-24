@@ -7,7 +7,7 @@ export function Pagination({ basePath, q, pages, total, newestFirst }: { basePat
     const href = (page: number) => listHref(basePath, { ...queryParams(q), page })
     const from = (q.page - 1) * PAGE_SIZE + 1
     const to = Math.min(q.page * PAGE_SIZE, total)
-    const link = 'inline-flex h-8 items-center rounded-md border border-border px-3 text-foreground transition-colors hover:bg-muted'
+    const link = 'inline-flex h-8 items-center rounded-md border border-input px-3 text-foreground transition-colors hover:bg-muted'
     return (
         <nav className="flex items-center justify-between gap-3 text-[13px]" aria-label="Pagination">
             {q.page > 1 ? <Link href={href(q.page - 1)} className={link} rel="prev">{newestFirst ? 'Newer' : 'Previous'}</Link> : <span />}

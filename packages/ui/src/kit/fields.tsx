@@ -3,7 +3,7 @@ import { cn } from '../utils'
 import { Icon } from './icon'
 
 const CONTROL =
-    'h-8 rounded-md border border-border bg-card px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground ' +
+    'h-8 rounded-md border border-input bg-card px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground ' +
     'transition-colors focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/30'
 
 /** Filter row above a table: search on the left, selects after it, wrapping on small screens. */
