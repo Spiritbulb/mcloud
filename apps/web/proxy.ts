@@ -238,11 +238,17 @@ async function handle(
 
   // ── 5. Platform ───────────────────────────────────────────────────────────
 
-  // Logged-in users skip the marketing homepage and go straight to their org.
-  if (pathname === '/' && session?.user) {
+  // The marketing page lives at /home so signed-in users can still open it. `/` stays the public
+  // address: visitors see /home there (a rewrite, so mcloud.co.ke keeps its search ranking and
+  // shared links), and signed-in users go straight to their org.
+  if (pathname === '/') {
     const url = request.nextUrl.clone()
-    url.pathname = '/org'
-    return NextResponse.redirect(url, 307)
+    if (session?.user) {
+      url.pathname = '/org'
+      return NextResponse.redirect(url, 307)
+    }
+    url.pathname = '/home'
+    return rewriteResponse(url, authHeaders)
   }
 
   return nextResponse(authHeaders)

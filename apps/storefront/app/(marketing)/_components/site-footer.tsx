@@ -10,7 +10,7 @@ export function SiteFooter() {
                     <Link href="/moving" className="hover:text-foreground">What&rsquo;s changing</Link>
                     <a href={webUrl('/support')} className="hover:text-foreground">Support</a>
                     <a href={webUrl('/docs')} className="hover:text-foreground">Docs</a>
-                    <a href={webUrl('/')} className="hover:text-foreground">Menengai Cloud</a>
+                    <a href={webUrl('/home')} className="hover:text-foreground">Menengai Cloud</a>
                 </nav>
             </div>
         </footer>

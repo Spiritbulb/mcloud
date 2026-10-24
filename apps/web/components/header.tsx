@@ -32,7 +32,7 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
             <div className="mx-auto px-6 md:px-12 max-w-7xl">
                 <div className="flex h-14 items-center justify-between">
                     {/* Logo */}
-                    <Link href="/" className="flex items-center gap-2.5">
+                    <Link href="/home" className="flex items-center gap-2.5">
                         <img src={logo} alt="Menengai Cloud" className="w-12 h-auto" />
                         <span className="text-[14px] font-semibold text-foreground hidden sm:block">Menengai Cloud</span>
                     </Link>

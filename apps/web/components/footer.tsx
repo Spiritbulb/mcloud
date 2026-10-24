@@ -6,7 +6,7 @@ export function Footer() {
             <div className="mx-auto px-4 md:px-2 max-w-6xl py-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                     <div className="col-span-2 md:col-span-1 space-y-3">
-                        <Link href="/" className="flex items-center gap-2">
+                        <Link href="/home" className="flex items-center gap-2">
                             <img src="/icons/logo-48.png" alt="" width={24} height={24} className="w-6 h-6" />
                             <span className="text-[13px] font-semibold text-foreground/80">Menengai Cloud</span>
                         </Link>
