@@ -22,6 +22,14 @@ for (const s of selectors) {
     assert.ok(s.includes(':not([data-variant])'), `class-substring button rule must skip variant Buttons: ${s}`)
 }
 
+// The plain-button "paint it primary" rule must leave pills alone, or a selected delivery zone,
+// payment method or variant option looks the same as the unselected ones.
+const paintPrimary = selectors.filter((s) => s.includes(':not([class*="ghost"])'))
+assert.ok(paintPrimary.length > 0, 'expected the plain-button default rule')
+for (const s of paintPrimary) {
+    assert.ok(s.includes(':not(.sf-pill)'), `plain-button default rule must skip .sf-pill: ${s}`)
+}
+
 // The cart's primary Button: its real class list must not hit the outline rule.
 const buttonClasses = readFileSync(path.join(here, '../../packages/ui/src/button.tsx'), 'utf8')
 assert.match(buttonClasses, /outline-none/, 'premise: Button classes contain outline-none')

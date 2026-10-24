@@ -191,10 +191,11 @@ export default function ClassicCheckoutPage({
                                         type="button"
                                         disabled={!zone.available || isProcessing}
                                         onClick={() => setDeliveryZoneId(zone.id)}
-                                        className="w-full flex items-center justify-between px-3 py-2.5 text-sm border transition-colors"
+                                        // Same pills as the payment method below: the chosen zone is the
+                                        // filled one. (It used to be the lighter one, which read as unselected.)
+                                        aria-pressed={deliveryZoneId === zone.id}
+                                        className={`w-full flex items-center justify-between px-3 py-2.5 text-sm border transition-colors sf-pill ${deliveryZoneId === zone.id ? 'sf-pill-active' : 'sf-pill-inactive'}`}
                                         style={{
-                                            borderColor: deliveryZoneId === zone.id ? 'var(--sf-foreground)' : 'var(--sf-border)',
-                                            background: deliveryZoneId === zone.id ? 'var(--sf-accent)' : 'var(--sf-primary)',
                                             opacity: zone.available ? 1 : 0.45,
                                             cursor: zone.available ? 'pointer' : 'not-allowed',
                                         }}

@@ -79,14 +79,17 @@
 /* Buttons. A @mcloud/ui Button says its variant in data-variant; match that, never its class
    list: every Button carries Tailwind's `outline-none`, so `[class*="outline"]` turned every
    primary Button (cart "Proceed to Checkout", "Confirm M-PESA Payment") into a transparent
-   outline one. The class-substring rules are kept only for plain <button>s with no variant. */
-.storefront-root[data-sf-css] button:not([data-variant]):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
+   outline one. The class-substring rules are kept only for plain <button>s with no variant.
+   Pills (.sf-pill: delivery zones, payment methods, variant options) style themselves with
+   .sf-pill-active / .sf-pill-inactive; the plain-button rule used to paint them all primary, so
+   the chosen one looked like the others. */
+.storefront-root[data-sf-css] button:not([data-variant]):not(.sf-pill):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
 .storefront-root[data-sf-css] button[data-variant="default"] {
     background-color: var(--sf-primary);
     color: var(--sf-background);
 }
 
-.storefront-root[data-sf-css] button:not([data-variant]):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
+.storefront-root[data-sf-css] button:not([data-variant]):not(.sf-pill):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
 .storefront-root[data-sf-css] button[data-variant="default"]:hover {
     background-color: var(--sf-primary);
     opacity: 0.9;
