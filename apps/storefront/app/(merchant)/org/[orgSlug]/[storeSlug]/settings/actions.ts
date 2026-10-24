@@ -19,7 +19,7 @@ type ActionResult = { error: string | null }
 /** Fields the settings pages are allowed to change on the store record. */
 type StoreSettingsPatch = Pick<
     TablesUpdate<'stores'>,
-    'name' | 'description' | 'currency' | 'timezone' | 'is_active' | 'settings' | 'logo_url'
+    'name' | 'description' | 'currency' | 'timezone' | 'is_active' | 'settings' | 'logo_url' | 'icon_url'
 >
 
 export const userId = async () => {
@@ -93,6 +93,7 @@ export async function updateStoreSettings(
     if (patch.is_active !== undefined) update.is_active = patch.is_active
     if (patch.settings !== undefined) update.settings = patch.settings
     if (patch.logo_url !== undefined) update.logo_url = patch.logo_url
+    if (patch.icon_url !== undefined) update.icon_url = patch.icon_url
 
     const supabase = await createClient()
     const { error } = await supabase.from('stores').update(update).eq('id', access.storeId)

@@ -17,7 +17,7 @@ export default async function OrgLayout({
     const supabase = await createClient()
     const { data: org } = await supabase
         .from('orgs')
-        .select('id, name, slug, logo_url, type')
+        .select('id, name, slug, logo_url, icon_url, type')
         .eq('slug', orgSlug)
         .single()
 

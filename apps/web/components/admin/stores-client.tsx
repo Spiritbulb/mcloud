@@ -25,6 +25,7 @@ type Store = {
     name: string | null
     slug: string | null
     logo_url: string | null
+    icon_url?: string | null
     is_pro: boolean | null
     is_active: boolean | null
     pro_since: string | null
@@ -153,7 +154,7 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                                     <Tr key={store.id}>
                                         <Td>
                                             <div className="flex items-center gap-2.5">
-                                                <Avatar name={store.name} src={store.logo_url} />
+                                                <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name ?? '—'}</p>
                                                     <p className="truncate font-mono text-[11px] text-muted-foreground">{store.slug ?? '—'}</p>

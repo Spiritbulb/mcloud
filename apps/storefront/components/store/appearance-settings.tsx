@@ -42,6 +42,7 @@ interface StoreData {
     slug: string
     description: string | null
     logo_url: string | null
+    icon_url?: string | null
     currency: string
     timezone: string
     custom_domain: string | null
@@ -52,6 +53,7 @@ interface StoreData {
         heroSubtitle?: string
         heroImage?: string
         logoPath?: string
+        iconPath?: string
         heroSlides?: HeroSlide[]
         heroImagePath?: string
         socialLinks?: Record<string, string>
@@ -68,6 +70,8 @@ export interface AppearanceSettingsProps {
     heroImage: string; setHeroImage: (v: string) => void
     logoUrl: string; setLogoUrl: (v: string) => void
     logoPath: string; setLogoPath: (v: string) => void
+    iconUrl: string; setIconUrl: (v: string) => void
+    iconPath: string; setIconPath: (v: string) => void
     heroSlides: HeroSlide[]; setHeroSlides: (v: HeroSlide[]) => void
     heroImagePath: string; setHeroImagePath: (v: string) => void
     primaryColor: string; setPrimaryColor: (v: string) => void
@@ -260,6 +264,8 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
     | 'heroImagePath' | 'setHeroImagePath'
     | 'logoUrl' | 'setLogoUrl'
     | 'logoPath' | 'setLogoPath'
+    | 'iconUrl' | 'setIconUrl'
+    | 'iconPath' | 'setIconPath'
 >) {
     const { store } = props
     return (
@@ -285,10 +291,42 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                             onChange={(url, path) => { props.setLogoUrl(url); props.setLogoPath(path) }}
                             bucket="store-assets"
                             pathPrefix={`${store.id}/logo`}
+                            aspectRatio="free"
+                        />
+                        <p className="text-[11px] text-on-surface-muted mt-1.5">
+                            Any shape. Shown in your store&apos;s header. A PNG or SVG with a transparent background works best.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div className="h-px bg-light my-5" />
+
+            {/* Square icon: the browser tab, home-screen icon and dashboard tiles */}
+            <div className="space-y-3">
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Square icon</p>
+                <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-xl border border-light bg-surface flex items-center justify-center overflow-hidden shrink-0">
+                        {props.iconUrl || props.logoUrl
+                            // eslint-disable-next-line @next/next/no-img-element -- a merchant upload on R2; next/image would need its host allow-listed
+                            ? <img src={props.iconUrl || props.logoUrl} alt="Icon" className="h-full w-full object-contain" />
+                            : <span className="text-[13px] font-bold text-on-surface-muted uppercase tracking-widest">
+                                {store.name.slice(0, 2)}
+                            </span>
+                        }
+                    </div>
+                    <div className="flex-1">
+                        <ImageUpload
+                            label="Upload icon"
+                            value={props.iconUrl}
+                            pathInDb={props.iconPath}
+                            onChange={(url, path) => { props.setIconUrl(url); props.setIconPath(path) }}
+                            bucket="store-assets"
+                            pathPrefix={`${store.id}/icon`}
                             aspectRatio="square"
                         />
                         <p className="text-[11px] text-on-surface-muted mt-1.5">
-                            Recommended: square PNG with transparent background
+                            Square, at least 512×512. Used for the browser tab, the home-screen icon and your dashboard. Leave empty to use your logo.
                         </p>
                     </div>
                 </div>
@@ -910,6 +948,8 @@ export default function AppearanceSettings(props: AppearanceSettingsProps) {
                         heroImagePath={props.heroImagePath} setHeroImagePath={props.setHeroImagePath}
                         logoUrl={props.logoUrl} setLogoUrl={props.setLogoUrl}
                         logoPath={props.logoPath} setLogoPath={props.setLogoPath}
+                        iconUrl={props.iconUrl} setIconUrl={props.setIconUrl}
+                        iconPath={props.iconPath} setIconPath={props.setIconPath}
                     />
                 )}
 

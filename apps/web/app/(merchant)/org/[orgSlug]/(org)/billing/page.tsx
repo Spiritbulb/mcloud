@@ -44,7 +44,7 @@ export default async function OrgBillingPage({
             .maybeSingle(),
         supabase
             .from('stores')
-            .select('id, name, slug, logo_url, is_pro, pro_expires_at')
+            .select('id, name, slug, logo_url, icon_url, is_pro, pro_expires_at')
             .eq('org_id', org.id)
             .order('created_at', { ascending: false }),
     ])

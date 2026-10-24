@@ -14,7 +14,7 @@ async function getStores() {
     const { data } = await supabase
         .from("stores")
         .select(`
-            id, name, slug, logo_url, is_pro, is_active,
+            id, name, slug, logo_url, icon_url, is_pro, is_active,
             pro_since, pro_expires_at, owner_id, currency, created_at,
             users!stores_owner_id_fkey ( name, email )
         `)

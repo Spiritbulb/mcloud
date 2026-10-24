@@ -74,12 +74,12 @@ export default function SettingsShell({
         <ContextSwitcher
             name={store.name}
             detail={storefrontDisplayUrl(store.slug, store.custom_domain)}
-            logo={store.logo_url}
+            logo={store.icon_url ?? store.logo_url}
             menuLabel="Switch store"
             options={pickerStores.map((s) => ({
                 key: s.slug,
                 name: s.name,
-                logo: s.logo_url,
+                logo: s.icon_url ?? s.logo_url,
                 href: settingsPath(ctxOrgSlug ?? orgSlug, s.slug),
             }))}
             links={[

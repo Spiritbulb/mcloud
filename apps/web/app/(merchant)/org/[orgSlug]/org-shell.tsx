@@ -12,6 +12,7 @@ type OrgShellOrg = {
     name: string
     slug: string
     logo_url?: string | null
+    icon_url?: string | null
     type: string
 }
 
@@ -74,7 +75,7 @@ export default function OrgShell({
             sections={sections}
             activeId={activeId}
             brandHref={`/org/${orgSlug}`}
-            context={<ContextSwitcher name={org.name} detail="Organization" logo={org.logo_url} />}
+            context={<ContextSwitcher name={org.name} detail="Organization" logo={org.icon_url ?? org.logo_url} />}
             user={user}
             signOutHref="/auth/logout"
             crumbs={[{ label: org.name, href: `/org/${orgSlug}` }, { label: pageLabel }]}

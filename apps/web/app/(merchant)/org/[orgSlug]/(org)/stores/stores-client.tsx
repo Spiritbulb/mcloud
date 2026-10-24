@@ -22,6 +22,7 @@ type Store = {
     name: string
     slug: string
     logo_url: string | null
+    icon_url?: string | null
     is_pro: boolean
     plan?: string
     created_at: string
@@ -161,7 +162,7 @@ export default function StoresClient({ orgId, orgSlug, stores: initial, role }: 
                                 <Tr key={store.id}>
                                     <Td>
                                         <div className="flex items-center gap-3">
-                                            <Avatar name={store.name} src={store.logo_url} />
+                                            <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">{store.name}</p>
                                                 <p className="truncate text-[12px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</p>

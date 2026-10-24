@@ -33,6 +33,7 @@ type StoreRow = {
     name: string
     slug: string
     logo_url: string | null
+    icon_url?: string | null
     is_pro: boolean
     pro_expires_at: string | null
     subscription: StoreSubscription
@@ -141,7 +142,7 @@ export default function BillingClient({
                                     <Tr key={store.id}>
                                         <Td>
                                             <div className="flex items-center gap-3">
-                                                <Avatar name={store.name} src={store.logo_url} />
+                                                <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name}</p>
                                                     {error && <p role="alert" className="mt-0.5 max-w-sm text-[12px] text-red-700 dark:text-red-300">{error}</p>}

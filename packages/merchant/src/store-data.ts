@@ -33,7 +33,7 @@ export async function getStoreSettingsData(
             .select(`
                 store_id,
                 role,
-                store:stores( id, name, slug, logo_url, org:orgs(slug) )
+                store:stores( id, name, slug, logo_url, icon_url, org:orgs(slug) )
             `)
             .eq('user_id', userId),
     ])
@@ -67,11 +67,11 @@ export async function getStoreSettingsData(
     if (!storeData) return { error: 'not_found', data: null }
 
     // Optional org layer — null for stores not associated with an org.
-    let org: { id: string; name: string; slug: string; logo_url: string | null } | null = null
+    let org: { id: string; name: string; slug: string; logo_url: string | null; icon_url: string | null } | null = null
     if (storeData.org_id) {
         const { data: orgData } = await supabase
             .from('orgs')
-            .select('id, name, slug, logo_url')
+            .select('id, name, slug, logo_url, icon_url')
             .eq('id', storeData.org_id)
             .single()
         org = orgData ?? null
@@ -85,6 +85,7 @@ export async function getStoreSettingsData(
             name: memberStore?.name ?? '',
             slug: memberStore?.slug ?? '',
             logo_url: memberStore?.logo_url ?? null,
+            icon_url: memberStore?.icon_url ?? null,
             role: m.role,
             org_slug: memberOrg?.slug ?? null,
         }

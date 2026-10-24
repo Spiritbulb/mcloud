@@ -1152,6 +1152,7 @@ export type Database = {
       orgs: {
         Row: {
           created_at: string
+          icon_url: string | null
           id: string
           logo_url: string | null
           name: string
@@ -1164,6 +1165,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          icon_url?: string | null
           id?: string
           logo_url?: string | null
           name: string
@@ -1176,6 +1178,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          icon_url?: string | null
           id?: string
           logo_url?: string | null
           name?: string
@@ -2376,6 +2379,7 @@ export type Database = {
           currency: string
           custom_domain: string | null
           description: string | null
+          icon_url: string | null
           id: string
           is_active: boolean | null
           is_pro: boolean
@@ -2397,6 +2401,7 @@ export type Database = {
           currency?: string
           custom_domain?: string | null
           description?: string | null
+          icon_url?: string | null
           id?: string
           is_active?: boolean | null
           is_pro?: boolean
@@ -2418,6 +2423,7 @@ export type Database = {
           currency?: string
           custom_domain?: string | null
           description?: string | null
+          icon_url?: string | null
           id?: string
           is_active?: boolean | null
           is_pro?: boolean

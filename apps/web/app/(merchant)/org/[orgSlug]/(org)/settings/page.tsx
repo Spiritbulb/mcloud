@@ -18,7 +18,7 @@ export default async function OrgSettingsPage({
 
     const { data: org } = await supabase
         .from('orgs')
-        .select('id, name, slug, logo_url, owner_id')
+        .select('id, name, slug, logo_url, icon_url, owner_id')
         .eq('slug', orgSlug)
         .single()
 

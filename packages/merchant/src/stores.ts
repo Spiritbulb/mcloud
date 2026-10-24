@@ -14,7 +14,7 @@ import { normalizeSlug, RESERVED_STORE_SLUGS, isValidSlug, slugFromName } from '
 
 export type Role = 'owner' | 'admin' | 'member' | string
 
-const STORE_LIST_COLUMNS = 'id, name, slug, logo_url, is_pro, created_at'
+const STORE_LIST_COLUMNS = 'id, name, slug, logo_url, icon_url, is_pro, created_at'
 
 /** A user's role in an org, or null if they aren't a member. */
 export async function getOrgRole(orgId: string, userId: string): Promise<Role | null> {
@@ -101,6 +101,7 @@ export interface StoreHub {
     name: string
     slug: string
     logo_url: string | null
+    icon_url: string | null
     is_pro: boolean
     custom_domain: string | null
     orgSlug: string | null
@@ -122,7 +123,7 @@ export async function getStoreHub(slug: string, userId: string): Promise<StoreHu
 
     const { data: store } = await supabase
         .from('stores')
-        .select('id, name, slug, logo_url, is_pro, custom_domain, org_id, org:orgs(slug)')
+        .select('id, name, slug, logo_url, icon_url, is_pro, custom_domain, org_id, org:orgs(slug)')
         .eq('slug', slug)
         .single()
 
@@ -142,6 +143,7 @@ export async function getStoreHub(slug: string, userId: string): Promise<StoreHu
             name: store.name,
             slug: store.slug,
             logo_url: store.logo_url ?? null,
+            icon_url: store.icon_url ?? null,
             is_pro: isPaidPlan(await getStorePlan(store.id)),
             custom_domain: store.custom_domain ?? null,
             orgSlug: org?.slug ?? null,

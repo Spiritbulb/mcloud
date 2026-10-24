@@ -12,7 +12,8 @@ interface ImageUploadProps {
     bucket?: 'store-assets' | 'product-images'
     pathPrefix: string   // e.g. `${store.id}/logo` — no trailing slash
     label?: string
-    aspectRatio?: 'square' | 'wide'
+    /** Preview shape. `free` shows the image at its own shape (logos). */
+    aspectRatio?: 'square' | 'wide' | 'free'
 }
 
 export default function ImageUpload({
@@ -77,13 +78,13 @@ export default function ImageUpload({
             {label && <p className="text-sm font-medium">{label}</p>}
 
             {showExisting ? (
-                <div className={`relative border ${aspectRatio === 'wide' ? 'aspect-video w-full' : 'aspect-square w-32'
+                <div className={`relative border ${aspectRatio === 'wide' ? 'aspect-video w-full' : aspectRatio === 'free' ? 'h-24 w-full' : 'aspect-square w-32'
                     }`}>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={value}
                         alt={label ?? 'Image'}
-                        className="object-cover w-full h-full"
+                        className={`w-full h-full ${aspectRatio === 'free' ? 'object-contain p-2' : 'object-cover'}`}
                     />
                     <button
                         type="button"
@@ -103,7 +104,7 @@ export default function ImageUpload({
                     </button>
                 </div>
             ) : (
-                <div className={aspectRatio === 'wide' ? 'aspect-video w-full' : 'aspect-square w-48'}>
+                <div className={aspectRatio === 'wide' ? 'aspect-video w-full' : aspectRatio === 'free' ? 'h-32 w-full' : 'aspect-square w-48'}>
                     <Dropzone {...uploadProps}>
                         <DropzoneEmptyState />
                         <DropzoneContent />

@@ -38,14 +38,12 @@ export async function generateMetadata({
     const { slug } = await params
     const store = await getStore(slug)
 
+    // The square icon when set; otherwise the logo, which browsers fit (and shrink) into a square.
+    const icon = store?.icon_url ?? store?.logo_url
+
     return {
         title: store?.name ?? 'Store',
-        icons: store?.logo_url
-            ? {
-                icon: store.logo_url,
-                apple: store.logo_url,
-            }
-            : undefined,
+        icons: icon ? { icon, apple: icon } : undefined,
     }
 }
 

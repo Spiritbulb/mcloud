@@ -73,7 +73,7 @@ export async function createOrg(name: string): Promise<{ error?: string; org?: {
 
 export async function updateOrg(
     orgId: string,
-    patch: { name?: string; slug?: string; logo_url?: string | null }
+    patch: { name?: string; slug?: string; logo_url?: string | null; icon_url?: string | null }
 ): Promise<{ error?: string; slug?: string }> {
     const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
@@ -87,6 +87,7 @@ export async function updateOrg(
         name?: string
         slug?: string
         logo_url?: string | null
+        icon_url?: string | null
         updated_at: string
     } = { updated_at: new Date().toISOString() }
     if (patch.name !== undefined) {
@@ -103,6 +104,7 @@ export async function updateOrg(
         update.slug = s
     }
     if (patch.logo_url !== undefined) update.logo_url = patch.logo_url
+    if (patch.icon_url !== undefined) update.icon_url = patch.icon_url
 
     const { data, error } = await supabase
         .from('orgs').update(update).eq('id', orgId).select('slug').single()

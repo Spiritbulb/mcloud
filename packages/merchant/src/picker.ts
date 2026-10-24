@@ -9,6 +9,8 @@ export interface PickerStore {
     name: string
     slug: string
     logo_url?: string
+    /** Square mark for tiles; fall back to logo_url when unset. */
+    icon_url?: string
     last_visited_at?: string
     org_id: string | null
     canManage: boolean
@@ -19,6 +21,7 @@ export interface PickerOrg {
     name: string
     slug: string
     logo_url?: string
+    icon_url?: string
     canManage: boolean
 }
 
@@ -43,12 +46,12 @@ export async function getPickerData(): Promise<{
 
     const { data: memberships } = await supabase
         .from('store_members')
-        .select(`role, store:stores (id, name, slug, logo_url, org_id)`)
+        .select(`role, store:stores (id, name, slug, logo_url, icon_url, org_id)`)
         .eq('user_id', userId)
 
     const { data: orgMemberships } = await supabase
         .from('org_members')
-        .select(`role, org:orgs (id, name, slug, logo_url)`)
+        .select(`role, org:orgs (id, name, slug, logo_url, icon_url)`)
         .eq('user_id', userId)
 
     const stores: PickerStore[] = (memberships ?? []).map(m => {
@@ -58,6 +61,7 @@ export async function getPickerData(): Promise<{
             name: s.name,
             slug: s.slug,
             logo_url: s.logo_url ?? undefined,
+            icon_url: s.icon_url ?? undefined,
             org_id: s.org_id ?? null,
             last_visited_at: undefined,
             canManage: m.role === 'owner',
@@ -86,6 +90,7 @@ export async function getPickerData(): Promise<{
             name: o.name,
             slug: o.slug,
             logo_url: o.logo_url ?? undefined,
+            icon_url: o.icon_url ?? undefined,
             canManage: m.role === 'owner' || m.role === 'admin',
         })
     }
@@ -97,7 +102,7 @@ export async function getPickerData(): Promise<{
     if (referencedOrgIds.length) {
         const { data: extraOrgs } = await supabase
             .from('orgs')
-            .select('id, name, slug, logo_url')
+            .select('id, name, slug, logo_url, icon_url')
             .in('id', referencedOrgIds)
 
         for (const o of extraOrgs ?? []) {
@@ -106,6 +111,7 @@ export async function getPickerData(): Promise<{
                 name: o.name,
                 slug: o.slug,
                 logo_url: o.logo_url ?? undefined,
+            icon_url: o.icon_url ?? undefined,
                 canManage: managedOrgIds.has(o.id),
             })
         }

@@ -25,6 +25,8 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
     const [galleryPhotos, setGalleryPhotos] = useState<GalleryPhoto[]>(s.galleryPhotos ?? [])
     const [logoUrl, setLogoUrl] = useState(store.logo_url ?? '')
     const [logoPath, setLogoPath] = useState(s.logoPath ?? '')
+    const [iconUrl, setIconUrl] = useState(store.icon_url ?? '')
+    const [iconPath, setIconPath] = useState(s.iconPath ?? '')
     const [primaryColor, setPrimaryColor] = useState(t.primary_color ?? '#1c2228')
     const [secondaryColor, setSecondaryColor] = useState(t.secondary_color ?? '#f5f0eb')
     const [accentColor, setAccentColor] = useState(t.accent_color ?? '#c9a96e')
@@ -51,11 +53,13 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
         // values are validated against THEME_SCHEMA (they end up in CSS on the public site).
         const storeResult = await updateStoreSettings(store.slug, {
             logo_url: logoUrl || null,
+            icon_url: iconUrl || null,
             settings: {
                 ...store.settings,
                 themeId, heroTitle, heroSubtitle,
                 heroImage: heroImage || undefined,
                 logoPath: logoPath || undefined,
+                iconPath: iconPath || undefined,
                 heroSlides: heroSlides.length > 0 ? heroSlides : undefined,
                 heroImagePath: heroImagePath || undefined,
                 galleryPhotos: galleryPhotos.length > 0 ? galleryPhotos : undefined,
@@ -99,6 +103,8 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
                 heroImage={heroImage} setHeroImage={setHeroImage}
                 logoUrl={logoUrl} setLogoUrl={setLogoUrl}
                 logoPath={logoPath} setLogoPath={setLogoPath}
+                iconUrl={iconUrl} setIconUrl={setIconUrl}
+                iconPath={iconPath} setIconPath={setIconPath}
                 heroSlides={heroSlides} setHeroSlides={setHeroSlides}
                 heroImagePath={heroImagePath} setHeroImagePath={setHeroImagePath}
                 galleryPhotos={galleryPhotos} setGalleryPhotos={setGalleryPhotos}

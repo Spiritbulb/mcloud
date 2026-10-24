@@ -70,7 +70,7 @@ export default async function OrgHomePage({
             .single(),
         supabase
             .from('stores')
-            .select('id, name, slug, logo_url, is_pro')
+            .select('id, name, slug, logo_url, icon_url, is_pro')
             .eq('org_id', org.id)
             .order('created_at', { ascending: false }),
         supabase
@@ -80,7 +80,7 @@ export default async function OrgHomePage({
             .order('created_at', { ascending: true }),
         supabase
             .from('store_members')
-            .select('role, store:stores(id, name, slug, logo_url, org_id, org:orgs(slug))')
+            .select('role, store:stores(id, name, slug, logo_url, icon_url, org_id, org:orgs(slug))')
             .eq('user_id', userId)
             .in('role', ['owner', 'admin']),
         supabase
@@ -158,7 +158,7 @@ export default async function OrgHomePage({
                                     <Tr key={store.id}>
                                         <Td>
                                             <Link href={`/org/${store.linkOrgSlug}/${store.slug}/settings`} className="flex items-center gap-3">
-                                                <Avatar name={store.name} src={store.logo_url} />
+                                                <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <span className="min-w-0">
                                                     <span className="block truncate font-medium hover:underline">{store.name}</span>
                                                     <span className="block truncate text-[12px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</span>

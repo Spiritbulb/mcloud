@@ -18,6 +18,7 @@ interface Org {
     name: string
     slug: string
     logo_url: string | null
+    icon_url: string | null
 }
 
 export default function OrgSettingsClient({ org, isOwner, storeCount }: {
@@ -26,7 +27,7 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
     storeCount: number
 }) {
     const router = useRouter()
-    const saved = { name: org.name, slug: org.slug, logoUrl: org.logo_url ?? '' }
+    const saved = { name: org.name, slug: org.slug, logoUrl: org.logo_url ?? '', iconUrl: org.icon_url ?? '' }
     const [draft, setDraft] = useState(saved)
     const [error, setError] = useState<string | null>(null)
     const [justSaved, setJustSaved] = useState(false)
@@ -39,7 +40,7 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
     const save = () => {
         setError(null); setJustSaved(false)
         startSave(async () => {
-            const res = await updateOrg(org.id, { name: draft.name, slug: draft.slug, logo_url: draft.logoUrl.trim() || null })
+            const res = await updateOrg(org.id, { name: draft.name, slug: draft.slug, logo_url: draft.logoUrl.trim() || null, icon_url: draft.iconUrl.trim() || null })
             if (res.error) { setError(res.error); return }
             setJustSaved(true)
             setTimeout(() => setJustSaved(false), 2000)
@@ -61,10 +62,13 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
                         <Field label="Slug" hint="Used in the organization URL.">
                             <TextInput value={draft.slug} onChange={(e) => setDraft({ ...draft, slug: e.target.value })} />
                         </Field>
-                        <Field label="Logo URL" className="sm:col-span-2">
+                        <Field label="Logo URL" hint="Your full logo, any shape." className="sm:col-span-2">
+                            <TextInput value={draft.logoUrl} placeholder="https://…" onChange={(e) => setDraft({ ...draft, logoUrl: e.target.value })} />
+                        </Field>
+                        <Field label="Square icon URL" hint="Shown in small square spots like the sidebar. Leave empty to use the logo." className="sm:col-span-2">
                             <div className="flex items-center gap-3">
-                                <Avatar name={draft.name} src={draft.logoUrl.trim() || null} />
-                                <TextInput value={draft.logoUrl} placeholder="https://…" onChange={(e) => setDraft({ ...draft, logoUrl: e.target.value })} />
+                                <Avatar name={draft.name} src={draft.iconUrl.trim() || draft.logoUrl.trim() || null} />
+                                <TextInput value={draft.iconUrl} placeholder="https://…" onChange={(e) => setDraft({ ...draft, iconUrl: e.target.value })} />
                             </div>
                         </Field>
                     </FormGrid>
