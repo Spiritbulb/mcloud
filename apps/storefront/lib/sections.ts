@@ -7,7 +7,7 @@
 
 import { getVertical } from '@mcloud/verticals'
 import type { SettingField } from '@mcloud/verticals'
-import { heroSlides, authoredSlides } from './hero'
+import { heroSlides } from './hero'
 
 export type SectionType =
   | 'hero'
@@ -39,8 +39,10 @@ export interface PageRenderContext {
 export interface SectionDef {
   templateKey: string
   pickContext: (ctx: PageRenderContext) => Record<string, unknown>
-  /** Human name, shown in the Editor rail. */
+  /** Human name, shown in the Editor's section list. */
   label: string
+  /** One line for the Editor's "Add section" picker. */
+  description?: string
   /**
    * What a merchant may configure on this section. The admin GENERATES its form
    * from this: adding a field here grows the UI with no admin code.
@@ -61,6 +63,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   hero: {
     templateKey: 'classic/sections/hero',
     label: 'Hero',
+    description: 'Large banner with slides, headline and a call to action.',
     // The hero is ONE shape: a list of slides (a single-image hero is a list of
     // one). heroSlides() normalises whatever a store actually has — including the
     // legacy flat keys — so the template has no branch to get wrong. Campaigns come
@@ -75,7 +78,6 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
       return {
         store: ctx.store,
         campaigns: ctx.campaigns,
-        // What the visitor SEES: defaults substituted in.
         slides: heroSlides({
           settings: store?.settings,
           storeName: store?.name ?? '',
@@ -83,21 +85,16 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
           commerce: !!store?.commerce,
           hasCampaign: Array.isArray(ctx.campaigns) && ctx.campaigns.length > 0,
         }),
-        // What is actually STORED: no defaults. The two differ, and conflating them
-        // is the trap — a hero with no title DISPLAYS the store's name, so reporting
-        // the rendered value would save "KFS" as though the merchant had typed it,
-        // and "Donate" as their button text. The template renders `slides` and
-        // reports `authored`.
-        authored: authoredSlides(store?.settings),
       }
     },
     // The hero's copy lives in the slides, not in section config, so it declares no
-    // heading/eyebrow. Everything on it is edited in the preview.
+    // heading/eyebrow. Its slides are edited in the Editor's hero panel.
     schema: [],
   },
   collections: {
     templateKey: 'classic/sections/collections-grid',
     label: 'Collections',
+    description: 'A grid of your product collections.',
     pickContext: (ctx) => ({ store: ctx.store, collections: ctx.collections }),
     schema: [
       ...copy('Shop by Category', 'Collections'),
@@ -107,18 +104,21 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   featured: {
     templateKey: 'classic/sections/featured-products',
     label: 'Featured products',
+    description: 'A handful of products you have marked as featured.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.featuredProducts }),
     schema: copy('Top Picks', 'Featured Collection'),
   },
   'all-products': {
     templateKey: 'classic/sections/all-products',
     label: 'All products',
+    description: 'Every product in your catalog.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.products }),
     schema: copy('Browse Everything', 'All Products'),
   },
   mission: {
     templateKey: 'classic/sections/mission',
     label: 'Mission',
+    description: 'Your mission headline and statement.',
     pickContext: (ctx) => ({ store: ctx.store }),
     // The mission's headline and body come from store settings
     // (missionHeadline / mission), so only the eyebrow is per-section.
@@ -129,30 +129,35 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   programs: {
     templateKey: 'classic/sections/programs',
     label: 'Programs',
+    description: 'Cards describing the work you do.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('What We Do', 'Programs'),
   },
   impact: {
     templateKey: 'classic/sections/impact',
     label: 'Impact',
+    description: 'Numbers that show what your work adds up to.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('Our Impact', 'Impact'),
   },
   contact: {
     templateKey: 'classic/sections/contact',
     label: 'Contact',
+    description: 'Your address, email and phone number.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('Contact Us', 'Get in Touch'),
   },
   campaigns: {
     templateKey: 'classic/sections/campaigns',
     label: 'Campaigns',
+    description: 'Causes visitors can donate to, with progress.',
     pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
     schema: copy('Support a Cause', 'Campaigns'),
   },
   gallery: {
     templateKey: 'classic/sections/gallery',
     label: 'Gallery',
+    description: 'A grid of photos with captions.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: [
       ...copy('Recent Shoots', 'Gallery'),
@@ -164,6 +169,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     services: {
     templateKey: 'classic/sections/services',
     label: 'Services',
+    description: 'Services customers can book.',
     pickContext: (ctx) => ({ store: ctx.store, services: ctx.services }),
     schema: [
      ...copy('What We Offer', 'Services'),

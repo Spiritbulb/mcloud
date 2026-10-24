@@ -64,3 +64,14 @@ export function googleFontsHref(families: readonly unknown[]): string | null {
 
   return `https://fonts.googleapis.com/css2?${params}&display=swap`
 }
+
+/**
+ * A theme's font_scale as an <html> font-size percentage, or null for the default
+ * size (or anything that is not a plain number in the Editor's range). The result
+ * is written into CSS, so only a clamped number ever comes out.
+ */
+export function fontScalePercent(raw: unknown): number | null {
+  const n = typeof raw === 'number' ? raw : typeof raw === 'string' && /^\d(\.\d+)?$/.test(raw.trim()) ? Number(raw) : NaN
+  if (!Number.isFinite(n) || n === 1) return null
+  return Math.round(Math.min(1.4, Math.max(0.8, n)) * 100)
+}

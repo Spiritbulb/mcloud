@@ -3,756 +3,127 @@
 import { useEffect } from 'react'
 
 /**
- * Click-to-edit, and the two-way link between the Editor's rail and this preview.
+ * The preview's half of the Editor. The preview DISPLAYS; every edit happens in the
+ * Editor's sidebar. So this only:
  *
- *   out: click a section here    -> the rail opens that section's drawer
- *   out: edit a heading here     -> the rail's field updates
- *   in:  select a section there  -> this scrolls to it and outlines it
+ *   out: a click on a section  -> the Editor opens that section
+ *   out: scroll position       -> replayed into the next preview after a change
+ *   out: Ctrl+S / Ctrl+Z       -> focus in the frame would otherwise swallow them
+ *   in:  select-section        -> outline it (and scroll to it)
+ *   in:  scroll-to             -> land where the merchant was
+ *   in:  show-slide            -> page the hero carousel to the slide being edited
  *
- * Containment (all of it required, and it matches PreviewListener):
- *   1. Only mounts inside an iframe. A real visitor is never framed by the admin,
- *      so for them this component does nothing at all — no editing, no listeners.
- *   2. Validates event.origin against the admin origin, both directions.
- *   3. Edits are PLAIN TEXT only. Paste is intercepted and flattened, and the
- *      value is read with textContent, never innerHTML, so nothing typed or pasted
- *      into the preview can inject markup. Editing here changes only what is sent
- *      to the parent; it never writes to the database on its own.
+ * Nothing is layered over the page (no toolbars, no editable regions), so nothing
+ * can sit between the merchant's click and the page.
+ *
+ * Containment, as PreviewListener: it only acts inside a frame (CSP frame-ancestors
+ * 'self' means only this app can frame it), and it talks only to this app's own
+ * origin, in both directions.
  */
-export default function EditorBridge({ adminOrigin }: { adminOrigin: string }) {
+export default function EditorBridge() {
     useEffect(() => {
-        // Not framed => not the Editor => do nothing at all.
         if (typeof window === 'undefined' || window.parent === window) return
 
         const STYLE_ID = 'mcloud-editor-bridge'
         if (!document.getElementById(STYLE_ID)) {
             const style = document.createElement('style')
             style.id = STYLE_ID
+            // Outlines draw outside layout and take no clicks.
             style.textContent = `
                 [data-mcloud-section] { cursor: pointer; }
-                [data-mcloud-section]:hover {
-                    outline: 2px dashed rgba(99,102,241,.35);
-                    outline-offset: -2px;
-                }
-                [data-mcloud-section][data-mcloud-selected] {
-                    outline: 2px solid #6366f1;
-                    outline-offset: -2px;
-                }
-                /* An editable field advertises itself on hover, and shows a real
-                   text caret rather than the section's pointer. */
-                [data-mcloud-field], [data-mcloud-setting], [data-mcloud-key] {
-                    cursor: text;
-                    border-radius: 2px;
-                    transition: background-color .12s, box-shadow .12s;
-                }
-                [data-mcloud-field]:hover,
-                [data-mcloud-setting]:hover,
-                [data-mcloud-key]:hover {
-                    background-color: rgba(99,102,241,.08);
-                    box-shadow: 0 0 0 4px rgba(99,102,241,.08);
-                }
-                [contenteditable="true"] {
-                    background-color: rgba(99,102,241,.10);
-                    box-shadow: 0 0 0 4px rgba(99,102,241,.10);
-                    outline: none;
-                }
-                /* An empty field is invisible and therefore unclickable. In the
-                   editor it needs a target and a prompt. */
-                [data-mcloud-setting]:empty::before,
-                [data-mcloud-key]:empty::before,
-                [data-mcloud-field]:empty::before {
-                    content: 'Click to add';
-                    opacity: .45;
-                    font-style: italic;
-                }
-
-                /* THE HERO, simplified. The background image is now edited from the
-                   slide toolbar (data-op="img"), NOT by clicking the backdrop — so the
-                   full-bleed background no longer needs to be clickable and can be
-                   fully inert. That collapses the pointer-events juggling this file
-                   used to need: nothing full-bleed competes with the text, so a click
-                   simply lands on whatever the merchant sees.
-
-                   Background layers take NO clicks... */
-                .sf-hero__slide > img,
-                .sf-hero__slide > .sf-hero-fallback,
-                .sf-hero__slide > div[style*="rgba(0,0,0"] {
-                    pointer-events: none;
-                }
-                /* ...and the active slide's interactive things take clicks normally.
-                   (Default pointer-events already work now that nothing overlays the
-                   text; these are belt-and-suspenders in case a theme sets none.) */
-                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-field],
-                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-setting],
-                .sf-hero__slide:not(.pointer-events-none) [data-mcloud-key],
-                .sf-hero__slide:not(.pointer-events-none) button,
-                .sf-hero__slide:not(.pointer-events-none) a,
-                .sf-hero .sf-hero__dot,
-                .sf-hero__slide-del,
-                .sf-hero__add-slide {
-                    pointer-events: auto;
-                }
-                /* Inactive carousel slides stay fully inert so a stacked hidden slide
-                   can never catch a click meant for the visible one. */
-                .sf-hero .sf-hero__slide.pointer-events-none,
-                .sf-hero .sf-hero__slide.pointer-events-none * {
-                    pointer-events: none !important;
-                }
-
-                /* An image gets a picker, not a caret, so it must not look typeable. */
-                [data-mcloud-image] {
-                    cursor: pointer;
-                    position: relative;
-                }
-                [data-mcloud-image]:hover {
-                    outline: 2px solid #6366f1;
-                    outline-offset: -2px;
-                }
-                [data-mcloud-image]:hover::after {
-                    content: 'Change image';
-                    position: absolute;
-                    inset: auto 0 0 0;
-                    padding: 6px 10px;
-                    font: 500 12px/1.2 system-ui, sans-serif;
-                    color: #fff;
-                    background: rgba(17,17,27,.75);
-                    text-align: center;
-                }
-                /* An empty image slot has nothing to show, so it must announce itself
-                   or the merchant cannot tell there is anything there to click. */
-                [data-mcloud-image][data-mcloud-stored=""]::before {
-                    content: 'Add an image';
-                    position: absolute;
-                    inset: 0;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    font: 500 13px/1.2 system-ui, sans-serif;
-                    opacity: .5;
-                }
-
-                #mcloud-op-toolbar {
-                    position: fixed;
-                    z-index: 2147483647;
-                    display: none;
-                    gap: 4px;
-                    padding: 4px;
-                    background: #11111b;
-                    border-radius: 8px;
-                    box-shadow: 0 4px 14px rgba(0,0,0,.35);
-                    /* the BAR ignores clicks; only its buttons take them, so it
-                       can never eat a click meant for the content beneath. */
-                    pointer-events: none;
-                }
-                #mcloud-op-toolbar button {
-                    pointer-events: auto;
-                    width: 28px; height: 28px;
-                    display: grid; place-items: center;
-                    border: 0; border-radius: 6px;
-                    background: transparent; color: #fff;
-                    font: 600 14px/1 system-ui, sans-serif; cursor: pointer;
-                }
-                #mcloud-op-toolbar button:hover { background: rgba(255,255,255,.14); }
-
-                /* Hero filmstrip (editor only). The dots become taller, numbered
-                   slide selectors so paging-to-edit reads as an affordance, plus an
-                   add-slide control. Visitors never see this — the section only
-                   emits these classes when store.editing. */
-                .sf-hero__dots--editing {
-                    gap: 8px;
-                    padding: 6px 8px;
-                    background: rgba(17,17,27,.72);
-                    border-radius: 10px;
-                }
-                .sf-hero__dots--editing .sf-hero__dot {
-                    height: 22px !important;
-                    min-width: 22px;
-                    width: auto !important;
-                    padding: 0 7px !important;
-                    border-radius: 6px !important;
-                    background: rgba(255,255,255,.22) !important;
-                    pointer-events: auto;
-                }
-                .sf-hero__dots--editing .sf-hero__dot.sf-hero__dot--active {
-                    background: #fff !important;
-                }
-                .sf-hero__dot-num {
-                    font: 600 12px/22px system-ui, sans-serif;
-                    color: #11111b;
-                }
-                .sf-hero__dots--editing .sf-hero__dot:not(.sf-hero__dot--active) .sf-hero__dot-num {
-                    color: #fff;
-                }
-                .sf-hero__add-slide {
-                    pointer-events: auto;
-                    height: 22px; min-width: 22px;
-                    padding: 0 8px;
-                    display: grid; place-items: center;
-                    border: 0; border-radius: 6px;
-                    background: var(--sf-primary, #6366f1); color: #fff;
-                    font: 700 15px/1 system-ui, sans-serif; cursor: pointer;
-                }
-                .sf-hero__add-slide:hover { filter: brightness(1.1); }
-
-                /* Per-slide cell: the numbered dot plus its own delete. */
-                .sf-hero__slide-cell {
-                    position: relative;
-                    display: inline-flex;
-                    align-items: center;
-                }
-                .sf-hero__slide-del {
-                    pointer-events: auto;
-                    margin-left: 2px;
-                    width: 16px; height: 16px;
-                    display: grid; place-items: center;
-                    border: 0; border-radius: 4px;
-                    background: rgba(255,255,255,.18); color: #fff;
-                    font: 700 12px/1 system-ui, sans-serif; cursor: pointer;
-                    opacity: .7;
-                }
-                .sf-hero__slide-del:hover {
-                    opacity: 1;
-                    background: #b3261e; /* clearly a delete on hover */
-                }
+                [data-mcloud-section]:hover { outline: 2px dashed rgba(99,102,241,.45); outline-offset: -2px; }
+                [data-mcloud-section][data-mcloud-selected] { outline: 2px solid #6366f1; outline-offset: -2px; }
             `
             document.head.appendChild(style)
         }
 
-        function sectionIndexOf(el: Element): number | null {
-            const host = el.closest('[data-mcloud-section]')
-            if (!host) return null
-            const i = Number(host.getAttribute('data-mcloud-section'))
-            return Number.isInteger(i) ? i : null
-        }
+        const origin = window.location.origin
 
-        // ── Hover overlay toolbar ────────────────────────────────────────────────
-        //
-        // Hovering a section or a record shows a small floating bar with structural
-        // ops (move / duplicate / delete / add). The bar itself never intercepts a
-        // click — see the hero lesson above: the same failure mode (an overlay
-        // eating clicks meant for what's beneath it) applies here, just one layer
-        // up, over the whole section instead of one image. Only the buttons take
-        // pointer events; the bar between them is a pass-through.
         function post(msg: Record<string, unknown>) {
-            window.parent.postMessage(msg, adminOrigin)
+            window.parent.postMessage(msg, origin)
         }
 
-        const toolbar = document.createElement('div')
-        toolbar.id = 'mcloud-op-toolbar'
-        toolbar.innerHTML =
-            '<button data-op="img" title="Change background image" hidden>🖼</button>' +
-            '<button data-op="up" title="Move up">↑</button>' +
-            '<button data-op="down" title="Move down">↓</button>' +
-            '<button data-op="dup" title="Duplicate">⧉</button>' +
-            '<button data-op="del" title="Delete">🗑</button>' +
-            '<button data-op="add" title="Add below">＋</button>'
-        document.body.appendChild(toolbar)
-        const imgBtn = toolbar.querySelector<HTMLButtonElement>('button[data-op="img"]')!
-
-        // The element the toolbar currently acts on: either a section or a record.
-        // Two variables on purpose — `hovered` still drives show/hide via
-        // mouseover/mouseout, but `current` is the one onToolbarClick trusts,
-        // and it is ONLY ever cleared by a genuine next hover or by the toolbar
-        // being explicitly hidden, never by a possibly-missed mouseout.
-        let hovered: HTMLElement | null = null
-        let current: HTMLElement | null = null
-
-        function targetOf(el: Element): HTMLElement | null {
-            // A record wins over its section: the more specific handle.
-            return el.closest<HTMLElement>('[data-mcloud-record]')
-                ?? el.closest<HTMLElement>('[data-mcloud-section]')
-        }
-
-        function showToolbarFor(el: HTMLElement) {
-            hovered = el
-            current = el
-            // The change-background button is only meaningful for a hero slide (the
-            // one record whose image is a full-bleed background edited from here, not
-            // by clicking it). Other records edit their image by clicking the photo.
-            const isHeroSlide = el.getAttribute('data-mcloud-list') === 'heroSlides'
-            imgBtn.hidden = !isHeroSlide
-            const r = el.getBoundingClientRect()
-            toolbar.style.display = 'flex'
-            // top-right of the element, clamped into the viewport (wider when the
-            // image button is present).
-            const w = isHeroSlide ? 190 : 160
-            toolbar.style.top = `${Math.max(4, r.top + 4)}px`
-            toolbar.style.left = `${Math.min(window.innerWidth - w, r.right - w)}px`
-        }
-
-        function onOver(e: Event) {
-            if (!(e.target instanceof Element)) return
-            const t = targetOf(e.target)
-            if (t) showToolbarFor(t)
-        }
-        function onOut(e: Event) {
-            // Hide only when leaving to something that is neither the toolbar nor a target.
-            const to = (e as MouseEvent).relatedTarget
-            if (to instanceof Element && (to.closest('#mcloud-op-toolbar') || targetOf(to))) return
-            toolbar.style.display = 'none'
-            hovered = null
-        }
-
-        function toolbarIndexOf(el: HTMLElement): number {
-            return Number(el.getAttribute('data-mcloud-index') ?? el.getAttribute('data-mcloud-section'))
-        }
-
-        // The hero filmstrip's add-slide control. Appends a slide after the last;
-        // the admin computes the follow index so the reload lands on the new slide.
-        function onAddSlide(e: MouseEvent) {
-            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-add-slide]')
-            if (!btn) return
-            e.preventDefault(); e.stopPropagation()
-            const count = document.querySelectorAll(
-                '[data-mcloud-record][data-mcloud-list="heroSlides"]',
-            ).length
-            post({ type: 'mcloud:item-op', op: 'add', list: 'heroSlides', index: count })
-        }
-
-        
-
-        // The hero filmstrip's per-slide delete. Distinct from the section 🗑 so a
-        // merchant removing ONE slide can't accidentally nuke the whole hero. Refuses
-        // to delete the last slide, and confirms first (paired with the undo toast on
-        // the admin side).
-        function onDeleteSlide(e: MouseEvent) {
-            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-del-slide]')
-            if (!btn) return
-            e.preventDefault(); e.stopPropagation()
-            const index = Number(btn.getAttribute('data-mcloud-del-slide'))
-            if (!Number.isInteger(index)) return
-            const total = document.querySelectorAll('[data-mcloud-record][data-mcloud-list="heroSlides"]').length
-            if (total <= 1) { window.alert('This is the only slide. A hero needs at least one slide.'); return }
-            if (!window.confirm('Delete this slide? You can undo right after.')) return
-            post({ type: 'mcloud:item-op', op: 'delete', list: 'heroSlides', index })
-        }
-
-        // The gallery's empty-state "+ Add photo" button. Same idea as
-        // onAddSlide: appends one empty record so there is something to click
-        // when the list starts at zero.
-        function onAddGalleryPhoto(e: MouseEvent) {
-            const btn = (e.target as Element)?.closest<HTMLElement>('[data-mcloud-add-gallery]')
-            if (!btn) return
-            e.preventDefault(); e.stopPropagation()
-            const count = document.querySelectorAll(
-                '[data-mcloud-record][data-mcloud-list="galleryPhotos"]',
-            ).length
-            post({ type: 'mcloud:item-op', op: 'add', list: 'galleryPhotos', index: count })
-        }
-
-        function onToolbarClick(e: MouseEvent) {
-            const btn = (e.target as Element)?.closest<HTMLButtonElement>('button[data-op]')
-            if (!btn) return
-            e.preventDefault(); e.stopPropagation()
-
-            // Resolve the target FROM THE BUTTON, not from `hovered`. `hovered` is
-            // set by mouseover/mouseout, and `onOut`'s relatedTarget check can miss
-            // an exit (relatedTarget is null on some transitions) and null it out
-            // right as the pointer crosses onto a toolbar button — so by the time
-            // this click fires, `hovered` may already be stale/null even though the
-            // toolbar is visibly sitting over the right element. The toolbar itself
-            // carries no positional link to its target other than CSS placement, so
-            // instead we keep the last-shown target on the BUTTON'S OWN ancestor
-            // chain via a dataset fallback: `current`, updated every time
-            // showToolbarFor runs, and read here directly instead of through the
-            // mouseover/mouseout state machine.
-            const target = current
-            if (!target) return
-
-            const isRecord = target.hasAttribute('data-mcloud-record')
-            const index = toolbarIndexOf(target)
-            if (!Number.isInteger(index)) return
-            const op = btn.getAttribute('data-op')
-
-            if (isRecord) {
-                const list = target.getAttribute('data-mcloud-list')
-                if (!list) return
-                // Change the hero slide's background image: reuse the same picker flow
-                // a clicked image would open. The current value rides on the slide.
-                if (op === 'img') {
-                    post({
-                        type: 'mcloud:image-click',
-                        setting: null, list, index,
-                        key: 'image',
-                        value: target.getAttribute('data-mcloud-slide-image') ?? '',
-                    })
-                    return
-                }
-                if (op === 'up') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index - 1 })
-                else if (op === 'down') post({ type: 'mcloud:item-op', op: 'move', list, index, to: index + 1 })
-                else if (op === 'dup') post({ type: 'mcloud:item-op', op: 'duplicate', list, index })
-                else if (op === 'del') {
-                    if (!window.confirm('Delete this item? You can undo right after.')) return
-                    post({ type: 'mcloud:item-op', op: 'delete', list, index })
-                }
-                else if (op === 'add') post({ type: 'mcloud:item-op', op: 'add', list, index: index + 1 })
-            } else {
-                if (op === 'up') post({ type: 'mcloud:section-op', op: 'move', index, to: index - 1 })
-                else if (op === 'down') post({ type: 'mcloud:section-op', op: 'move', index, to: index + 1 })
-                else if (op === 'dup') post({ type: 'mcloud:section-op', op: 'duplicate', index })
-                else if (op === 'del') {
-                    if (!window.confirm('Delete this whole section? You can undo right after.')) return
-                    post({ type: 'mcloud:section-op', op: 'delete', index })
-                }
-                else if (op === 'add') post({ type: 'mcloud:section-add-requested', index: index + 1 })
-            }
-        }
-
-        function select(index: number) {
-            document
-                .querySelectorAll('[data-mcloud-selected]')
-                .forEach((n) => n.removeAttribute('data-mcloud-selected'))
+        function select(index: number): Element | null {
+            document.querySelectorAll('[data-mcloud-selected]').forEach((n) => n.removeAttribute('data-mcloud-selected'))
             const el = document.querySelector(`[data-mcloud-section="${index}"]`)
-            if (!el) return null
-            el.setAttribute('data-mcloud-selected', '')
+            el?.setAttribute('data-mcloud-selected', '')
             return el
         }
 
-        const EDITABLE = '[data-mcloud-field],[data-mcloud-setting],[data-mcloud-key]'
-
-        /**
-         * Send an edited value up to the Editor.
-         *
-         * THREE channels, because copy lives in three shapes and each saves through a
-         * different action:
-         *
-         *   data-mcloud-field    section config     pages.sections[i].settings[field]
-         *   data-mcloud-setting  store setting      stores.settings[key]
-         *   data-mcloud-list/... repeated record    stores.settings[list][i][key]
-         *
-         * THE TRAP, common to all three: a value renders through `| default:` or falls
-         * back to store.name, so a field with NO stored value still SHOWS text. If we
-         * reported textContent, then clicking into a heading and clicking away would
-         * "save" the default as though the merchant had typed it — baking it in
-         * permanently and killing the fallback, with no way to undo it.
-         *
-         * So every editable element carries its STORED value (data-mcloud-stored,
-         * empty when unset) and we diff against THAT, never against what is displayed.
-         * Clearing a field reports '', which the template correctly re-defaults.
-         * Merely focusing and leaving reports nothing at all.
-         */
-        function commit(el: HTMLElement) {
-            // Only text the merchant actually TYPED. Without this, contentEditable's
-            // own whitespace normalisation fires `input` on focus, and a defaulted
-            // field (displays "Programs", stores "") would report the default as a
-            // real edit the moment it was clicked. See `typed` above.
-            if (!typed.has(el)) return
-
-            const stored = el.getAttribute('data-mcloud-stored') ?? ''
-            // textContent, never innerHTML: an edit can never carry markup upward.
-            const next = (el.textContent ?? '').replace(/\s+/g, ' ').trim()
-            if (next === stored) return          // nothing actually changed
-
-            const list = el.getAttribute('data-mcloud-list')
-            const key = el.getAttribute('data-mcloud-key')
-            const setting = el.getAttribute('data-mcloud-setting')
-            const field = el.getAttribute('data-mcloud-field')
-
-            let msg: Record<string, unknown> | null = null
-
-            if (list && key) {
-                const i = Number(el.getAttribute('data-mcloud-index'))
-                if (!Number.isInteger(i)) return
-                msg = { type: 'mcloud:item-edit', list, index: i, key, value: next }
-            } else if (setting) {
-                msg = { type: 'mcloud:setting-edit', key: setting, value: next }
-            } else if (field) {
-                const index = sectionIndexOf(el)
-                if (index === null) return
-                msg = { type: 'mcloud:field-edit', index, field, value: next }
-            }
-            if (!msg) return
-
-            el.setAttribute('data-mcloud-stored', next)
-            window.parent.postMessage(msg, adminOrigin)
-        }
-
-        /**
-         * Did the merchant actually TYPE in this field, or did they merely click into
-         * it and leave?
-         *
-         * This is load-bearing, and the reason is subtle enough that it survived the
-         * first design: making an element contentEditable causes the browser to
-         * normalise its whitespace, which fires `input` on its own. A defaulted
-         * heading DISPLAYS "Programs" while storing "", so that phantom input looked
-         * like a real change from "" to "Programs" — and reported the default as if
-         * the merchant had typed it. One click, and the fallback is gone forever.
-         *
-         * A commit therefore requires a real keystroke or paste, not just a DOM diff.
-         */
-        const typed = new WeakSet<HTMLElement>()
-
-        function beginEdit(el: HTMLElement, placeCaret: boolean) {
-            if (el.getAttribute('contenteditable') === 'true') return
-            el.setAttribute('contenteditable', 'true')
-            el.setAttribute('spellcheck', 'false')
-            el.focus()
-
-            // When we begin on mousedown, the browser's OWN mouseup places the caret
-            // exactly where the merchant pressed — forcing a range here would fight it.
-            // We only place a caret ourselves when there is no native click to do it
-            // (i.e. a programmatic begin), collapsing to the end.
-            if (!placeCaret) return
-            const range = document.createRange()
-            range.selectNodeContents(el)
-            range.collapse(false)
-            const sel = window.getSelection()
-            sel?.removeAllRanges()
-            sel?.addRange(range)
-        }
-
-        // ── Mousedown: begin editing a text field BEFORE the browser's native focus
-        // and caret logic runs on this press. If we waited for `click`, the element
-        // was still non-editable at mousedown, so the browser never started a text
-        // selection in it — the field would flip to contenteditable but show no caret
-        // and refuse typing (works when triggered synthetically, fails on real mouse
-        // clicks). Making it editable on mousedown lets the SAME press's mouseup drop
-        // the caret where the merchant clicked. Images/sections are still handled on
-        // `click` (they need no caret).
-        function onMouseDown(e: MouseEvent) {
-            if (!(e.target instanceof Element)) return
-            if (e.button !== 0) return
-            const targetField = e.target.closest<HTMLElement>(EDITABLE)
-            if (!targetField) return
-            // An image slot is not a text field; it opens the picker on click.
-            if (e.target.closest('[data-mcloud-image]')) return
-            if (sectionIndexOf(e.target) === null) return
-            beginEdit(targetField, false)
-        }
-
-        function endEdit(el: HTMLElement) {
-            el.removeAttribute('contenteditable')
-            el.removeAttribute('spellcheck')
-            typed.delete(el)
-        }
-
-        // ── Click ─────────────────────────────────────────────────────────────────
+        // Capture phase, so a link or button never acts first: the preview is for
+        // looking, and leaving the page (or opening a donate dialog) mid-edit is the
+        // thing to prevent. The hero's dots are the exception: paging the carousel
+        // is how the merchant sees each slide.
         function onClick(e: MouseEvent) {
             if (!(e.target instanceof Element)) return
-
-            // The hero filmstrip (slide dots + add-slide) is EDITOR UI, not content.
-            // Let its own handlers run: the dots need their native goTo click to page
-            // slides, and add-slide is handled by onAddSlide. If we fell through, the
-            // section preventDefault/stopPropagation below would swallow the dot click
-            // and the carousel would never advance.
-            if (e.target.closest('.sf-hero__dot, [data-mcloud-add-slide]')) return
-
-            // Resolve what the merchant clicked from the event target itself. This
-            // is coordinate-free, so it works for every click (mouse, keyboard,
-            // synthetic) — unlike elementsFromPoint, which needs real clientX/Y.
-            //
-            // An editable field wins over the background image: the hero's image is
-            // a full-bleed layer BEHIND the text, so when the target sits inside BOTH
-            // an editable field and the image markup, the merchant meant the text.
-            // Only a click whose target is the image (and NOT an editable field) opens
-            // the picker — that is a click on the bare hero background.
-            const closestField = e.target.closest<HTMLElement>(EDITABLE)
-const closestImage = e.target.closest<HTMLElement>('[data-mcloud-image]')
-// An element that IS an image slot is never treated as a text field, even if it
-// also carries list/key addressing attributes for the image-click message.
-const field = closestField && !closestField.hasAttribute('data-mcloud-image') ? closestField : null
-const image = field ? null : closestImage
-
-            const index = sectionIndexOf(e.target)
-            if (index === null) return
-
-            // Intercept ONLY what actually needs intercepting, instead of swallowing
-            // every click in the section. The old blanket preventDefault/stopPropagation
-            // made each new interactive control (dots, buttons) dead until whitelisted.
-            // Now:
-            //   - a NAVIGATIONAL click (a link, a submit, the donate CTA, an inline
-            //     onclick) is blocked, because the preview is for editing, not
-            //     shopping — leaving the page mid-edit is the thing to prevent;
-            //   - an editable field or image gets preventDefault (avoid the browser's
-            //     own selection/drag on the element) but NOT a broad stopPropagation;
-            //   - anything else (plain content) is left entirely alone.
-            const nav = e.target.closest<HTMLElement>('a[href], button[type="submit"], .sf-donate, [onclick]')
-            if (nav && !field && !image) {
-                e.preventDefault()
-                e.stopPropagation()
-            } else if (field || image) {
-                e.preventDefault()
-            }
-
-            select(index)
-            window.parent.postMessage({ type: 'mcloud:section-click', index }, adminOrigin)
-
-            // An image has no text to type into, so it gets a picker rather than a
-            // caret. The ADMIN owns that UI: it holds the merchant's session and the
-            // upload credentials, and the public storefront must never be the thing
-            // prompting for or uploading a file. So this only REPORTS the click, and
-            // the admin decides what to ask for.
-            if (image) {
-                window.parent.postMessage(
-                    {
-                        type: 'mcloud:image-click',
-                        // Whichever addressing the snippet emitted; the admin routes on it.
-                        setting: image.getAttribute('data-mcloud-setting'),
-                        list: image.getAttribute('data-mcloud-list'),
-                        index: image.getAttribute('data-mcloud-index'),
-                        key: image.getAttribute('data-mcloud-key'),
-                        value: image.getAttribute('data-mcloud-stored') ?? '',
-                    },
-                    adminOrigin,
-                )
-                return
-            }
-
-            // Usually mousedown already began the edit (so the caret landed where the
-            // merchant clicked); this covers any click with no matching mousedown
-            // (keyboard activation, synthetic). Place a caret ourselves in that case.
-            if (field) beginEdit(field, true)
-        }
-
-        // ── Editing ───────────────────────────────────────────────────────────────
-
-        // `beforeinput` fires only for a REAL user edit (a keystroke, a paste, a
-        // delete) — never for the whitespace normalisation the browser performs when
-        // an element becomes contentEditable. That distinction is what stops a
-        // defaulted field from reporting its default the instant it is clicked.
-        function onBeforeInput(e: Event) {
-            const el = (e.target as Element)?.closest<HTMLElement>(EDITABLE)
-            if (el?.getAttribute('contenteditable') === 'true') typed.add(el)
-        }
-
-        function onInput(e: Event) {
-            const el = (e.target as Element)?.closest<HTMLElement>(EDITABLE)
-            if (el?.getAttribute('contenteditable') === 'true') commit(el)
-        }
-
-        function onBlur(e: FocusEvent) {
-            const el = (e.target as Element)?.closest<HTMLElement>(EDITABLE)
-            if (!el) return
-            commit(el)
-            endEdit(el)
-        }
-
-        function onKeyDown(e: KeyboardEvent) {
-            const el = (e.target as Element)?.closest<HTMLElement>(EDITABLE)
-            if (!el || el.getAttribute('contenteditable') !== 'true') return
-
-            // A heading is one line. Enter commits rather than inserting a <br>.
-            if (e.key === 'Enter') {
-                e.preventDefault()
-                el.blur()
-            }
-            // Escape gives up the edit. The rail still holds the last committed
-            // value, so this is "stop typing", not "undo everything".
-            if (e.key === 'Escape') {
-                e.preventDefault()
-                el.blur()
-            }
-        }
-
-        // Paste as PLAIN TEXT. Without this, pasting from a word processor drops
-        // styled markup straight into the merchant's heading.
-        function onPaste(e: ClipboardEvent) {
-            const el = (e.target as Element)?.closest<HTMLElement>(EDITABLE)
-            if (!el || el.getAttribute('contenteditable') !== 'true') return
+            if (e.target.closest('.sf-hero__dot')) return
             e.preventDefault()
-            const text = (e.clipboardData?.getData('text/plain') ?? '').replace(/\s+/g, ' ')
-            document.execCommand('insertText', false, text)
+            e.stopPropagation()
+            const host = e.target.closest('[data-mcloud-section]')
+            const index = Number(host?.getAttribute('data-mcloud-section'))
+            if (!host || !Number.isInteger(index)) return
+            select(index)
+            post({ type: 'mcloud:section-click', index })
         }
 
-        // ── IN: the rail selected a section ───────────────────────────────────────
+        // A form can still be submitted from the keyboard.
+        function onSubmit(e: Event) {
+            e.preventDefault()
+            e.stopPropagation()
+        }
+
+        let scrollFrame = 0
+        function onScroll() {
+            if (scrollFrame) return
+            scrollFrame = requestAnimationFrame(() => {
+                scrollFrame = 0
+                post({ type: 'mcloud:scroll', y: window.scrollY })
+            })
+        }
+
+        function onShortcut(e: KeyboardEvent) {
+            if (!(e.metaKey || e.ctrlKey) || e.altKey) return
+            const k = e.key.toLowerCase()
+            if (k === 's') post({ type: 'mcloud:shortcut', key: 'save' })
+            else if (k === 'z') post({ type: 'mcloud:shortcut', key: e.shiftKey ? 'redo' : 'undo' })
+            else if (k === 'y') post({ type: 'mcloud:shortcut', key: 'redo' })
+            else return
+            e.preventDefault()
+        }
+
         function onMessage(e: MessageEvent) {
-            if (e.origin !== adminOrigin) return
+            if (e.origin !== origin || !e.data) return
             const data = e.data
-            if (!data) return
 
             if (data.type === 'mcloud:select-section' && Number.isInteger(data.index)) {
+                // -1 clears the outline; `scroll: false` re-applies it in place.
                 const el = select(data.index)
-                el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-                return
-            }
-
-            // ── IN: the rail reordered a section ─────────────────────────────────
-            //
-            // Shuffle the existing DOM nodes in place instead of waiting for an
-            // iframe reload, so a drag/move in the rail feels instant here too.
-            if (data.type === 'mcloud:reorder-preview' && Number.isInteger(data.from) && Number.isInteger(data.to)) {
-                const nodes = Array.from(document.querySelectorAll('[data-mcloud-section]'))
-                const from = nodes[data.from]
-                const parent = from?.parentNode
-                if (!from || !parent) return
-                const ref = data.to >= nodes.length ? null : nodes[data.to]
-                parent.insertBefore(from, data.to > data.from ? (ref?.nextSibling ?? null) : ref)
-                // Re-index so later clicks address the right section.
-                Array.from(parent.querySelectorAll('[data-mcloud-section]'))
-                    .forEach((n, i) => n.setAttribute('data-mcloud-section', String(i)))
-            }
-
-            // ── IN: a repeated record was reordered ──────────────────────────────
-            //
-            // Same idea as a section move, scoped to one list: shuffle that list's
-            // record nodes in place so a record reorder feels instant too, instead
-            // of waiting for the full reload. `list` picks the record set; from/to
-            // are indices within it.
-            if (
-                data.type === 'mcloud:reorder-preview-item' &&
-                typeof data.list === 'string' &&
-                Number.isInteger(data.from) &&
-                Number.isInteger(data.to)
-            ) {
-                const listEsc = CSS.escape(data.list)
-                const recordSel = `[data-mcloud-record][data-mcloud-list="${listEsc}"]`
-                const nodes = Array.from(document.querySelectorAll<HTMLElement>(recordSel))
-                const from = nodes[data.from]
-                const parent = from?.parentNode
-                if (!from || !parent) return
-                const ref = data.to >= nodes.length ? null : nodes[data.to]
-                parent.insertBefore(from, data.to > data.from ? (ref?.nextSibling ?? null) : ref)
-                // Re-index in DOM order. Both the record container AND the editable
-                // fields inside it carry their own data-mcloud-index (commit() reads
-                // the field's own attribute, not the container's via closest()), so
-                // BOTH must be renumbered or a later text/image edit on this list
-                // would address the wrong record.
-                Array.from(document.querySelectorAll<HTMLElement>(recordSel)).forEach((rec, i) => {
-                    rec.setAttribute('data-mcloud-index', String(i))
-                    rec
-                        .querySelectorAll<HTMLElement>(`[data-mcloud-list="${listEsc}"][data-mcloud-index]`)
-                        .forEach((f) => f.setAttribute('data-mcloud-index', String(i)))
-                })
+                if (data.scroll !== false) el?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+            } else if (data.type === 'mcloud:scroll-to' && typeof data.y === 'number' && Number.isFinite(data.y)) {
+                window.scrollTo({ top: data.y, behavior: 'instant' as ScrollBehavior })
+            } else if (data.type === 'mcloud:show-slide' && Number.isInteger(data.index)) {
+                document.querySelector<HTMLElement>(`.sf-hero__dot[data-index="${data.index}"]`)?.click()
             }
         }
 
-        // Capture phase: get the click before a link or button handles it.
-        document.addEventListener('mousedown', onMouseDown, true)
-        document.addEventListener('click', onAddSlide, true)
-        document.addEventListener('click', onAddGalleryPhoto, true)
-        document.addEventListener('click', onDeleteSlide, true)
         document.addEventListener('click', onClick, true)
-        document.addEventListener('beforeinput', onBeforeInput, true)
-        document.addEventListener('input', onInput, true)
-        document.addEventListener('blur', onBlur, true)
-        document.addEventListener('keydown', onKeyDown, true)
-        document.addEventListener('paste', onPaste, true)
+        document.addEventListener('submit', onSubmit, true)
+        document.addEventListener('keydown', onShortcut, true)
+        window.addEventListener('scroll', onScroll, { passive: true })
         window.addEventListener('message', onMessage)
-        document.addEventListener('mouseover', onOver, true)
-        document.addEventListener('mouseout', onOut, true)
-        toolbar.addEventListener('click', onToolbarClick, true)
 
-        // Announce readiness on the channel PreviewListener uses, so a reload (which
-        // a copy edit triggers) restores the unsaved theme AND the selection.
-        window.parent.postMessage({ type: 'mcloud:preview-ready' }, adminOrigin)
+        // `from: 'bridge'` tells the Editor this page can now take scroll and selection.
+        post({ type: 'mcloud:preview-ready', from: 'bridge' })
 
         return () => {
-            document.removeEventListener('mousedown', onMouseDown, true)
-            document.removeEventListener('click', onAddSlide, true)
-            document.removeEventListener('click', onAddGalleryPhoto, true)
-            document.removeEventListener('click', onDeleteSlide, true)
             document.removeEventListener('click', onClick, true)
-            document.removeEventListener('beforeinput', onBeforeInput, true)
-            document.removeEventListener('input', onInput, true)
-            document.removeEventListener('blur', onBlur, true)
-            document.removeEventListener('keydown', onKeyDown, true)
-            document.removeEventListener('paste', onPaste, true)
+            document.removeEventListener('submit', onSubmit, true)
+            document.removeEventListener('keydown', onShortcut, true)
+            window.removeEventListener('scroll', onScroll)
             window.removeEventListener('message', onMessage)
-            document.removeEventListener('mouseover', onOver, true)
-            document.removeEventListener('mouseout', onOut, true)
-            toolbar.removeEventListener('click', onToolbarClick, true)
-            toolbar.remove()
+            if (scrollFrame) cancelAnimationFrame(scrollFrame)
         }
-    }, [adminOrigin])
+    }, [])
 
     return null
 }
