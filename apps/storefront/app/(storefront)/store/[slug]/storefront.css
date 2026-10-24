@@ -76,42 +76,45 @@
     border-color: transparent;
 }
 
-/* Buttons: default variant should use sf-primary, not global primary */
-.storefront-root[data-sf-css] button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
-.storefront-root[data-sf-css] [class*="Button"][data-variant="default"] {
+/* Buttons. A @mcloud/ui Button says its variant in data-variant; match that, never its class
+   list: every Button carries Tailwind's `outline-none`, so `[class*="outline"]` turned every
+   primary Button (cart "Proceed to Checkout", "Confirm M-PESA Payment") into a transparent
+   outline one. The class-substring rules are kept only for plain <button>s with no variant. */
+.storefront-root[data-sf-css] button:not([data-variant]):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]),
+.storefront-root[data-sf-css] button[data-variant="default"] {
     background-color: var(--sf-primary);
     color: var(--sf-background);
 }
 
-.storefront-root[data-sf-css] button:not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
-.storefront-root[data-sf-css] [class*="Button"][data-variant="default"]:hover {
+.storefront-root[data-sf-css] button:not([data-variant]):not([class*="ghost"]):not([class*="outline"]):not([class*="secondary"]):hover,
+.storefront-root[data-sf-css] button[data-variant="default"]:hover {
     background-color: var(--sf-primary);
     opacity: 0.9;
 }
 
 /* Buttons: ghost variant should use foreground, not brand blue */
-.storefront-root[data-sf-css] button[class*="ghost"],
-.storefront-root[data-sf-css] [class*="Button"][data-variant="ghost"] {
+.storefront-root[data-sf-css] button:not([data-variant])[class*="ghost"],
+.storefront-root[data-sf-css] button[data-variant="ghost"] {
     color: var(--sf-foreground);
     background-color: transparent;
 }
 
-.storefront-root[data-sf-css] button[class*="ghost"]:hover,
-.storefront-root[data-sf-css] [class*="Button"][data-variant="ghost"]:hover {
+.storefront-root[data-sf-css] button:not([data-variant])[class*="ghost"]:hover,
+.storefront-root[data-sf-css] button[data-variant="ghost"]:hover {
     background-color: color-mix(in srgb, var(--sf-foreground) 8%, transparent);
     color: var(--sf-foreground);
 }
 
 /* Outline button variant */
-.storefront-root[data-sf-css] button[class*="outline"],
-.storefront-root[data-sf-css] [class*="Button"][data-variant="outline"] {
+.storefront-root[data-sf-css] button:not([data-variant])[class*="outline"],
+.storefront-root[data-sf-css] button[data-variant="outline"] {
     color: var(--sf-foreground);
     background-color: transparent;
     border-color: var(--sf-border-strong);
 }
 
-.storefront-root[data-sf-css] button[class*="outline"]:hover,
-.storefront-root[data-sf-css] [class*="Button"][data-variant="outline"]:hover {
+.storefront-root[data-sf-css] button:not([data-variant])[class*="outline"]:hover,
+.storefront-root[data-sf-css] button[data-variant="outline"]:hover {
     background-color: color-mix(in srgb, var(--sf-foreground) 6%, transparent);
     border-color: var(--sf-foreground);
 }
