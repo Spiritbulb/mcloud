@@ -11,6 +11,7 @@ import { Button } from '@mcloud/ui/button'
 import { Card } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ProductDetailPageProps } from '../types'
+import { isInStock as hasStock, maxOrderQuantity, showsStockCount } from '../stock-logic'
 import { WishlistButton } from '../../../../apps/storefront/components/store/WishlistButton'
 import { ReviewsSection } from './ReviewsSection'
 
@@ -34,8 +35,10 @@ export default function ClassicProductDetailPage({
         new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES' }).format(price)
 
     const currentImage = product.images[currentImageIndex]
-    const isInStock = (selectedVariant?.inventory_quantity ?? 0) > 0
-    const maxQuantity = selectedVariant?.inventory_quantity || 0
+    // Tracking is a product setting; the count comes from the selected variant.
+    const stock = { track_inventory: product.track_inventory, inventory_quantity: selectedVariant?.inventory_quantity }
+    const isInStock = hasStock(stock)
+    const maxQuantity = maxOrderQuantity(stock)
     const tags = product.metadata?.tags || []
     const hasDiscount =
         product.compare_at_price &&
@@ -206,7 +209,7 @@ export default function ClassicProductDetailPage({
                         <div className="flex items-center gap-2">
                             <div className={cn('h-2 w-2 rounded-full flex-shrink-0', isInStock ? 'sf-dot-instock' : 'sf-dot-outofstock')} />
                             <span className={cn('text-sm', isInStock ? 'sf-text-instock' : 'sf-text-outofstock')}>
-                                {isInStock ? `In stock — ${selectedVariant?.inventory_quantity} available` : 'Out of stock'}
+                                {!isInStock ? 'Out of stock' : showsStockCount(stock) ? `In stock — ${selectedVariant?.inventory_quantity} available` : 'In stock'}
                             </span>
                         </div>
 

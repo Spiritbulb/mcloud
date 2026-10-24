@@ -2,6 +2,9 @@
   "name": "@mcloud/themes",
   "version": "0.0.0",
   "private": true,
+  "scripts": {
+    "test": "node ../../scripts/run-tests.mjs"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./types": "./src/types.ts",

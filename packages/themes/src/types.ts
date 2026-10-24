@@ -174,6 +174,8 @@ export interface ProductDetailData {
     compare_at_price: number | null
     images: string[]
     inventory_quantity: number
+    /** False: stock isn't counted and the product is always available (see stock-logic.ts). */
+    track_inventory?: boolean | null
     is_active: boolean
     sku: string | null
     reviewCount?: number

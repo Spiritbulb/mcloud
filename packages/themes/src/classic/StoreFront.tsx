@@ -10,6 +10,7 @@ import { Separator } from '@mcloud/ui/separator'
 import { motion } from 'framer-motion'
 import { cn } from '@mcloud/ui/utils'
 import type { StoreFrontProps, ServiceItem } from '../types'
+import { isInStock } from '../stock-logic'
 
 // ─── Section Header ───────────────────────────────────────────────────────────
 function SectionHeader({ eyebrow, title, meta }: { eyebrow: string; title: string; meta?: string }) {
@@ -32,11 +33,6 @@ function formatPrice(amount: number, currency: string) {
         currency,
         minimumFractionDigits: 0,
     }).format(amount)
-}
-
-function isInStock(product: StoreFrontProps['products'][0]) {
-    if (!product.track_inventory) return true
-    return product.inventory_quantity > 0
 }
 
 // ─── Product Card ─────────────────────────────────────────────────────────────

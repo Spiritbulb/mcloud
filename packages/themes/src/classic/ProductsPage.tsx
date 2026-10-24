@@ -9,6 +9,7 @@ import { Input } from '@mcloud/ui/input'
 import { Card, CardContent } from '@mcloud/ui/card'
 import { cn } from '@mcloud/ui/utils'
 import type { ProductsPageProps, ProductItem, ServiceItem } from '../types'
+import { isInStock } from '../stock-logic'
 
 // ─── Product Card ─────────────────────────────────────────────────────────────
 function ProductCard({ product }: { product: ProductItem }) {
@@ -20,7 +21,7 @@ function ProductCard({ product }: { product: ProductItem }) {
             ? product.images[0]
             : '/api/placeholder/400/500'
 
-    const stock = product.inventory_quantity
+    const inStock = isInStock(product)
     const hasDiscount = product.compare_at_price && product.compare_at_price > product.price
     const discount = hasDiscount
         ? Math.round(((product.compare_at_price! - product.price) / product.compare_at_price!) * 100)
@@ -55,7 +56,7 @@ function ProductCard({ product }: { product: ProductItem }) {
                         -{discount}%
                     </span>
                 )}
-                {stock === 0 && (
+                {!inStock && (
                     <div className="absolute inset-0 sf-bg-sold-out flex items-center justify-center z-10">
                         <BadgeCheck className="w-6 h-6 mr-1 text-white" />
                         <span className="text-white font-medium">Sold Out</span>
@@ -94,7 +95,7 @@ function ProductCard({ product }: { product: ProductItem }) {
                             </span>
                         )}
                     </div>
-                    {stock > 0 ? (
+                    {inStock ? (
                         <Button size="sm" onClick={handleAddToCart} disabled={isLoading} className="sf-btn-primary shrink-0">
                             {isLoading ? <Loader2 className="w-4 h-4" /> : <ShoppingBag className="w-4 h-4" />}
                         </Button>
