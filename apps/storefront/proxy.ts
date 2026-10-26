@@ -1,6 +1,6 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { prepareMiddleware } from '@mcloud/auth/server'
-import { isPlatformHost, isLocalHost } from '@/lib/host'
+import { isPlatformHost, redirectsToCustomDomain } from '@/lib/host'
 import { loginHref } from '@/lib/auth-urls'
 import { RESERVED_STORE_SLUGS } from '@mcloud/merchant/slug'
 
@@ -241,8 +241,9 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   // White-label: a store with a custom domain is only ever served there. Redirect
   // the platform-host URL (canonical or bare) to the clean custom-domain path so
   // the internal slug never appears off-brand. Skipped on localhost/LAN, where no
-  // real custom domain is reachable and you need to preview the store in place.
-  if (store.custom_domain && !isLocalHost(host)) {
+  // real custom domain is reachable and you need to preview the store in place, and
+  // for the Editor preview, which the Editor frames from this host.
+  if (store.custom_domain && redirectsToCustomDomain(host, store.custom_domain, rest)) {
     const proto = request.headers.get('x-forwarded-proto') ?? 'https'
     return NextResponse.redirect(
       new URL(`${proto}://${store.custom_domain}${rest}${search}`),

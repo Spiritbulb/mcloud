@@ -39,6 +39,17 @@ export function isLocalHost(host: string): boolean {
 }
 
 /**
+ * Whether a platform-host store URL should 308 to the store's custom domain (white-label).
+ * `rest` is the path after the slug. The Editor preview (`/-preview`) is the exception: the
+ * Editor frames it from the platform host, and both `frame-ancestors 'self'` and the
+ * same-origin postMessage checks need it to stay there. It is noindex and token-gated.
+ */
+export function redirectsToCustomDomain(host: string, customDomain: string | null, rest: string): boolean {
+    if (!customDomain || isLocalHost(host)) return false
+    return !(rest === '/-preview' || rest.startsWith('/-preview/'))
+}
+
+/**
  * URL prefix for in-store links given the current host + slug. Empty on a custom
  * domain; "/store/{slug}" on the platform host. Never has a trailing slash.
  */
