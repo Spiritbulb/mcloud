@@ -17,7 +17,7 @@
     "jose": "^6.2.12"
   },
   "peerDependencies": {
-    "next": "^16.3.8",
+    "next": "^16.4.3",
     "react": "^19.3.0"
   },
   "devDependencies": {
