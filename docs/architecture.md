@@ -43,6 +43,7 @@ storefront's `/org/*`.
 | Store settings UI, the Editor, and the `/api/store/*` routes | `apps/storefront` (`app/(merchant)`, `app/api/store`) |
 | Uploads to R2 | `apps/storefront` (`app/api/upload`) |
 | Logic needed by both apps | `packages/merchant` (plans, stores, store data, payments rules, seed pages) |
+| Sending email | `packages/mail` (`sendEmail`, which never throws, and escaped templates in `@mcloud/mail/templates`) |
 
 Rule: settings and `/api/store/*` live in the storefront; anything both apps need goes in
 a package. Do not copy files between apps (that is how the payment routes and

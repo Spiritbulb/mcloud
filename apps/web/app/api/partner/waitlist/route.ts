@@ -6,7 +6,8 @@
 // ratelimit module exists for partner routes yet).
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@mcloud/db/server'
-import { Resend } from 'resend'
+import { SPIRITBULB_FROM, sendEmail } from '@mcloud/mail'
+import { waitlistEmail } from '@mcloud/mail/templates'
 import { fail, requirePartnerSecret } from '../_lib'
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -19,12 +20,6 @@ const PRODUCT_LABEL: Record<string, string> = {
     reach: 'Reach',
     tufike: 'Tufike',
     nuru: 'Nuru',
-}
-
-function getResend() {
-    const apiKey = process.env.RESEND_API_KEY
-    if (!apiKey) throw new Error('RESEND_API_KEY is not configured')
-    return new Resend(apiKey)
 }
 
 export async function POST(req: NextRequest) {
@@ -72,21 +67,11 @@ export async function POST(req: NextRequest) {
     }
 
     // Best-effort confirmation — a failed email shouldn't undo the signup.
-    try {
-        const resend = getResend()
-        const label = PRODUCT_LABEL[product] ?? product
-        await resend.emails.send({
-            from: 'Spiritbulb <spiritb@mcloud.co.ke>',
-            to: email,
-            subject: `You're on the ${label} waitlist`,
-            html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">You're on the list</h1>
-  <p style="font-size:15px;color:#374151;margin:0 0 24px">We'll email you at this address when <strong>${label}</strong> is ready.</p>
-</div>`,
-        })
-    } catch {
-        // swallow — see comment above
-    }
+    await sendEmail({
+        from: SPIRITBULB_FROM,
+        to: email,
+        ...waitlistEmail({ productLabel: PRODUCT_LABEL[product] ?? product }),
+    })
 
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } })
 }

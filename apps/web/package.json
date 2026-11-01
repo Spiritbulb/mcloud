@@ -21,6 +21,7 @@
     "@mcloud/auth": "^0.0.0",
     "@mcloud/db": "^0.0.0",
     "@mcloud/liquid": "^0.0.0",
+    "@mcloud/mail": "^0.0.0",
     "@mcloud/merchant": "^0.0.0",
     "@mcloud/themes": "^0.0.0",
     "@mcloud/ui": "^0.0.0",
@@ -36,7 +37,6 @@
     "radix-ui": "^1.6.7",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "resend": "^6.32.0",
     "supabase": "^2.119.0",
     "unpdf": "^1.8.1"
   },

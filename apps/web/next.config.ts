@@ -2,7 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
     output: 'standalone',
-    transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/auth', '@mcloud/themes', '@mcloud/merchant'],
+    transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/auth', '@mcloud/themes', '@mcloud/merchant', '@mcloud/mail'],
     turbopack: {},
     agentRules: false,
     allowedDevOrigins: ['http://localhost:3000', '192.168.1.*', '192.168.0.*', '10.0.0.*'],
@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
             { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
             { protocol: 'https', hostname: 'images.unsplash.com' },
             { protocol: 'https', hostname: '*.supabase.co' },
+            // Stickers on app/not-found.tsx; without this the 404 page itself throws.
+            { protocol: 'https', hostname: 'img.icons8.com', pathname: '/3d-fluency/**' },
         ],
     },
     // /auth/login only ever redirects to the spiritb handoff. As a rule it costs no function,

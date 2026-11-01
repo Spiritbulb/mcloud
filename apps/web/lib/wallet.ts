@@ -103,7 +103,7 @@ export async function getTopupByPalplussTransactionId(transactionId: string) {
   const supabase = await createClient()
   const { data } = await supabase
     .from('wallet_topups')
-    .select('id, org_id, status')
+    .select('id, org_id, status, requested_by')
     .eq('palpluss_transaction_id', transactionId)
     .maybeSingle()
   return data

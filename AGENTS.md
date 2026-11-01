@@ -34,6 +34,7 @@ are **not** workspaces and have their own lockfiles.
 | `packages/liquid` | Liquid engine + theme templates (`themes/classic/sections/*.liquid`) that render store pages. |
 | `packages/themes` | React theme components. **Imports from `apps/storefront` via relative paths** (see Known traps). |
 | `packages/verticals` | Vertical definitions (`shop`, `ngo`): default pages/sections and the settings nav model. |
+| `packages/mail` | Platform email via Resend: `sendEmail()` (never throws) and the templates (`@mcloud/mail/templates`, pure, escaped, tested). Owns the `resend` dep; don't call Resend directly from an app. |
 | `packages/ui` | shadcn-style primitives. Owns the Radix/cva/clsx deps. `src/kit/*` (`@mcloud/ui/kit/<name>`) is the admin design kit shared by both apps. |
 | `packages/config` | Shared `tsconfig.base.json`. |
 | `migrations/` | Hand-written SQL migrations, dated `YYYYMMDD_name.sql`. Applied manually to Supabase; there is no migration runner. |

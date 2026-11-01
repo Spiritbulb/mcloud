@@ -2,7 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
     output: 'standalone',
-    transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/themes', '@mcloud/auth', '@mcloud/merchant'],
+    transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/themes', '@mcloud/auth', '@mcloud/merchant', '@mcloud/mail'],
     turbopack: {},
     agentRules: false,
     allowedDevOrigins: ['http://localhost:3001', 'http://localhost:3000'],

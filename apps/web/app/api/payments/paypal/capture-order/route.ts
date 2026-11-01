@@ -1,8 +1,9 @@
 // @route-kind: public — PayPal redirect target; only settles when the captured amount matches the order
 // app/api/payments/paypal/capture-order/route.ts  
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, after } from 'next/server';
 import { createClient as createServerClient } from '@mcloud/db/server';
 import { paypalAmounts, paypalCaptureMatches } from '@mcloud/merchant/payments';
+import { notifyPaidOrder } from '@/lib/merchant/notify-paid-order';
 
 const PAYPAL_BASE = process.env.PAYPAL_MODE === 'live'
   ? 'https://api-m.paypal.com'
@@ -79,7 +80,7 @@ export async function GET(req: NextRequest) {
     const supabase = await createServerClient();
     const { data: order } = await supabase
       .from('orders')
-      .select('id, status, shipping, metadata, order_items(title, price, quantity)')
+      .select('id, status, shipping, metadata, store_id, order_number, total, currency, order_items(title, price, quantity)')
       .eq('order_number', referenceId)
       .maybeSingle();
 
@@ -131,6 +132,8 @@ export async function GET(req: NextRequest) {
 
     if (error) {
       console.error('DB update error:', error);
+    } else {
+      after(() => notifyPaidOrder(order));
     }
 
     return NextResponse.redirect(`${appUrl}/orders/${referenceId}?payment=success`);

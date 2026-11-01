@@ -3,15 +3,12 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
-import { Resend } from 'resend'
+import { sendEmail } from '@mcloud/mail'
+import { inviteEmail } from '@mcloud/mail/templates'
+import { randomBytes } from 'node:crypto'
+import { WEB_ORIGIN } from '@/lib/web-origin'
+import { INVITE_TTL_MS, inviteStatus, type InviteStatus } from '@/lib/org-invite-logic'
 
-function getResend() {
-  const apiKey = process.env.RESEND_API_KEY
-  if (!apiKey) {
-    throw new Error('RESEND_API_KEY is not configured')
-  }
-  return new Resend(apiKey)
-}
 export type OrgMemberRow = {
     id: string
     role: string
@@ -22,6 +19,16 @@ export type OrgMemberRow = {
         email: string | null
         avatar_url: string | null
     }
+}
+
+export type OrgInviteRow = {
+    id: string
+    email: string | null
+    role: string | null
+    created_at: string | null
+    expires_at: string | null
+    accepted_at: string | null
+    status: InviteStatus
 }
 
 export async function getOrgMembers(orgSlug: string) {
@@ -38,6 +45,15 @@ export async function getOrgMembers(orgSlug: string) {
 
     if (!org) return { error: 'Org not found', members: [], invites: [], currentRole: null }
 
+    // A server action is a public endpoint: only members may read the member list.
+    const { data: me } = await supabase
+        .from('org_members')
+        .select('role')
+        .eq('org_id', org.id)
+        .eq('user_id', session.user.id)
+        .maybeSingle()
+    if (!me) return { error: 'Not a member', members: [], invites: [], currentRole: null }
+
     const { data: members } = await supabase
         .from('org_members')
         .select('id, role, created_at, users(id, name, email, avatar_url)')
@@ -51,20 +67,26 @@ export async function getOrgMembers(orgSlug: string) {
         users: m.users as OrgMemberRow['users'],
     }))
 
-    const { data: invites } = await supabase
+    // Every recent invite with its status. The token is read only to tell a broken invite
+    // apart and is never sent to the browser: it is the acceptance link.
+    const { data: inviteRows } = await supabase
         .from('org_invites')
-        .select('id, email, role, created_at, expires_at')
+        .select('id, email, role, created_at, expires_at, accepted_at, token')
         .eq('org_id', org.id)
-        .is('accepted_at', null)
-        .gt('expires_at', new Date().toISOString())
         .order('created_at', { ascending: false })
+        .limit(50)
+
+    const invites: OrgInviteRow[] = (inviteRows ?? []).map(({ token, ...invite }) => ({
+        ...invite,
+        status: inviteStatus({ ...invite, token }),
+    }))
 
     return {
         orgId: org.id,
         orgName: org.name,
         members: safeMembers,
-        invites: invites ?? [],
-        currentRole: safeMembers.find((m) => m.users?.id === session.user.id)?.role ?? null,
+        invites,
+        currentRole: me.role,
     }
 }
 
@@ -129,30 +151,29 @@ export async function inviteOrgMember(formData: FormData) {
 
     const { data: invite, error: inviteError } = await supabase
         .from('org_invites')
-        .insert({ org_id: orgId, email, role, invited_by: session.user.id })
+        .insert({
+            org_id: orgId,
+            email,
+            role,
+            invited_by: session.user.id,
+            // Set here rather than trusting column defaults: org_invites had none, so every
+            // invite was created with a null token (migrations/20261101_org_invites_token.sql).
+            token: randomBytes(24).toString('hex'),
+            expires_at: new Date(Date.now() + INVITE_TTL_MS).toISOString(),
+        })
         .select('token')
         .single()
 
-    if (inviteError) return { error: inviteError.message }
-const appUrl = process.env.NEXT_PUBLIC_APP_URL
-if (!appUrl) return { error: 'App URL is not configured' }
+    if (inviteError || !invite?.token) return { error: inviteError?.message ?? 'Could not create the invite.' }
 
-const inviteUrl = `${appUrl}/invite/org/${invite.token}`
-    const resend = getResend()
-    await resend.emails.send({
-        from: 'Menengai Cloud <noreply@mcloud.co.ke>',
+    const inviteUrl = `${WEB_ORIGIN}/invite/org/${invite.token}`
+    const sent = await sendEmail({
         to: email,
-        subject: `You've been invited to join ${org?.name} on Menengai Cloud`,
-        html: `<div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-  <p style="font-size:14px;color:#6b7280;margin:0 0 24px">mcloud.co.ke</p>
-  <h1 style="font-size:22px;font-weight:700;color:#111;margin:0 0 12px">You're invited to join ${org?.name}</h1>
-  <p style="font-size:15px;color:#374151;margin:0 0 24px">${inviter?.name ?? 'Someone'} has invited you to join <strong>${org?.name}</strong> as a <strong>${role}</strong>.</p>
-  <a href="${inviteUrl}" style="display:inline-block;background:#111;color:#fff;padding:12px 24px;text-decoration:none;font-size:14px;font-weight:600;border-radius:6px">Accept invite →</a>
-  <p style="font-size:12px;color:#9ca3af;margin:24px 0 0">This invite expires in 7 days.</p>
-</div>`,
+        ...inviteEmail({ targetName: org?.name ?? 'an organization', inviterName: inviter?.name, role, url: inviteUrl }),
     })
 
     revalidatePath(`/org/${orgSlug}/members`)
+    if (!sent.ok) return { error: 'The invite was saved, but the email could not be sent. Please try again later.' }
     return { success: true }
 }
 
@@ -224,7 +245,8 @@ export async function revokeOrgInvite(inviteId: string, orgId: string, orgSlug: 
 
     if (!caller || !['owner', 'admin'].includes(caller.role)) return { error: 'Not authorized' }
 
-    const { error } = await supabase.from('org_invites').delete().eq('id', inviteId)
+    // Scoped to the org whose permission was just checked, not just the id the caller sent.
+    const { error } = await supabase.from('org_invites').delete().eq('id', inviteId).eq('org_id', orgId)
     if (error) return { error: error.message }
 
     revalidatePath(`/org/${orgSlug}/members`)
