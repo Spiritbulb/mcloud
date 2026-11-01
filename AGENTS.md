@@ -19,12 +19,13 @@ known debt before large refactors.
 
 ## Layout
 
-npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `packages/*`. The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`.
+npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `apps/nuru`, `packages/*`. The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`.
 
 | Path | What it is |
 |---|---|
 | `apps/web` | Platform site `mcloud.co.ke`: marketing, login/logout, org hub (`/org`), billing, servers, wallet, admin, docs, and the **mobile/partner APIs** (`app/api/mobile/*`, `app/api/partner/*`). |
 | `apps/storefront` | `app.mcloud.co.ke` and merchants' custom domains. Public stores (`app/(storefront)/store/[slug]/*`) and the signed-in **store settings** (`app/(merchant)/org/[orgSlug]/[storeSlug]/settings/*`) plus the `/api/store/*` routes they call. |
+| `apps/nuru` | Nuru web + API, `nuru.spiritb.uk`. Own Neon DB and B2; shares only WorkOS identity via `@mcloud/auth/standalone`. Migrations in `apps/nuru/migrations/`. |
 | `packages/auth` | Provider-agnostic auth API (`getSession`, etc.). The only provider is WorkOS AuthKit (`providers/workos.ts`). |
 | `packages/db` | Supabase clients: `server` (**service-role**), `client`, `customer-*` (storefront shoppers). `database.types.ts` is generated (`npm run sb-typegen -w @mcloud/web`). |
 | `packages/merchant` | Shared merchant logic: plans, stores, store-data, logistics-data, org context, `storefront-url`, seed pages. |

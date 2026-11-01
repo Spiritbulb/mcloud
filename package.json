@@ -6,6 +6,7 @@
   "workspaces": [
     "apps/web",
     "apps/storefront",
+    "apps/nuru",
     "packages/*"
   ],
   "scripts": {

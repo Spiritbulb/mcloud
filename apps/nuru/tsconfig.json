@@ -1,0 +1,31 @@
+{
+  "extends": "@mcloud/config/tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [
+      {
+        "name": "next"
+      }
+    ],
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "types/**/*.d.ts",
+    "app/**/*.ts",
+    "app/**/*.tsx",
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts",
+    ".next/dev/types/**/*.ts",
+    "**/*.mts"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/*.test.ts",
+    "scripts/verify-*.ts"
+  ]
+}
