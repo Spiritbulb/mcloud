@@ -1,5 +1,5 @@
 // @route-kind: webhook — Safaricom posts unsigned; matched by CheckoutRequestID, then confirmed with Safaricom (STK Query) before settling
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import type { Json } from '@mcloud/db/types'
 import { mpesaPaymentCovers } from '@mcloud/merchant/payments'
@@ -77,7 +77,7 @@ export async function POST(req: NextRequest) {
             }
 
             const settled = await settleDarajaOrder(supabase, order, { mpesaCode, amount, phone })
-            if (settled) void notifyPaidOrder(order)
+            if (settled) after(() => notifyPaidOrder(order))
         } else {
             // Payment failed or cancelled
             await supabase.from('orders').update({

@@ -1,5 +1,5 @@
 // @route-kind: public — polled by the buyer with the unguessable order number
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { confirmDarajaPayment, settleDarajaOrder } from '@mcloud/merchant/daraja'
 import { notifyPaidOrder } from '@/lib/merchant/notify-paid-order'
@@ -46,7 +46,7 @@ export async function GET(req: NextRequest) {
         const outcome = await confirmDarajaPayment(supabase, order)
         if (outcome === 'paid') {
             const settled = await settleDarajaOrder(supabase, order)
-            if (settled) void notifyPaidOrder(order)
+            if (settled) after(() => notifyPaidOrder(order))
             status = 'paid'
             paymentStatus = 'completed'
         } else if (outcome === 'failed') {

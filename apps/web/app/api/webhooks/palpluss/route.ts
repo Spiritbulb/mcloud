@@ -3,9 +3,10 @@
 // Receives async STK Push results from PalPluss. Per docs.palpluss.com/guides/webhooks:
 // return 2xx fast, handle duplicate deliveries safely (same callback can arrive
 // more than once on retry). No session here — PalPluss calls this, not a user.
-import { NextResponse, type NextRequest } from 'next/server'
+import { NextResponse, after, type NextRequest } from 'next/server'
 import { adjustWallet, getTopupByPalplussTransactionId, resolveTopup } from '@/lib/wallet'
 import { getTransaction, type PalplussWebhookPayload } from '@/lib/palpluss'
+import { notifyWalletTopup } from '@/lib/billing-notify'
 
 export async function POST(req: NextRequest) {
   const payload = (await req.json().catch(() => null)) as PalplussWebhookPayload | null
@@ -42,9 +43,10 @@ export async function POST(req: NextRequest) {
 
   if (confirmed.status === 'SUCCESS') {
     // Credit what PalPluss confirmed was actually paid, not what we requested.
-    await adjustWallet({
+    const amountCents = Math.round(confirmed.amount * 100)
+    const balanceCents = await adjustWallet({
       orgId: topup.org_id,
-      amountCents: Math.round(confirmed.amount * 100),
+      amountCents,
       kind: 'topup',
       reference: transaction.mpesa_receipt ?? transaction.id,
       metadata: { palplussTransactionId: transaction.id, topupId: topup.id },
@@ -54,6 +56,17 @@ export async function POST(req: NextRequest) {
       mpesaReceipt: transaction.mpesa_receipt,
       resultDesc: transaction.result_desc,
     })
+
+    after(() =>
+      notifyWalletTopup({
+        topupId: topup.id,
+        orgId: topup.org_id,
+        requestedBy: topup.requested_by,
+        amountCents,
+        balanceCents,
+        receipt: transaction.mpesa_receipt,
+      }),
+    )
   } else {
     const status = confirmed.status === 'CANCELLED' ? 'cancelled' : confirmed.status === 'EXPIRED' ? 'expired' : 'failed'
     await resolveTopup(topup.id, status, { resultDesc: transaction.result_desc })

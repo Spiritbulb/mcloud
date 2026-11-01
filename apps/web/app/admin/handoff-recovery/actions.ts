@@ -1,6 +1,6 @@
 'use server'
 
-import { Resend } from 'resend'
+import { SPIRITBULB_FROM, mailConfigured, sendEmail } from '@mcloud/mail'
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { getStranded } from './data'
@@ -9,8 +9,6 @@ import { headers } from 'next/headers'
 import { recordAudit } from '@/lib/audit'
 import { clientIp } from '@/lib/audit-logic'
 
-// Same verified sender the waitlist confirmation uses.
-const FROM = 'Spiritbulb <spiritb@mcloud.co.ke>'
 const MAX_PER_SEND = 50
 
 export type SendResult = {
@@ -36,12 +34,11 @@ export async function sendRecoveryEmails(emails: string[]): Promise<SendResult> 
     const { data: me } = await supabase.from('users').select('role').eq('id', session.user.id).single()
     if (me?.role !== 'admin') return { ...empty, error: 'Forbidden' }
 
-    if (!process.env.RESEND_API_KEY) return { ...empty, error: 'RESEND_API_KEY is not configured' }
+    if (!mailConfigured()) return { ...empty, error: 'RESEND_API_KEY is not configured' }
     if (!Array.isArray(emails) || emails.length === 0) return { ...empty, error: 'Nobody selected' }
     if (emails.length > MAX_PER_SEND) return { ...empty, error: `Send at most ${MAX_PER_SEND} at a time` }
 
     const stranded = new Map((await getStranded()).map((s) => [s.email, s]))
-    const resend = new Resend(process.env.RESEND_API_KEY)
     const result: SendResult = { ok: true, sent: [], failed: [], skipped: [] }
 
     for (const raw of new Set(emails.map((e) => String(e).trim().toLowerCase()))) {
@@ -51,13 +48,9 @@ export async function sendRecoveryEmails(emails: string[]): Promise<SendResult> 
             continue
         }
         const mail = recoveryEmail(person.name)
-        try {
-            const { error } = await resend.emails.send({ from: FROM, to: person.email, ...mail })
-            if (error) result.failed.push({ email: person.email, error: error.message })
-            else result.sent.push(person.email)
-        } catch (err) {
-            result.failed.push({ email: person.email, error: err instanceof Error ? err.message : 'Send failed' })
-        }
+        const sent = await sendEmail({ from: SPIRITBULB_FROM, to: person.email, ...mail })
+        if (sent.ok) result.sent.push(person.email)
+        else result.failed.push({ email: person.email, error: sent.error })
     }
     await recordAudit({
         actor: { id: session.user.id, email: session.user.email },

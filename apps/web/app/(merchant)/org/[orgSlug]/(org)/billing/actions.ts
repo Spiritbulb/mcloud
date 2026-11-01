@@ -3,6 +3,8 @@
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { revalidatePath } from 'next/cache'
+import { after } from 'next/server'
+import { notifyPlanPurchased } from '@/lib/billing-notify'
 import { revalidateStorefrontById } from '@/lib/revalidate-storefront'
 import { planPriceCents } from '@mcloud/merchant/plans'
 
@@ -112,7 +114,7 @@ export async function purchaseStorePlan(
 
   const { data: store, error: storeError } = await supabase
     .from('stores')
-    .select('id, org_id')
+    .select('id, org_id, name')
     .eq('id', storeId)
     .maybeSingle()
 
@@ -193,6 +195,21 @@ export async function purchaseStorePlan(
   }
 
   revalidatePath(`/org/${orgSlug}/billing`)
+
+  const buyerEmail = session.user.email
+  if (buyerEmail) {
+    after(() =>
+      notifyPlanPurchased({
+        to: buyerEmail,
+        orgSlug,
+        storeName: store.name,
+        planLabel: plan === 'pro' ? 'Pro' : 'Hobby',
+        amountCents: planPriceCents(plan),
+        periodEnd: row.period_end,
+        balanceCents: row.new_balance_cents,
+      }),
+    )
+  }
 
   return {
     ok: true,

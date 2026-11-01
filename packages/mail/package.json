@@ -1,0 +1,18 @@
+{
+  "name": "@mcloud/mail",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts",
+    "./templates": "./src/templates.ts"
+  },
+  "dependencies": {
+    "resend": "^6.32.0"
+  },
+  "devDependencies": {
+    "@mcloud/config": "^0.0.0"
+  },
+  "scripts": {
+    "test": "node ../../scripts/run-tests.mjs"
+  }
+}
