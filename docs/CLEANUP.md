@@ -420,7 +420,7 @@ tracked, so migrate or comp them; list them with `select store_id, period_end fr
 `/api/cron/reconcile-subscriptions` and remove it (it is not in `vercel.json`). (3) Wallet-paid plans have no expiry job;
 `resolvePlan` treats a row past `period_end` as lapsed, but rows stay `status = 'active'`; confirm `purchase_store_plan`
 renews or expires them. (4) Delete the `subscribe` stub once old app builds are gone. (5) The mobile changes were not type
-checked here (no `node_modules` in `apps/mobile`); run `npx tsc --noEmit` there.
+checked here (no `node_modules` in the mobile app); run `npx tsc --noEmit` in `~/mcloud-mobile`.
 
 ### 9.2 Database access is server-only (security, in progress)
 

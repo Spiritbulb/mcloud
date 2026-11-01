@@ -11,14 +11,12 @@ actively developed.
 |---|---|
 | [`apps/web`](apps/web) | The platform site at `mcloud.co.ke`: marketing, login, org hub, billing, servers/wallet, admin, and the mobile and partner APIs. |
 | [`apps/storefront`](apps/storefront) | `app.mcloud.co.ke` and merchants' custom domains: public stores plus the signed-in store settings. |
-| [`apps/mobile`](apps/mobile) | Expo (React Native) merchant app. |
-| [`apps/nuru`](apps/nuru) | Expo notes/chat app. |
 | [`packages/*`](packages) | Shared code: auth, db, merchant logic, liquid templates, themes, verticals, UI. |
 | [`migrations`](migrations) | Hand-written SQL migrations for Supabase. |
 | [`docs`](docs) | Architecture, API, payments, environment, and the cleanup log. |
 
 `apps/web` and `apps/storefront` are Next.js 16 (App Router) apps in an npm-workspaces +
-Turborepo monorepo. The mobile apps are Expo projects with their own lockfiles.
+Turborepo monorepo. The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`.
 
 ## Quick start
 
@@ -41,8 +39,6 @@ npx turbo run build                  # production builds (needs network for font
 npm test -w @mcloud/storefront       # one workspace's tests
 ```
 
-Mobile: `cd apps/mobile && npm install && npx expo start` (same for `apps/nuru`).
-
 ## Documentation
 
 Start with [docs/README.md](docs/README.md).
@@ -57,5 +53,5 @@ Start with [docs/README.md](docs/README.md).
 ## Deployment
 
 Both Next.js apps deploy to Vercel (separate projects). `apps/*/Dockerfile` exist for a
-future self-hosted setup and are not the production path. Mobile builds run through EAS
-(`apps/mobile/eas.json`) and `.github/workflows/android-build.yml`.
+future self-hosted setup and are not the production path. Mobile builds live in the mobile
+repos.

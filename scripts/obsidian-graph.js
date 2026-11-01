@@ -2,7 +2,7 @@
 /**
  * Generates an Obsidian vault from this monorepo's source code.
  *
- * Apps (web, storefront, mobile): parsed via TypeDoc JSON output.
+ * Apps (web, storefront): parsed via TypeDoc JSON output.
  * Packages (auth, config, db, themes, ui): parsed via TypeScript compiler API.
  *
  * Output: C:\Users\busie\obsidian\mcloud\
@@ -35,12 +35,6 @@ const APPS = [
     entries: ['app', 'components', 'lib', 'contexts'],
     description: 'Public-facing storefront for white-label tenants',
   },
-  {
-    name: '@mcloud/mobile',
-    dir: 'apps/mobile',
-    entries: ['app', 'src'],
-    description: 'Expo merchant app — thin client over /api/mobile/*',
-  },
 ];
 
 const PACKAGES = [
@@ -55,7 +49,6 @@ const PACKAGES = [
 const PACKAGE_DEPS = {
   '@mcloud/web': ['@mcloud/auth', '@mcloud/db', '@mcloud/themes', '@mcloud/ui', '@mcloud/config'],
   '@mcloud/storefront': ['@mcloud/db', '@mcloud/themes', '@mcloud/ui', '@mcloud/config'],
-  '@mcloud/mobile': [],
   '@mcloud/auth': ['@mcloud/db', '@mcloud/config'],
   '@mcloud/db': ['@mcloud/config'],
   '@mcloud/themes': ['@mcloud/ui', '@mcloud/config'],
@@ -84,7 +77,7 @@ function wikilink(relVaultPath) {
 function pkgNodePath(pkgName) {
   // e.g. packages/mcloud-auth.md  or  apps/mcloud-web.md
   const slug = slugify(pkgName);
-  const isApp = pkgName.includes('/web') || pkgName.includes('/storefront') || pkgName.includes('/mobile');
+  const isApp = pkgName.includes('/web') || pkgName.includes('/storefront');
   return isApp ? `apps/${slug}.md` : `packages/${slug}.md`;
 }
 

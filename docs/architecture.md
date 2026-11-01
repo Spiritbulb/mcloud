@@ -152,12 +152,9 @@ body is a raster image, and its size. See `lib/upload-key.ts`.
 
 ## Mobile apps
 
-- `apps/mobile` is the merchant app. It reads and writes through `/api/mobile/*` (bearer
-  auth, store access via `requireStoreAccess`), registers push tokens, and handles Google
-  Play billing.
-- `apps/nuru` is a notes/chat app using `/api/mobile/notes` and `/api/mobile/chat`
-  (Azure OpenAI or Anthropic, with note chunks in `nuru_note_chunks`).
-- Neither is part of the npm workspaces; install inside each app.
+The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`. The merchant app
+registers push tokens and the Nuru app uses `/api/mobile/notes` and `/api/mobile/chat` (Azure OpenAI or
+Anthropic, with note chunks in `nuru_note_chunks`).
 
 ## Plans and billing
 

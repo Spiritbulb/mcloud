@@ -1,7 +1,7 @@
 # Roadmap (Now / Next / Later)
 
 Priorities across the Menengai Cloud platform and its satellites: `apps/web`, `apps/storefront`,
-`apps/mobile`, `apps/nuru`, **spiritbulb** (`~/spiritbulb`, spiritb.uk) and **reach** (`~/reach`).
+`~/mcloud-mobile`, `~/nuru-mobile`, **spiritbulb** (`~/spiritbulb`, spiritb.uk) and **reach** (`~/reach`).
 What exists today is in [FEATURES.md](../FEATURES.md); this file only says what to do about the gaps.
 
 Source: a read-only audit on 2026-10-14 (code reading and greps, not a running app). Items marked
