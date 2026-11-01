@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react'
 import { motion } from 'framer-motion'
 import { cn } from '@mcloud/ui/utils'
 import { completeOnboarding } from '@/app/(merchant)/org/actions'
+import { afterOnboardingPath } from './onboarding-logic'
 import { useRouter } from 'next/navigation'
 
 function MSO({ icon, className, fill = 0 }: { icon: string; className?: string; fill?: number }) {
@@ -28,7 +29,7 @@ function isValidMpesaNumber(value: string) {
   return /^(?:\+254|0)(7|1)\d{8}$/.test(v.replace(/\s+/g, ''))
 }
 
-export default function OnboardingClient({ userName, to }: { userName?: string | null; to: string }) {
+export default function OnboardingClient({ userName, next }: { userName?: string | null; next: string }) {
   const [fullName, setFullName] = useState(userName ?? '')
   const [orgName, setOrgName] = useState('')
   const [mpesaNumber, setMpesaNumber] = useState('')
@@ -56,7 +57,9 @@ export default function OnboardingClient({ userName, to }: { userName?: string |
           return
         }
         if (result?.success) {
-          router.push(to)
+          // Straight to the new org: /org itself is a route handler that redirects, and a
+          // client-side push through a handler's redirect does not reliably land.
+          router.replace(afterOnboardingPath(result.slug, next))
         }
       } catch (err) {
         if (err instanceof Error && (err as any).digest?.startsWith('NEXT_REDIRECT')) throw err
