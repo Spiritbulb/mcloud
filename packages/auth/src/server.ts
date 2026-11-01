@@ -1,18 +1,17 @@
 // lib/auth/server.ts
 // The public auth API the app calls. Apps call these, never the provider SDK directly.
 import type { NextRequest } from 'next/server'
+import { createAuthApi } from './api'
 import { provider } from './index'
-import type { AuthSession, AuthUser, MiddlewarePrep } from './types'
+import type { AuthUser } from './types'
+
+const api = createAuthApi(provider)
 
 /** Resolve the current session. Pass `req` from API routes / middleware. */
-export function getSession(req?: NextRequest): Promise<AuthSession | null> {
-    return provider.getSession(req)
-}
+export const getSession = api.getSession
 
 /** Resolve a session from a raw provider access token (bearer / handoff verify). */
-export function getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
-    return provider.getSessionFromToken(accessToken)
-}
+export const getSessionFromToken = api.getSessionFromToken
 
 /** Establish a cookie session from an existing WorkOS token pair (SSO handoff). */
 export function createSessionFromTokens(
@@ -33,12 +32,7 @@ export async function getCurrentUser(req?: NextRequest): Promise<AuthUser | null
  * `Authorization: Bearer <token>` header. Returns null when the header is
  * missing or the token is invalid. Used by /api/mobile/* route handlers.
  */
-export async function getMobileSession(req: NextRequest): Promise<AuthSession | null> {
-    const header = req.headers.get('authorization')
-    const token = header?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim()
-    if (!token) return null
-    return provider.getSessionFromToken(token)
-}
+export const getMobileSession = api.getMobileSession
 
 /** Handles the provider's auth routes — mounted by the catch-all route + proxy. */
 export function authMiddleware(req: NextRequest) {
@@ -46,6 +40,4 @@ export function authMiddleware(req: NextRequest) {
 }
 
 /** Resolve session + middleware headers once per request, for the app middleware. */
-export function prepareMiddleware(req: NextRequest): Promise<MiddlewarePrep> {
-    return provider.prepareMiddleware(req)
-}
+export const prepareMiddleware = api.prepareMiddleware

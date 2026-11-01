@@ -17,6 +17,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { createRemoteJWKSet, decodeJwt, jwtVerify } from 'jose'
 import type { AuthProviderAdapter, AuthSession, AuthUser, IdentityUser, LoginEvent, NativeAuthTokens } from '../types'
 import { formatDevice, formatRelativeTime } from '../format'
+import { mapUser, resolveIdentity, type IdentityOptions, type WorkOSUserish } from './workos-logic'
 
 // ── Bearer-token verification (mobile) ────────────────────────────────────────
 // WorkOS access tokens are JWTs signed by the AuthKit JWKS for this client. We
@@ -33,42 +34,6 @@ const jwks = createRemoteJWKSet(
 // entries are evicted on expiry rather than on every request.
 const SESSION_CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutes
 type CachedSession = { session: AuthSession; expiresAt: number }
-const sessionCache = new Map<string, CachedSession>()
-
-// Structural shape of the WorkOS user fields we consume. Typed locally (rather than
-// importing @workos-inc/node's User) because AuthKit bundles its own SDK version,
-// and `name` only exists on newer versions — so we read it optionally.
-type WorkOSUserish = {
-    id: string
-    email: string
-    firstName?: string | null
-    lastName?: string | null
-    name?: string | null
-    profilePictureUrl?: string | null
-    externalId?: string | null
-    /** Set by ensureLinked when linking FAILED (not "nothing to link"): identity is unresolved. */
-    linkFailed?: boolean
-}
-
-/**
- * Map a WorkOS user onto our provider-agnostic AuthUser.
- *
- * IDENTITY CONTINUITY SEAM (Phase 2b — decided live): existing DB rows key on the
- * Auth0 `sub` (`auth0|...`). We prefer the WorkOS `externalId` as the canonical id
- * so that, once existing users are linked (their WorkOS externalId set to their
- * `auth0|...` id), `AuthUser.id` keeps matching all existing FKs. Brand-new users
- * have no externalId and are born with the WorkOS id as canonical.
- */
-function mapUser(u: WorkOSUserish): AuthUser {
-    const fullName = u.name ?? [u.firstName, u.lastName].filter(Boolean).join(' ')
-    return {
-        id: u.externalId ?? u.id,
-        email: u.email,
-        name: fullName || undefined,
-        avatarUrl: u.profilePictureUrl ?? null,
-        ...(u.linkFailed ? { unlinked: true } : {}),
-    }
-}
 
 /**
  * Resolve our canonical AuthUser.id back to a WorkOS user id for Management API
@@ -80,14 +45,6 @@ function toWorkOSId(id: string): string | null {
     return id.startsWith('user_') ? id : null
 }
 
-/**
- * Phase 2b auto-link: if a WorkOS user has no externalId, look up the original
- * Auth0 identity (`auth0|...` users row with the same email) and set the WorkOS
- * externalId to it, so all existing org/store memberships keyed on the Auth0 sub
- * resolve. Idempotent — once linked, externalId is non-null and this no-ops. Runs
- * lazily at session resolution (covers both web callback and mobile token auth).
- * Returns the user with externalId populated when a link was made.
- */
 // AuthKit's session cookie (WORKOS_COOKIE_NAME overrides) and the marker header its
 // withAuth() requires (session.js: middlewareHeaderName). Paths that must always run
 // the full AuthKit pass even when anonymous.
@@ -95,289 +52,255 @@ const SESSION_COOKIE_NAME = process.env.WORKOS_COOKIE_NAME ?? 'wos-session'
 const AUTHKIT_MIDDLEWARE_HEADER = 'x-workos-middleware'
 const ALWAYS_FULL_PASS = ['/auth/', '/callback', '/api/auth/', '/dev-login']
 
-// Users with no legacy Auth0 row (everyone created after the WorkOS move) have no
-// externalId, so without this the lookup below re-ran on EVERY session read: a DB
-// round trip per layout/page/API call. Remember "nothing to link" per instance.
-const NO_LEGACY_ROW_TTL_MS = 60 * 60 * 1000
-const noLegacyRow = new Map<string, number>()
+/**
+ * Build the WorkOS adapter. `opts` decides identity: web and storefront pass the
+ * legacy linker with `external` ids (./index); standalone apps pass no linker and
+ * `workos` ids (./standalone), so their import graph never reaches the db package.
+ */
+export function createWorkosProvider(opts: IdentityOptions): AuthProviderAdapter {
+    const sessionCache = new Map<string, CachedSession>()
 
-async function ensureLinked(u: WorkOSUserish): Promise<WorkOSUserish> {
-    if (u.externalId) return u // already linked
-    const checkedUntil = noLegacyRow.get(u.id)
-    if (checkedUntil && checkedUntil > Date.now()) return u
-    try {
-        const { createClient } = await import('@mcloud/db/server')
-        const supabase = await createClient()
-        // Oldest legacy row wins; limit(1) rather than maybeSingle() so an email that somehow
-        // has two auth0| rows links to one of them instead of erroring. Both spellings are
-        // tried because the legacy rows were written by Auth0, not by us.
-        const emails = [...new Set([u.email, u.email.toLowerCase()])]
-        const { data: rows, error } = await supabase
-            .from('users')
-            .select('id')
-            .in('email', emails)
-            .like('id', 'auth0|%')
-            .order('created_at', { ascending: true })
-            .limit(1)
-        if (error) throw error
-
-        const auth0Id = rows?.[0]?.id
-        if (!auth0Id) {
-            noLegacyRow.set(u.id, Date.now() + NO_LEGACY_ROW_TTL_MS)
-            return u // brand-new user, nothing to link
-        }
-
-        await getWorkOS().userManagement.updateUser({ userId: u.id, externalId: auth0Id })
-        return { ...u, externalId: auth0Id }
-    } catch (err) {
-        // Never block login on a linking failure. But do not pretend the user is fine: flag it
-        // so ensureUserRow does not mirror the raw WorkOS id into `users` (that is what created
-        // the duplicate 'customer' rows next to the real auth0| row), and say so in the logs.
-        console.error('[auth] ensureLinked failed; session continues unlinked', err)
-        return { ...u, linkFailed: true }
-    }
-}
-
-export const workosProvider: AuthProviderAdapter = {
-    async listUsers(): Promise<IdentityUser[]> {
-        const out: IdentityUser[] = []
-        let after: string | undefined
-        // Bounded so a pagination bug can never spin forever (50 x 100 users).
-        for (let page = 0; page < 50; page++) {
-            const res = await getWorkOS().userManagement.listUsers({ limit: 100, ...(after ? { after } : {}) })
-            for (const u of res.data) {
-                const user = u as unknown as WorkOSUserish & { createdAt: string; lastSignInAt?: string | null }
-                out.push({
-                    id: mapUser(user).id,
-                    email: user.email,
-                    name: mapUser(user).name,
-                    createdAt: user.createdAt,
-                    lastSignInAt: user.lastSignInAt ?? null,
-                })
+    return {
+        async listUsers(): Promise<IdentityUser[]> {
+            const out: IdentityUser[] = []
+            let after: string | undefined
+            // Bounded so a pagination bug can never spin forever (50 x 100 users).
+            for (let page = 0; page < 50; page++) {
+                const res = await getWorkOS().userManagement.listUsers({ limit: 100, ...(after ? { after } : {}) })
+                for (const u of res.data) {
+                    const user = u as unknown as WorkOSUserish & { createdAt: string; lastSignInAt?: string | null }
+                    out.push({
+                        id: mapUser(user, opts.canonicalId).id,
+                        email: user.email,
+                        name: mapUser(user, opts.canonicalId).name,
+                        createdAt: user.createdAt,
+                        lastSignInAt: user.lastSignInAt ?? null,
+                    })
+                }
+                after = res.listMetadata?.after ?? undefined
+                if (!after) break
             }
-            after = res.listMetadata?.after ?? undefined
-            if (!after) break
-        }
-        return out
-    },
+            return out
+        },
 
-    async getSession(): Promise<AuthSession | null> {
-        // Reads the session from the request headers that prepareMiddleware injected
-        // (works in server components, actions, and API routes — all run after the
-        // middleware). Never called from inside the middleware itself.
-        const { user } = await withAuth()
-        if (!user) return null
-        // Phase 2b auto-link. withAuth()'s user already carries externalId once set,
-        // so ensureLinked no-ops after the first link (no per-request write).
-        const linked = await ensureLinked(user as WorkOSUserish)
-        return { user: mapUser(linked) }
-    },
-
-    async getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
-        try {
-            const { payload } = await jwtVerify(accessToken, jwks)
-            const sub = typeof payload.sub === 'string' ? payload.sub : null
-            if (!sub) return null
-
-            const cached = sessionCache.get(sub)
-            if (cached && cached.expiresAt > Date.now()) return cached.session
-
-            // Load the full user so externalId (identity continuity) is available.
-            let user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
+        async getSession(): Promise<AuthSession | null> {
+            // Reads the session from the request headers that prepareMiddleware injected
+            // (works in server components, actions, and API routes — all run after the
+            // middleware). Never called from inside the middleware itself.
+            const { user } = await withAuth()
             if (!user) return null
-            user = await ensureLinked(user) // Phase 2b auto-link (idempotent)
-            const session: AuthSession = { user: mapUser(user) }
-            // Never cache an unlinked session: the next request should retry the link.
-            if (!user.linkFailed) sessionCache.set(sub, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
-            return session
-        } catch {
-            // Invalid signature, expired, wrong issuer, or user lookup failed.
-            return null
-        }
-    },
+            // Phase 2b auto-link. withAuth()'s user already carries externalId once set,
+            // so the linker no-ops after the first link (no per-request write).
+            const linked = await resolveIdentity(user as WorkOSUserish, opts)
+            return { user: mapUser(linked, opts.canonicalId) }
+        },
 
-    async prepareMiddleware(req: NextRequest) {
-        // Anonymous fast path. No session cookie means no session, so skip the AuthKit
-        // pass (decrypt, verify, refresh). withAuth() still THROWS unless the
-        // x-workos-middleware marker is on the request, so forward just that and every
-        // server-side getSession() resolves to "signed out" instead of a 500.
-        // Login/callback paths always take the full pass (PKCE state etc.).
-        if (!req.cookies.has(SESSION_COOKIE_NAME) && !ALWAYS_FULL_PASS.some((p) => req.nextUrl.pathname.startsWith(p))) {
-            const requestHeaders = new Headers(req.headers)
-            for (const name of Array.from(requestHeaders.keys())) {
-                if (isAuthkitRequestHeader(name)) requestHeaders.delete(name) // never trust client-sent auth headers
+        async getSessionFromToken(accessToken: string): Promise<AuthSession | null> {
+            try {
+                const { payload } = await jwtVerify(accessToken, jwks)
+                const sub = typeof payload.sub === 'string' ? payload.sub : null
+                if (!sub) return null
+
+                const cached = sessionCache.get(sub)
+                if (cached && cached.expiresAt > Date.now()) return cached.session
+
+                // Load the full user so externalId (identity continuity) is available.
+                let user = (await getWorkOS().userManagement.getUser(sub)) as WorkOSUserish
+                if (!user) return null
+                user = await resolveIdentity(user, opts) // Phase 2b auto-link (idempotent)
+                const session: AuthSession = { user: mapUser(user, opts.canonicalId) }
+                // Never cache an unlinked session: the next request should retry the link.
+                if (!user.linkFailed) sessionCache.set(sub, { session, expiresAt: Date.now() + SESSION_CACHE_TTL_MS })
+                return session
+            } catch {
+                // Invalid signature, expired, wrong issuer, or user lookup failed.
+                return null
             }
-            requestHeaders.set(AUTHKIT_MIDDLEWARE_HEADER, 'true')
-            return { session: null, requestHeaders, finalize: (res: NextResponse) => res }
-        }
-        // One authkit() pass per request: refreshes the session and yields the
-        // headers AuthKit needs. Request headers are forwarded downstream so
-        // withAuth() works; response headers carry any refreshed-session cookie.
-        const { session, headers } = await authkit(req)
-        const { requestHeaders, responseHeaders } = partitionAuthkitHeaders(req, headers)
-        return {
-            session: session.user ? { user: mapUser(session.user) } : null,
-            requestHeaders,
-            finalize: (res: NextResponse) => applyResponseHeaders(res, responseHeaders),
-        }
-    },
+        },
 
-    async middleware(_req: NextRequest) {
-        // Magic-code login renders in-app (apps/web /auth/login, /auth/sign-up post to
-        // /api/auth/*). There's no longer an OAuth redirect for these routes; let them
-        // render. /auth/logout, /callback, /auth/post-login also fall through.
-        return NextResponse.next()
-    },
-
-    async updateUserProfile(id, data) {
-        const workosId = toWorkOSId(id)
-        if (!workosId) return
-        // profilePictureUrl is not settable via the WorkOS API — the avatar lives
-        // in our DB/storage and is displayed from there. Only sync the name, split
-        // into first/last (the field shape AuthKit's bundled SDK accepts).
-        if (data.name === undefined) return
-        const [firstName, ...rest] = data.name.trim().split(/\s+/)
-        await getWorkOS().userManagement.updateUser({
-            userId: workosId,
-            firstName,
-            lastName: rest.join(' ') || undefined,
-        })
-    },
-
-    async deleteUser(id) {
-        const workosId = toWorkOSId(id)
-        if (!workosId) return
-        await getWorkOS().userManagement.deleteUser(workosId)
-    },
-
-    async getLoginHistory(id): Promise<LoginEvent[]> {
-        const workosId = toWorkOSId(id)
-        if (!workosId) return []
-
-        const { data: sessions } = await getWorkOS().userManagement.listSessions(workosId, {
-            limit: 20,
-        })
-
-        return sessions.map((s, i) => ({
-            id: s.id,
-            device: formatDevice(s.userAgent ?? ''),
-            // WorkOS sessions carry the IP but no resolved geo; show the IP.
-            location: s.ipAddress ?? 'Unknown',
-            lastActive: formatRelativeTime(s.createdAt),
-            current: i === 0,
-        }))
-    },
-
-    // ── Native magic-code auth (mobile) ──────────────────────────────────────────
-    // WorkOS Magic Auth: createMagicAuth emails a one-time code; the same flow
-    // creates the user on first use, so it covers sign-in AND sign-up. No browser,
-    // no OAuth redirect — the mobile app POSTs to our /api/mobile/auth/* routes,
-    // which call these server-side with the WORKOS_API_KEY.
-
-    async sendMagicCode(email: string): Promise<void> {
-        // Idempotent per email from WorkOS's side; emails the 6-digit code.
-        await getWorkOS().userManagement.createMagicAuth({ email })
-    },
-
-    async verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null> {
-        try {
-            const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
-                clientId: process.env.WORKOS_CLIENT_ID,
-                email,
-                code,
-            })
-            const user = await ensureLinked(res.user as WorkOSUserish)
-            // Seal the WorkOS session into the authkit cookie. saveSession accepts the
-            // Session shape ({ accessToken, refreshToken, user }); pass the RAW WorkOS
-            // user (res.user) so the cookie's encoded user matches what withAuth()
-            // expects, while we return the MAPPED user to the app.
-            await saveSession(
-                { accessToken: res.accessToken, refreshToken: res.refreshToken, user: res.user },
-                req,
-            )
-            return mapUser(user)
-        } catch {
-            return null
-        }
-    },
-
-    async createSessionFromTokens(
-        tokens: { accessToken: string; refreshToken: string },
-        req: NextRequest,
-    ): Promise<AuthUser | null> {
-        try {
-            // Verify the access token and resolve the WorkOS user id from it.
-            const { payload } = await jwtVerify(tokens.accessToken, jwks)
-            const sub = typeof payload.sub === 'string' ? payload.sub : null
-            if (!sub) return null
-            // Keep the full WorkOS User for saveSession (it needs the whole shape);
-            // read our structural subset separately for ensureLinked/mapUser.
-            const raw = await getWorkOS().userManagement.getUser(sub)
-            if (!raw) return null
-            const user = await ensureLinked(raw as WorkOSUserish)
-            // Seal into the AuthKit cookie. Pass the RAW WorkOS user (see
-            // verifyMagicCodeWeb) so withAuth() decodes the shape it expects, while
-            // we return the MAPPED user to the app.
-            await saveSession(
-                { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, user: raw },
-                req,
-            )
-            return mapUser(user)
-        } catch {
-            return null
-        }
-    },
-
-    async verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {
-        try {
-            const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
-                clientId: process.env.WORKOS_CLIENT_ID,
-                email,
-                code,
-            })
-            // Phase 2b auto-link (idempotent) so externalId-based identity continuity
-            // applies exactly as in the cookie/bearer paths.
-            const user = await ensureLinked(res.user as WorkOSUserish)
-            // The access token is a JWT; derive its lifetime from `exp` so the app's
-            // proactive-refresh keeps working without a separate expiresIn field
-            // (authenticateWithMagicAuth doesn't return one).
-            const exp = decodeJwt(res.accessToken).exp
-            const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
+        async prepareMiddleware(req: NextRequest) {
+            // Anonymous fast path. No session cookie means no session, so skip the AuthKit
+            // pass (decrypt, verify, refresh). withAuth() still THROWS unless the
+            // x-workos-middleware marker is on the request, so forward just that and every
+            // server-side getSession() resolves to "signed out" instead of a 500.
+            // Login/callback paths always take the full pass (PKCE state etc.).
+            if (!req.cookies.has(SESSION_COOKIE_NAME) && !ALWAYS_FULL_PASS.some((p) => req.nextUrl.pathname.startsWith(p))) {
+                const requestHeaders = new Headers(req.headers)
+                for (const name of Array.from(requestHeaders.keys())) {
+                    if (isAuthkitRequestHeader(name)) requestHeaders.delete(name) // never trust client-sent auth headers
+                }
+                requestHeaders.set(AUTHKIT_MIDDLEWARE_HEADER, 'true')
+                return { session: null, requestHeaders, finalize: (res: NextResponse) => res }
+            }
+            // One authkit() pass per request: refreshes the session and yields the
+            // headers AuthKit needs. Request headers are forwarded downstream so
+            // withAuth() works; response headers carry any refreshed-session cookie.
+            const { session, headers } = await authkit(req)
+            const { requestHeaders, responseHeaders } = partitionAuthkitHeaders(req, headers)
             return {
-                accessToken: res.accessToken,
-                refreshToken: res.refreshToken,
-                expiresIn,
-                user: mapUser(user),
+                session: session.user ? { user: mapUser(session.user, opts.canonicalId) } : null,
+                requestHeaders,
+                finalize: (res: NextResponse) => applyResponseHeaders(res, responseHeaders),
             }
-        } catch {
-            // Invalid/expired code, or WorkOS rejected the request.
-            return null
-        }
-    },
+        },
 
-    async verifyPassword(email: string, password: string): Promise<NativeAuthTokens | null> {
-        try {
-            const res = await getWorkOS().userManagement.authenticateWithPassword({
-                clientId: process.env.WORKOS_CLIENT_ID,
-                email,
-                password,
+        async middleware(_req: NextRequest) {
+            // Magic-code login renders in-app (apps/web /auth/login, /auth/sign-up post to
+            // /api/auth/*). There's no longer an OAuth redirect for these routes; let them
+            // render. /auth/logout, /callback, /auth/post-login also fall through.
+            return NextResponse.next()
+        },
+
+        async updateUserProfile(id, data) {
+            const workosId = toWorkOSId(id)
+            if (!workosId) return
+            // profilePictureUrl is not settable via the WorkOS API — the avatar lives
+            // in our DB/storage and is displayed from there. Only sync the name, split
+            // into first/last (the field shape AuthKit's bundled SDK accepts).
+            if (data.name === undefined) return
+            const [firstName, ...rest] = data.name.trim().split(/\s+/)
+            await getWorkOS().userManagement.updateUser({
+                userId: workosId,
+                firstName,
+                lastName: rest.join(' ') || undefined,
             })
-            // Mirror verifyMagicCode exactly: link identity, derive expiry from the
-            // JWT, return the same token shape the app already stores.
-            const user = await ensureLinked(res.user as WorkOSUserish)
-            const exp = decodeJwt(res.accessToken).exp
-            const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
-            return {
-                accessToken: res.accessToken,
-                refreshToken: res.refreshToken,
-                expiresIn,
-                user: mapUser(user),
+        },
+
+        async deleteUser(id) {
+            const workosId = toWorkOSId(id)
+            if (!workosId) return
+            await getWorkOS().userManagement.deleteUser(workosId)
+        },
+
+        async getLoginHistory(id): Promise<LoginEvent[]> {
+            const workosId = toWorkOSId(id)
+            if (!workosId) return []
+
+            const { data: sessions } = await getWorkOS().userManagement.listSessions(workosId, {
+                limit: 20,
+            })
+
+            return sessions.map((s, i) => ({
+                id: s.id,
+                device: formatDevice(s.userAgent ?? ''),
+                // WorkOS sessions carry the IP but no resolved geo; show the IP.
+                location: s.ipAddress ?? 'Unknown',
+                lastActive: formatRelativeTime(s.createdAt),
+                current: i === 0,
+            }))
+        },
+
+        // ── Native magic-code auth (mobile) ──────────────────────────────────────────
+        // WorkOS Magic Auth: createMagicAuth emails a one-time code; the same flow
+        // creates the user on first use, so it covers sign-in AND sign-up. No browser,
+        // no OAuth redirect — the mobile app POSTs to our /api/mobile/auth/* routes,
+        // which call these server-side with the WORKOS_API_KEY.
+
+        async sendMagicCode(email: string): Promise<void> {
+            // Idempotent per email from WorkOS's side; emails the 6-digit code.
+            await getWorkOS().userManagement.createMagicAuth({ email })
+        },
+
+        async verifyMagicCodeWeb(email: string, code: string, req: NextRequest): Promise<AuthUser | null> {
+            try {
+                const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
+                    clientId: process.env.WORKOS_CLIENT_ID,
+                    email,
+                    code,
+                })
+                const user = await resolveIdentity(res.user as WorkOSUserish, opts)
+                // Seal the WorkOS session into the authkit cookie. saveSession accepts the
+                // Session shape ({ accessToken, refreshToken, user }); pass the RAW WorkOS
+                // user (res.user) so the cookie's encoded user matches what withAuth()
+                // expects, while we return the MAPPED user to the app.
+                await saveSession(
+                    { accessToken: res.accessToken, refreshToken: res.refreshToken, user: res.user },
+                    req,
+                )
+                return mapUser(user, opts.canonicalId)
+            } catch {
+                return null
             }
-        } catch {
-            // Wrong password, or WorkOS rejected the request.
-            return null
-        }
-    },
+        },
+
+        async createSessionFromTokens(
+            tokens: { accessToken: string; refreshToken: string },
+            req: NextRequest,
+        ): Promise<AuthUser | null> {
+            try {
+                // Verify the access token and resolve the WorkOS user id from it.
+                const { payload } = await jwtVerify(tokens.accessToken, jwks)
+                const sub = typeof payload.sub === 'string' ? payload.sub : null
+                if (!sub) return null
+                // Keep the full WorkOS User for saveSession (it needs the whole shape);
+                // read our structural subset separately for resolveIdentity/mapUser.
+                const raw = await getWorkOS().userManagement.getUser(sub)
+                if (!raw) return null
+                const user = await resolveIdentity(raw as WorkOSUserish, opts)
+                // Seal into the AuthKit cookie. Pass the RAW WorkOS user (see
+                // verifyMagicCodeWeb) so withAuth() decodes the shape it expects, while
+                // we return the MAPPED user to the app.
+                await saveSession(
+                    { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken, user: raw },
+                    req,
+                )
+                return mapUser(user, opts.canonicalId)
+            } catch {
+                return null
+            }
+        },
+
+        async verifyMagicCode(email: string, code: string): Promise<NativeAuthTokens | null> {
+            try {
+                const res = await getWorkOS().userManagement.authenticateWithMagicAuth({
+                    clientId: process.env.WORKOS_CLIENT_ID,
+                    email,
+                    code,
+                })
+                // Phase 2b auto-link (idempotent) so externalId-based identity continuity
+                // applies exactly as in the cookie/bearer paths.
+                const user = await resolveIdentity(res.user as WorkOSUserish, opts)
+                // The access token is a JWT; derive its lifetime from `exp` so the app's
+                // proactive-refresh keeps working without a separate expiresIn field
+                // (authenticateWithMagicAuth doesn't return one).
+                const exp = decodeJwt(res.accessToken).exp
+                const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
+                return {
+                    accessToken: res.accessToken,
+                    refreshToken: res.refreshToken,
+                    expiresIn,
+                    user: mapUser(user, opts.canonicalId),
+                }
+            } catch {
+                // Invalid/expired code, or WorkOS rejected the request.
+                return null
+            }
+        },
+
+        async verifyPassword(email: string, password: string): Promise<NativeAuthTokens | null> {
+            try {
+                const res = await getWorkOS().userManagement.authenticateWithPassword({
+                    clientId: process.env.WORKOS_CLIENT_ID,
+                    email,
+                    password,
+                })
+                // Mirror verifyMagicCode exactly: link identity, derive expiry from the
+                // JWT, return the same token shape the app already stores.
+                const user = await resolveIdentity(res.user as WorkOSUserish, opts)
+                const exp = decodeJwt(res.accessToken).exp
+                const expiresIn = exp ? Math.max(0, exp - Math.floor(Date.now() / 1000)) : 0
+                return {
+                    accessToken: res.accessToken,
+                    refreshToken: res.refreshToken,
+                    expiresIn,
+                    user: mapUser(user, opts.canonicalId),
+                }
+            } catch {
+                // Wrong password, or WorkOS rejected the request.
+                return null
+            }
+        },
+    }
 }
 
 // Real per-device session revocation is now possible via
