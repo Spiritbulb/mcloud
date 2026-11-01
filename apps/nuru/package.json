@@ -16,7 +16,9 @@
     "@mcloud/ui": "^0.0.0",
     "@neondatabase/serverless": "^1.0.0",
     "@workos-inc/authkit-nextjs": "^4.4.0",
+    "fast-xml-parser": "^5.11.2",
     "next": "^16.4.3",
+    "node-html-parser": "^9.0.6",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1"
