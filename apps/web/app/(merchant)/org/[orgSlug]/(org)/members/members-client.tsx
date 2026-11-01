@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { Avatar } from '@mcloud/ui/kit/avatar'
-import { Badge, type BadgeTone } from '@mcloud/ui/kit/badge'
+import { Badge, Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button } from '@mcloud/ui/kit/button'
 import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
@@ -19,10 +19,11 @@ import {
     revokeOrgInvite,
     updateOrgMemberRole,
 } from './actions'
-import type { OrgMemberRow } from './actions'
+import type { OrgInviteRow, OrgMemberRow } from './actions'
 import { canInvite, daysUntil, memberPermissions } from './members-logic'
+import type { InviteStatus } from '@/lib/org-invite-logic'
 
-type Invite = { id: string; email: string | null; role: string | null; created_at: string | null; expires_at: string | null }
+type Invite = OrgInviteRow
 
 interface Props {
     orgId: string
@@ -33,6 +34,16 @@ interface Props {
 }
 
 const ROLE_TONE: Record<string, BadgeTone> = { owner: 'warning', admin: 'info', member: 'neutral' }
+
+const INVITE_STATUS: Record<InviteStatus, { label: string; tone: BadgeTone }> = {
+    pending: { label: 'Pending', tone: 'info' },
+    accepted: { label: 'Accepted', tone: 'success' },
+    expired: { label: 'Expired', tone: 'neutral' },
+    broken: { label: 'Link broken', tone: 'danger' },
+}
+
+const shortDate = (iso: string | null) =>
+    iso ? new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', timeZone: 'Africa/Nairobi' }) : '—'
 
 function RoleBadge({ role }: { role: string | null }) {
     if (!role) return null
@@ -115,16 +126,22 @@ function MemberRow({ member, orgId, orgSlug, currentRole, onRemove }: {
     )
 }
 
-function InviteRow({ invite, orgId, orgSlug, now, onRevoke }: {
+function InviteRow({ invite, orgId, orgSlug, now, canManage, onRevoke }: {
     invite: Invite
     orgId: string
     orgSlug: string
     now: number
+    canManage: boolean
     onRevoke: (id: string) => void
 }) {
     const [isPending, start] = useTransition()
+    if (!invite.email && !invite.role) return null
     const days = daysUntil(invite.expires_at, now)
-    if (days === null || (!invite.email && !invite.role)) return null
+    const status = INVITE_STATUS[invite.status]
+    const when =
+        invite.status === 'accepted' ? `Joined ${shortDate(invite.accepted_at)}`
+        : invite.status === 'pending' && days !== null ? (days === 0 ? 'Expires today' : `Expires in ${days} ${days === 1 ? 'day' : 'days'}`)
+        : `Sent ${shortDate(invite.created_at)}`
 
     return (
         <Tr>
@@ -137,16 +154,21 @@ function InviteRow({ invite, orgId, orgSlug, now, onRevoke }: {
                 </div>
             </Td>
             <Td label="Role"><RoleBadge role={invite.role} /></Td>
-            <Td label="Expires" muted>{days === 0 ? 'Today' : `In ${days} ${days === 1 ? 'day' : 'days'}`}</Td>
+            <Td label="Status"><Status tone={status.tone}>{status.label}</Status></Td>
+            <Td label="When" muted>{when}</Td>
             <Td align="right" label="Actions">
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    disabled={isPending}
-                    onClick={() => start(async () => { await revokeOrgInvite(invite.id, orgId, orgSlug); onRevoke(invite.id) })}
-                >
-                    {isPending ? 'Revoking…' : 'Revoke'}
-                </Button>
+                {canManage && invite.status !== 'accepted' && (
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        disabled={isPending}
+                        onClick={() => start(async () => { await revokeOrgInvite(invite.id, orgId, orgSlug); onRevoke(invite.id) })}
+                    >
+                        {invite.status === 'pending'
+                            ? (isPending ? 'Revoking…' : 'Revoke')
+                            : (isPending ? 'Removing…' : 'Remove')}
+                    </Button>
+                )}
             </Td>
         </Tr>
     )
@@ -202,7 +224,11 @@ function InviteForm({ orgId, orgSlug }: { orgId: string; orgSlug: string }) {
 
 export default function OrgMembersClient({ orgId, orgSlug, members: initial, invites: initialInvites, currentRole }: Props) {
     const [members, setMembers] = useState<OrgMemberRow[]>(initial)
-    const [invites, setInvites] = useState<Invite[]>(initialInvites)
+    // Derived from props, not copied into state: sending an invite revalidates the page, and the
+    // fresh list has to show up. Only revocations are tracked locally.
+    const [revoked, setRevoked] = useState<ReadonlySet<string>>(() => new Set())
+    const invites = initialInvites.filter((i) => !revoked.has(i.id))
+    const pendingCount = invites.filter((i) => i.status === 'pending').length
     // One clock per visit, so invite expiry is stable across re-renders.
     const [now] = useState(() => Date.now())
 
@@ -241,13 +267,14 @@ export default function OrgMembersClient({ orgId, orgSlug, members: initial, inv
             </Panel>
 
             {invites.length > 0 && (
-                <Panel title="Pending invites" description={`${invites.length} waiting to be accepted`} flush>
+                <Panel title="Invites" description={pendingCount ? `${pendingCount} waiting to be accepted` : 'None waiting'} flush>
                     <Table>
                         <thead>
                             <tr>
                                 <Th>Email</Th>
                                 <Th>Role</Th>
-                                <Th>Expires</Th>
+                                <Th>Status</Th>
+                                <Th>When</Th>
                                 <Th align="right"><span className="sr-only">Actions</span></Th>
                             </tr>
                         </thead>
@@ -259,7 +286,8 @@ export default function OrgMembersClient({ orgId, orgSlug, members: initial, inv
                                     orgId={orgId}
                                     orgSlug={orgSlug}
                                     now={now}
-                                    onRevoke={(id) => setInvites((prev) => prev.filter((i) => i.id !== id))}
+                                    canManage={canInvite(currentRole)}
+                                    onRevoke={(id) => setRevoked((prev) => new Set(prev).add(id))}
                                 />
                             ))}
                         </tbody>

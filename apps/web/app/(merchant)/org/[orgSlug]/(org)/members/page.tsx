@@ -9,7 +9,8 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
     const session = await getSession()
     if (!session?.user) redirect(loginUrlWithReturn(`/org/${orgSlug}/members`))
 
-    // getOrgMembers checks membership; the org itself was already resolved by the layout.
+    // getOrgMembers checks membership (and returns nothing to non-members); the org itself was
+    // already resolved by the layout.
     const data = await getOrgMembers(orgSlug)
     if (data.error === 'Org not found') notFound()
     if (!data.currentRole) redirect(`/org/${orgSlug}`)
