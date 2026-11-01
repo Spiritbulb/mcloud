@@ -9,9 +9,9 @@ import { motion } from "framer-motion"
 type Sticker = { src: string; x: string; y: string; delay: number; duration: number }
 
 const stickers: Sticker[] = [
-    { src: "https://img.icons8.com/3d-fluency/94/sparkling-1.png", x: "8%", y: "15%", delay: 0, duration: 6 },
+    { src: "https://img.icons8.com/3d-fluency/94/sparkling.png", x: "8%", y: "15%", delay: 0, duration: 6 },
     { src: "https://img.icons8.com/3d-fluency/94/bank-card-back-side.png", x: "85%", y: "12%", delay: 0.5, duration: 7 },
-    { src: "https://img.icons8.com/3d-fluency/94/movie-video-camera.png", x: "80%", y: "68%", delay: 1, duration: 5 },
+    { src: "https://img.icons8.com/3d-fluency/94/camera.png", x: "80%", y: "68%", delay: 1, duration: 5 },
 ]
 
 function FloatingStickerImage({ s }: { s: Sticker }) {

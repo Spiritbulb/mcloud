@@ -11,6 +11,8 @@ const nextConfig: NextConfig = {
             { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
             { protocol: 'https', hostname: 'images.unsplash.com' },
             { protocol: 'https', hostname: '*.supabase.co' },
+            // Stickers on app/not-found.tsx; without this the 404 page itself throws.
+            { protocol: 'https', hostname: 'img.icons8.com', pathname: '/3d-fluency/**' },
         ],
     },
     // /auth/login only ever redirects to the spiritb handoff. As a rule it costs no function,
