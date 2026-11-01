@@ -23,9 +23,10 @@ export function Footer() {
                                 { href: '/org/servers', label: 'Deploy server' },
                             ].map(({ href, label }) => (
                                 <li key={href}>
-                                    <Link href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                                    {/* A full page load: /org/* redirects from a route handler, which client navigation can't follow. */}
+                                    <a href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
                                         {label}
-                                    </Link>
+                                    </a>
                                 </li>
                             ))}
                         </ul>

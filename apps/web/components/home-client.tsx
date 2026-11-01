@@ -315,7 +315,7 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                                 </li>
                             ))}
                         </ul>
-                        <Link
+                        <a
                             href={plan.href}
                             className={cn(
                                 'flex h-11 items-center justify-center gap-2  px-5 text-[14px] font-semibold transition-opacity hover:opacity-85',
@@ -326,7 +326,7 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                         >
                             {plan.cta}
                             <span className="material-symbols-outlined text-[16px]">arrow_forward</span>
-                        </Link>
+                        </a>
                     </div>
                 </FadeIn>
             ))}
@@ -537,6 +537,8 @@ const STORE_STEPS: Step[] = [
     },
 ]
 
+// The /org/* CTAs on this page are plain <a>s: those paths redirect from route handlers,
+// which client navigation can't follow.
 const STORE_PLANS: PlanTier[] = [
     {
         name: 'Free',
@@ -738,14 +740,15 @@ function CloudServers() {
                                     <p className="text-[12px] leading-relaxed text-muted-foreground">
                                         No credit card required
                                     </p>
-                                    <Link
+                                    {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
+                                    <a
                                         href="/org/servers"
                                         className="inline-flex h-12 items-center justify-center gap-2  px-7 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
                                         style={{ backgroundColor: SERVER_ACCENT }}
                                     >
                                         Explore cloud servers
                                         <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                                    </Link>
+                                    </a>
                                 </div>
                             </div>
                         </div>
@@ -778,14 +781,15 @@ function CloudServers() {
                             Start with a cloud server built for the project in front of you. Add capacity when that project becomes something bigger.
                         </p>
                         <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
-                            <Link
+                            {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
+                            <a
                                 href="/org/servers"
                                 className="flex h-12 items-center justify-center gap-2  px-8 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
                                 style={{ backgroundColor: SERVER_ACCENT }}
                             >
                                 Choose a server
                                 <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                            </Link>
+                            </a>
                             <Link
                                 href="/contact"
                                 className="flex h-12 items-center justify-center gap-2  border border-border px-8 text-[15px] text-foreground transition-colors hover:bg-foreground/[0.05]"
@@ -924,21 +928,23 @@ export default function HomeClient() {
                             </div>
 
                             <div className="flex flex-col gap-3 sm:flex-row">
-                                <Link
+                                {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
+                                <a
                                     href="/org/servers"
                                     className="flex h-12 items-center justify-center gap-2  px-7 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
                                     style={{ backgroundColor: SERVER_ACCENT }}
                                 >
                                     Deploy server
                                     <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                                </Link>
-                                <Link
+                                </a>
+                                {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
+                                <a
                                     href="/org/stores?new=1"
                                     className="flex h-12 items-center justify-center gap-2  border border-border px-7 text-[15px] font-medium text-foreground transition-colors hover:bg-foreground/[0.05]"
                                 >
                                     Start a storefront free
                                     <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
-                                </Link>
+                                </a>
                             </div>
 
                             <p className="text-[12px] text-muted-foreground/65">

@@ -55,3 +55,7 @@ next-env.d.ts
 .env*.local
 .superpowers/
 apps/storefront/connect-google-photos.mjs
+
+# Supabase CLI cache. Only the project link is shared, so `supabase` commands hit the live project.
+**/supabase/.temp/*
+!**/supabase/.temp/linked-project.json

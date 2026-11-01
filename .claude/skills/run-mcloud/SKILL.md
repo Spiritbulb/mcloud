@@ -135,8 +135,10 @@ schema — refine it as we learn what's useful.
 - **Benign hydration console warnings** — pages may log a React "hydration mismatch" warning
   (often a browser-extension `caret-color` tweak). The smoke test flags these with ⚠ but they
   are not failures.
-- **Supabase calls need connectivity** — `.env.local` points at a live Supabase project
-  (`cuptlifacdkeagrrofni.supabase.co`). Empty data in dev usually means a network issue.
+- **Supabase calls need connectivity** — `.env.local` points at the live Supabase project
+  (`qmezqxlplerfomggocfa.supabase.co`). Empty data in dev usually means a network issue; a
+  404 on an org that exists, or "column does not exist" errors, mean `.env.local` still points
+  at the retired `cuptlifacdkeagrrofni` project.
 
 ## Troubleshooting
 

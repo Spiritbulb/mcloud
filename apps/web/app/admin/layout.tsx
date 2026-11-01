@@ -2,6 +2,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from "@mcloud/db/server"
 import { redirect } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
+import { dashboardPath } from "@/lib/first-org"
 
 async function getAdminUser(sub: string) {
     const supabase = await createClient()
@@ -50,8 +51,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         )
     }
 
+    // A real page, not /org: that is a redirecting route handler, which client navigation can't follow.
+    const platformHref = await dashboardPath(session.user.id)
+
     return (
         <AdminShell
+            platformHref={platformHref}
             user={{
                 name: user.name ?? session.user.name ?? 'Admin',
                 email: user.email ?? session.user.email ?? '',

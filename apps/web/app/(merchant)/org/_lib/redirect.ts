@@ -1,8 +1,8 @@
 // app/(merchant)/org/_lib/redirect.ts
 import { NextResponse, type NextRequest } from 'next/server'
 import { getCurrentUser } from '@mcloud/auth/server'
-import { createClient } from '@mcloud/db/server'
 import { LOGIN_URL } from '@mcloud/auth/routes'
+import { firstOrgSlug } from '@/lib/first-org'
 
 
 export async function redirectToOrgPath(request: NextRequest, rest: string) {
@@ -13,16 +13,7 @@ export async function redirectToOrgPath(request: NextRequest, rest: string) {
         return NextResponse.redirect(loginUrl)
     }
 
-    const supabase = await createClient()
-    const { data: firstOrg } = await supabase
-        .from('org_members')
-        .select('org:orgs(slug)')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending: true })
-        .limit(1)
-        .maybeSingle()
-
-    const orgSlug = firstOrg ? (firstOrg.org as { slug?: string } | null)?.slug : null
+    const orgSlug = await firstOrgSlug(user.id)
 
     if (orgSlug) {
         return NextResponse.redirect(new URL(`/org/${orgSlug}${rest}`, request.url))

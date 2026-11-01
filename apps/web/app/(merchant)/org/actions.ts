@@ -4,6 +4,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { dashboardPath } from '@/lib/first-org'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -116,7 +117,8 @@ export async function updateOrg(
     return { slug: data.slug }
 }
 
-export async function deleteOrg(orgId: string): Promise<{ error?: string }> {
+/** On success, `next` is where to send the user: their next org, or onboarding. */
+export async function deleteOrg(orgId: string): Promise<{ error?: string; next?: string }> {
     const session = await getSession()
     if (!session?.user) return { error: 'Not authenticated' }
 
@@ -134,7 +136,7 @@ export async function deleteOrg(orgId: string): Promise<{ error?: string }> {
     if (error) return { error: error.message }
 
     revalidatePath('/org')
-    return {}
+    return { next: await dashboardPath(userId) }
 }
 
 // ─── Store ↔ org CRUD ─────────────────────────────────────────────────────────

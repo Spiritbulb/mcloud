@@ -58,13 +58,14 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
                     <div className="flex items-center gap-2">
 
                         {isLoggedIn ? (
-                            <Link
+                            // eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow
+                            <a
                                 href="/org"
                                 className="h-8 px-4 rounded-full bg-foreground text-background text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
                             >
                                 Dashboard
                                 <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-                            </Link>
+                            </a>
                         ) : (
                             <>
                                 <Link

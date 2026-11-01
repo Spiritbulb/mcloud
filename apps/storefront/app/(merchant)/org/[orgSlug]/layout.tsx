@@ -26,12 +26,14 @@ export default async function OrgLayout({
     const { stores } = await getPickerData().catch(() => ({ stores: [], orgs: [], userName: null }))
 
     const supabase = await createClient()
-    const { data: org } = await supabase
+    const { data: org, error: orgError } = await supabase
         .from('orgs')
         .select('id')
         .eq('slug', orgSlug)
-        .single()
+        .maybeSingle()
 
+    // A failed query is an outage or schema drift, not a missing org: surface it instead of a 404.
+    if (orgError) throw new Error(`Loading org "${orgSlug}" failed: ${orgError.message}`)
     if (!org) notFound()
 
     return (

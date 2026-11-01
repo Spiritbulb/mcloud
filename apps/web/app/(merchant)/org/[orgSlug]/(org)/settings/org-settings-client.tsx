@@ -103,7 +103,7 @@ function DeleteOrgDialog({ open, onClose, org, sites }: { open: boolean; onClose
         start(async () => {
             const res = await deleteOrg(org.id)
             if (res.error) { setError(res.error); return }
-            router.push('/org')
+            router.push(res.next ?? '/org/onboarding')
         })
     }
 

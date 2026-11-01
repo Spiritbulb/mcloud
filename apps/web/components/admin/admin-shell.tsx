@@ -11,9 +11,11 @@ import { ADMIN_SECTIONS, type AdminUser } from './admin-nav'
 
 export default function AdminShell({
     user,
+    platformHref = '/org/onboarding',
     children,
 }: {
     user: AdminUser
+    platformHref?: string
     children: React.ReactNode
 }) {
     const pathname = usePathname()
@@ -36,11 +38,11 @@ export default function AdminShell({
             brandHref="/admin"
             brandTag="Admin"
             user={user}
-            menuLinks={[{ label: 'Back to platform', href: '/org', icon: 'arrow_back' }]}
+            menuLinks={[{ label: 'Back to platform', href: platformHref, icon: 'arrow_back' }]}
             signOutHref="/auth/logout"
             crumbs={crumbs}
             actions={
-                <Link href="/org" className={buttonClass('ghost', 'sm')}>
+                <Link href={platformHref} className={buttonClass('ghost', 'sm')}>
                     <Icon name="arrow_back" size={14} />
                     <span className="hidden sm:inline">Back to platform</span>
                 </Link>
