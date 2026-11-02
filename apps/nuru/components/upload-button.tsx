@@ -2,6 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { isPdfFile } from '@/lib/files/upload-logic'
 
 const MAX_BYTES = 25 * 1024 * 1024
 
@@ -21,7 +22,8 @@ export function UploadButton() {
 
   async function onFile(file: File) {
     setError(null)
-    if (file.type !== 'application/pdf') return setError('Choose a PDF file.')
+    // Some browsers report no type for a PDF; the server still checks the bytes. Always sent as application/pdf.
+    if (!isPdfFile(file)) return setError('Choose a PDF file.')
     if (file.size < 1) return setError('That file is empty.')
     if (file.size > MAX_BYTES) return setError('Files can be at most 25 MB.')
     try {
@@ -53,7 +55,7 @@ export function UploadButton() {
       <input
         ref={input}
         type="file"
-        accept="application/pdf"
+        accept="application/pdf,.pdf"
         className="sr-only"
         id="nuru-upload"
         disabled={busy}

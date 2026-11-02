@@ -1,11 +1,21 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { MAX_BYTES, checkUploadedObject, isFileId, isPdfContentType, objectKey, safeFilename, validateUploadRequest } from './upload-logic'
+import { MAX_BYTES, checkUploadedObject, isFileId, isPdfContentType, isPdfFile, objectKey, safeFilename, validateUploadRequest } from './upload-logic'
 
 test('safeFilename strips paths and unsafe characters', () => {
   assert.equal(safeFilename('../../etc/x.pdf'), 'x.pdf')
   assert.equal(safeFilename('résumé notes (1).PDF'), 'r-sum-notes-1-.pdf')
   assert.equal(safeFilename(''), 'document.pdf')
+})
+
+test('safeFilename always ends in .pdf and caps the stem', () => {
+  assert.equal(safeFilename('notes'), 'notes.pdf')
+  assert.equal(safeFilename('x.exe'), 'x.pdf')
+  assert.equal(safeFilename('a.b.PDF'), 'a.b.pdf')
+  const long = safeFilename('a'.repeat(2000) + '.pdf')
+  assert.ok(long.length <= 124, String(long.length))
+  assert.ok(long.endsWith('.pdf'))
+  assert.equal(safeFilename('a'.repeat(2000)).length, 124)
 })
 
 test('objectKey is scoped by owner and file id', () => {
@@ -45,4 +55,11 @@ test('isFileId accepts only uuids', () => {
   assert.equal(isFileId('3f1c2a9e-8b7d-4c6e-9a1b-2c3d4e5f6a7b'), true)
   assert.equal(isFileId('not-a-uuid'), false)
   assert.equal(isFileId("3f1c2a9e-8b7d-4c6e-9a1b-2c3d4e5f6a7b' or 1=1"), false)
+})
+
+test('isPdfFile accepts a pdf type, or no type with a .pdf name', () => {
+  assert.equal(isPdfFile({ type: 'application/pdf', name: 'a' }), true)
+  assert.equal(isPdfFile({ type: '', name: 'Notes.PDF' }), true)
+  assert.equal(isPdfFile({ type: '', name: 'notes.txt' }), false)
+  assert.equal(isPdfFile({ type: 'text/plain', name: 'notes.pdf' }), false)
 })

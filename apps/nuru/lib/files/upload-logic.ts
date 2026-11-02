@@ -12,19 +12,27 @@ export function validateUploadRequest(body: unknown): Validated {
   return { ok: true, value: { filename: filename.trim(), bytes } }
 }
 
-/** Last path segment, anything outside [A-Za-z0-9._-] becomes '-', runs collapsed, extension lowercased. */
+/**
+ * Last path segment, anything outside [A-Za-z0-9._-] becomes '-', runs collapsed, stem capped at
+ * 120 characters. Always ends in `.pdf`: any other extension is replaced.
+ */
 export function safeFilename(name: string): string {
   const base = (name.split(/[\\/]/).pop() ?? '').trim().replace(/^\.+/, '')
   const dot = base.lastIndexOf('.')
-  const stem = dot > 0 ? base.slice(0, dot) : base
-  const ext = dot > 0 ? base.slice(dot).toLowerCase() : ''
-  const clean = (s: string) => s.replace(/[^A-Za-z0-9._-]/g, '-').replace(/-{2,}/g, '-')
-  const out = clean(stem) + clean(ext)
-  return out && out !== '-' ? out : 'document.pdf'
+  const stem = (dot > 0 ? base.slice(0, dot) : base)
+    .replace(/[^A-Za-z0-9._-]/g, '-')
+    .replace(/-{2,}/g, '-')
+    .slice(0, 120)
+  return `${stem && stem !== '-' ? stem : 'document'}.pdf`
 }
 
 export function objectKey(ownerId: string, fileId: string, filename: string): string {
   return `files/${ownerId}/${fileId}/${safeFilename(filename)}`
+}
+
+/** Browser-side check: a PDF by type, or by `.pdf` name when the browser reports no type. */
+export function isPdfFile(file: { type: string; name: string }): boolean {
+  return file.type === 'application/pdf' || (file.type === '' && /\.pdf$/i.test(file.name))
 }
 
 const PDF_MAGIC = [0x25, 0x50, 0x44, 0x46, 0x2d] // %PDF-
