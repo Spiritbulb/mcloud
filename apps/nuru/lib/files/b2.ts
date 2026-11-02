@@ -1,35 +1,12 @@
 import 'server-only'
-import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
+import { DeleteObjectCommand, GetObjectCommand, HeadObjectCommand } from '@aws-sdk/client-s3'
+import { bucket, client, presignGet, presignPut } from './b2-presign'
 
-let cached: S3Client | undefined
-
-function client(): S3Client {
-  return (cached ??= new S3Client({
-    endpoint: process.env.B2_ENDPOINT,
-    region: process.env.B2_REGION,
-    forcePathStyle: true,
-    credentials: { accessKeyId: process.env.B2_KEY_ID!, secretAccessKey: process.env.B2_APPLICATION_KEY! },
-  }))
-}
-
-const Bucket = () => process.env.B2_BUCKET!
-
-export function presignPut(key: string, bytes: number): Promise<string> {
-  return getSignedUrl(
-    client(),
-    new PutObjectCommand({ Bucket: Bucket(), Key: key, ContentType: 'application/pdf', ContentLength: bytes }),
-    { expiresIn: 600 },
-  )
-}
-
-export function presignGet(key: string): Promise<string> {
-  return getSignedUrl(client(), new GetObjectCommand({ Bucket: Bucket(), Key: key }), { expiresIn: 300 })
-}
+export { presignPut, presignGet }
 
 export async function headBytes(key: string): Promise<number | null> {
   try {
-    const r = await client().send(new HeadObjectCommand({ Bucket: Bucket(), Key: key }))
+    const r = await client().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }))
     return r.ContentLength ?? null
   } catch (err) {
     const e = err as { name?: string; $metadata?: { httpStatusCode?: number } }
@@ -39,7 +16,7 @@ export async function headBytes(key: string): Promise<number | null> {
 }
 
 async function body(key: string, range?: string): Promise<Uint8Array> {
-  const r = await client().send(new GetObjectCommand({ Bucket: Bucket(), Key: key, Range: range }))
+  const r = await client().send(new GetObjectCommand({ Bucket: bucket(), Key: key, Range: range }))
   if (!r.Body) throw new Error('empty object body')
   return r.Body.transformToByteArray()
 }
@@ -54,5 +31,5 @@ export function getBytes(key: string): Promise<Uint8Array> {
 }
 
 export async function deleteObject(key: string): Promise<void> {
-  await client().send(new DeleteObjectCommand({ Bucket: Bucket(), Key: key }))
+  await client().send(new DeleteObjectCommand({ Bucket: bucket(), Key: key }))
 }
