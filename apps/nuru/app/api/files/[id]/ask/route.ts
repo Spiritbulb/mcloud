@@ -20,7 +20,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!file) return NextResponse.json({ error: 'File not found' }, { status: 404, headers: NO_STORE })
   // Ready files, and failed files whose text was extracted (e.g. notes failed), can be asked about.
   const pageCount = file.pages ?? 0
-  if ((file.status !== 'ready' && file.status !== 'failed') || pageCount <= 0) {
+  // no_text files have a page count but no stored text.
+  if ((file.status !== 'ready' && file.status !== 'failed') || pageCount <= 0 || file.error === 'no_text') {
     return NextResponse.json({ error: "Nuru can't answer questions about this file yet." }, { status: 409, headers: NO_STORE })
   }
 
@@ -29,15 +30,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!parsed.ok) return NextResponse.json({ error: parsed.error }, { status: 400, headers: NO_STORE })
   const { page, question } = parsed.value
 
+  // Read the page first, so a missing page never spends a slot.
+  const pageText = await getPage(user.id, file.id, page)
+  if (pageText == null) {
+    return NextResponse.json({ error: "Nuru can't answer questions about this file yet." }, { status: 409, headers: NO_STORE })
+  }
+
   // Reserve the slot before calling the model, so concurrent asks cannot exceed the limit.
   // A failed or refused call keeps its slot.
   if (!(await reserveAsk(user.id, file.id, page, ASK_LIMIT_PER_DAY))) {
     return NextResponse.json({ error: "You've reached today's question limit." }, { status: 429, headers: NO_STORE })
-  }
-
-  const pageText = await getPage(user.id, file.id, page)
-  if (pageText == null) {
-    return NextResponse.json({ error: "Nuru can't answer questions about this file yet." }, { status: 409, headers: NO_STORE })
   }
   try {
     const answer = await answerAboutPage(page, pageText, question)

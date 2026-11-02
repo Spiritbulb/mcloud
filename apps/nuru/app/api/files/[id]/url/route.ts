@@ -1,6 +1,7 @@
 // @route-kind: user
 // GET /api/files/:id/url -> { url } | { error }
-// A short-lived (300 s) presigned GET for the viewer. Fetched on mount and at most once more on failure.
+// A presigned GET (3600 s) for the viewer. The web page gets its first URL from the server and fetches
+// this at most once, after the PDF fails to load. Mobile fetches it directly.
 import { NextResponse, type NextRequest } from 'next/server'
 import { presignGet } from '@/lib/files/b2'
 import { getFile } from '@/lib/files/queries'

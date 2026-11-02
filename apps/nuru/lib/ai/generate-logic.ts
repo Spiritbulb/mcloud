@@ -55,3 +55,32 @@ export function canRetry(code: string | null): boolean {
 export function isEmptyOutput(o: StudyOutput): boolean {
   return o.notes.length === 0 && o.questions.length === 0
 }
+
+/** A `processing` claim older than this belongs to a function that has died (maxDuration is 300 s). */
+export const STALE_PROCESSING_MS = 10 * 60 * 1000
+
+type StatusRow = { status: 'uploaded' | 'processing' | 'ready' | 'failed'; error: string | null; claimedAt: string | null }
+
+/** True when a `processing` row was claimed over STALE_PROCESSING_MS ago, or before claims were stamped. */
+export function isStaleProcessing(row: StatusRow, now: Date): boolean {
+  if (row.status !== 'processing') return false
+  if (row.claimedAt === null) return true
+  return now.getTime() - new Date(row.claimedAt).getTime() > STALE_PROCESSING_MS
+}
+
+/** The status to show: a stale `processing` row reads as `failed`/`generation_failed`, so it can be retried. */
+export function effectiveStatus(row: StatusRow, now: Date): { status: StatusRow['status']; error: string | null } {
+  return isStaleProcessing(row, now) ? { status: 'failed', error: 'generation_failed' } : { status: row.status, error: row.error }
+}
+
+/** Effective status plus the viewer's error message and retry flag, shared by the file route and page. */
+export function describeFile(row: StatusRow, now: Date): {
+  status: StatusRow['status']
+  error: string | null
+  errorMessage: string | null
+  canRetry: boolean
+} {
+  const s = effectiveStatus(row, now)
+  const failed = s.status === 'failed'
+  return { ...s, errorMessage: failed ? errorMessage(s.error) : null, canRetry: failed && canRetry(s.error) }
+}

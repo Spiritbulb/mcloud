@@ -37,6 +37,6 @@ export function presignGet(key: string, filename: string): Promise<string> {
       ResponseContentType: 'application/pdf',
       ResponseContentDisposition: `inline; filename="${safeFilename(filename)}"`,
     }),
-    { expiresIn: 300 },
+    { expiresIn: 3600 },
   )
 }

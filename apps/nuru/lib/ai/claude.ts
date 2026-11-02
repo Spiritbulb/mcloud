@@ -23,7 +23,8 @@ let cached: Anthropic | null = null
 
 function client(): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set')
-  cached ??= new Anthropic()
+  // Generation runs inside a 300 s function: fail well before that, so the file ends `failed`, not stuck.
+  cached ??= new Anthropic({ timeout: 200_000, maxRetries: 1 })
   return cached
 }
 
@@ -80,7 +81,7 @@ export async function whyItMatters(
     system: WHY_SYSTEM,
     messages: [{ role: 'user', content }],
     output_config: { effort: 'low', format: zodOutputFormat(WhySchema) },
-  })
+  }, { timeout: 20_000, maxRetries: 0 })
   if (res.stop_reason === 'refusal') throw new Error(`model refused (${res.stop_details?.category ?? 'unknown'})`)
   if (!res.parsed_output) throw new Error(`no parsed output (stop_reason ${res.stop_reason})`)
   return res.parsed_output.items

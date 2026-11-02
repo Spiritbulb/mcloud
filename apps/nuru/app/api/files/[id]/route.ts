@@ -2,7 +2,7 @@
 // GET /api/files/:id -> { file, notes, questions, errorMessage, canRetry } | { error }
 // Polled by the viewer while a file is processing. Never returns the storage key.
 import { NextResponse, type NextRequest } from 'next/server'
-import { canRetry, errorMessage } from '@/lib/ai/generate-logic'
+import { describeFile } from '@/lib/ai/generate-logic'
 import { getFile, getOutputs } from '@/lib/files/queries'
 import { isFileId } from '@/lib/files/upload-logic'
 import { requireUser } from '@/lib/session'
@@ -18,15 +18,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
   const { b2Key: _key, ...file } = row
   void _key
   const { notes, questions } = await getOutputs(user.id, row.id)
-  const failed = row.status === 'failed'
+  // A stale `processing` claim is reported as a retryable failure.
+  const { status, error, errorMessage, canRetry } = describeFile(row, new Date())
   return NextResponse.json(
-    {
-      file,
-      notes,
-      questions,
-      errorMessage: failed ? errorMessage(row.error) : null,
-      canRetry: failed && canRetry(row.error),
-    },
+    { file: { ...file, status, error }, notes, questions, errorMessage, canRetry },
     { headers: NO_STORE },
   )
 }

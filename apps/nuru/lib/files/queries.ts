@@ -12,6 +12,7 @@ export type FileRow = {
   status: FileStatus
   error: string | null
   createdAt: string
+  claimedAt: string | null
   b2Key: string
 }
 
@@ -23,6 +24,7 @@ type Raw = {
   status: FileStatus
   error: string | null
   created_at: string | Date
+  claimed_at: string | Date | null
   b2_key: string
 }
 
@@ -35,6 +37,7 @@ function toRow(r: Raw): FileRow {
     status: r.status,
     error: r.error,
     createdAt: new Date(r.created_at).toISOString(),
+    claimedAt: r.claimed_at ? new Date(r.claimed_at).toISOString() : null,
     b2Key: r.b2_key,
   }
 }
@@ -49,14 +52,14 @@ export async function createFile(ownerId: string, f: { id: string; b2Key: string
 
 export async function getFile(ownerId: string, id: string): Promise<FileRow | null> {
   const rows = (await db()`
-    select id, filename, bytes, pages, status, error, created_at, b2_key
+    select id, filename, bytes, pages, status, error, created_at, claimed_at, b2_key
     from files where id = ${id} and owner_id = ${ownerId}`) as Raw[]
   return rows[0] ? toRow(rows[0]) : null
 }
 
 export async function listFiles(ownerId: string): Promise<FileRow[]> {
   const rows = (await db()`
-    select id, filename, bytes, pages, status, error, created_at, b2_key
+    select id, filename, bytes, pages, status, error, created_at, claimed_at, b2_key
     from files where owner_id = ${ownerId} order by created_at desc`) as Raw[]
   return rows.map(toRow)
 }
@@ -84,8 +87,23 @@ export async function deleteFile(ownerId: string, id: string): Promise<void> {
  */
 export async function claimForProcessing(ownerId: string, id: string, from: FileStatus): Promise<boolean> {
   const rows = (await db()`
-    update files set status = 'processing', error = null
+    update files set status = 'processing', error = null, claimed_at = now()
     where id = ${id} and owner_id = ${ownerId} and status = ${from}
+    returning id`) as { id: string }[]
+  return rows.length > 0
+}
+
+/**
+ * Claims a file for "Try again": a `failed`/`generation_failed` row, or a `processing` row whose claim
+ * is stale (its function died; see STALE_PROCESSING_MS). Returns false when the file is in neither state
+ * or another request claimed it first.
+ */
+export async function claimForRetry(ownerId: string, id: string): Promise<boolean> {
+  const rows = (await db()`
+    update files set status = 'processing', error = null, claimed_at = now()
+    where id = ${id} and owner_id = ${ownerId}
+      and ((status = 'failed' and error = 'generation_failed')
+        or (status = 'processing' and (claimed_at is null or claimed_at < now() - interval '10 minutes')))
     returning id`) as { id: string }[]
   return rows.length > 0
 }

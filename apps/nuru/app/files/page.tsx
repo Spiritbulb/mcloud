@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { UploadButton } from '@/components/upload-button'
+import { effectiveStatus } from '@/lib/ai/generate-logic'
 import { listFiles } from '@/lib/files/queries'
 import { currentUser } from '@/lib/session'
 
@@ -16,7 +17,9 @@ function size(bytes: number): string {
 export default async function FilesPage() {
   const user = await currentUser()
   if (!user) redirect('/auth/sign-in')
-  const files = await listFiles(user.id)
+  const now = new Date()
+  // A stale `processing` claim shows as Failed, as it does in the viewer.
+  const files = (await listFiles(user.id)).map((f) => ({ ...f, ...effectiveStatus(f, now) }))
   return (
     <section className="ui-sans max-w-2xl">
       <h1 className="text-2xl font-semibold tracking-tight">My files</h1>

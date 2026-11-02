@@ -24,5 +24,5 @@ test('presigned GET forces an inline pdf response with a safe filename', async (
   assert.match(href, /response-content-type=application%2Fpdf/)
   const cd = url.searchParams.get('response-content-disposition') ?? ''
   assert.match(cd, /^inline; filename="[A-Za-z0-9._-]+"$/)
-  assert.equal(url.searchParams.get('X-Amz-Expires'), '300')
+  assert.equal(url.searchParams.get('X-Amz-Expires'), '3600')
 })

@@ -3,7 +3,18 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { extractPages } from './extract'
-import { MAX_DOC_CHARS, buildDocumentText, canRetry, cleanOutputs, errorMessage, hasText, isEmptyOutput } from './generate-logic'
+import {
+  MAX_DOC_CHARS,
+  buildDocumentText,
+  canRetry,
+  cleanOutputs,
+  describeFile,
+  effectiveStatus,
+  errorMessage,
+  hasText,
+  isEmptyOutput,
+  isStaleProcessing,
+} from './generate-logic'
 
 async function fixture(name: string): Promise<Uint8Array> {
   return new Uint8Array(await readFile(path.join(import.meta.dirname, '__fixtures__', name)))
@@ -54,4 +65,33 @@ test('isEmptyOutput is true only when nothing survived cleaning', () => {
   assert.equal(isEmptyOutput({ notes: [], questions: [{ question: 'Q', answer: 'A', pages: [1] }] }), false)
   assert.equal(isEmptyOutput({ notes: [{ heading: 'H', points: [{ text: 'p', pages: [1] }] }], questions: [] }), false)
   assert.equal(isEmptyOutput(cleanOutputs({ notes: [{ heading: 'H', points: [{ text: 'p', pages: [9] }] }], questions: [] }, 3)), true)
+})
+
+test('a processing claim older than 10 minutes is stale', () => {
+  const now = new Date('2026-11-02T12:00:00Z')
+  const row = (status: 'uploaded' | 'processing' | 'ready' | 'failed', claimedAt: string | null) => ({ status, error: null, claimedAt })
+  assert.equal(isStaleProcessing(row('processing', '2026-11-02T11:55:00Z'), now), false)
+  assert.equal(isStaleProcessing(row('processing', '2026-11-02T11:50:00Z'), now), false)
+  assert.equal(isStaleProcessing(row('processing', '2026-11-02T11:49:59Z'), now), true)
+  assert.equal(isStaleProcessing(row('processing', null), now), true)
+  assert.equal(isStaleProcessing(row('ready', '2026-11-01T00:00:00Z'), now), false)
+  assert.equal(isStaleProcessing(row('uploaded', null), now), false)
+})
+
+test('effectiveStatus and describeFile report a stale claim as a retryable failure', () => {
+  const now = new Date('2026-11-02T12:00:00Z')
+  const stale = { status: 'processing' as const, error: null, claimedAt: '2026-11-02T11:00:00Z' }
+  assert.deepEqual(effectiveStatus(stale, now), { status: 'failed', error: 'generation_failed' })
+  assert.deepEqual(describeFile(stale, now), {
+    status: 'failed',
+    error: 'generation_failed',
+    errorMessage: "Nuru couldn't make notes for this file.",
+    canRetry: true,
+  })
+  const fresh = { status: 'processing' as const, error: null, claimedAt: '2026-11-02T11:59:00Z' }
+  assert.deepEqual(describeFile(fresh, now), { status: 'processing', error: null, errorMessage: null, canRetry: false })
+  const noText = { status: 'failed' as const, error: 'no_text', claimedAt: null }
+  assert.equal(describeFile(noText, now).canRetry, false)
+  assert.match(describeFile(noText, now).errorMessage!, /no selectable text/)
+  assert.deepEqual(describeFile({ status: 'ready', error: null, claimedAt: null }, now), { status: 'ready', error: null, errorMessage: null, canRetry: false })
 })
