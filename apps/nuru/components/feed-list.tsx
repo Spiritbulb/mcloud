@@ -1,7 +1,7 @@
 'use client'
 import { Fragment, useState } from 'react'
 import type { FeedRow } from '@/lib/feed/queries'
-import { formatFeedDate } from '@/lib/feed/feed-logic'
+import { formatFeedDate, institutionCardIndex } from '@/lib/feed/feed-logic'
 
 const CHIPS = [
   { key: 'all', label: 'All' },
@@ -20,6 +20,7 @@ export function FeedList({ initial }: { initial: FeedRow[] }) {
   const [failed, setFailed] = useState(false)
 
   const shown = chip === 'all' ? rows : rows.filter((r) => r.category === chip)
+  const cardAt = institutionCardIndex(shown.length)
 
   async function older() {
     const last = rows[rows.length - 1]
@@ -86,7 +87,7 @@ export function FeedList({ initial }: { initial: FeedRow[] }) {
                 </p>
               )}
             </li>
-            {i === 4 && (
+            {i === cardAt && (
               <li className="ui-sans my-2 rounded-md bg-[var(--line)]/40 px-4 py-3 text-sm">
                 Connected to an institution?{' '}
                 <a href="/waitlist?kind=institution" className="font-medium text-[var(--accent)] underline">

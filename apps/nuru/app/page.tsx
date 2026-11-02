@@ -8,10 +8,13 @@ export const revalidate = 600
 
 export default async function Home() {
   let rows: FeedRow[] = []
-  try {
-    await maybeRefreshFeed() // best-effort
-  } catch (err) {
-    console.error('feed refresh failed', err)
+  // Best-effort, and never while building: the build has no business fetching sources.
+  if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) {
+    try {
+      await maybeRefreshFeed()
+    } catch (err) {
+      console.error('feed refresh failed', err)
+    }
   }
   try {
     rows = await listFeed({ days: 7 })

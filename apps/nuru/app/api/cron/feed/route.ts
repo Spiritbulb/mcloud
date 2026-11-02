@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 import { runIngest } from '@/lib/feed/ingest'
 import { withFeedLease } from '@/lib/feed/lease'
 
-export const maxDuration = 60
+// Matches the 5 minute feed lease.
+export const maxDuration = 300
 
 function authorised(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET

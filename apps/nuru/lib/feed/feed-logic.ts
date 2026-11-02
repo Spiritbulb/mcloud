@@ -28,3 +28,8 @@ export function decodeCursor(v: string | null): { at: string; id: number } | nul
   const id = Number(rawId)
   return Number.isSafeInteger(id) ? { at, id } : null
 }
+
+/** The row the institution card follows: the fifth, or the last on a shorter list. -1 when empty. */
+export function institutionCardIndex(shown: number): number {
+  return Math.min(4, shown - 1)
+}
