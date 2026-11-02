@@ -56,3 +56,14 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 export function isFileId(id: string): boolean {
   return UUID_RE.test(id)
 }
+
+/** How long a presigned PUT stays valid (b2-presign.ts uses it as expiresIn), and so how long a browser may still be uploading. */
+export const UPLOAD_WINDOW_MS = 600_000
+
+/**
+ * True while the browser's PUT could still be running: the row is created before the PUT starts, so a
+ * missing object inside this window is not yet a failed upload. A clock behind `createdAt` counts as running.
+ */
+export function uploadMayStillBeRunning(createdAt: Date, now: Date): boolean {
+  return now.getTime() - createdAt.getTime() < UPLOAD_WINDOW_MS
+}

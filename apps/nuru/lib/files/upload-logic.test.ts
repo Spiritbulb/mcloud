@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { MAX_BYTES, checkUploadedObject, isFileId, isPdfContentType, isPdfFile, objectKey, safeFilename, validateUploadRequest } from './upload-logic'
+import { MAX_BYTES, UPLOAD_WINDOW_MS, checkUploadedObject, isFileId, isPdfContentType, isPdfFile, objectKey, safeFilename, uploadMayStillBeRunning, validateUploadRequest } from './upload-logic'
 
 test('safeFilename strips paths and unsafe characters', () => {
   assert.equal(safeFilename('../../etc/x.pdf'), 'x.pdf')
@@ -62,4 +62,17 @@ test('isPdfFile accepts a pdf type, or no type with a .pdf name', () => {
   assert.equal(isPdfFile({ type: '', name: 'Notes.PDF' }), true)
   assert.equal(isPdfFile({ type: '', name: 'notes.txt' }), false)
   assert.equal(isPdfFile({ type: 'text/plain', name: 'notes.pdf' }), false)
+})
+
+test('an upload may still be running inside the presigned PUT window', () => {
+  const created = new Date('2026-11-01T10:00:00Z')
+  const at = (ms: number) => new Date(created.getTime() + ms)
+  assert.equal(UPLOAD_WINDOW_MS, 600_000)
+  assert.equal(uploadMayStillBeRunning(created, at(0)), true)
+  assert.equal(uploadMayStillBeRunning(created, at(5 * 60_000)), true)
+  assert.equal(uploadMayStillBeRunning(created, at(UPLOAD_WINDOW_MS - 1)), true)
+  assert.equal(uploadMayStillBeRunning(created, at(UPLOAD_WINDOW_MS)), false)
+  assert.equal(uploadMayStillBeRunning(created, at(60 * 60_000)), false)
+  // A clock a little behind the server's still counts as running.
+  assert.equal(uploadMayStillBeRunning(created, at(-30_000)), true)
 })

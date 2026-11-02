@@ -77,8 +77,15 @@ export async function setStatus(
     where id = ${id} and owner_id = ${ownerId}`
 }
 
-export async function deleteFile(ownerId: string, id: string): Promise<void> {
-  await db()`delete from files where id = ${id} and owner_id = ${ownerId}`
+/**
+ * Deletes a failed upload's row, but only while it is still `uploaded`: a /complete that lost a race
+ * must not delete a row another request already claimed. Returns false when nothing was deleted.
+ */
+export async function deleteUnclaimedUpload(ownerId: string, id: string): Promise<boolean> {
+  const rows = (await db()`
+    delete from files where id = ${id} and owner_id = ${ownerId} and status = 'uploaded'
+    returning id`) as { id: string }[]
+  return rows.length > 0
 }
 
 /**

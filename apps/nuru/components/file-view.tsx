@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import dynamic from 'next/dynamic'
 import type { StudyOutput } from '@/lib/ai/schema'
 import type { FileRow } from '@/lib/files/queries'
+import { uploadMayStillBeRunning } from '@/lib/files/upload-logic'
 import { AskDialog } from './ask-dialog'
 import { StudyPanel, type StudyTab } from './study-panel'
 
@@ -24,6 +25,7 @@ export type FileDetail = {
 const POLL_MS = 4000
 const OPEN_FAILED = "Couldn't open this PDF. Reload the page to try again."
 const UPLOAD_FAILED = "This upload didn't finish. Please upload the file again."
+const STILL_UPLOADING = 'Still uploading…'
 
 async function fetchViewUrl(id: string): Promise<string> {
   const res = await fetch(`/api/files/${id}/url`, { cache: 'no-store' })
@@ -62,44 +64,39 @@ export function FileView({ initial, initialUrl }: { initial: FileDetail; initial
   }, [id])
 
   // While the file is `uploaded` or `processing`, poll its status with a setTimeout chain; a 4xx stops it.
-  // An `uploaded` file never got its /complete (the tab closed mid-upload, say): call it once first.
-  // The route is idempotent via the claim, so a 409 just means someone else is already on it.
-  const completeTried = useRef(false)
+  // An `uploaded` file may still be uploading in another tab: the row exists before the PUT starts.
+  // Only once the presigned PUT window has passed does the viewer call /complete itself (the uploader's
+  // tab closed mid-upload, say). A 409 (still in progress, or someone else claimed it) or a 5xx means
+  // keep polling; only a 422 or 404 means the upload didn't finish.
+  const createdAt = detail.file.createdAt
   useEffect(() => {
     if (uploadFailed || (status !== 'uploaded' && status !== 'processing')) return
     let off = false
     let timer: ReturnType<typeof setTimeout> | undefined
 
-    async function poll() {
+    async function tick() {
+      if (status === 'uploaded' && !uploadMayStillBeRunning(new Date(createdAt), new Date())) {
+        try {
+          const res = await fetch(`/api/files/${id}/complete`, { method: 'POST' })
+          if (res.status === 422 || res.status === 404) return setUploadFailed(true)
+        } catch {}
+      }
+      if (off) return
       try {
         const res = await fetch(`/api/files/${id}`, { cache: 'no-store' })
         if (off || (res.status >= 400 && res.status < 500)) return
         if (res.ok) setDetail((await res.json()) as FileDetail)
       } catch {}
-      if (!off) timer = setTimeout(poll, POLL_MS)
+      if (!off) timer = setTimeout(tick, POLL_MS)
     }
 
-    async function complete() {
-      try {
-        const res = await fetch(`/api/files/${id}/complete`, { method: 'POST' })
-        if (!res.ok && res.status !== 409) return setUploadFailed(true)
-      } catch {
-        return setUploadFailed(true)
-      }
-      if (!off) void poll()
-    }
-
-    if (status === 'uploaded' && !completeTried.current) {
-      completeTried.current = true
-      void complete()
-    } else {
-      timer = setTimeout(poll, POLL_MS)
-    }
+    if (status === 'uploaded') void tick()
+    else timer = setTimeout(tick, POLL_MS)
     return () => {
       off = true
       clearTimeout(timer)
     }
-  }, [id, status, uploadFailed])
+  }, [id, status, createdAt, uploadFailed])
 
   async function retry() {
     const res = await fetch(`/api/files/${id}/retry`, { method: 'POST' })
@@ -125,7 +122,10 @@ export function FileView({ initial, initialUrl }: { initial: FileDetail; initial
         <span className="text-xs tabular-nums text-[var(--muted)]">Page {page}{detail.file.pages ? ` of ${detail.file.pages}` : ''}</span>
       </div>
 
-      {urlError ? (
+      {status === 'uploaded' ? (
+        // The object may not exist yet, so the PDF isn't opened until /complete has claimed it.
+        <p role="status" className="ui-sans text-sm text-[var(--muted)]">{STILL_UPLOADING}</p>
+      ) : urlError ? (
         <p role="alert" className="ui-sans text-sm text-red-700 dark:text-red-400">{urlError}</p>
       ) : url ? (
         <PdfViewer url={url} page={page} onPageChange={setPage} onLoadError={onLoadError} />

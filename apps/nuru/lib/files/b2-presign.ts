@@ -1,7 +1,7 @@
 // Client and presigning for B2. No `server-only` here so it can be tested offline; import it only from b2.ts.
 import { GetObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
-import { safeFilename } from './upload-logic'
+import { UPLOAD_WINDOW_MS, safeFilename } from './upload-logic'
 
 let cached: S3Client | undefined
 
@@ -23,7 +23,7 @@ export function presignPut(key: string, bytes: number): Promise<string> {
   return getSignedUrl(
     client(),
     new PutObjectCommand({ Bucket: bucket(), Key: key, ContentType: 'application/pdf', ContentLength: bytes }),
-    { expiresIn: 600 },
+    { expiresIn: UPLOAD_WINDOW_MS / 1000 },
   )
 }
 
