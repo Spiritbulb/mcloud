@@ -12,22 +12,20 @@ This block is written and re-added by `turbo` before repository-scoped commands 
 # Menengai Cloud (mcloud)
 
 Multi-tenant commerce/site platform for Kenyan merchants and NGOs. Merchants get a hosted
-storefront ("store" or "site") plus a settings area; Spiritbulb also ships two mobile apps.
+storefront ("store" or "site") plus a settings area.
 Docs index: `docs/README.md`. Read `docs/architecture.md` when new to the repo, `docs/api.md`
 before adding a route, `docs/payments.md` before touching checkout, and `docs/CLEANUP.md` for
 known debt before large refactors.
 
 ## Layout
 
-npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `packages/*`. The two mobile apps
-are **not** workspaces and have their own lockfiles.
+npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `apps/nuru`, `packages/*`. The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`.
 
 | Path | What it is |
 |---|---|
 | `apps/web` | Platform site `mcloud.co.ke`: marketing, login/logout, org hub (`/org`), billing, servers, wallet, admin, docs, and the **mobile/partner APIs** (`app/api/mobile/*`, `app/api/partner/*`). |
 | `apps/storefront` | `app.mcloud.co.ke` and merchants' custom domains. Public stores (`app/(storefront)/store/[slug]/*`) and the signed-in **store settings** (`app/(merchant)/org/[orgSlug]/[storeSlug]/settings/*`) plus the `/api/store/*` routes they call. |
-| `apps/mobile` | Expo merchant app (`@mcloud/mobile`). Talks to `apps/web` `/api/mobile/*` with bearer tokens. |
-| `apps/nuru` | Expo notes/chat app. Talks to `apps/web` `/api/mobile/{chat,notes}`. |
+| `apps/nuru` | Nuru web + API, `nuru.spiritb.uk`. Own Neon DB and B2; shares only WorkOS identity via `@mcloud/auth/standalone`. Migrations in `apps/nuru/migrations/`. |
 | `packages/auth` | Provider-agnostic auth API (`getSession`, etc.). The only provider is WorkOS AuthKit (`providers/workos.ts`). |
 | `packages/db` | Supabase clients: `server` (**service-role**), `client`, `customer-*` (storefront shoppers). `database.types.ts` is generated (`npm run sb-typegen -w @mcloud/web`). |
 | `packages/merchant` | Shared merchant logic: plans, stores, store-data, logistics-data, org context, `storefront-url`, seed pages. |
@@ -64,7 +62,6 @@ node --import ./scripts/ts-resolve.mjs path/to/x.test.ts   # one test file (run 
   A test file that only logs "passed" must still throw on failure (use `assert`).
 - **Lint** is ESLint 9 (`eslint-config-next` 16; ESLint 10 breaks `eslint-plugin-react`, don't bump it).
   Many rules are deliberately `warn` (baseline debt). New code should not add warnings, and `lint` must stay at 0 errors.
-- Mobile apps: `cd apps/mobile && npm install && npx expo start` (same for `apps/nuru`). Android builds: `.github/workflows/android-build.yml`, EAS profiles in `eas.json`.
 - `/run-mcloud` skill drives the running app with Playwright for screenshots/UI checks.
 
 ## Turborepo

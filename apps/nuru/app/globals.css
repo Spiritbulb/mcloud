@@ -1,0 +1,32 @@
+@import "tailwindcss";
+@source "../../../packages/ui/src";
+
+:root {
+  --paper: #fbfaf7;
+  --ink: #1f2421;
+  --muted: #6b726d;
+  --line: #e4e1d9;
+  --accent: #1f6f50;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #151816;
+    --ink: #e8e6e0;
+    --muted: #9aa19b;
+    --line: #2a2f2c;
+    --accent: #5cc79a;
+  }
+}
+
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: ui-serif, Georgia, 'Times New Roman', serif;
+  line-height: 1.65;
+  padding-bottom: 3rem;
+}
+
+.ui-sans {
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}

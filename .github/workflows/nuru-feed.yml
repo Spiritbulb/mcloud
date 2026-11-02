@@ -1,0 +1,10 @@
+name: nuru-feed
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch: {}
+jobs:
+  ingest:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl -fsS -X POST -H "Authorization: Bearer ${{ secrets.NURU_CRON_SECRET }}" https://nuru.spiritb.uk/api/cron/feed

@@ -13,6 +13,8 @@ export const KINDS = {
     cron: [/CRON_SECRET/],
     // signed-in AND a member of the store/org the route touches
     member: [/requireStoreAccess(ById)?\(|getStoreSettingsData\(|getStoreOverview\(|canManage\(|getOrgRole\(|getStoreRole\(|store_members|org_members/],
+    // Nuru: cookie session or bearer token, the caller's own data
+    user: [/requireUser\(/],
     // the shopper's own Supabase customer session (storefront accounts)
     customer: [/getStoreCustomer\(/],
     // The kinds below have no (or a weaker) gate, so a reason after the dash is mandatory.

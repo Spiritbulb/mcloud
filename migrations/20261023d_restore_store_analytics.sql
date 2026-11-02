@@ -11,7 +11,7 @@
 -- This re-applies the function from 20260717_store_analytics_funnel_orders.sql
 -- unchanged (that file is the source of truth for the shape; see
 -- apps/storefront/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/analytics/analytics-client.tsx
--- and apps/mobile/src/lib/api.ts), and pins EXECUTE to service_role: callers are
+-- and ~/mcloud-mobile src/lib/api.ts), and pins EXECUTE to service_role: callers are
 -- the storefront and web route handlers, which check store access first.
 -- Idempotent.
 -- ============================================================================
