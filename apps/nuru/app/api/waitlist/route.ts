@@ -4,7 +4,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { SPIRITBULB_FROM, sendEmail } from '@mcloud/mail'
 import { waitlistEmail } from '@mcloud/mail/templates'
-import { db } from '@/lib/db'
+import { db, dbUnavailableOrThrow, isDbUnavailable } from '@/lib/db'
 import { currentUser } from '@/lib/session'
 import { hashIp, parseWaitlistInput, withAccountEmail } from '@/lib/waitlist/waitlist-logic'
 
@@ -16,6 +16,14 @@ function fail(status: number, error: string) {
 }
 
 export async function POST(req: NextRequest) {
+  try {
+    return await join(req)
+  } catch (err) {
+    return dbUnavailableOrThrow(err)
+  }
+}
+
+async function join(req: NextRequest): Promise<NextResponse> {
   let body: unknown
   try {
     body = await req.json()
@@ -48,6 +56,7 @@ export async function POST(req: NextRequest) {
       on conflict ((lower(email)), kind) do nothing
       returning id`
   } catch (err) {
+    if (isDbUnavailable(err)) throw err
     console.error('waitlist insert failed', err)
     return fail(500, 'Could not join the waitlist. Please try again.')
   }

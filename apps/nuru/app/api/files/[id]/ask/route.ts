@@ -4,6 +4,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { ASK_LIMIT_PER_DAY, parseAsk } from '@/lib/ai/ask-logic'
 import { answerAboutPage } from '@/lib/ai/claude'
+import { dbUnavailableOrThrow } from '@/lib/db'
 import { getFile, getPage, reserveAsk } from '@/lib/files/queries'
 import { isFileId } from '@/lib/files/upload-logic'
 import { requireUser } from '@/lib/session'
@@ -16,7 +17,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const user = await requireUser(req)
   if (user instanceof NextResponse) return user
   const { id } = await params
-  const file = isFileId(id) ? await getFile(user.id, id) : null
+  try {
+    return await ask(req, user.id, id)
+  } catch (err) {
+    return dbUnavailableOrThrow(err)
+  }
+}
+
+async function ask(req: NextRequest, ownerId: string, id: string): Promise<NextResponse> {
+  const file = isFileId(id) ? await getFile(ownerId, id) : null
   if (!file) return NextResponse.json({ error: 'File not found' }, { status: 404, headers: NO_STORE })
   // Ready files, and failed files whose text was extracted (e.g. notes failed), can be asked about.
   const pageCount = file.pages ?? 0
@@ -31,14 +40,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   const { page, question } = parsed.value
 
   // Read the page first, so a missing page never spends a slot.
-  const pageText = await getPage(user.id, file.id, page)
+  const pageText = await getPage(ownerId, file.id, page)
   if (pageText == null) {
     return NextResponse.json({ error: "Nuru can't answer questions about this file yet." }, { status: 409, headers: NO_STORE })
   }
 
   // Reserve the slot before calling the model, so concurrent asks cannot exceed the limit.
   // A failed or refused call keeps its slot.
-  if (!(await reserveAsk(user.id, file.id, page, ASK_LIMIT_PER_DAY))) {
+  if (!(await reserveAsk(ownerId, file.id, page, ASK_LIMIT_PER_DAY))) {
     return NextResponse.json({ error: "You've reached today's question limit." }, { status: 429, headers: NO_STORE })
   }
   try {

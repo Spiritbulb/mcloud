@@ -1,6 +1,7 @@
 // @route-kind: user
 // POST /api/files/upload-url  { filename, mime, bytes } -> { id, uploadUrl }
 import { NextResponse, type NextRequest } from 'next/server'
+import { dbUnavailableOrThrow } from '@/lib/db'
 import { presignPut } from '@/lib/files/b2'
 import { createFile } from '@/lib/files/queries'
 import { objectKey, validateUploadRequest } from '@/lib/files/upload-logic'
@@ -26,6 +27,10 @@ export async function POST(req: NextRequest) {
   const id = crypto.randomUUID()
   const b2Key = objectKey(user.id, id, filename)
   const uploadUrl = await presignPut(b2Key, bytes)
-  await createFile(user.id, { id, b2Key, filename, bytes })
+  try {
+    await createFile(user.id, { id, b2Key, filename, bytes })
+  } catch (err) {
+    return dbUnavailableOrThrow(err)
+  }
   return NextResponse.json({ id, uploadUrl }, { headers: NO_STORE })
 }

@@ -2,7 +2,7 @@ import 'server-only'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getMobileSession, getSession } from '@mcloud/auth/standalone'
 import type { AuthUser } from '@mcloud/auth/types'
-import { db } from '@/lib/db'
+import { db, dbUnavailableOrThrow } from '@/lib/db'
 
 export type NuruUser = {
   id: string
@@ -41,11 +41,18 @@ export async function currentUser(): Promise<NuruUser | null> {
   return session?.user ? resolveUser(session.user) : null
 }
 
-/** API gate: bearer token when an Authorization header is present, otherwise the cookie. */
+/**
+ * API gate: bearer token when an Authorization header is present, otherwise the cookie.
+ * An unreachable database is a 503 response; any other error still throws.
+ */
 export async function requireUser(req: NextRequest): Promise<NuruUser | NextResponse> {
   const session = req.headers.has('authorization') ? await getMobileSession(req) : await getSession(req)
   if (!session?.user) return NextResponse.json({ error: 'Sign in required' }, { status: 401 })
-  return resolveUser(session.user)
+  try {
+    return await resolveUser(session.user)
+  } catch (err) {
+    return dbUnavailableOrThrow(err)
+  }
 }
 
 /** Server-action gate for admin-only work. */
