@@ -23,8 +23,9 @@ let cached: Anthropic | null = null
 
 function client(): Anthropic {
   if (!process.env.ANTHROPIC_API_KEY) throw new Error('ANTHROPIC_API_KEY is not set')
-  // Generation runs inside a 300 s function: fail well before that, so the file ends `failed`, not stuck.
-  cached ??= new Anthropic({ timeout: 200_000, maxRetries: 1 })
+  // Generation runs inside a 300 s function (maxDuration). 120 s per attempt with one retry keeps both
+  // attempts (240 s) inside it, so the file ends `failed`, not stuck in `processing`.
+  cached ??= new Anthropic({ timeout: 120_000, maxRetries: 1 })
   return cached
 }
 
