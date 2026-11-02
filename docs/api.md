@@ -13,6 +13,7 @@ There is no separate API server. Every endpoint is a Next.js route handler
 | | `/api/webhooks/*`, `/api/cron/*`, `/api/payments/*` | Providers and schedulers |
 | `apps/storefront` | `/api/store/[slug]/*` | Public stores (shoppers) and the settings UI (managers) |
 | | `/api/upload`, `/api/store/domain` | Settings UI |
+| `apps/nuru` | `/api/feed`, `/api/files/*`, `/api/me`, `/api/waitlist`, `/api/cron/feed` | Nuru web and mobile (cookie or bearer token); see [nuru.md](nuru.md) |
 
 ## Route kinds (enforced)
 
@@ -25,13 +26,14 @@ Every `route.ts` begins with one line declaring what protects it:
 and the file must actually call that kind's gate. `npm test` fails if a route has no
 declaration, an unknown kind, or doesn't show the gate. The check is
 [`scripts/route-kinds.mjs`](../scripts/route-kinds.mjs), run by `app/api/_route-kinds.test.ts`
-in each app.
+in each app (web, storefront and nuru).
 
 | Kind | Meaning | The file must call |
 |---|---|---|
 | `admin` | Platform admin only | `requireAdmin()` (`apps/web/lib/require-admin.ts`) |
 | `member` | Signed in **and** a member of the store/org it touches | `requireStoreAccess[ById]`, `getStoreSettingsData`, `getOrgRole`, `getStoreRole` or a `store_members`/`org_members` check |
 | `mobile` | Bearer token from the mobile apps | `requireMobileUser()` (`apps/web/app/api/mobile/_lib.ts`) |
+| `user` | Nuru only: the caller's own data, by cookie session or bearer token | `requireUser()` (`apps/nuru/lib/session.ts`) |
 | `customer` | The shopper's own storefront session | `getStoreCustomer()` |
 | `partner` | Trusted partner site | `requirePartnerSecret()` (fails closed) |
 | `cron` | Vercel cron | `CRON_SECRET` check |

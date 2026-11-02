@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { StudyOutputSchema, WhySchema, type StudyOutput } from './schema'
 
-export const MODEL = 'claude-opus-5-5'
+export const MODEL = 'claude-haiku-5-5'
 
 const SYSTEM = `You write study notes and practice questions for a university student, drawn only from the document they give you.
 
@@ -30,11 +30,9 @@ function client(): Anthropic {
 }
 
 export async function generateStudyOutput(docText: string): Promise<StudyOutput> {
-  const res = await client().beta.messages.parse({
+  const res = await client().messages.parse({
     model: MODEL,
     max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
     system: SYSTEM,
     messages: [{ role: 'user', content: docText }],
     output_config: { effort: 'medium', format: zodOutputFormat(StudyOutputSchema) },
@@ -46,11 +44,9 @@ export async function generateStudyOutput(docText: string): Promise<StudyOutput>
 
 /** One answer to one question, drawn only from the given page. Not a conversation. */
 export async function answerAboutPage(page: number, pageText: string, question: string): Promise<string> {
-  const res = await client().beta.messages.create({
+  const res = await client().messages.create({
     model: MODEL,
     max_tokens: 4000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
     system: ASK_SYSTEM,
     messages: [{ role: 'user', content: `<page n="${page}">${pageText}</page>\n\n<question>${question}</question>` }],
     output_config: { effort: 'low' },
@@ -74,11 +70,9 @@ export async function whyItMatters(
   const content = items
     .map((i) => `<item id="${i.id}" source="${esc(i.source)}"><title>${esc(i.title)}</title><summary>${esc(i.summary)}</summary></item>`)
     .join('\n')
-  const res = await client().beta.messages.parse({
+  const res = await client().messages.parse({
     model: MODEL,
     max_tokens: 16000,
-    betas: ['server-side-fallback-2026-07-01'],
-    fallbacks: 'default',
     system: WHY_SYSTEM,
     messages: [{ role: 'user', content }],
     output_config: { effort: 'low', format: zodOutputFormat(WhySchema) },
