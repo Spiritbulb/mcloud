@@ -4,7 +4,7 @@
 // then generates notes in after().
 import { NextResponse, after, type NextRequest } from 'next/server'
 import { deleteObject, headObject, readRange } from '@/lib/files/b2'
-import { extractAndStore, generateForFile } from '@/lib/files/process'
+import { extractAndStore, generateForFile, markFailed } from '@/lib/files/process'
 import { claimForProcessing, deleteFile, getFile } from '@/lib/files/queries'
 import { checkUploadedObject, isFileId, isPdfContentType } from '@/lib/files/upload-logic'
 import { requireUser } from '@/lib/session'
@@ -41,8 +41,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!(await claimForProcessing(user.id, file.id, 'uploaded'))) {
     return NextResponse.json({ error: 'This file is already being processed' }, { status: 409, headers: NO_STORE })
   }
-  const result = await extractAndStore(user.id, file)
-  if (result !== 'ok') return NextResponse.json({ status: 'failed' }, { headers: NO_STORE })
-  after(() => generateForFile(user.id, file.id))
-  return NextResponse.json({ status: 'processing' }, { headers: NO_STORE })
+  // Past the claim nothing may throw: a file left in `processing` could never be retried.
+  try {
+    if ((await extractAndStore(user.id, file)) !== 'ok') return NextResponse.json({ status: 'failed' }, { headers: NO_STORE })
+    after(() => generateForFile(user.id, file))
+    return NextResponse.json({ status: 'processing' }, { headers: NO_STORE })
+  } catch (err) {
+    console.error('[nuru] complete failed after claim', file.id, err)
+    await markFailed(user.id, file.id, 'generation_failed')
+    return NextResponse.json({ status: 'failed' }, { headers: NO_STORE })
+  }
 }

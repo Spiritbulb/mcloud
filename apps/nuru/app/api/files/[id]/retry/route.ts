@@ -1,9 +1,9 @@
 // @route-kind: user
 // POST /api/files/:id/retry -> { status } | { error }
-// Backs "Try again" on a file whose generation failed. Pages are already stored.
+// Backs "Try again" on a file whose generation failed. Re-extracts first if no pages were stored.
 import { NextResponse, after, type NextRequest } from 'next/server'
 import { canRetry } from '@/lib/ai/generate-logic'
-import { generateForFile } from '@/lib/files/process'
+import { generateForFile, markFailed } from '@/lib/files/process'
 import { claimForProcessing, getFile } from '@/lib/files/queries'
 import { isFileId } from '@/lib/files/upload-logic'
 import { requireUser } from '@/lib/session'
@@ -24,6 +24,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (!(await claimForProcessing(user.id, file.id, 'failed'))) {
     return NextResponse.json({ error: 'This file is already being processed' }, { status: 409, headers: NO_STORE })
   }
-  after(() => generateForFile(user.id, file.id))
-  return NextResponse.json({ status: 'processing' }, { headers: NO_STORE })
+  // Past the claim nothing may throw: a file left in `processing` could never be retried.
+  // generateForFile never throws and re-extracts when no pages are stored.
+  try {
+    after(() => generateForFile(user.id, file))
+    return NextResponse.json({ status: 'processing' }, { headers: NO_STORE })
+  } catch (err) {
+    console.error('[nuru] retry failed after claim', file.id, err)
+    await markFailed(user.id, file.id, 'generation_failed')
+    return NextResponse.json({ status: 'failed' }, { headers: NO_STORE })
+  }
 }

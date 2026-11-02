@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { extractPages } from './extract'
-import { MAX_DOC_CHARS, buildDocumentText, canRetry, cleanOutputs, errorMessage, hasText } from './generate-logic'
+import { MAX_DOC_CHARS, buildDocumentText, canRetry, cleanOutputs, errorMessage, hasText, isEmptyOutput } from './generate-logic'
 
 async function fixture(name: string): Promise<Uint8Array> {
   return new Uint8Array(await readFile(path.join(import.meta.dirname, '__fixtures__', name)))
@@ -47,4 +47,11 @@ test('extractPages reads a text PDF per page', async () => {
 
 test('a scanned PDF has no text', async () => {
   assert.equal(hasText(await extractPages(await fixture('notext.pdf'))), false)
+})
+
+test('isEmptyOutput is true only when nothing survived cleaning', () => {
+  assert.equal(isEmptyOutput({ notes: [], questions: [] }), true)
+  assert.equal(isEmptyOutput({ notes: [], questions: [{ question: 'Q', answer: 'A', pages: [1] }] }), false)
+  assert.equal(isEmptyOutput({ notes: [{ heading: 'H', points: [{ text: 'p', pages: [1] }] }], questions: [] }), false)
+  assert.equal(isEmptyOutput(cleanOutputs({ notes: [{ heading: 'H', points: [{ text: 'p', pages: [9] }] }], questions: [] }, 3)), true)
 })

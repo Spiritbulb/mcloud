@@ -50,3 +50,8 @@ export function errorMessage(code: string | null): string {
 export function canRetry(code: string | null): boolean {
   return code === 'generation_failed'
 }
+
+/** True when no note or question survived cleaning; such a file ends `failed`, not `ready`. */
+export function isEmptyOutput(o: StudyOutput): boolean {
+  return o.notes.length === 0 && o.questions.length === 0
+}
