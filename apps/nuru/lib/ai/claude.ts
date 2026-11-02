@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk'
 import { zodOutputFormat } from '@anthropic-ai/sdk/helpers/zod'
 import { StudyOutputSchema, WhySchema, type StudyOutput } from './schema'
 
-export const MODEL = 'claude-opus-5-5'
+export const MODEL = 'claude-haiku-5-5'
 
 const SYSTEM = `You write study notes and practice questions for a university student, drawn only from the document they give you.
 
