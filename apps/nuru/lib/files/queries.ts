@@ -140,3 +140,19 @@ export async function getOutputs(
     questions: questions ? (questions.content as StudyOutput['questions']) : null,
   }
 }
+
+// asks has its own owner_id, so the daily limit counts one user's questions across all their files.
+
+export async function countRecentAsks(ownerId: string): Promise<number> {
+  const rows = (await db()`
+    select count(*)::int as n from asks
+    where owner_id = ${ownerId} and created_at > now() - interval '24 hours'`) as { n: number }[]
+  return rows[0]?.n ?? 0
+}
+
+export async function recordAsk(ownerId: string, fileId: string, pageNo: number): Promise<void> {
+  await db()`
+    insert into asks (owner_id, file_id, page_no)
+    select ${ownerId}, ${fileId}::uuid, ${pageNo}
+    where exists (select 1 from files where id = ${fileId} and owner_id = ${ownerId})`
+}
