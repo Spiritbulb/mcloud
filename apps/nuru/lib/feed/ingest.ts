@@ -6,6 +6,8 @@ import { normalizeItem } from './normalize-logic'
 import { PARSERS } from './parsers'
 import { isStale } from './stale-logic'
 import { withFeedLease } from './lease'
+import { whyUpdates } from './why-logic'
+import { whyItMatters } from '@/lib/ai/claude'
 import type { RawItem, Source } from './types'
 
 export type SourceResult = { source: string; ok: boolean; inserted: number; error?: string }
@@ -28,7 +30,11 @@ async function fetchRaw(s: Source): Promise<RawItem[]> {
   return items
 }
 
-async function ingestSource(s: Source): Promise<SourceResult> {
+type NewItem = { id: number; title: string; summary: string; source: string }
+
+const WHY_BATCH = 20
+
+async function ingestSource(s: Source, fresh: NewItem[]): Promise<SourceResult> {
   try {
     const raw = await fetchRaw(s)
     const now = new Date()
@@ -41,8 +47,11 @@ async function ingestSource(s: Source): Promise<SourceResult> {
         select ${s.id}, ${item.url}, ${item.title}, ${item.summary}, ${item.publishedAt}, ${item.titleKey}
         where not exists (select 1 from feed_items where source_id = ${s.id} and title_key = ${item.titleKey})
         on conflict (url) do nothing
-        returning id`
+        returning id, title, summary`
       inserted += rows.length
+      for (const row of rows) {
+        fresh.push({ id: Number(row.id), title: String(row.title ?? ''), summary: String(row.summary ?? ''), source: s.name })
+      }
     }
     await db()`update sources set last_fetched_at = now(), last_ok_at = now(), last_error = null where id = ${s.id}`
     return { source: s.name, ok: true, inserted }
@@ -57,11 +66,26 @@ async function ingestSource(s: Source): Promise<SourceResult> {
   }
 }
 
+/** Best effort: any failure is logged and never touches the ingest results. */
+async function addWhyLines(batch: NewItem[]): Promise<void> {
+  if (batch.length === 0) return
+  try {
+    const results = await whyItMatters(batch)
+    for (const u of whyUpdates(batch.map((b) => b.id), results)) {
+      await db()`update feed_items set why = ${u.why} where id = ${u.id}`
+    }
+  } catch (e) {
+    console.error('why-this-matters failed:', e instanceof Error ? e.message : String(e))
+  }
+}
+
 export async function runIngest(): Promise<SourceResult[]> {
   const rows = await db()`
     select id, name, kind, url, homepage, category, parser from sources where active order by id`
   const sources = rows as unknown as Source[]
-  const settled = await Promise.allSettled(sources.map(ingestSource))
+  const fresh: NewItem[] = []
+  const settled = await Promise.allSettled(sources.map((s) => ingestSource(s, fresh)))
+  await addWhyLines(fresh.slice(0, WHY_BATCH))
   return settled.map((r, i) =>
     r.status === 'fulfilled'
       ? r.value

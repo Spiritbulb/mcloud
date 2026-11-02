@@ -11,3 +11,7 @@ export const StudyOutputSchema = z.object({
 })
 
 export type StudyOutput = z.infer<typeof StudyOutputSchema>
+
+export const WhySchema = z.object({
+  items: z.array(z.object({ id: z.number().int(), why: z.string().nullable() })),
+})
