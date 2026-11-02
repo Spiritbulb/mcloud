@@ -4,10 +4,12 @@ import { bucket, client, presignGet, presignPut } from './b2-presign'
 
 export { presignPut, presignGet }
 
-export async function headBytes(key: string): Promise<number | null> {
+/** Size and stored Content-Type, or null when the object does not exist. */
+export async function headObject(key: string): Promise<{ bytes: number; contentType: string | undefined } | null> {
   try {
     const r = await client().send(new HeadObjectCommand({ Bucket: bucket(), Key: key }))
-    return r.ContentLength ?? null
+    if (r.ContentLength == null) return null
+    return { bytes: r.ContentLength, contentType: r.ContentType }
   } catch (err) {
     const e = err as { name?: string; $metadata?: { httpStatusCode?: number } }
     if (e.name === 'NotFound' || e.$metadata?.httpStatusCode === 404) return null

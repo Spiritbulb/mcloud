@@ -503,6 +503,11 @@ dead, infrastructure, other repos. Tick items off (or delete them) as they are d
   vendor, as before. A platform admin can now also be a vendor.
 - `reach_vendor_members.user_id` has a unique FK to `users`; deleting a user cascades to `reach_users`.
 
+### Nuru
+
+- [ ] **Delete mcloud's Nuru code** (`apps/web/app/api/mobile/{notes,chat}`, `nuru_*` tables, storage bucket) once
+  the new Nuru mobile app ships; ported to `apps/nuru/lib/ai/`.
+
 ### Infrastructure (Cloudflare)
 
 Cloudflare proxies `mcloud.co.ke` and `spiritb.uk` (orange cloud). The connector available to Claude is

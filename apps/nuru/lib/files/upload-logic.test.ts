@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { MAX_BYTES, checkUploadedObject, objectKey, safeFilename, validateUploadRequest } from './upload-logic'
+import { MAX_BYTES, checkUploadedObject, isFileId, isPdfContentType, objectKey, safeFilename, validateUploadRequest } from './upload-logic'
 
 test('safeFilename strips paths and unsafe characters', () => {
   assert.equal(safeFilename('../../etc/x.pdf'), 'x.pdf')
@@ -31,4 +31,18 @@ test('checkUploadedObject checks size and magic bytes', () => {
   assert.equal(checkUploadedObject({ declared: 5, actual: 6, head: pdf }).ok, false)
   assert.equal(checkUploadedObject({ declared: 5, actual: null, head: pdf }).ok, false)
   assert.equal(checkUploadedObject({ declared: 5, actual: 5, head: new TextEncoder().encode('<html') }).ok, false)
+})
+
+test('isPdfContentType accepts only application/pdf', () => {
+  assert.equal(isPdfContentType('application/pdf'), true)
+  assert.equal(isPdfContentType('Application/PDF; charset=binary'), true)
+  assert.equal(isPdfContentType('text/html'), false)
+  assert.equal(isPdfContentType('application/pdfx'), false)
+  assert.equal(isPdfContentType(undefined), false)
+})
+
+test('isFileId accepts only uuids', () => {
+  assert.equal(isFileId('3f1c2a9e-8b7d-4c6e-9a1b-2c3d4e5f6a7b'), true)
+  assert.equal(isFileId('not-a-uuid'), false)
+  assert.equal(isFileId("3f1c2a9e-8b7d-4c6e-9a1b-2c3d4e5f6a7b' or 1=1"), false)
 })

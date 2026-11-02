@@ -36,3 +36,15 @@ export function checkUploadedObject(o: { declared: number; actual: number | null
   if (!PDF_MAGIC.every((b, i) => o.head[i] === b)) return { ok: false, error: 'The file is not a PDF' }
   return { ok: true }
 }
+
+/** The object's stored Content-Type must be application/pdf (parameters ignored). */
+export function isPdfContentType(contentType: string | undefined): boolean {
+  return contentType?.split(';')[0].trim().toLowerCase() === 'application/pdf'
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+/** File ids are uuids; anything else is a 404 before it reaches a uuid column. */
+export function isFileId(id: string): boolean {
+  return UUID_RE.test(id)
+}
