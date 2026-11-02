@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { hashIp, parseWaitlistInput } from './waitlist-logic'
+import { hashIp, parseWaitlistInput, withAccountEmail } from './waitlist-logic'
 
 test('parses and normalises a valid input', () => {
   assert.deepEqual(parseWaitlistInput({ email: ' A@B.CO ', kind: 'uploads' }), {
@@ -34,4 +34,14 @@ test('hashIp is deterministic, salted, hex sha256', () => {
   assert.equal(hashIp('1.2.3.4', 's'), hashIp('1.2.3.4', 's'))
   assert.notEqual(hashIp('1.2.3.4', 's'), hashIp('1.2.3.4', 't'))
   assert.match(hashIp('1.2.3.4', 's'), /^[0-9a-f]{64}$/)
+})
+
+test('a signed-in user joins with the account email, not the body email', () => {
+  const body = { email: 'someone-else@example.com', kind: 'uploads' }
+  const parsed = parseWaitlistInput(withAccountEmail(body, 'Me@Example.com'))
+  assert.equal(parsed.ok && parsed.value.email, 'me@example.com')
+  const noBodyEmail = parseWaitlistInput(withAccountEmail({ kind: 'uploads' }, 'me@example.com'))
+  assert.equal(noBodyEmail.ok, true)
+  assert.deepEqual(withAccountEmail(body, null), body)
+  assert.equal(withAccountEmail(null, 'me@example.com'), null)
 })

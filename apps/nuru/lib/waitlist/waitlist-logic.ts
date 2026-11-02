@@ -42,6 +42,12 @@ export function parseWaitlistInput(body: unknown): { ok: true; value: WaitlistIn
   }
 }
 
+/** A signed-in user joins with their account email: whatever email the body carries is ignored. */
+export function withAccountEmail(body: unknown, accountEmail: string | null): unknown {
+  if (accountEmail === null || typeof body !== 'object' || body === null) return body
+  return { ...(body as Record<string, unknown>), email: accountEmail }
+}
+
 export function hashIp(ip: string, salt: string): string {
   return createHash('sha256').update(`${salt}:${ip}`).digest('hex')
 }

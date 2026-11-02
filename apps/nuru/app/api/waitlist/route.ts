@@ -1,11 +1,12 @@
 // @route-kind: public — anyone may join the waitlist; rate limited by IP
 // POST /api/waitlist  { email, kind, institutionName?, note? }
+// Signed in: the account email is used and the body email ignored. Signed out: the body email, no user_id.
 import { NextResponse, type NextRequest } from 'next/server'
 import { SPIRITBULB_FROM, sendEmail } from '@mcloud/mail'
 import { waitlistEmail } from '@mcloud/mail/templates'
 import { db } from '@/lib/db'
 import { currentUser } from '@/lib/session'
-import { hashIp, parseWaitlistInput } from '@/lib/waitlist/waitlist-logic'
+import { hashIp, parseWaitlistInput, withAccountEmail } from '@/lib/waitlist/waitlist-logic'
 
 const RATE_LIMIT_MAX_ATTEMPTS = 5
 const NO_STORE = { 'Cache-Control': 'no-store' }
@@ -21,7 +22,8 @@ export async function POST(req: NextRequest) {
   } catch {
     return fail(400, 'Invalid request body')
   }
-  const parsed = parseWaitlistInput(body)
+  const user = await currentUser()
+  const parsed = parseWaitlistInput(withAccountEmail(body, user?.email ?? null))
   if (!parsed.ok) return fail(400, parsed.error)
   const { email, kind, institutionName, note } = parsed.value
 
@@ -38,7 +40,6 @@ export async function POST(req: NextRequest) {
     return fail(429, 'Too many attempts. Please wait a few minutes and try again.')
   }
 
-  const user = await currentUser()
   let inserted
   try {
     inserted = await sql`
