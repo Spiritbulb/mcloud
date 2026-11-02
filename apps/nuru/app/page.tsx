@@ -1,8 +1,25 @@
-export default function Home() {
+import { FeedList } from '@/components/feed-list'
+import { maybeRefreshFeed } from '@/lib/feed/ingest'
+import { listFeed, type FeedRow } from '@/lib/feed/queries'
+
+// ISR: never read cookies(), headers() or searchParams here.
+export const revalidate = 600
+
+export default async function Home() {
+  let rows: FeedRow[] = []
+  try {
+    await maybeRefreshFeed()
+    rows = await listFeed({})
+  } catch (err) {
+    console.error('feed unavailable', err)
+  }
   return (
     <section>
-      <h1 className="text-3xl font-semibold tracking-tight">Nuru</h1>
-      <p className="mt-3 text-[var(--muted)]">Read the news and your documents, with help one question away.</p>
+      <h1 className="text-2xl font-semibold tracking-tight">News</h1>
+      <p className="ui-sans mt-1 text-sm text-[var(--muted)]">
+        Kenyan government, universities and media, from the last 7 days.
+      </p>
+      <FeedList initial={rows} />
     </section>
   )
 }
