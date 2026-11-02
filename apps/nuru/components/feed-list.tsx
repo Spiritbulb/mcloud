@@ -10,7 +10,7 @@ const CHIPS = [
   { key: 'media', label: 'Media' },
 ] as const
 
-type Page = { items: FeedRow[]; nextBefore: string | null }
+type Page = { items: FeedRow[]; nextCursor: string | null }
 
 export function FeedList({ initial }: { initial: FeedRow[] }) {
   const [rows, setRows] = useState(initial)
@@ -27,11 +27,14 @@ export function FeedList({ initial }: { initial: FeedRow[] }) {
     setLoading(true)
     setFailed(false)
     try {
-      const res = await fetch(`/api/feed?before=${encodeURIComponent(last.at)}`)
+      const res = await fetch(`/api/feed?cursor=${encodeURIComponent(last.cursor)}`)
       if (!res.ok) throw new Error(String(res.status))
       const page = (await res.json()) as Page
-      setRows((cur) => [...cur, ...page.items])
-      setMore(page.nextBefore !== null)
+      setRows((cur) => {
+        const seen = new Set(cur.map((r) => r.id))
+        return [...cur, ...page.items.filter((r) => !seen.has(r.id))]
+      })
+      setMore(page.nextCursor !== null)
     } catch {
       setFailed(true)
     } finally {

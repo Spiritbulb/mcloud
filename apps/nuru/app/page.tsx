@@ -1,3 +1,4 @@
+import { PHASE_PRODUCTION_BUILD } from 'next/constants'
 import { FeedList } from '@/components/feed-list'
 import { maybeRefreshFeed } from '@/lib/feed/ingest'
 import { listFeed, type FeedRow } from '@/lib/feed/queries'
@@ -8,10 +9,16 @@ export const revalidate = 600
 export default async function Home() {
   let rows: FeedRow[] = []
   try {
-    await maybeRefreshFeed()
-    rows = await listFeed({})
+    await maybeRefreshFeed() // best-effort
   } catch (err) {
-    console.error('feed unavailable', err)
+    console.error('feed refresh failed', err)
+  }
+  try {
+    rows = await listFeed({ days: 7 })
+  } catch (err) {
+    // Only tolerate a missing DB while building. At runtime throw, so Next keeps the last good page.
+    if (process.env.NEXT_PHASE !== PHASE_PRODUCTION_BUILD) throw err
+    console.error('feed unavailable at build', err)
   }
   return (
     <section>
