@@ -6,6 +6,7 @@
 | [api.md](api.md) | You are adding or changing an API route. |
 | [payments.md](payments.md) | You are touching checkout, M-PESA, PayPal or wallet top-ups. |
 | [reach.md](reach.md) | You are touching the Reach marketplace: store listing, store keys, the mobile vendor API. |
+| [nuru.md](nuru.md) | You are touching `apps/nuru`: the study feed, PDF uploads and notes, or its isolated database and session. |
 | [caching.md](caching.md) | You are touching public store pages, or adding a write that visitors should see. |
 | [environment.md](environment.md) | You are setting up a machine or a Vercel project. |
 | [storefront-domain-move.md](storefront-domain-move.md) | You are changing storefront sign-in, hosts or cookies, or planning the move to its own domain. |

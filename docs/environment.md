@@ -43,9 +43,9 @@ add it here.
 | `PALPLUSS_API_KEY`, `PALPLUSS_BASE_URL` | PalPluss (wallet top-ups, Reach payments) |
 | `UPCLOUD_API_TOKEN` | UpCloud (servers) |
 | `TRADING_VERCEL_TOKEN`, `TRADING_VERCEL_PROJECT_ID`, `TRADING_VERCEL_TEAM_ID` | Domain management for trading apps |
-| `ANTHROPIC_API_KEY` | Nuru chat (Anthropic path) |
-| `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Nuru chat and embeddings (Azure path) |
-| `AZURE_VISION_ENDPOINT`, `AZURE_VISION_API_KEY` | OCR for Nuru note ingest |
+| `ANTHROPIC_API_KEY` | Legacy `/api/mobile/chat` (Anthropic path) |
+| `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Legacy `/api/mobile/chat` and embeddings (Azure path) |
+| `AZURE_VISION_ENDPOINT`, `AZURE_VISION_API_KEY` | OCR for legacy `/api/mobile/notes` ingest |
 
 ## `apps/storefront` only
 
@@ -56,6 +56,12 @@ add it here.
 | `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | Custom-domain management (`/api/store/domain`); the project id is the **storefront** project |
 
 `apps/storefront/ENV.md` is the older per-app checklist; this file supersedes it where they differ.
+
+## `apps/nuru` only
+
+Nuru has its own database, bucket and session, so it shares none of the variables above except the
+WorkOS client keys. Its list (Neon, B2, `IP_HASH_SALT`, and so on) is in
+[`apps/nuru/ENV.md`](../apps/nuru/ENV.md). `WORKOS_COOKIE_DOMAIN` must be unset there.
 
 ## Retired
 

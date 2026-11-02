@@ -24,7 +24,8 @@
         ▼ Cloudflare R2 worker (uploads), Safaricom Daraja, PayPal, PalPluss
 ```
 
-Two Next.js apps, one database (Supabase), shared packages. They are separate Vercel
+Two Next.js apps, one database (Supabase), shared packages (plus `apps/nuru`, which is isolated; see
+[nuru.md](nuru.md)). Web and storefront are separate Vercel
 projects and separate origins; the merchant session is shared by a cookie scoped to
 `.mcloud.co.ke` (`WORKOS_COOKIE_DOMAIN`), so signing in on web also signs you in on the
 storefront's `/org/*`.
@@ -43,6 +44,7 @@ storefront's `/org/*`.
 | Store settings UI, the Editor, and the `/api/store/*` routes | `apps/storefront` (`app/(merchant)`, `app/api/store`) |
 | Uploads to R2 | `apps/storefront` (`app/api/upload`) |
 | Logic needed by both apps | `packages/merchant` (plans, stores, store data, payments rules, seed pages) |
+| Nuru (study feed, PDF notes) | `apps/nuru`, a separate app with its own Neon database and B2 bucket; see [nuru.md](nuru.md) |
 | Sending email | `packages/mail` (`sendEmail`, which never throws, and escaped templates in `@mcloud/mail/templates`) |
 
 Rule: settings and `/api/store/*` live in the storefront; anything both apps need goes in
@@ -98,7 +100,7 @@ Main tables, grouped:
 - **Plans and money:** `store_subscriptions`, `org_wallets`, `wallet_ledger_entries`, `wallet_topups`, `servers`, `server_billing`
 - **Analytics:** `store_analytics`, `store_visits`
 - **Admin:** `admin_audit_log` (append-only; RLS on, no grants)
-- **Other products:** `nuru_*` (notes and chat), `reach_*` (Reach vendors/couriers), `trading_apps`, `docs_pages`, `waitlist`, `beta_signups`
+- **Other products:** `nuru_*` (legacy mobile notes and chat; the Nuru web app uses its own Neon database, not Supabase), `reach_*` (Reach vendors/couriers), `trading_apps`, `docs_pages`, `waitlist`, `beta_signups`
 
 **All database access is server-side.** The server client is service-role and bypasses RLS, so
 authorization is enforced in route code and server actions (`requireManagedStore` in
@@ -152,9 +154,10 @@ body is a raster image, and its size. See `lib/upload-key.ts`.
 
 ## Mobile apps
 
-The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`. The merchant app
-registers push tokens and the Nuru app uses `/api/mobile/notes` and `/api/mobile/chat` (Azure OpenAI or
-Anthropic, with note chunks in `nuru_note_chunks`).
+The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos. The merchant app
+calls `apps/web` `/api/mobile/*` and registers push tokens. The Nuru web app and its API are `apps/nuru`
+(see [nuru.md](nuru.md)); the older `/api/mobile/notes` and `/api/mobile/chat` routes (Azure OpenAI or
+Anthropic, note chunks in `nuru_note_chunks`) are legacy, kept only until the new mobile app ships.
 
 ## Plans and billing
 
