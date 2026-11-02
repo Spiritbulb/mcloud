@@ -5,6 +5,10 @@ import 'pdfjs-dist/web/pdf_viewer.css'
 import { useEffect, useRef, useState } from 'react'
 import type { EventBus, PDFViewer } from 'pdfjs-dist/web/pdf_viewer.mjs'
 
+// pdfjs-dist 5 supports these at runtime but its .d.ts omits them.
+type ViewerOptions = ConstructorParameters<typeof PDFViewer>[0] & { abortSignal?: AbortSignal }
+type Resettable = { setDocument(doc: null): void }
+
 type Props = {
   url: string
   page: number
@@ -33,6 +37,10 @@ export default function PdfViewer({ url, page, onPageChange, onLoadError }: Prop
   useEffect(() => {
     let cancelled = false
     let destroy: (() => void) | null = null
+    let created: PDFViewer | null = null
+    // Removes the viewer's ResizeObserver, scroll listener and our event bus listeners.
+    const ac = new AbortController()
+    const signal = ac.signal
     ;(async () => {
       const pdfjs = await import('pdfjs-dist')
       // pdf_viewer.mjs reads the core library from this global.
@@ -44,19 +52,22 @@ export default function PdfViewer({ url, page, onPageChange, onLoadError }: Prop
       const eventBus = new lib.EventBus()
       const linkService = new lib.PDFLinkService({ eventBus })
       const findController = new lib.PDFFindController({ eventBus, linkService })
-      const v = new lib.PDFViewer({
+      const options: ViewerOptions = {
         container: container.current,
         viewer: viewerEl.current,
         eventBus,
         linkService,
         findController,
         textLayerMode: 1,
-      })
+        abortSignal: signal,
+      }
+      const v = new lib.PDFViewer(options)
+      created = v
       linkService.setViewer(v)
-      eventBus.on('pagesinit', () => { v.currentScaleValue = 'page-width' })
-      eventBus.on('pagechanging', (e: { pageNumber: number }) => callbacks.current.onPageChange(e.pageNumber))
-      eventBus.on('updatefindmatchescount', (e: { matchesCount: Count }) => setCount(e.matchesCount))
-      eventBus.on('updatefindcontrolstate', (e: { matchesCount: Count }) => setCount(e.matchesCount))
+      eventBus.on('pagesinit', () => { v.currentScaleValue = 'page-width' }, { signal })
+      eventBus.on('pagechanging', (e: { pageNumber: number }) => callbacks.current.onPageChange(e.pageNumber), { signal })
+      eventBus.on('updatefindmatchescount', (e: { matchesCount: Count }) => setCount(e.matchesCount), { signal })
+      eventBus.on('updatefindcontrolstate', (e: { matchesCount: Count }) => setCount(e.matchesCount), { signal })
 
       const task = pdfjs.getDocument({ url })
       destroy = () => { void task.destroy() }
@@ -74,6 +85,8 @@ export default function PdfViewer({ url, page, onPageChange, onLoadError }: Prop
     })
     return () => {
       cancelled = true
+      ac.abort()
+      ;(created as unknown as Resettable | null)?.setDocument(null)
       destroy?.()
       viewer.current = null
       bus.current = null

@@ -141,18 +141,31 @@ export async function getOutputs(
   }
 }
 
-// asks has its own owner_id, so the daily limit counts one user's questions across all their files.
-
-export async function countRecentAsks(ownerId: string): Promise<number> {
+export async function getPage(ownerId: string, fileId: string, pageNo: number): Promise<string | null> {
   const rows = (await db()`
-    select count(*)::int as n from asks
-    where owner_id = ${ownerId} and created_at > now() - interval '24 hours'`) as { n: number }[]
-  return rows[0]?.n ?? 0
+    select p.text from file_pages p
+    join files f on f.id = p.file_id
+    where p.file_id = ${fileId} and p.page_no = ${pageNo} and f.owner_id = ${ownerId}`) as { text: string }[]
+  return rows[0]?.text ?? null
 }
 
-export async function recordAsk(ownerId: string, fileId: string, pageNo: number): Promise<void> {
-  await db()`
-    insert into asks (owner_id, file_id, page_no)
-    select ${ownerId}, ${fileId}::uuid, ${pageNo}
-    where exists (select 1 from files where id = ${fileId} and owner_id = ${ownerId})`
+// asks has its own owner_id, so the daily limit counts one user's questions across all their files.
+
+/**
+ * Reserves one ask against the rolling 24 h limit before the model is called. The advisory lock
+ * serialises a user's concurrent asks, so the count and insert cannot race. Returns false at the limit.
+ * A reserved row stays even if the model call later fails or is refused.
+ */
+export async function reserveAsk(ownerId: string, fileId: string, pageNo: number, limit: number): Promise<boolean> {
+  const sql = db()
+  const [, inserted] = (await sql.transaction([
+    sql`select pg_advisory_xact_lock(hashtext(${ownerId}))`,
+    sql`
+      insert into asks (owner_id, file_id, page_no)
+      select ${ownerId}, ${fileId}::uuid, ${pageNo}
+      where exists (select 1 from files where id = ${fileId} and owner_id = ${ownerId})
+        and (select count(*) from asks where owner_id = ${ownerId} and created_at > now() - interval '24 hours') < ${limit}
+      returning id`,
+  ])) as [unknown, { id: number }[]]
+  return inserted.length > 0
 }
