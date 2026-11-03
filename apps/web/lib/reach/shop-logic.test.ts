@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { decideLegacyLink, mergeOrderHistory, validateShopperProfile } from './shop-logic'
+import { decideLegacyLink, mergeOrderHistory, orderVisibleTo, validateShopperProfile } from './shop-logic'
 
 const buyer = { userId: 'u1', platformRole: 'customer', reachRole: 'buyer', alreadyLinked: false }
 
@@ -32,5 +32,13 @@ const merged = mergeOrderHistory(
     [{ id: 'a', created_at: '2026-01-01T00:00:00Z' }, { id: 'c', created_at: '2026-02-01T00:00:00Z' }],
 )
 assert.deepEqual(merged.map((o) => o.id), ['b', 'c', 'a'])
+
+// An order is the shopper's through their Reach customer row, or through their linked old account.
+const viewer = { customerId: 'c1', legacyUserId: 'u1' }
+assert.equal(orderVisibleTo({ customer_id: 'c1', legacy_user_id: null }, viewer), true)
+assert.equal(orderVisibleTo({ customer_id: null, legacy_user_id: 'u1' }, viewer), true)
+assert.equal(orderVisibleTo({ customer_id: 'c2', legacy_user_id: 'u2' }, viewer), false)
+// null never matches null: a shopper with no customer row must not see every guest order.
+assert.equal(orderVisibleTo({ customer_id: null, legacy_user_id: null }, { customerId: null, legacyUserId: null }), false)
 
 console.log('shop-logic: passed')

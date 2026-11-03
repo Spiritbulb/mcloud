@@ -51,3 +51,17 @@ export function mergeOrderHistory<T extends { id: string; created_at: string }>(
     for (const o of [...a, ...b]) if (!byId.has(o.id)) byId.set(o.id, o)
     return [...byId.values()].sort((x, y) => y.created_at.localeCompare(x.created_at))
 }
+
+/**
+ * Whether a Reach-store order belongs to this shopper: through their customer row in the Reach
+ * store, or through the WorkOS account they were linked from (reach_payments.user_id). A null id
+ * never matches anything.
+ */
+export function orderVisibleTo(
+    order: { customer_id: string | null; legacy_user_id: string | null },
+    viewer: { customerId: string | null; legacyUserId: string | null },
+): boolean {
+    if (viewer.customerId && order.customer_id === viewer.customerId) return true
+    if (viewer.legacyUserId && order.legacy_user_id === viewer.legacyUserId) return true
+    return false
+}
