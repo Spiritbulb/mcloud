@@ -106,11 +106,11 @@ export default async function GuidePage({ params }: Props) {
                     <h2 id="related-docs" className="mb-3 text-sm font-semibold text-foreground">Settings covered in this guide</h2>
                     <ul className="grid gap-2 sm:grid-cols-2">
                         {related.map((d) => (
-                            <li key={d.slug}>
+                            <li key={d.slug} className="min-w-0">
                                 <Link href={docPath(d.slug)} className="flex items-center gap-2 rounded-xl border border-border px-4 py-3 text-sm text-foreground hover:bg-secondary/50">
                                     <DocIcon id={d.iconId} className="w-4 h-4 text-primary" />
-                                    <span className="font-medium">{d.title}</span>
-                                    <span className="text-muted-foreground truncate">: {d.description}</span>
+                                    <span className="font-medium shrink-0">{d.title}</span>
+                                    <span className="min-w-0 text-muted-foreground truncate">: {d.description}</span>
                                 </Link>
                             </li>
                         ))}
