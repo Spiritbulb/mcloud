@@ -4,6 +4,7 @@
 // dashboard); this file adds the "and make me its vendor" part, which needs no key.
 import { canManage, createOrgForUser, createStoreForUser, findManageableOrg, requireStoreAccess, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { normalizeSlug, slugFromName } from '@mcloud/merchant/slug'
+import { storeSettingsUrl } from '@mcloud/merchant/storefront-url'
 import { ensureVendor, saveReachLocation, setReachListed } from '@mcloud/merchant/reach-listing'
 import { sendPushToUsers } from '@/lib/merchant/send-push'
 import { reachDb } from './db'
@@ -18,22 +19,24 @@ export interface ManagedStore {
     approvalStatus: string
     /** This user is currently the Reach vendor of this store. */
     current: boolean
+    /** The store's settings on the web (append e.g. '/orders'). */
+    settingsUrl: string | null
 }
 
 /** Every store the user is an owner/admin of, directly or through its org, with its Reach status. */
 export async function listManagedStores(userId: string): Promise<ManagedStore[]> {
     const db = await reachDb()
     const [{ data: direct }, { data: orgs }, { data: member }] = await Promise.all([
-        db.from('store_members').select('role, stores(id, slug, name)').eq('user_id', userId).in('role', ['owner', 'admin']),
+        db.from('store_members').select('role, stores(id, slug, name, orgs(slug))').eq('user_id', userId).in('role', ['owner', 'admin']),
         db.from('org_members').select('org_id').eq('user_id', userId).in('role', ['owner', 'admin']),
         db.from('reach_vendor_members').select('reach_vendors(store_id)').eq('user_id', userId).maybeSingle(),
     ])
     const orgIds = (orgs ?? []).map((o: any) => o.org_id)
     const { data: orgStores } = orgIds.length
-        ? await db.from('stores').select('id, slug, name').in('org_id', orgIds)
+        ? await db.from('stores').select('id, slug, name, orgs(slug)').in('org_id', orgIds)
         : { data: [] }
 
-    const byId = new Map<string, { id: string; slug: string; name: string }>()
+    const byId = new Map<string, { id: string; slug: string; name: string; orgs?: { slug: string } | null }>()
     for (const s of [...(direct ?? []).map((d: any) => d.stores), ...(orgStores ?? [])]) if (s?.id) byId.set(s.id, s)
     if (!byId.size) return []
 
@@ -49,6 +52,7 @@ export async function listManagedStores(userId: string): Promise<ManagedStore[]>
             listed: !!vendorOf.get(s.id)?.listed,
             approvalStatus: vendorOf.get(s.id)?.approval_status ?? 'draft',
             current: s.id === currentStoreId,
+            settingsUrl: s.orgs?.slug ? storeSettingsUrl(s.orgs.slug, s.slug) : null,
         }))
         .sort((a, b) => a.name.localeCompare(b.name))
 }
