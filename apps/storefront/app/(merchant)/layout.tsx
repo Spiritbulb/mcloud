@@ -12,6 +12,8 @@ const lora = Lora({ variable: '--font-lora', subsets: ['latin'], style: ['normal
 
 export const metadata: Metadata = {
     title: 'Menengai Cloud',
+    // `favicon.ico` only works at the top of app/, and this app has one root layout per route group.
+    icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
     robots: { index: false, follow: false },
 }
 

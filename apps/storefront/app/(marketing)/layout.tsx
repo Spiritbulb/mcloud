@@ -19,6 +19,7 @@ export const metadata: Metadata = {
     },
     description:
         'Hosted websites for Kenyan merchants and NGOs, with M-PESA checkout, donations, a visual editor and your own domain.',
+    icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
 }
 
 export const viewport: Viewport = {
