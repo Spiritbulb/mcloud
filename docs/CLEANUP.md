@@ -155,6 +155,12 @@ web today: the Daraja callback URL is hard-coded in both copies as
 from `appUrl`. Do not delete web's copies until those external registrations are moved
 and a payment has been tested end to end in production.
 
+### 2.10 Reach WorkOS buyer path *(new, 2026-11)*
+Reach shoppers now sign in with Supabase and use `/api/mobile/reach/shop/*`. The WorkOS buyer routes (`reach/confirm-buyer`,
+`reach/orders`, `reach/orders/[orderId]`) and the WorkOS branch of `requireMobileUserOrShopper` remain for old app builds.
+Remove them, and `reach_users` rows with role `buyer`, once analytics show no old builds checking out. Linked buyers keep
+their history via `reach_shoppers.legacy_user_id`, so it must stay.
+
 ### 2.6 Duplicate libraries
 `apps/storefront/lib/merchant/{stores,store-managers,send-push}.ts` are older copies
 that have already **diverged** from `packages/merchant/src/stores.ts` and

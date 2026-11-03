@@ -81,6 +81,17 @@ go through `webUrl()` (storefront → web) and `storeSettingsUrl()` (web → sto
 - **Shoppers** (customers of a store) are a separate Supabase Auth path
   (`@mcloud/db` `customer-client`/`customer-server`), scoped per store. This is the only
   place `supabase.auth.getUser()` is meaningful.
+- **Reach shoppers** use that same Supabase account, sent as a bearer token
+  (`@mcloud/db/customer-token`, `requireReachShopper`).
+  - Shoppers are not in `users`; each has a `reach_shoppers` row.
+  - On first sign-in, an old WorkOS Reach buyer with the same *confirmed* email is linked
+    (`legacy_user_id`), so their profile and orders carry over (`lib/reach/shop-logic.ts`
+    `decideLegacyLink`).
+  - At checkout the shopper gets a `customers` row in the Reach store, which holds their order
+    history, and one in each store they bought from.
+  - Reach vendors and admins stay on WorkOS. A store owner who creates or lists a store from the
+    app becomes its vendor without a key (`reach_join_as_owner`). That access lasts as long as
+    they can manage the store.
 - **Identity continuity:** `AuthUser.id` is the WorkOS `externalId` when set, which holds
   the legacy `auth0|…` id, so existing foreign keys keep matching. Do not remove that
   mapping or `ensureLinked()` until every user is linked.

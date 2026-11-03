@@ -32,9 +32,9 @@ in each app (web, storefront and nuru).
 |---|---|---|
 | `admin` | Platform admin only | `requireAdmin()` (`apps/web/lib/require-admin.ts`) |
 | `member` | Signed in **and** a member of the store/org it touches | `requireStoreAccess[ById]`, `getStoreSettingsData`, `getOrgRole`, `getStoreRole` or a `store_members`/`org_members` check |
-| `mobile` | Bearer token from the mobile apps | `requireMobileUser()` (`apps/web/app/api/mobile/_lib.ts`) |
+| `mobile` | WorkOS bearer token from the mobile apps | `requireMobileUser()` (`apps/web/app/api/mobile/_lib.ts`); `requireMobileUserOrShopper()` for the catalog reads Reach shoppers share |
 | `user` | Nuru only: the caller's own data, by cookie session or bearer token | `requireUser()` (`apps/nuru/lib/session.ts`) |
-| `customer` | The shopper's own storefront session | `getStoreCustomer()` |
+| `customer` | The shopper's own Supabase session: storefront cookie, or a Reach bearer token | `getStoreCustomer()` (storefront) or `requireReachShopper()` (web `/api/mobile/reach/shop/*`) |
 | `partner` | Trusted partner site | `requirePartnerSecret()` (fails closed) |
 | `cron` | Vercel cron | `CRON_SECRET` check |
 | `session` | Signed in, acting on the caller's own data or a global catalog | `getSession()`; **reason required** |
@@ -95,3 +95,21 @@ or an amount check (see [payments.md](payments.md)).
 The mobile apps depend on response shapes in `/api/mobile/*`, and old app versions stay in
 users' hands for months. Add fields freely; do not rename, remove or retype existing ones
 without a versioned route.
+
+### Reach
+
+Reach has two kinds of caller, with different tokens:
+
+| Who | Token | Routes |
+|---|---|---|
+| Shoppers | Supabase access token (`requireReachShopper`) | `/api/mobile/reach/shop/*`: `me`, `stores/[slug]`, `stores/[slug]/products`, `orders`, `orders/[orderNumber]`. Also `reach/areas` and `reach/products`. |
+| Vendors, Reach admins | WorkOS (`requireMobileUser`) | `/api/mobile/reach/vendor/*`, `/api/mobile/reach/admin/*`, and the merchant routes `/api/mobile/stores/[slug]/*` for owners |
+
+- **Shopper routes** take who the shopper is only from the verified token. The store, customer
+  and price never come from the body; `shop/_body-trust.test.ts` pins this. Checkout is
+  `lib/reach/checkout.ts`, shared with the old WorkOS buyer route `reach/orders`.
+- **Vendor store routes** (`vendor/stores`, `vendor/store`, `vendor/keys`) are for owners and
+  admins of the store. `vendor/stores` creates or lists a store, and `vendor/store` and
+  `vendor/keys` act on the store the user is the vendor of (`myManagedStore`). Key-joined staff
+  get 403. The listing and key logic is `@mcloud/merchant/reach-listing`, which the store
+  dashboard also uses.
