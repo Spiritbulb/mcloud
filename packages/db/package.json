@@ -10,6 +10,7 @@
     "./client": "./src/client.ts",
     "./customer-server": "./src/customer-server.ts",
     "./customer-client": "./src/customer-client.ts",
+    "./customer-token": "./src/customer-token.ts",
     "./types": "./src/database.types.ts"
   },
   "dependencies": {

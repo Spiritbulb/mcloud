@@ -15,8 +15,8 @@ export const KINDS = {
     member: [/requireStoreAccess(ById)?\(|getStoreSettingsData\(|getStoreOverview\(|canManage\(|getOrgRole\(|getStoreRole\(|store_members|org_members/],
     // Nuru: cookie session or bearer token, the caller's own data
     user: [/requireUser\(/],
-    // the shopper's own Supabase customer session (storefront accounts)
-    customer: [/getStoreCustomer\(/],
+    // the shopper's own Supabase customer session (storefront cookies, or a Reach bearer token)
+    customer: [/getStoreCustomer\(|requireReachShopper\(/],
     // The kinds below have no (or a weaker) gate, so a reason after the dash is mandatory.
     // signed-in only, acting on the caller's own data or reading a global catalog
     session: [/getSession\(|withAuth\(/],

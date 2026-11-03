@@ -5,6 +5,8 @@
 import { getMobileSession } from '@mcloud/auth/server'
 import { ensureUserRow } from '@mcloud/auth/callback'
 import type { AuthUser } from '@mcloud/auth/types'
+import { verifyCustomerToken } from '@mcloud/db/customer-token'
+import { ensureShopper, type Shopper } from '@/lib/reach/shopper'
 import { NextResponse, type NextRequest } from 'next/server'
 
 /** JSON error response. */
@@ -28,4 +30,18 @@ export async function requireMobileUser(
     // before any handler writes rows that FK to users.id (org/store creation).
     await ensureUserRow(session.user)
     return { user: session.user }
+}
+
+/**
+ * Resolve the Reach shopper from a Supabase bearer token (not WorkOS), or return a 401 response.
+ * The shopper's identity comes only from the verified token, never from the request body.
+ */
+export async function requireReachShopper(req: NextRequest): Promise<{ shopper: Shopper } | NextResponse> {
+    const header = req.headers.get('authorization') ?? ''
+    const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
+    const user = token ? await verifyCustomerToken(token) : null
+    if (!user) return fail(401, 'Unauthorized')
+    const shopper = await ensureShopper(user)
+    if (!shopper) return fail(500, 'Could not load your account')
+    return { shopper }
 }
