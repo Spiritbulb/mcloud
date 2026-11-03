@@ -5,10 +5,10 @@
 import { canManage, createOrgForUser, createStoreForUser, findManageableOrg, requireStoreAccess, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { normalizeSlug, slugFromName } from '@mcloud/merchant/slug'
 import { storeSettingsUrl } from '@mcloud/merchant/storefront-url'
-import { ensureVendor, saveReachLocation, setReachListed } from '@mcloud/merchant/reach-listing'
+import { ensureVendor, saveReachLocation, setReachListed, vendorOfStore } from '@mcloud/merchant/reach-listing'
 import { sendPushToUsers } from '@/lib/merchant/send-push'
 import { reachDb } from './db'
-import { planOneStepSetup } from './shop-logic'
+import { findPreviousSetupStore, planOneStepSetup, sellingBlockedFor, shouldRequestListing } from './shop-logic'
 import { vendorFor } from './vendor'
 
 export interface ManagedStore {
@@ -74,13 +74,20 @@ export async function listAndJoin(
     const storeId = access.storeId!
 
     const db = await reachDb()
-    if (input.areaId !== undefined) {
-        const saved = await saveReachLocation(db, storeId, { areaId: input.areaId, extraAreaIds: [], payoutPhone: input.payoutPhone ?? null })
-        if (!saved.ok) return { ok: false, status: 400, error: saved.error }
+    const blocked = await sellingBlocked(db, userId)
+    if (blocked) return blocked
+
+    // Only a store that never asked (or was sent back) is put up for listing. Switching to a store
+    // the owner switched off keeps it off, and nothing approved is sent back for review.
+    if (shouldRequestListing(await vendorOfStore(db, storeId))) {
+        if (input.areaId !== undefined) {
+            const saved = await saveReachLocation(db, storeId, { areaId: input.areaId, extraAreaIds: [], payoutPhone: input.payoutPhone ?? null })
+            if (!saved.ok) return { ok: false, status: 400, error: saved.error }
+        }
+        const listed = await setReachListed(db, storeId, true)
+        if (!listed.ok) return { ok: false, status: 400, error: listed.error }
+        if (listed.asked) await notifyReachAdmins(db, listed.storeName ?? 'A store')
     }
-    const listed = await setReachListed(db, storeId, true)
-    if (!listed.ok) return { ok: false, status: 400, error: listed.error }
-    if (listed.asked) await notifyReachAdmins(db, listed.storeName ?? 'A store')
 
     const { data: store } = await db.from('stores').select('id, name').eq('id', storeId).maybeSingle()
     const vendor = store ? await ensureVendor(db, store) : null
@@ -88,9 +95,7 @@ export async function listAndJoin(
 
     const { error } = await db.rpc('reach_join_as_owner', { p_user_id: userId, p_vendor_id: vendor.id })
     if (error) {
-        if (error.message?.includes('role_conflict')) {
-            return { ok: false, status: 409, error: 'This account shops on Reach. Use a different account to sell.' }
-        }
+        if (error.message?.includes('role_conflict')) return ROLE_CONFLICT
         return { ok: false, status: 500, error: 'Could not open your store. Try again.' }
     }
     return { ok: true, slug }
@@ -109,13 +114,17 @@ export async function createAndJoin(
     if (typeof input.areaId !== 'string' || !input.areaId) return { ok: false, status: 400, error: 'Choose the area your store delivers from.' }
 
     const db = await reachDb()
+    // Refuse before creating anything, so a refused request leaves no org or store behind.
+    const blocked = await sellingBlocked(db, userId)
+    if (blocked) return blocked
+
     let org = await findManageableOrg(userId)
     const base = normalizeSlug(slugFromName(name)) || 'store'
-    // A store of theirs with this name's slug in this org is a previous attempt: reuse it.
+    // A store of theirs with this name in this org is a previous attempt: reuse it.
     let existingStoreSlug: string | null = null
     if (org) {
-        const { data } = await db.from('stores').select('slug').eq('slug', base).eq('org_id', org.id).eq('owner_id', userId).maybeSingle()
-        existingStoreSlug = data?.slug ?? null
+        const { data } = await db.from('stores').select('slug, name').eq('org_id', org.id).eq('owner_id', userId)
+        existingStoreSlug = findPreviousSetupStore(data ?? [], name, base)
     }
 
     let slug = existingStoreSlug ?? base
@@ -134,6 +143,13 @@ export async function createAndJoin(
     }
     // 'list' and 'join'
     return listAndJoin(userId, slug, { areaId: input.areaId, payoutPhone: input.payoutPhone })
+}
+
+const ROLE_CONFLICT = { ok: false, status: 409, error: 'This account shops on Reach. Use a different account to sell.' } as const
+
+async function sellingBlocked(db: any, userId: string): Promise<VendorStoreResult | null> {
+    const { data } = await db.from('reach_users').select('role').eq('user_id', userId).maybeSingle()
+    return sellingBlockedFor(data?.role ?? null) ? ROLE_CONFLICT : null
 }
 
 /** Tell the Reach admins a store asked to be listed. Best effort. */

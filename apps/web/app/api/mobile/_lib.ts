@@ -6,6 +6,7 @@ import { getMobileSession } from '@mcloud/auth/server'
 import { ensureUserRow } from '@mcloud/auth/callback'
 import type { AuthUser } from '@mcloud/auth/types'
 import { verifyCustomerToken } from '@mcloud/db/customer-token'
+import { shopperAccess } from '@/lib/reach/shop-logic'
 import { ensureShopper, type Shopper } from '@/lib/reach/shopper'
 import { NextResponse, type NextRequest } from 'next/server'
 
@@ -41,6 +42,8 @@ export async function requireReachShopper(req: NextRequest): Promise<{ shopper: 
     const token = header.startsWith('Bearer ') ? header.slice(7).trim() : ''
     const user = token ? await verifyCustomerToken(token) : null
     if (!user) return fail(401, 'Unauthorized')
+    // History and customers are matched by email: an unconfirmed address proves nothing.
+    if (shopperAccess(user) === 'unconfirmed') return fail(403, 'Confirm your email first. We sent you a link.')
     const shopper = await ensureShopper(user)
     if (!shopper) return fail(500, 'Could not load your account')
     return { shopper }

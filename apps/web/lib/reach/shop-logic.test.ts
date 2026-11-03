@@ -1,5 +1,16 @@
 import assert from 'node:assert/strict'
-import { decideLegacyLink, membershipActive, mergeOrderHistory, orderVisibleTo, planOneStepSetup, validateShopperProfile } from './shop-logic'
+import {
+    decideLegacyLink,
+    findPreviousSetupStore,
+    membershipActive,
+    mergeOrderHistory,
+    orderVisibleTo,
+    planOneStepSetup,
+    sellingBlockedFor,
+    shouldRequestListing,
+    shopperAccess,
+    validateShopperProfile,
+} from './shop-logic'
 
 const buyer = { userId: 'u1', platformRole: 'customer', reachRole: 'buyer', alreadyLinked: false }
 
@@ -53,5 +64,34 @@ assert.equal(membershipActive({ keyId: null, keyActive: null, hasStoreAccess: fa
 assert.deepEqual(planOneStepSetup({ manageableOrg: null, existingStoreSlug: null }), ['create_org', 'create_store', 'list', 'join'])
 assert.deepEqual(planOneStepSetup({ manageableOrg: { id: 'o' }, existingStoreSlug: null }), ['create_store', 'list', 'join'])
 assert.deepEqual(planOneStepSetup({ manageableOrg: { id: 'o' }, existingStoreSlug: 'duka' }), ['list', 'join'])
+
+// A retry finds the store an earlier attempt made, even when that attempt had to suffix the slug.
+const mine = [
+    { slug: 'other', name: 'Other' },
+    { slug: 'duka-4821', name: 'Duka' },
+]
+assert.equal(findPreviousSetupStore(mine, 'Duka', 'duka'), 'duka-4821')
+assert.equal(findPreviousSetupStore([{ slug: 'duka', name: 'Duka' }], ' Duka ', 'duka'), 'duka')
+assert.equal(findPreviousSetupStore([{ slug: 'dukani', name: 'Dukani' }], 'Duka', 'duka'), null) // another store, not a retry
+assert.equal(findPreviousSetupStore([{ slug: 'duka-12', name: 'Different' }], 'Duka', 'duka'), null)
+
+// Shopper routes need a confirmed email: history is matched by email, so an unconfirmed sign-up
+// must not read the real owner's orders (whatever the Supabase project setting).
+assert.equal(shopperAccess({ emailConfirmed: true }), 'ok')
+assert.equal(shopperAccess({ emailConfirmed: false }), 'unconfirmed')
+
+// A Reach buyer account can't sell: refuse before creating anything.
+assert.equal(sellingBlockedFor('buyer'), true)
+assert.equal(sellingBlockedFor('vendor'), false)
+assert.equal(sellingBlockedFor(null), false)
+
+// Joining (or switching to) a store only asks for a listing when it never asked; a store the
+// owner switched off stays off, and nothing is re-sent for review.
+assert.equal(shouldRequestListing(null), true)
+assert.equal(shouldRequestListing({ listed: false, approval_status: 'draft' }), true)
+assert.equal(shouldRequestListing({ listed: false, approval_status: 'rejected' }), true)
+assert.equal(shouldRequestListing({ listed: false, approval_status: 'approved' }), false)
+assert.equal(shouldRequestListing({ listed: true, approval_status: 'pending' }), false)
+assert.equal(shouldRequestListing({ listed: true, approval_status: 'approved' }), false)
 
 console.log('shop-logic: passed')

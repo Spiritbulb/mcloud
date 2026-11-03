@@ -89,3 +89,34 @@ export function planOneStepSetup(s: { manageableOrg: { id: string } | null; exis
     if (!s.existingStoreSlug) return ['create_store', 'list', 'join']
     return ['list', 'join']
 }
+
+/**
+ * The store an earlier "create a store" attempt already made for this name, among the user's own
+ * stores in the org, or null. That attempt may have had to suffix the slug (`duka-4821`) because
+ * the plain one was taken, so match the name and the `base` or `base-NNNN` slug.
+ */
+export function findPreviousSetupStore(stores: { slug: string; name: string }[], name: string, base: string): string | null {
+    const wanted = name.trim()
+    const slugRe = new RegExp(`^${base.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?:-\\d+)?$`)
+    return stores.find((s) => s.name.trim() === wanted && slugRe.test(s.slug))?.slug ?? null
+}
+
+/** Shopper routes match history and customers by email, so only a confirmed email may use them. */
+export function shopperAccess(user: { emailConfirmed: boolean }): 'ok' | 'unconfirmed' {
+    return user.emailConfirmed ? 'ok' : 'unconfirmed'
+}
+
+/** One account doesn't hold both Reach roles: a Reach buyer (WorkOS) can't sell from it. */
+export function sellingBlockedFor(reachRole: string | null): boolean {
+    return reachRole === 'buyer'
+}
+
+/**
+ * Whether joining a store should also ask Reach to list it: only when it never asked (no vendor
+ * row, draft) or was sent back. A store the owner switched off stays off, and a pending or
+ * approved one is not re-sent for review.
+ */
+export function shouldRequestListing(vendor: { listed: boolean; approval_status: string } | null): boolean {
+    if (!vendor) return true
+    return vendor.approval_status === 'draft' || vendor.approval_status === 'rejected'
+}

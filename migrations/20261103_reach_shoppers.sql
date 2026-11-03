@@ -10,8 +10,9 @@
 -- instead of the key for those rows. Revoking a key still only ends the access of people who
 -- joined with it.
 --
--- Additive and safe to run before the matching web deploy. Old app builds keep working:
--- reach_payments.user_id is still filled for WorkOS buyers.
+-- Additive, and it MUST run before the matching web deploy: that deploy's checkout writes
+-- reach_payments.shopper_id, so without this column every Reach checkout fails. Old app builds
+-- keep working: reach_payments.user_id is still filled for WorkOS buyers.
 
 create table if not exists public.reach_shoppers (
   id             uuid primary key default gen_random_uuid(),
