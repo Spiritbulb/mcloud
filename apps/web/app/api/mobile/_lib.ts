@@ -45,3 +45,14 @@ export async function requireReachShopper(req: NextRequest): Promise<{ shopper: 
     if (!shopper) return fail(500, 'Could not load your account')
     return { shopper }
 }
+
+/**
+ * For the read-only catalog routes both apps share (areas, products): a WorkOS mobile user or a
+ * Reach shopper. Old Reach builds send WorkOS tokens for buyers; new ones send Supabase tokens.
+ */
+export async function requireMobileUserOrShopper(req: NextRequest): Promise<{ ok: true } | NextResponse> {
+    const session = await getMobileSession(req)
+    if (session?.user) return { ok: true }
+    const shopper = await requireReachShopper(req)
+    return shopper instanceof NextResponse ? shopper : { ok: true }
+}

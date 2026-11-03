@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
-import { buildVendorIndex, vendorDelivers, vendorForProduct, type ListedVendor } from './catalog-logic'
+import { buildVendorIndex, toBuyerProduct, vendorDelivers, vendorForProduct, type ListedVendor } from './catalog-logic'
+import { REACH_STORE_ID, priceForBuyer } from './store-config'
 
 const MARKET = 'store-market'
 const mk = (id: string, storeId: string | null, areaIds: string[] = []): ListedVendor => ({
@@ -44,5 +45,18 @@ assert.equal(vendorDelivers(mk('a', 's', ['wl']), areas, 'kl'), false)
 assert.equal(vendorDelivers(mk('a', 's', ['wl']), areas, 'nku'), false)
 assert.equal(vendorDelivers(mk('old', null, []), areas, 'nku'), true)
 assert.equal(vendorDelivers(mk('s', 's', []), areas, 'wl'), false) // store-backed with no area never delivers
+
+// What a buyer sees of a product: marked-up price, stock only when tracked.
+const row = { id: 'p1', store_id: 'store-a', name: 'Milk', price: 100, images: ['a.jpg'], description: null, inventory_quantity: 0, track_inventory: true }
+const bp = toBuyerProduct(row, shop)
+assert.equal(bp.buyerPrice, priceForBuyer(100, REACH_STORE_ID))
+assert.equal(bp.inStock, false)
+assert.equal(bp.stockLeft, 0)
+assert.equal(bp.vendorId, 'v-shop')
+assert.equal(bp.storeSlug, 'store-a')
+const untracked = toBuyerProduct({ ...row, images: null, track_inventory: false }, shop)
+assert.equal(untracked.inStock, true)
+assert.equal(untracked.stockLeft, null)
+assert.deepEqual(untracked.images, [])
 
 console.log('reach catalog logic ok')

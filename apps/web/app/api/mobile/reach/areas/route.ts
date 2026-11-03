@@ -4,10 +4,10 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { loadAreas } from '@/lib/reach/catalog'
 import { reachDb } from '@/lib/reach/db'
-import { fail, requireMobileUser } from '../../_lib'
+import { fail, requireMobileUserOrShopper } from '../../_lib'
 
 export async function GET(req: NextRequest) {
-    const auth = await requireMobileUser(req)
+    const auth = await requireMobileUserOrShopper(req)
     if (auth instanceof NextResponse) return auth
 
     try {

@@ -1,4 +1,5 @@
 import { vendorServesArea, type Area } from '@mcloud/merchant/reach-areas'
+import { REACH_STORE_ID, priceForBuyer } from './store-config'
 
 // Which Reach vendor sells a product. Pure so the rule has one tested home; the database
 // loading lives in catalog.ts.
@@ -61,3 +62,36 @@ export function vendorForProduct(
     }
     return index.byStore.get(product.store_id) ?? null
 }
+
+export interface ProductRow {
+    id: string
+    store_id: string
+    name: string
+    price: number | string
+    images: unknown
+    description: string | null
+    inventory_quantity: number | null
+    track_inventory: boolean | null
+}
+
+/** A product as Reach buyers see it: buyer price (with Reach's markup), stock only when tracked. */
+export function toBuyerProduct(p: ProductRow, vendor: ListedVendor) {
+    const tracked = p.track_inventory ?? true
+    const qty = p.inventory_quantity ?? 0
+    return {
+        id: p.id,
+        name: p.name,
+        price: Number(p.price),
+        buyerPrice: priceForBuyer(Number(p.price), REACH_STORE_ID),
+        images: Array.isArray(p.images) ? (p.images as string[]) : [],
+        description: p.description ?? null,
+        inStock: !tracked || qty > 0,
+        stockLeft: tracked ? qty : null,
+        vendorId: vendor.id,
+        vendorName: vendor.name,
+        storeSlug: vendor.storeSlug,
+        storeUrl: vendor.storeUrl,
+    }
+}
+
+export const BUYER_PRODUCT_COLS = 'id, store_id, name, price, images, description, inventory_quantity, track_inventory'
