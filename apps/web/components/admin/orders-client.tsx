@@ -42,7 +42,7 @@ export default function OrdersClient({
     const filtered = isFiltered(q)
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader title="Orders" description={`${total.toLocaleString()} ${filtered ? (total === 1 ? 'match' : 'matches') : 'total'}`} />
 
             <FilterBar
@@ -71,7 +71,7 @@ export default function OrdersClient({
                         <tbody>
                             {orders.map(order => (
                                 <Tr key={order.id}>
-                                    <Td><span className="font-mono text-[12px] max-md:font-medium">{order.order_number ?? '—'}</span></Td>
+                                    <Td><span className="font-mono text-[13px] max-md:font-medium">{order.order_number ?? '—'}</span></Td>
                                     <Td label="Store">
                                         {order.store?.slug ? (
                                             <a href={`/store/${order.store.slug}`} target="_blank" rel="noopener noreferrer" className="font-medium hover:text-primary hover:underline underline-offset-4">

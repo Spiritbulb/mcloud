@@ -222,7 +222,7 @@ function ProductForm({
                                 {images.map((img, i) => (
                                     <li key={i} className="flex items-center gap-3 rounded-md border border-border p-2">
                                         <Thumb src={img} alt="" />
-                                        <span className="min-w-0 flex-1 truncate font-mono text-[12px] text-muted-foreground">{img}</span>
+                                        <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted-foreground">{img}</span>
                                         <Button variant="ghost" size="sm" aria-label="Remove image" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>
                                             <Icon name="delete" size={15} />
                                         </Button>
@@ -254,13 +254,13 @@ function ProductForm({
                 }
             >
                 {variants.length === 0 ? (
-                    <p className="text-[13px] text-muted-foreground">No variants. Add one for sizes, colours or other options.</p>
+                    <p className="text-[14px] text-muted-foreground">No variants. Add one for sizes, colours or other options.</p>
                 ) : (
                     <div className="space-y-4">
                         {variants.map((v, i) => (
                             <div key={i} className="rounded-md border border-border p-3">
                                 <div className="mb-3 flex items-center justify-between">
-                                    <p className="text-[12px] font-medium text-muted-foreground">
+                                    <p className="text-[13px] font-medium text-muted-foreground">
                                         Variant {i + 1}{!v.is_active && ' · hidden'}
                                     </p>
                                     <div className="flex items-center gap-1">
@@ -407,7 +407,7 @@ export default function ProductSettings({
                                                 <Thumb src={(product.images as string[])?.[0]} alt={product.name} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{product.name}</p>
-                                                    <p className="truncate font-mono text-[12px] text-muted-foreground">{product.slug}</p>
+                                                    <p className="truncate font-mono text-[13px] text-muted-foreground">{product.slug}</p>
                                                 </div>
                                             </div>
                                         </Td>

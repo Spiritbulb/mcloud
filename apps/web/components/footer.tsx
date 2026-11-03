@@ -3,20 +3,20 @@ import Link from 'next/link'
 export function Footer() {
     return (
         <footer className="border-t border-border bg-background">
-            <div className="mx-auto px-4 md:px-2 max-w-6xl py-10">
+            <div className="mx-auto px-6 md:px-12 max-w-page py-10">
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-10">
                     <div className="col-span-2 md:col-span-1 space-y-3">
                         <Link href="/home" className="flex items-center gap-2">
                             <img src="/icons/logo-48.png" alt="" width={24} height={24} className="w-6 h-6" />
-                            <span className="text-[13px] font-semibold text-foreground/80">Menengai Cloud</span>
+                            <span className="text-[14px] font-semibold text-foreground/80">Menengai Cloud</span>
                         </Link>
-                        <p className="text-[12px] text-muted-foreground/70 leading-relaxed max-w-[180px]">
+                        <p className="text-[13px] text-muted-foreground/70 leading-relaxed max-w-[180px]">
                             Managed platform for enterprise applications.
                         </p>
                     </div>
 
                     <div className="space-y-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">Platform</p>
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/70">Platform</p>
                         <ul className="space-y-2">
                             {[
                                 { href: '/org/stores?new=1', label: 'Create storefront' },
@@ -24,7 +24,7 @@ export function Footer() {
                             ].map(({ href, label }) => (
                                 <li key={href}>
                                     {/* A full page load: /org/* redirects from a route handler, which client navigation can't follow. */}
-                                    <a href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                                    <a href={href} className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
                                         {label}
                                     </a>
                                 </li>
@@ -33,14 +33,14 @@ export function Footer() {
                     </div>
 
                     <div className="space-y-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">Resources</p>
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/70">Resources</p>
                         <ul className="space-y-2">
                             {[
                                 { href: '/docs', label: 'Documentation' },
                                 { href: '/support', label: 'Support' },
                             ].map(({ href, label }) => (
                                 <li key={href}>
-                                    <Link href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                                    <Link href={href} className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
                                         {label}
                                     </Link>
                                 </li>
@@ -49,7 +49,7 @@ export function Footer() {
                     </div>
 
                     <div className="space-y-3">
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/70">Company</p>
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/70">Company</p>
                         <ul className="space-y-2">
                             {[
                                 { href: 'https://x.com/menengaicloud', label: 'Twitter / X' },
@@ -57,7 +57,7 @@ export function Footer() {
                                 { href: 'https://spiritb.uk/privacy', label: 'Privacy & Cookies' },
                             ].map(({ href, label }) => (
                                 <li key={href}>
-                                    <Link href={href} className="text-[13px] text-muted-foreground hover:text-foreground transition-colors">
+                                    <Link href={href} className="text-[14px] text-muted-foreground hover:text-foreground transition-colors">
                                         {label}
                                     </Link>
                                 </li>
@@ -67,10 +67,10 @@ export function Footer() {
                 </div>
 
                 <div className="border-t border-border pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-                    <p className="text-[12px] text-muted-foreground/60">
+                    <p className="text-[13px] text-muted-foreground/60">
                         © {new Date().getFullYear()} Menengai Cloud. All rights reserved.
                     </p>
-                    <p className="text-[12px] text-muted-foreground/50">
+                    <p className="text-[13px] text-muted-foreground/50">
                         Built by{' '}
                         <a href="https://github.com/Spiritbulb" className="hover:text-muted-foreground transition-colors">
                             Spiritbulb

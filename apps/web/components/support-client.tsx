@@ -122,7 +122,7 @@ export default function SupportClient() {
         <div className="min-h-screen bg-background overflow-x-hidden pb-0">
             {/* HERO SECTION */}
             <section className="relative pt-32 pb-16 bg-background">
-                <div className="container mx-auto px-6 md:px-12 max-w-4xl text-center">
+                <div className="mx-auto w-full px-6 md:px-12 max-w-4xl text-center">
                     <motion.div
                         variants={staggerContainer}
                         initial="hidden"
@@ -161,7 +161,7 @@ export default function SupportClient() {
             {/* COMMON ISSUES SECTION */}
             {!searchQuery && (
                 <section className="bg-secondary py-20">
-                    <div className="container mx-auto px-6 md:px-12 max-w-6xl">
+                    <div className="mx-auto w-full px-6 md:px-12 max-w-7xl">
                         <FadeIn className="text-center mb-12">
                             <h2 className="text-3xl font-montserrat font-bold text-foreground">
                                 Common Issues
@@ -185,7 +185,7 @@ export default function SupportClient() {
 
             {/* FAQs SECTION */}
             <section className="bg-background py-20">
-                <div className="container mx-auto px-6 md:px-12 max-w-4xl">
+                <div className="mx-auto w-full px-6 md:px-12 max-w-4xl">
                     <FadeIn className="mb-10 text-center">
                         <h2 className="text-3xl font-montserrat font-bold text-foreground">
                             {searchQuery ? "Search Results" : "Frequently Asked Questions"}
@@ -217,7 +217,7 @@ export default function SupportClient() {
 
             {/* CONTACT SECTION */}
             <section className="dark-section py-24 text-center">
-                <div className="container mx-auto px-6 md:px-12 max-w-3xl">
+                <div className="mx-auto w-full px-6 md:px-12 max-w-3xl">
                     <FadeIn>
                         <h2 className="text-4xl md:text-5xl font-montserrat font-bold text-on-dark mb-6">
                             Still need help?

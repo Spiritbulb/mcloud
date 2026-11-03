@@ -21,8 +21,8 @@ export function FeatureGate({
             <span className="flex h-9 w-9 items-center justify-center rounded-full bg-muted">
                 <Icon name={icon} size={18} className="text-muted-foreground" />
             </span>
-            <p className="mt-1 text-[13px] font-medium text-foreground">{title}</p>
-            {description && <p className="max-w-sm text-[12px] text-muted-foreground">{description}</p>}
+            <p className="mt-1 text-[14px] font-medium text-foreground">{title}</p>
+            {description && <p className="max-w-sm text-[13px] text-muted-foreground">{description}</p>}
             {action && <div className="mt-2">{action}</div>}
         </div>
     )

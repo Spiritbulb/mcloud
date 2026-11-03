@@ -145,7 +145,7 @@ export default function BillingClient({
                                                 <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name}</p>
-                                                    {error && <p role="alert" className="mt-0.5 max-w-sm text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+                                                    {error && <p role="alert" className="mt-0.5 max-w-sm text-[13px] text-red-700 dark:text-red-300">{error}</p>}
                                                 </div>
                                             </div>
                                         </Td>
@@ -178,7 +178,7 @@ export default function BillingClient({
                     </Table>
                 )}
                 {!canManage && stores.length > 0 && (
-                    <p className="border-t border-border bg-muted/30 px-4 py-3 text-[12px] text-muted-foreground">You have view-only access to billing.</p>
+                    <p className="border-t border-border bg-muted/30 px-4 py-3 text-[13px] text-muted-foreground">You have view-only access to billing.</p>
                 )}
             </Panel>
 

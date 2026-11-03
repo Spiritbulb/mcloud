@@ -99,14 +99,14 @@ function LocationSection({
                 </Field>
 
                 <fieldset className="flex flex-col gap-2">
-                    <legend className="mb-1.5 text-[12px] font-medium text-foreground">Also delivers to (optional)</legend>
+                    <legend className="mb-1.5 text-[13px] font-medium text-foreground">Also delivers to (optional)</legend>
                     <div className="flex max-h-64 flex-col gap-3 overflow-y-auto rounded-md border border-border p-3">
                         {groups.map(({ town, children }) => {
                             const options = [town, ...children].filter((a) => a.id !== areaId)
                             if (!options.length) return null
                             return (
                                 <div key={town.id}>
-                                    <p className="mb-1.5 text-[12px] font-medium text-muted-foreground">{town.name}</p>
+                                    <p className="mb-1.5 text-[13px] font-medium text-muted-foreground">{town.name}</p>
                                     <div className="flex flex-wrap gap-2">
                                         {options.map((a) => (
                                             <button
@@ -115,7 +115,7 @@ function LocationSection({
                                                 onClick={() => toggle(a.id)}
                                                 aria-pressed={extra.includes(a.id)}
                                                 className={cn(
-                                                    'h-7 rounded-md border px-2.5 text-[12px] transition-colors',
+                                                    'h-7 rounded-md border px-2.5 text-[13px] transition-colors',
                                                     extra.includes(a.id) ? 'border-primary bg-primary text-primary-foreground' : 'border-border bg-card hover:bg-muted/60',
                                                 )}
                                             >
@@ -182,13 +182,13 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
         <li className="flex flex-col gap-2 px-4 py-3.5">
             <div className="flex items-start justify-between gap-4">
                 <div className="min-w-0">
-                    <p className={cn('text-[13px] font-semibold', k.active ? 'text-foreground' : 'text-muted-foreground line-through')}>
+                    <p className={cn('text-[14px] font-semibold', k.active ? 'text-foreground' : 'text-muted-foreground line-through')}>
                         {k.label}
                     </p>
-                    <p className="font-mono text-[13px] tracking-wide text-foreground mt-0.5 break-all">
+                    <p className="font-mono text-[14px] tracking-wide text-foreground mt-0.5 break-all">
                         {k.active && !reveal ? maskStoreKey(k.key) : k.key}
                     </p>
-                    <p className="mt-1 text-[12px] text-muted-foreground">
+                    <p className="mt-1 text-[13px] text-muted-foreground">
                         {k.active ? `Created ${formatDate(k.created_at)}` : `Revoked ${formatDate(k.revoked_at ?? k.created_at)}`}
                     </p>
                 </div>
@@ -207,13 +207,13 @@ function KeyRow({ k, busy, onRevoke }: { k: ReachKey; busy: boolean; onRevoke: (
                     <div className="bg-white p-3 rounded-md">
                         <QRCodeSVG value={k.key} size={132} level="M" marginSize={0} />
                     </div>
-                    <p className="text-[12px] text-muted-foreground max-w-[220px]">
+                    <p className="text-[13px] text-muted-foreground max-w-[220px]">
                         In the Reach app, choose <strong>I&apos;m selling</strong>, then <strong>Scan QR code</strong>. Anyone who scans this can open your store, so only show it to people you trust.
                     </p>
                 </div>
             )}
             {k.members.length > 0 && (
-                <p className="text-[12px] text-muted-foreground">
+                <p className="text-[13px] text-muted-foreground">
                     In use by {k.members.map((m) => m.name || m.email || 'Someone').join(', ')}
                 </p>
             )}
@@ -282,33 +282,33 @@ export default function ReachClient({
                 action={<StatusPill status={status} />}
             >
                 {status.blocked ? (
-                    <p className="text-[13px] text-muted-foreground">{status.blocked}</p>
+                    <p className="text-[14px] text-muted-foreground">{status.blocked}</p>
                 ) : (
                     <div className="flex flex-col gap-4">
                         {status.approvalStatus === 'approved' && status.listed && (
-                            <p className="text-[13px] text-foreground">
+                            <p className="text-[14px] text-foreground">
                                 <strong>{storeName}</strong> is live in {areaLabel(status.areas, status.areaId) || 'your area'} with {status.productCount} active product{status.productCount === 1 ? '' : 's'}.
                                 Orders are paid to Reach first, then released to you when you mark them delivered. Removing your store hides your products;
                                 your keys keep working so you can finish orders already placed.
                             </p>
                         )}
                         {status.approvalStatus === 'pending' && (
-                            <p className="text-[13px] text-foreground">
+                            <p className="text-[14px] text-foreground">
                                 Reach is reviewing your request. You can set up keys and stock meanwhile; shoppers will not see your products until you are approved.
                             </p>
                         )}
                         {status.approvalStatus === 'rejected' && (
-                            <p className="text-[13px] text-red-700 dark:text-red-300">
+                            <p className="text-[14px] text-red-700 dark:text-red-300">
                                 Reach sent your request back: {status.reviewNote ?? 'please check your details'}. Fix it, then request again.
                             </p>
                         )}
                         {status.approvalStatus === 'suspended' && (
-                            <p className="text-[13px] text-red-700 dark:text-red-300">
+                            <p className="text-[14px] text-red-700 dark:text-red-300">
                                 Reach has paused your store{status.reviewNote ? `: ${status.reviewNote}` : '.'} Contact Reach support to be reinstated.
                             </p>
                         )}
                         {(status.approvalStatus === 'draft' || (status.approvalStatus === 'approved' && !status.listed)) && (
-                            <p className="text-[13px] text-muted-foreground">
+                            <p className="text-[14px] text-muted-foreground">
                                 {status.approvalStatus === 'draft'
                                     ? `Choose your area below, then ask to be listed. Reach reviews every store before shoppers see it. You have ${status.productCount} active product${status.productCount === 1 ? '' : 's'}.`
                                     : 'Your store is approved but switched off. List it again whenever you are ready.'}
@@ -329,7 +329,7 @@ export default function ReachClient({
                                           : 'Request to be listed'}
                                 </Button>
                                 {!status.areaId && !status.listed && (
-                                    <p className="text-[12px] text-muted-foreground mt-2">Choose where you deliver first.</p>
+                                    <p className="text-[13px] text-muted-foreground mt-2">Choose where you deliver first.</p>
                                 )}
                             </div>
                         )}
@@ -345,7 +345,7 @@ export default function ReachClient({
                 title="Store keys"
                 description="A key lets someone open the Reach app as your store: see orders, mark them delivered and update stock."
                 flush
-                footer={<p className="mr-auto text-[12px] text-muted-foreground">{status.activeKeyCount} of {status.maxKeys} active keys used.</p>}
+                footer={<p className="mr-auto text-[13px] text-muted-foreground">{status.activeKeyCount} of {status.maxKeys} active keys used.</p>}
             >
                 <form
                     className="flex flex-col gap-2 border-b border-border px-4 py-3.5 sm:flex-row"
@@ -372,7 +372,7 @@ export default function ReachClient({
                 </form>
 
                 {active.length === 0 ? (
-                    <p className="px-4 py-6 text-[13px] text-muted-foreground">
+                    <p className="px-4 py-6 text-[14px] text-muted-foreground">
                         No keys yet. Create one, then in the Reach app choose <strong>I&apos;m selling</strong> and enter it.
                     </p>
                 ) : (
@@ -390,7 +390,7 @@ export default function ReachClient({
 
                 {revoked.length > 0 && (
                     <details className="border-t border-border">
-                        <summary className="cursor-pointer px-4 py-3 text-[12px] text-muted-foreground hover:text-foreground">Revoked keys ({revoked.length})</summary>
+                        <summary className="cursor-pointer px-4 py-3 text-[13px] text-muted-foreground hover:text-foreground">Revoked keys ({revoked.length})</summary>
                         <ul className="divide-y divide-border">
                             {revoked.map((k) => (
                                 <KeyRow key={k.id} k={k} busy onRevoke={() => {}} />

@@ -24,7 +24,7 @@ function CopyValue({ value }: { value: string }) {
     const [copied, setCopied] = useState(false)
     return (
         <span className="flex min-w-0 items-center gap-2">
-            <code className="truncate font-mono text-[12px] text-foreground">{value}</code>
+            <code className="truncate font-mono text-[13px] text-foreground">{value}</code>
             <Button
                 size="sm"
                 variant="ghost"
@@ -45,7 +45,7 @@ function CopyValue({ value }: { value: string }) {
 function RecordTable({ rows }: { rows: { type: string; name: string; value: string }[] }) {
     return (
         <div className="overflow-x-auto rounded-md border border-border">
-            <table className="w-full text-left text-[12px]">
+            <table className="w-full text-left text-[13px]">
                 <thead className="bg-muted/40 text-muted-foreground">
                     <tr>
                         <th className="px-3 py-2 font-medium">Type</th>
@@ -203,13 +203,13 @@ export default function DomainSettings({
                                         <RecordTable rows={[record]} />
                                         {status?.verification && status.verification.length > 0 && (
                                             <div className="space-y-2">
-                                                <p className="text-[12px] text-muted-foreground">
+                                                <p className="text-[13px] text-muted-foreground">
                                                     This domain is also in use on another Vercel account. Add this record too, to prove it is yours:
                                                 </p>
                                                 <RecordTable rows={status.verification.map((v) => ({ type: v.type, name: v.domain, value: v.value }))} />
                                             </div>
                                         )}
-                                        <p className="text-[12px] text-muted-foreground">
+                                        <p className="text-[13px] text-muted-foreground">
                                             DNS changes can take up to a few hours to reach everyone.
                                         </p>
                                     </>

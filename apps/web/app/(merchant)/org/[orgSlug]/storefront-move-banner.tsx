@@ -43,7 +43,7 @@ export function StorefrontMoveBanner() {
     return (
         <div
             role="status"
-            className="shrink-0 flex items-center gap-3 px-4 md:px-6 py-2 text-[13px] bg-muted/50 text-foreground border-b border-border"
+            className="shrink-0 flex items-center gap-3 px-4 md:px-6 py-2 text-[14px] bg-muted/50 text-foreground border-b border-border"
         >
             <Icon name="storefront" size={16} className="text-muted-foreground" />
             <p className="flex-1 min-w-0">

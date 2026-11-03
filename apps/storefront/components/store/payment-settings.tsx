@@ -190,7 +190,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
 
     if (loading) {
         return (
-            <div role="status" className="flex items-center justify-center gap-2 py-10 text-[13px] text-muted-foreground">
+            <div role="status" className="flex items-center justify-center gap-2 py-10 text-[14px] text-muted-foreground">
                 <Spinner />
                 Loading payment settings…
             </div>
@@ -256,7 +256,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                                     aria-checked={manual.type === t}
                                     onClick={() => setManual((m) => ({ ...m, type: t }))}
                                     className={cn(
-                                        'h-7 rounded px-3 text-[12px] transition-colors',
+                                        'h-7 rounded px-3 text-[13px] transition-colors',
                                         manual.type === t ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
                                     )}
                                 >
@@ -287,7 +287,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                         </FormGrid>
                     </div>
                 ) : (
-                    <p className="text-[13px] text-muted-foreground">Off. Turn it on to show your till or paybill at checkout.</p>
+                    <p className="text-[14px] text-muted-foreground">Off. Turn it on to show your till or paybill at checkout.</p>
                 )}
             </Panel>
 
@@ -307,7 +307,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                 {!darajaAllowed ? (
                     <ProGateInline plan={plan} requires="hobby" feature="Automatic M-PESA payments" description="STK Push is on the Hobby plan and higher." />
                 ) : !setupOpen ? (
-                    <p className="text-[13px] text-muted-foreground">
+                    <p className="text-[14px] text-muted-foreground">
                         {stored.consumerKey
                             ? `Using shortcode ${shortcode || 'not set'}. ${darajaEnabled ? 'Shown at checkout.' : 'Not shown at checkout.'}`
                             : 'Connect your Safaricom Daraja app to send payment prompts.'}
@@ -318,7 +318,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                             {STEPS.map((label, i) => (
                                 <li key={label} className="flex-1 space-y-1" aria-current={i === step ? 'step' : undefined}>
                                     <div className={cn('h-1 rounded-full', i <= step ? 'bg-primary' : 'bg-muted')} />
-                                    <p className={cn('text-[11px]', i === step ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</p>
+                                    <p className={cn('text-[12px]', i === step ? 'font-medium text-foreground' : 'text-muted-foreground')}>{label}</p>
                                 </li>
                             ))}
                         </ol>
@@ -363,7 +363,7 @@ export default function PaymentSettings({ slug, plan, orgName }: PaymentSettings
                                         {test.state === 'testing' ? 'Testing…' : 'Test the keys'}
                                     </Button>
                                     {test.state === 'ok' && <Status tone="success">Safaricom accepted them</Status>}
-                                    <span className="text-[12px] text-muted-foreground">No payment is made.</span>
+                                    <span className="text-[13px] text-muted-foreground">No payment is made.</span>
                                 </div>
                                 {test.state === 'fail' && test.error && <Notice tone="error">{test.error}</Notice>}
                                 <Switch

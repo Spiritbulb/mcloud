@@ -36,7 +36,7 @@ export function Stat({
     const pct = current !== undefined && previous !== undefined ? percentChange(current, previous) : undefined
     return (
         <div className="bg-card p-4" aria-busy={loading || undefined}>
-            <p className="text-[12px] text-muted-foreground">{label}</p>
+            <p className="text-[13px] text-muted-foreground">{label}</p>
             {loading ? (
                 <Skeleton className="mt-2.5 h-5 w-20" />
             ) : (
@@ -45,7 +45,7 @@ export function Stat({
                     {pct !== undefined && pct !== null && <Delta pct={pct} />}
                 </div>
             )}
-            {hint && !loading && <p className="mt-1 text-[12px] text-muted-foreground">{hint}</p>}
+            {hint && !loading && <p className="mt-1 text-[13px] text-muted-foreground">{hint}</p>}
         </div>
     )
 }
@@ -61,5 +61,5 @@ export function Delta({ pct, goodWhen = 'up' }: { pct: number | null; goodWhen?:
     const tone = deltaTone(pct)
     const colour =
         tone === 'flat' ? DELTA_COLOR.flat : (tone === 'up') === (goodWhen === 'up') ? DELTA_COLOR.up : DELTA_COLOR.down
-    return <span className={cn('text-[12px] font-medium tabular-nums', colour)}>{formatDelta(pct)}</span>
+    return <span className={cn('text-[13px] font-medium tabular-nums', colour)}>{formatDelta(pct)}</span>
 }

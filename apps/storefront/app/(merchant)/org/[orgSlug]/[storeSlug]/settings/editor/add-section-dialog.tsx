@@ -32,7 +32,7 @@ export default function AddSectionDialog({
             className="m-auto w-[min(30rem,calc(100vw-2rem))] rounded-lg border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-black/40"
         >
             <header className="flex items-center justify-between border-b border-border px-5 py-3">
-                <h2 id="add-section-title" className="text-[15px] font-semibold">Add a section</h2>
+                <h2 id="add-section-title" className="text-[16px] font-semibold">Add a section</h2>
                 <Button variant="ghost" size="sm" aria-label="Close" onClick={onClose}>
                     <Icon name="close" size={16} />
                 </Button>
@@ -47,8 +47,8 @@ export default function AddSectionDialog({
                         >
                             <Icon name={SECTION_ICONS[c.type] ?? 'view_agenda'} size={18} className="mt-0.5 text-muted-foreground" />
                             <span className="min-w-0">
-                                <span className="block text-[13px] font-medium">{c.label}</span>
-                                {c.description && <span className="block text-[12px] text-muted-foreground">{c.description}</span>}
+                                <span className="block text-[14px] font-medium">{c.label}</span>
+                                {c.description && <span className="block text-[13px] text-muted-foreground">{c.description}</span>}
                             </span>
                         </button>
                     </li>

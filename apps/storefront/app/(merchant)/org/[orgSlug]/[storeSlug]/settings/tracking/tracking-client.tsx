@@ -83,20 +83,20 @@ function OrderRow({ order, onSave }: {
         <div className="space-y-2.5 px-4 py-3.5">
             <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                    <p className="flex items-center gap-2 truncate text-[13px] font-medium text-foreground">
+                    <p className="flex items-center gap-2 truncate text-[14px] font-medium text-foreground">
                         <span className="truncate">#{order.order_number} · {order.customer_name}</span>
                         <Status tone={fulfillmentTone(savedFulfillment)}>
                             {statusLabel(savedFulfillment)}
                         </Status>
                     </p>
-                    <p className="mt-0.5 text-[12px] text-muted-foreground">
+                    <p className="mt-0.5 text-[13px] text-muted-foreground">
                         {order.delivery_option?.courier_name ?? 'No courier set'}
                         {order.delivery_zone ? ` · ${order.delivery_zone.location_name}` : ''}
                         {' · '}{timeAgo(order.created_at)}
                     </p>
                 </div>
                 {url && (
-                    <a href={url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[12px] text-primary underline-offset-2 hover:underline">
+                    <a href={url} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[13px] text-primary underline-offset-2 hover:underline">
                         Track
                         <Icon name="open_in_new" size={13} />
                     </a>
@@ -126,7 +126,7 @@ function OrderRow({ order, onSave }: {
                     </Button>
                 )}
             </div>
-            {error && <p role="alert" className="text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+            {error && <p role="alert" className="text-[13px] text-red-700 dark:text-red-300">{error}</p>}
         </div>
     )
 }

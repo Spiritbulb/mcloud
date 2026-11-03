@@ -10,7 +10,7 @@ const TONES = {
 /** Inline message under a page header or inside a dialog. Announced to screen readers. */
 export function Notice({ tone = 'info', children, className }: { tone?: keyof typeof TONES; children: ReactNode; className?: string }) {
     return (
-        <p role={tone === 'error' ? 'alert' : 'status'} className={cn('rounded-lg border px-3.5 py-2.5 text-[13px]', TONES[tone], className)}>
+        <p role={tone === 'error' ? 'alert' : 'status'} className={cn('rounded-lg border px-3.5 py-2.5 text-[14px]', TONES[tone], className)}>
             {children}
         </p>
     )

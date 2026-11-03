@@ -52,7 +52,7 @@ export default function ImagePicker({
             className="m-auto w-[min(32rem,calc(100vw-2rem))] rounded-lg border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-black/40"
         >
             <header className="flex items-center justify-between border-b border-border px-5 py-3">
-                <h2 id="image-picker-title" className="text-[15px] font-semibold">
+                <h2 id="image-picker-title" className="text-[16px] font-semibold">
                     {value ? 'Change image' : 'Add an image'}
                 </h2>
                 <Button variant="ghost" size="sm" aria-label="Close" onClick={onClose}>
@@ -70,7 +70,7 @@ export default function ImagePicker({
                             aria-selected={mode === m}
                             onClick={() => setMode(m)}
                             className={cn(
-                                'h-7 rounded px-3 text-[12px] font-medium transition-colors',
+                                'h-7 rounded px-3 text-[13px] font-medium transition-colors',
                                 mode === m ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground',
                             )}
                         >

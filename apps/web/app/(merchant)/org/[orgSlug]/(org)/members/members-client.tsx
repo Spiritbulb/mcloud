@@ -87,8 +87,8 @@ function MemberRow({ member, orgId, orgSlug, currentRole, onRemove }: {
                     <Avatar name={member.users?.name ?? null} src={member.users?.avatar_url} shape="circle" />
                     <div className="min-w-0">
                         <p className="truncate font-medium">{name}</p>
-                        <p className="truncate text-[12px] text-muted-foreground">{member.users?.email ?? '—'}</p>
-                        {error && <p role="alert" className="mt-0.5 text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+                        <p className="truncate text-[13px] text-muted-foreground">{member.users?.email ?? '—'}</p>
+                        {error && <p role="alert" className="mt-0.5 text-[13px] text-red-700 dark:text-red-300">{error}</p>}
                     </div>
                 </div>
             </Td>

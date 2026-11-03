@@ -51,8 +51,8 @@ export function ConfirmDialog({
             className="m-auto w-[min(28rem,calc(100vw-2rem))] rounded-lg border border-border bg-card p-0 text-foreground shadow-xl backdrop:bg-black/40"
         >
             <div className="p-5">
-                <h2 id="confirm-dialog-title" className="font-sans text-[15px] font-semibold">{title}</h2>
-                {description && <div className="mt-1.5 text-[13px] text-muted-foreground">{description}</div>}
+                <h2 id="confirm-dialog-title" className="font-sans text-[16px] font-semibold">{title}</h2>
+                {description && <div className="mt-1.5 text-[14px] text-muted-foreground">{description}</div>}
                 {children && <div className="mt-4">{children}</div>}
             </div>
             <div className="flex justify-end gap-2 border-t border-border bg-muted/30 px-5 py-3">

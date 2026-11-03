@@ -19,7 +19,7 @@ export function Table({ children, busy }: { children: ReactNode; busy?: boolean 
         <div className="overflow-x-auto max-md:[&_table]:block max-md:[&_tbody]:block max-md:[&_thead]:hidden">
             <table
                 aria-busy={busy || undefined}
-                className="w-full text-[13px] [&_thead_tr]:border-b [&_thead_tr]:border-border [&_tbody>tr:first-child]:border-t-0"
+                className="w-full text-[14px] [&_thead_tr]:border-b [&_thead_tr]:border-border [&_tbody>tr:first-child]:border-t-0"
             >{children}</table>
         </div>
     )
@@ -27,7 +27,7 @@ export function Table({ children, busy }: { children: ReactNode; busy?: boolean 
 
 export function Th({ children, align = 'left' }: { children?: ReactNode; align?: 'left' | 'right' }) {
     return (
-        <th scope="col" className={cn('px-4 py-2 text-[12px] font-medium text-muted-foreground', align === 'right' ? 'text-right' : 'text-left')}>
+        <th scope="col" className={cn('px-4 py-2 text-[13px] font-medium text-muted-foreground', align === 'right' ? 'text-right' : 'text-left')}>
             {children}
         </th>
     )
@@ -68,7 +68,7 @@ export function Td({
                 'max-md:block max-md:px-0 max-md:py-1 max-md:text-left',
                 label &&
                     'max-md:flex max-md:items-baseline max-md:justify-between max-md:gap-4 max-md:text-right ' +
-                        'max-md:before:shrink-0 max-md:before:text-left max-md:before:text-[12px] max-md:before:text-muted-foreground max-md:before:content-[attr(data-label)]',
+                        'max-md:before:shrink-0 max-md:before:text-left max-md:before:text-[13px] max-md:before:text-muted-foreground max-md:before:content-[attr(data-label)]',
             )}
         >
             {label ? <span className="min-w-0 max-md:text-right">{children}</span> : children}

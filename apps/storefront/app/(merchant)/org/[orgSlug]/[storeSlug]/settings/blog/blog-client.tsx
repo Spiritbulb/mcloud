@@ -107,10 +107,10 @@ function AuthorDialog({ open, onClose, onSaved, storeId }: {
 
 function MarkdownPreview({ content }: { content: string }) {
     if (!content.trim()) {
-        return <p className="py-16 text-center text-[13px] text-muted-foreground">Nothing to preview yet.</p>
+        return <p className="py-16 text-center text-[14px] text-muted-foreground">Nothing to preview yet.</p>
     }
     return (
-        <div className="max-w-none px-1 py-2 text-[14px] text-foreground/90">
+        <div className="max-w-none px-1 py-2 text-[15px] text-foreground/90">
             <ReactMarkdown
                 components={{
                     h1: ({ children }) => <h1 className="mb-3 mt-6 text-2xl font-semibold text-foreground">{children}</h1>,
@@ -124,13 +124,13 @@ function MarkdownPreview({ content }: { content: string }) {
                     blockquote: ({ children }) => <blockquote className="my-4 border-l-2 border-border pl-4 italic text-muted-foreground">{children}</blockquote>,
                     code: ({ children, className }) =>
                         className?.includes('language-')
-                            ? <code className="block overflow-x-auto rounded-md bg-muted p-3 font-mono text-[12px]">{children}</code>
-                            : <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[12px]">{children}</code>,
+                            ? <code className="block overflow-x-auto rounded-md bg-muted p-3 font-mono text-[13px]">{children}</code>
+                            : <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[13px]">{children}</code>,
                     img: ({ src, alt }) => (
                         <figure className="my-4">
                             {/* eslint-disable-next-line @next/next/no-img-element */}
                             <img src={typeof src === 'string' ? src : undefined} alt={alt ?? ''} className="w-full rounded-md object-cover" />
-                            {alt && <figcaption className="mt-1 text-center text-[12px] text-muted-foreground">{alt}</figcaption>}
+                            {alt && <figcaption className="mt-1 text-center text-[13px] text-muted-foreground">{alt}</figcaption>}
                         </figure>
                     ),
                 }}
@@ -325,10 +325,10 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                         <li key={post.id} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/40">
                                             <button type="button" onClick={() => openEditor(formFromPost(post))} className="min-w-0 flex-1 text-left">
                                                 <span className="flex items-center gap-2">
-                                                    <span className="truncate text-[13px] font-medium text-foreground">{post.title || 'Untitled'}</span>
+                                                    <span className="truncate text-[14px] font-medium text-foreground">{post.title || 'Untitled'}</span>
                                                     {post.metadata?.featured && <Badge tone="info">Featured</Badge>}
                                                 </span>
-                                                <span className="mt-0.5 block truncate text-[12px] text-muted-foreground">
+                                                <span className="mt-0.5 block truncate text-[13px] text-muted-foreground">
                                                     {formatDate(post.published_at ?? post.created_at)}
                                                     {post.reading_time_minutes ? ` · ${post.reading_time_minutes} min read` : ''}
                                                     {post.tags?.length ? ` · ${post.tags.slice(0, 3).join(', ')}` : ''}
@@ -350,7 +350,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                             <button
                                 type="button"
                                 onClick={() => (dirty ? setLeaving(true) : backToList())}
-                                className="inline-flex items-center gap-1 text-[13px] text-muted-foreground hover:text-foreground"
+                                className="inline-flex items-center gap-1 text-[14px] text-muted-foreground hover:text-foreground"
                             >
                                 <Icon name="arrow_back" size={15} />
                                 All posts
@@ -389,14 +389,14 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
                                         placeholder="Post title"
                                         className="w-full bg-transparent text-xl font-semibold text-foreground outline-none placeholder:text-muted-foreground/50"
                                     />
-                                    <div className="flex flex-wrap items-center gap-x-1 gap-y-2 text-[12px] text-muted-foreground">
+                                    <div className="flex flex-wrap items-center gap-x-1 gap-y-2 text-[13px] text-muted-foreground">
                                         <span className="truncate">{storefrontDisplayUrl(storeSlug)}/blog/</span>
                                         <TextInput
                                             aria-label="Post URL"
                                             value={form.slug}
                                             onChange={(e) => set({ slug: e.target.value })}
                                             placeholder="post-url"
-                                            className="h-7 w-auto min-w-0 flex-1 font-mono text-[12px] sm:max-w-xs"
+                                            className="h-7 w-auto min-w-0 flex-1 font-mono text-[13px] sm:max-w-xs"
                                             spellCheck={false}
                                         />
                                         <span className="ml-auto">{estimateReadingTime(form.content)} min read</span>

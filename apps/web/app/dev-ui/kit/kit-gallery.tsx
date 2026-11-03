@@ -123,12 +123,12 @@ export default function KitGallery() {
                     title="Danger zone"
                     footer={<Button variant="danger" onClick={() => setConfirm(true)}>Delete organization</Button>}
                 >
-                    <p className="text-[13px] text-muted-foreground">Its 7 sites will be moved to Personal.</p>
+                    <p className="text-[14px] text-muted-foreground">Its 7 sites will be moved to Personal.</p>
                 </Panel>
                 <FeatureGate title="Blog is on its way" description="This feature isn't available yet. Check back soon." icon="schedule" />
             </div>
 
-            <p className="flex items-center gap-2 text-[12px] text-muted-foreground"><Spinner /> Inline spinner</p>
+            <p className="flex items-center gap-2 text-[13px] text-muted-foreground"><Spinner /> Inline spinner</p>
 
             <ConfirmDialog
                 open={confirm}

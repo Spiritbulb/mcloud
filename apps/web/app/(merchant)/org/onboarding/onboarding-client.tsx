@@ -70,7 +70,7 @@ export default function OnboardingClient({ userName, next }: { userName?: string
 
   const inputCls = cn(
     'w-full h-12 bg-muted/30',
-    'px-4 text-[14px] text-foreground placeholder:text-muted-foreground/40',
+    'px-4 text-[15px] text-foreground placeholder:text-muted-foreground/40',
     'focus:outline-none focus:border-[var(--md-sys-color-primary)] focus:ring-2 focus:ring-[var(--md-sys-color-primary)]/15',
     'transition-all duration-150'
   )
@@ -102,14 +102,14 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                 <h1 className="text-[22px] font-semibold text-foreground tracking-tight">
                   {greeting}{userName ? `, ${userName.split(' ')[0]}` : ''}
                 </h1>
-                <p className="text-[13px] text-muted-foreground leading-relaxed">
+                <p className="text-[14px] text-muted-foreground leading-relaxed">
                   Tell us a bit about you, then create your organisation. It will be the home for your servers and storefronts.
                 </p>
               </div>
 
               <form onSubmit={submit} className="space-y-4">
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="block text-[12px] font-semibold uppercase tracking-widest text-muted-foreground">
                     Your name
                   </label>
                   <input
@@ -123,7 +123,7 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                  <label className="block text-[12px] font-semibold uppercase tracking-widest text-muted-foreground">
                     Organisation name
                   </label>
                   <input
@@ -140,8 +140,8 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                       initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }}
                       className="flex items-center gap-1.5 px-1"
                     >
-                      <MSO icon="link" className="text-[13px] text-primary" />
-                      <span className="text-[12px] text-muted-foreground">
+                      <MSO icon="link" className="text-[14px] text-primary" />
+                      <span className="text-[13px] text-muted-foreground">
                         mcloud.co.ke/org/<span className="font-medium text-primary">{slug}</span>
                       </span>
                     </motion.div>
@@ -150,10 +150,10 @@ export default function OnboardingClient({ userName, next }: { userName?: string
 
                 <div className="space-y-1.5">
                   <div className="flex items-center justify-between px-1">
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
+                    <label className="block text-[12px] font-semibold uppercase tracking-widest text-muted-foreground">
                       M-Pesa number
                     </label>
-                    <span className="text-[11px] text-muted-foreground/50">Optional</span>
+                    <span className="text-[12px] text-muted-foreground/50">Optional</span>
                   </div>
                   <input
                     type="tel"
@@ -163,11 +163,11 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                     className={cn(inputCls, mpesaNumber && !mpesaValid && 'border-[var(--md-sys-color-error)] focus:border-[var(--md-sys-color-error)] focus:ring-[var(--md-sys-color-error)]/15')}
                   />
                   {mpesaNumber && !mpesaValid && (
-                    <p className="text-[12px] text-destructive px-1">
+                    <p className="text-[13px] text-destructive px-1">
                       Enter a valid number, e.g. 0712345678
                     </p>
                   )}
-                  <p className="text-[12px] text-muted-foreground px-1">
+                  <p className="text-[13px] text-muted-foreground px-1">
                     Used for payouts. You can add or change this later.
                   </p>
                 </div>
@@ -175,9 +175,9 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                 {error && (
                   <motion.div
                     initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}
-                    className="flex items-center gap-2 text-[12px] text-destructive bg-destructive/20 px-3 py-2.5 rounded-xl"
+                    className="flex items-center gap-2 text-[13px] text-destructive bg-destructive/20 px-3 py-2.5 rounded-xl"
                   >
-                    <MSO icon="error" className="text-[14px] shrink-0" fill={1} />
+                    <MSO icon="error" className="text-[15px] shrink-0" fill={1} />
                     {error}
                   </motion.div>
                 )}
@@ -186,7 +186,7 @@ export default function OnboardingClient({ userName, next }: { userName?: string
                   type="submit"
                   disabled={!canSubmit || isPending}
                   className={cn(
-                    'w-full flex items-center justify-center gap-2 h-12 text-[14px] font-medium',
+                    'w-full flex items-center justify-center gap-2 h-12 text-[15px] font-medium',
                     'text-primary border border-border bg-[var(--md-sys-color-secondary-container)]',
                     'hover:opacity-90 active:scale-[0.98] transition-all duration-150',
                     'disabled:opacity-30 disabled:cursor-not-allowed'
@@ -212,7 +212,7 @@ export default function OnboardingClient({ userName, next }: { userName?: string
         <motion.p
           initial={{ opacity: 0 }} animate={{ opacity: 1 }}
           transition={{ duration: 0.4, delay: 0.5 }}
-          className="mt-8 text-[11px] text-muted-foreground opacity-40 text-center"
+          className="mt-8 text-[12px] text-muted-foreground opacity-40 text-center"
         >
           <img src="/logo-light.svg" alt="Menengai Cloud" className="w-8 h-auto mr-1.5 pb-1 inline-block" />
           Menengai Cloud © {new Date().getFullYear()}

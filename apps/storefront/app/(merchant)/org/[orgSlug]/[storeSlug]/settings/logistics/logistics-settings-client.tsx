@@ -56,7 +56,7 @@ function OptionRow({ option, onChange, onDelete }: {
                         placeholder="e.g. Fargo Courier"
                     />
                 </Field>
-                <div className="flex h-8 items-center gap-2 text-[12px] text-muted-foreground">
+                <div className="flex h-8 items-center gap-2 text-[13px] text-muted-foreground">
                     <Switch checked={option.is_active} onChange={(is_active) => onChange({ is_active })} />
                     <span className="w-12">{option.is_active ? 'Active' : 'Off'}</span>
                 </div>
@@ -99,7 +99,7 @@ function ZoneRow({ zone, currency, onChange, onDelete }: {
                 className="h-8 min-w-0 flex-1 basis-full sm:basis-auto"
             />
             <div className="flex items-center gap-1.5">
-                <span className="text-[12px] text-muted-foreground">{currency}</span>
+                <span className="text-[13px] text-muted-foreground">{currency}</span>
                 <TextInput
                     aria-label="Rate"
                     type="number"
@@ -111,7 +111,7 @@ function ZoneRow({ zone, currency, onChange, onDelete }: {
                     className="h-8 w-28 tabular-nums"
                 />
             </div>
-            <div className="flex items-center gap-2 text-[12px] text-muted-foreground">
+            <div className="flex items-center gap-2 text-[13px] text-muted-foreground">
                 <Switch checked={zone.available} onChange={(available) => onChange({ available })} />
                 <span className="w-16">{zone.available ? 'Delivering' : 'Paused'}</span>
             </div>

@@ -45,7 +45,7 @@ export default function NotFound() {
                 }}
             />
 
-            <div className="relative z-20 container mx-auto px-6 md:px-12 text-center">
+            <div className="relative z-20 mx-auto w-full max-w-5xl px-6 md:px-12 text-center">
                 <motion.div
                     initial={{ opacity: 0, y: 32 }}
                     animate={{ opacity: 1, y: 0 }}

@@ -160,7 +160,7 @@ function ColorRow({ label, value, onChange }: {
 }) {
     return (
         <div className="flex items-center gap-3 group">
-            <span className="text-[12px] text-on-surface-muted w-24 shrink-0">{label}</span>
+            <span className="text-[13px] text-on-surface-muted w-24 shrink-0">{label}</span>
             <label className="relative shrink-0 cursor-pointer">
                 <div
                     className="w-8 h-8 rounded-lg border border-light shadow-sm transition-transform group-hover:scale-105"
@@ -179,7 +179,7 @@ function ColorRow({ label, value, onChange }: {
                 onChange={e => onChange(e.target.value)}
                 spellCheck={false}
                 className={cn(
-                    'flex-1 h-8 px-2.5 font-mono text-[12px] rounded-lg',
+                    'flex-1 h-8 px-2.5 font-mono text-[13px] rounded-lg',
                     'border border-light bg-surface text-foreground',
                     'focus:outline-none focus:border-foreground/40 focus:ring-2 focus:ring-foreground/10',
                     'transition-all duration-150'
@@ -205,9 +205,9 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                     href={`/store/${slug}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[12px] text-on-surface-muted hover:text-foreground transition-colors"
+                    className="inline-flex items-center gap-1.5 text-[13px] text-on-surface-muted hover:text-foreground transition-colors"
                 >
-                    <MSO icon="open_in_new" className="text-[14px]" />
+                    <MSO icon="open_in_new" className="text-[15px]" />
                     Preview store
                 </a>
             }
@@ -233,17 +233,17 @@ function ThemeSection({ themeId, setThemeId, slug }: {
                                 <div className="w-5 rounded-r-md" style={{ backgroundColor: theme.preview.accent }} />
                             </div>
 
-                            <p className="text-[12px] font-semibold text-foreground leading-none truncate">
+                            <p className="text-[13px] font-semibold text-foreground leading-none truncate">
                                 {theme.name}
                             </p>
-                            <p className="hidden sm:block text-[11px] text-on-surface-muted mt-1 leading-snug">
+                            <p className="hidden sm:block text-[12px] text-on-surface-muted mt-1 leading-snug">
                                 {theme.description}
                             </p>
 
                             {/* Active checkmark */}
                             {isActive && (
                                 <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
-                                    <MSO icon="check" className="text-[13px] text-surface" fill={1} />
+                                    <MSO icon="check" className="text-[14px] text-surface" fill={1} />
                                 </div>
                             )}
                         </button>
@@ -273,12 +273,12 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
 
             {/* Logo */}
             <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Logo</p>
+                <p className="text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted">Logo</p>
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-xl border border-light bg-surface flex items-center justify-center overflow-hidden shrink-0">
                         {props.logoUrl
                             ? <img src={props.logoUrl} alt="Logo" className="max-h-12 max-w-full object-contain" />
-                            : <span className="text-[13px] font-bold text-on-surface-muted uppercase tracking-widest">
+                            : <span className="text-[14px] font-bold text-on-surface-muted uppercase tracking-widest">
                                 {store.name.slice(0, 2)}
                             </span>
                         }
@@ -293,7 +293,7 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                             pathPrefix={`${store.id}/logo`}
                             aspectRatio="free"
                         />
-                        <p className="text-[11px] text-on-surface-muted mt-1.5">
+                        <p className="text-[12px] text-on-surface-muted mt-1.5">
                             Any shape. Shown in your store&apos;s header. A PNG or SVG with a transparent background works best.
                         </p>
                     </div>
@@ -304,13 +304,13 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
 
             {/* Square icon: the browser tab, home-screen icon and dashboard tiles */}
             <div className="space-y-3">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Square icon</p>
+                <p className="text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted">Square icon</p>
                 <div className="flex items-center gap-4">
                     <div className="w-16 h-16 rounded-xl border border-light bg-surface flex items-center justify-center overflow-hidden shrink-0">
                         {props.iconUrl || props.logoUrl
                             // eslint-disable-next-line @next/next/no-img-element -- a merchant upload on R2; next/image would need its host allow-listed
                             ? <img src={props.iconUrl || props.logoUrl} alt="Icon" className="h-full w-full object-contain" />
-                            : <span className="text-[13px] font-bold text-on-surface-muted uppercase tracking-widest">
+                            : <span className="text-[14px] font-bold text-on-surface-muted uppercase tracking-widest">
                                 {store.name.slice(0, 2)}
                             </span>
                         }
@@ -325,7 +325,7 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                             pathPrefix={`${store.id}/icon`}
                             aspectRatio="square"
                         />
-                        <p className="text-[11px] text-on-surface-muted mt-1.5">
+                        <p className="text-[12px] text-on-surface-muted mt-1.5">
                             Square, at least 512×512. Used for the browser tab, the home-screen icon and your dashboard. Leave empty to use your logo.
                         </p>
                     </div>
@@ -336,10 +336,10 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
 
             {/* Banner */}
             <div className="space-y-4">
-                <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">Banner</p>
+                <p className="text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted">Banner</p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div className="space-y-1.5">
-                        <label className="block text-[12px] text-on-surface-muted">Title</label>
+                        <label className="block text-[13px] text-on-surface-muted">Title</label>
                         <Input
                             value={props.heroTitle}
                             onChange={e => props.setHeroTitle(e.target.value)}
@@ -348,7 +348,7 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <label className="block text-[12px] text-on-surface-muted">Subtitle</label>
+                        <label className="block text-[13px] text-on-surface-muted">Subtitle</label>
                         <Input
                             value={props.heroSubtitle}
                             onChange={e => props.setHeroSubtitle(e.target.value)}
@@ -358,9 +358,9 @@ function HeroSection(props: Pick<AppearanceSettingsProps,
                     </div>
                 </div>
                 <div className="space-y-1.5">
-                    <label className="block text-[12px] text-on-surface-muted">
+                    <label className="block text-[13px] text-on-surface-muted">
                         Hero image
-                        <span className="ml-1.5 text-[11px] text-on-surface-muted/60">— used as the banner background</span>
+                        <span className="ml-1.5 text-[12px] text-on-surface-muted/60">— used as the banner background</span>
                     </label>
                     <ImageUpload
                         label="Upload image"
@@ -393,18 +393,18 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
 
                 {/* Heading font */}
                 <div className="space-y-2">
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">
+                    <label className="block text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted">
                         Heading font
                     </label>
                     <Select value={props.headingFont} onValueChange={props.setHeadingFont}>
-                        <SelectTrigger className="rounded-lg text-[13px]">
+                        <SelectTrigger className="rounded-lg text-[14px]">
                             <SelectValue placeholder="Pick a heading font" />
                         </SelectTrigger>
                         <SelectContent>
                             {HEADING_FONTS.map(f => (
                                 <SelectItem key={f.value} value={f.value}>
                                     <span>{f.value}</span>
-                                    <span className="ml-2 text-[11px] text-muted-foreground">{f.category}</span>
+                                    <span className="ml-2 text-[12px] text-muted-foreground">{f.category}</span>
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -416,7 +416,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                         >
                             The quick brown fox
                         </p>
-                        <p className="text-[10px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
+                        <p className="text-[11px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
                             {props.headingFont}
                         </p>
                     </div>
@@ -424,30 +424,30 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
 
                 {/* Body font */}
                 <div className="space-y-2">
-                    <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted">
+                    <label className="block text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted">
                         Body font
                     </label>
                     <Select value={props.bodyFont} onValueChange={props.setBodyFont}>
-                        <SelectTrigger className="rounded-lg text-[13px]">
+                        <SelectTrigger className="rounded-lg text-[14px]">
                             <SelectValue placeholder="Pick a body font" />
                         </SelectTrigger>
                         <SelectContent>
                             {BODY_FONTS.map(f => (
                                 <SelectItem key={f.value} value={f.value}>
                                     <span>{f.value}</span>
-                                    <span className="ml-2 text-[11px] text-muted-foreground">{f.category}</span>
+                                    <span className="ml-2 text-[12px] text-muted-foreground">{f.category}</span>
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <div className="px-3.5 py-3 bg-surface rounded-xl border border-light">
                         <p
-                            className="text-[13px] leading-relaxed text-foreground"
+                            className="text-[14px] leading-relaxed text-foreground"
                             style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}
                         >
                             Handpicked styles for every occasion. Free shipping on orders over KES 2,000.
                         </p>
-                        <p className="text-[10px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
+                        <p className="text-[11px] text-on-surface-muted mt-1.5 uppercase tracking-widest">
                             {props.bodyFont}
                         </p>
                     </div>
@@ -457,10 +457,10 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
             {/* Pairing preview */}
             <div className="mt-5 rounded-xl border border-light overflow-hidden">
                 <div className="flex items-center justify-between px-4 py-2.5 bg-surface border-b border-light">
-                    <p className="text-[14px] font-semibold" style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}>
+                    <p className="text-[15px] font-semibold" style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}>
                         Your Store
                     </p>
-                    <p className="text-[11px] text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
+                    <p className="text-[12px] text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                         Cart (2)
                     </p>
                 </div>
@@ -468,7 +468,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                     <p className="text-[22px] leading-tight" style={{ fontFamily: `'${props.headingFont}', serif`, fontWeight: 700 }}>
                         Fresh Arrivals
                     </p>
-                    <p className="text-[12px] mt-1 text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
+                    <p className="text-[13px] mt-1 text-on-surface-muted" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                         Handpicked styles for the season.
                     </p>
                 </div>
@@ -476,10 +476,10 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                     {['Linen Tote', 'Canvas Cap', 'Woven Wrap'].map(name => (
                         <div key={name} className="flex-1 min-w-0">
                             <div className="w-full aspect-square bg-surface rounded-lg mb-1.5" />
-                            <p className="text-[12px] font-semibold leading-tight truncate" style={{ fontFamily: `'${props.headingFont}', serif` }}>
+                            <p className="text-[13px] font-semibold leading-tight truncate" style={{ fontFamily: `'${props.headingFont}', serif` }}>
                                 {name}
                             </p>
-                            <p className="text-[11px] text-on-surface-muted mt-0.5" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
+                            <p className="text-[12px] text-on-surface-muted mt-0.5" style={{ fontFamily: `'${props.bodyFont}', sans-serif` }}>
                                 KES 1,800
                             </p>
                         </div>
@@ -489,7 +489,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
 
             {/* Border radius */}
             <div className="mt-5">
-                <label className="block text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">
+                <label className="block text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">
                     Button & card radius
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -498,7 +498,7 @@ function TypographySection(props: Pick<AppearanceSettingsProps,
                             key={r.value}
                             onClick={() => props.setBorderRadius(r.value)}
                             className={cn(
-                                'h-9 px-4 text-[12px] font-medium border transition-all duration-150',
+                                'h-9 px-4 text-[13px] font-medium border transition-all duration-150',
                                 'rounded-lg',          // the tab itself is always rounded
                                 props.borderRadius === r.value
                                     ? 'bg-foreground text-surface border-foreground'
@@ -536,7 +536,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
             title="Colors"
             description="Fine-tune the palette — overrides the preset theme"
             aside={
-                <div className="flex items-center rounded-lg border border-light overflow-hidden text-[12px]">
+                <div className="flex items-center rounded-lg border border-light overflow-hidden text-[13px]">
                     {(['light', 'dark'] as const).map((m) => (
                         <button
                             key={m}
@@ -548,7 +548,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
                                     : 'text-on-surface-muted hover:text-foreground'
                             )}
                         >
-                            <MSO icon={m === 'light' ? 'light_mode' : 'dark_mode'} className="text-[14px]" fill={mode === m ? 1 : 0} />
+                            <MSO icon={m === 'light' ? 'light_mode' : 'dark_mode'} className="text-[15px]" fill={mode === m ? 1 : 0} />
                             {m}
                         </button>
                     ))}
@@ -558,7 +558,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
             {mode === 'light' ? (
                 <div className="space-y-4">
                     <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Brand</p>
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Brand</p>
                         <div className="space-y-2.5">
                             <ColorRow label="Primary" value={props.primaryColor} onChange={props.setPrimaryColor} />
                             <ColorRow label="Secondary" value={props.secondaryColor} onChange={props.setSecondaryColor} />
@@ -567,7 +567,7 @@ function ColorsSection(props: Pick<AppearanceSettingsProps,
                     </div>
                     <div className="h-px bg-light" />
                     <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Surface</p>
+                        <p className="text-[12px] font-semibold uppercase tracking-widest text-on-surface-muted mb-3">Surface</p>
                         <div className="space-y-2.5">
                             <ColorRow label="Background" value={props.bgColor} onChange={props.setBgColor} />
                             <ColorRow label="Foreground" value={props.fgColor} onChange={props.setFgColor} />
@@ -606,10 +606,10 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
             <div className="flex items-center justify-between px-4 py-3 bg-surface-variant/40">
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2.5 text-[13px] font-medium text-foreground min-w-0"
+                    className="flex items-center gap-2.5 text-[14px] font-medium text-foreground min-w-0"
                 >
                     <MSO icon={open ? 'expand_less' : 'expand_more'} className="text-[18px] text-on-surface-muted shrink-0" />
-                    <span className="shrink-0 text-on-surface-muted text-[12px]">#{idx + 1}</span>
+                    <span className="shrink-0 text-on-surface-muted text-[13px]">#{idx + 1}</span>
                     <span className="truncate">
                         {slide.title || <span className="text-on-surface-muted font-normal italic">Untitled slide</span>}
                     </span>
@@ -621,7 +621,7 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                         title="Move up"
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-colors"
                     >
-                        <MSO icon="arrow_upward" className="text-[15px]" />
+                        <MSO icon="arrow_upward" className="text-[16px]" />
                     </button>
                     <button
                         disabled={idx === total - 1}
@@ -629,14 +629,14 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                         title="Move down"
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface disabled:opacity-25 transition-colors"
                     >
-                        <MSO icon="arrow_downward" className="text-[15px]" />
+                        <MSO icon="arrow_downward" className="text-[16px]" />
                     </button>
                     <button
                         onClick={onRemove}
                         title="Remove slide"
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                     >
-                        <MSO icon="delete" className="text-[15px]" />
+                        <MSO icon="delete" className="text-[16px]" />
                     </button>
                 </div>
             </div>
@@ -652,7 +652,7 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                             { label: 'Button text', field: 'buttonText', placeholder: 'Shop now' },
                         ] as const).map(({ label, field, placeholder }) => (
                             <div key={field} className="space-y-1.5">
-                                <label className="block text-[12px] text-on-surface-muted">{label}</label>
+                                <label className="block text-[13px] text-on-surface-muted">{label}</label>
                                 <Input
                                     value={(slide as any)[field] ?? ''}
                                     onChange={e => onChange({ ...slide, [field]: e.target.value })}
@@ -663,7 +663,7 @@ function SlideCard({ slide, idx, total, storeId, onChange, onMove, onRemove }: {
                         ))}
                     </div>
                     <div className="space-y-1.5">
-                        <label className="block text-[12px] text-on-surface-muted">Slide image</label>
+                        <label className="block text-[13px] text-on-surface-muted">Slide image</label>
                         <ImageUpload
                             value={slide.image ?? ''}
                             pathInDb={slide.imagePath ?? ''}
@@ -691,7 +691,7 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
                     onClick={() => setHeroSlides([...heroSlides, { title: '', subtitle: '', accent: 'New Arrivals', buttonText: 'Shop now' }])}
                     className={cn(
                         'flex items-center gap-1.5 h-8 px-3 rounded-lg border border-light',
-                        'text-[12px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
+                        'text-[13px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
                         'transition-colors'
                     )}
                 >
@@ -703,8 +703,8 @@ function SlidesSection(props: Pick<AppearanceSettingsProps, 'store' | 'heroSlide
             {heroSlides.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-light text-center">
                     <MSO icon="view_carousel" className="text-[32px] text-on-surface-muted/30" />
-                    <p className="text-[13px] font-medium text-on-surface-muted">No slides yet</p>
-                    <p className="text-[12px] text-on-surface-muted/60 max-w-[220px]">
+                    <p className="text-[14px] font-medium text-on-surface-muted">No slides yet</p>
+                    <p className="text-[13px] text-on-surface-muted/60 max-w-[220px]">
                         Add slides to create a rotating hero carousel on your storefront.
                     </p>
                 </div>
@@ -751,15 +751,15 @@ function GalleryPhotoCard({ photo, idx, storeId, onChange, onRemove }: {
             <div className="flex items-center justify-between px-4 py-3 bg-surface-variant/40">
                 <button
                     onClick={() => setOpen(!open)}
-                    className="flex items-center gap-2.5 text-[13px] font-medium text-foreground min-w-0"
+                    className="flex items-center gap-2.5 text-[14px] font-medium text-foreground min-w-0"
                 >
                     {photo.url
                         ? <img src={photo.url} alt="" className="w-6 h-6 rounded object-cover shrink-0 border border-light" />
                         : <div className="w-6 h-6 rounded bg-surface border border-light shrink-0 flex items-center justify-center">
-                            <MSO icon="image" className="text-[13px] text-on-surface-muted" />
+                            <MSO icon="image" className="text-[14px] text-on-surface-muted" />
                         </div>
                     }
-                    <span className="shrink-0 text-on-surface-muted text-[12px]">#{idx + 1}</span>
+                    <span className="shrink-0 text-on-surface-muted text-[13px]">#{idx + 1}</span>
                     <span className="truncate">
                         {photo.caption || <span className="text-on-surface-muted font-normal italic">No caption</span>}
                     </span>
@@ -769,13 +769,13 @@ function GalleryPhotoCard({ photo, idx, storeId, onChange, onRemove }: {
                         onClick={() => setOpen(!open)}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-foreground hover:bg-surface transition-colors"
                     >
-                        <MSO icon={open ? 'expand_less' : 'edit'} className="text-[15px]" />
+                        <MSO icon={open ? 'expand_less' : 'edit'} className="text-[16px]" />
                     </button>
                     <button
                         onClick={onRemove}
                         className="w-7 h-7 rounded-lg flex items-center justify-center text-on-surface-muted hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                     >
-                        <MSO icon="delete" className="text-[15px]" />
+                        <MSO icon="delete" className="text-[16px]" />
                     </button>
                 </div>
             </div>
@@ -791,7 +791,7 @@ function GalleryPhotoCard({ photo, idx, storeId, onChange, onRemove }: {
                         aspectRatio="square"
                     />
                     <div className="space-y-1.5">
-                        <label className="block text-[12px] text-on-surface-muted">Caption</label>
+                        <label className="block text-[13px] text-on-surface-muted">Caption</label>
                         <Input
                             value={photo.caption ?? ''}
                             onChange={e => onChange({ ...photo, caption: e.target.value })}
@@ -817,7 +817,7 @@ function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryP
                     onClick={() => setGalleryPhotos([...galleryPhotos, { id: crypto.randomUUID(), url: '', caption: '' }])}
                     className={cn(
                         'flex items-center gap-1.5 h-8 px-3 rounded-lg border border-light',
-                        'text-[12px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
+                        'text-[13px] text-on-surface-muted hover:text-foreground hover:border-light-strong',
                         'transition-colors'
                     )}
                 >
@@ -829,8 +829,8 @@ function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryP
             {galleryPhotos.length === 0 ? (
                 <div className="flex flex-col items-center justify-center gap-2 py-8 rounded-xl border border-dashed border-light text-center">
                     <MSO icon="photo_library" className="text-[32px] text-on-surface-muted/30" />
-                    <p className="text-[13px] font-medium text-on-surface-muted">No photos yet</p>
-                    <p className="text-[12px] text-on-surface-muted/60 max-w-[220px]">
+                    <p className="text-[14px] font-medium text-on-surface-muted">No photos yet</p>
+                    <p className="text-[13px] text-on-surface-muted/60 max-w-[220px]">
                         Photos appear in the gallery grid on your storefront homepage.
                     </p>
                 </div>
@@ -899,7 +899,7 @@ function AppearanceTabBar({
                         key={tab.id}
                         onClick={() => onChange(tab.id)}
                         className={cn(
-                            'flex items-center gap-2 px-3 sm:px-4 py-2.5 text-[13px] whitespace-nowrap border-b-2 -mb-px transition-all duration-150 shrink-0',
+                            'flex items-center gap-2 px-3 sm:px-4 py-2.5 text-[14px] whitespace-nowrap border-b-2 -mb-px transition-all duration-150 shrink-0',
                             isActive
                                 ? 'border-foreground text-foreground font-medium'
                                 : 'border-transparent text-on-surface-muted hover:text-foreground hover:border-light-strong'

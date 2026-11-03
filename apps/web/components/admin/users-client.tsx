@@ -86,7 +86,7 @@ export default function UsersClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader title="Users" description={`${total.toLocaleString()} ${filtered ? (total === 1 ? 'match' : 'matches') : 'total'} · ${adminCount} ${adminCount === 1 ? 'admin' : 'admins'}`} />
 
             <FilterBar
@@ -119,7 +119,7 @@ export default function UsersClient({
                                             <Avatar name={user.name ?? user.email} src={user.avatar_url} shape="circle" />
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">{user.name ?? '—'}</p>
-                                                <p className="truncate text-[12px] text-muted-foreground">{user.email ?? '—'}</p>
+                                                <p className="truncate text-[13px] text-muted-foreground">{user.email ?? '—'}</p>
                                             </div>
                                         </div>
                                     </Td>

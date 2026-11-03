@@ -32,13 +32,13 @@ function FadeIn({ children, className, delay = 0 }: {
 }
 
 const inputCls = cn(
-    'w-full h-11 rounded-xl px-4 text-[14px] text-foreground placeholder:text-muted-foreground/60',
+    'w-full h-11 rounded-xl px-4 text-[15px] text-foreground placeholder:text-muted-foreground/60',
     'bg-foreground/5 border border-border',
     'focus:outline-none focus:border-foreground/30 focus:bg-foreground/[0.08]',
     'transition-all duration-150'
 )
 
-const labelCls = 'block text-[12px] font-medium text-muted-foreground mb-1.5'
+const labelCls = 'block text-[13px] font-medium text-muted-foreground mb-1.5'
 
 export default function ContactClient() {
     const [interest, setInterest] = useState<string | null>(null)
@@ -82,15 +82,15 @@ export default function ContactClient() {
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[400px] bg-[#3fa9f5]/15 rounded-full blur-[120px]" />
             </div>
 
-            <div className="relative z-10 container mx-auto px-6 md:px-12 max-w-4xl py-24 md:py-32">
+            <div className="relative z-10 mx-auto w-full px-6 md:px-12 max-w-6xl py-24 md:py-32">
 
                 <FadeIn className="mb-14 space-y-4 max-w-xl">
-                    <p className="text-[12px] font-semibold uppercase tracking-widest text-muted-foreground/60">Contact sales</p>
+                    <p className="text-[13px] font-semibold uppercase tracking-widest text-muted-foreground/60">Contact sales</p>
                     <h1 className="text-[2.8rem] md:text-[3.5rem] font-bold leading-[1.04] tracking-tight">
                         Let's talk<br />
                         <span className="text-muted-foreground/60">about your project.</span>
                     </h1>
-                    <p className="text-[15px] text-muted-foreground/70 leading-relaxed">
+                    <p className="text-[16px] text-muted-foreground/70 leading-relaxed">
                         Tell us what you're building and we'll figure out how Menengai Cloud can help. We typically respond within one business day.
                     </p>
                 </FadeIn>
@@ -113,7 +113,7 @@ export default function ContactClient() {
                                         </span>
                                     </div>
                                     <h2 className="text-[20px] font-semibold text-foreground">Message sent.</h2>
-                                    <p className="text-[14px] text-muted-foreground/80 leading-relaxed max-w-sm">
+                                    <p className="text-[15px] text-muted-foreground/80 leading-relaxed max-w-sm">
                                         Your default mail client should have opened with the message pre-filled. If it didn't, email us directly at{' '}
                                         <a href="mailto:sales@spiritb.uk" className="text-foreground/80 underline underline-offset-2 hover:text-foreground transition-colors">
                                             sales@spiritb.uk
@@ -136,7 +136,7 @@ export default function ContactClient() {
                                                     type="button"
                                                     onClick={() => setInterest(opt.id)}
                                                     className={cn(
-                                                        'h-8 px-4 rounded-full text-[13px] font-medium border transition-all duration-150',
+                                                        'h-8 px-4 rounded-full text-[14px] font-medium border transition-all duration-150',
                                                         interest === opt.id
                                                             ? 'bg-foreground text-background border-transparent'
                                                             : 'border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground'
@@ -199,14 +199,14 @@ export default function ContactClient() {
                                     </div>
 
                                     {error && (
-                                        <p className="text-[13px] text-red-400">{error}</p>
+                                        <p className="text-[14px] text-red-400">{error}</p>
                                     )}
 
                                     <button
                                         type="submit"
                                         disabled={!canSubmit || isPending}
                                         className={cn(
-                                            'h-11 px-6 rounded-full bg-foreground text-background text-[14px] font-semibold',
+                                            'h-11 px-6 rounded-full bg-foreground text-background text-[15px] font-semibold',
                                             'flex items-center gap-2 hover:opacity-90 active:scale-[0.98] transition-all',
                                             'disabled:opacity-30 disabled:cursor-not-allowed'
                                         )}
@@ -225,7 +225,7 @@ export default function ContactClient() {
                     {/* Sidebar */}
                     <FadeIn delay={0.2} className="space-y-6">
                         <div className="rounded-2xl border border-border bg-foreground/[0.03] p-6 space-y-5">
-                            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">Direct contact</h3>
+                            <h3 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-widest">Direct contact</h3>
                             <a
                                 href="mailto:sales@spiritb.uk"
                                 className="flex items-center gap-3 group"
@@ -234,14 +234,14 @@ export default function ContactClient() {
                                     <span className="material-symbols-outlined text-[18px] text-[#95ccff]">mail</span>
                                 </div>
                                 <div>
-                                    <p className="text-[13px] font-medium text-foreground group-hover:text-foreground/80 transition-colors">sales@spiritb.uk</p>
-                                    <p className="text-[11px] text-muted-foreground/60">Typically replies in 1 business day</p>
+                                    <p className="text-[14px] font-medium text-foreground group-hover:text-foreground/80 transition-colors">sales@spiritb.uk</p>
+                                    <p className="text-[12px] text-muted-foreground/60">Typically replies in 1 business day</p>
                                 </div>
                             </a>
                         </div>
 
                         <div className="rounded-2xl border border-border bg-foreground/[0.03] p-6 space-y-4">
-                            <h3 className="text-[13px] font-semibold text-muted-foreground uppercase tracking-widest">Good to know</h3>
+                            <h3 className="text-[14px] font-semibold text-muted-foreground uppercase tracking-widest">Good to know</h3>
                             {[
                                 'No lock-in contracts',
                                 'Setup assistance included',
@@ -249,10 +249,10 @@ export default function ContactClient() {
                                 'Dedicated support for trading app clients',
                             ].map(item => (
                                 <div key={item} className="flex items-start gap-2.5">
-                                    <span className="material-symbols-outlined text-[14px] text-emerald-400 mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
+                                    <span className="material-symbols-outlined text-[15px] text-emerald-400 mt-0.5 shrink-0" style={{ fontVariationSettings: "'FILL' 1" }}>
                                         check_circle
                                     </span>
-                                    <span className="text-[13px] text-muted-foreground/80 leading-snug">{item}</span>
+                                    <span className="text-[14px] text-muted-foreground/80 leading-snug">{item}</span>
                                 </div>
                             ))}
                         </div>

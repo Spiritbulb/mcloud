@@ -26,7 +26,7 @@ const TONES: Record<BadgeTone, string> = {
 /** A state: dot + text. Use for statuses in tables, lists and headers. */
 export function Status({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {
     return (
-        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[12px] text-foreground">
+        <span className="inline-flex items-center gap-1.5 whitespace-nowrap text-[13px] text-foreground">
             <span aria-hidden className={cn('h-1.5 w-1.5 shrink-0 rounded-full', DOTS[tone])} />
             {children}
         </span>
@@ -36,7 +36,7 @@ export function Status({ tone = 'neutral', children }: { tone?: BadgeTone; child
 /** A label or tag: a small chip. For states, use Status. */
 export function Badge({ tone = 'neutral', children }: { tone?: BadgeTone; children: ReactNode }) {
     return (
-        <span className={cn('inline-flex items-center rounded px-1.5 py-px text-[11px] font-medium leading-4', TONES[tone])}>
+        <span className={cn('inline-flex items-center rounded px-1.5 py-px text-[12px] font-medium leading-4', TONES[tone])}>
             {children}
         </span>
     )

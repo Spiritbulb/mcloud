@@ -139,7 +139,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
             <Panel title="Visibility" description="Whether your store is open for business.">
                 <div className="space-y-3">
                     <Switch label="Site active" description="When off, visitors see a coming soon page." checked={draft.isActive} onChange={(isActive) => set({ isActive })} />
-                    <div className="flex flex-wrap items-center gap-2 text-[12px] text-muted-foreground">
+                    <div className="flex flex-wrap items-center gap-2 text-[13px] text-muted-foreground">
                         {saved.isActive ? (
                             <>
                                 <Status tone="success">Live</Status>

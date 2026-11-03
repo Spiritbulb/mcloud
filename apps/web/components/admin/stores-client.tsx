@@ -114,7 +114,7 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader title="Stores" description={`${rows.length.toLocaleString()} total · ${proCount.toLocaleString()} on a paid plan`} />
 
             <Toolbar>
@@ -157,13 +157,13 @@ export default function StoresClient({ stores }: { stores: Store[] }) {
                                                 <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name ?? '—'}</p>
-                                                    <p className="truncate font-mono text-[11px] text-muted-foreground">{store.slug ?? '—'}</p>
+                                                    <p className="truncate font-mono text-[12px] text-muted-foreground">{store.slug ?? '—'}</p>
                                                 </div>
                                             </div>
                                         </Td>
                                         <Td label="Owner">
                                             <p>{store.owner?.name ?? '—'}</p>
-                                            <p className="text-[12px] text-muted-foreground">{store.owner?.email ?? ''}</p>
+                                            <p className="text-[13px] text-muted-foreground">{store.owner?.email ?? ''}</p>
                                         </Td>
                                         <Td label="Plan"><Badge tone={store.is_pro ? 'success' : 'neutral'}>{store.is_pro ? 'Pro' : 'Free'}</Badge></Td>
                                         <Td label="Status"><Status tone={isActive ? 'success' : 'danger'}>{isActive ? 'Active' : 'Suspended'}</Status></Td>

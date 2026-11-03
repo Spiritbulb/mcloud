@@ -47,7 +47,7 @@ function planLines(id: 'free' | 'hobby' | 'pro'): string[] {
 export default function Home() {
     return (
         <>
-            <section className="mx-auto max-w-6xl px-4 pb-16 pt-16 sm:px-6 sm:pt-24">
+            <section className="mx-auto max-w-page px-6 pb-16 pt-16 md:px-12 sm:pt-24">
                 <p className="mb-4 text-sm font-medium text-primary">MCloud Storefronts</p>
                 <h1 className="max-w-3xl text-4xl font-semibold tracking-tight sm:text-6xl">
                     Your store, live in minutes.
@@ -67,7 +67,7 @@ export default function Home() {
                 <p className="mt-3 text-sm text-muted-foreground">No card needed for the Free plan.</p>
             </section>
 
-            <section className="mx-auto grid max-w-6xl gap-4 px-4 pb-16 sm:grid-cols-2 sm:px-6">
+            <section className="mx-auto grid max-w-page gap-4 px-6 pb-16 sm:grid-cols-2 md:px-12">
                 <div className="rounded-2xl border border-border bg-card p-6">
                     <ShoppingBag className="mb-4 size-6 text-primary" aria-hidden />
                     <h2 className="text-xl font-semibold">For shops</h2>
@@ -85,7 +85,7 @@ export default function Home() {
             </section>
 
             <section id="how" className="border-y border-border bg-muted/30">
-                <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+                <div className="mx-auto max-w-page px-6 py-16 md:px-12">
                     <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">From idea to live site in three steps</h2>
                     <ol className="mt-8 grid gap-6 sm:grid-cols-3">
                         {STEPS.map((s) => (
@@ -99,7 +99,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+            <section className="mx-auto max-w-page px-6 py-16 md:px-12">
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Everything a small business site needs</h2>
                 <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
                     {FEATURES.map(({ icon: Icon, title, body }) => (
@@ -113,7 +113,7 @@ export default function Home() {
             </section>
 
             <section id="pricing" className="border-t border-border bg-muted/30">
-                <div className="mx-auto max-w-6xl px-4 py-16 sm:px-6">
+                <div className="mx-auto max-w-page px-6 py-16 md:px-12">
                     <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Simple pricing</h2>
                     <p className="mt-2 text-muted-foreground">Prices are per store, per month, in KES, paid from your organisation wallet when you upgrade.</p>
                     <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -148,7 +148,7 @@ export default function Home() {
                 </div>
             </section>
 
-            <section className="mx-auto max-w-6xl px-4 py-16 text-center sm:px-6">
+            <section className="mx-auto max-w-page px-6 py-16 text-center md:px-12">
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Ready when you are</h2>
                 <p className="mx-auto mt-2 max-w-xl text-muted-foreground">
                     It takes a couple of minutes to have a site you can share.

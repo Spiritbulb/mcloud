@@ -62,7 +62,7 @@ export function WalletTopupModal({
               Check your phone
             </p>
 
-            <p className="mt-2 text-[13px] text-muted-foreground">
+            <p className="mt-2 text-[14px] text-muted-foreground">
               Enter your M-Pesa PIN to complete the top-up. Your credits will
               reflect within a minute of confirming.
             </p>
@@ -70,7 +70,7 @@ export function WalletTopupModal({
             <button
               type="button"
               onClick={onClose}
-              className="mt-5 w-full bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground"
+              className="mt-5 w-full bg-primary px-4 py-2.5 text-[14px] font-semibold text-primary-foreground"
             >
               Done
             </button>
@@ -81,7 +81,7 @@ export function WalletTopupModal({
               Add credits
             </h3>
 
-            <p className="mt-1 text-[12px] text-muted-foreground">
+            <p className="mt-1 text-[13px] text-muted-foreground">
               You&apos;ll get an M-Pesa prompt on your phone.
             </p>
 
@@ -95,7 +95,7 @@ export function WalletTopupModal({
                     type="button"
                     onClick={() => setAmount(String(value))}
                     className={[
-                      'border px-3 py-2.5 text-left text-[13px] font-semibold transition-colors',
+                      'border px-3 py-2.5 text-left text-[14px] font-semibold transition-colors',
                       selected
                         ? 'border-[var(--md-sys-color-primary)] bg-primary text-primary-foreground'
                         : 'border-border text-foreground hover:bg-[var(--md-sys-color-surface-container)]',
@@ -107,7 +107,7 @@ export function WalletTopupModal({
               })}
             </div>
 
-            <label className="mt-4 block text-[12px] font-medium text-foreground">
+            <label className="mt-4 block text-[13px] font-medium text-foreground">
               Amount (KSh)
               <input
                 type="number"
@@ -116,11 +116,11 @@ export function WalletTopupModal({
                 value={amount}
                 onChange={(event) => setAmount(event.target.value)}
                 required
-                className="mt-1 w-full border border-border px-3 py-2 text-[14px] text-foreground"
+                className="mt-1 w-full border border-border px-3 py-2 text-[15px] text-foreground"
               />
             </label>
 
-            <label className="mt-3 block text-[12px] font-medium text-foreground">
+            <label className="mt-3 block text-[13px] font-medium text-foreground">
               M-Pesa phone number
               <input
                 type="tel"
@@ -128,18 +128,18 @@ export function WalletTopupModal({
                 value={phone}
                 onChange={(event) => setPhone(event.target.value)}
                 required
-                className="mt-1 w-full border border-border px-3 py-2 text-[14px] text-foreground"
+                className="mt-1 w-full border border-border px-3 py-2 text-[15px] text-foreground"
               />
             </label>
 
-            {error && <p className="mt-3 text-[12px] text-red-700">{error}</p>}
+            {error && <p className="mt-3 text-[13px] text-red-700">{error}</p>}
 
             <div className="mt-5 flex gap-2">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={submitting}
-                className="flex-1 border border-border px-4 py-2.5 text-[13px] font-medium text-foreground disabled:opacity-40"
+                className="flex-1 border border-border px-4 py-2.5 text-[14px] font-medium text-foreground disabled:opacity-40"
               >
                 Cancel
               </button>
@@ -147,7 +147,7 @@ export function WalletTopupModal({
               <button
                 type="submit"
                 disabled={submitting || Number(amount) < 20}
-                className="flex-1 bg-primary px-4 py-2.5 text-[13px] font-semibold text-primary-foreground disabled:opacity-40"
+                className="flex-1 bg-primary px-4 py-2.5 text-[14px] font-semibold text-primary-foreground disabled:opacity-40"
               >
                 {submitting ? 'Sending…' : 'Done'}
               </button>

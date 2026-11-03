@@ -71,7 +71,7 @@ function PermissionsEditor({ member, storeId, canEdit }: { member: Member; store
 
     // Owners always have every permission, so there is nothing to edit.
     if (member.role === 'owner') {
-        return <p className="mt-1 text-[12px] text-muted-foreground">Owners have full access to every feature.</p>
+        return <p className="mt-1 text-[13px] text-muted-foreground">Owners have full access to every feature.</p>
     }
 
     return (
@@ -80,7 +80,7 @@ function PermissionsEditor({ member, storeId, canEdit }: { member: Member; store
                 type="button"
                 onClick={() => setOpen((o) => !o)}
                 aria-expanded={open}
-                className="inline-flex items-center gap-1 text-[12px] text-muted-foreground transition-colors hover:text-foreground"
+                className="inline-flex items-center gap-1 text-[13px] text-muted-foreground transition-colors hover:text-foreground"
             >
                 <Icon name={open ? 'expand_less' : 'expand_more'} size={15} />
                 {open ? 'Hide permissions' : `Permissions (${perms.length})`}
@@ -102,8 +102,8 @@ function PermissionsEditor({ member, storeId, canEdit }: { member: Member; store
                                 >
                                     <input type="checkbox" checked={on} onChange={() => toggle(p.key)} disabled={!canEdit} className="mt-0.5 accent-primary" />
                                     <span>
-                                        <span className="block text-[12px] font-medium text-foreground">{p.label}</span>
-                                        <span className="block text-[12px] text-muted-foreground">{p.description}</span>
+                                        <span className="block text-[13px] font-medium text-foreground">{p.label}</span>
+                                        <span className="block text-[13px] text-muted-foreground">{p.description}</span>
                                     </span>
                                 </label>
                             )
@@ -149,11 +149,11 @@ function MemberItem({ member, storeId, currentRole, onRemove }: {
                 <Avatar name={member.users?.name ?? null} src={member.users?.avatar_url} shape="circle" />
                 <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                        <p className="truncate text-[13px] font-medium text-foreground">{name}</p>
+                        <p className="truncate text-[14px] font-medium text-foreground">{name}</p>
                         <RoleBadge role={member.role} />
                     </div>
-                    <p className="truncate text-[12px] text-muted-foreground">{member.users?.email ?? '—'}</p>
-                    {error && <p role="alert" className="mt-1 text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+                    <p className="truncate text-[13px] text-muted-foreground">{member.users?.email ?? '—'}</p>
+                    {error && <p role="alert" className="mt-1 text-[13px] text-red-700 dark:text-red-300">{error}</p>}
                     <PermissionsEditor member={member} storeId={storeId} canEdit={canManage} />
                 </div>
                 {canManage && (
@@ -196,11 +196,11 @@ function InviteItem({ invite, storeId, now, onRevoke }: { invite: Invite; storeI
             </span>
             <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-[13px] text-foreground">{invite.email}</p>
+                    <p className="truncate text-[14px] text-foreground">{invite.email}</p>
                     <RoleBadge role={invite.role} />
                 </div>
                 {days !== null && (
-                    <p className="text-[12px] text-muted-foreground">{days === 0 ? 'Expires today' : `Expires in ${days} ${days === 1 ? 'day' : 'days'}`}</p>
+                    <p className="text-[13px] text-muted-foreground">{days === 0 ? 'Expires today' : `Expires in ${days} ${days === 1 ? 'day' : 'days'}`}</p>
                 )}
             </div>
             <Button variant="ghost" size="sm" onClick={handleRevoke} disabled={isPending}>

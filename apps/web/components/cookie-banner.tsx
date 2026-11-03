@@ -33,7 +33,7 @@ export function CookieBanner() {
                     className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-2rem)] max-w-xl"
                 >
                     <div className="flex items-center justify-between gap-4 rounded-2xl border border-white/10 bg-[#0a0a0a]/95 backdrop-blur-md px-5 py-4 shadow-2xl">
-                        <p className="text-[12px] text-white/60 leading-relaxed">
+                        <p className="text-[13px] text-white/60 leading-relaxed">
                             We use analytics cookies to see which pages are useful. You can decline; the site works the same.{' '}
                             <a href="https://spiritb.uk/privacy" className="text-white/80 underline underline-offset-2 hover:text-white transition-colors">
                                 Cookie policy
@@ -43,13 +43,13 @@ export function CookieBanner() {
                         <div className="flex shrink-0 items-center gap-2">
                             <button
                                 onClick={() => answer('denied')}
-                                className="h-8 px-3 rounded-full text-white/70 text-[12px] font-medium hover:text-white transition-colors"
+                                className="h-8 px-3 rounded-full text-white/70 text-[13px] font-medium hover:text-white transition-colors"
                             >
                                 Decline
                             </button>
                             <button
                                 onClick={() => answer('granted')}
-                                className="h-8 px-4 rounded-full bg-white text-[#0a0a0a] text-[12px] font-semibold hover:bg-white/90 active:scale-[0.97] transition-all"
+                                className="h-8 px-4 rounded-full bg-white text-[#0a0a0a] text-[13px] font-semibold hover:bg-white/90 active:scale-[0.97] transition-all"
                             >
                                 Accept
                             </button>

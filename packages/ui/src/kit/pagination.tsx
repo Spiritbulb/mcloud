@@ -9,7 +9,7 @@ export function Pagination({ basePath, q, pages, total, newestFirst }: { basePat
     const to = Math.min(q.page * PAGE_SIZE, total)
     const link = 'inline-flex h-8 items-center rounded-md border border-input px-3 text-foreground transition-colors hover:bg-muted'
     return (
-        <nav className="flex items-center justify-between gap-3 text-[13px]" aria-label="Pagination">
+        <nav className="flex items-center justify-between gap-3 text-[14px]" aria-label="Pagination">
             {q.page > 1 ? <Link href={href(q.page - 1)} className={link} rel="prev">{newestFirst ? 'Newer' : 'Previous'}</Link> : <span />}
             <span className="text-center text-muted-foreground tabular-nums">
                 {from.toLocaleString()}–{to.toLocaleString()} of {total.toLocaleString()}

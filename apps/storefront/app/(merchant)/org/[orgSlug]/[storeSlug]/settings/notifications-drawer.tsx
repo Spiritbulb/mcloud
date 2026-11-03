@@ -137,7 +137,7 @@ export function GettingStartedDrawer({
                                 <div className="flex items-center gap-3">
                                     <div className="relative flex-shrink-0">
                                         <ProgressRing done={doneCount} total={steps.length} />
-                                        <span className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold text-foreground">
+                                        <span className="absolute inset-0 flex items-center justify-center text-[12px] font-semibold text-foreground">
                                             {doneCount}/{steps.length}
                                         </span>
                                     </div>
@@ -256,7 +256,7 @@ export function GettingStartedButton({
         >
             <Rocket className="w-3.5 h-3.5 text-[#425e7b]" />
             <span className="hidden sm:inline">Getting started</span>
-            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#425e7b] text-white text-[10px] font-bold">
+            <span className="inline-flex items-center justify-center w-4 h-4 rounded-full bg-[#425e7b] text-white text-[11px] font-bold">
                 {total - doneCount}
             </span>
         </button>

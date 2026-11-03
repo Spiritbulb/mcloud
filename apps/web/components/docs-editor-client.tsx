@@ -26,6 +26,8 @@ export type EditableSection = {
 }
 export type EditablePage = {
     id: string
+    slug?: string
+    seoTitle?: string
     title: string
     description: string
     beta?: boolean
@@ -416,7 +418,11 @@ export default function DocsEditorClient({ initialDocs }: { initialDocs: Editabl
                                     <TF label="Title" value={activePage.title} onChange={v => updatePage(activeId, { title: v })} />
                                     <TF label="ID" value={activePage.id} onChange={v => updatePage(activeId, { id: v })} mono />
                                 </div>
-                                <TF label="Description" value={activePage.description} onChange={v => updatePage(activeId, { description: v })} />
+                                <TF label="Description (also the search-result snippet, aim for 120-160 characters)" value={activePage.description} onChange={v => updatePage(activeId, { description: v })} />
+                                <div className="grid sm:grid-cols-2 gap-4">
+                                    <TF label="URL slug (/docs/…; blank uses the ID)" value={activePage.slug ?? ""} onChange={v => updatePage(activeId, { slug: v || undefined })} mono />
+                                    <TF label="Search title (blank: “Title | Menengai Cloud Docs”)" value={activePage.seoTitle ?? ""} onChange={v => updatePage(activeId, { seoTitle: v || undefined })} />
+                                </div>
                                 <div className="flex gap-6 flex-wrap">
                                     <div className="space-y-1">
                                         <label className="text-xs font-medium text-muted-foreground">Icon</label>

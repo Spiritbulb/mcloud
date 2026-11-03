@@ -32,10 +32,10 @@ export function Panel({
             {(title || action) && (
                 <header className={cn('flex items-center justify-between gap-4 px-4', flush ? 'border-b border-border py-3' : 'pb-1 pt-4')}>
                     <div className="min-w-0">
-                        {title && <h2 className="font-sans text-[13px] font-medium text-foreground">{title}</h2>}
-                        {description && <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>}
+                        {title && <h2 className="font-sans text-[14px] font-medium text-foreground">{title}</h2>}
+                        {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
                     </div>
-                    {action && <div className="shrink-0 text-[12px]">{action}</div>}
+                    {action && <div className="shrink-0 text-[13px]">{action}</div>}
                 </header>
             )}
             {/* flex-1: when a grid stretches the panel, the body grows and the footer stays at the bottom. */}

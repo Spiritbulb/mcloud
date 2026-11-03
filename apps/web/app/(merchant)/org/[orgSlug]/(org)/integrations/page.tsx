@@ -107,10 +107,10 @@ export default async function Page({ params }: { params: Promise<{ orgSlug: stri
                                 </span>
                                 <span className="min-w-0 flex-1">
                                     <span className="flex items-center gap-2">
-                                        <span className="text-[13px] font-medium text-foreground">{integration.name}</span>
+                                        <span className="text-[14px] font-medium text-foreground">{integration.name}</span>
                                         {integration.comingSoon && <Badge>Soon</Badge>}
                                     </span>
-                                    <span className="mt-0.5 block text-[12px] text-muted-foreground">{integration.description}</span>
+                                    <span className="mt-0.5 block text-[13px] text-muted-foreground">{integration.description}</span>
                                 </span>
                                 {!integration.comingSoon && <Button size="sm" disabled>Configure</Button>}
                             </li>

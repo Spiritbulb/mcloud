@@ -29,14 +29,14 @@ export function Tabs({
             {items.map((t) => {
                 const active = t.id === value
                 const cls = cn(
-                    'relative flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-[13px] transition-colors',
+                    'relative flex shrink-0 items-center gap-1.5 whitespace-nowrap border-b-2 px-0.5 pb-2 pt-1 text-[14px] transition-colors',
                     active ? 'border-primary font-medium text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
                 )
                 const inner = (
                     <>
                         {t.label}
                         {t.count !== undefined && (
-                            <span className={cn('text-[12px] tabular-nums', active ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
+                            <span className={cn('text-[13px] tabular-nums', active ? 'text-muted-foreground' : 'text-muted-foreground/70')}>
                                 {t.count}
                             </span>
                         )}

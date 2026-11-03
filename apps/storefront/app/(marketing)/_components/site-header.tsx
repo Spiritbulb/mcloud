@@ -4,7 +4,7 @@ import { ThemedLogo } from '@mcloud/ui/themed-logo'
 export function SiteHeader() {
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
-            <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
+            <div className="mx-auto flex h-14 max-w-page items-center justify-between px-6 md:px-12">
                 <Link href="/" className="flex items-center gap-2" aria-label="Menengai Storefronts home">
                     <ThemedLogo className="h-6 w-auto" />
                     <span className="hidden text-sm font-semibold tracking-tight sm:inline">Storefronts</span>

@@ -86,7 +86,7 @@ function ProductStack({ order }: { order: Order }) {
         <span className="flex shrink-0 items-center -space-x-2.5">
             {shown.map((item, i) => <Thumb key={i} src={item.image_url} alt={item.title} />)}
             {extra > 0 && (
-                <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-card bg-muted text-[10px] font-medium text-muted-foreground">+{extra}</span>
+                <span className="flex h-8 w-8 items-center justify-center rounded-md border-2 border-card bg-muted text-[11px] font-medium text-muted-foreground">+{extra}</span>
             )}
         </span>
     )
@@ -108,12 +108,12 @@ function OrderDetail({ order, updating, onStatus }: {
         <div className="grid gap-6 bg-muted/30 px-4 py-5 md:grid-cols-[minmax(0,1fr)_16rem]">
             <div className="min-w-0 space-y-4">
                 {order.customer_email || order.customer_phone ? (
-                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[12px] text-muted-foreground">
+                    <div className="flex flex-wrap gap-x-5 gap-y-1 text-[13px] text-muted-foreground">
                         {order.customer_email && <span className="inline-flex items-center gap-1.5"><Icon name="mail" size={14} />{order.customer_email}</span>}
                         {order.customer_phone && <span className="inline-flex items-center gap-1.5"><Icon name="call" size={14} />{order.customer_phone}</span>}
                     </div>
                 ) : (
-                    <p className="text-[12px] text-muted-foreground">Guest checkout: no contact on file.</p>
+                    <p className="text-[13px] text-muted-foreground">Guest checkout: no contact on file.</p>
                 )}
 
                 {order.items && order.items.length > 0 && (
@@ -122,11 +122,11 @@ function OrderDetail({ order, updating, onStatus }: {
                             <li key={item.id} className="flex items-center gap-3 px-3 py-2">
                                 <Thumb src={item.image_url} alt={item.title} />
                                 <span className="min-w-0 flex-1">
-                                    <span className="block truncate text-[13px] text-foreground">{item.title}</span>
-                                    {item.variant_title && <span className="block text-[12px] text-muted-foreground">{item.variant_title}</span>}
+                                    <span className="block truncate text-[14px] text-foreground">{item.title}</span>
+                                    {item.variant_title && <span className="block text-[13px] text-muted-foreground">{item.variant_title}</span>}
                                 </span>
-                                <span className="text-[12px] text-muted-foreground">×{item.quantity}</span>
-                                <span className="w-24 text-right text-[13px] tabular-nums">{formatMoney(order.currency, item.total)}</span>
+                                <span className="text-[13px] text-muted-foreground">×{item.quantity}</span>
+                                <span className="w-24 text-right text-[14px] tabular-nums">{formatMoney(order.currency, item.total)}</span>
                             </li>
                         ))}
                     </ul>
@@ -134,21 +134,21 @@ function OrderDetail({ order, updating, onStatus }: {
 
                 {order.notes && (
                     <div className="rounded-md border border-border bg-card p-3">
-                        <p className="mb-1 text-[12px] font-medium text-muted-foreground">Customer note</p>
-                        <p className="text-[13px] text-foreground">{order.notes}</p>
+                        <p className="mb-1 text-[13px] font-medium text-muted-foreground">Customer note</p>
+                        <p className="text-[14px] text-foreground">{order.notes}</p>
                     </div>
                 )}
             </div>
 
             <div className="space-y-4">
-                <dl className="space-y-1.5 text-[12px]">
+                <dl className="space-y-1.5 text-[13px]">
                     {totals.map((row) => (
                         <div key={row.label} className="flex justify-between text-muted-foreground">
                             <dt>{row.label}</dt>
                             <dd className="tabular-nums">{formatMoney(order.currency, row.value)}</dd>
                         </div>
                     ))}
-                    <div className="flex justify-between border-t border-border pt-1.5 text-[13px] font-semibold text-foreground">
+                    <div className="flex justify-between border-t border-border pt-1.5 text-[14px] font-semibold text-foreground">
                         <dt>Total</dt>
                         <dd className="tabular-nums">{formatMoney(order.currency, order.total)}</dd>
                     </div>
@@ -165,7 +165,7 @@ function OrderDetail({ order, updating, onStatus }: {
                         {FULFILLMENT_STATUSES.map((s) => <option key={s} value={s}>{statusLabel(s)}</option>)}
                     </Select>
                 </Field>
-                {updating && <p className="flex items-center gap-1.5 text-[12px] text-muted-foreground"><Spinner size={12} />Saving…</p>}
+                {updating && <p className="flex items-center gap-1.5 text-[13px] text-muted-foreground"><Spinner size={12} />Saving…</p>}
             </div>
         </div>
     )
@@ -284,8 +284,8 @@ export default function OrderSettings({
                                                     <div className="flex items-center gap-3">
                                                         <ProductStack order={order} />
                                                         <div className="min-w-0">
-                                                            <p className="font-mono text-[11px] text-muted-foreground">#{order.order_number}</p>
-                                                            <p className="truncate text-[13px] text-foreground">
+                                                            <p className="font-mono text-[12px] text-muted-foreground">#{order.order_number}</p>
+                                                            <p className="truncate text-[14px] text-foreground">
                                                                 {itemCount(order.item_count)}
                                                                 <span className="text-muted-foreground"> · {new Date(order.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short' })}</span>
                                                             </p>
@@ -294,7 +294,7 @@ export default function OrderSettings({
                                                 </td>
                                                 <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1 max-md:pr-1.5"><Status tone={orderStatusTone(order.status)}>{statusLabel(order.status)}</Status></td>
                                                 <td className="px-4 py-2.5 max-md:inline-block max-md:px-0 max-md:py-1"><Status tone={fulfillmentTone(order.fulfillment_status)}>{statusLabel(order.fulfillment_status)}</Status></td>
-                                                <td className="px-4 py-2.5 text-right text-[13px] font-medium tabular-nums max-md:block max-md:px-0 max-md:py-1 max-md:text-left">{formatMoney(order.currency, order.total)}</td>
+                                                <td className="px-4 py-2.5 text-right text-[14px] font-medium tabular-nums max-md:block max-md:px-0 max-md:py-1 max-md:text-left">{formatMoney(order.currency, order.total)}</td>
                                                 <td className="w-10 px-4 py-2.5 text-right max-md:hidden">
                                                     <Icon name={open ? 'expand_less' : 'expand_more'} size={18} className="text-muted-foreground" />
                                                 </td>

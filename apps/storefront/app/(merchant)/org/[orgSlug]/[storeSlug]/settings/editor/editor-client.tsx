@@ -363,7 +363,7 @@ export default function EditorClient({
             <header className="flex h-12 shrink-0 items-center gap-2 border-b border-border px-3">
                 <div className="flex min-w-0 items-center gap-2">
                     <Icon name="home" size={16} className="text-muted-foreground" />
-                    <span className="truncate text-[13px] font-medium">Home page</span>
+                    <span className="truncate text-[14px] font-medium">Home page</span>
                 </div>
 
                 <div className="mx-auto hidden items-center rounded-md border border-border bg-muted/40 p-0.5 md:flex" role="group" aria-label="Preview size">
@@ -392,7 +392,7 @@ export default function EditorClient({
                                 type="button"
                                 aria-pressed={mobilePane === p}
                                 onClick={() => setMobilePane(p)}
-                                className={cn('h-7 rounded px-2.5 text-[12px] font-medium', mobilePane === p ? 'bg-card shadow-sm' : 'text-muted-foreground')}
+                                className={cn('h-7 rounded px-2.5 text-[13px] font-medium', mobilePane === p ? 'bg-card shadow-sm' : 'text-muted-foreground')}
                             >
                                 {p === 'edit' ? 'Edit' : 'Preview'}
                             </button>
@@ -400,7 +400,7 @@ export default function EditorClient({
                     </div>
                     <IconAction icon="undo" label="Undo (Ctrl+Z)" onClick={undo} disabled={state.past.length === 0} className="h-8 w-8" />
                     <IconAction icon="redo" label="Redo (Ctrl+Shift+Z)" onClick={redo} disabled={state.future.length === 0} className="h-8 w-8" />
-                    <span className="mx-2 hidden text-[12px] text-muted-foreground lg:inline" role="status">
+                    <span className="mx-2 hidden text-[13px] text-muted-foreground lg:inline" role="status">
                         {saving ? 'Saving…' : justSaved ? 'All changes saved' : dirty ? 'Unsaved changes' : ''}
                     </span>
                     <a href={liveUrl} target="_blank" rel="noreferrer" className={cn(buttonClass('ghost'), 'hidden sm:inline-flex')}>
@@ -450,7 +450,7 @@ export default function EditorClient({
                                         aria-selected={tab === t}
                                         onClick={() => setTab(t)}
                                         className={cn(
-                                            '-mb-px border-b-2 px-2 py-2.5 text-[13px] font-medium transition-colors',
+                                            '-mb-px border-b-2 px-2 py-2.5 text-[14px] font-medium transition-colors',
                                             tab === t ? 'border-primary text-foreground' : 'border-transparent text-muted-foreground hover:text-foreground',
                                         )}
                                     >
@@ -470,8 +470,8 @@ export default function EditorClient({
                                     <div className="space-y-6">
                                         {THEME_GROUPS.map((g) => (
                                             <section key={g.title}>
-                                                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</h3>
-                                                {g.hint && <p className="-mt-1.5 mb-3 text-[12px] text-muted-foreground">{g.hint}</p>}
+                                                <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</h3>
+                                                {g.hint && <p className="-mt-1.5 mb-3 text-[13px] text-muted-foreground">{g.hint}</p>}
                                                 <SettingsFields
                                                     schema={THEME_SCHEMA.filter((f) => g.match(f.id))}
                                                     values={doc.theme}
@@ -480,7 +480,7 @@ export default function EditorClient({
                                                 />
                                             </section>
                                         ))}
-                                        <p className="text-[12px] text-muted-foreground">Clear a field to go back to the theme default.</p>
+                                        <p className="text-[13px] text-muted-foreground">Clear a field to go back to the theme default.</p>
                                     </div>
                                 )}
                             </div>
@@ -519,14 +519,14 @@ export default function EditorClient({
                         />
                     ) : (
                         <div className="grid h-full place-items-center rounded-md border border-dashed border-border">
-                            <p className="max-w-xs text-center text-[13px] text-muted-foreground">
+                            <p className="max-w-xs text-center text-[14px] text-muted-foreground">
                                 The preview is unavailable right now. Your changes still save normally.
                             </p>
                         </div>
                     )}
 
                     {toast && (
-                        <div role="status" className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md bg-foreground py-1.5 pl-3.5 pr-1.5 text-[13px] text-background shadow-lg">
+                        <div role="status" className="absolute bottom-5 left-1/2 z-30 flex -translate-x-1/2 items-center gap-3 rounded-md bg-foreground py-1.5 pl-3.5 pr-1.5 text-[14px] text-background shadow-lg">
                             <span>{toast.label}</span>
                             {canUndoToast ? (
                                 <button type="button" onClick={() => { undo(); setToast(null) }} className="h-7 rounded px-2.5 font-semibold hover:bg-background/15">
@@ -635,8 +635,8 @@ function SectionList({
                             >
                                 <Icon name={SECTION_ICONS[s.type] ?? 'view_agenda'} size={16} className="text-muted-foreground" />
                                 <span className="min-w-0">
-                                    <span className="block truncate text-[13px] font-medium">{def?.label ?? s.type}</span>
-                                    {heading && <span className="block truncate text-[11px] text-muted-foreground">{heading}</span>}
+                                    <span className="block truncate text-[14px] font-medium">{def?.label ?? s.type}</span>
+                                    {heading && <span className="block truncate text-[12px] text-muted-foreground">{heading}</span>}
                                 </span>
                             </button>
                             <span className="flex opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
@@ -651,7 +651,7 @@ function SectionList({
                 <Icon name="add" size={16} />
                 Add section
             </Button>
-            <p className="mt-4 text-[12px] leading-relaxed text-muted-foreground">
+            <p className="mt-4 text-[13px] leading-relaxed text-muted-foreground">
                 Click a section in the preview to edit it. Drag sections here to reorder them.
             </p>
         </div>
@@ -683,7 +683,7 @@ function SectionPanel({
             <div className="flex h-11 shrink-0 items-center gap-1 border-b border-border px-1.5">
                 <IconAction icon="arrow_back" label="Back to sections" onClick={onBack} className="h-8 w-8" />
                 <Icon name={SECTION_ICONS[section.type] ?? 'view_agenda'} size={16} className="ml-1 text-muted-foreground" />
-                <h2 className="min-w-0 flex-1 truncate pl-1 text-[13px] font-semibold">{def?.label ?? section.type}</h2>
+                <h2 className="min-w-0 flex-1 truncate pl-1 text-[14px] font-semibold">{def?.label ?? section.type}</h2>
                 <IconAction icon="arrow_upward" label="Move up" disabled={index === 0} onClick={() => onOp({ op: 'move', index, to: index - 1 })} />
                 <IconAction icon="arrow_downward" label="Move down" disabled={index === count - 1} onClick={() => onOp({ op: 'move', index, to: index + 1 })} />
                 <IconAction icon="content_copy" label="Duplicate section" onClick={() => onOp({ op: 'duplicate', index })} />
@@ -706,10 +706,10 @@ function SectionPanel({
                     </div>
                 )}
                 {def && schema.length === 0 && !content && (
-                    <p className="text-[13px] text-muted-foreground">{def.description ?? 'This section has nothing to configure.'}</p>
+                    <p className="text-[14px] text-muted-foreground">{def.description ?? 'This section has nothing to configure.'}</p>
                 )}
                 {(def?.description && (schema.length > 0 || content)) && (
-                    <p className="text-[12px] text-muted-foreground">{def.description}</p>
+                    <p className="text-[13px] text-muted-foreground">{def.description}</p>
                 )}
             </div>
             <div className="shrink-0 border-t border-border p-3">

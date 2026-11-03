@@ -17,8 +17,8 @@ export function LoadError({
     return (
         <div role="alert" className="flex flex-col items-center gap-2 px-6 py-10 text-center">
             <Icon name="error" size={22} className="text-red-600 dark:text-red-400" />
-            <p className="text-[13px] font-medium text-foreground">{title}</p>
-            {message && <p className="max-w-sm text-[12px] text-muted-foreground">{message}</p>}
+            <p className="text-[14px] font-medium text-foreground">{title}</p>
+            {message && <p className="max-w-sm text-[13px] text-muted-foreground">{message}</p>}
             {onRetry && (
                 <Button size="sm" onClick={onRetry} className="mt-1">
                     <Icon name="refresh" size={14} />

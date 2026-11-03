@@ -67,7 +67,7 @@ function zoneLabel(zone: Zone | undefined): string {
 
 function SummaryRow({ label, value }: { label: string; value: string }) {
     return (
-        <div className="flex items-baseline justify-between gap-3 py-1.5 text-[13px]">
+        <div className="flex items-baseline justify-between gap-3 py-1.5 text-[14px]">
             <span className="shrink-0 text-muted-foreground">{label}</span>
             <span className="truncate text-right text-foreground">{value}</span>
         </div>
@@ -114,11 +114,11 @@ function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; private
                     </>
                 }
             >
-                <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-[11px] leading-relaxed text-foreground">{privateKey}</pre>
+                <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-[12px] leading-relaxed text-foreground">{privateKey}</pre>
             </Panel>
             <Panel title="Connect" description="New servers can take a few minutes to become reachable.">
                 <div className="flex items-center justify-between gap-3">
-                    <code className="min-w-0 truncate font-mono text-[12px] text-foreground">{ssh}</code>
+                    <code className="min-w-0 truncate font-mono text-[13px] text-foreground">{ssh}</code>
                     <Button size="sm" variant="ghost" onClick={() => copy('ssh', ssh)}>
                         <Icon name={copied === 'ssh' ? 'check' : 'content_copy'} size={14} />
                         {copied === 'ssh' ? 'Copied' : 'Copy'}
@@ -300,9 +300,9 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                     <OptionCard key={z.id} selected={zone === z.id} onSelect={() => setZone(z.id)}>
                                         <span className="flex items-center gap-2">
                                             <Flag zoneId={z.id} className="h-3.5 w-5" />
-                                            <span className="text-[13px] font-medium text-foreground">{ZONE_META[z.id]?.city ?? z.description}</span>
+                                            <span className="text-[14px] font-medium text-foreground">{ZONE_META[z.id]?.city ?? z.description}</span>
                                         </span>
-                                        <span className="mt-1.5 block text-[12px] text-muted-foreground">
+                                        <span className="mt-1.5 block text-[13px] text-muted-foreground">
                                             {z.id === DEFAULT_ZONE ? 'Recommended' : ZONE_META[z.id]?.country ?? z.id}
                                         </span>
                                     </OptionCard>
@@ -320,7 +320,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                                 <OptionCard key={z.id} selected={zone === z.id} onSelect={() => setZone(z.id)} className="py-2.5">
                                                     <span className="flex items-center gap-2 pr-5">
                                                         <Flag zoneId={z.id} className="h-3 w-4" />
-                                                        <span className="truncate text-[13px] text-foreground">{zoneLabel(z)}</span>
+                                                        <span className="truncate text-[14px] text-foreground">{zoneLabel(z)}</span>
                                                         {GREEN_ZONES.has(z.id) && <Icon name="eco" size={13} className="shrink-0 text-emerald-600 dark:text-emerald-400" />}
                                                     </span>
                                                 </OptionCard>
@@ -328,7 +328,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                         </div>
                                     )}
                                     {showAllZones && (
-                                        <p className="flex items-center gap-1 text-[12px] text-muted-foreground">
+                                        <p className="flex items-center gap-1 text-[13px] text-muted-foreground">
                                             <Icon name="eco" size={13} className="text-emerald-600 dark:text-emerald-400" />
                                             Runs on renewable energy.
                                         </p>
@@ -346,20 +346,20 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                 onChange={(id) => { setTier(id as PlanTier); setPlan('') }}
                                 items={TIERS.map((t) => ({ id: t.id, label: `${t.label} · from ${formatKes(options.kesPrices[t.from])}` }))}
                             />
-                            <p className="text-[12px] text-muted-foreground">{TIERS.find((t) => t.id === tier)?.description}</p>
+                            <p className="text-[13px] text-muted-foreground">{TIERS.find((t) => t.id === tier)?.description}</p>
                             {plans.length === 0 ? (
-                                <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-[13px] text-muted-foreground">No plans are available in this tier right now.</p>
+                                <p className="rounded-md border border-dashed border-border px-4 py-6 text-center text-[14px] text-muted-foreground">No plans are available in this tier right now.</p>
                             ) : (
                                 <div className="grid gap-2 sm:grid-cols-2">
                                     {plans.map((p) => (
                                         <OptionCard key={p.name} selected={plan === p.name} onSelect={() => setPlan(p.name)}>
-                                            <span className="block pr-6 text-[13px] font-medium text-foreground">
+                                            <span className="block pr-6 text-[14px] font-medium text-foreground">
                                                 {p.core_number} vCPU · {formatMemory(p.memory_amount)} · {p.storage_size} GB
                                             </span>
-                                            <span className="mt-0.5 block text-[12px] text-muted-foreground">{planUseCase(p)}</span>
-                                            <span className="mt-2 block text-[13px] font-semibold tabular-nums text-foreground">
+                                            <span className="mt-0.5 block text-[13px] text-muted-foreground">{planUseCase(p)}</span>
+                                            <span className="mt-2 block text-[14px] font-semibold tabular-nums text-foreground">
                                                 {formatKes(options.kesPrices[p.name])}
-                                                <span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span>
+                                                <span className="ml-1 text-[13px] font-normal text-muted-foreground">/ month</span>
                                             </span>
                                         </OptionCard>
                                     ))}
@@ -385,8 +385,8 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                             {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={f.icon} alt="" className="h-6 w-6 object-contain" />
                                             <span>
-                                                <span className="block text-[13px] font-medium text-foreground">{f.label}</span>
-                                                {f.recommended && <span className="block text-[11px] text-muted-foreground">Recommended</span>}
+                                                <span className="block text-[14px] font-medium text-foreground">{f.label}</span>
+                                                {f.recommended && <span className="block text-[12px] text-muted-foreground">Recommended</span>}
                                             </span>
                                         </span>
                                     </OptionCard>
@@ -399,7 +399,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                                     </Select>
                                 </Field>
                             )}
-                            <p className="flex items-start gap-1.5 text-[12px] text-muted-foreground">
+                            <p className="flex items-start gap-1.5 text-[13px] text-muted-foreground">
                                 <Icon name="key" size={14} className="mt-px shrink-0" />
                                 An SSH key is generated for you. You download its private half once, right after the server is created.
                             </p>
@@ -418,11 +418,11 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                             <SummaryRow label="System" value={selectedTemplate?.title ?? '—'} />
                         </div>
                         <div className="mt-3 rounded-md bg-muted/50 p-3">
-                            <p className="flex items-baseline justify-between text-[13px]">
+                            <p className="flex items-baseline justify-between text-[14px]">
                                 <span className="text-muted-foreground">About</span>
-                                <span className="text-lg font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span></span>
+                                <span className="text-lg font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[13px] font-normal text-muted-foreground">/ month</span></span>
                             </p>
-                            <p className="mt-1 text-[12px] text-muted-foreground">
+                            <p className="mt-1 text-[13px] text-muted-foreground">
                                 {hourlyKes !== undefined ? `Charged KSh ${hourlyKes.toFixed(2)} an hour from the wallet, starting with the first hour.` : 'Charged hourly from the organization wallet.'}
                             </p>
                         </div>
@@ -440,8 +440,8 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
             <div className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 px-4 py-3 backdrop-blur lg:hidden">
                 <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
-                        <p className="truncate text-[12px] text-muted-foreground">{selectedPlan ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} · ${zoneLabel(selectedZone)}` : 'Choose a plan'}</p>
-                        <p className="text-[15px] font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[12px] font-normal text-muted-foreground">/ month</span></p>
+                        <p className="truncate text-[13px] text-muted-foreground">{selectedPlan ? `${selectedPlan.core_number} vCPU · ${formatMemory(selectedPlan.memory_amount)} · ${zoneLabel(selectedZone)}` : 'Choose a plan'}</p>
+                        <p className="text-[16px] font-semibold tabular-nums text-foreground">{formatKes(monthly)}<span className="ml-1 text-[13px] font-normal text-muted-foreground">/ month</span></p>
                     </div>
                     <div className="w-36 shrink-0">{createButton}</div>
                 </div>

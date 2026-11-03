@@ -136,11 +136,11 @@ function FunnelPanel({ funnel, loading, analyticsHref }: { funnel?: Funnel; load
             <div className="grid grid-cols-2 gap-px bg-border md:grid-cols-4">
                 {steps.map((step) => (
                     <div key={step.label} className="bg-card p-4">
-                        <p className="text-[12px] text-muted-foreground">{step.label}</p>
+                        <p className="text-[13px] text-muted-foreground">{step.label}</p>
                         {loading
                             ? <Skeleton className="mt-2.5 h-5 w-12" />
                             : <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{step.value.toLocaleString()}</p>}
-                        {!loading && step.rate && <p className="mt-0.5 text-[12px] text-muted-foreground">{step.rate} of views</p>}
+                        {!loading && step.rate && <p className="mt-0.5 text-[13px] text-muted-foreground">{step.rate} of views</p>}
                     </div>
                 ))}
             </div>
@@ -168,11 +168,11 @@ function HighlightRow({ icon, image, eyebrow, title, detail, value, href, progre
                         : <Icon name={icon} size={17} className="text-muted-foreground" />}
                 </span>
                 <span className="min-w-0 flex-1">
-                    <span className="block text-[11px] text-muted-foreground">{eyebrow}</span>
-                    <span className="block truncate text-[13px] font-medium text-foreground">{title}</span>
-                    <span className="block text-[12px] text-muted-foreground">{detail}</span>
+                    <span className="block text-[12px] text-muted-foreground">{eyebrow}</span>
+                    <span className="block truncate text-[14px] font-medium text-foreground">{title}</span>
+                    <span className="block text-[13px] text-muted-foreground">{detail}</span>
                 </span>
-                <span className="text-[13px] font-semibold tabular-nums text-foreground">{value}</span>
+                <span className="text-[14px] font-semibold tabular-nums text-foreground">{value}</span>
             </div>
             {progress !== undefined && (
                 <div className="mt-2.5 h-1 overflow-hidden rounded-full bg-muted">
@@ -270,7 +270,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             )}
 
             {store && (
-                <p className="max-w-2xl text-[13px] text-muted-foreground">
+                <p className="max-w-2xl text-[14px] text-muted-foreground">
                     {overviewSummary({ commerce, revenue: store.revenue_total, raised, currency })}
                 </p>
             )}
@@ -294,7 +294,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
             {paymentsNeeded && (
                 <Panel title="Set up payments">
                     <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-[13px] text-muted-foreground">
+                        <p className="text-[14px] text-muted-foreground">
                             {commerce
                                 ? 'Connect M-Pesa or PayPal so customers can check out. Takes about 2 minutes.'
                                 : 'Connect M-Pesa or PayPal so people can donate. Takes about 2 minutes.'}
@@ -342,10 +342,10 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                                 <li key={order.id}>
                                     <Link href={settings('orders')} className="flex items-center gap-3 px-4 py-2.5 transition-colors hover:bg-muted/40">
                                         <span className="min-w-0 flex-1">
-                                            <span className="block truncate text-[13px] font-medium text-foreground">{order.customer_name}</span>
-                                            <span className="block text-[12px] text-muted-foreground">{timeAgo(order.created_at, now)}</span>
+                                            <span className="block truncate text-[14px] font-medium text-foreground">{order.customer_name}</span>
+                                            <span className="block text-[13px] text-muted-foreground">{timeAgo(order.created_at, now)}</span>
                                         </span>
-                                        <span className="text-[13px] font-medium tabular-nums">{formatCurrency(order.total, currency)}</span>
+                                        <span className="text-[14px] font-medium tabular-nums">{formatCurrency(order.total, currency)}</span>
                                         <Status tone={STATUS_TONE[order.status] ?? 'neutral'}>{statusText(order.status)}</Status>
                                     </Link>
                                 </li>
@@ -399,7 +399,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                             description="Your own domain, advanced analytics, a blog, and your branding out front."
                             footer={<a href={webUrl(`/org/${orgSlug}/billing`)} className={buttonClass('primary', 'sm')}>See plans</a>}
                         >
-                            <p className="text-[12px] text-muted-foreground">Plans are paid from your organization wallet in Billing.</p>
+                            <p className="text-[13px] text-muted-foreground">Plans are paid from your organization wallet in Billing.</p>
                         </Panel>
                     )}
                 </div>

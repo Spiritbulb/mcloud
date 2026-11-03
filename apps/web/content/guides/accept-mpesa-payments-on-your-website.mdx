@@ -1,0 +1,67 @@
+Most Kenyan shoppers would rather pay with M-PESA than type in a card number. If your website can't take M-PESA, many of them will message you on WhatsApp instead, or leave. This guide covers the two ways to accept M-PESA payments on a Menengai Cloud site, what each needs, and how to pick.
+
+In both cases **the money goes straight to your own till or paybill**. It never passes through Menengai Cloud's account.
+
+## The two ways to take M-PESA online
+
+| | Manual M-PESA | STK push (Lipa na M-PESA Online) |
+|---|---|---|
+| How the customer pays | Pays your till or paybill from their phone, then enters the M-PESA code at checkout | Gets a payment prompt on their phone and enters their PIN |
+| Order marked paid | When you confirm the payment | Automatically, once Safaricom confirms it |
+| What you need | A till or paybill number | A till or paybill, plus your own Safaricom Daraja app |
+| Plan | Every plan, including Free | Hobby or Pro |
+
+You can switch on both. Customers then choose at checkout.
+
+## Option 1: Manual M-PESA
+
+Manual M-PESA works with the till or paybill you already have, and you can set it up in a couple of minutes.
+
+1. In your site's settings, open **Advanced → Integrations → Payments**.
+2. Switch on **Manual M-PESA**.
+3. Choose **Till Number** or **Paybill**.
+4. Enter your number. For a paybill, also enter the account number customers should use.
+5. Save.
+
+At checkout, the customer sees your number, pays from their phone, and types in the confirmation code from Safaricom's SMS.
+
+> Manual orders stay **pending** until you check the payment arrived and confirm it on the [Orders](/docs/orders) page. If you get lots of orders, this checking becomes a daily chore. That is the main reason to move to STK push.
+
+## Option 2: STK push through Safaricom Daraja
+
+With STK push, the customer enters their phone number at checkout and a payment prompt pops up on their phone. They enter their M-PESA PIN and the order marks itself paid. You don't have to check anything.
+
+STK push runs on **Daraja**, Safaricom's API platform. Each business uses its own Daraja app, so payments settle to your shortcode.
+
+### Step 1: Get your Daraja credentials
+
+1. Create an account on the [Safaricom developer portal](https://developer.safaricom.co.ke) and create an app with the **Lipa na M-PESA** product.
+2. Take your app live for your till or paybill using Safaricom's go-live process. Safaricom then gives you the details you need below.
+3. Note down:
+   - **Consumer Key** and **Consumer Secret** (from your Daraja app)
+   - **Business Shortcode**: the till or paybill number registered on Daraja
+   - **Passkey**: the STK push passkey Safaricom gives you
+
+### Step 2: Connect Daraja to your site
+
+Open **Advanced → Integrations → Payments**. A guided panel walks you through three steps:
+
+1. **API credentials**: paste the Consumer Key and Consumer Secret.
+2. **Shortcode and passkey**: enter your Business Shortcode and the passkey.
+3. **Test and enable**: run the connection test, then switch on STK push at checkout.
+
+You don't need to set a callback URL in Daraja, because Menengai Cloud handles it. Before an order is marked paid, the payment is checked with Safaricom and the amount has to cover the order total. That way an order can't be marked paid by mistake.
+
+Field-by-field details are in the [Payments reference](/docs/payments#payments-daraja).
+
+## Which should you choose?
+
+- **Just starting, or only a few orders a week?** Use manual M-PESA. It's free, works today, and you can add STK push later without changing anything else.
+- **Getting orders every day?** Use STK push. Checkout is faster, fewer people give up halfway, and you no longer have to match M-PESA messages to orders.
+- **Not sure?** Turn on both. Customers who prefer to pay from their own M-PESA menu still can.
+
+STK push needs the **Hobby** plan (KES 795 a month) or **Pro**. See [Plans and billing](/docs/billing) for what else each plan includes.
+
+## When a customer says they paid but the order is pending
+
+With STK push, give it a minute. The checkout page keeps checking and settles the order as soon as Safaricom confirms. With manual M-PESA, the order stays pending until you confirm it, so look for the payment in your M-PESA statement, then mark the order paid on the [Orders](/docs/orders) page.

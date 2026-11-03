@@ -207,6 +207,15 @@
   --font-sans: var(--font-geist-sans), system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
   --font-display: var(--font-lora), Georgia, serif;
+
+  /* Type and width scale for the platform and settings UI. Body copy reads at
+     15px (text-sm) and captions at 13px (text-xs), not Tailwind's 14/12, which
+     looked zoomed out on desktop. max-w-page is the outer frame of a page. */
+  --text-xs: 0.8125rem;
+  --text-xs--line-height: calc(1.125 / 0.8125);
+  --text-sm: 0.9375rem;
+  --text-sm--line-height: calc(1.375 / 0.9375);
+  --container-page: 90rem;
 }
 
 /* ============================================================
@@ -477,17 +486,12 @@ body:has([data-settings-shell]) {
 
 .divider { border-top: 1px solid rgb(var(--border)); }
 
-.container { width: 100%; max-width: 64rem; margin-inline: auto; padding-inline: 1.5rem; }
-.containerNarrow { max-width: 48rem; }
-.containerFaq { max-width: 42rem; }
-.containerCta { max-width: 56rem; }
 
 .section { padding-block: 6rem; }
 .sectionMuted { background: color-mix(in srgb, rgb(var(--foreground)) 2%, transparent); }
 .sectionStorefront { background: color-mix(in srgb, rgb(var(--foreground)) 1.5%, transparent); }
 
 @media (min-width: 768px) {
-  .container { padding-inline: 3rem; }
   .section { padding-block: 8rem; }
 }
 

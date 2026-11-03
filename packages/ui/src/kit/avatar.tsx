@@ -10,7 +10,7 @@ export function Avatar({ name, src, shape = 'square' }: { name: string | null; s
     return (
         <span
             className={cn(
-                'flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden text-[10px] font-bold',
+                'flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden text-[11px] font-bold',
                 src ? 'bg-muted' : 'store-avatar-fallback',
                 shape === 'circle' ? 'rounded-full' : 'rounded-md',
             )}

@@ -78,7 +78,7 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
                             aria-pressed={metric === m.id}
                             onClick={() => setMetric(m.id)}
                             className={cn(
-                                'h-6 rounded px-2 text-[12px] transition-colors',
+                                'h-6 rounded px-2 text-[13px] transition-colors',
                                 metric === m.id ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
                             )}
                         >
@@ -89,14 +89,14 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
             }
         >
             {total === 0 ? (
-                <div className="flex h-[180px] items-center justify-center text-[12px] text-muted-foreground">No {METRICS.find((m) => m.id === metric)?.label.toLowerCase()} in this range yet.</div>
+                <div className="flex h-[180px] items-center justify-center text-[13px] text-muted-foreground">No {METRICS.find((m) => m.id === metric)?.label.toLowerCase()} in this range yet.</div>
             ) : (
                 <svg viewBox={`0 0 ${W} ${H}`} className="h-[180px] w-full text-primary" preserveAspectRatio="none" role="img" aria-label={`${metric} per day`}>
                     <path d={area} fill="currentColor" fillOpacity={0.08} />
                     <path d={line} fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
                 </svg>
             )}
-            <div className="mt-2 flex items-center justify-between text-[12px] text-muted-foreground">
+            <div className="mt-2 flex items-center justify-between text-[13px] text-muted-foreground">
                 <span>{series[0]?.date ?? ''}</span>
                 <span className="font-medium text-foreground tabular-nums">
                     {metric === 'revenue' ? formatCurrency(total, currency) : fmtNum(total)} total
@@ -112,7 +112,7 @@ function TrendChart({ series, currency }: { series: SeriesPoint[]; currency: str
 function Bar({ label, value, share, detail }: { label: string; value: string; share: number; detail?: string | null }) {
     return (
         <div>
-            <div className="mb-1 flex items-center justify-between gap-2 text-[12px]">
+            <div className="mb-1 flex items-center justify-between gap-2 text-[13px]">
                 <span className="truncate text-foreground">{label}</span>
                 <span className="shrink-0 tabular-nums text-muted-foreground">
                     {value}
@@ -152,7 +152,7 @@ function BreakdownPanel({ title, items }: { title: string; items: Breakdown[] })
     return (
         <Panel title={title}>
             {items.length === 0 ? (
-                <p className="py-2 text-[12px] text-muted-foreground">No visits yet.</p>
+                <p className="py-2 text-[13px] text-muted-foreground">No visits yet.</p>
             ) : (
                 <div className="space-y-2.5">
                     {items.map((it) => (
@@ -168,7 +168,7 @@ function TopProducts({ products, currency }: { products: TopProduct[] | undefine
     return (
         <Panel title="Top products" flush>
             {!products || products.length === 0 ? (
-                <p className="px-4 py-4 text-[12px] text-muted-foreground">No sales in this range yet.</p>
+                <p className="px-4 py-4 text-[13px] text-muted-foreground">No sales in this range yet.</p>
             ) : (
                 <ul className="divide-y divide-border">
                     {products.map((p) => (
@@ -180,10 +180,10 @@ function TopProducts({ products, currency }: { products: TopProduct[] | undefine
                                     : <Icon name="inventory_2" size={16} className="text-muted-foreground" />}
                             </span>
                             <span className="min-w-0 flex-1">
-                                <span className="block truncate text-[13px] text-foreground">{p.name}</span>
-                                <span className="block text-[12px] text-muted-foreground">{fmtNum(p.units_sold)} sold</span>
+                                <span className="block truncate text-[14px] text-foreground">{p.name}</span>
+                                <span className="block text-[13px] text-muted-foreground">{fmtNum(p.units_sold)} sold</span>
                             </span>
-                            <span className="shrink-0 text-[13px] font-medium tabular-nums text-foreground">{formatCurrency(p.revenue, currency)}</span>
+                            <span className="shrink-0 text-[14px] font-medium tabular-nums text-foreground">{formatCurrency(p.revenue, currency)}</span>
                         </li>
                     ))}
                 </ul>

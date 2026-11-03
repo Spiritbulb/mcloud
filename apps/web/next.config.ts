@@ -1,4 +1,11 @@
 import type { NextConfig } from 'next'
+import createMDX from '@next/mdx'
+
+// Guide articles (content/guides/*.mdx). Plugins are named by string so the
+// options stay serializable for Turbopack.
+const withMDX = createMDX({
+    options: { remarkPlugins: [['remark-gfm']] },
+})
 
 const nextConfig: NextConfig = {
     output: 'standalone',
@@ -21,10 +28,18 @@ const nextConfig: NextConfig = {
     // where it goes to /dev-login, and for anything these rules don't match.
     // `to` is forwarded as-is: the handoff mint sanitizes it (api/_handoff/tickets.ts).
     async redirects() {
-        if (process.env.NODE_ENV !== 'production') return []
+        // Docs used to be one page switched by ?page=<id>; ids are the slugs now.
+        const docs = [{
+            source: '/docs',
+            has: [{ type: 'query' as const, key: 'page', value: '(?<page>[a-z0-9-]+)' }],
+            destination: '/docs/:page',
+            permanent: true,
+        }]
+        if (process.env.NODE_ENV !== 'production') return docs
         const notFailed = [{ type: 'query' as const, key: 'handoff' }]
         const go = 'https://spiritb.uk/go/mcloud'
         return [
+            ...docs,
             ...(['returnTo', 'next'] as const).map((key) => ({
                 source: '/auth/login',
                 has: [{ type: 'query' as const, key, value: '(?<to>.+)' }],
@@ -58,4 +73,4 @@ const nextConfig: NextConfig = {
     },
 }
 
-export default nextConfig
+export default withMDX(nextConfig)

@@ -21,7 +21,7 @@ export default function ImageField({
             <button
                 type="button"
                 onClick={() => pickImage('', onChange)}
-                className="flex h-20 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-input bg-muted/30 text-[12px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
+                className="flex h-20 w-full flex-col items-center justify-center gap-1 rounded-md border border-dashed border-input bg-muted/30 text-[13px] text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
             >
                 <Icon name="add_photo_alternate" size={20} />
                 Add image

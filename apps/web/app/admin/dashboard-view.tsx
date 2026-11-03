@@ -34,7 +34,7 @@ export type DashboardData = {
 
 export default function DashboardView({ data: d }: { data: DashboardData }) {
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader
                 title="Overview"
                 description="Platform activity over the last 30 days"
@@ -61,7 +61,7 @@ export default function DashboardView({ data: d }: { data: DashboardData }) {
                         d.revenue.map((r) => <RevenuePanel key={r.currency} r={r} multi={d.revenue.length > 1} />)
                     )}
                     {d.revenueCapped && (
-                        <p className="text-[12px] text-muted-foreground">Showing the most recent 10,000 paid orders; totals are understated.</p>
+                        <p className="text-[13px] text-muted-foreground">Showing the most recent 10,000 paid orders; totals are understated.</p>
                     )}
                 </section>
                 <section aria-label="New users">
@@ -140,7 +140,7 @@ export default function DashboardView({ data: d }: { data: DashboardData }) {
 function Attention({ items }: { items: AttentionItem[] }) {
     if (items.length === 0) {
         return (
-            <p className="flex items-center gap-2 text-[13px] text-muted-foreground">
+            <p className="flex items-center gap-2 text-[14px] text-muted-foreground">
                 <Icon name="check_circle" size={16} className="text-emerald-600 dark:text-emerald-400" />
                 All clear. Nothing is waiting on you.
             </p>
@@ -148,11 +148,11 @@ function Attention({ items }: { items: AttentionItem[] }) {
     }
     return (
         <section aria-label="Needs attention" className="overflow-hidden rounded-lg border border-amber-300/70 bg-amber-50/60 dark:border-amber-500/30 dark:bg-amber-500/[0.06]">
-            <h2 className="px-4 pt-3 pb-1 font-sans text-[12px] font-medium text-amber-800 dark:text-amber-300">Needs attention</h2>
+            <h2 className="px-4 pt-3 pb-1 font-sans text-[13px] font-medium text-amber-800 dark:text-amber-300">Needs attention</h2>
             <ul className="divide-y divide-amber-300/50 dark:divide-amber-500/20">
                 {items.map((a) => (
                     <li key={a.id}>
-                        <Link href={a.href} className="group flex items-center gap-3 px-4 py-2.5 text-[13px] transition-colors hover:bg-amber-100/60 dark:hover:bg-amber-500/10">
+                        <Link href={a.href} className="group flex items-center gap-3 px-4 py-2.5 text-[14px] transition-colors hover:bg-amber-100/60 dark:hover:bg-amber-500/10">
                             <Icon name={a.icon} size={18} className="text-amber-700 dark:text-amber-300" />
                             <span className="min-w-0 flex-1 text-foreground">
                                 <span className="font-semibold tabular-nums">{a.count.toLocaleString()}</span> {a.label}
@@ -169,27 +169,27 @@ function Attention({ items }: { items: AttentionItem[] }) {
 function RevenuePanel({ r, multi }: { r: CurrencyRevenue; multi: boolean }) {
     return (
         <Panel title={multi ? `Paid orders · ${r.currency}` : "Paid orders"} description="Last 30 days, compared with the 30 days before">
-            <p className="text-[12px] text-muted-foreground">Revenue</p>
+            <p className="text-[13px] text-muted-foreground">Revenue</p>
             <div className="mt-1 flex items-baseline gap-2">
                 <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">{formatMoney(r.last30, r.currency)}</p>
                 <Delta pct={percentChange(r.last30, r.prev30)} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-[14px]">
                 <div>
-                    <dt className="text-[12px] text-muted-foreground">Orders</dt>
+                    <dt className="text-[13px] text-muted-foreground">Orders</dt>
                     <dd className="mt-0.5 flex items-baseline gap-1.5 font-medium text-foreground tabular-nums">
                         {r.orders30.toLocaleString()}
                         <Delta pct={percentChange(r.orders30, r.ordersPrev30)} />
                     </dd>
                 </div>
                 <div>
-                    <dt className="text-[12px] text-muted-foreground">Last 7 days</dt>
+                    <dt className="text-[13px] text-muted-foreground">Last 7 days</dt>
                     <dd className="mt-0.5 font-medium text-foreground tabular-nums">{formatMoney(r.last7, r.currency)}</dd>
                 </div>
             </dl>
             <div className="mt-5 text-[rgb(var(--brand))]">
                 <Sparkline values={r.daily} label={`Daily ${r.currency} sales, last ${r.daily.length} days`} height={72} />
-                <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                <div className="mt-1 flex justify-between text-[12px] text-muted-foreground">
                     <span>{r.daily.length} days ago</span>
                     <span>Today</span>
                 </div>
@@ -201,24 +201,24 @@ function RevenuePanel({ r, multi }: { r: CurrencyRevenue; multi: boolean }) {
 function SignupsPanel({ s }: { s: Signups }) {
     return (
         <Panel title="New users" description="Last 30 days, compared with the 30 days before">
-            <p className="text-[12px] text-muted-foreground">Sign-ups</p>
+            <p className="text-[13px] text-muted-foreground">Sign-ups</p>
             <div className="mt-1 flex items-baseline gap-2">
                 <p className="text-3xl font-semibold tracking-tight text-foreground tabular-nums">{s.last30.toLocaleString()}</p>
                 <Delta pct={percentChange(s.last30, s.prev30)} />
             </div>
-            <dl className="mt-4 grid grid-cols-2 gap-4 text-[13px]">
+            <dl className="mt-4 grid grid-cols-2 gap-4 text-[14px]">
                 <div>
-                    <dt className="text-[12px] text-muted-foreground">Previous 30 days</dt>
+                    <dt className="text-[13px] text-muted-foreground">Previous 30 days</dt>
                     <dd className="mt-0.5 font-medium text-foreground tabular-nums">{s.prev30.toLocaleString()}</dd>
                 </div>
                 <div>
-                    <dt className="text-[12px] text-muted-foreground">Last 7 days</dt>
+                    <dt className="text-[13px] text-muted-foreground">Last 7 days</dt>
                     <dd className="mt-0.5 font-medium text-foreground tabular-nums">{s.last7.toLocaleString()}</dd>
                 </div>
             </dl>
             <div className="mt-5 text-[rgb(var(--brand))]">
                 <Sparkline values={s.daily} label={`New users per day, last ${s.daily.length} days`} height={72} />
-                <div className="mt-1 flex justify-between text-[11px] text-muted-foreground">
+                <div className="mt-1 flex justify-between text-[12px] text-muted-foreground">
                     <span>{s.daily.length} days ago</span>
                     <span>Today</span>
                 </div>

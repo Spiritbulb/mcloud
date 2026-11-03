@@ -27,7 +27,7 @@ export function SaveBar({
     return (
         <div className="sticky bottom-0 z-30 mt-6 border-t border-border bg-background/95 py-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
             <div className="flex items-center justify-between gap-3">
-                <p className="truncate text-[12px] text-muted-foreground">{saving ? 'Saving…' : message}</p>
+                <p className="truncate text-[13px] text-muted-foreground">{saving ? 'Saving…' : message}</p>
                 <div className="flex shrink-0 items-center gap-2">
                     {onDiscard && (
                         <Button variant="ghost" onClick={onDiscard} disabled={saving}>
@@ -51,7 +51,7 @@ export function SaveStatus({ saving, saved, className }: { saving: boolean; save
         <div
             role="status"
             className={cn(
-                'pointer-events-none fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[12px] shadow-md',
+                'pointer-events-none fixed bottom-6 right-6 z-50 flex items-center gap-2 rounded-md border border-border bg-card px-3 py-2 text-[13px] shadow-md',
                 className,
             )}
         >

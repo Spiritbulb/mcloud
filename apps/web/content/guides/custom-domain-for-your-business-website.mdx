@@ -1,0 +1,50 @@
+A web address like *yourbusiness.co.ke* makes your business look established, is easy to say over the phone, and is yours to keep whichever platform you use. This guide covers choosing a domain, buying it, and connecting it to your Menengai Cloud site with one DNS record.
+
+## Choosing your domain
+
+**.co.ke or .com?**
+
+- **.co.ke** tells customers straight away that you're a Kenyan business, and it's usually cheaper than .com. It's the natural choice if most of your customers are in Kenya.
+- **.com** suits businesses that sell beyond Kenya, or whose name is already taken as a .co.ke.
+- Many businesses register both and point one at the other.
+
+Other Kenyan options include **.or.ke** for organisations and NGOs, and **.ke**.
+
+**Tips for a good name:**
+
+- Keep it short and easy to spell after hearing it once.
+- Avoid hyphens and numbers. People forget them.
+- Use your business name if you can, rather than a keyword like *best-shoes-nairobi*.
+
+## Buying the domain
+
+Kenyan domains (.co.ke, .or.ke, .ke and others) are run by KENIC and sold through accredited registrars. Most Kenyan hosting companies are registrars, and international registrars sell .com. When you buy, make sure you can:
+
+- sign in and **edit DNS records** yourself, and
+- see the renewal date. Turn on auto-renew so the domain doesn't lapse.
+
+## Connecting it to your site
+
+A custom domain needs the **Hobby** plan or higher. Once connected, customers can reach your site at your own address, and your original Menengai Cloud address keeps working.
+
+1. In your site's settings, open **Advanced → Domain**.
+2. Enter the address you want, without `https://`, for example `shop.yourbusiness.co.ke` or `www.yourbusiness.co.ke`, and add it.
+3. Sign in at your registrar and open the DNS settings for that domain.
+4. Add a **CNAME** record:
+   - **Name:** the first part of your address, for example `shop` or `www`
+   - **Value:** `cname.vercel-dns.com`
+
+   The Domain page shows these values with copy buttons.
+5. Return to the Domain page and choose **Check status**.
+
+> If your registrar already has a record with the same name, replace it rather than adding a second one. Two records with the same name is the most common reason a domain won't verify.
+
+The status shows **Awaiting DNS propagation** until the record is visible, then **Domain verified**. DNS changes can take anywhere from a few minutes to many hours to spread, so if it hasn't verified yet, check again later.
+
+Subdomains such as `www.` or `shop.` work best, because they use a single CNAME record. The full reference is on the [Domain](/docs/domain#domain-setup) page.
+
+## After it's connected
+
+- **Update your links everywhere**: WhatsApp Business profile, Instagram bio, Google Business Profile, flyers and receipts.
+- **Use the same address every time** you share it, so customers and search engines learn one name for your business.
+- **Keep the renewal current.** If a domain lapses, someone else can register it.

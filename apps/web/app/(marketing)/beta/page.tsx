@@ -4,6 +4,7 @@ import BetaClient from './beta-client'
 export const metadata: Metadata = {
     title: 'Join the Beta | Menengai Cloud',
     description: 'Get early access to Menengai Cloud. Join the closed beta for merchants.',
+    alternates: { canonical: '/beta' },
 }
 
 export default function Page() {

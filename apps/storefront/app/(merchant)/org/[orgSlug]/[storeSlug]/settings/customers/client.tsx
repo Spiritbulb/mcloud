@@ -118,7 +118,7 @@ export default function CustomersPage({ slug, plan, currency }: { slug: string; 
                         </Table>
                     )}
                     {totalPages > 1 && (
-                        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-[12px] text-muted-foreground">
+                        <div className="flex items-center justify-between gap-3 border-t border-border px-4 py-3 text-[13px] text-muted-foreground">
                             <span>Page {page} of {totalPages}</span>
                             <div className="flex gap-2">
                                 <Button size="sm" disabled={page <= 1 || loading} onClick={() => setPage((p) => p - 1)}>Previous</Button>

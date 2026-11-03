@@ -6,7 +6,7 @@ import { cn } from '../utils'
 // their own state and handlers.
 
 const CONTROL =
-    'w-full rounded-md border bg-card px-2.5 text-[13px] text-foreground placeholder:text-muted-foreground ' +
+    'w-full rounded-md border bg-card px-2.5 text-[14px] text-foreground placeholder:text-muted-foreground ' +
     'transition-colors focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:bg-muted/40 disabled:text-muted-foreground'
 
 function controlClass(invalid?: boolean) {
@@ -40,11 +40,11 @@ export function Field({
     className?: string
     children: ReactNode
 }) {
-    const text = <span className="mb-1.5 block text-[12px] font-medium text-foreground">{label}</span>
+    const text = <span className="mb-1.5 block text-[13px] font-medium text-foreground">{label}</span>
     const below = error ? (
-        <span role="alert" className="mt-1.5 block text-[12px] text-red-700 dark:text-red-300">{error}</span>
+        <span role="alert" className="mt-1.5 block text-[13px] text-red-700 dark:text-red-300">{error}</span>
     ) : hint ? (
-        <span className="mt-1.5 block text-[12px] text-muted-foreground">{hint}</span>
+        <span className="mt-1.5 block text-[13px] text-muted-foreground">{hint}</span>
     ) : null
 
     if (htmlFor || as === 'div') {
@@ -138,8 +138,8 @@ export function Switch({
     return (
         <div className="flex items-start justify-between gap-4">
             <div className="min-w-0">
-                <p className="text-[13px] font-medium text-foreground">{label}</p>
-                {description && <p className="mt-0.5 text-[12px] text-muted-foreground">{description}</p>}
+                <p className="text-[14px] font-medium text-foreground">{label}</p>
+                {description && <p className="mt-0.5 text-[13px] text-muted-foreground">{description}</p>}
             </div>
             {control}
         </div>

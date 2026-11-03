@@ -12,10 +12,10 @@ import { SettingsField } from '../settings-primitives'
 import type { CampaignDraft } from '@/lib/content-draft'
 
 const inputClass =
-    'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+    'flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[15px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 const textareaClass =
-    'flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-[14px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
+    'flex w-full rounded-md border border-input bg-transparent px-3 py-2 text-[15px] shadow-sm transition-colors placeholder:text-muted-foreground/60 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50'
 
 export default function CampaignCard({
     storeId,
@@ -89,7 +89,7 @@ export default function CampaignCard({
                 />
             </SettingsField>
 
-            <label className="flex items-center gap-2 text-[13px] text-foreground">
+            <label className="flex items-center gap-2 text-[14px] text-foreground">
                 <input
                     type="checkbox"
                     checked={campaign.allowCustomAmount}
@@ -100,7 +100,7 @@ export default function CampaignCard({
 
             <button
                 type="button"
-                className="inline-flex items-center gap-1 text-[12.5px] font-medium text-destructive hover:underline underline-offset-4"
+                className="inline-flex items-center gap-1 text-[13.5px] font-medium text-destructive hover:underline underline-offset-4"
                 onClick={() => {
                     // Donations are tagged with this campaign id. Removing the
                     // campaign does not delete them, but they stop being

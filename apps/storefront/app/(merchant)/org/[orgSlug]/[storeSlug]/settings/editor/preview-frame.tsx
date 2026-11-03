@@ -120,7 +120,7 @@ const PreviewFrame = forwardRef<PreviewHandle, {
                 />
             ))}
             {pending && (
-                <div role="status" className="pointer-events-none absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-md border border-border bg-card/95 px-2 py-1 text-[11px] text-muted-foreground shadow-sm">
+                <div role="status" className="pointer-events-none absolute right-3 top-3 z-20 flex items-center gap-1.5 rounded-md border border-border bg-card/95 px-2 py-1 text-[12px] text-muted-foreground shadow-sm">
                     <Spinner size={11} />
                     Updating preview
                 </div>

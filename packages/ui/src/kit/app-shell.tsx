@@ -71,9 +71,9 @@ function NavLink({ item, active, rail, onNavigate }: { item: ShellNavItem; activ
                 )}
                 {!rail && (
                     <>
-                        <span className="flex-1 truncate text-left text-[13px]" aria-current={active ? 'page' : undefined}>{item.label}</span>
+                        <span className="flex-1 truncate text-left text-[14px]" aria-current={active ? 'page' : undefined}>{item.label}</span>
                         {item.badge && (
-                            <span className="rounded bg-muted px-1 py-px text-[10px] font-medium leading-3 text-muted-foreground">{item.badge}</span>
+                            <span className="rounded bg-muted px-1 py-px text-[11px] font-medium leading-3 text-muted-foreground">{item.badge}</span>
                         )}
                         {item.external && <Icon name="open_in_new" size={13} className="text-muted-foreground/70" />}
                     </>
@@ -99,7 +99,7 @@ function ThemeToggle({ rail, onToggle }: { rail: boolean; onToggle: () => void }
             <span className="inline-flex dark:hidden"><Icon name="dark_mode" size={rail ? 20 : 18} /></span>
             <span className="hidden dark:inline-flex"><Icon name="light_mode" size={rail ? 20 : 18} /></span>
             {!rail && (
-                <span className="text-[13px]">
+                <span className="text-[14px]">
                     <span className="dark:hidden">Dark mode</span>
                     <span className="hidden dark:inline">Light mode</span>
                 </span>
@@ -125,8 +125,8 @@ function AccountMenu({ user, links, signOutHref, rail }: { user: ShellUser; link
                         {!rail && (
                             <>
                                 <span className="flex min-w-0 flex-1 flex-col text-left">
-                                    <span className="truncate text-[12px] font-medium leading-tight text-foreground">{user.name}</span>
-                                    <span className="truncate text-[11px] leading-tight text-muted-foreground">{user.email}</span>
+                                    <span className="truncate text-[13px] font-medium leading-tight text-foreground">{user.name}</span>
+                                    <span className="truncate text-[12px] leading-tight text-muted-foreground">{user.email}</span>
                                 </span>
                                 <Icon name="unfold_more" size={16} className="text-muted-foreground" />
                             </>
@@ -137,13 +137,13 @@ function AccountMenu({ user, links, signOutHref, rail }: { user: ShellUser; link
                     <div className="mb-1 flex items-center gap-2 px-2 py-1.5">
                         <Avatar name={user.name} src={user.avatarUrl} shape="circle" />
                         <span className="flex min-w-0 flex-col">
-                            <span className="truncate text-[12px] font-medium text-foreground">{user.name}</span>
-                            <span className="truncate text-[11px] text-muted-foreground">{user.email}</span>
+                            <span className="truncate text-[13px] font-medium text-foreground">{user.name}</span>
+                            <span className="truncate text-[12px] text-muted-foreground">{user.email}</span>
                         </span>
                     </div>
                     {links.length > 0 && <DropdownMenuSeparator />}
                     {links.map((l) => (
-                        <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                        <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[14px]">
                             <AnyLink href={l.href} external={l.external}>
                                 <Icon name={l.icon} size={16} className="text-muted-foreground" />
                                 {l.label}
@@ -151,7 +151,7 @@ function AccountMenu({ user, links, signOutHref, rail }: { user: ShellUser; link
                         </DropdownMenuItem>
                     ))}
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-md text-[13px] text-destructive focus:text-destructive">
+                    <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-md text-[14px] text-destructive focus:text-destructive">
                         {/* A real link: sign-out is a route, and needs no client-side navigation. */}
                         <a href={signOutHref}>
                             <Icon name="logout" size={16} />
@@ -196,7 +196,7 @@ function Sidebar({
                     <AnyLink href={p.brandHref} className="flex shrink-0 items-center gap-2">
                         <ThemedLogo className="h-5 w-auto" />
                         {p.brandTag && (
-                            <span className="rounded bg-muted px-1.5 py-px text-[10px] font-medium text-muted-foreground">{p.brandTag}</span>
+                            <span className="rounded bg-muted px-1.5 py-px text-[11px] font-medium text-muted-foreground">{p.brandTag}</span>
                         )}
                     </AnyLink>
                 )}
@@ -225,7 +225,7 @@ function Sidebar({
                         {rail ? (
                             i > 0 && <div className="mx-2 my-2 h-px bg-border" />
                         ) : section.label ? (
-                            <div className="px-3.5 pb-1 pt-3"><span className="text-[11px] font-medium text-muted-foreground">{section.label}</span></div>
+                            <div className="px-3.5 pb-1 pt-3"><span className="text-[12px] font-medium text-muted-foreground">{section.label}</span></div>
                         ) : (
                             <div className="pt-2" />
                         )}
@@ -380,7 +380,7 @@ export function AppShell({
                     <button type="button" onClick={() => setDrawer(true)} aria-label="Open navigation" className={cn(ICON_BUTTON, 'h-8 w-8 md:hidden')}>
                         <Icon name="menu" size={20} />
                     </button>
-                    <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-[13px]">
+                    <nav aria-label="Breadcrumb" className="flex min-w-0 flex-1 items-center gap-1.5 text-[14px]">
                         {crumbs.map((c, i) => {
                             const last = i === crumbs.length - 1
                             return (
@@ -402,7 +402,7 @@ export function AppShell({
 
                 {content === 'page' ? (
                     <main className="min-h-0 flex-1 overflow-y-auto">
-                        <div className="mx-auto w-full max-w-6xl px-4 py-6 md:px-8 md:py-8">{children}</div>
+                        <div className="mx-auto w-full max-w-page px-4 py-6 md:px-8 md:py-8">{children}</div>
                     </main>
                 ) : (
                     <main className="flex min-h-0 flex-1 flex-col overflow-hidden">{children}</main>
@@ -440,8 +440,8 @@ export function ContextSwitcher({
         <>
             <Avatar name={name} src={logo} />
             <span className="flex min-w-0 flex-1 flex-col text-left">
-                <span className="truncate text-[13px] font-medium leading-tight text-foreground">{name}</span>
-                {detail && <span className="truncate text-[11px] leading-tight text-muted-foreground">{detail}</span>}
+                <span className="truncate text-[14px] font-medium leading-tight text-foreground">{name}</span>
+                {detail && <span className="truncate text-[12px] leading-tight text-muted-foreground">{detail}</span>}
             </span>
         </>
     )
@@ -457,15 +457,15 @@ export function ContextSwitcher({
                 </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-[216px] rounded-lg border border-border bg-popover p-1 shadow-lg">
-                {menuLabel && <p className="px-2 pb-1 pt-1.5 text-[11px] font-medium text-muted-foreground">{menuLabel}</p>}
+                {menuLabel && <p className="px-2 pb-1 pt-1.5 text-[12px] font-medium text-muted-foreground">{menuLabel}</p>}
                 {options.map((o) => (
-                    <DropdownMenuItem key={o.key} asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                    <DropdownMenuItem key={o.key} asChild className="cursor-pointer gap-2 rounded-md text-[14px]">
                         {/* A full navigation: switching org or store reloads its whole context. */}
                         <a href={o.href}>
                             <Avatar name={o.name} src={o.logo} />
                             <span className="flex min-w-0 flex-col">
                                 <span className={cn('truncate', o.name === name && 'font-medium')}>{o.name}</span>
-                                {o.detail && <span className="truncate text-[11px] text-muted-foreground">{o.detail}</span>}
+                                {o.detail && <span className="truncate text-[12px] text-muted-foreground">{o.detail}</span>}
                             </span>
                             {o.name === name && <Icon name="check" size={15} className="ml-auto text-muted-foreground" />}
                         </a>
@@ -473,7 +473,7 @@ export function ContextSwitcher({
                 ))}
                 {links.length > 0 && options.length > 0 && <DropdownMenuSeparator />}
                 {links.map((l) => (
-                    <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                    <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[14px]">
                         <AnyLink href={l.href} external={l.external}>
                             <Icon name={l.icon} size={16} className="text-muted-foreground" />
                             {l.label}

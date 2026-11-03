@@ -113,7 +113,7 @@ export function WalletBalancePill({ orgSlug }: { orgSlug: string }) {
 function cnPill(isLow: boolean) {
   // Kit button shape (h-7, rounded-md); amber only when the balance is low.
   const base =
-    'flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[12px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
+    'flex h-7 shrink-0 items-center gap-1.5 rounded-md border px-2.5 text-[13px] font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40'
 
   return isLow
     ? `${base} border-amber-300/70 bg-amber-50/60 text-amber-800 hover:bg-amber-100/60 dark:border-amber-500/30 dark:bg-amber-500/[0.06] dark:text-amber-300`

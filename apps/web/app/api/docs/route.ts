@@ -42,8 +42,9 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    // ── 5. Bust ISR cache so /docs re-fetches immediately ───────────────────────
-    revalidatePath("/docs")
+    // ── 5. Bust ISR cache so /docs/** and the sitemap re-fetch immediately ──────
+    revalidatePath("/docs", "layout")
+    revalidatePath("/sitemap.xml")
 
     return NextResponse.json({ ok: true })
 }

@@ -10,7 +10,7 @@ import { joinBeta } from './actions'
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
 const inputCls = cn(
-    'w-full h-11 rounded-xl px-4 text-[14px] text-foreground placeholder:text-muted-foreground/60',
+    'w-full h-11 rounded-xl px-4 text-[15px] text-foreground placeholder:text-muted-foreground/60',
     'bg-foreground/5 border border-border',
     'focus:outline-none focus:border-foreground/30 focus:bg-foreground/[0.08]',
     'transition-all duration-150'
@@ -49,7 +49,7 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
                     >
                         <div className="flex items-center gap-3">
                             <span className="text-lg">🎉</span>
-                            <p className="text-[14px] text-foreground">
+                            <p className="text-[15px] text-foreground">
                                 You&apos;re on the list.
                             </p>
                         </div>
@@ -58,12 +58,12 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
                                 href={optInUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-[13px] font-medium text-background hover:opacity-90 transition-opacity"
+                                className="inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-[14px] font-medium text-background hover:opacity-90 transition-opacity"
                             >
                                 Opt in to the Android beta →
                             </a>
                         )}
-                        <p className="text-[12px] text-muted-foreground">
+                        <p className="text-[13px] text-muted-foreground">
                             Open this on the Android device you&apos;ll test with, signed in to the Google account on this email.
                         </p>
                     </motion.div>
@@ -90,7 +90,7 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
                             type="submit"
                             disabled={isPending}
                             className={cn(
-                                'h-11 shrink-0 rounded-xl px-6 text-[14px] font-medium transition-all duration-150',
+                                'h-11 shrink-0 rounded-xl px-6 text-[15px] font-medium transition-all duration-150',
                                 'bg-foreground text-background hover:opacity-90 disabled:opacity-60'
                             )}
                         >
@@ -100,7 +100,7 @@ export function BetaSignupForm({ source, className }: { source: string; classNam
                 )}
             </AnimatePresence>
             {error && (
-                <p className="mt-2 text-[13px] text-red-500">{error}</p>
+                <p className="mt-2 text-[14px] text-red-500">{error}</p>
             )}
         </div>
     )

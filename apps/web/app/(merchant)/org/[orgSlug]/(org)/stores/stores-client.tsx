@@ -165,7 +165,7 @@ export default function StoresClient({ orgId, orgSlug, stores: initial, role }: 
                                             <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                             <div className="min-w-0">
                                                 <p className="truncate font-medium">{store.name}</p>
-                                                <p className="truncate text-[12px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</p>
+                                                <p className="truncate text-[13px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</p>
                                             </div>
                                         </div>
                                     </Td>

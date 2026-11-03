@@ -38,7 +38,7 @@ export function SettingsHeaderActions({ isPro, orgSlug }: { isPro: boolean; orgS
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-52 rounded-lg border border-border bg-popover p-1 shadow-lg">
                     {MORE_LINKS.map((l) => (
-                        <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                        <DropdownMenuItem key={l.label} asChild className="cursor-pointer gap-2 rounded-md text-[14px]">
                             <a href={l.href} target="_blank" rel="noopener noreferrer">
                                 <Icon name={l.icon} size={16} className="text-muted-foreground" />
                                 {l.label}
@@ -48,7 +48,7 @@ export function SettingsHeaderActions({ isPro, orgSlug }: { isPro: boolean; orgS
                     {!isPro && (
                         <>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-md text-[13px]">
+                            <DropdownMenuItem asChild className="cursor-pointer gap-2 rounded-md text-[14px]">
                                 {/* Plans are bought from the org wallet in Billing; there is no app-store purchase. */}
                                 <a href={webUrl(`/org/${orgSlug}/billing`)}>
                                     <Icon name="workspace_premium" size={16} className="text-primary" />

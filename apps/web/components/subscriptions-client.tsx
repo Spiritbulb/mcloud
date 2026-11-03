@@ -56,7 +56,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
     const filtered = rows.filter(r => !statusFilter || r.status === statusFilter)
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader
                 title="Subscriptions"
                 description={`${rows.length.toLocaleString()} total${pending ? ` · ${pending} pending` : ''} — activate manually after confirming payment`}
@@ -98,11 +98,11 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                                 {sub.stores.name}
                                             </a>
                                         ) : <span className="font-medium">{sub.stores?.name ?? '—'}</span>}
-                                        <p className="font-mono text-[11px] text-muted-foreground">{sub.stores?.slug}</p>
+                                        <p className="font-mono text-[12px] text-muted-foreground">{sub.stores?.slug}</p>
                                     </Td>
                                     <Td align="right" label="Amount">{sub.currency} {sub.amount.toLocaleString()}</Td>
                                     <Td label="Status"><Status tone={subscriptionStatusTone(sub.status)}>{humanize(sub.status)}</Status></Td>
-                                    <Td muted label="Reference"><span className="font-mono text-[12px]">{sub.google_play_order_id ?? '—'}</span></Td>
+                                    <Td muted label="Reference"><span className="font-mono text-[13px]">{sub.google_play_order_id ?? '—'}</span></Td>
                                     <Td muted label="Created">
                                         {new Date(sub.created_at).toLocaleDateString('en-KE', { day: 'numeric', month: 'short', year: 'numeric' })}
                                     </Td>
@@ -112,7 +112,7 @@ export default function SubscriptionsClient({ subscriptions }: { subscriptions: 
                                                 {loading === sub.id ? 'Activating…' : 'Activate Pro'}
                                             </Button>
                                         ) : sub.status === 'active' ? (
-                                            <span className="text-[12px] text-muted-foreground">Active</span>
+                                            <span className="text-[13px] text-muted-foreground">Active</span>
                                         ) : null}
                                     </Td>
                                 </Tr>

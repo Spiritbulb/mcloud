@@ -46,7 +46,7 @@ export default function WebhooksClient({
     const filtered = isFiltered(q)
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader title="Webhook logs" description={`${total.toLocaleString()} ${filtered ? (total === 1 ? 'match' : 'matches') : 'events'}${failed ? ` · ${failed.toLocaleString()} failed overall` : ''}`} />
 
             <FilterBar
@@ -81,7 +81,7 @@ export default function WebhooksClient({
                                         className={`cursor-pointer ${ROW_CLASS}`}
                                         aria-expanded={expanded === log.id}
                                     >
-                                        <Td><span className="font-mono text-[12px]">{log.provider ?? '—'}</span></Td>
+                                        <Td><span className="font-mono text-[13px]">{log.provider ?? '—'}</span></Td>
                                         <Td muted label="Event">{log.event_type ?? '—'}</Td>
                                         <Td label="Status"><Status tone={webhookStatusTone(log.status)}>{humanize(log.status)}</Status></Td>
                                         <Td muted label="Store">{log.store?.name ?? '—'}</Td>
@@ -92,15 +92,15 @@ export default function WebhooksClient({
                                             <td colSpan={5} className="space-y-3 px-4 py-4 max-md:block">
                                                 {log.error_message && (
                                                     <div>
-                                                        <p className="mb-1 text-[12px] font-medium text-red-700 dark:text-red-300">Error</p>
-                                                        <p className="rounded-md border border-red-300/70 bg-red-50/60 px-3 py-2 font-mono text-[12px] text-red-800 dark:border-red-500/30 dark:bg-red-500/[0.06] dark:text-red-300">
+                                                        <p className="mb-1 text-[13px] font-medium text-red-700 dark:text-red-300">Error</p>
+                                                        <p className="rounded-md border border-red-300/70 bg-red-50/60 px-3 py-2 font-mono text-[13px] text-red-800 dark:border-red-500/30 dark:bg-red-500/[0.06] dark:text-red-300">
                                                             {log.error_message}
                                                         </p>
                                                     </div>
                                                 )}
                                                 <div>
-                                                    <p className="mb-1 text-[12px] font-medium text-muted-foreground">Payload</p>
-                                                    <pre className="max-h-64 overflow-auto rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-[11px] leading-relaxed text-foreground">
+                                                    <p className="mb-1 text-[13px] font-medium text-muted-foreground">Payload</p>
+                                                    <pre className="max-h-64 overflow-auto rounded-md border border-border bg-muted/40 px-3 py-2 font-mono text-[12px] leading-relaxed text-foreground">
                                                         {JSON.stringify(log.payload, null, 2)}
                                                     </pre>
                                                 </div>

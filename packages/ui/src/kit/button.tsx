@@ -16,7 +16,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 
 /** Class string for anything that should look like a button, e.g. a <Link>. */
 export function buttonClass(variant: ButtonVariant = 'secondary', size: 'sm' | 'md' = 'md'): string {
-    return cn(BASE, VARIANTS[variant], size === 'sm' ? 'h-7 px-2.5 text-[12px]' : 'h-8 px-3 text-[13px]')
+    return cn(BASE, VARIANTS[variant], size === 'sm' ? 'h-7 px-2.5 text-[13px]' : 'h-8 px-3 text-[14px]')
 }
 
 export function Button({

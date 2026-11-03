@@ -314,8 +314,8 @@ storefront proxy lookup cache. Remaining ideas, in order of expected payoff:
 2. ~~Public store pages cached at the edge~~ done, see [caching.md](caching.md). Still open there:
    the proxy runs for every request (including cached pages), and writes are invalidated
    from code, not from the database.
-3. `/docs` is dynamic only because of `cookies()` and `searchParams`; make it static and
-   move the "edit" affordance to a client check.
+3. ~~`/docs` is dynamic only because of `cookies()` and `searchParams`~~ done: `/docs`,
+   `/docs/[slug]` and `/docs/guides/[slug]` are static/ISR (see [caching.md](caching.md)).
 4. The wallet pill could read the balance from the layout's data instead of polling at
    all, or use a visible-tab-only SSE.
 5. Re-measure after each deploy: Vercel Observability → middleware and function Active CPU

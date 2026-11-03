@@ -69,7 +69,7 @@ function PhotoPanel({ user, onUpdate }: { user: User; onUpdate: (url: string) =>
     return (
         <Panel title="Profile photo" description="Shown in your dashboards and to your team.">
             <div className="flex items-center gap-4">
-                <span className="store-avatar-fallback flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-[15px] font-bold">
+                <span className="store-avatar-fallback flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-full text-[16px] font-bold">
                     {preview ? (
                         // eslint-disable-next-line @next/next/no-img-element
                         <img src={preview} alt="" className="h-full w-full object-cover" />
@@ -82,8 +82,8 @@ function PhotoPanel({ user, onUpdate }: { user: User; onUpdate: (url: string) =>
                         {isPending ? <Spinner size={12} /> : <Icon name="photo_camera" size={14} />}
                         {isPending ? 'Uploading…' : 'Change photo'}
                     </Button>
-                    <p className="text-[12px] text-muted-foreground">JPG, PNG or WebP, up to 2MB.</p>
-                    {error && <p role="alert" className="text-[12px] text-red-700 dark:text-red-300">{error}</p>}
+                    <p className="text-[13px] text-muted-foreground">JPG, PNG or WebP, up to 2MB.</p>
+                    {error && <p role="alert" className="text-[13px] text-red-700 dark:text-red-300">{error}</p>}
                 </div>
                 <input ref={inputRef} type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={handleFile} />
             </div>
@@ -124,7 +124,7 @@ function ProfilePanel({ user }: { user: User }) {
             description="How you appear across your stores and to your team."
             footer={
                 <>
-                    {justSaved && <span className="mr-auto text-[12px] text-muted-foreground">Saved</span>}
+                    {justSaved && <span className="mr-auto text-[13px] text-muted-foreground">Saved</span>}
                     <Button variant="primary" onClick={handleSave} disabled={!dirty || isPending}>
                         {isPending && <Spinner size={13} />}
                         {isPending ? 'Saving…' : 'Save'}
@@ -193,18 +193,18 @@ function ActivityPanel() {
             ) : !sessions ? (
                 <div className="p-4"><SkeletonLines lines={2} /></div>
             ) : sessions.length === 0 ? (
-                <p className="px-4 py-4 text-[13px] text-muted-foreground">No recent sign-ins found.</p>
+                <p className="px-4 py-4 text-[14px] text-muted-foreground">No recent sign-ins found.</p>
             ) : (
                 <ul className="divide-y divide-border">
                     {sessions.map((s) => (
                         <li key={s.id} className="flex items-center gap-3 px-4 py-3">
                             <Icon name="devices" size={16} className="shrink-0 text-muted-foreground" />
                             <div className="min-w-0 flex-1">
-                                <p className="flex items-center gap-2 truncate text-[13px] text-foreground">
+                                <p className="flex items-center gap-2 truncate text-[14px] text-foreground">
                                     <span className="truncate">{s.device}</span>
                                     {s.current && <Badge tone="success">Most recent</Badge>}
                                 </p>
-                                <p className="text-[12px] text-muted-foreground">{s.location} · {s.lastActive}</p>
+                                <p className="text-[13px] text-muted-foreground">{s.location} · {s.lastActive}</p>
                             </div>
                         </li>
                     ))}

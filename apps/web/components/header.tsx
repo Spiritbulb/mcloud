@@ -29,12 +29,12 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
 
     return (
         <header className="sticky top-0 z-50 border-b border-border bg-background">
-            <div className="mx-auto px-6 md:px-12 max-w-7xl">
+            <div className="mx-auto px-6 md:px-12 max-w-page">
                 <div className="flex h-14 items-center justify-between">
                     {/* Logo */}
                     <Link href="/home" className="flex items-center gap-2.5">
                         <img src={logo} alt="Menengai Cloud" className="w-12 h-auto" />
-                        <span className="text-[14px] font-semibold text-foreground hidden sm:block">Menengai Cloud</span>
+                        <span className="text-[15px] font-semibold text-foreground hidden sm:block">Menengai Cloud</span>
                     </Link>
 
                     {/* Nav */}
@@ -47,7 +47,7 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
                             <Link
                                 key={href}
                                 href={href}
-                                className="text-[13px] text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-[14px] text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 {label}
                             </Link>
@@ -61,22 +61,22 @@ export function Header({ isLoggedIn: initialLoggedIn = false }: HeaderProps) {
                             // eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow
                             <a
                                 href="/org"
-                                className="h-8 px-4 rounded-full bg-foreground text-background text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                                className="h-8 px-4 rounded-full bg-foreground text-background text-[14px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
                             >
                                 Dashboard
-                                <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
+                                <span className="material-symbols-outlined text-[15px]">arrow_forward</span>
                             </a>
                         ) : (
                             <>
                                 <Link
                                     href="/auth/login"
-                                    className="h-8 px-4 rounded-full text-[13px] text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center"
+                                    className="h-8 px-4 rounded-full text-[14px] text-muted-foreground hover:text-foreground transition-colors hidden sm:flex items-center"
                                 >
                                     Log in
                                 </Link>
                                 <button
                                     onClick={() => router.push('/auth/sign-up')}
-                                    className="h-8 px-4 rounded-full bg-foreground text-background text-[13px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
+                                    className="h-8 px-4 rounded-full bg-foreground text-background text-[14px] font-semibold hover:opacity-90 transition-opacity flex items-center gap-1.5"
                                 >
                                     Get started
                                 </button>

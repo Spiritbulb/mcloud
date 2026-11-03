@@ -188,7 +188,7 @@ function RecordList({
                                     setOpen(expanded ? null : i)
                                     if (!expanded) onShow?.(spec.list, i)
                                 }}
-                                className="flex h-9 min-w-0 flex-1 items-center gap-1.5 text-left text-[13px] font-medium"
+                                className="flex h-9 min-w-0 flex-1 items-center gap-1.5 text-left text-[14px] font-medium"
                             >
                                 <Icon name={expanded ? 'expand_more' : 'chevron_right'} size={16} className="text-muted-foreground" />
                                 <span className="truncate">{title}</span>

@@ -161,7 +161,7 @@ export default async function OrgHomePage({
                                                 <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <span className="min-w-0">
                                                     <span className="block truncate font-medium hover:underline">{store.name}</span>
-                                                    <span className="block truncate text-[12px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</span>
+                                                    <span className="block truncate text-[13px] text-muted-foreground">{storefrontDisplayUrl(store.slug)}</span>
                                                 </span>
                                             </Link>
                                         </Td>
@@ -191,7 +191,7 @@ export default async function OrgHomePage({
                                 action={canManage && <Link href={`/org/${orgSlug}/servers/new`} className={buttonClass('secondary', 'sm')}>Create a server</Link>}
                             />
                         ) : (
-                            <p className="p-4 text-[13px] text-muted-foreground">
+                            <p className="p-4 text-[14px] text-muted-foreground">
                                 {running} of {serverList.length} {serverList.length === 1 ? 'server is' : 'servers are'} running.
                             </p>
                         )}
@@ -209,8 +209,8 @@ export default async function OrgHomePage({
                                     <li key={m.id} className="flex items-center gap-3 px-4 py-2.5">
                                         <Avatar name={u?.name ?? null} src={u?.avatar_url} shape="circle" />
                                         <span className="min-w-0 flex-1">
-                                            <span className="block truncate text-[13px] font-medium text-foreground">{u?.name ?? 'Unknown'}</span>
-                                            <span className="block truncate text-[12px] text-muted-foreground">{u?.email}</span>
+                                            <span className="block truncate text-[14px] font-medium text-foreground">{u?.name ?? 'Unknown'}</span>
+                                            <span className="block truncate text-[13px] text-muted-foreground">{u?.email}</span>
                                         </span>
                                         <Badge tone={ROLE_TONE[m.role as keyof typeof ROLE_TONE] ?? 'neutral'}>{m.role ? m.role[0].toUpperCase() + m.role.slice(1) : 'Member'}</Badge>
                                     </li>

@@ -50,7 +50,7 @@ function Segmented<T extends string>({ value, options, onChange, label }: {
                     aria-checked={value === o.value}
                     onClick={() => onChange(o.value)}
                     className={cn(
-                        'h-7 rounded px-2.5 text-[12px] transition-colors',
+                        'h-7 rounded px-2.5 text-[13px] transition-colors',
                         value === o.value ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:text-foreground',
                     )}
                 >
@@ -85,7 +85,7 @@ function PackageCard({ pkg, index, currency, onChange, onFeature, onRemove }: {
     return (
         <div className={cn('space-y-3 rounded-md border p-3', pkg.is_featured ? 'border-primary/50' : 'border-border')}>
             <div className="flex items-center justify-between gap-2">
-                <p className="flex items-center gap-2 text-[12px] font-medium text-muted-foreground">
+                <p className="flex items-center gap-2 text-[13px] font-medium text-muted-foreground">
                     Package {index + 1}
                     {pkg.is_featured && <Badge tone="info">Featured</Badge>}
                 </p>
@@ -331,8 +331,8 @@ function ServiceForm({ storeId, currency, service, onSaved, onCancel }: {
                                         <li key={item.id} className="flex items-center gap-2 rounded-md border border-border p-1.5">
                                             {item.type === 'image' ? <Thumb src={item.url} /> : <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted"><Icon name="movie" size={16} className="text-muted-foreground" /></span>}
                                             <span className="min-w-0 flex-1">
-                                                <span className="block truncate font-mono text-[11px] text-muted-foreground">{item.url}</span>
-                                                <span className="text-[11px] text-muted-foreground">{item.type === 'video' ? 'Video' : i === 0 ? 'Image · thumbnail' : 'Image'}</span>
+                                                <span className="block truncate font-mono text-[12px] text-muted-foreground">{item.url}</span>
+                                                <span className="text-[12px] text-muted-foreground">{item.type === 'video' ? 'Video' : i === 0 ? 'Image · thumbnail' : 'Image'}</span>
                                             </span>
                                             <Button size="sm" variant="ghost" aria-label="Remove" onClick={() => set({ media: draft.media.filter((m) => m.id !== item.id) })}>
                                                 <Icon name="close" size={15} />
@@ -507,7 +507,7 @@ export default function ServiceSettings({ storeId, currency }: { storeId: string
                                                     <Thumb src={thumb} />
                                                     <div className="min-w-0">
                                                         <p className="truncate font-medium">{svc.name}</p>
-                                                        <p className="truncate text-[12px] text-muted-foreground">
+                                                        <p className="truncate text-[13px] text-muted-foreground">
                                                             {[draft.serviceType, draft.packages.length ? `${draft.packages.length} package${draft.packages.length === 1 ? '' : 's'}` : ''].filter(Boolean).join(' · ') || svc.slug}
                                                         </p>
                                                     </div>

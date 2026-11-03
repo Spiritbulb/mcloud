@@ -105,7 +105,7 @@ function SectionHeading({
     return (
         <FadeIn className={cn('mb-14 space-y-4', centered && 'mx-auto max-w-3xl text-center')}>
             <p
-                className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                className="text-[12px] font-semibold uppercase tracking-[0.18em]"
                 style={{ color: accent ?? 'rgb(var(--muted-foreground))' }}
             >
                 {eyebrow}
@@ -133,7 +133,7 @@ function FaqItem({ q, a }: FaqEntry) {
                 className="flex w-full items-start justify-between gap-6 py-5 text-left"
                 aria-expanded={open}
             >
-                <span className="text-[15px] font-medium leading-snug text-foreground/90">{q}</span>
+                <span className="text-[16px] font-medium leading-snug text-foreground/90">{q}</span>
                 <span
                     className={cn(
                         'faqIcon material-symbols-outlined mt-0.5 shrink-0 select-none text-[18px] text-muted-foreground/70',
@@ -145,7 +145,7 @@ function FaqItem({ q, a }: FaqEntry) {
             </button>
             <div className={cn('faqAnswerWrap', open && 'open')}>
                 <div className="faqAnswerInner">
-                    <p className="pb-5 text-[14px] leading-relaxed text-muted-foreground">{a}</p>
+                    <p className="pb-5 text-[15px] leading-relaxed text-muted-foreground">{a}</p>
                 </div>
             </div>
         </div>
@@ -216,7 +216,7 @@ function FeatureShowcase({ items, accent }: { items: Feature[]; accent: string }
                                         </span>
                                     </span>
                                     <span
-                                        className="text-[11px] font-semibold uppercase tracking-[0.18em]"
+                                        className="text-[12px] font-semibold uppercase tracking-[0.18em]"
                                         style={{ color: accent }}
                                     >
                                         {item.eyebrow}
@@ -235,7 +235,7 @@ function FeatureShowcase({ items, accent }: { items: Feature[]; accent: string }
                                             >
                                                 check_circle
                                             </span>
-                                            <span className="text-[14px] leading-snug text-muted-foreground">{point}</span>
+                                            <span className="text-[15px] leading-snug text-muted-foreground">{point}</span>
                                         </li>
                                     ))}
                                 </ul>
@@ -254,12 +254,12 @@ function Steps({ steps, accent }: { steps: Step[]; accent: string }) {
             {steps.map((item, index) => (
                 <FadeIn key={item.step} delay={index * 80}>
                     <div className="space-y-5">
-                        <span className="text-[12px] font-semibold tracking-[0.16em]" style={{ color: accent }}>
+                        <span className="text-[13px] font-semibold tracking-[0.16em]" style={{ color: accent }}>
                             {item.step}
                         </span>
                         <div className="h-px w-full bg-border" />
                         <h3 className="text-[18px] font-semibold tracking-tight text-foreground">{item.title}</h3>
-                        <p className="text-[14px] leading-relaxed text-muted-foreground">{item.body}</p>
+                        <p className="text-[15px] leading-relaxed text-muted-foreground">{item.body}</p>
                     </div>
                 </FadeIn>
             ))}
@@ -282,14 +282,14 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                     >
                         {plan.highlight && (
                             <span
-                                className="absolute -top-3 left-7  px-3 py-1 text-[10px] font-bold uppercase tracking-[0.14em] text-background"
+                                className="absolute -top-3 left-7  px-3 py-1 text-[11px] font-bold uppercase tracking-[0.14em] text-background"
                                 style={{ backgroundColor: accent }}
                             >
                                 Built for growing brands
                             </span>
                         )}
                         <div className="space-y-2">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: accent }}>
+                            <p className="text-[12px] font-semibold uppercase tracking-[0.18em]" style={{ color: accent }}>
                                 {plan.name}
                             </p>
                             <div className="flex items-end gap-1.5 pt-1">
@@ -297,10 +297,10 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                                     {plan.price}
                                 </span>
                                 {plan.cadence && (
-                                    <span className="mb-0.5 text-[12px] text-muted-foreground/70">{plan.cadence}</span>
+                                    <span className="mb-0.5 text-[13px] text-muted-foreground/70">{plan.cadence}</span>
                                 )}
                             </div>
-                            <p className="pt-2 text-[14px] leading-relaxed text-muted-foreground">{plan.blurb}</p>
+                            <p className="pt-2 text-[15px] leading-relaxed text-muted-foreground">{plan.blurb}</p>
                         </div>
                         <ul className="flex-1 space-y-3">
                             {plan.features.map(feature => (
@@ -311,14 +311,14 @@ function PricingCards({ plans, accent }: { plans: PlanTier[]; accent: string }) 
                                     >
                                         check
                                     </span>
-                                    <span className="text-[13px] leading-snug text-muted-foreground">{feature}</span>
+                                    <span className="text-[14px] leading-snug text-muted-foreground">{feature}</span>
                                 </li>
                             ))}
                         </ul>
                         <a
                             href={plan.href}
                             className={cn(
-                                'flex h-11 items-center justify-center gap-2  px-5 text-[14px] font-semibold transition-opacity hover:opacity-85',
+                                'flex h-11 items-center justify-center gap-2  px-5 text-[15px] font-semibold transition-opacity hover:opacity-85',
                                 plan.highlight
                                     ? 'bg-foreground text-background'
                                     : 'border border-border text-foreground'
@@ -347,7 +347,7 @@ function MatrixCell({ value, accent }: { value: string | boolean; accent: string
         return <span className="text-[16px] text-muted-foreground/50">—</span>
     }
 
-    return <span className="text-[13px] text-muted-foreground">{value}</span>
+    return <span className="text-[14px] text-muted-foreground">{value}</span>
 }
 
 function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: FeatureRow[]; accent: string }) {
@@ -357,11 +357,11 @@ function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: Feature
                 <table className="w-full min-w-[520px] border-collapse">
                     <thead>
                         <tr className="border-b border-border">
-                            <th className="px-6 py-4 text-left text-[11px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
+                            <th className="px-6 py-4 text-left text-[12px] font-semibold uppercase tracking-[0.16em] text-muted-foreground/70">
                                 Compare storefront plans
                             </th>
                             {plans.map(plan => (
-                                <th key={plan} className="px-4 py-4 text-center text-[13px] font-semibold text-foreground">
+                                <th key={plan} className="px-4 py-4 text-center text-[14px] font-semibold text-foreground">
                                     {plan}
                                 </th>
                             ))}
@@ -370,7 +370,7 @@ function FeatureMatrix({ plans, rows, accent }: { plans: string[]; rows: Feature
                     <tbody>
                         {rows.map((row, index) => (
                             <tr key={row.label} className={cn(index !== rows.length - 1 && 'border-b border-border')}>
-                                <td className="px-6 py-3.5 text-[13px] text-muted-foreground">{row.label}</td>
+                                <td className="px-6 py-3.5 text-[14px] text-muted-foreground">{row.label}</td>
                                 {row.values.map((value, valueIndex) => (
                                     <td key={`${row.label}-${valueIndex}`} className="px-4 py-3.5 text-center">
                                         <MatrixCell value={value} accent={accent} />
@@ -676,7 +676,7 @@ function ProductSelector({ active, onChange }: { active: Product; onChange: (pro
                             </span>
                             <span className="space-y-1.5">
                                 <span className="block text-[17px] font-semibold tracking-tight text-foreground">{product.label}</span>
-                                <span className="block max-w-xs text-[13px] leading-relaxed text-muted-foreground">{product.detail}</span>
+                                <span className="block max-w-xs text-[14px] leading-relaxed text-muted-foreground">{product.detail}</span>
                             </span>
                         </div>
                     </button>
@@ -693,7 +693,7 @@ function CloudServers() {
                 <div
                     className="pointer-events-none absolute left-1/2 top-0 h-[580px] w-[760px] -translate-x-1/2  blur-[150px]"
                 />
-                <div className="relative z-10 mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+                <div className="relative z-10 mx-auto max-w-page px-6 py-28 md:px-12 md:py-40">
                     <SectionHeading
                         eyebrow="MCloud servers"
                         accent={SERVER_ACCENT}
@@ -707,7 +707,7 @@ function CloudServers() {
             <Divider />
 
             <section className="bg-foreground/[0.02] py-28 md:py-36">
-                <div className="mx-auto max-w-7xl px-6 md:px-12">
+                <div className="mx-auto max-w-page px-6 md:px-12">
                     <SectionHeading
                         eyebrow="How it works"
                         accent={SERVER_ACCENT}
@@ -720,12 +720,12 @@ function CloudServers() {
             <Divider />
 
             <section className="py-28 md:py-36">
-                <div className="mx-auto max-w-7xl px-6 md:px-12">
+                <div className="mx-auto max-w-page px-6 md:px-12">
                     <FadeIn>
                         <div className="relative overflow-hidden">
                             <div className="relative grid gap-10 md:grid-cols-[1.1fr_0.9fr] md:items-end">
                                 <div className="space-y-5">
-                                    <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: SERVER_ACCENT }}>
+                                    <p className="text-[12px] font-semibold uppercase tracking-[0.18em]" style={{ color: SERVER_ACCENT }}>
                                         Start lean
                                     </p>
                                     <h2 className="max-w-xl text-2xl font-semibold tracking-[-0.055em] leading-[0.98] text-foreground md:text-5xl">
@@ -737,13 +737,13 @@ function CloudServers() {
                                 </div>
                                 <div className="space-y-5 md:justify-self-end md:text-right">
                                     <img src={'/M-PESA_LOGO-01.svg'} alt="M-PESA" width={512} height={273} className='w-80 h-auto'/>
-                                    <p className="text-[12px] leading-relaxed text-muted-foreground">
+                                    <p className="text-[13px] leading-relaxed text-muted-foreground">
                                         No credit card required
                                     </p>
                                     {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
                                     <a
                                         href="/org/servers"
-                                        className="inline-flex h-12 items-center justify-center gap-2  px-7 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
+                                        className="inline-flex h-12 items-center justify-center gap-2  px-7 text-[16px] font-semibold text-background transition-opacity hover:opacity-85"
                                         style={{ backgroundColor: SERVER_ACCENT }}
                                     >
                                         Explore cloud servers
@@ -759,7 +759,7 @@ function CloudServers() {
             <Divider />
 
             <section className="py-28 md:py-36">
-                <div className="container mx-auto max-w-3xl px-6 md:px-12">
+                <div className="mx-auto w-full max-w-3xl px-6 md:px-12">
                     <SectionHeading eyebrow="Frequently Asked Questions" accent={SERVER_ACCENT} title="Getting curious?" />
                     <FaqBlock faqs={SERVER_FAQS} />
                 </div>
@@ -772,7 +772,7 @@ function CloudServers() {
                     className="pointer-events-none absolute bottom-0 left-1/2 h-[420px] w-[760px] -translate-x-1/2  blur-[120px]"
                     style={{ backgroundColor: `${SERVER_ACCENT}2b` }}
                 />
-                <div className="relative z-10 container mx-auto max-w-3xl px-6 text-center md:px-12">
+                <div className="relative z-10 mx-auto w-full max-w-3xl px-6 text-center md:px-12">
                     <FadeIn className="space-y-7">
                         <h2 className="text-5xl font-semibold tracking-[-0.06em] leading-[0.95] text-foreground md:text-7xl">
                             Give your work a place to run.
@@ -784,7 +784,7 @@ function CloudServers() {
                             {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
                             <a
                                 href="/org/servers"
-                                className="flex h-12 items-center justify-center gap-2  px-8 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
+                                className="flex h-12 items-center justify-center gap-2  px-8 text-[16px] font-semibold text-background transition-opacity hover:opacity-85"
                                 style={{ backgroundColor: SERVER_ACCENT }}
                             >
                                 Choose a server
@@ -792,12 +792,12 @@ function CloudServers() {
                             </a>
                             <Link
                                 href="/contact"
-                                className="flex h-12 items-center justify-center gap-2  border border-border px-8 text-[15px] text-foreground transition-colors hover:bg-foreground/[0.05]"
+                                className="flex h-12 items-center justify-center gap-2  border border-border px-8 text-[16px] text-foreground transition-colors hover:bg-foreground/[0.05]"
                             >
                                 Ask a question
                             </Link>
                         </div>
-                        <p className="text-[12px] text-muted-foreground/60">Cloud servers from KES 700 per month.</p>
+                        <p className="text-[13px] text-muted-foreground/60">Cloud servers from KES 700 per month.</p>
                     </FadeIn>
                 </div>
             </section>
@@ -812,7 +812,7 @@ function Storefronts() {
                 <div
                     className="pointer-events-none absolute left-1/2 top-0 h-[580px] w-[760px] -translate-x-1/2  blur-[150px]"
                                     />
-                <div className="relative z-10 mx-auto max-w-7xl px-6 py-28 md:px-12 md:py-40">
+                <div className="relative z-10 mx-auto max-w-page px-6 py-28 md:px-12 md:py-40">
                     <SectionHeading
                         eyebrow="MCloud storefronts"
                         accent={STORE_ACCENT}
@@ -826,7 +826,7 @@ function Storefronts() {
             <Divider />
 
             <section className="bg-foreground/[0.02] py-28 md:py-36">
-                <div className="mx-auto max-w-7xl px-6 md:px-12">
+                <div className="mx-auto max-w-page px-6 md:px-12">
                     <SectionHeading
                         eyebrow="How it works"
                         accent={STORE_ACCENT}
@@ -839,7 +839,7 @@ function Storefronts() {
             <Divider />
 
             <section className="py-28 md:py-36">
-                <div className="mx-auto max-w-7xl space-y-12 px-6 md:px-12">
+                <div className="mx-auto max-w-page space-y-12 px-6 md:px-12">
                     <SectionHeading
                         eyebrow="Storefront pricing"
                         accent={STORE_ACCENT}
@@ -854,7 +854,7 @@ function Storefronts() {
             <Divider />
 
             <section className="py-28 md:py-36">
-                <div className="container mx-auto max-w-3xl px-6 md:px-12">
+                <div className="mx-auto w-full max-w-3xl px-6 md:px-12">
                     <SectionHeading eyebrow="Frequently Asked Questions" accent={STORE_ACCENT} title="Getting curious?" />
                     <FaqBlock faqs={STORE_FAQS} />
                 </div>
@@ -867,7 +867,7 @@ function Storefronts() {
                     className="pointer-events-none absolute bottom-0 left-1/2 h-[420px] w-[760px] -translate-x-1/2  blur-[120px]"
                     style={{ backgroundColor: `${STORE_ACCENT}2b` }}
                 />
-                <div className="relative z-10 container mx-auto max-w-3xl px-6 text-center md:px-12">
+                <div className="relative z-10 mx-auto w-full max-w-3xl px-6 text-center md:px-12">
                     <FadeIn className="space-y-7">
                         <h2 className="text-5xl font-semibold tracking-[-0.06em] leading-[0.95] text-foreground md:text-7xl">
                             Make the shop people remember.
@@ -878,7 +878,7 @@ function Storefronts() {
                         <div className="flex flex-col items-center justify-center gap-3 pt-2 sm:flex-row">
                             <Link
                                 href="/auth/sign-up"
-                                className="flex h-12 items-center justify-center gap-2  px-8 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
+                                className="flex h-12 items-center justify-center gap-2  px-8 text-[16px] font-semibold text-background transition-opacity hover:opacity-85"
                                 style={{ backgroundColor: STORE_ACCENT }}
                             >
                                 Start a storefront free
@@ -886,12 +886,12 @@ function Storefronts() {
                             </Link>
                             <Link
                                 href="#storefront-pricing"
-                                className="flex h-12 items-center justify-center gap-2  border border-border px-8 text-[15px] text-foreground transition-colors hover:bg-foreground/[0.05]"
+                                className="flex h-12 items-center justify-center gap-2  border border-border px-8 text-[16px] text-foreground transition-colors hover:bg-foreground/[0.05]"
                             >
                                 View pricing
                             </Link>
                         </div>
-                        <p className="text-[12px] text-muted-foreground/60">No card required. Upgrade when your business needs more.</p>
+                        <p className="text-[13px] text-muted-foreground/60">No card required. Upgrade when your business needs more.</p>
                     </FadeIn>
                 </div>
             </section>
@@ -912,11 +912,11 @@ export default function HomeClient() {
                     className="pointer-events-none absolute left-1/2 top-[-260px] h-[660px] w-[980px] -translate-x-1/2  blur-[150px]"
                 />
 
-                <div className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-16 md:px-12 md:pb-32 md:pt-24">
+                <div className="relative z-10 mx-auto max-w-page px-6 pb-24 pt-16 md:px-12 md:pb-32 md:pt-24">
                     <div className="grid items-center gap-12 lg:grid-cols-[1fr_0.9fr] lg:gap-16">
                         <div className="space-y-9">
                             <div className="heroCopy space-y-6">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em]" style={{ color: SERVER_ACCENT }}>
+                                <p className="text-[12px] font-semibold uppercase tracking-[0.18em]" style={{ color: SERVER_ACCENT }}>
                                     Menengai Cloud
                                 </p>
                                 <h1 className="text-4xl font-semibold tracking-[-0.07em] leading-[0.92] text-foreground sm:text-5xl md:text-5xl lg:text-[3.6rem]">
@@ -931,7 +931,7 @@ export default function HomeClient() {
                                 {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
                                 <a
                                     href="/org/servers"
-                                    className="flex h-12 items-center justify-center gap-2  px-7 text-[15px] font-semibold text-background transition-opacity hover:opacity-85"
+                                    className="flex h-12 items-center justify-center gap-2  px-7 text-[16px] font-semibold text-background transition-opacity hover:opacity-85"
                                     style={{ backgroundColor: SERVER_ACCENT }}
                                 >
                                     Deploy server
@@ -940,14 +940,14 @@ export default function HomeClient() {
                                 {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- /org/* redirects from a route handler, which <Link> can't follow */}
                                 <a
                                     href="/org/stores?new=1"
-                                    className="flex h-12 items-center justify-center gap-2  border border-border px-7 text-[15px] font-medium text-foreground transition-colors hover:bg-foreground/[0.05]"
+                                    className="flex h-12 items-center justify-center gap-2  border border-border px-7 text-[16px] font-medium text-foreground transition-colors hover:bg-foreground/[0.05]"
                                 >
                                     Start a storefront free
                                     <span className="material-symbols-outlined text-[17px]">arrow_forward</span>
                                 </a>
                             </div>
 
-                            <p className="text-[12px] text-muted-foreground/65">
+                            <p className="text-[13px] text-muted-foreground/65">
                                 Cloud servers from KES 700/month. Storefronts are free to start.
                             </p>
                         </div>
@@ -981,7 +981,7 @@ export default function HomeClient() {
                         centered
                     />
                 </div>
-                <div className="mx-auto mt-12 max-w-7xl px-6 md:px-12">
+                <div className="mx-auto mt-12 max-w-page px-6 md:px-12">
                     <FadeIn>
                         <ProductSelector active={product} onChange={setProduct} />
                     </FadeIn>
@@ -995,19 +995,19 @@ export default function HomeClient() {
             </main>
 
             <section className="border-t border-border py-16 md:py-20">
-                <div className="mx-auto max-w-7xl px-6 md:px-12">
+                <div className="mx-auto max-w-page px-6 md:px-12">
                     <FadeIn>
                         <div className="grid gap-6  border border-border bg-foreground/[0.025] p-7 md:grid-cols-[1fr_360px] md:items-center md:p-9">
                             <div className="space-y-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">Early access</p>
+                                <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-muted-foreground/70">Early access</p>
                                 <h2 className="text-2xl font-semibold tracking-[-0.035em] text-foreground">The Menengai Cloud mobile app is taking shape.</h2>
-                                <p className="max-w-xl text-[14px] leading-relaxed text-muted-foreground">
+                                <p className="max-w-xl text-[15px] leading-relaxed text-muted-foreground">
                                     Join the Android beta to try it early and help shape what comes next.
                                 </p>
                             </div>
                             <div>
                                 <BetaSignupForm source="homepage" />
-                                <p className="mt-3 text-[12px] text-muted-foreground/55">
+                                <p className="mt-3 text-[13px] text-muted-foreground/55">
                                     Use a Google account (Gmail). Android beta installs are delivered through Google Play.
                                 </p>
                             </div>

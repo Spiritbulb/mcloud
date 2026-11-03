@@ -79,7 +79,7 @@ export default function OrgSettingsClient({ org, isOwner, storeCount }: {
 
             {isOwner && (
                 <Panel title="Delete organization" footer={<Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete organization</Button>}>
-                    <p className="text-[13px] text-muted-foreground">
+                    <p className="text-[14px] text-muted-foreground">
                         {storeCount > 0
                             ? `Its ${sites} will be moved to Personal, and the organization is deleted permanently.`
                             : 'This organization has no stores. Deleting it is permanent.'}

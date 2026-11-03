@@ -10,7 +10,7 @@ export function AuthLoading({ label = 'Signing you in…' }: { label?: string })
             />
             <div className="flex flex-col items-center gap-3">
                 <div className="h-5 w-5 rounded-full border-2 border-white/20 border-t-[#3fa9f5] animate-spin" />
-                <p className="text-[13px] text-white/55">{label}</p>
+                <p className="text-[14px] text-white/55">{label}</p>
             </div>
         </div>
     )

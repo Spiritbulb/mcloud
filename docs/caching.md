@@ -44,6 +44,16 @@ anything that writes outside those paths. The hourly `revalidate` is the backsto
 
 Web's call is fire-and-forget; if `REVALIDATE_SECRET` is unset it silently does nothing.
 
+## Platform docs (`mcloud.co.ke/docs`)
+
+`/docs`, `/docs/[slug]` (rows of `docs_pages`) and `/docs/guides/[slug]` (`apps/web/content/guides/*.mdx`,
+metadata in `lib/guides.ts`) are static with `revalidate = 3600`. They read through `lib/docs-data.ts`
+(`createPublicClient()`), so the same rule as store pages applies: no `cookies()`/`headers()`/`searchParams`
+under `app/(marketing)/docs`. Saving in `/admin/docs-editor` calls `revalidatePath("/docs", "layout")` and
+purges the sitemap. `/docs/[slug]` builds on first visit, so `next build` doesn't need the DB; guides prerender
+at build. Old `/docs?page=<id>` links 308 to `/docs/<id>` (`next.config.ts`). To add a guide: write the `.mdx`,
+add its entry to `GUIDES` and its loader to `content/guides/index.ts`; `guides.test.ts` fails if one is missing.
+
 ## The order page
 
 `/store/[slug]/orders/[orderNumber]` is where shoppers land after paying. The page is a cached, empty

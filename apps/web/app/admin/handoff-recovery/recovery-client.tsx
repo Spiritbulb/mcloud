@@ -38,7 +38,7 @@ export default function RecoveryClient({
     }
 
     return (
-        <div className="mx-auto w-full max-w-6xl space-y-6">
+        <div className="mx-auto w-full max-w-page space-y-6">
             <PageHeader
                 title="Handoff recovery"
                 description="People who signed in on spiritb.uk but have no Menengai Cloud account row, so the handoff probably failed for them. Anyone who gets through drops off this list on their own."
@@ -64,14 +64,14 @@ export default function RecoveryClient({
                     <ul className="divide-y divide-border">
                         {people.map((p) => (
                             <li key={p.email}>
-                                <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-[13px] transition-colors hover:bg-muted/40">
+                                <label className="flex cursor-pointer items-center gap-3 px-4 py-2.5 text-[14px] transition-colors hover:bg-muted/40">
                                     <input type="checkbox" checked={picked.has(p.email)} onChange={() => toggle(p.email)} disabled={pending} className="h-4 w-4 accent-[rgb(var(--brand))]" />
                                     <span className="min-w-0 flex-1">
                                         <span className="font-medium text-foreground">{p.name ?? p.email}</span>
                                         {p.name && <span className="text-muted-foreground"> · {p.email}</span>}
                                     </span>
                                     {!p.recent && <Badge>older</Badge>}
-                                    <span className="shrink-0 text-[12px] text-muted-foreground tabular-nums">
+                                    <span className="shrink-0 text-[13px] text-muted-foreground tabular-nums">
                                         {new Date(p.lastSignInAt).toLocaleDateString("en-KE", { day: "numeric", month: "short" })}
                                     </span>
                                 </label>

@@ -43,9 +43,9 @@ export function SettingsField({
 }) {
     return (
         <div className="min-w-0">
-            <label className="mb-1.5 block text-[12px] font-medium text-foreground">{label}</label>
+            <label className="mb-1.5 block text-[13px] font-medium text-foreground">{label}</label>
             {children}
-            {hint && <p className="mt-1.5 text-[12px] text-muted-foreground">{hint}</p>}
+            {hint && <p className="mt-1.5 text-[13px] text-muted-foreground">{hint}</p>}
         </div>
     )
 }
