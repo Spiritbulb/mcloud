@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict'
-import { decideLegacyLink, mergeOrderHistory, orderVisibleTo, validateShopperProfile } from './shop-logic'
+import { decideLegacyLink, membershipActive, mergeOrderHistory, orderVisibleTo, planOneStepSetup, validateShopperProfile } from './shop-logic'
 
 const buyer = { userId: 'u1', platformRole: 'customer', reachRole: 'buyer', alreadyLinked: false }
 
@@ -40,5 +40,18 @@ assert.equal(orderVisibleTo({ customer_id: null, legacy_user_id: 'u1' }, viewer)
 assert.equal(orderVisibleTo({ customer_id: 'c2', legacy_user_id: 'u2' }, viewer), false)
 // null never matches null: a shopper with no customer row must not see every guest order.
 assert.equal(orderVisibleTo({ customer_id: null, legacy_user_id: null }, { customerId: null, legacyUserId: null }), false)
+
+// Vendor access: a key member lasts as long as the key; an owner-member (no key) as long as they
+// can still manage the store.
+assert.equal(membershipActive({ keyId: 'k', keyActive: true, hasStoreAccess: false }), true)
+assert.equal(membershipActive({ keyId: 'k', keyActive: false, hasStoreAccess: true }), false)
+assert.equal(membershipActive({ keyId: null, keyActive: null, hasStoreAccess: true }), true)
+assert.equal(membershipActive({ keyId: null, keyActive: null, hasStoreAccess: false }), false)
+
+// One-step setup only does what is missing, so a retry after a partial failure never makes a
+// second org or store.
+assert.deepEqual(planOneStepSetup({ manageableOrg: null, existingStoreSlug: null }), ['create_org', 'create_store', 'list', 'join'])
+assert.deepEqual(planOneStepSetup({ manageableOrg: { id: 'o' }, existingStoreSlug: null }), ['create_store', 'list', 'join'])
+assert.deepEqual(planOneStepSetup({ manageableOrg: { id: 'o' }, existingStoreSlug: 'duka' }), ['list', 'join'])
 
 console.log('shop-logic: passed')

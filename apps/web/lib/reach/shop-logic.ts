@@ -65,3 +65,27 @@ export function orderVisibleTo(
     if (viewer.legacyUserId && order.legacy_user_id === viewer.legacyUserId) return true
     return false
 }
+
+// ---- vendors ----
+
+/**
+ * Whether a reach_vendor_members row still grants access. A key member keeps access while the key
+ * is active (revoking it cuts them off). An owner-member has no key and keeps access while they
+ * can still manage the store (removing them from the org cuts them off).
+ */
+export function membershipActive(m: { keyId: string | null; keyActive: boolean | null; hasStoreAccess: boolean }): boolean {
+    return m.keyId ? m.keyActive === true : m.hasStoreAccess
+}
+
+export type SetupStep = 'create_org' | 'create_store' | 'list' | 'join'
+
+/**
+ * The steps of "create a store" in the Reach app, skipping what already exists. Each step is
+ * idempotent, and so is the plan: a retry after a partial failure finishes the job instead of
+ * making a second org or store.
+ */
+export function planOneStepSetup(s: { manageableOrg: { id: string } | null; existingStoreSlug: string | null }): SetupStep[] {
+    if (!s.manageableOrg) return ['create_org', 'create_store', 'list', 'join']
+    if (!s.existingStoreSlug) return ['create_store', 'list', 'join']
+    return ['list', 'join']
+}
