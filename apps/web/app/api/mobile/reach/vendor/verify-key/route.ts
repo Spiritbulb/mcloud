@@ -6,10 +6,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { normalizeStoreKey } from '@mcloud/merchant/reach'
 import { reachDb } from '@/lib/reach/db'
 import { fail, requireMobileUser } from '../../../_lib'
+import { allowStoreKeyCheck } from '../../../../_auth-ratelimit'
 
 export async function POST(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
+
+    if (!allowStoreKeyCheck(auth.user.id)) return fail(429, 'Too many attempts. Please wait a few minutes and try again.')
 
     const body = (await req.json().catch(() => null)) as { key?: string } | null
     const key = normalizeStoreKey(body?.key)

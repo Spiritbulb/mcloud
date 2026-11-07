@@ -61,3 +61,16 @@ const HANDOFF_MAX = 10
 export function allowHandoffMint(key: string, ip: string): boolean {
   return allow('handoff', key, ip, HANDOFF_MAX)
 }
+
+const KEY_CHECK_MAX = 10
+
+/**
+ * True if a store-key check is allowed (max 10 / 15 min per signed-in user). Counted per user and
+ * not per IP: mobile carriers put many people behind one address. Keys are about 59 bits, so this
+ * is a second line of defence against guessing, not the first.
+ */
+export function allowStoreKeyCheck(userId: string): boolean {
+  const now = Date.now()
+  sweep(now)
+  return hit(`storekey:user:${userId}`, KEY_CHECK_MAX, now)
+}

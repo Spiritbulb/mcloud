@@ -560,3 +560,7 @@ Compared the live `commerce` project with `migrations/`.
 - One store has `org_id is null`; if its owner deletes their account the RPC refuses (`store_without_org`). Give it an org.
 - Before this, web's `DELETE /api/account` deleted the `users` row directly and could never succeed for an org member.
 - Apply the migration, then try with a throwaway account that owns an org with a second admin.
+
+## Reach store keys (SPI-76, 2026-11-07)
+
+Store keys are issued by the app (`generateStoreKey`, `RCH-XXXX-XXXX-XXXX`, about 59 bits, Web Crypto). The weak `reach_issue_courier_key` RPC (4 characters of the vendor id plus 4 `random()` digits) was never called by the app; `migrations/20261107d_reach_courier_key_hardening.sql` drops it and revokes any active key not in the current format (one lowercase old-format key, unusable anyway because lookups upper-case the input and it had no members). `confirm-vendor` and `vendor/verify-key` are limited to 10 checks per 15 minutes per user (`allowStoreKeyCheck`, in-memory like the other auth limiters, so per instance). After applying the migration, regenerate `database.types.ts`.

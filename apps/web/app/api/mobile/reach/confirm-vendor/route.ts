@@ -3,6 +3,7 @@
 // from the store's dashboard (settings/reach). Revoking the key later ends this access.
 import { NextResponse, type NextRequest } from 'next/server'
 import { requireMobileUser, fail } from '../../_lib'
+import { allowStoreKeyCheck } from '../../../_auth-ratelimit'
 import { createClient } from '@mcloud/db/server'
 import { normalizeStoreKey } from '@mcloud/merchant/reach'
 import { vendorFor } from '@/lib/reach/vendor'
@@ -10,6 +11,8 @@ import { vendorFor } from '@/lib/reach/vendor'
 export async function POST(req: NextRequest) {
     const auth = await requireMobileUser(req)
     if (auth instanceof NextResponse) return auth
+
+    if (!allowStoreKeyCheck(auth.user.id)) return fail(429, 'Too many attempts. Please wait a few minutes and try again.')
 
     const body = await req.json().catch(() => null)
     const storeKey = normalizeStoreKey(body?.storeKey)

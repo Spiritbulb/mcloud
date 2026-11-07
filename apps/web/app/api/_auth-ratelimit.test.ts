@@ -1,7 +1,7 @@
 // apps/web/app/api/_auth-ratelimit.test.ts
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { allowMagicSend, allowMagicVerify } from './_auth-ratelimit.ts'
+import { allowMagicSend, allowMagicVerify, allowStoreKeyCheck } from './_auth-ratelimit.ts'
 
 test('send allows 3 then blocks the 4th for the same email', () => {
   const ip = '1.2.3.4'
@@ -18,4 +18,11 @@ test('verify allows 5 then blocks the 6th for the same email', () => {
     assert.equal(allowMagicVerify(email, `ip-${i}`), true)
   }
   assert.equal(allowMagicVerify(email, 'ip-x'), false)
+})
+
+test('store key checks allow 10 then block the 11th for the same user, and users are independent', () => {
+  const user = `key-user-${Date.now()}`
+  for (let i = 0; i < 10; i++) assert.equal(allowStoreKeyCheck(user), true)
+  assert.equal(allowStoreKeyCheck(user), false)
+  assert.equal(allowStoreKeyCheck(`${user}-other`), true)
 })
