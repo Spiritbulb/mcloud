@@ -37,6 +37,8 @@ npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `apps/nuru`, `package
 | `packages/config` | Shared `tsconfig.base.json`. |
 | `migrations/` | Hand-written SQL migrations, dated `YYYYMMDD_name.sql`. Applied manually to Supabase; there is no migration runner. |
 
+**Schema changes start as a file in `migrations/`**, even when you apply them with the Supabase MCP (`apply_migration`/`execute_sql`) or the dashboard: write the file first, apply that exact SQL, and commit it with the code that needs it. Never change functions, policies, constraints or triggers in the live database without a file; a hand-applied `get_store_analytics` once broke Analytics for four weeks (SPI-65). The live database is the truth, so to check for drift compare `pg_get_functiondef` with the latest file.
+
 Rule of thumb: **settings UI and `/api/store/*` live in the storefront; anything shared by
 both apps goes in `@mcloud/merchant`** (or another package), never copied between apps.
 Web and storefront are separate origins; cross-links go through `webUrl()` /
