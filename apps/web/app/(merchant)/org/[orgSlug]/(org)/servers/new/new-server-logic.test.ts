@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { defaultZone, formatMemory, isValidHostname, osFamilyOf, plansInTier, planTier, sortZones, templatesByFamily } from './new-server-logic.ts'
+import { defaultZone, formatMemory, isValidHostname, osFamilyOf, plansInTier, planTier, publicIpv4, sshCommand, sortZones, templatesByFamily } from './new-server-logic.ts'
 
 const z = (id: string) => ({ id, description: id })
 
@@ -43,4 +43,16 @@ test('hostnames are validated like UpCloud does', () => {
     assert.ok(!isValidHostname('my server'))
     assert.ok(!isValidHostname('api..example.com'))
     assert.ok(!isValidHostname(''))
+})
+
+test('the public IPv4 is found, and absent until assigned', () => {
+    const ip = (address: string, family: string, access: string) => ({ address, family, access })
+    assert.equal(publicIpv4({ ip_addresses: { ip_address: [ip('10.0.0.5', 'IPv4', 'utility'), ip('2001:db8::1', 'IPv6', 'public'), ip('203.0.113.7', 'IPv4', 'public')] } }), '203.0.113.7')
+    assert.equal(publicIpv4({ ip_addresses: { ip_address: [ip('10.0.0.5', 'IPv4', 'utility')] } }), undefined)
+    assert.equal(publicIpv4({}), undefined)
+    assert.equal(publicIpv4(null), undefined)
+})
+
+test('the ssh command uses the given host and the hostname for the key file', () => {
+    assert.equal(sshCommand('api.example.com', '203.0.113.7'), 'ssh -i api.example.com.pem root@203.0.113.7')
 })

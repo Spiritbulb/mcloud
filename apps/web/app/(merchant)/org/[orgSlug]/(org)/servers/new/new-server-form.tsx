@@ -18,7 +18,7 @@ import { centsToKes, hourlyRateCentsForMonthlyKes } from '@/lib/wallet-math'
 import 'flag-icons/css/flag-icons.min.css'
 import {
     GREEN_ZONES, OS_FAMILIES, ZONE_META, DEFAULT_ZONE,
-    defaultZone, formatKes, formatMemory, isRecommendedZone, isValidHostname, plansInTier, planUseCase, sortZones, templatesByFamily,
+    defaultZone, formatKes, formatMemory, isRecommendedZone, isValidHostname, plansInTier, planUseCase, publicIpv4, sshCommand, sortZones, templatesByFamily,
     type OsFamily, type Plan, type PlanTier, type Template, type Zone,
 } from './new-server-logic'
 
@@ -42,7 +42,7 @@ function OptionCard({ selected, onSelect, className, children }: {
             aria-pressed={selected}
             onClick={onSelect}
             className={cn(
-                'relative rounded-lg border bg-card p-3 text-left transition-colors',
+                'relative min-w-0 rounded-lg border bg-card p-3 text-left transition-colors',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/40',
                 selected ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/30',
                 className,
@@ -69,20 +69,51 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
     return (
         <div className="flex items-baseline justify-between gap-3 py-1.5 text-[14px]">
             <span className="shrink-0 text-muted-foreground">{label}</span>
-            <span className="truncate text-right text-foreground">{value}</span>
+            <span className="min-w-0 truncate text-right text-foreground">{value}</span>
         </div>
     )
 }
 
 // ─── Key reveal (after create) ────────────────────────────────────────────────
 
-function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; privateKey: string; hostname: string }) {
+const IP_POLL_MS = 4000
+const IP_POLL_MAX = 45 // about three minutes
+
+function KeyReveal({ orgSlug, privateKey, hostname, uuid, initialIp }: { orgSlug: string; privateKey: string; hostname: string; uuid: string; initialIp?: string }) {
     const [copied, setCopied] = useState<'key' | 'ssh' | null>(null)
+    const [ip, setIp] = useState<string | undefined>(initialIp)
+    const [gaveUp, setGaveUp] = useState(false)
     const copy = (what: 'key' | 'ssh', text: string) =>
         navigator.clipboard.writeText(text).then(() => {
             setCopied(what)
             window.setTimeout(() => setCopied(null), 2000)
         }, () => {})
+
+    // UpCloud assigns the public address a moment after the server is created; ask until it appears.
+    useEffect(() => {
+        if (ip) return
+        let cancelled = false
+        let tries = 0
+        let timer: number | undefined
+        const poll = async () => {
+            tries += 1
+            try {
+                const res = await fetch(`/api/org/${orgSlug}/servers/${uuid}`)
+                if (res.ok) {
+                    const found = publicIpv4((await res.json()).server)
+                    if (found && !cancelled) return setIp(found)
+                }
+            } catch {}
+            if (cancelled) return
+            if (tries >= IP_POLL_MAX) return setGaveUp(true)
+            timer = window.setTimeout(poll, IP_POLL_MS)
+        }
+        timer = window.setTimeout(poll, IP_POLL_MS)
+        return () => {
+            cancelled = true
+            window.clearTimeout(timer)
+        }
+    }, [ip, orgSlug, uuid])
 
     const download = () => {
         const url = URL.createObjectURL(new Blob([privateKey], { type: 'text/plain' }))
@@ -93,7 +124,8 @@ function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; private
         URL.revokeObjectURL(url)
     }
 
-    const ssh = `ssh -i ${hostname}.pem root@${hostname}`
+    const ssh = ip ? sshCommand(hostname, ip) : null
+    const sshByHostname = sshCommand(hostname, hostname)
 
     return (
         <div className="mx-auto max-w-xl space-y-6">
@@ -107,9 +139,9 @@ function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; private
                             <Icon name={copied === 'key' ? 'check' : 'content_copy'} size={14} />
                             {copied === 'key' ? 'Copied' : 'Copy'}
                         </Button>
-                        <Button variant="primary" onClick={download}>
-                            <Icon name="download" size={14} />
-                            Download {hostname}.pem
+                        <Button variant="primary" onClick={download} className="max-w-full min-w-0">
+                            <Icon name="download" size={14} className="shrink-0" />
+                            <span className="truncate">Download {hostname}.pem</span>
                         </Button>
                     </>
                 }
@@ -117,12 +149,29 @@ function KeyReveal({ orgSlug, privateKey, hostname }: { orgSlug: string; private
                 <pre className="max-h-56 overflow-auto whitespace-pre-wrap break-all rounded-md bg-muted p-3 font-mono text-[12px] leading-relaxed text-foreground">{privateKey}</pre>
             </Panel>
             <Panel title="Connect" description="New servers can take a few minutes to become reachable.">
-                <div className="flex items-center justify-between gap-3">
-                    <code className="min-w-0 truncate font-mono text-[13px] text-foreground">{ssh}</code>
-                    <Button size="sm" variant="ghost" onClick={() => copy('ssh', ssh)}>
-                        <Icon name={copied === 'ssh' ? 'check' : 'content_copy'} size={14} />
-                        {copied === 'ssh' ? 'Copied' : 'Copy'}
-                    </Button>
+                <div className="space-y-3">
+                    {ssh ? (
+                        <div className="flex items-center justify-between gap-3">
+                            <code className="min-w-0 truncate font-mono text-[13px] text-foreground">{ssh}</code>
+                            <Button size="sm" variant="ghost" onClick={() => copy('ssh', ssh)} className="shrink-0">
+                                <Icon name={copied === 'ssh' ? 'check' : 'content_copy'} size={14} />
+                                {copied === 'ssh' ? 'Copied' : 'Copy'}
+                            </Button>
+                        </div>
+                    ) : gaveUp ? (
+                        <p className="text-[14px] text-muted-foreground">
+                            The server has no public address yet. Find it on the <Link href={`/org/${orgSlug}/servers`} className="underline underline-offset-2">servers page</Link> once it has started.
+                        </p>
+                    ) : (
+                        <p className="flex items-center gap-2 text-[14px] text-muted-foreground">
+                            <Spinner size={13} />
+                            Waiting for the server&apos;s IP address…
+                        </p>
+                    )}
+                    <p className="text-[13px] text-muted-foreground">
+                        Once DNS for <span className="break-all font-mono text-foreground">{hostname}</span> points at the server, you can connect with{' '}
+                        <code className="break-all font-mono text-foreground">{sshByHostname}</code> instead.
+                    </p>
                 </div>
             </Panel>
             <div className="flex justify-end">
@@ -151,7 +200,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
     const [confirming, setConfirming] = useState(false)
     const [submitting, setSubmitting] = useState(false)
     const [error, setError] = useState<{ message: string; topUp?: boolean } | null>(null)
-    const [created, setCreated] = useState<{ privateKey: string; hostname: string } | null>(null)
+    const [created, setCreated] = useState<{ privateKey: string; hostname: string; uuid: string; ip?: string } | null>(null)
 
     useEffect(() => {
         const controller = new AbortController()
@@ -208,7 +257,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                 setError({ message: data.error ?? 'The server could not be created. Try again.', topUp: data.code === 'INSUFFICIENT_CREDITS' })
                 return
             }
-            setCreated({ privateKey: data.privateKey, hostname: data.server.hostname })
+            setCreated({ privateKey: data.privateKey, hostname: data.server.hostname, uuid: data.server.uuid, ip: publicIpv4(data.server) })
         } catch {
             setError({ message: 'The server could not be created. Check your connection and try again.' })
         } finally {
@@ -217,7 +266,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
         }
     }
 
-    if (created) return <KeyReveal orgSlug={orgSlug} privateKey={created.privateKey} hostname={created.hostname} />
+    if (created) return <KeyReveal orgSlug={orgSlug} privateKey={created.privateKey} hostname={created.hostname} uuid={created.uuid} initialIp={created.ip} />
 
     const header = (
         <PageHeader
@@ -242,7 +291,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
         return (
             <div className="space-y-6">
                 {header}
-                <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+                <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                     <div className="space-y-6">
                         {[0, 1, 2].map((i) => <Skeleton key={i} className="h-44 w-full rounded-lg" />)}
                     </div>
@@ -268,7 +317,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
         <div className="space-y-6 pb-20 lg:pb-0">
             {header}
 
-            <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+            <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
                 <div className="min-w-0 space-y-6">
                     <Panel title="Name" description="A title your team recognizes, and the hostname you will connect to.">
                         <FormGrid>
@@ -407,7 +456,7 @@ export default function NewServerForm({ orgSlug, orgName }: { orgSlug: string; o
                     </Panel>
                 </div>
 
-                <aside className="space-y-4 lg:sticky lg:top-6">
+                <aside className="min-w-0 space-y-4 lg:sticky lg:top-6">
                     <Panel title="Summary" footer={<div className="w-full">{createButton}</div>}>
                         <div className="divide-y divide-border">
                             <SummaryRow label="Name" value={title.trim() || '—'} />

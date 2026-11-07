@@ -113,3 +113,15 @@ export function plansInTier(plans: readonly Plan[], tier: PlanTier, hasPrice: (n
 export function isValidHostname(hostname: string): boolean {
     return /^(?=.{1,128}$)[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)*$/i.test(hostname)
 }
+
+type ServerAddresses = { ip_addresses?: { ip_address?: { address: string; family: string; access: string }[] } }
+
+/** The server's public IPv4, once UpCloud has assigned it (it can be missing right after create). */
+export function publicIpv4(server: ServerAddresses | null | undefined): string | undefined {
+    return server?.ip_addresses?.ip_address?.find((ip) => ip.access === 'public' && ip.family === 'IPv4')?.address
+}
+
+/** The ssh command to show. The IP works at once; the hostname only after DNS points at the server. */
+export function sshCommand(hostname: string, host: string): string {
+    return `ssh -i ${hostname}.pem root@${host}`
+}
