@@ -551,3 +551,12 @@ Compared the live `commerce` project with `migrations/`.
 - **History table:** `20261101_org_invites_token.sql` and `20261103_reach_shoppers.sql` are applied (their objects exist) but missing from `supabase_migrations.schema_migrations`, like the `20261012*` files. The two new capture files are no-ops on the live database and are not applied or recorded.
 - **Weaknesses seen, not fixed:** `reach_issue_courier_key` makes a key from 4 characters of the vendor id plus 4 `random()` digits (about 10^4 guesses); `expire_store_subscriptions` is `SECURITY DEFINER` without a pinned `search_path`; the `auth.uid()` policies are inert under WorkOS; `reach_vendors` and `reach_product_vendors` are readable by `anon` with `using (true)`.
 - **Still open:** a `pg_dump --schema-only` baseline (needs the DB password or CLI) to cover the initial schema, tables and constraints; recording the unrecorded migrations in `schema_migrations`.
+
+## Account deletion (SPI-67, 2026-11-07)
+
+`deleteAccount` (storefront) and `DELETE /api/account` (web) now call one RPC, `delete_user_account` (`migrations/20261107c_delete_user_account.sql`, **written and tested in a rolled-back transaction, not yet applied**). Rules: stores belong to orgs, so no store is deleted; an owned org goes to its longest-serving other admin (owners first) together with its stores; with nobody to take it the call refuses and changes nothing; the person's memberships, sent store invites, vendor links and Nuru chats/notes are removed, and "who did it" columns are set to null. Messages live in `@mcloud/merchant/account-deletion`.
+
+- **Not built: closing an org.** An org with no other admin cannot be deleted by its owner (they are told to contact support). A real close needs an ordered delete: **no foreign key from the store or org tables cascades** (about 35 tables reference `stores`, 10 reference `orgs`, all NO ACTION), so deleting a store with any data fails. The old comments saying store deletion "cascades to products, orders and customers" were wrong.
+- One store has `org_id is null`; if its owner deletes their account the RPC refuses (`store_without_org`). Give it an org.
+- Before this, web's `DELETE /api/account` deleted the `users` row directly and could never succeed for an org member.
+- Apply the migration, then try with a throwaway account that owns an org with a second admin.

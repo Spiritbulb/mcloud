@@ -238,7 +238,7 @@ function DeletePanel() {
     return (
         <Panel
             title="Delete account"
-            description="Permanently deletes your account and every store you own, with their products, orders and customers. This can't be undone."
+            description="Permanently deletes your account. Organizations you own go to their longest-serving admin, with their stores; if nobody can take one over, nothing is deleted. This can't be undone."
             className="border-red-300/60 dark:border-red-500/30"
             footer={
                 <Button variant="danger" disabled={confirm.trim().toLowerCase() !== DELETE_PHRASE || isPending} onClick={handleDelete}>

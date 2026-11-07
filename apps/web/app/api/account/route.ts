@@ -2,6 +2,7 @@
 import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
+import { deleteUserAccount } from '@mcloud/merchant/account-deletion'
 
 // GET /api/account
 export async function GET(request: NextRequest) {
@@ -39,17 +40,10 @@ export async function DELETE(request: NextRequest) {
     const supabase = await createClient()
     const userId = session.user.id
 
-    // Cascade-delete is handled by DB foreign keys.
-    // Remove the user row — everything else follows.
-    const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-    if (error) {
-        console.error('[account delete]', error.code, error.message)
-        return NextResponse.json({ error: 'Failed to delete account.' }, { status: 500 })
-    }
+    // One transaction in the database; refuses, changing nothing, when an org has nobody to take it
+    // over. (Every foreign key to users is NO ACTION, so a plain delete of the row cannot work.)
+    const deleted = await deleteUserAccount(supabase, userId)
+    if (deleted.message) return NextResponse.json({ error: deleted.message }, { status: deleted.result ? 409 : 500 })
 
     return NextResponse.json({ ok: true })
 }
