@@ -10,10 +10,52 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.17"
   }
   public: {
     Tables: {
+      admin_audit_log: {
+        Row: {
+          action: string
+          actor_email: string | null
+          actor_id: string
+          after: Json | null
+          before: Json | null
+          created_at: string
+          id: string
+          ip: string | null
+          summary: string
+          target_id: string | null
+          target_type: string | null
+        }
+        Insert: {
+          action: string
+          actor_email?: string | null
+          actor_id: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          summary: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Update: {
+          action?: string
+          actor_email?: string | null
+          actor_id?: string
+          after?: Json | null
+          before?: Json | null
+          created_at?: string
+          id?: string
+          ip?: string | null
+          summary?: string
+          target_id?: string | null
+          target_type?: string | null
+        }
+        Relationships: []
+      }
       api_keys: {
         Row: {
           created_at: string
@@ -610,6 +652,27 @@ export type Database = {
         }
         Relationships: []
       }
+      docs_pages_backup_20261023: {
+        Row: {
+          data: Json | null
+          id: string | null
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          data?: Json | null
+          id?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          data?: Json | null
+          id?: string | null
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       nuru_chat_messages: {
         Row: {
           context_note_ids: string[]
@@ -1031,35 +1094,35 @@ export type Database = {
         Row: {
           accepted_at: string | null
           created_at: string | null
-          email: string | null
-          expires_at: string | null
+          email: string
+          expires_at: string
           id: string
           invited_by: string | null
-          org_id: string | null
-          role: string | null
-          token: string | null
+          org_id: string
+          role: string
+          token: string
         }
         Insert: {
           accepted_at?: string | null
           created_at?: string | null
-          email?: string | null
-          expires_at?: string | null
+          email: string
+          expires_at?: string
           id?: string
           invited_by?: string | null
-          org_id?: string | null
-          role?: string | null
-          token?: string | null
+          org_id: string
+          role: string
+          token?: string
         }
         Update: {
           accepted_at?: string | null
           created_at?: string | null
-          email?: string | null
-          expires_at?: string | null
+          email?: string
+          expires_at?: string
           id?: string
           invited_by?: string | null
-          org_id?: string | null
-          role?: string | null
-          token?: string | null
+          org_id?: string
+          role?: string
+          token?: string
         }
         Relationships: [
           {
@@ -1585,10 +1648,55 @@ export type Database = {
           },
         ]
       }
+      reach_areas: {
+        Row: {
+          active: boolean
+          created_at: string
+          id: string
+          lat: number | null
+          lng: number | null
+          name: string
+          parent_id: string | null
+          slug: string
+          sort: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name: string
+          parent_id?: string | null
+          slug: string
+          sort?: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          name?: string
+          parent_id?: string | null
+          slug?: string
+          sort?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reach_areas_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "reach_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reach_courier_keys: {
         Row: {
           active: boolean
           created_at: string
+          created_by: string | null
           id: string
           key: string
           label: string
@@ -1598,6 +1706,7 @@ export type Database = {
         Insert: {
           active?: boolean
           created_at?: string
+          created_by?: string | null
           id?: string
           key: string
           label: string
@@ -1607,6 +1716,7 @@ export type Database = {
         Update: {
           active?: boolean
           created_at?: string
+          created_by?: string | null
           id?: string
           key?: string
           label?: string
@@ -1615,10 +1725,77 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "reach_courier_keys_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "reach_courier_keys_vendor_id_fkey"
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "reach_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reach_payments: {
+        Row: {
+          amount_kes: number
+          created_at: string
+          failure_reason: string | null
+          id: string
+          mpesa_receipt: string | null
+          order_id: string
+          palpluss_transaction_id: string | null
+          phone: string
+          settled_at: string | null
+          shopper_id: string | null
+          status: string
+          user_id: string | null
+        }
+        Insert: {
+          amount_kes: number
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          mpesa_receipt?: string | null
+          order_id: string
+          palpluss_transaction_id?: string | null
+          phone: string
+          settled_at?: string | null
+          shopper_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Update: {
+          amount_kes?: number
+          created_at?: string
+          failure_reason?: string | null
+          id?: string
+          mpesa_receipt?: string | null
+          order_id?: string
+          palpluss_transaction_id?: string | null
+          phone?: string
+          settled_at?: string | null
+          shopper_id?: string | null
+          status?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reach_payments_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_payments_shopper_id_fkey"
+            columns: ["shopper_id"]
+            isOneToOne: false
+            referencedRelation: "reach_shoppers"
             referencedColumns: ["id"]
           },
         ]
@@ -1649,6 +1826,47 @@ export type Database = {
             columns: ["vendor_id"]
             isOneToOne: false
             referencedRelation: "reach_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      reach_shoppers: {
+        Row: {
+          auth_user_id: string
+          created_at: string
+          email: string
+          id: string
+          legacy_user_id: string | null
+          mpesa_number: string | null
+          name: string | null
+          updated_at: string
+        }
+        Insert: {
+          auth_user_id: string
+          created_at?: string
+          email: string
+          id?: string
+          legacy_user_id?: string | null
+          mpesa_number?: string | null
+          name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_user_id?: string
+          created_at?: string
+          email?: string
+          id?: string
+          legacy_user_id?: string | null
+          mpesa_number?: string | null
+          name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reach_shoppers_legacy_user_id_fkey"
+            columns: ["legacy_user_id"]
+            isOneToOne: true
+            referencedRelation: "users"
             referencedColumns: ["id"]
           },
         ]
@@ -1688,22 +1906,52 @@ export type Database = {
           },
         ]
       }
+      reach_vendor_areas: {
+        Row: {
+          area_id: string
+          vendor_id: string
+        }
+        Insert: {
+          area_id: string
+          vendor_id: string
+        }
+        Update: {
+          area_id?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reach_vendor_areas_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "reach_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_vendor_areas_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "reach_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reach_vendor_members: {
         Row: {
           created_at: string
-          key_id: string
+          key_id: string | null
           user_id: string
           vendor_id: string
         }
         Insert: {
           created_at?: string
-          key_id: string
+          key_id?: string | null
           user_id: string
           vendor_id: string
         }
         Update: {
           created_at?: string
-          key_id?: string
+          key_id?: string | null
           user_id?: string
           vendor_id?: string
         }
@@ -1731,26 +1979,136 @@ export type Database = {
           },
         ]
       }
+      reach_vendor_payouts: {
+        Row: {
+          amount_kes: number
+          id: string
+          order_id: string
+          paid_out_at: string | null
+          paid_out_by: string | null
+          payout_ref: string | null
+          released_at: string | null
+          status: string
+          vendor_id: string
+        }
+        Insert: {
+          amount_kes: number
+          id?: string
+          order_id: string
+          paid_out_at?: string | null
+          paid_out_by?: string | null
+          payout_ref?: string | null
+          released_at?: string | null
+          status?: string
+          vendor_id: string
+        }
+        Update: {
+          amount_kes?: number
+          id?: string
+          order_id?: string
+          paid_out_at?: string | null
+          paid_out_by?: string | null
+          payout_ref?: string | null
+          released_at?: string | null
+          status?: string
+          vendor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "reach_vendor_payouts_order_id_fkey"
+            columns: ["order_id"]
+            isOneToOne: false
+            referencedRelation: "orders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_vendor_payouts_paid_out_by_fkey"
+            columns: ["paid_out_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_vendor_payouts_vendor_id_fkey"
+            columns: ["vendor_id"]
+            isOneToOne: false
+            referencedRelation: "reach_vendors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       reach_vendors: {
         Row: {
           active: boolean
+          approval_status: string
+          area_id: string | null
           created_at: string
           id: string
+          listed: boolean
+          listed_at: string | null
           name: string
+          payout_phone: string | null
+          requested_at: string | null
+          review_note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          store_id: string | null
         }
         Insert: {
           active?: boolean
+          approval_status?: string
+          area_id?: string | null
           created_at?: string
           id?: string
+          listed?: boolean
+          listed_at?: string | null
           name: string
+          payout_phone?: string | null
+          requested_at?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          store_id?: string | null
         }
         Update: {
           active?: boolean
+          approval_status?: string
+          area_id?: string | null
           created_at?: string
           id?: string
+          listed?: boolean
+          listed_at?: string | null
           name?: string
+          payout_phone?: string | null
+          requested_at?: string | null
+          review_note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          store_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reach_vendors_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "reach_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_vendors_reviewed_by_fkey"
+            columns: ["reviewed_by"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "reach_vendors_store_id_fkey"
+            columns: ["store_id"]
+            isOneToOne: false
+            referencedRelation: "stores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       server_billing: {
         Row: {
@@ -2932,11 +3290,19 @@ export type Database = {
         }
         Returns: number
       }
-      expire_store_subscriptions: { Args: never; Returns: undefined }
+      check_bill_servers_token: { Args: { token: string }; Returns: boolean }
+      close_org: { Args: { p_actor: string; p_org_id: string }; Returns: Json }
+      delete_store_cascade: { Args: { p_store_id: string }; Returns: undefined }
+      delete_user_account: { Args: { p_user_id: string }; Returns: Json }
+      expire_store_subscriptions: {
+        Args: { p_store_id?: string }
+        Returns: number
+      }
       get_store_analytics: {
         Args: { p_end: string; p_start: string; p_store_id: string }
         Returns: Json
       }
+      get_upcloud_api_key: { Args: never; Returns: string }
       increment_store_views: { Args: { store_id: string }; Returns: undefined }
       match_nuru_chunks: {
         Args: {
@@ -2967,11 +3333,25 @@ export type Database = {
         Args: { p_key: string; p_user_id: string }
         Returns: string
       }
-      reach_issue_courier_key: {
-        Args: { p_label: string; p_vendor_id: string }
+      reach_finance_summary: { Args: { p_since?: string }; Returns: Json }
+      reach_join_as_owner: {
+        Args: { p_user_id: string; p_vendor_id: string }
         Returns: string
       }
+      reach_mark_vendor_paid: {
+        Args: { p_admin: string; p_ref: string; p_vendor_id: string }
+        Returns: number
+      }
       reach_revoke_courier_key: { Args: { p_key: string }; Returns: undefined }
+      reach_settle_payment: {
+        Args: {
+          p_payment_id: string
+          p_reason?: string
+          p_receipt?: string
+          p_status: string
+        }
+        Returns: boolean
+      }
       reach_update_vendor_product: {
         Args: {
           p_description?: string
@@ -2991,6 +3371,10 @@ export type Database = {
           vendor_id: string
           vendor_name: string
         }[]
+      }
+      store_has_unpaid_payouts: {
+        Args: { p_store_id: string }
+        Returns: boolean
       }
     }
     Enums: {
