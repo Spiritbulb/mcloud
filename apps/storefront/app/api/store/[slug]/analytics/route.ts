@@ -1,4 +1,4 @@
-// @route-kind: member
+// @route-kind: public — GET is member-gated (requireStoreAccess) for the merchant dashboard; POST is an anonymous beacon from shoppers, who are never signed in
 // app/api/store/[slug]/analytics/route.ts
 
 import { getSession } from '@mcloud/auth/server'
@@ -6,6 +6,7 @@ import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 import { storeHasFeature } from '@mcloud/merchant/plans-server'
 import { requireStoreAccess } from '@mcloud/merchant/stores'
+import { allowAnalyticsEvent } from '../../_analytics-ratelimit'
 
 const RANGES: Record<string, number> = { '7d': 7, '30d': 30, '90d': 90 }
 
@@ -104,6 +105,16 @@ export async function POST(
             .single()
 
         if (!store) return NextResponse.json({ error: 'Not Found' }, { status: 404 })
+
+        const ip =
+            request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+            request.headers.get('x-real-ip') ||
+            'unknown'
+        if (!allowAnalyticsEvent(store.id, typeof session_id === 'string' ? session_id : null, ip)) {
+            // Quietly drop — same contract as any other analytics failure, and it
+            // must never surface as an error to the shopper's browser.
+            return NextResponse.json({ ok: true })
+        }
 
         await supabase.from('store_analytics').insert({
             store_id: store.id,
