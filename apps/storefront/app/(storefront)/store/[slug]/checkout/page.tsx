@@ -73,12 +73,6 @@ export default function CheckoutPageContainer() {
             .catch(err => console.error('Failed to load delivery zones', err))
     }, [storeSlug])
 
-    useEffect(() => {
-        if (storeSlug) {
-            trackCheckout(storeSlug)
-        }
-    }, [storeSlug])
-
     const subtotalKES = safeCartItems.reduce((s, i) => s + i.price * i.quantity, 0)
 
     const createOrder = async (
@@ -88,6 +82,12 @@ export default function CheckoutPageContainer() {
         deliveryZoneId: string | null,
     ): Promise<{ orderNumber: string; total: number }> => {
         if (safeCartItems.length === 0) throw new Error('Your cart is empty')
+
+        // The real "checkout started" moment: the shopper picked a payment method
+        // and committed to it, one event per attempt — not per page view (that
+        // used to fire here AND on the cart page's mount, inflating this well
+        // past add_to_cart and making the funnel look inverted).
+        if (storeSlug) trackCheckout(storeSlug)
 
         const res = await fetch(`/api/store/${storeSlug}/checkout`, {
             method: 'POST',

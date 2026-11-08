@@ -6,7 +6,6 @@ import { useCart } from '@/contexts/CartContext'
 import { useStoreInfo } from '@/hooks/useStoreInfo'
 import ClassicCartPage from '@mcloud/themes/classic/CartPage'
 import type { CartOnlyPageProps } from '@mcloud/themes/types'
-import { trackCheckout } from '../lib/analytics'
 
 // The cart lists items and hands off to /checkout, which owns payment and delivery. It used to
 // carry a full copy of the checkout's payment handlers and an integrations fetch that the cart
@@ -28,10 +27,6 @@ export default function CartPageContainer() {
         if (!loading && cartItems.length > 0) refreshCart()
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [])
-
-    useEffect(() => {
-        if (storeSlug) trackCheckout(storeSlug)
-    }, [storeSlug])
 
     const PageComponent = THEME_COMPONENTS[themeId] ?? ClassicCartPage
 
