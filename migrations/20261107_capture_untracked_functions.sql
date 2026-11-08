@@ -6,12 +6,10 @@
 -- is the live definition, copied with pg_get_functiondef on 2026-11-07, so applying it to the live
 -- database changes nothing. Idempotent (create or replace).
 --
--- Known weaknesses, kept as they are here so this migration is a faithful capture; fix in their
--- own migration:
+-- Known weakness, kept as it is here so this migration is a faithful capture; fixed in its own
+-- migration (20261107d_reach_courier_key_hardening.sql):
 --   * reach_issue_courier_key: the key is 4 characters of the vendor id plus 4 random digits
 --     (random(), not a CSPRNG), so about 10^4 guesses per vendor.
---   * expire_store_subscriptions: SECURITY DEFINER without a pinned search_path.
---   * purchase_store_plan: SECURITY INVOKER, so it relies on being called with the service role.
 
 -- ── Org wallet ─────────────────────────────────────────────────────────────
 
@@ -45,102 +43,11 @@ begin
 end;
 $function$;
 
-create or replace function public.purchase_store_plan(p_org_id uuid, p_store_id uuid, p_plan text, p_amount_cents bigint)
- returns table(new_balance_cents bigint, period_start timestamp with time zone, period_end timestamp with time zone)
- language plpgsql
-as $function$
-declare
-  v_balance bigint;
-  v_current_end timestamptz;
-  v_period_start timestamptz;
-  v_period_end timestamptz;
-  v_ledger_id uuid;
-begin
-  if p_plan not in ('hobby', 'pro') then
-    raise exception 'invalid plan: %', p_plan;
-  end if;
-
-  select balance_cents into v_balance
-  from org_wallets
-  where org_id = p_org_id
-  for update;
-
-  if v_balance is null then
-    raise exception 'no wallet found for org %', p_org_id;
-  end if;
-
-  if v_balance < p_amount_cents then
-    raise exception 'insufficient balance: have %, need %', v_balance, p_amount_cents;
-  end if;
-
-  select ss.period_end into v_current_end
-  from store_subscriptions ss
-  where ss.store_id = p_store_id and ss.status = 'active'
-  order by ss.created_at desc
-  limit 1;
-
-  v_period_start := now();
-  if v_current_end is not null and v_current_end > now() then
-    v_period_end := v_current_end + interval '1 month';
-  else
-    v_period_end := now() + interval '1 month';
-  end if;
-
-  update org_wallets
-  set balance_cents = balance_cents - p_amount_cents,
-      updated_at = now()
-  where org_id = p_org_id;
-
-  insert into wallet_ledger_entries
-    (id, org_id, amount_cents, balance_after_cents, kind, store_id, reference, metadata, created_at)
-  values
-    (gen_random_uuid(), p_org_id, -p_amount_cents, v_balance - p_amount_cents, 'store_subscription', p_store_id,
-     null, jsonb_build_object('plan', p_plan), now())
-  returning id into v_ledger_id;
-
-  insert into store_subscriptions
-    (id, store_id, amount, currency, status, period_start, period_end, created_at, provider, plan)
-  values
-    (gen_random_uuid(), p_store_id, round(p_amount_cents / 100.0, 2), 'KES', 'active', v_period_start, v_period_end, now(), 'wallet', p_plan);
-
-  update stores
-  set is_pro = (p_plan = 'pro'),
-      pro_since = case when p_plan = 'pro' then v_period_start else pro_since end,
-      pro_expires_at = v_period_end
-  where id = p_store_id;
-
-  return query select v_balance - p_amount_cents, v_period_start, v_period_end;
-end;
-$function$;
-
-create or replace function public.expire_store_subscriptions()
- returns void
- language plpgsql
- security definer
-as $function$
-begin
-  update store_subscriptions
-  set status = 'expired'
-  where status = 'active'
-    and period_end < now();
-
-  update stores s
-  set is_pro = exists (
-        select 1 from store_subscriptions ss
-        where ss.store_id = s.id
-          and ss.status = 'active'
-          and ss.period_end > now()
-      ),
-      pro_expires_at = (
-        select max(ss.period_end) from store_subscriptions ss
-        where ss.store_id = s.id and ss.status = 'active' and ss.period_end > now()
-      )
-  where s.is_pro = true
-     or exists (
-        select 1 from store_subscriptions ss where ss.store_id = s.id
-     );
-end;
-$function$;
+-- purchase_store_plan and expire_store_subscriptions are NOT here. They were captured from the live
+-- database on 2026-11-07, but 20261105_expire_store_subscriptions.sql (applied to live the same day)
+-- replaces both: expire_store_subscriptions(uuid) with a pinned search_path, and a purchase_store_plan
+-- that expires the store's lapsed rows first. Re-creating the older versions here would undo that,
+-- so the definitions live in that file only.
 
 -- ── Storefront ─────────────────────────────────────────────────────────────
 
@@ -238,16 +145,12 @@ $function$;
 -- These are server-only: the privileges the live database has (postgres and service_role).
 -- Re-stated so a rebuilt database matches; see 20261012_lock_down_privileged_functions_and_wallet_tables.sql.
 revoke all on function public.adjust_org_wallet(uuid, bigint, text, uuid, text, jsonb) from public, anon, authenticated;
-revoke all on function public.purchase_store_plan(uuid, uuid, text, bigint) from public, anon, authenticated;
-revoke all on function public.expire_store_subscriptions() from public, anon, authenticated;
 revoke all on function public.increment_store_views(uuid) from public, anon, authenticated;
 revoke all on function public.reach_issue_courier_key(uuid, text) from public, anon, authenticated;
 revoke all on function public.reach_revoke_courier_key(text) from public, anon, authenticated;
 revoke all on function public.reach_verify_courier_key(text) from public, anon, authenticated;
 revoke all on function public.reach_settle_payment(uuid, text, text, text) from public, anon, authenticated;
 grant execute on function public.adjust_org_wallet(uuid, bigint, text, uuid, text, jsonb) to service_role;
-grant execute on function public.purchase_store_plan(uuid, uuid, text, bigint) to service_role;
-grant execute on function public.expire_store_subscriptions() to service_role;
 grant execute on function public.increment_store_views(uuid) to service_role;
 grant execute on function public.reach_issue_courier_key(uuid, text) to service_role;
 grant execute on function public.reach_revoke_courier_key(text) to service_role;

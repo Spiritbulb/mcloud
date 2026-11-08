@@ -544,12 +544,12 @@ Cloudflare proxies `mcloud.co.ke` and `spiritb.uk` (orange cloud). The connector
 
 Compared the live `commerce` project with `migrations/`.
 
-- **Functions (19 in `public`):** 11 matched a repo definition by normalized body hash (`get_store_analytics` included; `reach_confirm_vendor` differs only in comments). **8 had no file** and are now captured, unchanged, in `20261107_capture_untracked_functions.sql`: `adjust_org_wallet`, `purchase_store_plan`, `expire_store_subscriptions`, `increment_store_views`, `reach_issue_courier_key`, `reach_revoke_courier_key`, `reach_verify_courier_key`, `reach_settle_payment`.
+- **Functions (19 in `public`):** 11 matched a repo definition by normalized body hash (`get_store_analytics` included; `reach_confirm_vendor` differs only in comments). **8 had no file**: `adjust_org_wallet`, `increment_store_views`, `reach_revoke_courier_key`, `reach_verify_courier_key` and `reach_settle_payment` are captured, unchanged, in `20261107_capture_untracked_functions.sql`; `reach_issue_courier_key` was captured and then dropped (SPI-76); `purchase_store_plan` and `expire_store_subscriptions` are defined by `20261105_expire_store_subscriptions.sql` (applied the same day), so they are not in the capture file.
 - **Triggers (3):** all in the repo.
 - **RLS policies (8):** none were in the repo; captured in `20261107b_capture_rls_policies.sql`.
 - **Check constraints (~50):** most come from the initial schema, which is **not in the repo at all** (the live history starts with `core_schema_part1..4` on 2026-09-19). Not captured.
 - **History table:** `20261101_org_invites_token.sql` and `20261103_reach_shoppers.sql` are applied (their objects exist) but missing from `supabase_migrations.schema_migrations`, like the `20261012*` files. The two new capture files are no-ops on the live database and are not applied or recorded.
-- **Weaknesses seen, not fixed:** `reach_issue_courier_key` makes a key from 4 characters of the vendor id plus 4 `random()` digits (about 10^4 guesses); `expire_store_subscriptions` is `SECURITY DEFINER` without a pinned `search_path`; the `auth.uid()` policies are inert under WorkOS; `reach_vendors` and `reach_product_vendors` are readable by `anon` with `using (true)`.
+- **Weaknesses seen, not fixed:** `reach_issue_courier_key` made a key from 4 characters of the vendor id plus 4 `random()` digits (fixed, SPI-76); the `auth.uid()` policies are inert under WorkOS; `reach_vendors` and `reach_product_vendors` are readable by `anon` with `using (true)`.
 - **Still open:** a `pg_dump --schema-only` baseline (needs the DB password or CLI) to cover the initial schema, tables and constraints; recording the unrecorded migrations in `schema_migrations`.
 
 ## Account deletion (SPI-67, 2026-11-07)
