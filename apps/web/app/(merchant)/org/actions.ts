@@ -166,25 +166,6 @@ export async function moveStore(storeId: string, orgId: string | null): Promise<
     return {}
 }
 
-export async function deleteStore(storeId: string): Promise<{ error?: string }> {
-    const session = await getSession()
-    if (!session?.user) return { error: 'Not authenticated' }
-
-    const { id: userId } = session.user
-    const supabase = await createClient()
-
-    const { data: store } = await supabase.from('stores').select('owner_id').eq('id', storeId).single()
-    if (!store) return { error: 'Store not found.' }
-    if (store.owner_id !== userId) return { error: 'Only the store owner can delete it.' }
-
-    await supabase.from('store_members').delete().eq('store_id', storeId)
-    const { error } = await supabase.from('stores').delete().eq('id', storeId)
-    if (error) return { error: 'Could not delete store. It may still have orders or products attached.' }
-
-    revalidatePath('/org')
-    return {}
-}
-
 // ─── Onboarding: create org ───────────────────────────────────────────────────
 
 export async function completeOnboarding(formData: FormData) {

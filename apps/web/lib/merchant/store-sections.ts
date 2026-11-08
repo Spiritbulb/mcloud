@@ -1,6 +1,7 @@
 // Orders, branding, manual M-Pesa, analytics, and store deletion for the mobile
 // API. All gated through requireStoreAccess; writes require owner/admin.
 import { createClient } from '@mcloud/db/server'
+import { deleteStoreCascade } from '@mcloud/merchant/store-deletion'
 import { canManage, requireStoreAccess, type Role } from '@mcloud/merchant/stores'
 import { revalidateStorefront } from '@/lib/revalidate-storefront'
 
@@ -320,10 +321,10 @@ export async function deleteStore(
     // Stricter than canManage: only the OWNER may delete (matches web deleteStore).
     if (store.owner_id !== userId) return { error: 'Only the store owner can delete it', status: 403 }
 
-    await supabase.from('store_members').delete().eq('store_id', store.id)
-    const { error } = await supabase.from('stores').delete().eq('id', store.id)
-    if (error) {
-        return { error: 'Could not delete store. It may still have orders or products attached.', status: 409 }
+    // One transaction in the database: everything under the store goes, or nothing does.
+    const deleted = await deleteStoreCascade(supabase, store.id)
+    if (!deleted.ok) {
+        return { error: deleted.message, status: deleted.failure === 'unpaid_payouts' ? 409 : 500 }
     }
     await revalidateStorefront(slug)
     return { error: null, status: 200 }

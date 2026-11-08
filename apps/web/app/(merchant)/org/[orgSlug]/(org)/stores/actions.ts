@@ -4,6 +4,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { createStoreForUser, listOrgStores } from '@mcloud/merchant/stores'
+import { deleteStoreCascade } from '@mcloud/merchant/store-deletion'
 import { revalidateStorefront, revalidateStorefrontById } from '@/lib/revalidate-storefront'
 
 export async function getOrgStores(orgSlug: string) {
@@ -48,8 +49,9 @@ export async function deleteStore(storeId: string, orgSlug: string) {
     if (!store) return { error: 'Store not found' }
     if (store.owner_id !== session.user.id) return { error: 'Only the store owner can delete it' }
 
-    const { error } = await supabase.from('stores').delete().eq('id', storeId)
-    if (error) return { error: error.message }
+    // One transaction in the database: everything under the store goes, or nothing does.
+    const deleted = await deleteStoreCascade(supabase, storeId)
+    if (!deleted.ok) return { error: deleted.message }
 
     await revalidateStorefront(store.slug)
 

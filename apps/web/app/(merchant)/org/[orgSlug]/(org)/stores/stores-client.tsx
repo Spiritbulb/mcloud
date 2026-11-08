@@ -90,8 +90,14 @@ function CreateStoreDialog({ orgId, orgSlug, onClose }: { orgId: string; orgSlug
 function DeleteStoreDialog({ store, orgSlug, onDeleted, onClose }: { store: Store; orgSlug: string; onDeleted: (id: string) => void; onClose: () => void }) {
     const [isPending, start] = useTransition()
     const [error, setError] = useState<string | null>(null)
+    const [typed, setTyped] = useState('')
 
     const confirm = () => {
+        if (typed.trim() !== store.name) {
+            setError(`Type ${store.name} exactly to confirm.`)
+            return
+        }
+        setError(null)
         start(async () => {
             const res = await deleteStore(store.id, orgSlug)
             if (res.error) { setError(res.error); return }
@@ -104,13 +110,16 @@ function DeleteStoreDialog({ store, orgSlug, onDeleted, onClose }: { store: Stor
         <ConfirmDialog
             open
             title={`Delete ${store.name}?`}
-            description="This permanently deletes the store and all its data. It cannot be undone."
+            description="This permanently deletes the store with its products, orders, customers, pages and payment records. It cannot be undone."
             confirmLabel="Delete store"
             busy={isPending}
             onConfirm={confirm}
             onCancel={onClose}
         >
-            {error && <Notice tone="error">{error}</Notice>}
+            <Field label={<>Type <span className="font-semibold">{store.name}</span> to confirm</>}>
+                <TextInput value={typed} onChange={(e) => { setTyped(e.target.value); setError(null) }} placeholder={store.name} autoComplete="off" />
+            </Field>
+            {error && <div className="mt-3"><Notice tone="error">{error}</Notice></div>}
         </ConfirmDialog>
     )
 }
