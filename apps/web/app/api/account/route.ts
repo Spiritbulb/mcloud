@@ -3,6 +3,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { NextResponse, NextRequest } from 'next/server'
 import { deleteUserAccount } from '@mcloud/merchant/account-deletion'
+import { revalidateStorefront } from '@/lib/revalidate-storefront'
 
 // GET /api/account
 export async function GET(request: NextRequest) {
@@ -43,7 +44,10 @@ export async function DELETE(request: NextRequest) {
     // One transaction in the database; refuses, changing nothing, when an org has nobody to take it
     // over. (Every foreign key to users is NO ACTION, so a plain delete of the row cannot work.)
     const deleted = await deleteUserAccount(supabase, userId)
-    if (deleted.message) return NextResponse.json({ error: deleted.message }, { status: deleted.result ? 409 : 500 })
+    if (!deleted.ok) return NextResponse.json({ error: deleted.message }, { status: deleted.result ? 409 : 500 })
+
+    // Personal stores that went with the account must stop being served from the cache.
+    await revalidateStorefront(...deleted.result.deletedStores.map((st) => st.slug))
 
     return NextResponse.json({ ok: true })
 }

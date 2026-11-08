@@ -3,10 +3,10 @@
 // Callers authenticate the user first and pass only their own id.
 
 export type DeleteAccountResult =
-    | { ok: true; transfers: { org: string; to: string }[] }
+    | { ok: true; transfers: { org: string; to: string }[]; deletedStores: { slug: string; customDomain: string | null }[] }
     | { ok: false; code: 'no_user' }
     | { ok: false; code: 'org_needs_successor'; org: string; has_other_members: boolean }
-    | { ok: false; code: 'store_without_org' }
+    | { ok: false; code: 'store_has_unpaid_payouts'; store: string }
 
 /** Reads the RPC's JSON; anything unexpected is treated as a failure that deleted nothing. */
 export function parseDeleteAccountResult(data: unknown): DeleteAccountResult | null {
@@ -16,10 +16,15 @@ export function parseDeleteAccountResult(data: unknown): DeleteAccountResult | n
         const transfers = Array.isArray(d.transfers)
             ? d.transfers.filter((t): t is { org: string; to: string } => !!t && typeof (t as any).org === 'string' && typeof (t as any).to === 'string')
             : []
-        return { ok: true, transfers }
+        const deletedStores = Array.isArray(d.deleted_stores)
+            ? d.deleted_stores
+                  .filter((x): x is { slug: string; custom_domain?: unknown } => !!x && typeof (x as any).slug === 'string')
+                  .map((x) => ({ slug: x.slug, customDomain: typeof x.custom_domain === 'string' ? x.custom_domain : null }))
+            : []
+        return { ok: true, transfers, deletedStores }
     }
     if (d.code === 'no_user') return { ok: false, code: 'no_user' }
-    if (d.code === 'store_without_org') return { ok: false, code: 'store_without_org' }
+    if (d.code === 'store_has_unpaid_payouts' && typeof d.store === 'string') return { ok: false, code: 'store_has_unpaid_payouts', store: d.store }
     if (d.code === 'org_needs_successor' && typeof d.org === 'string') {
         return { ok: false, code: 'org_needs_successor', org: d.org, has_other_members: d.has_other_members === true }
     }
@@ -36,8 +41,8 @@ export function describeDeleteBlock(result: Exclude<DeleteAccountResult, { ok: t
             return result.has_other_members
                 ? `You own "${result.org}", and nobody else in it is an admin. Make someone an admin first, then delete your account. Nothing was changed.`
                 : `You are the only person in "${result.org}". Closing an organization is not available yet, so contact support to close it and your account. Nothing was changed.`
-        case 'store_without_org':
-            return 'One of your stores is not part of an organization, so it cannot be handed over. Contact support. Nothing was changed.'
+        case 'store_has_unpaid_payouts':
+            return `"${result.store}" still owes Reach vendors payouts that have not been paid out. Pay them first, then delete your account. Nothing was changed.`
     }
 }
 
@@ -49,10 +54,11 @@ type RpcClient = { rpc: (fn: any, args: any) => PromiseLike<{ data: unknown; err
 export async function deleteUserAccount(
     supabase: RpcClient,
     userId: string,
-): Promise<{ result: DeleteAccountResult; message?: undefined } | { result: Exclude<DeleteAccountResult, { ok: true }> | null; message: string }> {
+): Promise<{ ok: true; result: Extract<DeleteAccountResult, { ok: true }> } | { ok: false; result: Exclude<DeleteAccountResult, { ok: true }> | null; message: string }> {
     const { data, error } = await supabase.rpc('delete_user_account', { p_user_id: userId })
     if (error) console.error('[account delete]', error.code, error.message)
     const result = error ? null : parseDeleteAccountResult(data)
-    if (result?.ok) return { result }
-    return { result: result as Exclude<DeleteAccountResult, { ok: true }> | null, message: describeDeleteBlock(result as Exclude<DeleteAccountResult, { ok: true }> | null) }
+    if (result?.ok) return { ok: true, result }
+    const blocked = result as Exclude<DeleteAccountResult, { ok: true }> | null
+    return { ok: false, result: blocked, message: describeDeleteBlock(blocked) }
 }

@@ -7,6 +7,7 @@ import { redirect } from 'next/navigation'
 import { revalidatePath } from 'next/cache'
 import { webUrl } from '@/lib/host'
 import { deleteUserAccount } from '@mcloud/merchant/account-deletion'
+import { revalidateStore } from '@/lib/revalidate-store'
 
 // ─── Get account data ──────────────────────────────────────────────────────────
 
@@ -122,7 +123,10 @@ export async function deleteAccount() {
     //    personal data, deletes the user row. It refuses, changing nothing, when an org has nobody
     //    to take it over (see migrations/20261107c_delete_user_account.sql).
     const deleted = await deleteUserAccount(supabase, userId)
-    if (deleted.message) return { error: deleted.message }
+    if (!deleted.ok) return { error: deleted.message }
+
+    // The Personal stores that went with the account must stop being served from the cache.
+    for (const store of deleted.result.deletedStores) revalidateStore(store.slug)
 
     // 2. Remove avatar from storage (try all common extensions)
     const safeUserId = userId.replace(/\|/g, '-')

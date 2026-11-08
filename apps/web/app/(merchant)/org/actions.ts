@@ -5,6 +5,8 @@ import { createClient } from '@mcloud/db/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { dashboardPath } from '@/lib/first-org'
+import { closeOrg } from '@mcloud/merchant/org-closing'
+import { revalidateStorefront } from '@/lib/revalidate-storefront'
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -125,15 +127,14 @@ export async function deleteOrg(orgId: string): Promise<{ error?: string; next?:
     const { id: userId } = session.user
     const supabase = await createClient()
 
-    const { data: org } = await supabase.from('orgs').select('owner_id, slug').eq('id', orgId).single()
-    if (!org) return { error: 'Organization not found.' }
-    if (org.owner_id !== userId) return { error: 'Only the owner can delete this organization.' }
+    // One transaction in the database: refuses, changing nothing, while the org has running servers
+    // or a wallet balance. Its stores are kept and move to Personal
+    // (see migrations/20261108_close_org_and_delete_personal_stores.sql).
+    const closed = await closeOrg(supabase, orgId, userId)
+    if (!closed.ok) return { error: closed.message }
 
-    await supabase.from('stores').update({ org_id: null }).eq('org_id', orgId)
-    await supabase.from('org_members').delete().eq('org_id', orgId)
-
-    const { error } = await supabase.from('orgs').delete().eq('id', orgId)
-    if (error) return { error: error.message }
+    // Their pages show the org's name and plan; refresh what visitors see.
+    await revalidateStorefront(...closed.result.movedStores.map((st) => st.slug))
 
     revalidatePath('/org')
     return { next: await dashboardPath(userId) }
