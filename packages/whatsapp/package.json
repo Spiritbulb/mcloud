@@ -1,0 +1,14 @@
+{
+  "name": "@mcloud/whatsapp",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@mcloud/config": "^0.0.0"
+  },
+  "scripts": {
+    "test": "node ../../scripts/run-tests.mjs"
+  }
+}

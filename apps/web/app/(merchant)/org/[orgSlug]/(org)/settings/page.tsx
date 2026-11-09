@@ -3,6 +3,9 @@ import { getSession } from '@mcloud/auth/server'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { createClient } from '@mcloud/db/server'
 import OrgSettingsClient from './org-settings-client'
+import WhatsAppPanel from './whatsapp-panel'
+import { getWhatsAppConfig } from '@/lib/whatsapp/config'
+import { getLinkForUser, maskWaId } from '@/lib/whatsapp/whatsapp-store'
 
 export default async function OrgSettingsPage({
     params,
@@ -40,11 +43,17 @@ export default async function OrgSettingsPage({
         .select('id', { count: 'exact', head: true })
         .eq('org_id', org.id)
 
+    // A failure here (for example the migration is not applied yet) must not break org settings.
+    const link = await getLinkForUser(userId).catch(() => null)
+
     return (
-        <OrgSettingsClient
-            org={org}
-            isOwner={org.owner_id === userId}
-            storeCount={storeCount ?? 0}
-        />
+        <div className="space-y-6">
+            <OrgSettingsClient
+                org={org}
+                isOwner={org.owner_id === userId}
+                storeCount={storeCount ?? 0}
+            />
+            <WhatsAppPanel configured={getWhatsAppConfig() !== null} linkedAs={link ? maskWaId(link.waId) : null} />
+        </div>
     )
 }

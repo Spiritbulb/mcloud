@@ -25,6 +25,7 @@
     "@mcloud/merchant": "^0.0.0",
     "@mcloud/themes": "^0.0.0",
     "@mcloud/ui": "^0.0.0",
+    "@mcloud/whatsapp": "^0.0.0",
     "@mdx-js/loader": "^3.1.1",
     "@mdx-js/react": "^3.1.1",
     "@next/mdx": "^16.4.3",

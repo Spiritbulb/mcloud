@@ -10,7 +10,7 @@ There is no separate API server. Every endpoint is a Next.js route handler
 | | `/api/auth/*` | The web login forms (same origin) |
 | | `/api/org/*`, `/api/account/*`, `/api/upcloud/*`, `/api/trading/*` | The org hub and account pages |
 | | `/api/admin/*`, `/api/docs` | Platform admin |
-| | `/api/webhooks/*`, `/api/cron/*`, `/api/payments/*` | Providers and schedulers |
+| | `/api/webhooks/*`, `/api/cron/*`, `/api/payments/*` | Providers and schedulers (`webhooks/palpluss`, `webhooks/whatsapp`) |
 | `apps/storefront` | `/api/store/[slug]/*` | Public stores (shoppers) and the settings UI (managers) |
 | | `/api/upload`, `/api/store/domain` | Settings UI |
 | `apps/nuru` | `/api/feed`, `/api/files/*`, `/api/me`, `/api/waitlist`, `/api/cron/feed` | Nuru web and mobile (cookie or bearer token); see [nuru.md](nuru.md) |
