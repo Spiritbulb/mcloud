@@ -7,6 +7,7 @@ Turborepo configuration, task behavior, and CLI commands can vary between instal
 Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+
 <!-- END:turborepo-agent-rules -->
 
 # Menengai Cloud (mcloud)
@@ -21,21 +22,21 @@ known debt before large refactors.
 
 npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `apps/nuru`, `packages/*`. The merchant app (`~/mcloud-mobile`) and the Nuru app (`~/nuru-mobile`) live in their own repos and call `apps/web` `/api/mobile/*`.
 
-| Path | What it is |
-|---|---|
-| `apps/web` | Platform site `mcloud.co.ke`: marketing, login/logout, org hub (`/org`), billing, servers, wallet, admin, docs, and the **mobile/partner APIs** (`app/api/mobile/*`, `app/api/partner/*`). |
-| `apps/storefront` | `app.mcloud.co.ke` and merchants' custom domains. Public stores (`app/(storefront)/store/[slug]/*`) and the signed-in **store settings** (`app/(merchant)/org/[orgSlug]/[storeSlug]/settings/*`) plus the `/api/store/*` routes they call. |
-| `apps/nuru` | Nuru web + API, `nuru.spiritb.uk`. Own Neon DB and B2; shares only WorkOS identity via `@mcloud/auth/standalone`. Migrations in `apps/nuru/migrations/`. |
-| `packages/auth` | Provider-agnostic auth API (`getSession`, etc.). The only provider is WorkOS AuthKit (`providers/workos.ts`). |
-| `packages/db` | Supabase clients: `server` (**service-role**), `client`, `customer-*` (storefront shoppers). `database.types.ts` is generated (`npm run sb-typegen -w @mcloud/web`). |
-| `packages/merchant` | Shared merchant logic: plans, stores, store-data, logistics-data, org context, `storefront-url`, seed pages. |
-| `packages/liquid` | Liquid engine + theme templates (`themes/classic/sections/*.liquid`) that render store pages. |
-| `packages/themes` | React theme components. **Imports from `apps/storefront` via relative paths** (see Known traps). |
-| `packages/verticals` | Vertical definitions (`shop`, `ngo`): default pages/sections and the settings nav model. |
-| `packages/mail` | Platform email via Resend: `sendEmail()` (never throws) and the templates (`@mcloud/mail/templates`, pure, escaped, tested). Owns the `resend` dep; don't call Resend directly from an app. |
-| `packages/ui` | shadcn-style primitives. Owns the Radix/cva/clsx deps. `src/kit/*` (`@mcloud/ui/kit/<name>`) is the admin design kit shared by both apps. |
-| `packages/config` | Shared `tsconfig.base.json`. |
-| `migrations/` | Hand-written SQL migrations, dated `YYYYMMDD_name.sql`. Applied manually to Supabase; there is no migration runner. |
+| Path                 | What it is                                                                                                                                                                                                                                   |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/web`           | Platform site `mcloud.co.ke`: marketing, login/logout, org hub (`/org`), billing, servers, wallet, admin, docs, and the **mobile/partner APIs** (`app/api/mobile/*`, `app/api/partner/*`).                                                   |
+| `apps/storefront`    | `app.mcloud.co.ke` and merchants' custom domains. Public stores (`app/(storefront)/store/[slug]/*`) and the signed-in **store settings** (`app/(merchant)/org/[orgSlug]/[storeSlug]/settings/*`) plus the `/api/store/*` routes they call.   |
+| `apps/nuru`          | Nuru web + API, `nuru.spiritb.uk`. Own Neon DB and B2; shares only WorkOS identity via `@mcloud/auth/standalone`. Migrations in `apps/nuru/migrations/`.                                                                                     |
+| `packages/auth`      | Provider-agnostic auth API (`getSession`, etc.). The only provider is WorkOS AuthKit (`providers/workos.ts`).                                                                                                                                |
+| `packages/db`        | Supabase clients: `server` (**service-role**), `client`, `customer-*` (storefront shoppers). `database.types.ts` is generated (`npm run sb-typegen -w @mcloud/web`).                                                                         |
+| `packages/merchant`  | Shared merchant logic: plans, stores, store-data, logistics-data, org context, `storefront-url`, seed pages.                                                                                                                                 |
+| `packages/liquid`    | Liquid engine + theme templates (`themes/classic/sections/*.liquid`) that render store pages.                                                                                                                                                |
+| `packages/themes`    | React theme components. **Imports from `apps/storefront` via relative paths** (see Known traps).                                                                                                                                             |
+| `packages/verticals` | Vertical definitions (`shop`, `ngo`): default pages/sections and the settings nav model.                                                                                                                                                     |
+| `packages/mail`      | Platform email via Resend: `sendEmail()` (never throws) and the templates (`@mcloud/mail/templates`, pure, escaped, tested). Owns the `resend` dep; don't call Resend directly from an app.                                                  |
+| `packages/ui`        | shadcn-style primitives. Owns the Radix/cva/clsx deps. `src/kit/*` (`@mcloud/ui/kit/<name>`) is the admin design kit shared by both apps.                                                                                                    |
+| `packages/config`    | Shared `tsconfig.base.json`.                                                                                                                                                                                                                 |
+| `migrations/`        | Hand-written SQL migrations, dated `YYYYMMDD_name.sql`. Applied by `npm run db:migrate` (`scripts/migrate.mjs`), which records each file in `ops.schema_migrations`; `npm run db:status` lists pending ones. Needs `DATABASE_URL` in `.env`. |
 
 **Schema changes start as a file in `migrations/`**, even when you apply them with the Supabase MCP (`apply_migration`/`execute_sql`) or the dashboard: write the file first, apply that exact SQL, and commit it with the code that needs it. Never change functions, policies, constraints or triggers in the live database without a file; a hand-applied `get_store_analytics` once broke Analytics for four weeks (SPI-65). The live database is the truth, so to check for drift compare `pg_get_functiondef` with the latest file.
 
@@ -89,12 +90,12 @@ turbo docs (see the managed block above) before changing `turbo.json`.
 
 ## Security rules (read before touching API routes)
 
-- **Every `app/api/**/route.ts` starts with `// @route-kind: <kind>`** (`admin`, `member`, `mobile`,
-  `customer`, `partner`, `cron`, `session`, `public`, `webhook`) and must call that kind's gate;
-  `public`/`webhook`/`session` need a reason after ` — `. A test enforces this (`scripts/route-kinds.mjs`).
-  See `docs/api.md`. Use `requireAdmin()` (web) and `requireStoreAccess[ById]()` + `canManage()`; don't re-implement them.
+- **Every `app/api/**/route.ts`starts with`// @route-kind: <kind>`** (`admin`, `member`, `mobile`,
+`customer`, `partner`, `cron`, `session`, `public`, `webhook`) and must call that kind's gate;
+`public`/`webhook`/`session`need a reason after` — `. A test enforces this (`scripts/route-kinds.mjs`).
+See `docs/api.md`. Use `requireAdmin()`(web) and`requireStoreAccess[ById]()`+`canManage()`; don't re-implement them.
 - **Money:** charge amounts come from the stored order, never the request; an order is `paid` only from a
-  provider-confirmed amount that covers its total; order ids from clients are the order *number*, looked up
+  provider-confirmed amount that covers its total; order ids from clients are the order _number_, looked up
   scoped to the store. Rules live in `packages/merchant/src/payments.ts`. Read `docs/payments.md`.
 - **Uploads** go through `/api/upload` with keys `<bucket>/<storeId>/…`; callers must prefix paths with the store id.
 
