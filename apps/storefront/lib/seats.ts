@@ -32,3 +32,24 @@ export function computeSeats(input: SeatInput): Seats {
         seatsLeft: Math.max(0, capacity - input.taken),
     }
 }
+
+export interface OrderRef {
+    status: string
+    source: string | null
+}
+
+/**
+ * Does this order take a seat that inventory_quantity does not already reflect?
+ * inventory_quantity is decremented in exactly one place: reach_settle_payment, when a
+ * source='reach' order is paid. Those orders are already netted out of the stored number;
+ * every other order (and any pending order) still has to be subtracted from it.
+ */
+export function holdsUndecrementedSeat(order: OrderRef): boolean {
+    if (UNCOUNTED_ORDER_STATUSES.includes(order.status)) return false
+    if (order.source === 'reach' && order.status !== 'pending') return false
+    return true
+}
+
+export function countTaken(items: { quantity: number | null; order: OrderRef }[]): number {
+    return items.reduce((sum, i) => sum + (holdsUndecrementedSeat(i.order) ? (i.quantity ?? 0) : 0), 0)
+}

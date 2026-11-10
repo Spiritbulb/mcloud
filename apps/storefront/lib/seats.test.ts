@@ -40,3 +40,43 @@ test('cancelled and refunded orders release their seats', () => {
     assert.ok(!UNCOUNTED_ORDER_STATUSES.includes('pending'))
     assert.ok(!UNCOUNTED_ORDER_STATUSES.includes('paid'))
 })
+
+// Stock is decremented in exactly one place today: reach_settle_payment, when a
+// source='reach' order is paid. Every other paid order never touches inventory_quantity.
+import { holdsUndecrementedSeat, countTaken } from './seats'
+
+test('pending orders hold a seat whatever their source', () => {
+    assert.equal(holdsUndecrementedSeat({ status: 'pending', source: 'reach' }), true)
+    assert.equal(holdsUndecrementedSeat({ status: 'pending', source: 'storefront' }), true)
+    assert.equal(holdsUndecrementedSeat({ status: 'pending', source: null }), true)
+})
+
+test('paid and fulfilled non-reach orders hold a seat (nothing decremented stock)', () => {
+    assert.equal(holdsUndecrementedSeat({ status: 'paid', source: 'storefront' }), true)
+    assert.equal(holdsUndecrementedSeat({ status: 'fulfilled', source: null }), true)
+})
+
+test('paid and fulfilled reach orders do not (reach_settle_payment already decremented)', () => {
+    assert.equal(holdsUndecrementedSeat({ status: 'paid', source: 'reach' }), false)
+    assert.equal(holdsUndecrementedSeat({ status: 'fulfilled', source: 'reach' }), false)
+})
+
+test('cancelled and refunded orders never hold a seat', () => {
+    for (const source of ['reach', 'storefront', null]) {
+        assert.equal(holdsUndecrementedSeat({ status: 'cancelled', source }), false)
+        assert.equal(holdsUndecrementedSeat({ status: 'refunded', source }), false)
+    }
+})
+
+test('countTaken sums quantities of seat-holding orders only', () => {
+    assert.equal(
+        countTaken([
+            { quantity: 2, order: { status: 'pending', source: 'storefront' } },
+            { quantity: 3, order: { status: 'paid', source: 'storefront' } },
+            { quantity: 4, order: { status: 'paid', source: 'reach' } },
+            { quantity: 5, order: { status: 'cancelled', source: 'storefront' } },
+        ]),
+        5,
+    )
+    assert.equal(countTaken([]), 0)
+})

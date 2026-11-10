@@ -7,7 +7,7 @@
 // since simple cross-origin GETs don't trigger a preflight.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
-import { computeSeats, UNCOUNTED_ORDER_STATUSES } from '@/lib/seats'
+import { computeSeats, countTaken } from '@/lib/seats'
 
 // TODO: tighten to specific origins once known cross-origin consumers are fixed
 const corsHeaders = {
@@ -51,20 +51,18 @@ export async function GET(
         return NextResponse.json({ error: 'Product not found' }, { status: 404, headers: noStore })
     }
 
-    // Seat counts for products that track inventory. Checkout never decrements
-    // inventory_quantity, so bookings are counted from order_items; seats held by
-    // pending (unverified) orders count, cancelled/refunded ones are released.
+    // Seats left for products that track inventory. See lib/seats.ts: stock is only
+    // decremented for paid reach orders, so every other booking is subtracted here.
     let taken = 0
     if (product.track_inventory !== false) {
         const { data: items } = await admin
             .from('order_items')
-            .select('quantity, order:orders!inner(store_id, status)')
+            .select('quantity, order:orders!inner(store_id, status, source)')
             .eq('product_id', product.id)
             .eq('order.store_id', store.id)
-            .not('order.status', 'in', `(${UNCOUNTED_ORDER_STATUSES.join(',')})`)
-        taken = (items ?? []).reduce((sum, i) => sum + (i.quantity ?? 0), 0)
+        taken = countTaken((items ?? []) as unknown as Parameters<typeof countTaken>[0])
     }
-    const seats = computeSeats({
+    const { trackInventory, seatsLeft } = computeSeats({
         trackInventory: product.track_inventory,
         capacity: product.inventory_quantity,
         taken,
@@ -78,7 +76,9 @@ export async function GET(
             price: product.price,
             currency: store.currency,
             image: Array.isArray(product.images) ? product.images[0] ?? null : null,
-            ...seats,
+            trackInventory,
+            taken,
+            seatsLeft,
         },
         { headers: noStore },
     )
