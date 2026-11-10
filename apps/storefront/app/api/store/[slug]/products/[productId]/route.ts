@@ -7,6 +7,7 @@
 // since simple cross-origin GETs don't trigger a preflight.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { computeSeats, UNCOUNTED_ORDER_STATUSES } from '@/lib/seats'
 
 // TODO: tighten to specific origins once known cross-origin consumers are fixed
 const corsHeaders = {
@@ -40,7 +41,7 @@ export async function GET(
 
     const { data: product } = await admin
         .from('products')
-        .select('id, name, description, price, images, is_active')
+        .select('id, name, description, price, images, is_active, inventory_quantity, track_inventory')
         .eq('id', productId)
         .eq('store_id', store.id)
         .eq('is_active', true)
@@ -50,6 +51,25 @@ export async function GET(
         return NextResponse.json({ error: 'Product not found' }, { status: 404, headers: noStore })
     }
 
+    // Seat counts for products that track inventory. Checkout never decrements
+    // inventory_quantity, so bookings are counted from order_items; seats held by
+    // pending (unverified) orders count, cancelled/refunded ones are released.
+    let taken = 0
+    if (product.track_inventory !== false) {
+        const { data: items } = await admin
+            .from('order_items')
+            .select('quantity, order:orders!inner(store_id, status)')
+            .eq('product_id', product.id)
+            .eq('order.store_id', store.id)
+            .not('order.status', 'in', `(${UNCOUNTED_ORDER_STATUSES.join(',')})`)
+        taken = (items ?? []).reduce((sum, i) => sum + (i.quantity ?? 0), 0)
+    }
+    const seats = computeSeats({
+        trackInventory: product.track_inventory,
+        capacity: product.inventory_quantity,
+        taken,
+    })
+
     return NextResponse.json(
         {
             id: product.id,
@@ -58,6 +78,7 @@ export async function GET(
             price: product.price,
             currency: store.currency,
             image: Array.isArray(product.images) ? product.images[0] ?? null : null,
+            ...seats,
         },
         { headers: noStore },
     )
