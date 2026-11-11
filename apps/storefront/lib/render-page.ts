@@ -14,6 +14,8 @@ export async function renderPage(sections: PageSection[], ctx: PageRenderContext
   let index = -1
   for (const s of sections) {
     index++
+    // Switched off in the Editor: nothing renders, but the index is consumed above.
+    if (s.settings?.hidden === true) continue
     const def = SECTION_REGISTRY[s.type as SectionType]
     if (!def) {
       console.warn(`[storefront] unknown section type skipped: ${s.type}`)

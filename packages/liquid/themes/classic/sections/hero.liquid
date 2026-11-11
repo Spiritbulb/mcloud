@@ -28,7 +28,19 @@
 {%- assign multi = false -%}
 {%- if slides.size > 1 -%}{%- assign multi = true -%}{%- endif -%}
 
-<section class="sf-hero relative w-full overflow-hidden" style="height: 70vh; min-height: 480px">
+{%- comment -%}
+  Layout and height are per-section settings (SECTION_REGISTRY.hero.schema). The
+  defaults are what this template always rendered; an unknown value falls back.
+    full     image behind the copy (the original)
+    split    copy on the page background, image beside it
+    minimal  no image, copy centred
+{%- endcomment -%}
+{%- assign layout = section.layout | default: 'full' -%}
+{%- unless layout == 'split' or layout == 'minimal' -%}{%- assign layout = 'full' -%}{%- endunless -%}
+{%- assign height = section.height | default: 'standard' -%}
+{%- unless height == 'short' or height == 'tall' -%}{%- assign height = 'standard' -%}{%- endunless -%}
+
+<section class="sf-hero sf-hero--{{ layout }} sf-hero--h-{{ height }} relative w-full overflow-hidden">
   <div class="sf-hero__track" id="sf-hero-track">
     {%- for slide in slides -%}
       <div
@@ -36,21 +48,9 @@
         data-index="{{ forloop.index0 }}"
       >
         {%- comment -%}
-          The image is a full-bleed BACKGROUND behind the text.
+          The copy card is the same in every layout, so it is captured once.
         {%- endcomment -%}
-        {%- if slide.image and slide.image != '' -%}
-          <img
-            src="{{ slide.image }}"
-            alt="{{ slide.title }}"
-            class="w-full h-full object-cover"
-          >
-          <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
-        {%- else -%}
-          <div class="sf-hero-fallback absolute inset-0"></div>
-        {%- endif -%}
-
-        <div class="absolute inset-0 flex items-end md:items-center">
-          <div class="sf-hero__content w-full px-4 pb-16 md:pb-0" style="padding-left: clamp(1rem, 5vw, 3rem)">
+        {%- capture card -%}
             <div class="sf-hero-card max-w-xl space-y-4 p-5 sf-hero__card-animate{% if forloop.first %} sf-hero__card-animate--load{% endif %}">
               {%- if slide.accent and slide.accent != '' -%}
                 <span class="sf-badge-outline inline-flex items-center border px-2.5 py-0.5 text-xs font-medium">{{ slide.accent }}</span>
@@ -108,8 +108,44 @@
                 </a>
               {%- endif -%}
             </div>
+        {%- endcapture -%}
+
+        {%- if layout == 'split' -%}
+          <div class="sf-hero__split grid h-full md:grid-cols-2">
+            <div class="sf-hero__split-copy flex items-center px-4 py-12 md:px-12">
+              <div class="sf-hero__content w-full">{{ card | raw }}</div>
+            </div>
+            <div class="sf-hero__split-media relative min-h-[240px] overflow-hidden">
+              {%- if slide.image and slide.image != '' -%}
+                <img src="{{ slide.image }}" alt="{{ slide.title }}" class="absolute inset-0 h-full w-full object-cover">
+              {%- else -%}
+                <div class="sf-hero-fallback absolute inset-0"></div>
+              {%- endif -%}
+            </div>
           </div>
-        </div>
+        {%- elsif layout == 'minimal' -%}
+          <div class="sf-hero__minimal absolute inset-0 flex items-center justify-center px-4 text-center">
+            <div class="sf-hero__content w-full flex justify-center">{{ card | raw }}</div>
+          </div>
+        {%- else -%}
+          {%- comment -%}
+            The image is a full-bleed BACKGROUND behind the text.
+          {%- endcomment -%}
+          {%- if slide.image and slide.image != '' -%}
+            <img
+              src="{{ slide.image }}"
+              alt="{{ slide.title }}"
+              class="w-full h-full object-cover"
+            >
+            <div class="absolute inset-0" style="background: rgba(0,0,0,0.28)"></div>
+          {%- else -%}
+            <div class="sf-hero-fallback absolute inset-0"></div>
+          {%- endif -%}
+
+          <div class="absolute inset-0 flex items-end md:items-center">
+            <div class="sf-hero__content w-full px-4 pb-16 md:pb-0" style="padding-left: clamp(1rem, 5vw, 3rem)">{{ card | raw }}</div>
+          </div>
+        {%- endif -%}
       </div>
     {%- endfor -%}
   </div>

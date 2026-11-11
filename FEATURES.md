@@ -40,7 +40,7 @@ last column. Add new features as rows; keep the **ID** stable so the roadmap can
 | ST-24 | Cached public pages with purge on write | ✅ | `docs/caching.md`; DB-trigger purge ❌ |
 | ST-25 | Branding removal | ✅ 🔒 | Pro |
 | ST-26 | Multi-currency, Swahili / i18n | ❌ | KSh and USD only, English only |
-| ST-27 | Themes | 🟡 | One theme (`classic`) |
+| ST-27 | Themes | 🟡 | One theme (`classic`) with 8 presets (`lib/theme-presets.ts`) and per-section layout options (hero layout/height, grid columns, card style, hide); no second markup theme |
 | ST-28 | Gift cards, bundles, ad pixels | ❌ | |
 
 ## 2. NGO vertical (SF)

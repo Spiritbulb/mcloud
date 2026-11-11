@@ -1,5 +1,10 @@
 {%- assign heading = section.heading | default: 'Top Picks' -%}
 {%- assign eyebrow = section.eyebrow | default: 'Featured Collection' -%}
+{%- comment -%} Layout settings; defaults equal the original grid and card. {%- endcomment -%}
+{%- assign columns = section.columns | default: 'auto' -%}
+{%- unless columns == '2' or columns == '3' or columns == '4' -%}{%- assign columns = 'auto' -%}{%- endunless -%}
+{%- assign card_style = section.card_style | default: 'flat' -%}
+{%- unless card_style == 'bordered' or card_style == 'shadow' -%}{%- assign card_style = 'flat' -%}{%- endunless -%}
 {%- if products and products.size > 0 -%}
 <section class="py-12 md:py-20">
   <div class="container mx-auto max-w-6xl px-6">
@@ -16,12 +21,9 @@
     </div>
 
     {{- - GRID - -}}
-    <div
-      class="grid gap-4 md:gap-6"
-      style="grid-template-columns: repeat(auto-fill, minmax(220px, 1fr))"
-    >
+    <div class="sf-grid sf-grid--{{ columns }} grid gap-4 md:gap-6">
       {%- for product in products -%}
-        {%- render 'classic/sections/product-card', store: store, product: product -%}
+        {%- render 'classic/sections/product-card', store: store, product: product, card_style: card_style -%}
       {%- endfor -%}
     </div>
 

@@ -81,6 +81,8 @@ export default async function StoreLayout({
             '--sf-dark-background': theme.dark_background_color,
             '--sf-dark-foreground': theme.dark_foreground_color,
             '--sf-dark-muted': theme.dark_muted_color,
+            '--sf-dark-accent': theme.dark_accent_color,
+            '--sf-dark-secondary': theme.dark_secondary_color,
             '--sf-font-heading': `'${theme.heading_font}', serif`,
             '--sf-font-body': `'${theme.body_font}', sans-serif`,
             '--sf-font-scale': theme.font_scale,

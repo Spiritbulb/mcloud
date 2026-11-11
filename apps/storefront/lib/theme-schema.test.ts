@@ -8,6 +8,7 @@ const REAL_COLUMNS = new Set([
   'primary_color', 'secondary_color', 'accent_color',
   'background_color', 'foreground_color', 'muted_color',
   'dark_primary_color', 'dark_background_color', 'dark_foreground_color', 'dark_muted_color',
+  'dark_accent_color', 'dark_secondary_color',
   'heading_font', 'body_font', 'border_radius', 'font_scale',
 ])
 for (const f of THEME_SCHEMA) {
@@ -16,6 +17,14 @@ for (const f of THEME_SCHEMA) {
 const ids = THEME_SCHEMA.map((f) => f.id)
 assert.equal(new Set(ids).size, ids.length, 'field ids are unique')
 assert.deepEqual([...THEME_COLUMNS].sort(), ids.sort(), 'THEME_COLUMNS matches the schema')
+
+// The dark block in storefront.css reads --sf-dark-accent and --sf-dark-secondary;
+// both must be real, editable fields or merchants can never set them.
+for (const id of ['dark_accent_color', 'dark_secondary_color']) {
+  const f = THEME_SCHEMA.find((x) => x.id === id)
+  assert.ok(f && f.type === 'color', `${id} is a colour field`)
+}
+assert.ok(isValidThemeValue('dark_accent_color', '#c9a96e'))
 
 // Validation is the XSS boundary: these values are interpolated into CSS custom
 // properties, so anything that is not a plain colour/font/length is rejected.

@@ -18,6 +18,8 @@ export const THEME_SCHEMA: readonly SettingField[] = [
   { id: 'dark_background_color',   type: 'color',  label: 'Background (dark)', default: '#0f0f10' },
   { id: 'dark_foreground_color',   type: 'color',  label: 'Text (dark)',       default: '#f0ece6' },
   { id: 'dark_muted_color',        type: 'color',  label: 'Muted (dark)',      default: '#1e1e20' },
+  { id: 'dark_accent_color',       type: 'color',  label: 'Accent (dark)',     default: '#c9a96e' },
+  { id: 'dark_secondary_color',    type: 'color',  label: 'Secondary (dark)',  default: '#27272a' },
 
   { id: 'heading_font',            type: 'font',   label: 'Heading font',      default: 'Playfair Display' },
   { id: 'body_font',               type: 'font',   label: 'Body font',         default: 'Inter' },
@@ -28,7 +30,7 @@ export const THEME_SCHEMA: readonly SettingField[] = [
       { value: '8px',  label: 'Rounded' },
       { value: '16px', label: 'Very rounded' },
     ] },
-  // A real column, applied as --sf-font-scale, that no UI has ever written.
+  // Applied as --sf-font-scale (the layout scales <html> font-size by it).
   { id: 'font_scale',              type: 'number', label: 'Text size', default: 1, min: 0.8, max: 1.4, step: 0.05 },
 ]
 

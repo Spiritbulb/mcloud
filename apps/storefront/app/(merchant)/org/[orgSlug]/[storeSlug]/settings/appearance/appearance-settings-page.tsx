@@ -16,7 +16,6 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
     const s = store.settings ?? {}
     const t = store.theme ?? {}
 
-    const [themeId, setThemeId] = useState(s.themeId ?? 'classic')
     const [heroTitle, setHeroTitle] = useState(s.heroTitle ?? store.name ?? '')
     const [heroSubtitle, setHeroSubtitle] = useState(s.heroSubtitle ?? store.description ?? '')
     const [heroImage, setHeroImage] = useState(s.heroImage ?? '')
@@ -56,7 +55,7 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
             icon_url: iconUrl || null,
             settings: {
                 ...store.settings,
-                themeId, heroTitle, heroSubtitle,
+                heroTitle, heroSubtitle,
                 heroImage: heroImage || undefined,
                 logoPath: logoPath || undefined,
                 iconPath: iconPath || undefined,
@@ -97,7 +96,6 @@ export default function AppearanceSettingsPage({ store }: { store: any }) {
         <>
             <AppearanceSettings
                 store={store}
-                themeId={themeId} setThemeId={setThemeId}
                 heroTitle={heroTitle} setHeroTitle={setHeroTitle}
                 heroSubtitle={heroSubtitle} setHeroSubtitle={setHeroSubtitle}
                 heroImage={heroImage} setHeroImage={setHeroImage}

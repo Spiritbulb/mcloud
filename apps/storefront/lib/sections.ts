@@ -59,6 +59,34 @@ const copy = (heading: string, eyebrow: string): readonly SettingField[] => [
   { id: 'eyebrow', type: 'text', label: 'Label above heading', default: eyebrow },
 ]
 
+/**
+ * Settings every section has, declared once. The Editor shows them on every
+ * section panel; renderPage honours `hidden` before it looks at the type.
+ */
+export const COMMON_SECTION_SCHEMA: readonly SettingField[] = [
+  { id: 'hidden', type: 'toggle', label: 'Hide this section', default: false },
+]
+
+/** How many cards across. `auto` is the fluid grid the templates always had. */
+const columns: SettingField = {
+  id: 'columns', type: 'select', label: 'Columns', default: 'auto',
+  options: [
+    { value: 'auto', label: 'Automatic' },
+    { value: '2', label: '2' },
+    { value: '3', label: '3' },
+    { value: '4', label: '4' },
+  ],
+}
+
+const cardStyle: SettingField = {
+  id: 'card_style', type: 'select', label: 'Card style', default: 'flat',
+  options: [
+    { value: 'flat', label: 'Flat' },
+    { value: 'bordered', label: 'Bordered' },
+    { value: 'shadow', label: 'Shadow' },
+  ],
+}
+
 export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   hero: {
     templateKey: 'classic/sections/hero',
@@ -89,7 +117,24 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     },
     // The hero's copy lives in the slides, not in section config, so it declares no
     // heading/eyebrow. Its slides are edited in the Editor's hero panel.
-    schema: [],
+    schema: [
+      {
+        id: 'layout', type: 'select', label: 'Layout', default: 'full',
+        options: [
+          { value: 'full', label: 'Full-bleed image' },
+          { value: 'split', label: 'Image beside text' },
+          { value: 'minimal', label: 'Text only' },
+        ],
+      },
+      {
+        id: 'height', type: 'select', label: 'Height', default: 'standard',
+        options: [
+          { value: 'short', label: 'Short' },
+          { value: 'standard', label: 'Standard' },
+          { value: 'tall', label: 'Full screen' },
+        ],
+      },
+    ],
   },
   collections: {
     templateKey: 'classic/sections/collections-grid',
@@ -99,6 +144,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     schema: [
       ...copy('Shop by Category', 'Collections'),
       { id: 'subheading', type: 'text', label: 'Subheading', default: 'Curated selections for every need' },
+      columns,
     ],
   },
   featured: {
@@ -106,14 +152,14 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     label: 'Featured products',
     description: 'A handful of products you have marked as featured.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.featuredProducts }),
-    schema: copy('Top Picks', 'Featured Collection'),
+    schema: [...copy('Top Picks', 'Featured Collection'), columns, cardStyle],
   },
   'all-products': {
     templateKey: 'classic/sections/all-products',
     label: 'All products',
     description: 'Every product in your catalog.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.products }),
-    schema: copy('Browse Everything', 'All Products'),
+    schema: [...copy('Browse Everything', 'All Products'), columns, cardStyle],
   },
   mission: {
     templateKey: 'classic/sections/mission',

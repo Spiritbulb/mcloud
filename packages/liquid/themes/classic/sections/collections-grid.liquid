@@ -1,6 +1,8 @@
 {%- assign heading = section.heading | default: 'Shop by Category' -%}
 {%- assign eyebrow = section.eyebrow | default: 'Collections' -%}
 {%- assign subheading = section.subheading | default: 'Curated selections for every need' -%}
+{%- assign columns = section.columns | default: 'auto' -%}
+{%- unless columns == '2' or columns == '3' or columns == '4' -%}{%- assign columns = 'auto' -%}{%- endunless -%}
 {%- if collections and collections.size > 0 -%}
 <section class="sf-section-muted py-12 md:py-20">
   <div class="container mx-auto max-w-6xl px-6">
@@ -39,10 +41,7 @@
     </div>
 
     {{- - GRID - -}}
-    <div
-      class="grid gap-6 md:gap-8"
-      style="grid-template-columns: repeat(auto-fill, minmax(280px, 1fr))"
-    >
+    <div class="sf-grid sf-grid--{{ columns }} sf-grid--wide grid gap-6 md:gap-8">
       {%- for collection in collections -%}
         <article
           class="sf-card sf-collection-card group cursor-pointer overflow-hidden sf-animate-fadein"

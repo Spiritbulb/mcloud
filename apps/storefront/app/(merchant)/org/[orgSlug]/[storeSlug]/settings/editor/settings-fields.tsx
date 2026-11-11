@@ -10,6 +10,7 @@ const FONT_SUGGESTIONS = [
     'Inter', 'DM Sans', 'Poppins', 'Montserrat', 'Lato', 'Open Sans', 'Roboto', 'Nunito', 'Work Sans',
     'Raleway', 'Quicksand', 'Space Grotesk', 'Playfair Display', 'Lora', 'Merriweather',
     'Libre Baskerville', 'Cormorant Garamond', 'EB Garamond', 'Source Serif 4', 'Fraunces',
+    'Archivo', 'Archivo Black', 'IBM Plex Sans', 'Source Sans 3',
 ]
 
 /**

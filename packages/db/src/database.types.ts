@@ -2632,10 +2632,12 @@ export type Database = {
           body_font: string
           border_radius: string
           created_at: string | null
+          dark_accent_color: string
           dark_background_color: string
           dark_foreground_color: string
           dark_muted_color: string
           dark_primary_color: string
+          dark_secondary_color: string
           font_scale: string
           foreground_color: string
           heading_font: string
@@ -2655,10 +2657,12 @@ export type Database = {
           body_font?: string
           border_radius?: string
           created_at?: string | null
+          dark_accent_color?: string
           dark_background_color?: string
           dark_foreground_color?: string
           dark_muted_color?: string
           dark_primary_color?: string
+          dark_secondary_color?: string
           font_scale?: string
           foreground_color?: string
           heading_font?: string
@@ -2678,10 +2682,12 @@ export type Database = {
           body_font?: string
           border_radius?: string
           created_at?: string | null
+          dark_accent_color?: string
           dark_background_color?: string
           dark_foreground_color?: string
           dark_muted_color?: string
           dark_primary_color?: string
+          dark_secondary_color?: string
           font_scale?: string
           foreground_color?: string
           heading_font?: string
@@ -3162,6 +3168,106 @@ export type Database = {
           },
         ]
       }
+      whatsapp_inbound_ids: {
+        Row: {
+          created_at: string
+          id: string
+        }
+        Insert: {
+          created_at?: string
+          id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_link_attempts: {
+        Row: {
+          created_at: string
+          id: number
+          wa_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: never
+          wa_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: never
+          wa_id?: string
+        }
+        Relationships: []
+      }
+      whatsapp_link_codes: {
+        Row: {
+          code_hash: string
+          created_at: string
+          expires_at: string
+          id: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          code_hash: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          code_hash?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_link_codes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_links: {
+        Row: {
+          id: string
+          linked_at: string
+          revoked_at: string | null
+          user_id: string
+          wa_id: string
+        }
+        Insert: {
+          id?: string
+          linked_at?: string
+          revoked_at?: string | null
+          user_id: string
+          wa_id: string
+        }
+        Update: {
+          id?: string
+          linked_at?: string
+          revoked_at?: string | null
+          user_id?: string
+          wa_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_links_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       whatsapp_messages: {
         Row: {
           content: string | null
@@ -3227,6 +3333,24 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_sessions: {
+        Row: {
+          state: Json
+          updated_at: string
+          wa_id: string
+        }
+        Insert: {
+          state?: Json
+          updated_at?: string
+          wa_id: string
+        }
+        Update: {
+          state?: Json
+          updated_at?: string
+          wa_id?: string
+        }
+        Relationships: []
       }
       wishlists: {
         Row: {
@@ -3375,6 +3499,10 @@ export type Database = {
       store_has_unpaid_payouts: {
         Args: { p_store_id: string }
         Returns: boolean
+      }
+      whatsapp_redeem_link_code: {
+        Args: { p_code_hash: string; p_wa_id: string }
+        Returns: Json
       }
     }
     Enums: {

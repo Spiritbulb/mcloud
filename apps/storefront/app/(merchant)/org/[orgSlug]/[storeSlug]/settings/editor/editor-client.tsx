@@ -9,8 +9,9 @@ import { Spinner } from '@mcloud/ui/kit/skeleton'
 import { cn } from '@mcloud/ui/utils'
 import type { SettingField } from '@mcloud/verticals'
 import type { Plan } from '@mcloud/merchant/plans'
-import { SECTION_REGISTRY } from '@/lib/sections'
+import { COMMON_SECTION_SCHEMA, SECTION_REGISTRY } from '@/lib/sections'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
+import { THEME_PRESETS, activePreset } from '@/lib/theme-presets'
 import { patchStoreSettings, updatePageSections, updateStoreTheme } from '../actions'
 import {
     contentErrors, editorReducer, initEditor, isDocDirty, listFor,
@@ -468,6 +469,7 @@ export default function EditorClient({
                                     />
                                 ) : (
                                     <div className="space-y-6">
+                                        <PresetPicker theme={doc.theme} onPick={(values) => dispatch({ type: 'theme-set', values })} />
                                         {THEME_GROUPS.map((g) => (
                                             <section key={g.title}>
                                                 <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">{g.title}</h3>
@@ -600,6 +602,7 @@ function SectionList({
                 {sections.map((s, i) => {
                     const def = sectionDef(s.type)
                     const heading = typeof s.settings?.heading === 'string' ? s.settings.heading : ''
+                    const isHidden = s.settings?.hidden === true
                     const dropHere = drag && drag.over === i && drag.from !== i
                     return (
                         <li
@@ -615,6 +618,7 @@ function SectionList({
                             onDragEnd={() => setDrag(null)}
                             className={cn(
                                 'group relative flex items-center gap-1 rounded-md border border-transparent bg-card pr-1 transition-colors hover:border-border hover:bg-muted/40',
+                                isHidden && 'opacity-60',
                                 drag?.from === i && 'opacity-40',
                                 dropHere && (drag!.from < i ? 'shadow-[0_2px_0_0_var(--color-primary)]' : 'shadow-[0_-2px_0_0_var(--color-primary)]'),
                             )}
@@ -638,6 +642,7 @@ function SectionList({
                                     <span className="block truncate text-[14px] font-medium">{def?.label ?? s.type}</span>
                                     {heading && <span className="block truncate text-[12px] text-muted-foreground">{heading}</span>}
                                 </span>
+                                {isHidden && <Icon name="visibility_off" size={15} className="ml-auto text-muted-foreground" aria-label="Hidden" />}
                             </button>
                             <span className="flex opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
                                 <IconAction icon="content_copy" label="Duplicate section" onClick={() => onOp({ op: 'duplicate', index: i })} />
@@ -692,6 +697,12 @@ function SectionPanel({
                 {!def && (
                     <Notice tone="warning">This section type is no longer available. It still shows on your site; you can remove it.</Notice>
                 )}
+                <SettingsFields
+                    schema={COMMON_SECTION_SCHEMA}
+                    values={section.settings ?? {}}
+                    pickImage={pickImage}
+                    onChange={(field, value) => dispatch({ type: 'section-field', index, field, value })}
+                />
                 {schema.length > 0 && (
                     <SettingsFields
                         schema={schema}
@@ -705,10 +716,7 @@ function SectionPanel({
                         <SectionContent type={section.type} settings={settings} dispatch={dispatch} pickImage={pickImage} plan={plan} onShowRecord={onShowRecord} />
                     </div>
                 )}
-                {def && schema.length === 0 && !content && (
-                    <p className="text-[14px] text-muted-foreground">{def.description ?? 'This section has nothing to configure.'}</p>
-                )}
-                {(def?.description && (schema.length > 0 || content)) && (
+                {def?.description && (
                     <p className="text-[13px] text-muted-foreground">{def.description}</p>
                 )}
             </div>
@@ -719,6 +727,48 @@ function SectionPanel({
                 </Button>
             </div>
         </>
+    )
+}
+
+// ── Sidebar: theme presets ──────────────────────────────────────────────────────
+
+/**
+ * One click sets every theme value. The active tile is derived from the document
+ * (activePreset), so a hand-tweaked theme shows no tile selected, and Undo after a
+ * pick restores every value at once (one `theme-set` step).
+ */
+function PresetPicker({ theme, onPick }: { theme: Record<string, unknown>; onPick: (values: Record<string, string>) => void }) {
+    const active = activePreset(theme)?.id ?? null
+    return (
+        <section>
+            <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">Presets</h3>
+            <div role="radiogroup" aria-label="Theme preset" className="grid grid-cols-2 gap-2">
+                {THEME_PRESETS.map((p) => (
+                    <button
+                        key={p.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={active === p.id}
+                        title={p.description}
+                        onClick={() => onPick(p.values)}
+                        className={cn(
+                            'rounded-md border p-2 text-left transition-colors',
+                            active === p.id ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/40',
+                        )}
+                    >
+                        <span className="mb-2 flex h-6 overflow-hidden rounded" aria-hidden>
+                            <span className="flex-1" style={{ backgroundColor: p.swatch.background }} />
+                            <span className="flex-1" style={{ backgroundColor: p.swatch.primary }} />
+                            <span className="w-4" style={{ backgroundColor: p.swatch.accent }} />
+                        </span>
+                        <span className="block truncate text-[13px] font-medium" style={{ fontFamily: `'${p.values.heading_font}', serif` }}>{p.name}</span>
+                    </button>
+                ))}
+            </div>
+            <p className="mt-2 text-[13px] text-muted-foreground">
+                {active ? 'Change any value below to make it your own.' : 'Custom theme. Pick a preset to start over.'}
+            </p>
+        </section>
     )
 }
 

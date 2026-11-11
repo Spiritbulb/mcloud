@@ -55,7 +55,7 @@ Size: **S** under a day, **M** a few days, **L** a week or more. Area tags: `SF`
 | L1 | More payment rails: card (Pesapal or Flutterwave), Airtel Money | SF | Decide the provider first (N2 depends on it). | L |
 | L2 | Courier and delivery: rate tables, labels, courier role, live tracking | SF, RCH | Reach has no courier role, no delivery address in the order payload, and no maps. | L |
 | L3 | Swahili and i18n; multi-currency | SF, MOB, SB | `currency.ts` is KSh and USD only; PayPal uses a fixed 0.0077 rate. | L |
-| L4 | More themes; finish the `events` vertical | SF | One theme (`classic`) exists; `events` references sections with no templates. | L |
+| L4 | A second markup theme; finish the `events` vertical | SF | `classic` has presets and section layout options (2026-11-12); a second theme needs its own Liquid sections and React pages, and CLEANUP §2.9 fixed first. `events` references sections with no templates. | L |
 | L5 | Abandoned cart, low-stock alerts, product CSV import/export | SF, MOB | Standard merchant expectations. | M each |
 | L6 | NGO: donor receipts, recurring donations | SF | Donations exist; receipts and monthly giving do not. | M |
 | L7 | Barcode scan and POS mode in the mobile app | MOB | Barcode is typed by hand today. | L |

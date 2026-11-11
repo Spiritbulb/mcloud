@@ -5,7 +5,6 @@ import { Check, ExternalLink, ChevronDown, Moon, Sun } from 'lucide-react'
 import { cn } from '@mcloud/ui/utils'
 import { SettingsSection, SettingsField } from '@/app/(merchant)/org/[orgSlug]/[storeSlug]/settings/settings-primitives'
 import ImageUpload from './image-upload'
-import { THEMES } from '@mcloud/themes'
 
 // shadcn primitives
 import {
@@ -64,7 +63,6 @@ interface StoreData {
 
 export interface AppearanceSettingsProps {
     store: StoreData
-    themeId: string; setThemeId: (v: string) => void
     heroTitle: string; setHeroTitle: (v: string) => void
     heroSubtitle: string; setHeroSubtitle: (v: string) => void
     heroImage: string; setHeroImage: (v: string) => void
@@ -186,71 +184,6 @@ function ColorRow({ label, value, onChange }: {
                 )}
             />
         </div>
-    )
-}
-
-// ─── ThemeSection ─────────────────────────────────────────────────────────────
-
-function ThemeSection({ themeId, setThemeId, slug }: {
-    themeId: string
-    setThemeId: (v: string) => void
-    slug: string
-}) {
-    return (
-        <SettingsSection
-            title="Theme"
-            description="Layout and visual style of your storefront"
-            aside={
-                <a
-                    href={`/store/${slug}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-[13px] text-on-surface-muted hover:text-foreground transition-colors"
-                >
-                    <MSO icon="open_in_new" className="text-[15px]" />
-                    Preview store
-                </a>
-            }
-        >
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {THEMES.map((theme) => {
-                    const isActive = themeId === theme.id
-                    return (
-                        <button
-                            key={theme.id}
-                            onClick={() => setThemeId(theme.id)}
-                            className={cn(
-                                'group relative text-left rounded-xl border-2 p-3 transition-all duration-150 overflow-hidden',
-                                isActive
-                                    ? 'border-foreground shadow-md'
-                                    : 'border-light hover:border-light-strong hover:shadow-sm'
-                            )}
-                        >
-                            {/* Color swatch */}
-                            <div className="flex gap-1 mb-3 rounded-md overflow-hidden h-8">
-                                <div className="flex-1 rounded-l-md" style={{ backgroundColor: theme.preview.background }} />
-                                <div className="flex-1" style={{ backgroundColor: theme.preview.primary }} />
-                                <div className="w-5 rounded-r-md" style={{ backgroundColor: theme.preview.accent }} />
-                            </div>
-
-                            <p className="text-[13px] font-semibold text-foreground leading-none truncate">
-                                {theme.name}
-                            </p>
-                            <p className="hidden sm:block text-[12px] text-on-surface-muted mt-1 leading-snug">
-                                {theme.description}
-                            </p>
-
-                            {/* Active checkmark */}
-                            {isActive && (
-                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-foreground flex items-center justify-center">
-                                    <MSO icon="check" className="text-[14px] text-surface" fill={1} />
-                                </div>
-                            )}
-                        </button>
-                    )
-                })}
-            </div>
-        </SettingsSection>
     )
 }
 
@@ -872,10 +805,9 @@ function GallerySection(props: Pick<AppearanceSettingsProps, 'store' | 'galleryP
 
 // ─── Tab config ───────────────────────────────────────────────────────────────
 
-type TabId = 'theme' | 'brand' | 'styling' | 'components'
+type TabId = 'brand' | 'styling' | 'components'
 
 const APPEARANCE_TABS: { id: TabId; label: string; icon: string; description: string }[] = [
-    { id: 'theme', label: 'Theme', icon: 'palette', description: 'Layout & visual style' },
     { id: 'brand', label: 'Brand', icon: 'storefront', description: 'Logo & identity' },
     { id: 'styling', label: 'Styling', icon: 'format_paint', description: 'Colors & typography' },
     { id: 'components', label: 'Components', icon: 'view_quilt', description: 'Hero, slides & gallery' },
@@ -921,22 +853,13 @@ function AppearanceTabBar({
 // ─── Root ─────────────────────────────────────────────────────────────────────
 
 export default function AppearanceSettings(props: AppearanceSettingsProps) {
-    const [tab, setTab] = useState<TabId>('theme')
+    const [tab, setTab] = useState<TabId>('brand')
 
     return (
         <div className="space-y-0">
             <AppearanceTabBar active={tab} onChange={setTab} />
 
             <div className="pt-4 space-y-4">
-
-                {/* ── Theme ── */}
-                {tab === 'theme' && (
-                    <ThemeSection
-                        themeId={props.themeId}
-                        setThemeId={props.setThemeId}
-                        slug={props.store.slug}
-                    />
-                )}
 
                 {/* ── Brand ── */}
                 {tab === 'brand' && (

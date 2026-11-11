@@ -596,6 +596,51 @@
     color: var(--sf-background);
 }
 
+/* ── Section layout variants (per-section settings in the Editor) ───────────── */
+
+/* Hero height. `standard` is the original 70vh / 480px. */
+.sf-hero--h-short    { height: 50vh;  min-height: 360px; }
+.sf-hero--h-standard { height: 70vh;  min-height: 480px; }
+.sf-hero--h-tall     { height: 100vh; min-height: 560px; }
+
+/* Split: copy on the page background, image beside it. On a phone the image sits
+   below the copy, so the slide scrolls inside its fixed height. */
+.sf-hero--split .sf-hero__slide { overflow-y: auto; }
+.sf-hero--split .sf-hero__split-copy { background-color: var(--sf-background); }
+.sf-hero--split .sf-hero-card { max-width: none; padding: 0; }
+@media (max-width: 767px) {
+    .sf-hero--split .sf-hero__split { grid-template-rows: auto 1fr; }
+}
+
+/* Minimal: no image, centred copy on a soft tint of the secondary colour. */
+.sf-hero--minimal { background-color: color-mix(in srgb, var(--sf-secondary) 60%, var(--sf-background)); }
+.sf-hero--minimal .sf-hero-card { background-color: transparent; max-width: 42rem; }
+.sf-hero--minimal .sf-hero__btn { margin-inline: auto; }
+
+/* Card grids. `auto` is the fluid grid the sections always had; a fixed count
+   still collapses on narrow screens. */
+.sf-grid--auto { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.sf-grid--auto.sf-grid--wide { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); }
+.sf-grid--2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sf-grid--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sf-grid--4 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+@media (min-width: 768px) {
+    .sf-grid--3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .sf-grid--4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+}
+
+/* Product card style. `flat` (no border, no shadow) is the original. */
+.sf-product-card--bordered { border: 1px solid var(--sf-border); }
+.sf-product-card--bordered:hover { border-color: var(--sf-border-strong); }
+.sf-product-card--shadow {
+    box-shadow: 0 1px 2px color-mix(in srgb, var(--sf-foreground) 6%, transparent),
+                0 8px 24px color-mix(in srgb, var(--sf-foreground) 8%, transparent);
+}
+.sf-product-card--shadow:hover {
+    box-shadow: 0 2px 4px color-mix(in srgb, var(--sf-foreground) 8%, transparent),
+                0 16px 40px color-mix(in srgb, var(--sf-foreground) 14%, transparent);
+}
+
 /* ── Hero ─────────────────────────────────────────────── */
 
 .sf-hero__card-animate {

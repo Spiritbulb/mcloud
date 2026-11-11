@@ -38,6 +38,8 @@ export type EditorState = {
 
 export type EditorAction =
     | { type: 'theme'; id: string; value: unknown }
+    /** Many theme values at once (a preset). One undo step. */
+    | { type: 'theme-set'; values: Record<string, unknown> }
     | { type: 'section-field'; index: number; field: string; value: unknown }
     /** `section` is the seeded section for an `add`; the reducer stays registry-free. */
     | { type: 'section-op'; op: SectionOp; section?: Section }
@@ -123,6 +125,12 @@ function applyEdit(doc: EditorDoc, action: EditorAction): EditorDoc {
         case 'theme':
             if (doc.theme[action.id] === action.value) return doc
             return { ...doc, theme: { ...doc.theme, [action.id]: action.value } }
+
+        case 'theme-set': {
+            const changed = Object.entries(action.values).filter(([id, v]) => doc.theme[id] !== v)
+            if (changed.length === 0) return doc
+            return { ...doc, theme: { ...doc.theme, ...Object.fromEntries(changed) } }
+        }
 
         case 'section-field': {
             const s = doc.sections[action.index]

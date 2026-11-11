@@ -167,3 +167,19 @@ test('remapIndex follows the open section through moves, deletes and inserts', (
     assert.equal(remapIndex(1, { op: 'add', index: 1, sectionType: 'gallery' }), 2)
     assert.equal(remapIndex(1, { op: 'add', index: 2, sectionType: 'gallery' }), 1)
 })
+
+test('applying a preset writes every value as ONE undo step', () => {
+    let s = initEditor(doc())
+    s = editorReducer(s, { type: 'theme-set', values: { primary_color: '#222222', accent_color: '#abcdef', heading_font: 'Lora' } })
+    assert.equal(s.present.theme.primary_color, '#222222')
+    assert.equal(s.present.theme.heading_font, 'Lora')
+    assert.equal(s.past.length, 1)
+    s = editorReducer(s, { type: 'undo' })
+    assert.equal(s.present.theme.primary_color, '#111111')
+    assert.equal(s.present.theme.accent_color, undefined)
+})
+
+test('applying a preset that changes nothing adds no history', () => {
+    const s = initEditor(doc())
+    assert.equal(editorReducer(s, { type: 'theme-set', values: { primary_color: '#111111' } }), s)
+})

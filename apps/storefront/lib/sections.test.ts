@@ -98,3 +98,26 @@ for (const [type, def] of Object.entries(SECTION_REGISTRY)) {
 }
 
 console.log('sections.test.ts: SP6 schema assertions passed')
+
+// ── Layout variants are schema, so the Editor's form grows with no admin code ──
+//
+// A `default` MUST be the value the template used before the option existed.
+const field = (type: keyof typeof SECTION_REGISTRY, id: string) => {
+  const f = SECTION_REGISTRY[type].schema?.find((x) => x.id === id)
+  assert.ok(f && f.type === 'select', `${type}.${id} is a select field`)
+  return f
+}
+assert.equal(field('hero', 'layout').default, 'full', 'hero layout defaults to full-bleed')
+assert.deepEqual(field('hero', 'layout').options.map((o) => o.value), ['full', 'split', 'minimal'])
+assert.equal(field('hero', 'height').default, 'standard')
+for (const t of ['featured', 'all-products'] as const) {
+  assert.equal(field(t, 'columns').default, 'auto', `${t} columns default to auto`)
+  assert.equal(field(t, 'card_style').default, 'flat', `${t} cards default to flat (no border, no shadow: the original)`)
+}
+assert.equal(field('collections', 'columns').default, 'auto')
+
+// The visibility toggle is common to every section, declared once.
+import { COMMON_SECTION_SCHEMA } from './sections'
+assert.deepEqual(COMMON_SECTION_SCHEMA.map((f) => f.id), ['hidden'])
+assert.equal(COMMON_SECTION_SCHEMA[0].type, 'toggle')
+console.log('sections.test.ts: layout variant schema assertions passed')

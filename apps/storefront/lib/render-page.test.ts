@@ -199,3 +199,18 @@ const noImg = await renderPage([{ type: 'programs' }], ngoStore({ programs: [{ t
 assert.ok(!noImg.includes('<img'), 'a programme with no image renders no image')
 
 console.log('render-page.test.ts: preview-equals-visitor assertions passed')
+
+// ── Hidden sections ────────────────────────────────────────────────────────────
+//
+// A merchant can switch a section off without deleting it (settings.hidden). It
+// renders nothing, but like an unknown type it still CONSUMES its index, or the
+// rail and the preview would disagree about every section after it.
+
+const hidden = await renderPage([{ type: 'hero', settings: { hidden: true } }, { type: 'all-products' }], ctx)
+assert.ok(!hidden.includes('sf-hero'), 'a hidden section renders nothing')
+assert.ok(!hidden.includes('data-mcloud-section="0"'), 'and emits no anchor')
+assert.ok(hidden.includes('data-mcloud-section="1"'), 'the next section keeps its index')
+const shown = await renderPage([{ type: 'hero', settings: { hidden: false } }], ctx)
+assert.ok(shown.includes('sf-hero'), 'hidden: false renders normally')
+
+console.log('render-page.test.ts: hidden section assertions passed')
