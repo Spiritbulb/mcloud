@@ -1,0 +1,50 @@
+{%- assign heading = section.heading | default: 'Browse Everything' -%}
+{%- assign eyebrow = section.eyebrow | default: 'All Products' -%}
+{%- comment -%} Layout settings; defaults equal the original grid and card. {%- endcomment -%}
+{%- assign columns = section.columns | default: 'auto' -%}
+{%- unless columns == '2' or columns == '3' or columns == '4' -%}{%- assign columns = 'auto' -%}{%- endunless -%}
+{%- assign card_style = section.card_style | default: 'flat' -%}
+{%- unless card_style == 'bordered' or card_style == 'shadow' -%}{%- assign card_style = 'flat' -%}{%- endunless -%}
+{%- if products and products.size > 0 -%}
+{{- - ALL PRODUCTS - -}}
+<section id="products" class="sf-t-soft py-16 md:py-28">
+  <div class="container mx-auto max-w-6xl px-6">
+    <div class="mb-10 md:mb-14">
+      <div class="flex justify-center mb-3">
+        <span class="sf-eyebrow block text-center">
+          {{ eyebrow }}
+        </span>
+      </div>
+      <h2 class="sf-heading text-center text-4xl md:text-5xl font-semibold tracking-tight">{{ heading }}</h2>
+    </div>
+
+    <div class="sf-grid sf-grid--{{ columns }} grid gap-6 md:gap-8">
+      {%- for product in products -%}
+        {%- render 'soft/sections/product-card', store: store, product: product, card_style: card_style -%}
+      {%- endfor -%}
+   </div>
+  </div>
+</section>
+{%- endif -%}
+
+{{- - SCROLL FADE-IN OBSERVER - -}}
+<script>
+  (function () {
+    var els = document.querySelectorAll('.sf-animate-fadein');
+    if (!els.length) return;
+    var io = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (e) {
+          if (e.isIntersecting) {
+            e.target.classList.add('sf-visible');
+            io.unobserve(e.target);
+          }
+        });
+      },
+      { threshold: 0.08 }
+    );
+    els.forEach(function (el) {
+      io.observe(el);
+    });
+  })();
+</script>

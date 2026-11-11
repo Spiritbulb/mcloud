@@ -49,7 +49,7 @@ export const STORE_THEMES: readonly StoreThemeDef[] = [
     description: 'Rounded and airy: pill buttons, soft shadows, warm section colours.',
     defaultPreset: { shop: 'market', ngo: 'giving' },
     suggestedPresets: ['market', 'craft', 'giving'],
-    released: false,
+    released: true,
   },
   {
     id: 'classic',

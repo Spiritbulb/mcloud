@@ -1,0 +1,47 @@
+{%- assign heading = section.heading | default: 'Contact Us' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Get in Touch' -%}
+{%- assign settings = store.settings -%}
+{%- assign contact = null -%}
+{%- assign social = null -%}
+{%- if settings -%}
+  {%- assign contact = settings.contact -%}
+  {%- assign social = settings.socialLinks -%}
+{%- endif -%}
+
+{%- assign has_contact = false -%}
+{%- if contact -%}
+  {%- if contact.email or contact.phone or contact.address -%}{%- assign has_contact = true -%}{%- endif -%}
+{%- endif -%}
+{%- assign has_social = false -%}
+{%- if social and social.size > 0 -%}{%- assign has_social = true -%}{%- endif -%}
+
+{%- if has_contact or has_social -%}
+<section class="sf-t-soft sf-contact py-20 md:py-28">
+  <div class="container mx-auto max-w-3xl px-6 text-center">
+    <span class="sf-eyebrow block text-center mb-3">
+      {{ eyebrow }}
+    </span>
+    <h2 class="sf-heading text-center text-4xl md:text-5xl font-semibold tracking-tight mb-8">{{ heading }}</h2>
+    {%- if has_contact -%}
+      <div class="space-y-2 mb-8">
+        {%- if contact.email -%}
+          <p><a href="mailto:{{ contact.email }}" class="sf-link">{{ contact.email }}</a></p>
+        {%- endif -%}
+        {%- if contact.phone -%}
+          <p><a href="tel:{{ contact.phone }}" class="sf-link">{{ contact.phone }}</a></p>
+        {%- endif -%}
+        {%- if contact.address -%}
+          <p style="color: var(--sf-foreground-subtle)">{{ contact.address }}</p>
+        {%- endif -%}
+      </div>
+    {%- endif -%}
+    {%- if has_social -%}
+      <div class="flex justify-center gap-4">
+        {%- for link in social -%}
+          <a href="{{ link.url }}" class="sf-link text-sm" target="_blank" rel="noopener noreferrer">{{ link.platform }}</a>
+        {%- endfor -%}
+      </div>
+    {%- endif -%}
+  </div>
+</section>
+{%- endif -%}

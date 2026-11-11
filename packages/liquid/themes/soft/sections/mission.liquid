@@ -1,0 +1,29 @@
+{%- assign eyebrow = section.eyebrow | default: 'Our Mission' -%}
+{%- assign settings = store.settings -%}
+{%- assign headline = store.name -%}
+{%- assign statement = store.description -%}
+{%- if settings -%}
+  {%- if settings.missionHeadline -%}{%- assign headline = settings.missionHeadline -%}{%- endif -%}
+  {%- if settings.mission -%}{%- assign statement = settings.mission -%}{%- endif -%}
+{%- endif -%}
+
+<section class="sf-t-soft sf-mission relative w-full overflow-hidden py-20 md:py-28">
+  <div class="sf-mission-fallback absolute inset-0"></div>
+  <div class="relative container mx-auto max-w-4xl px-6 text-center">
+    <span class="sf-eyebrow block text-center mb-4">
+      {{ eyebrow }}
+    </span>
+    <h1 class="sf-heading font-bold tracking-tight" style="font-size: clamp(1.875rem, 5vw, 3rem); line-height: 1.1">
+      {{ headline }}
+    </h1>
+    {%- comment -%}
+      Rendered when empty IN THE EDITOR so there is something to click in order to
+      write one. A visitor still sees nothing.
+    {%- endcomment -%}
+    {%- if statement -%}
+      <p class="font-light mt-4 mx-auto max-w-2xl" style="color: var(--sf-foreground-subtle); font-size: clamp(1rem, 2vw, 1.25rem)">
+        {{ statement }}
+      </p>
+    {%- endif -%}
+  </div>
+</section>

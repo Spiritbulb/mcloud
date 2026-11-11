@@ -240,3 +240,122 @@
     padding-top: 3rem;
     padding-bottom: 3rem;
 }
+
+/* ── Soft ───────────────────────────────────────────────────────────────────────
+   Rounded and airy: big radii whatever the preset's corner setting, pill buttons,
+   soft shadows, centred headers, every other section on a warm tint, a floating
+   nav. Suits food, giving and handmade. */
+.storefront-root[data-sf-theme="soft"] {
+    --sf-soft-radius: 1.25rem;
+    --sf-soft-tint: color-mix(in srgb, var(--sf-secondary) 55%, var(--sf-background));
+    --sf-soft-shadow: 0 1px 2px color-mix(in srgb, var(--sf-foreground) 5%, transparent),
+                      0 10px 30px color-mix(in srgb, var(--sf-foreground) 7%, transparent);
+}
+.storefront-root[data-sf-theme="soft"] .sf-heading {
+    letter-spacing: -0.015em;
+}
+
+/* Alternate sections sit on the tint (the Editor's section wrappers are the rows). */
+.storefront-root[data-sf-theme="soft"] [data-mcloud-section]:nth-child(even) > section:not(.sf-hero) {
+    background-color: var(--sf-soft-tint);
+}
+.storefront-root[data-sf-theme="soft"] .sf-section-muted {
+    background-color: var(--sf-soft-tint);
+}
+
+/* Hero: an inset, rounded panel rather than a full-bleed band. */
+.storefront-root[data-sf-theme="soft"] .sf-hero {
+    width: auto;
+    margin: 0.75rem 0.75rem 0;
+    border-radius: calc(var(--sf-soft-radius) * 1.4);
+}
+.storefront-root[data-sf-theme="soft"] .sf-hero-card {
+    background-color: color-mix(in srgb, var(--sf-background) 92%, transparent);
+    border-radius: var(--sf-soft-radius);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+    box-shadow: var(--sf-soft-shadow);
+}
+.storefront-root[data-sf-theme="soft"] .sf-hero--split .sf-hero-card,
+.storefront-root[data-sf-theme="soft"] .sf-hero--minimal .sf-hero-card {
+    background-color: transparent;
+    box-shadow: none;
+}
+.storefront-root[data-sf-theme="soft"] .sf-hero--minimal {
+    background-color: var(--sf-soft-tint);
+}
+
+/* Pill buttons everywhere a button is drawn by the theme. */
+.storefront-root[data-sf-theme="soft"] .sf-hero__btn,
+.storefront-root[data-sf-theme="soft"] .sf-btn-primary,
+.storefront-root[data-sf-theme="soft"] .sf-pill,
+.storefront-root[data-sf-theme="soft"] .sf-donate {
+    border-radius: 9999px !important;
+}
+.storefront-root[data-sf-theme="soft"] .sf-hero__btn {
+    padding: 0.85rem 1.75rem;
+}
+
+/* Cards: rounded and lifted. The card_style option still wins when set. */
+.storefront-root[data-sf-theme="soft"] .sf-product-card,
+.storefront-root[data-sf-theme="soft"] .sf-collection-card,
+.storefront-root[data-sf-theme="soft"] .sf-program-card,
+.storefront-root[data-sf-theme="soft"] .sf-campaign-card,
+.storefront-root[data-sf-theme="soft"] .sf-service-card {
+    border-radius: var(--sf-soft-radius);
+    overflow: hidden;
+    background-color: var(--sf-background);
+}
+.storefront-root[data-sf-theme="soft"] .sf-product-card--flat,
+.storefront-root[data-sf-theme="soft"] .sf-program-card,
+.storefront-root[data-sf-theme="soft"] .sf-campaign-card {
+    box-shadow: var(--sf-soft-shadow);
+}
+.storefront-root[data-sf-theme="soft"] .sf-product-card__image-wrap {
+    height: 17rem;
+}
+.storefront-root[data-sf-theme="soft"] .sf-product-card__view-btn {
+    display: none;
+}
+.storefront-root[data-sf-theme="soft"] .sf-gallery img {
+    border-radius: var(--sf-soft-radius);
+}
+@media (max-width: 639px) {
+    .storefront-root[data-sf-theme="soft"] .sf-grid--auto:not(.sf-grid--wide) {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 0.75rem;
+    }
+    .storefront-root[data-sf-theme="soft"] .sf-product-card__image-wrap {
+        height: 11rem;
+    }
+    .storefront-root[data-sf-theme="soft"] .sf-product-card__desc {
+        display: none;
+    }
+}
+
+/* Nav: a floating rounded bar inset from the edges. */
+.storefront-root[data-sf-theme="soft"] .sf-nav {
+    background-color: transparent;
+    border-bottom: 0;
+    padding: 0.75rem 0.75rem 0;
+}
+.storefront-root[data-sf-theme="soft"] .sf-nav > div {
+    max-width: none;
+    height: 3.5rem;
+    border-radius: 9999px;
+    background-color: color-mix(in srgb, var(--sf-background) 94%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    box-shadow: var(--sf-soft-shadow);
+}
+
+/* Footer: rounded top corners on the tint. */
+.storefront-root[data-sf-theme="soft"] .sf-footer {
+    background-color: var(--sf-soft-tint);
+    border-top: 0;
+    border-radius: calc(var(--sf-soft-radius) * 1.4) calc(var(--sf-soft-radius) * 1.4) 0 0;
+    margin-top: 2rem;
+}
+.storefront-root[data-sf-theme="soft"] .sf-footer > div {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+}
