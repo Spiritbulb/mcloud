@@ -8,6 +8,7 @@ import { useCart } from '@/contexts/CartContext'
 import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
 import { useWishlist } from '@/contexts/WishlistContext'
+import type { StoreThemeId } from '@/lib/store-themes'
 
 interface Store {
     id: string
@@ -35,7 +36,7 @@ function WishlistBadge({ count }: { count: number }) {
     )
 }
 
-export default function StoreNav({ store, pages = [] }: { store: Store; pages?: NavPage[] }) {
+export default function StoreNav({ store, pages = [], theme = 'classic' }: { store: Store; pages?: NavPage[]; theme?: StoreThemeId }) {
     const { cartItems } = useCart()
     const { user } = useCustomerAuth()
     const { wishlistIds } = useWishlist()
@@ -46,7 +47,7 @@ export default function StoreNav({ store, pages = [] }: { store: Store; pages?: 
     const commerce = getVertical(store.type).commerce
 
     return (
-        <nav className="sf-nav sticky top-0 z-40">
+        <nav className="sf-nav sticky top-0 z-40" data-sf-nav={theme}>
             <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
 
                 <Link href={href('/')} className="flex items-center gap-3">
