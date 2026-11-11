@@ -92,7 +92,7 @@ All tables have RLS enabled and **no policies**: only the service role touches t
 | `whatsapp_link_codes` | `code_hash` (unique), `user_id`, `expires_at` (10 min), `used_at`. |
 | `whatsapp_link_attempts` | `wa_id`, `created_at`. One row per failed `LINK`; 5 failures per hour blocks further attempts. |
 | `whatsapp_sessions` | `wa_id` (pk), `state` jsonb, `updated_at`. Idle for 30 minutes means back to the menu. |
-| `whatsapp_messages` | Meta message `id` (pk), `created_at`. Insert-or-skip makes retries idempotent. |
+| `whatsapp_inbound_ids` | Meta message `id` (pk), `created_at`. Insert-or-skip makes retries idempotent. |
 
 ## Conversation
 

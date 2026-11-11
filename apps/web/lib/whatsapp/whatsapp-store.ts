@@ -14,10 +14,10 @@ export const SESSION_TTL_MS = 30 * 60 * 1000
 export const LINK_CODE_TTL_MS = 10 * 60 * 1000
 
 export async function claimMessage(id: string): Promise<boolean> {
-    const { error } = await (await db()).from('whatsapp_messages').insert({ id })
+    const { error } = await (await db()).from('whatsapp_inbound_ids').insert({ id })
     if (!error) return true
     if (error.code === '23505') return false // already seen: a Meta retry
-    throw new Error(`whatsapp_messages insert failed: ${error.message}`)
+    throw new Error(`whatsapp_inbound_ids insert failed: ${error.message}`)
 }
 
 export async function getLinkedUserId(waId: string): Promise<string | null> {

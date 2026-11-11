@@ -54,7 +54,7 @@ Unset variables: the webhook answers 503 and the settings panel says WhatsApp is
 
 - Idempotency records the message id before processing. If the process dies in between, Meta's retry is
   skipped and the merchant just resends.
-- `whatsapp_messages` and `whatsapp_link_attempts` grow without bound. Add a cron prune (a few days) when
+- `whatsapp_inbound_ids` and `whatsapp_link_attempts` grow without bound. Add a cron prune (a few days) when
   volume justifies it.
 - Orders are the newest 10 and detail is looked up in the newest 100, matching the mobile API.
 - Outbound sends outside the 24 hour window fail and are dropped (logged). Pushing notifications needs templates.
