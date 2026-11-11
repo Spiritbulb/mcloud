@@ -42,6 +42,9 @@ add it here.
 | `BETA_GROUP_EMAIL`, `BETA_PLAY_OPT_IN_URL` | Closed-testing group and opt-in link |
 | `PALPLUSS_API_KEY`, `PALPLUSS_BASE_URL` | PalPluss (wallet top-ups, Reach payments) |
 | `UPCLOUD_API_TOKEN` | UpCloud (servers) |
+| `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Cloud API sending (system-user token and the sending number's id). See [whatsapp.md](whatsapp.md). Runtime only |
+| `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` | Verify inbound webhooks (`X-Hub-Signature-256`) and Meta's registration handshake. All four WhatsApp secrets must be set or the integration stays off |
+| `WHATSAPP_BUSINESS_NUMBER` | Optional display number (`+254...`) shown in link instructions and used for the `wa.me` button |
 | `TRADING_VERCEL_TOKEN`, `TRADING_VERCEL_PROJECT_ID`, `TRADING_VERCEL_TEAM_ID` | Domain management for trading apps |
 | `ANTHROPIC_API_KEY` | Legacy `/api/mobile/chat` (Anthropic path) |
 | `AZURE_OPENAI_ENDPOINT`, `AZURE_OPENAI_API_KEY`, `AZURE_OPENAI_CHAT_DEPLOYMENT`, `AZURE_OPENAI_EMBEDDING_DEPLOYMENT` | Legacy `/api/mobile/chat` and embeddings (Azure path) |

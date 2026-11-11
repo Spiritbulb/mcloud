@@ -7,7 +7,6 @@ Turborepo configuration, task behavior, and CLI commands can vary between instal
 Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
 
 This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
-
 <!-- END:turborepo-agent-rules -->
 
 # Menengai Cloud (mcloud)
@@ -34,6 +33,7 @@ npm workspaces + Turborepo: `apps/web`, `apps/storefront`, `apps/nuru`, `package
 | `packages/themes`    | React theme components. **Imports from `apps/storefront` via relative paths** (see Known traps).                                                                                                                                             |
 | `packages/verticals` | Vertical definitions (`shop`, `ngo`): default pages/sections and the settings nav model.                                                                                                                                                     |
 | `packages/mail`      | Platform email via Resend: `sendEmail()` (never throws) and the templates (`@mcloud/mail/templates`, pure, escaped, tested). Owns the `resend` dep; don't call Resend directly from an app.                                                  |
+| `packages/whatsapp`  | WhatsApp merchant bot core: Cloud API client, webhook signature check, inbound parser and the pure conversation state machine (`bot-logic.ts`). No database; the webhook, tables and panel live in `apps/web` (`docs/whatsapp.md`). |
 | `packages/ui`        | shadcn-style primitives. Owns the Radix/cva/clsx deps. `src/kit/*` (`@mcloud/ui/kit/<name>`) is the admin design kit shared by both apps.                                                                                                    |
 | `packages/config`    | Shared `tsconfig.base.json`.                                                                                                                                                                                                                 |
 | `migrations/`        | Hand-written SQL migrations, dated `YYYYMMDD_name.sql`. Applied by `npm run db:migrate` (`scripts/migrate.mjs`), which records each file in `ops.schema_migrations`; `npm run db:status` lists pending ones. Needs `DATABASE_URL` in `.env`. |
