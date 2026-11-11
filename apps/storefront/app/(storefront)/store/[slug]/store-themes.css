@@ -107,3 +107,136 @@
         display: none;
     }
 }
+
+/* ── Studio ─────────────────────────────────────────────────────────────────────
+   Bold and image-led: the headline sits straight on the image, grids tile edge to
+   edge, labels shout, the footer is inverted. Corners follow the preset. */
+.storefront-root[data-sf-theme="studio"] .sf-heading {
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+}
+.storefront-root[data-sf-theme="studio"] .sf-eyebrow {
+    color: var(--sf-foreground);
+    letter-spacing: 0.3em;
+}
+
+/* Hero (full layout): no card; big white type on the image's dark lower edge. */
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card {
+    background: transparent;
+    max-width: 56rem;
+    padding: 0;
+}
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card h1,
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card p {
+    color: #fff !important;
+}
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card h1 {
+    font-size: clamp(2.75rem, 8vw, 6.5rem) !important;
+    text-transform: uppercase;
+    font-weight: 800;
+    line-height: 0.92 !important;
+    letter-spacing: -0.04em;
+}
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-badge-outline,
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-eyebrow {
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.6);
+}
+/* On the image, the CTA is white so it never sinks into a dark photo. */
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__btn {
+    background-color: #fff;
+    color: #0a0a0a;
+    border-color: #fff;
+}
+.storefront-root[data-sf-theme="studio"] .sf-hero__btn {
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-weight: 700;
+    padding: 1rem 2rem;
+}
+
+/* Tiled grids: hairlines between tiles, drawn by the tiles themselves so a short last
+   row leaves empty page, not a grey block. */
+.storefront-root[data-sf-theme="studio"] .sf-tiles {
+    gap: 0;
+    border-top: 1px solid var(--sf-border);
+    border-left: 1px solid var(--sf-border);
+}
+.storefront-root[data-sf-theme="studio"] .sf-tiles > * {
+    background-color: var(--sf-background);
+    border-right: 1px solid var(--sf-border);
+    border-bottom: 1px solid var(--sf-border);
+}
+.storefront-root[data-sf-theme="studio"] .sf-product-card {
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0;
+}
+.storefront-root[data-sf-theme="studio"] .sf-product-card__image-wrap {
+    height: auto;
+    aspect-ratio: 1 / 1;
+}
+.storefront-root[data-sf-theme="studio"] .sf-product-card__name {
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-size: 0.85rem;
+    font-weight: 700;
+}
+.storefront-root[data-sf-theme="studio"] .sf-product-card__view-btn {
+    display: none;
+}
+@media (max-width: 639px) {
+    .storefront-root[data-sf-theme="studio"] .sf-tiles.sf-grid--auto {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .storefront-root[data-sf-theme="studio"] .sf-product-card__desc {
+        display: none;
+    }
+}
+
+/* Nav: logo centred, page links left, icons right; a heavy rule underneath. */
+.storefront-root[data-sf-theme="studio"] .sf-nav {
+    border-bottom: 2px solid var(--sf-foreground);
+}
+.storefront-root[data-sf-theme="studio"] .sf-nav > div {
+    position: relative;
+    height: 4.25rem;
+}
+@media (min-width: 768px) {
+    .storefront-root[data-sf-theme="studio"] .sf-nav__logo {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    .storefront-root[data-sf-theme="studio"] .sf-nav__pages {
+        margin-left: 0;
+    }
+    /* The logo left the flow, so the icons need pushing to the right edge. */
+    .storefront-root[data-sf-theme="studio"] .sf-nav > div > :last-child {
+        margin-left: auto;
+    }
+}
+.storefront-root[data-sf-theme="studio"] .sf-nav__pages a {
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 0.72rem;
+    font-weight: 700;
+}
+
+/* Footer: inverted. */
+.storefront-root[data-sf-theme="studio"] .sf-footer {
+    background-color: var(--sf-foreground);
+    color: var(--sf-background);
+    border-top: 0;
+}
+.storefront-root[data-sf-theme="studio"] .sf-footer p,
+.storefront-root[data-sf-theme="studio"] .sf-footer a {
+    color: color-mix(in srgb, var(--sf-background) 75%, transparent) !important;
+}
+.storefront-root[data-sf-theme="studio"] .sf-footer a:hover {
+    color: var(--sf-background) !important;
+}
+.storefront-root[data-sf-theme="studio"] .sf-footer > div {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}

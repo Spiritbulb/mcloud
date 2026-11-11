@@ -41,7 +41,7 @@ export const STORE_THEMES: readonly StoreThemeDef[] = [
     description: 'Bold and image-led: big headlines, edge-to-edge grids, a dark footer.',
     defaultPreset: { shop: 'bold', ngo: 'bold' },
     suggestedPresets: ['bold', 'noir', 'tech', 'minimal'],
-    released: false,
+    released: true,
   },
   {
     id: 'soft',

@@ -224,9 +224,17 @@ console.log('render-page.test.ts: hidden section assertions passed')
 const themed = (themeId: unknown) => ({ ...ctx, store: { ...ctx.store, settings: { themeId } } })
 const shopPage = [{ type: 'hero' }, { type: 'all-products' }]
 const plain = await renderPage(shopPage, ctx)
-const unreleased = await renderPage(shopPage, themed('studio'))
-assert.ok(unreleased.includes('sf-hero') && unreleased.includes('id="products"'), 'an unreleased theme still renders')
-assert.equal(unreleased, plain, 'and renders exactly Classic')
+// Whichever theme has not shipped its templates yet stands in for "unreleased". Once
+// every theme ships, the fallback is still pinned by templateKeyFor's own tests.
+{
+  const { STORE_THEMES: all } = await import('./store-themes')
+  const pending = all.find((t) => !t.released)
+  if (pending) {
+    const unreleased = await renderPage(shopPage, themed(pending.id))
+    assert.ok(unreleased.includes('sf-hero') && unreleased.includes('id="products"'), `${pending.id} (unreleased) still renders`)
+    assert.equal(unreleased, plain, `${pending.id} (unreleased) renders exactly Classic`)
+  }
+}
 assert.equal(await renderPage(shopPage, themed('bogus')), plain, 'an unknown theme is Classic')
 assert.equal(await renderPage(shopPage, themed(undefined)), plain, 'no theme is Classic')
 

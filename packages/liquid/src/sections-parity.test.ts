@@ -23,9 +23,9 @@ for (const theme of themeIds()) {
 
   // collections + featured are now self-contained (own max-w-6xl)
   const coll = await renderTemplate(`${theme}/sections/collections-grid`, { store, collections })
-  assert.ok(coll.includes('max-w-6xl'), 'collections-grid carries its own max-w-6xl container')
+  assert.match(coll, /container mx-auto max-w-\dxl/, 'collections-grid carries its own centred container')
   const feat = await renderTemplate(`${theme}/sections/featured-products`, { store, products })
-  assert.ok(feat.includes('max-w-6xl'), 'featured-products carries its own max-w-6xl container')
+  assert.match(feat, /container mx-auto max-w-\dxl/, 'featured-products carries its own centred container')
 
   // empty-list guards: sections must render nothing when list is empty
   const collEmpty = await renderTemplate(`${theme}/sections/collections-grid`, { store, collections: [] })
