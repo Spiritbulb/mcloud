@@ -44,3 +44,17 @@ assert.equal(STORE_THEMES.find((t) => t.id === 'classic')?.name, 'Classic (origi
 assert.equal(UPGRADE_TARGET, 'classic-2')
 
 console.log('store-themes.test.ts OK')
+
+// ── Update (adoptTheme) write plan ─────────────────────────────────────────────
+import { adoptionWrites } from './store-themes'
+{
+  const fresh = adoptionWrites({}, 'studio', true)
+  assert.deepEqual(fresh.settingsPatch, { themeId: 'studio' }, 'only themeId is written to settings')
+  assert.deepEqual(fresh.themeValues, preset('bold'), 'an untouched store takes the theme default')
+  const custom = adoptionWrites({ ...preset('classic'), accent_color: '#ff0000' }, 'studio', true)
+  assert.deepEqual(custom.settingsPatch, { themeId: 'studio' })
+  assert.equal(custom.themeValues, null, 'custom colours are never overwritten')
+  const toClassic2 = adoptionWrites({}, 'classic-2', true)
+  assert.deepEqual(toClassic2.themeValues, preset('classic'), 'Classic 2 keeps the Classic look')
+}
+console.log('store-themes.test.ts: adoption assertions passed')

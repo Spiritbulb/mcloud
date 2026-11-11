@@ -18,6 +18,8 @@ import { Skeleton, SkeletonLines } from '@mcloud/ui/kit/skeleton'
 import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
 import { timeAgo } from '@mcloud/ui/kit/ui-logic'
 import { webUrl } from '@/lib/host'
+import ThemeUpgradePanel from './theme-upgrade-panel'
+import type { StoreThemeId } from '@/lib/store-themes'
 import { formatCurrency, funnelRate, overviewHeadline, overviewSummary } from './overview-logic'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -185,8 +187,10 @@ function HighlightRow({ icon, image, eyebrow, title, detail, value, href, progre
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
-export default function SettingsHomeClient({ slug, orgSlug, initialData = null }: {
+export default function SettingsHomeClient({ slug, orgSlug, initialData = null, themeId = null }: {
     slug: string; orgSlug: string; initialData?: OverviewData | null
+    /** The store's layout; null when it could not be read (the update panel then stays hidden). */
+    themeId?: StoreThemeId | null
 }) {
     const [data, setData] = useState<OverviewData | null>(initialData)
     // When the server already provided data, render it immediately: no fetch, no skeleton.
@@ -290,6 +294,8 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null }
                     </>
                 )}
             </StatStrip>
+
+            {themeId && <ThemeUpgradePanel slug={slug} orgSlug={orgSlug} themeId={themeId} />}
 
             {paymentsNeeded && (
                 <Panel title="Set up payments">

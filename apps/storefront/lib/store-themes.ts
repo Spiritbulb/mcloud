@@ -100,3 +100,16 @@ export function presetForAdoption(
   const preset = THEME_PRESETS.find((p) => p.id === (commerce ? def.shop : def.ngo))
   return preset ? { ...preset.values } : null
 }
+
+/**
+ * What adopting `target` writes: always `settings.themeId` (and nothing else in
+ * settings), plus the theme's default colours only when presetForAdoption says the
+ * store has not chosen its own.
+ */
+export function adoptionWrites(
+  currentTheme: Record<string, unknown>,
+  target: StoreThemeId,
+  commerce: boolean,
+): { settingsPatch: { themeId: StoreThemeId }; themeValues: Record<string, string> | null } {
+  return { settingsPatch: { themeId: target }, themeValues: presetForAdoption(currentTheme, target, commerce) }
+}

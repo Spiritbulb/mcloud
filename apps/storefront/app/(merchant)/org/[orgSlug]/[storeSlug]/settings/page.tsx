@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { getSession } from '@mcloud/auth/server'
-import { getStoreOverview } from '@mcloud/merchant/store-data'
+import { getStoreOverview, getStoreSettingsData } from '@mcloud/merchant/store-data'
+import { resolveThemeId, type StoreThemeId } from '@/lib/store-themes'
 import SettingsHomeClient from './settings-home-client'
 
 export const metadata: Metadata = {
@@ -18,10 +19,16 @@ export default async function SettingsHomePage({
     // its data — no post-mount client round-trip, no skeleton flash.
     const session = await getSession()
     let initialData = null
+    let themeId: StoreThemeId | null = null
     if (session?.user) {
-        const result = await getStoreOverview(session.user.id, storeSlug, orgSlug)
-        if (!result.error) initialData = result.data
+        const [overview, settings] = await Promise.all([
+            getStoreOverview(session.user.id, storeSlug, orgSlug),
+            // Access-checked like the overview; only the theme id leaves the server.
+            getStoreSettingsData(session.user.id, storeSlug, orgSlug),
+        ])
+        if (!overview.error) initialData = overview.data
+        if (!settings.error && settings.data) themeId = resolveThemeId(settings.data.settings)
     }
 
-    return <SettingsHomeClient slug={storeSlug} orgSlug={orgSlug} initialData={initialData} />
+    return <SettingsHomeClient slug={storeSlug} orgSlug={orgSlug} initialData={initialData} themeId={themeId} />
 }

@@ -14,6 +14,8 @@ import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
 import { SECTION_REGISTRY } from '@/lib/sections'
 import { validateSectionTypes } from './section-validate'
 import { revalidateStore } from '@/lib/revalidate-store'
+import { adoptionWrites, isStoreThemeId, themeDef } from '@/lib/store-themes'
+import { getVertical } from '@mcloud/verticals'
 
 type ActionResult = { error: string | null }
 
@@ -139,6 +141,61 @@ export async function patchStoreSettings(
         .eq('id', access.storeId)
     if (!error) revalidateStore(slug)
     return { error: error ? error.message : null }
+}
+
+/**
+ * Switch a store to another layout (the dashboard's Update button). Writes
+ * settings.themeId, and the theme's default colours only for a store still on the
+ * untouched Classic look, so a merchant's own colours always survive
+ * (lib/store-themes.ts adoptionWrites). Owner/admin only.
+ */
+export async function adoptTheme(slug: string, themeId: string): Promise<ActionResult> {
+    const session = await getSession()
+    if (!session?.user) return { error: 'Not signed in' }
+
+    const access = await requireStoreAccess(slug, session.user.id)
+    if (access.error) return { error: 'Store not found' }
+    if (!canManage(access.role)) return { error: 'Not authorized' }
+    if (!isStoreThemeId(themeId) || !themeDef(themeId).released) return { error: 'That design is not available yet.' }
+
+    const supabase = await createClient()
+    const [{ data: store, error: storeError }, { data: themeRow }] = await Promise.all([
+        supabase.from('stores').select('settings, type').eq('id', access.storeId).single(),
+        supabase.from('store_themes').select('*').eq('store_id', access.storeId).maybeSingle(),
+    ])
+    if (storeError || !store) return { error: 'Could not read your store. Try again.' }
+
+    const current =
+        store.settings && typeof store.settings === 'object' && !Array.isArray(store.settings)
+            ? (store.settings as Record<string, unknown>)
+            : {}
+    const writes = adoptionWrites((themeRow ?? {}) as Record<string, unknown>, themeId, getVertical(store.type).commerce)
+
+    // Layout first: if the colour write then fails, the store has its new layout in its
+    // existing colours, never new colours on the old layout.
+    const { error } = await supabase
+        .from('stores')
+        .update({ settings: { ...current, ...writes.settingsPatch } as never })
+        .eq('id', access.storeId)
+    if (error) return { error: 'Could not switch your design. Try again.' }
+
+    if (writes.themeValues) {
+        const values: Record<string, string> = {}
+        for (const [id, value] of Object.entries(writes.themeValues)) {
+            // Presets are ours, but they still land in CSS: same whitelist as every theme write.
+            if (THEME_SCHEMA.some((f) => f.id === id) && isValidThemeValue(id, value)) values[id] = value
+        }
+        const { error } = await supabase
+            .from('store_themes')
+            .upsert({ store_id: access.storeId, ...values, updated_at: new Date().toISOString() }, { onConflict: 'store_id' })
+        if (error) {
+            revalidateStore(slug)
+            return { error: 'Your new design is on, but its colours could not be applied. Pick a preset in the Editor.' }
+        }
+    }
+
+    revalidateStore(slug)
+    return { error: null }
 }
 
 /**
