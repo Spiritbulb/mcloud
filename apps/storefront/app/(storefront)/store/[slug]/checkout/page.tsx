@@ -51,7 +51,7 @@ export default function CheckoutPageContainer() {
                     number: m?.mpesa_till ?? m?.mpesa_paybill ?? '',
                     account: m?.mpesa_account,
                     enabled: m?.enabled ?? false,
-                    darajaEnabled: m?.darajaEnabled ?? false,
+                    darajaEnabled: (m?.darajaEnabled ?? false) || !!m?.platformStk,
                     paypalEnabled: p?.enabled ?? false,
                     pesapalEnabled: psa?.enabled ?? false,
                     intasendEnabled: isend?.enabled ?? false,

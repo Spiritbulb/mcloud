@@ -4,7 +4,7 @@ import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { canManage, requireStoreAccess, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
-import { channelSpecFromMpesa, darajaReady, palplussStkEligible, palplussStorePaymentsOn } from '@mcloud/merchant/palpluss-store'
+import { channelSpecFromMpesa, darajaReady, palplussStkEligible, palplussStorePaymentsOn, withPlatformStk } from '@mcloud/merchant/palpluss-store'
 import { publicIntegration } from '@/lib/integration-public'
 import { readOptionalSession } from '@/lib/optional-session'
 
@@ -85,11 +85,12 @@ export async function GET(
         const view = manager ? sanitize : publicIntegration
 
         // A Pro store without its own Daraja keys is charged through PalPluss (web does the push), straight
-        // to its till or paybill. Checkout only knows "STK on" as darajaEnabled, so shoppers see it as on;
-        // managers keep seeing their real settings. Decided from the store's own M-PESA row, the same
-        // row web's stk-push reads, so the page never offers a prompt the route would refuse.
+        // to its till or paybill. Shoppers are told darajaEnabled (all checkout understands); managers keep
+        // their real settings and get platformStk, so testing their own store shows the shopper form.
+        // Decided from the store's own M-PESA row, the same row web's stk-push reads, so the page never
+        // offers a prompt the route would refuse.
         let platformStk = false
-        if (!manager && palplussStorePaymentsOn()) {
+        if (palplussStorePaymentsOn()) {
             const row = pgIntegrations?.find(i => i.provider === 'mpesa')
             const spec = row?.is_active ? channelSpecFromMpesa(row.config) : null
             if (row && spec) {
@@ -101,10 +102,9 @@ export async function GET(
                 })
             }
         }
-        const mpesaView = view(dataMap['mpesa'])
 
         return NextResponse.json({
-            mpesa: platformStk && mpesaView ? { ...mpesaView, darajaEnabled: true } : mpesaView,
+            mpesa: withPlatformStk(view(dataMap['mpesa']), platformStk, manager),
             paypal: view(dataMap['paypal']),
             pesapal: view(dataMap['pesapal']),
             intasend: view(dataMap['intasend']),

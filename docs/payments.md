@@ -76,9 +76,11 @@ goes straight to the merchant's till or paybill (PalPluss `channelId`); we never
 - **Same endpoints, no theme changes.** The checkout calls `POST /payments/mpesa/stk-push` and polls
   `GET /payments/mpesa/status` on web as before. `stk-push` picks PalPluss when `palplussSpecForStore` says the
   store is eligible (switch on, Pro via `getStorePlan`, chargeable manual details, no working Daraja). Otherwise
-  it falls through to Daraja, unchanged. The storefront's `integrations` GET reports `darajaEnabled: true` to
-  **shoppers only** for an eligible store, so checkout shows the STK form; store managers keep seeing their real
-  settings (so an owner testing their own store while signed in still sees the manual code form; use a private window).
+  it falls through to Daraja, unchanged. The storefront's `integrations` GET (`withPlatformStk`) reports
+  `darajaEnabled: true` to **shoppers** for an eligible store, so checkout shows the STK form. **Managers** keep
+  their real `darajaEnabled` (the Payments screen shows the Daraja keys' real state) and get `platformStk: true`;
+  checkout and the donate box read `darajaEnabled || platformStk`, so an owner testing their own store sees the
+  same form as a shopper.
 - **Channel.** `ensureChannel` finds the store's till or paybill among PalPluss channels (list, match on type,
   shortcode and account) and registers it on first use, never as the default. No table stores it; an in-memory
   cache only saves calls.

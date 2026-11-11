@@ -1,7 +1,7 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
 import {
-  channelMatches, channelName, darajaReady, channelSpecFromMpesa, palplussOutcome, palplussStkEligible, palplussStorePaymentsOn,
+  channelMatches, channelName, darajaReady, channelSpecFromMpesa, palplussOutcome, palplussStkEligible, palplussStorePaymentsOn, withPlatformStk,
 } from './palpluss-store.ts'
 
 test('the switch is off unless exactly "1"', () => {
@@ -81,4 +81,15 @@ test('darajaReady mirrors the stk-push route: active and every credential presen
   assert.equal(darajaReady({ ...full, darajaEnabled: false }, true), false)
   for (const k of ['consumerKey', 'consumerSecret', 'passkey', 'shortcode']) assert.equal(darajaReady({ ...full, [k]: '' }, true), false, k)
   assert.equal(darajaReady(null, true), false)
+})
+
+test('withPlatformStk: shoppers see STK on, managers keep real settings plus a flag', () => {
+  const view = { enabled: true, darajaEnabled: false, mpesa_till: '123456' }
+  assert.deepEqual(withPlatformStk(view, true, false), { ...view, darajaEnabled: true })
+  assert.deepEqual(withPlatformStk(view, true, true), { ...view, platformStk: true })
+  assert.equal((withPlatformStk(view, true, true) as { darajaEnabled: boolean }).darajaEnabled, false)
+  // Not on PalPluss, or nothing to show: untouched.
+  assert.equal(withPlatformStk(view, false, false), view)
+  assert.equal(withPlatformStk(view, false, true), view)
+  assert.equal(withPlatformStk(null, true, false), null)
 })

@@ -91,7 +91,7 @@ export function DonateIsland({ slug }: { slug: string }) {
         if (!alive) return
         setIntegrations({
           mpesaEnabled: data?.mpesa?.enabled ?? false,
-          darajaEnabled: data?.mpesa?.darajaEnabled ?? false,
+          darajaEnabled: (data?.mpesa?.darajaEnabled ?? false) || !!data?.mpesa?.platformStk,
           paypalEnabled: data?.paypal?.enabled ?? false,
         })
       })

@@ -98,3 +98,15 @@ export function palplussOutcome(txn: { status?: unknown; amount?: unknown }, ord
             return 'pending'
     }
 }
+
+/**
+ * What the integrations endpoint tells a caller about M-PESA when the store is charged through
+ * PalPluss. Checkout only understands "STK on" as `darajaEnabled`, so shoppers are told that.
+ * Managers keep their real `darajaEnabled` (the Payments screen shows the Daraja keys' real
+ * state) and get `platformStk: true` instead; checkout reads `darajaEnabled || platformStk`,
+ * so the owner testing their own store sees the same form as a shopper.
+ */
+export function withPlatformStk<T extends Record<string, unknown>>(view: T | null, platformStk: boolean, manager: boolean): T | null {
+    if (!view || !platformStk) return view
+    return manager ? { ...view, platformStk: true } : { ...view, darajaEnabled: true }
+}
