@@ -9,20 +9,23 @@ const ctx = {
   campaigns: [],
 }
 
-// every known type maps to an existing classic section template key
+// Every type names a section FILE; the theme folder is chosen at render time
+// (lib/store-themes.ts). Classic must ship every file, as it is the fallback.
+import { hasTemplate } from '@mcloud/liquid'
 for (const [type, def] of Object.entries(SECTION_REGISTRY)) {
-  assert.ok(def.templateKey.startsWith('classic/sections/'), `${type} maps to a classic section`)
+  assert.ok(!def.file.includes('/'), `${type} names a bare file`)
+  assert.ok(hasTemplate(`classic/sections/${def.file}`), `${type} has a classic template`)
 }
-assert.equal(SECTION_REGISTRY.hero.templateKey, 'classic/sections/hero')
-assert.equal(SECTION_REGISTRY.collections.templateKey, 'classic/sections/collections-grid')
-assert.equal(SECTION_REGISTRY.featured.templateKey, 'classic/sections/featured-products')
-assert.equal(SECTION_REGISTRY['all-products'].templateKey, 'classic/sections/all-products')
+assert.equal(SECTION_REGISTRY.hero.file, 'hero')
+assert.equal(SECTION_REGISTRY.collections.file, 'collections-grid')
+assert.equal(SECTION_REGISTRY.featured.file, 'featured-products')
+assert.equal(SECTION_REGISTRY['all-products'].file, 'all-products')
 
 // NGO section types map to their templates and pick only { store }
-assert.equal(SECTION_REGISTRY.mission.templateKey, 'classic/sections/mission')
-assert.equal(SECTION_REGISTRY.programs.templateKey, 'classic/sections/programs')
-assert.equal(SECTION_REGISTRY.impact.templateKey, 'classic/sections/impact')
-assert.equal(SECTION_REGISTRY.contact.templateKey, 'classic/sections/contact')
+assert.equal(SECTION_REGISTRY.mission.file, 'mission')
+assert.equal(SECTION_REGISTRY.programs.file, 'programs')
+assert.equal(SECTION_REGISTRY.impact.file, 'impact')
+assert.equal(SECTION_REGISTRY.contact.file, 'contact')
 for (const t of ['mission', 'programs', 'impact', 'contact'] as const) {
   assert.deepEqual(Object.keys(SECTION_REGISTRY[t].pickContext(ctx)), ['store'], `${t} picks only store`)
 }
@@ -45,7 +48,7 @@ assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps fe
 const all = SECTION_REGISTRY['all-products'].pickContext(ctx)
 assert.deepEqual((all as any).products, ctx.products, 'all-products maps products -> products')
 
-assert.equal(SECTION_REGISTRY.campaigns.templateKey, 'classic/sections/campaigns')
+assert.equal(SECTION_REGISTRY.campaigns.file, 'campaigns')
 assert.deepEqual(Object.keys(SECTION_REGISTRY.campaigns.pickContext({
   store: { slug: 's' }, products: [], collections: [], featuredProducts: [], campaigns: [{ id: 'c1' }],
 } as any)).sort(), ['campaigns', 'store'])

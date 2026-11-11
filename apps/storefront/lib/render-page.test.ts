@@ -214,3 +214,20 @@ const shown = await renderPage([{ type: 'hero', settings: { hidden: false } }], 
 assert.ok(shown.includes('sf-hero'), 'hidden: false renders normally')
 
 console.log('render-page.test.ts: hidden section assertions passed')
+
+// ── Themes ─────────────────────────────────────────────────────────────────────
+//
+// A store's theme picks the section templates. A theme that is not released yet
+// (or has no template for a section) falls back to Classic, so a hand-set or stale
+// themeId can never blank a live store.
+
+const themed = (themeId: unknown) => ({ ...ctx, store: { ...ctx.store, settings: { themeId } } })
+const shopPage = [{ type: 'hero' }, { type: 'all-products' }]
+const plain = await renderPage(shopPage, ctx)
+const unreleased = await renderPage(shopPage, themed('studio'))
+assert.ok(unreleased.includes('sf-hero') && unreleased.includes('id="products"'), 'an unreleased theme still renders')
+assert.equal(unreleased, plain, 'and renders exactly Classic')
+assert.equal(await renderPage(shopPage, themed('bogus')), plain, 'an unknown theme is Classic')
+assert.equal(await renderPage(shopPage, themed(undefined)), plain, 'no theme is Classic')
+
+console.log('render-page.test.ts: theme resolution assertions passed')

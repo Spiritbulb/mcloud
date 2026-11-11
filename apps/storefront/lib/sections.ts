@@ -1,6 +1,6 @@
 // lib/sections.ts
-// Storefront-side registry: maps a page section `type` to the repo Liquid
-// section template that renders it and the slice of render context it needs.
+// Storefront-side registry: maps a page section `type` to the Liquid section
+// file that renders it (in whichever theme folder the store uses) and the slice of render context it needs.
 // @mcloud/liquid stays a dumb renderer; this file holds the storefront's
 // knowledge of what data each section consumes. Adding a section type = a new
 // entry here + a .liquid file in packages/liquid.
@@ -37,7 +37,11 @@ export interface PageRenderContext {
 }
 
 export interface SectionDef {
-  templateKey: string
+  /**
+   * The section's Liquid file, without theme or extension ('hero', 'collections-grid').
+   * renderPage picks the folder from the store's theme (lib/store-themes.ts).
+   */
+  file: string
   pickContext: (ctx: PageRenderContext) => Record<string, unknown>
   /** Human name, shown in the Editor's section list. */
   label: string
@@ -89,7 +93,7 @@ const cardStyle: SettingField = {
 
 export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   hero: {
-    templateKey: 'classic/sections/hero',
+    file: 'hero',
     label: 'Hero',
     description: 'Large banner with slides, headline and a call to action.',
     // The hero is ONE shape: a list of slides (a single-image hero is a list of
@@ -137,7 +141,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     ],
   },
   collections: {
-    templateKey: 'classic/sections/collections-grid',
+    file: 'collections-grid',
     label: 'Collections',
     description: 'A grid of your product collections.',
     pickContext: (ctx) => ({ store: ctx.store, collections: ctx.collections }),
@@ -148,21 +152,21 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     ],
   },
   featured: {
-    templateKey: 'classic/sections/featured-products',
+    file: 'featured-products',
     label: 'Featured products',
     description: 'A handful of products you have marked as featured.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.featuredProducts }),
     schema: [...copy('Top Picks', 'Featured Collection'), columns, cardStyle],
   },
   'all-products': {
-    templateKey: 'classic/sections/all-products',
+    file: 'all-products',
     label: 'All products',
     description: 'Every product in your catalog.',
     pickContext: (ctx) => ({ store: ctx.store, products: ctx.products }),
     schema: [...copy('Browse Everything', 'All Products'), columns, cardStyle],
   },
   mission: {
-    templateKey: 'classic/sections/mission',
+    file: 'mission',
     label: 'Mission',
     description: 'Your mission headline and statement.',
     pickContext: (ctx) => ({ store: ctx.store }),
@@ -173,35 +177,35 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     ],
   },
   programs: {
-    templateKey: 'classic/sections/programs',
+    file: 'programs',
     label: 'Programs',
     description: 'Cards describing the work you do.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('What We Do', 'Programs'),
   },
   impact: {
-    templateKey: 'classic/sections/impact',
+    file: 'impact',
     label: 'Impact',
     description: 'Numbers that show what your work adds up to.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('Our Impact', 'Impact'),
   },
   contact: {
-    templateKey: 'classic/sections/contact',
+    file: 'contact',
     label: 'Contact',
     description: 'Your address, email and phone number.',
     pickContext: (ctx) => ({ store: ctx.store }),
     schema: copy('Contact Us', 'Get in Touch'),
   },
   campaigns: {
-    templateKey: 'classic/sections/campaigns',
+    file: 'campaigns',
     label: 'Campaigns',
     description: 'Causes visitors can donate to, with progress.',
     pickContext: (ctx) => ({ store: ctx.store, campaigns: ctx.campaigns }),
     schema: copy('Support a Cause', 'Campaigns'),
   },
   gallery: {
-    templateKey: 'classic/sections/gallery',
+    file: 'gallery',
     label: 'Gallery',
     description: 'A grid of photos with captions.',
     pickContext: (ctx) => ({ store: ctx.store }),
@@ -213,7 +217,7 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
     ],
   },
     services: {
-    templateKey: 'classic/sections/services',
+    file: 'services',
     label: 'Services',
     description: 'Services customers can book.',
     pickContext: (ctx) => ({ store: ctx.store, services: ctx.services }),
