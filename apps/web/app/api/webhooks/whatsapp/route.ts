@@ -26,6 +26,8 @@ export async function POST(req: NextRequest) {
 
     const raw = await req.text()
     if (!verifySignature(raw, req.headers.get('x-hub-signature-256'), cfg.appSecret)) {
+        // Almost always a wrong WHATSAPP_APP_SECRET (it must be the app secret, not a token).
+        console.warn('[whatsapp] webhook rejected: bad signature')
         return NextResponse.json({ error: 'bad signature' }, { status: 401 })
     }
 
@@ -34,6 +36,7 @@ export async function POST(req: NextRequest) {
 
     const messages = parseInbound(payload)
     if (messages.length === 0) return NextResponse.json({ ok: true }) // delivery receipts and the like
+    console.info(`[whatsapp] inbound: ${messages.length} message(s)`)
 
     const graph = createGraphClient({ token: cfg.token, phoneNumberId: cfg.phoneNumberId })
     const ports: Ports = {
