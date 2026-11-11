@@ -11,6 +11,7 @@ import type { Json } from '@mcloud/db/types'
 import { isVerticalId } from '@mcloud/verticals'
 import { seedPageRows } from './seed-pages'
 import { normalizeSlug, RESERVED_STORE_SLUGS, isValidSlug, slugFromName } from './slug'
+import { newStoreRow } from './new-store'
 
 export type Role = 'owner' | 'admin' | 'member' | string
 
@@ -228,7 +229,7 @@ export async function createStoreForUser(
 
     const { data: store, error } = await supabase
         .from('stores')
-        .insert({ name, slug, org_id: input.orgId, owner_id: userId, type })
+        .insert(newStoreRow({ name, slug, orgId: input.orgId, userId, type }))
         .select('id, slug')
         .single()
     if (error || !store) return { error: error?.message ?? 'Failed to create store', slug: null }
