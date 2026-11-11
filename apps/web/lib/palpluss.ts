@@ -142,7 +142,7 @@ export async function listChannels(key: PalplussKey = 'store'): Promise<Palpluss
 /** Register a till or paybill. Never set as the default: store channels are always picked by id. */
 export async function createChannel(input: {
   name: string
-  type: 'PAYBILL' | 'TILL_NUMBER'
+  type: 'PAYBILL' | 'TILL'
   shortcode: string
   accountNumber: string | null
   key?: PalplussKey

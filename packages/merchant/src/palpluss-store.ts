@@ -12,7 +12,8 @@ export function palplussStorePaymentsOn(env: Record<string, string | undefined> 
 }
 
 export interface PalplussChannelSpec {
-    type: 'PAYBILL' | 'TILL_NUMBER'
+    /** The API's channel types are PAYBILL and TILL (its docs say TILL_NUMBER; the live API rejects that). */
+    type: 'PAYBILL' | 'TILL'
     shortcode: string
     /** Paybill account number; null for a till. */
     accountNumber: string | null
@@ -39,7 +40,7 @@ export function channelSpecFromMpesa(cfg: unknown): PalplussChannelSpec | null {
     }
     const shortcode = str(cfg.mpesa_till)
     if (!SHORTCODE.test(shortcode)) return null
-    return { type: 'TILL_NUMBER', shortcode, accountNumber: null }
+    return { type: 'TILL', shortcode, accountNumber: null }
 }
 
 /** Does the store's own Daraja setup work (on, and every credential present)? Mirrors the stk-push route. */
@@ -57,7 +58,9 @@ export interface PalplussChannel {
 
 /** Does an existing PalPluss channel already describe exactly this spec? */
 export function channelMatches(ch: PalplussChannel, spec: PalplussChannelSpec): boolean {
-    return ch.type === spec.type && String(ch.shortcode) === spec.shortcode && (ch.accountNumber ?? '') === (spec.accountNumber ?? '')
+    // A till may come back as TILL or, per the docs, TILL_NUMBER.
+    const type = ch.type === 'TILL_NUMBER' ? 'TILL' : ch.type
+    return type === spec.type && String(ch.shortcode) === spec.shortcode && (ch.accountNumber ?? '') === (spec.accountNumber ?? '')
 }
 
 /** A readable, per-store channel name. The store id keeps channels of different stores apart. */

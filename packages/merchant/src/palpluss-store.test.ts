@@ -11,10 +11,10 @@ test('the switch is off unless exactly "1"', () => {
   assert.equal(palplussStorePaymentsOn({ PALPLUSS_STORE_PAYMENTS: '1' }), true)
 })
 
-test('till details become a TILL_NUMBER spec', () => {
-  assert.deepEqual(channelSpecFromMpesa({ mpesa_type: 'till', mpesa_till: ' 123456 ' }), { type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null })
+test('till details become a TILL spec', () => {
+  assert.deepEqual(channelSpecFromMpesa({ mpesa_type: 'till', mpesa_till: ' 123456 ' }), { type: 'TILL', shortcode: '123456', accountNumber: null })
   // Missing mpesa_type defaults to a till, as the checkout does.
-  assert.deepEqual(channelSpecFromMpesa({ mpesa_till: '5551234' }), { type: 'TILL_NUMBER', shortcode: '5551234', accountNumber: null })
+  assert.deepEqual(channelSpecFromMpesa({ mpesa_till: '5551234' }), { type: 'TILL', shortcode: '5551234', accountNumber: null })
 })
 
 test('paybill needs a paybill number and an account number', () => {
@@ -38,19 +38,19 @@ test('channelMatches compares type, shortcode and account', () => {
   const spec = { type: 'PAYBILL', shortcode: '400200', accountNumber: 'SHOP1' } as const
   assert.equal(channelMatches({ id: 'c', type: 'PAYBILL', shortcode: '400200', accountNumber: 'SHOP1' }, spec), true)
   assert.equal(channelMatches({ id: 'c', type: 'PAYBILL', shortcode: '400200', accountNumber: 'OTHER' }, spec), false)
-  assert.equal(channelMatches({ id: 'c', type: 'TILL_NUMBER', shortcode: '400200', accountNumber: null }, spec), false)
-  const till = { type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null } as const
-  assert.equal(channelMatches({ id: 'c', type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null }, till), true)
-  assert.equal(channelMatches({ id: 'c', type: 'TILL_NUMBER', shortcode: '123456', accountNumber: '' }, till), true)
-  assert.equal(channelMatches({ id: 'c', type: 'TILL_NUMBER', shortcode: '999999', accountNumber: null }, till), false)
+  assert.equal(channelMatches({ id: 'c', type: 'TILL', shortcode: '400200', accountNumber: null }, spec), false)
+  const till = { type: 'TILL', shortcode: '123456', accountNumber: null } as const
+  assert.equal(channelMatches({ id: 'c', type: 'TILL', shortcode: '123456', accountNumber: null }, till), true)
+  assert.equal(channelMatches({ id: 'c', type: 'TILL', shortcode: '123456', accountNumber: '' }, till), true)
+  assert.equal(channelMatches({ id: 'c', type: 'TILL', shortcode: '999999', accountNumber: null }, till), false)
 })
 
 test('channelName carries a short store id and the number', () => {
-  assert.equal(channelName('abcdef12-3456', { type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null }), 'mcloud abcdef12 till 123456')
+  assert.equal(channelName('abcdef12-3456', { type: 'TILL', shortcode: '123456', accountNumber: null }), 'mcloud abcdef12 till 123456')
 })
 
 test('eligibility needs the switch, Pro, a chargeable spec and no working Daraja', () => {
-  const spec = { type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null } as const
+  const spec = { type: 'TILL', shortcode: '123456', accountNumber: null } as const
   const ok = { switchOn: true, plan: 'pro', spec, darajaReady: false } as const
   assert.equal(palplussStkEligible(ok), true)
   assert.equal(palplussStkEligible({ ...ok, switchOn: false }), false)
@@ -92,4 +92,9 @@ test('withPlatformStk: shoppers see STK on, managers keep real settings plus a f
   assert.equal(withPlatformStk(view, false, false), view)
   assert.equal(withPlatformStk(view, false, true), view)
   assert.equal(withPlatformStk(null, true, false), null)
+})
+
+test('a channel the API names TILL_NUMBER still matches a till spec', () => {
+  const till = { type: 'TILL', shortcode: '123456', accountNumber: null } as const
+  assert.equal(channelMatches({ id: 'c', type: 'TILL_NUMBER', shortcode: '123456', accountNumber: null }, till), true)
 })
