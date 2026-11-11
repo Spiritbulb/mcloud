@@ -1,4 +1,4 @@
--- NOT YET APPLIED. Review, then run in the Supabase SQL editor (or apply_migration).
+-- -- Applied manually before the migration runner (confirmed 2026-11-09).
 --
 -- Why: every function in `public` was executable by the public `anon` key, including the
 -- SECURITY DEFINER `adjust_org_wallet` (no caller check: anyone could credit/debit any org's

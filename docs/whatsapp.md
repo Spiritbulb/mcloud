@@ -43,7 +43,7 @@ in `deps.ts`, and add tests. `handle.ts` does not change.
 
 1. Meta app with the WhatsApp product, a registered number, and a permanent **system user** token.
 2. Set the `WHATSAPP_*` variables on `apps/web` (names in [environment.md](environment.md)).
-3. Apply `migrations/20261109_whatsapp_merchant_bot.sql`, then regenerate types
+3. Apply `migrations/20261109_whatsapp_merchant_bot.sql` with `npm run db:migrate`, then regenerate types
    (`npm run sb-typegen -w @mcloud/web`) and delete the untyped `db()` seam in `whatsapp-store.ts`.
 4. In Meta, set the webhook callback to `https://mcloud.co.ke/api/webhooks/whatsapp`, the verify token
    to `WHATSAPP_VERIFY_TOKEN`, and subscribe to the `messages` field.

@@ -1,4 +1,4 @@
--- NOT YET APPLIED. Run AFTER 20261012_lock_down_privileged_functions_and_wallet_tables.sql
+-- -- Applied manually before the migration runner (confirmed 2026-11-09).sql
 -- AND after the matching app code is deployed to production.
 --
 -- Model: all database access is server-side with the service-role key. The browser holds the

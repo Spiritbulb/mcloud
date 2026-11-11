@@ -1,4 +1,4 @@
--- NOT YET APPLIED. Run AFTER 20261014b_reach_users.sql AND after the web app that reads
+-- Applied manually before the migration runner (confirmed 2026-11-09).s
 -- reach_users (apps/web/app/api/mobile/me, reach/confirm-buyer) is deployed.
 --
 -- Why the order matters: until that deploy, /api/mobile/me reads users.role to tell the Reach app

@@ -7,6 +7,7 @@
 // since simple cross-origin GETs don't trigger a preflight.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
+import { computeSeats, countTaken } from '@/lib/seats'
 
 // TODO: tighten to specific origins once known cross-origin consumers are fixed
 const corsHeaders = {
@@ -40,7 +41,7 @@ export async function GET(
 
     const { data: product } = await admin
         .from('products')
-        .select('id, name, description, price, images, is_active')
+        .select('id, name, description, price, images, is_active, inventory_quantity, track_inventory')
         .eq('id', productId)
         .eq('store_id', store.id)
         .eq('is_active', true)
@@ -50,6 +51,23 @@ export async function GET(
         return NextResponse.json({ error: 'Product not found' }, { status: 404, headers: noStore })
     }
 
+    // Seats left for products that track inventory. See lib/seats.ts: stock is only
+    // decremented for paid reach orders, so every other booking is subtracted here.
+    let taken = 0
+    if (product.track_inventory !== false) {
+        const { data: items } = await admin
+            .from('order_items')
+            .select('quantity, order:orders!inner(store_id, status, source)')
+            .eq('product_id', product.id)
+            .eq('order.store_id', store.id)
+        taken = countTaken((items ?? []) as unknown as Parameters<typeof countTaken>[0])
+    }
+    const { trackInventory, seatsLeft } = computeSeats({
+        trackInventory: product.track_inventory,
+        capacity: product.inventory_quantity,
+        taken,
+    })
+
     return NextResponse.json(
         {
             id: product.id,
@@ -58,6 +76,9 @@ export async function GET(
             price: product.price,
             currency: store.currency,
             image: Array.isArray(product.images) ? product.images[0] ?? null : null,
+            trackInventory,
+            taken,
+            seatsLeft,
         },
         { headers: noStore },
     )
