@@ -58,3 +58,15 @@ import { adoptionWrites } from './store-themes'
   assert.deepEqual(toClassic2.themeValues, preset('classic'), 'Classic 2 keeps the Classic look')
 }
 console.log('store-themes.test.ts: adoption assertions passed')
+
+// ── Released means complete ─────────────────────────────────────────────────────
+// A theme is offered to merchants only when it ships every Classic file, so a released
+// theme never silently falls back to Classic for a section.
+import { hasTemplate } from '@mcloud/liquid'
+const FILES = ['hero', 'collections-grid', 'featured-products', 'all-products', 'services', 'gallery',
+  'mission', 'programs', 'impact', 'contact', 'campaigns', 'product-card']
+for (const t of STORE_THEMES.filter((x) => x.released)) {
+  for (const f of FILES) assert.ok(hasTemplate(`${t.id}/sections/${f}`), `${t.id} ships ${f}`)
+}
+assert.equal(STORE_THEMES.find((t) => t.id === UPGRADE_TARGET)?.released, true, 'the Update target is released')
+console.log('store-themes.test.ts: release completeness passed')

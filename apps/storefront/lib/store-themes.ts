@@ -33,7 +33,7 @@ export const STORE_THEMES: readonly StoreThemeDef[] = [
     description: 'The editorial look, refreshed: more space, larger images, cleaner cards.',
     defaultPreset: { shop: 'classic', ngo: 'classic' },
     suggestedPresets: ['classic', 'craft', 'minimal'],
-    released: false,
+    released: true,
   },
   {
     id: 'studio',

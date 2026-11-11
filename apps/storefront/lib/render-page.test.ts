@@ -231,3 +231,27 @@ assert.equal(await renderPage(shopPage, themed('bogus')), plain, 'an unknown the
 assert.equal(await renderPage(shopPage, themed(undefined)), plain, 'no theme is Classic')
 
 console.log('render-page.test.ts: theme resolution assertions passed')
+
+// ── Every released theme keeps the page contract ───────────────────────────────
+import { STORE_THEMES } from './store-themes'
+for (const t of STORE_THEMES.filter((x) => x.released && x.id !== 'classic')) {
+  const ngo = (settings: Record<string, unknown>) => ({
+    store: { id: 's', name: 'KFS', slug: 's', currency: 'KES', settings: { ...settings, themeId: t.id }, commerce: false },
+    products: [], collections: [], featuredProducts: [], campaigns: [],
+  })
+  const page = await renderPage(
+    [{ type: 'hero' }, { type: 'mission' }, { type: 'programs' }, { type: 'impact' }, { type: 'contact' }],
+    ngo({ missionHeadline: 'H', mission: 'M', programs: [{ title: 'Advocacy' }], impactStats: [{ value: '10', label: 'Wells' }] }),
+  )
+  assert.ok(page.includes(`sf-t-${t.id}`), `${t.id}: renders its own templates`)
+  assert.ok(!page.includes('#products') && !page.includes('Shop now'), `${t.id}: an NGO gets no shop CTA`)
+  for (const cls of ['sf-hero', 'sf-mission', 'sf-programs', 'sf-impact', 'sf-contact']) {
+    assert.ok(page.includes(cls), `${t.id}: renders ${cls}`)
+  }
+  for (const i of [0, 1, 2, 3, 4]) assert.ok(page.includes(`data-mcloud-section="${i}"`), `${t.id}: anchors section ${i}`)
+
+  const shop = { ...ctx, store: { ...ctx.store, settings: { themeId: t.id } } }
+  const hiddenHero = await renderPage([{ type: 'hero', settings: { hidden: true } }, { type: 'all-products' }], shop)
+  assert.ok(!hiddenHero.includes('sf-hero') && hiddenHero.includes('data-mcloud-section="1"'), `${t.id}: hidden keeps indexes`)
+}
+console.log('render-page.test.ts: per-theme page contract passed')

@@ -33,5 +33,9 @@ for (const theme of themeIds()) {
   const featEmpty = await renderTemplate(`${theme}/sections/featured-products`, { store, products: [] })
   assert.ok(!featEmpty.includes('Top Picks'), 'featured-products with empty list renders nothing (no heading)')
 
+  // A theme marks its own markup, so theme CSS can scope to it; Classic stays untouched.
+  if (theme === 'classic') assert.ok(!/sf-t-/.test(ap), 'classic carries no theme class')
+  else assert.ok(ap.includes(`sf-t-${theme}`), `${theme} marks its sections`)
+
   console.log('sections-parity.test.ts: all assertions passed')
 }

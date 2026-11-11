@@ -1,0 +1,51 @@
+{%- assign heading = section.heading | default: 'Top Picks' -%}
+{%- assign eyebrow = section.eyebrow | default: 'Featured Collection' -%}
+{%- comment -%} Layout settings; defaults equal the original grid and card. {%- endcomment -%}
+{%- assign columns = section.columns | default: 'auto' -%}
+{%- unless columns == '2' or columns == '3' or columns == '4' -%}{%- assign columns = 'auto' -%}{%- endunless -%}
+{%- assign card_style = section.card_style | default: 'flat' -%}
+{%- unless card_style == 'bordered' or card_style == 'shadow' -%}{%- assign card_style = 'flat' -%}{%- endunless -%}
+{%- if products and products.size > 0 -%}
+<section class="sf-t-classic-2 py-16 md:py-28">
+  <div class="container mx-auto max-w-6xl px-6">
+    {{- - HEADER - -}}
+    <div class="mb-10 md:mb-14">
+      <div class="flex justify-center mb-3">
+        <span class="sf-eyebrow inline-block">
+          {{ eyebrow }}
+        </span>
+      </div>
+      <h2 class="sf-heading text-4xl md:text-5xl font-normal text-center tracking-tight">{{ heading }}</h2>
+    </div>
+
+    {{- - GRID - -}}
+    <div class="sf-grid sf-grid--{{ columns }} grid gap-6 md:gap-8">
+      {%- for product in products -%}
+        {%- render 'classic-2/sections/product-card', store: store, product: product, card_style: card_style -%}
+      {%- endfor -%}
+    </div>
+
+    {{- - VIEW ALL - -}}
+    <div class="mt-10 flex justify-center">
+      <a
+        href="/store/{{ store.slug }}/products"
+        class="sf-pill sf-pill-inactive border px-8 py-2.5 text-sm inline-flex items-center gap-2 transition-all"
+      >
+        View all products
+        <svg
+          width="12"
+          height="12"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          {% raw %}<path d="M5 12h14M12 5l7 7-7 7"/>{% endraw %}
+        </svg>
+      </a>
+    </div>
+  </div>
+</section>
+{%- endif -%}

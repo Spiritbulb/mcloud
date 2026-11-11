@@ -1,0 +1,95 @@
+/* Store themes: layout-specific styling, one block per theme.
+   Every rule is scoped to .storefront-root[data-sf-theme="<id>"] (set by LayoutWrapper from
+   settings.themeId), so a theme can never restyle another. Colours always come from the
+   --sf-* tokens a preset sets; a theme decides shape, spacing and type, not palette. */
+
+/* Shared by the new themes: a small uppercase label above a heading (Classic uses a badge). */
+.sf-eyebrow {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--sf-accent);
+}
+
+/* ── Classic 2 ──────────────────────────────────────────────────────────────────
+   The editorial look, refreshed: more air, larger images, a frosted hero card,
+   quieter chrome. */
+.storefront-root[data-sf-theme="classic-2"] {
+    --sf-c2-radius: max(var(--sf-border-radius), 4px);
+}
+
+.storefront-root[data-sf-theme="classic-2"] .sf-heading {
+    letter-spacing: -0.02em;
+}
+
+/* Hero: a frosted card that lets the image through, with more room inside. */
+.storefront-root[data-sf-theme="classic-2"] .sf-hero-card {
+    background-color: color-mix(in srgb, var(--sf-background) 86%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: var(--sf-c2-radius);
+    padding: clamp(1.5rem, 3vw, 2.5rem);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.18);
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-hero--split .sf-hero-card,
+.storefront-root[data-sf-theme="classic-2"] .sf-hero--minimal .sf-hero-card {
+    background-color: transparent;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-hero__btn {
+    border-radius: var(--sf-c2-radius);
+    padding: 0.85rem 1.75rem;
+}
+
+/* Product cards: taller images, softer corners, no "View" pill: the whole card is the link. */
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card {
+    border-radius: var(--sf-c2-radius);
+    background-color: transparent;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card__image-wrap {
+    height: 20rem;
+    border-radius: var(--sf-c2-radius);
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card--flat > div:last-child {
+    padding-left: 0.25rem;
+    padding-right: 0.25rem;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card__name {
+    font-size: 1.05rem;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card__price {
+    font-weight: 500;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-product-card__view-btn {
+    display: none;
+}
+
+/* Cards in the other sections follow the same corners. */
+.storefront-root[data-sf-theme="classic-2"] .sf-collection-card,
+.storefront-root[data-sf-theme="classic-2"] .sf-program-card,
+.storefront-root[data-sf-theme="classic-2"] .sf-campaign-card,
+.storefront-root[data-sf-theme="classic-2"] .sf-service-card {
+    border-radius: var(--sf-c2-radius);
+    overflow: hidden;
+}
+
+/* Quieter chrome: a taller nav with a hairline, a roomier footer. */
+.storefront-root[data-sf-theme="classic-2"] .sf-nav {
+    border-bottom-color: color-mix(in srgb, var(--sf-foreground) 8%, transparent);
+    backdrop-filter: saturate(1.4) blur(8px);
+    -webkit-backdrop-filter: saturate(1.4) blur(8px);
+    background-color: color-mix(in srgb, var(--sf-background) 92%, transparent);
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-nav > div {
+    height: 4rem;
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-footer {
+    border-top-color: color-mix(in srgb, var(--sf-foreground) 8%, transparent);
+}
+.storefront-root[data-sf-theme="classic-2"] .sf-footer > div {
+    padding-top: 2.5rem;
+    padding-bottom: 2.5rem;
+}
