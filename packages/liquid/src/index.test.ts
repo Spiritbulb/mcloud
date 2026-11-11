@@ -40,3 +40,11 @@ const money = await renderTemplate('classic/sections/product-card', { store, pro
 assert.ok(money.includes('1,000') || money.includes('1000'), 'product-card renders a formatted price')
 
 console.log('index.test.ts: all assertions passed')
+
+// ── Theme helpers ───────────────────────────────────────────────────────────────
+import { hasTemplate, themeIds } from './index'
+assert.equal(hasTemplate('classic/sections/hero'), true, 'classic hero exists')
+assert.equal(hasTemplate('nope/sections/hero'), false, 'unknown theme has no hero')
+assert.equal(themeIds()[0], 'classic', 'classic is listed first')
+assert.ok(themeIds().every((t) => hasTemplate(`${t}/sections/hero`)), 'every listed theme has a hero')
+console.log('index.test.ts: theme helper assertions passed')
