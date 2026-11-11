@@ -14,7 +14,7 @@ import { THEME_SCHEMA, isValidThemeValue } from '@/lib/theme-schema'
 import { SECTION_REGISTRY } from '@/lib/sections'
 import { validateSectionTypes } from './section-validate'
 import { revalidateStore } from '@/lib/revalidate-store'
-import { adoptionWrites, isStoreThemeId, themeDef } from '@/lib/store-themes'
+import { adoptionWrites, isStoreThemeId, themeDef, themeRowForAdoption } from '@/lib/store-themes'
 import { getVertical } from '@mcloud/verticals'
 
 type ActionResult = { error: string | null }
@@ -159,17 +159,18 @@ export async function adoptTheme(slug: string, themeId: string): Promise<ActionR
     if (!isStoreThemeId(themeId) || !themeDef(themeId).released) return { error: 'That design is not available yet.' }
 
     const supabase = await createClient()
-    const [{ data: store, error: storeError }, { data: themeRow }] = await Promise.all([
+    const [{ data: store, error: storeError }, themeRead] = await Promise.all([
         supabase.from('stores').select('settings, type').eq('id', access.storeId).single(),
         supabase.from('store_themes').select('*').eq('store_id', access.storeId).maybeSingle(),
     ])
-    if (storeError || !store) return { error: 'Could not read your store. Try again.' }
+    const themeRow = themeRowForAdoption(themeRead)
+    if (storeError || !store || !themeRow) return { error: 'Could not read your store. Nothing was changed. Try again.' }
 
     const current =
         store.settings && typeof store.settings === 'object' && !Array.isArray(store.settings)
             ? (store.settings as Record<string, unknown>)
             : {}
-    const writes = adoptionWrites((themeRow ?? {}) as Record<string, unknown>, themeId, getVertical(store.type).commerce)
+    const writes = adoptionWrites(themeRow, themeId, getVertical(store.type).commerce)
 
     // Layout first: if the colour write then fails, the store has its new layout in its
     // existing colours, never new colours on the old layout.

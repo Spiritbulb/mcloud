@@ -70,3 +70,12 @@ for (const t of STORE_THEMES.filter((x) => x.released)) {
 }
 assert.equal(STORE_THEMES.find((t) => t.id === UPGRADE_TARGET)?.released, true, 'the Update target is released')
 console.log('store-themes.test.ts: release completeness passed')
+
+// ── adoptTheme must not mistake a failed read for "untouched Classic" ──────────
+import { themeRowForAdoption } from './store-themes'
+{
+  assert.equal(themeRowForAdoption({ data: null, error: { message: 'timeout' } }), null, 'a read error stops the update')
+  assert.deepEqual(themeRowForAdoption({ data: null, error: null }), {}, 'no row at all is the default look')
+  assert.deepEqual(themeRowForAdoption({ data: { primary_color: '#123456' }, error: null }), { primary_color: '#123456' })
+}
+console.log('store-themes.test.ts: read-error assertions passed')

@@ -113,3 +113,13 @@ export function adoptionWrites(
 ): { settingsPatch: { themeId: StoreThemeId }; themeValues: Record<string, string> | null } {
   return { settingsPatch: { themeId: target }, themeValues: presetForAdoption(currentTheme, target, commerce) }
 }
+
+/**
+ * The store's theme row as adoptTheme should see it: `{}` when the store has none,
+ * null when the read FAILED. A failed read must stop the update, or it would look
+ * like the untouched Classic look and the merchant's own colours would be replaced.
+ */
+export function themeRowForAdoption(result: { data: unknown; error: unknown }): Record<string, unknown> | null {
+  if (result.error) return null
+  return result.data && typeof result.data === 'object' ? (result.data as Record<string, unknown>) : {}
+}

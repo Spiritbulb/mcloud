@@ -48,7 +48,7 @@ export default function StoreNav({ store, pages = [], theme = 'classic' }: { sto
 
     return (
         <nav className="sf-nav sticky top-0 z-40" data-sf-nav={theme}>
-            <div className="container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
+            <div className="sf-nav__bar container mx-auto px-4 md:px-6 h-14 flex items-center justify-between gap-4">
 
                 <Link href={href('/')} className="sf-nav__logo flex items-center gap-3">
                     {store.logo_url ? (

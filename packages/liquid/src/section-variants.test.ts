@@ -63,3 +63,15 @@ for (const theme of themeIds()) {
     assert.match(two, /sf-grid--2/)
   })
 }
+
+// A slide with a photo is marked, so a theme can style text "on the image" without
+// guessing (Studio draws white type there). Classic's markup is left untouched.
+for (const theme of themeIds().filter((t) => t !== 'classic')) {
+  test(`${theme}: hero marks slides that have an image`, async () => {
+    const store = { name: 'S', slug: 's', settings: {}, commerce: true }
+    const withImg = await renderTemplate(`${theme}/sections/hero`, { store, campaigns: [], section: {}, slides: [{ title: 'A', image: 'https://x/a.jpg', buttonText: 'Go' }] })
+    const noImg = await renderTemplate(`${theme}/sections/hero`, { store, campaigns: [], section: {}, slides: [{ title: 'A', image: '', buttonText: 'Go' }] })
+    assert.match(withImg, /sf-hero__slide--image/)
+    assert.doesNotMatch(noImg, /sf-hero__slide--image/)
+  })
+}

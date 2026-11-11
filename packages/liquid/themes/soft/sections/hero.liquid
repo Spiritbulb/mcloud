@@ -44,7 +44,7 @@
   <div class="sf-hero__track" id="sf-hero-track">
     {%- for slide in slides -%}
       <div
-        class="sf-hero__slide absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
+        class="sf-hero__slide{% if slide.image and slide.image != '' %} sf-hero__slide--image{% endif %} absolute inset-0 transition-opacity duration-700{% unless forloop.first %} opacity-0 pointer-events-none{% else %} opacity-100{% endunless %}"
         data-index="{{ forloop.index0 }}"
       >
         {%- comment -%}

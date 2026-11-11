@@ -3,7 +3,8 @@
    settings.themeId), so a theme can never restyle another. Colours always come from the
    --sf-* tokens a preset sets; a theme decides shape, spacing and type, not palette. */
 
-/* Shared by the new themes: a small uppercase label above a heading (Classic uses a badge). */
+/* Shared by the new themes: a small uppercase label above a heading (Classic uses a badge).
+   Not under a theme selector on purpose: no Classic template or React page uses it. */
 .sf-eyebrow {
     font-size: 0.72rem;
     font-weight: 600;
@@ -83,7 +84,7 @@
     -webkit-backdrop-filter: saturate(1.4) blur(8px);
     background-color: color-mix(in srgb, var(--sf-background) 92%, transparent);
 }
-.storefront-root[data-sf-theme="classic-2"] .sf-nav > div {
+.storefront-root[data-sf-theme="classic-2"] .sf-nav__bar {
     height: 4rem;
 }
 .storefront-root[data-sf-theme="classic-2"] .sf-footer {
@@ -126,8 +127,8 @@
     max-width: 56rem;
     padding: 0;
 }
-.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card h1,
-.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card p {
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__slide--image .sf-hero-card h1,
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__slide--image .sf-hero-card p {
     color: #fff !important;
 }
 .storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero-card h1 {
@@ -137,13 +138,14 @@
     line-height: 0.92 !important;
     letter-spacing: -0.04em;
 }
-.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-badge-outline,
-.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-eyebrow {
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__slide--image .sf-badge-outline,
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__slide--image .sf-eyebrow {
     color: #fff;
     border-color: rgba(255, 255, 255, 0.6);
 }
-/* On the image, the CTA is white so it never sinks into a dark photo. */
-.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__btn {
+/* On the image, the CTA is white so it never sinks into a dark photo. Without an image
+   the hero is the primary colour, and the normal button colours apply. */
+.storefront-root[data-sf-theme="studio"] .sf-hero--full .sf-hero__slide--image .sf-hero__btn {
     background-color: #fff;
     color: #0a0a0a;
     border-color: #fff;
@@ -198,7 +200,7 @@
 .storefront-root[data-sf-theme="studio"] .sf-nav {
     border-bottom: 2px solid var(--sf-foreground);
 }
-.storefront-root[data-sf-theme="studio"] .sf-nav > div {
+.storefront-root[data-sf-theme="studio"] .sf-nav__bar {
     position: relative;
     height: 4.25rem;
 }
@@ -212,7 +214,7 @@
         margin-left: 0;
     }
     /* The logo left the flow, so the icons need pushing to the right edge. */
-    .storefront-root[data-sf-theme="studio"] .sf-nav > div > :last-child {
+    .storefront-root[data-sf-theme="studio"] .sf-nav__bar > :last-child {
         margin-left: auto;
     }
 }
@@ -338,7 +340,7 @@
     border-bottom: 0;
     padding: 0.75rem 0.75rem 0;
 }
-.storefront-root[data-sf-theme="soft"] .sf-nav > div {
+.storefront-root[data-sf-theme="soft"] .sf-nav__bar {
     max-width: none;
     height: 3.5rem;
     border-radius: 9999px;

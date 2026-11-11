@@ -24,6 +24,7 @@ import type { SectionOp } from './section-ops'
 import type { ItemOp } from './item-ops'
 import { seedSection } from './section-seeds-registry'
 import { followSlideIndex } from './slide-follow'
+import { withoutThemeParam } from './start-theme'
 import SettingsFields from './settings-fields'
 import SectionContent, { IconAction, hasSectionContent } from './section-content'
 import ImagePicker from './image-picker'
@@ -181,9 +182,12 @@ export default function EditorClient({
     useEffect(() => {
         if (started.current) return
         started.current = true
-        if (startTheme && startTheme !== resolveThemeId(stateRef.current.saved.settings)) {
+        if (!startTheme) return
+        if (startTheme !== resolveThemeId(stateRef.current.saved.settings)) {
             dispatch({ type: 'setting', key: 'themeId', value: startTheme })
         }
+        // Applied once; drop it so a reload after Save does not re-apply it.
+        try { window.history.replaceState(window.history.state, '', withoutThemeParam(window.location.href)) } catch { /* the edit stands either way */ }
     }, [startTheme, dispatch, stateRef])
 
     // The preview outlines the open section, and scrolls to it when it is opened.
