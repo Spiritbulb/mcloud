@@ -66,6 +66,35 @@ Merchants set an order's payment status by hand only to `pending`, `paid`, `refu
 (`PAYMENT_STATUSES` in `components/store/order-logic.ts`, which `order-actions` validates against).
 The list must stay inside `orders_status_check`; a test pins it.
 
+## PalPluss for Pro stores (STK to the merchant's own till)
+
+A Pro store that has M-PESA on with a **till, or a paybill with its account number**, and no working
+Daraja keys of its own, charges shoppers through PalPluss instead of asking them to type a code. The money
+goes straight to the merchant's till or paybill (PalPluss `channelId`); we never hold it. Off until
+`PALPLUSS_STORE_PAYMENTS=1` is set on **both** web and the storefront.
+
+- **Same endpoints, no theme changes.** The checkout calls `POST /payments/mpesa/stk-push` and polls
+  `GET /payments/mpesa/status` on web as before. `stk-push` picks PalPluss when `palplussSpecForStore` says the
+  store is eligible (switch on, Pro via `getStorePlan`, chargeable manual details, no working Daraja). Otherwise
+  it falls through to Daraja, unchanged. The storefront's `integrations` GET reports `darajaEnabled: true` to
+  **shoppers only** for an eligible store, so checkout shows the STK form; store managers keep seeing their real
+  settings (so an owner testing their own store while signed in still sees the manual code form; use a private window).
+- **Channel.** `ensureChannel` finds the store's till or paybill among PalPluss channels (list, match on type,
+  shortcode and account) and registers it on first use, never as the default. No table stores it; an in-memory
+  cache only saves calls.
+- **Matching and settling.** The order stores `palpluss_transaction_id` (never sent to the browser, which gets
+  the order number back). `POST /api/webhooks/palpluss/store` and the status poll both call `settlePalplussOrder`:
+  re-fetch the transaction from PalPluss, `palplussOutcome` decides (`paid` only from `SUCCESS` with an amount
+  covering `ceil(total)`; a short amount records `payment_status: 'underpaid'`), and `settleDarajaOrder` flips
+  the order once. The receipt number comes from the webhook body only after PalPluss confirmed the payment.
+- **Cost and limits.** Each prompt takes a fee from our PalPluss **service wallet**; if it runs out, prompts
+  fail with `402` and shoppers see "Could not start the M-PESA prompt". Keep the wallet funded. PalPluss allows
+  60 requests a minute per API key and may suspend an account with a poor success ratio; set
+  `PALPLUSS_STORE_API_KEY` so that cannot reach wallet top-ups. Payouts (B2C) are not used and need KYC.
+- **Not verified live.** Unit tests cover the decisions (`palpluss-store.test.ts`). Do one KES 1 order on a Pro
+  test store, with the switch on, before announcing it. Open question: confirm with PalPluss that a channel on a
+  till we do not own is authorised to receive prompts for it (their BYOC `credential_id` is the other option).
+
 ## PayPal
 
 1. `POST /payments/paypal/create-order` with `{ orderId: <orderNumber> }`. The PayPal order

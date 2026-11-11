@@ -41,6 +41,8 @@ add it here.
 | `GOOGLE_SA_EMAIL`, `GOOGLE_SA_PRIVATE_KEY`, `GOOGLE_ADMIN_SUBJECT` | Google service account (adds testers to the beta Google Group) |
 | `BETA_GROUP_EMAIL`, `BETA_PLAY_OPT_IN_URL` | Closed-testing group and opt-in link |
 | `PALPLUSS_API_KEY`, `PALPLUSS_BASE_URL` | PalPluss (wallet top-ups, Reach payments) |
+| `PALPLUSS_STORE_PAYMENTS` | `1` turns on PalPluss STK push for Pro stores' shoppers (see [payments.md](payments.md)). Unset = off, every store behaves as before. **Also set it on the storefront project** (its integrations endpoint decides what checkout shows). Runtime only |
+| `PALPLUSS_STORE_API_KEY` | Optional separate PalPluss key for store checkout, so a store problem cannot affect wallet top-ups. Falls back to `PALPLUSS_API_KEY`. Runtime only |
 | `UPCLOUD_API_TOKEN` | UpCloud (servers) |
 | `WHATSAPP_ACCESS_TOKEN`, `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Cloud API sending (system-user token and the sending number's id). See [whatsapp.md](whatsapp.md). Runtime only |
 | `WHATSAPP_APP_SECRET`, `WHATSAPP_VERIFY_TOKEN` | Verify inbound webhooks (`X-Hub-Signature-256`) and Meta's registration handshake. All four WhatsApp secrets must be set or the integration stays off |

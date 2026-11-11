@@ -34,6 +34,9 @@ VERCEL_TEAM_ID=
 NEXT_PUBLIC_SITE_ORIGIN=             # storefrontUrl() display origin, e.g. https://app.mcloud.co.ke
 NEXT_PUBLIC_STOREFRONT_ORIGIN=       # used by web redirects; listed here for parity
 
+# --- PalPluss store checkout ---
+PALPLUSS_STORE_PAYMENTS=             # "1" = Pro stores' shoppers get a PalPluss STK push (web does the push). Must match apps/web
+
 # --- Possibly needed (confirm during Phase 3) ---
 # HANDOFF_ENC_KEY (only if settings code paths touch the SSO handoff). No AUTH0_* vars (Auth0 is gone).
 ```

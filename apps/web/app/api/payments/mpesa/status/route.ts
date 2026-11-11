@@ -3,6 +3,7 @@ import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { confirmDarajaPayment, settleDarajaOrder } from '@mcloud/merchant/daraja'
 import { notifyPaidOrder } from '@/lib/merchant/notify-paid-order'
+import { settlePalplussOrder } from '@/lib/palpluss-store-payments'
 
 // Don't ask Safaricom more often than this per order (per server instance), and give the
 // STK prompt a moment to be answered first.
@@ -51,6 +52,35 @@ export async function GET(req: NextRequest) {
             paymentStatus = 'completed'
         } else if (outcome === 'failed') {
             paymentStatus = 'failed'
+        }
+    }
+
+    // Same idea for a store charged through PalPluss: if the webhook has not settled it, ask PalPluss.
+    const palplussPushedAt = Date.parse(typeof meta.palpluss_pushed_at === 'string' ? meta.palpluss_pushed_at : '')
+    const waitingPalpluss =
+        order.status === 'pending' &&
+        paymentStatus !== 'completed' &&
+        meta.payment_method === 'palpluss' &&
+        typeof meta.palpluss_transaction_id === 'string' &&
+        Number.isFinite(palplussPushedAt) && now - palplussPushedAt >= MIN_AGE_MS &&
+        now - (lastQuery.get(order.id) ?? 0) >= QUERY_EVERY_MS
+
+    if (waitingPalpluss) {
+        lastQuery.set(order.id, now)
+        try {
+            const { outcome, justSettled } = await settlePalplussOrder(supabase, order)
+            if (justSettled) after(() => notifyPaidOrder(order))
+            if (outcome === 'paid') {
+                status = 'paid'
+                paymentStatus = 'completed'
+            } else if (outcome === 'failed') {
+                paymentStatus = 'failed'
+            } else if (outcome === 'underpaid') {
+                paymentStatus = 'underpaid'
+            }
+        } catch (e) {
+            // PalPluss unreachable: the order stays pending and the next poll tries again.
+            console.error('PalPluss status check failed', e)
         }
     }
 

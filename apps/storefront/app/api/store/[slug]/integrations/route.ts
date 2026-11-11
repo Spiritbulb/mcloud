@@ -3,6 +3,8 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { getSession } from '@mcloud/auth/server'
 import { canManage, requireStoreAccess, requireStoreAccessById } from '@mcloud/merchant/stores'
+import { getStorePlan } from '@mcloud/merchant/plans-server'
+import { channelSpecFromMpesa, darajaReady, palplussStkEligible, palplussStorePaymentsOn } from '@mcloud/merchant/palpluss-store'
 import { publicIntegration } from '@/lib/integration-public'
 import { readOptionalSession } from '@/lib/optional-session'
 
@@ -82,8 +84,27 @@ export async function GET(
         const manager = user ? canManage((await requireStoreAccessById(store.id, user.id)).role) : false
         const view = manager ? sanitize : publicIntegration
 
+        // A Pro store without its own Daraja keys is charged through PalPluss (web does the push), straight
+        // to its till or paybill. Checkout only knows "STK on" as darajaEnabled, so shoppers see it as on;
+        // managers keep seeing their real settings. Decided from the store's own M-PESA row, the same
+        // row web's stk-push reads, so the page never offers a prompt the route would refuse.
+        let platformStk = false
+        if (!manager && palplussStorePaymentsOn()) {
+            const row = pgIntegrations?.find(i => i.provider === 'mpesa')
+            const spec = row?.is_active ? channelSpecFromMpesa(row.config) : null
+            if (row && spec) {
+                platformStk = palplussStkEligible({
+                    switchOn: true,
+                    plan: await getStorePlan(store.id),
+                    spec,
+                    darajaReady: darajaReady(row.config, row.is_active),
+                })
+            }
+        }
+        const mpesaView = view(dataMap['mpesa'])
+
         return NextResponse.json({
-            mpesa: view(dataMap['mpesa']),
+            mpesa: platformStk && mpesaView ? { ...mpesaView, darajaEnabled: true } : mpesaView,
             paypal: view(dataMap['paypal']),
             pesapal: view(dataMap['pesapal']),
             intasend: view(dataMap['intasend']),

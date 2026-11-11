@@ -5,17 +5,25 @@
 
 const BASE = process.env.PALPLUSS_BASE_URL ?? 'https://api.palpluss.com/v1'
 
-function getAuthHeader() {
-  const apiKey = process.env.PALPLUSS_API_KEY
+/**
+ * Which PalPluss API key a call uses. `platform` is the wallet and Reach key. `store` is for
+ * store checkout: PALPLUSS_STORE_API_KEY when set (so a problem with one store, such as a
+ * suspension for failed prompts or the 60 requests a minute limit, cannot take down wallet
+ * top-ups), otherwise the platform key.
+ */
+export type PalplussKey = 'platform' | 'store'
+
+function getAuthHeader(key: PalplussKey = 'platform') {
+  const apiKey = (key === 'store' ? process.env.PALPLUSS_STORE_API_KEY : undefined) || process.env.PALPLUSS_API_KEY
   if (!apiKey) throw new Error('PALPLUSS_API_KEY is not set')
   return `Basic ${Buffer.from(`${apiKey}:`).toString('base64')}`
 }
 
-async function palplussFetch<T>(path: string, init?: RequestInit): Promise<T> {
+async function palplussFetch<T>(path: string, init?: RequestInit, key: PalplussKey = 'platform'): Promise<T> {
   const res = await fetch(`${BASE}${path}`, {
     ...init,
     headers: {
-      Authorization: getAuthHeader(),
+      Authorization: getAuthHeader(key),
       'Content-Type': 'application/json',
       Accept: 'application/json',
       ...init?.headers,
@@ -59,8 +67,19 @@ export type StkInitiateResponse = {
 
 export type PalplussTransaction = {
   transactionId: string
-  status: 'PENDING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'EXPIRED'
+  status: 'PENDING' | 'PROCESSING' | 'SUCCESS' | 'FAILED' | 'CANCELLED' | 'EXPIRED' | 'REVERSED'
   amount: number
+  accountReference?: string | null
+  channelId?: string | null
+}
+
+export type PalplussChannelRow = {
+  id: string
+  type: string
+  shortcode: string
+  name: string
+  accountNumber: string | null
+  isDefault: boolean
 }
 
 export type PalplussWebhookPayload = {
@@ -92,6 +111,9 @@ export async function initiateStkPush(input: {
   accountReference: string // <= 12 chars, shown on customer's M-Pesa statement
   transactionDesc: string // <= 13 chars, shown on customer's PIN prompt
   callbackUrl: string
+  /** Which payment channel (till or paybill) the customer pays. Omitted = the account's default channel. */
+  channelId?: string
+  key?: PalplussKey
 }): Promise<StkInitiateResponse> {
   return palplussFetch<StkInitiateResponse>('/payments/stk', {
     method: 'POST',
@@ -101,11 +123,38 @@ export async function initiateStkPush(input: {
       accountReference: input.accountReference,
       transactionDesc: input.transactionDesc,
       callbackUrl: input.callbackUrl,
+      ...(input.channelId ? { channelId: input.channelId } : {}),
     }),
-  })
+  }, input.key)
 }
 
 /** Fallback for confirming a transaction if a webhook never arrives. Call on demand, not in a loop. */
-export async function getTransaction(transactionId: string): Promise<PalplussTransaction> {
-  return palplussFetch<PalplussTransaction>(`/transactions/${transactionId}`)
+export async function getTransaction(transactionId: string, key: PalplussKey = 'platform'): Promise<PalplussTransaction> {
+  return palplussFetch<PalplussTransaction>(`/transactions/${transactionId}`, undefined, key)
+}
+
+/** Payment channels (tills and paybills) registered on the account. */
+export async function listChannels(key: PalplussKey = 'store'): Promise<PalplussChannelRow[]> {
+  const data = await palplussFetch<{ items?: PalplussChannelRow[] }>('/payment-wallet/channels', undefined, key)
+  return data.items ?? []
+}
+
+/** Register a till or paybill. Never set as the default: store channels are always picked by id. */
+export async function createChannel(input: {
+  name: string
+  type: 'PAYBILL' | 'TILL_NUMBER'
+  shortcode: string
+  accountNumber: string | null
+  key?: PalplussKey
+}): Promise<PalplussChannelRow> {
+  return palplussFetch<PalplussChannelRow>('/payment-wallet/channels', {
+    method: 'POST',
+    body: JSON.stringify({
+      name: input.name,
+      type: input.type,
+      shortcode: input.shortcode,
+      ...(input.accountNumber ? { accountNumber: input.accountNumber } : {}),
+      isDefault: false,
+    }),
+  }, input.key ?? 'store')
 }

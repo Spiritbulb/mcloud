@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { mpesaAmountDue, normalizeKenyanPhone, orderIsPayable } from '@mcloud/merchant/payments'
+import { initiateStkPush } from '@/lib/palpluss'
+import { ensureChannel, palplussSpecForStore } from '@/lib/palpluss-store-payments'
 
 const DARAJA_BASE = process.env.DARAJA_ENV === 'production'
     ? 'https://api.safaricom.co.ke'
@@ -59,9 +61,53 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ success: false, error: 'Phone does not match the order' }, { status: 403 })
         }
         const orderMeta = (typeof order.metadata === 'object' && order.metadata ? order.metadata : {}) as Record<string, any>
-        const lastPush = Date.parse(orderMeta.daraja_pushed_at ?? '')
+        const lastPush = Math.max(
+            Date.parse(orderMeta.daraja_pushed_at ?? ''),
+            Date.parse(orderMeta.palpluss_pushed_at ?? ''),
+        )
         if (Number.isFinite(lastPush) && Date.now() - lastPush < REPUSH_WINDOW_MS) {
             return NextResponse.json({ success: false, error: 'A payment prompt was just sent. Wait a minute to retry.' }, { status: 429 })
+        }
+
+        // Pro stores without their own Daraja keys are charged through PalPluss, straight to the
+        // merchant's till or paybill. Null (switch off, not Pro, no details, or working Daraja)
+        // falls through to the Daraja path below, exactly as before.
+        const palplussSpec = await palplussSpecForStore(supabase, store.id)
+        if (palplussSpec) {
+            const appUrl = process.env.NEXT_PUBLIC_ADMIN_ORIGIN
+            if (!appUrl) return NextResponse.json({ success: false, error: 'Server misconfigured' }, { status: 500 })
+            try {
+                const channelId = await ensureChannel(store.id, palplussSpec)
+                const stk = await initiateStkPush({
+                    amountKes: mpesaAmountDue(order.total),
+                    phone: normalizedPhone,
+                    accountReference: orderId.slice(0, 12), // <= 12, on the shopper's statement
+                    transactionDesc: orderId.slice(0, 13), // <= 13, on the PIN prompt
+                    callbackUrl: `${appUrl}/api/webhooks/palpluss/store`,
+                    channelId,
+                    key: 'store',
+                })
+                // The transaction id is what the webhook and the status poll match on. It stays on the
+                // server: the browser only ever gets the order number back.
+                await supabase.from('orders').update({
+                    metadata: {
+                        ...orderMeta,
+                        palpluss_transaction_id: stk.transactionId,
+                        palpluss_channel_id: channelId,
+                        palpluss_pushed_at: new Date().toISOString(),
+                        payment_method: 'palpluss',
+                        payment_status: 'pending',
+                    },
+                }).eq('id', order.id)
+                return NextResponse.json({
+                    success: true,
+                    checkoutRequestId: orderId,
+                    customerMessage: 'Check your phone and enter your M-PESA PIN.',
+                })
+            } catch (e) {
+                console.error('PalPluss store STK push failed', e)
+                return NextResponse.json({ success: false, error: 'Could not start the M-PESA prompt. Please try again.' }, { status: 502 })
+            }
         }
 
         const { data: integration } = await supabase
