@@ -12,6 +12,8 @@ import type { Plan } from '@mcloud/merchant/plans'
 import { COMMON_SECTION_SCHEMA, SECTION_REGISTRY } from '@/lib/sections'
 import { THEME_SCHEMA } from '@/lib/theme-schema'
 import { THEME_PRESETS, activePreset } from '@/lib/theme-presets'
+import { STORE_THEMES, resolveThemeId, type StoreThemeId } from '@/lib/store-themes'
+import { LAYOUT_MESSAGE } from '@/lib/layout-message'
 import { patchStoreSettings, updatePageSections, updateStoreTheme } from '../actions'
 import {
     contentErrors, editorReducer, initEditor, isDocDirty, listFor,
@@ -77,7 +79,7 @@ function useEditorState(initial: EditorDoc) {
 
 export default function EditorClient({
     slug, storeId, theme, sections: initialSections, previewToken, storefrontOrigin,
-    commerce, storeSettings, plan, liveUrl,
+    commerce, storeSettings, plan, liveUrl, startTheme,
 }: {
     slug: string
     storeId: string
@@ -92,6 +94,8 @@ export default function EditorClient({
     /** NGO content editing is Hobby+. */
     plan: Plan
     liveUrl: string
+    /** From the dashboard's Preview button: open with this layout as an unsaved edit. */
+    startTheme?: StoreThemeId
 }) {
     const [state, dispatch, stateRef] = useEditorState({ theme, sections: initialSections, settings: storeSettings })
     const doc = state.present
@@ -161,6 +165,26 @@ export default function EditorClient({
     }, [stateRef])
 
     useEffect(() => { preview.current?.post(themeMessage()) }, [doc.theme, themeMessage])
+
+    // The nav and footer are drawn from the saved store, so the unsaved layout is posted
+    // to the preview (lib/layout-message.ts). Home sections follow it via the draft settings.
+    const themeId = resolveThemeId(doc.settings)
+    const layoutMessage = useCallback(
+        () => ({ type: LAYOUT_MESSAGE, themeId: resolveThemeId(stateRef.current.present.settings) }),
+        [stateRef],
+    )
+    useEffect(() => { preview.current?.post(layoutMessage()) }, [themeId, layoutMessage])
+
+    // Arriving from the dashboard's Preview: start on that layout, unsaved, so Save or
+    // Discard is the merchant's choice. Once per mount.
+    const started = useRef(false)
+    useEffect(() => {
+        if (started.current) return
+        started.current = true
+        if (startTheme && startTheme !== resolveThemeId(stateRef.current.saved.settings)) {
+            dispatch({ type: 'setting', key: 'themeId', value: startTheme })
+        }
+    }, [startTheme, dispatch, stateRef])
 
     // The preview outlines the open section, and scrolls to it when it is opened.
     const postSelect = useCallback((index: number | null, scroll: boolean) => {
@@ -298,6 +322,7 @@ export default function EditorClient({
     // A fresh preview page: replay what it cannot know (unsaved theme, scroll, outline).
     function onPreviewReady(post: (msg: Record<string, unknown>) => void, data: Record<string, unknown>) {
         post(themeMessage())
+        post(layoutMessage())
         // Scroll and outline belong to the bridge; the theme listener's announcement
         // may arrive before the bridge is listening.
         if (data.from !== 'bridge') return
@@ -469,6 +494,7 @@ export default function EditorClient({
                                     />
                                 ) : (
                                     <div className="space-y-6">
+                                        <LayoutPicker current={themeId} onPick={(id) => dispatch({ type: 'setting', key: 'themeId', value: id })} />
                                         <PresetPicker theme={doc.theme} onPick={(values) => dispatch({ type: 'theme-set', values })} />
                                         {THEME_GROUPS.map((g) => (
                                             <section key={g.title}>
@@ -727,6 +753,61 @@ function SectionPanel({
                 </Button>
             </div>
         </>
+    )
+}
+
+// ── Sidebar: layout (store theme) ───────────────────────────────────────────────
+
+/** A tiny sketch of each layout: hero, product row, footer. Decorative only. */
+const THEME_THUMBS: Record<StoreThemeId, React.ReactNode> = {
+    classic: (<><rect x="4" y="4" width="56" height="16" fill="currentColor" opacity=".25" /><rect x="8" y="9" width="20" height="6" fill="currentColor" opacity=".7" /><rect x="4" y="24" width="17" height="10" fill="currentColor" opacity=".35" /><rect x="23.5" y="24" width="17" height="10" fill="currentColor" opacity=".35" /><rect x="43" y="24" width="17" height="10" fill="currentColor" opacity=".35" /><rect x="4" y="37" width="56" height="3" fill="currentColor" opacity=".2" /></>),
+    'classic-2': (<><rect x="4" y="4" width="56" height="18" fill="currentColor" opacity=".25" /><rect x="8" y="9" width="24" height="8" rx="1" fill="currentColor" opacity=".55" /><rect x="4" y="25" width="17" height="11" rx="1" fill="currentColor" opacity=".35" /><rect x="23.5" y="25" width="17" height="11" rx="1" fill="currentColor" opacity=".35" /><rect x="43" y="25" width="17" height="11" rx="1" fill="currentColor" opacity=".35" /><rect x="4" y="38" width="56" height="2" fill="currentColor" opacity=".2" /></>),
+    studio: (<><rect x="0" y="0" width="64" height="22" fill="currentColor" opacity=".45" /><rect x="6" y="8" width="40" height="8" fill="currentColor" opacity=".9" /><rect x="0" y="23" width="21" height="12" fill="currentColor" opacity=".3" /><rect x="21.5" y="23" width="21" height="12" fill="currentColor" opacity=".38" /><rect x="43" y="23" width="21" height="12" fill="currentColor" opacity=".3" /><rect x="0" y="36" width="64" height="8" fill="currentColor" opacity=".85" /></>),
+    soft: (<><rect x="6" y="3" width="52" height="5" rx="2.5" fill="currentColor" opacity=".3" /><rect x="4" y="10" width="56" height="14" rx="5" fill="currentColor" opacity=".22" /><rect x="22" y="14" width="20" height="6" rx="3" fill="currentColor" opacity=".6" /><rect x="4" y="27" width="17" height="10" rx="4" fill="currentColor" opacity=".32" /><rect x="23.5" y="27" width="17" height="10" rx="4" fill="currentColor" opacity=".32" /><rect x="43" y="27" width="17" height="10" rx="4" fill="currentColor" opacity=".32" /><rect x="4" y="39" width="56" height="5" rx="2.5" fill="currentColor" opacity=".2" /></>),
+}
+
+/**
+ * Which theme draws the home page, nav and footer. A normal settings edit, so it is
+ * undoable, previews before Save, and saves with everything else. Only released
+ * themes are offered, plus whatever the store is on now so it is never hidden.
+ */
+function LayoutPicker({ current, onPick }: { current: StoreThemeId; onPick: (id: StoreThemeId) => void }) {
+    const themes = STORE_THEMES.filter((t) => t.released || t.id === current)
+    if (themes.length < 2) return null
+    const active = STORE_THEMES.find((t) => t.id === current)
+    const suggested = (active?.suggestedPresets ?? [])
+        .map((id) => THEME_PRESETS.find((p) => p.id === id)?.name)
+        .filter(Boolean)
+    return (
+        <section>
+            <h3 className="mb-3 text-[12px] font-semibold uppercase tracking-wider text-muted-foreground">Layout</h3>
+            <div role="radiogroup" aria-label="Store layout" className="space-y-2">
+                {themes.map((t) => (
+                    <button
+                        key={t.id}
+                        type="button"
+                        role="radio"
+                        aria-checked={current === t.id}
+                        onClick={() => onPick(t.id)}
+                        className={cn(
+                            'flex w-full items-center gap-3 rounded-md border p-2 text-left transition-colors',
+                            current === t.id ? 'border-primary ring-1 ring-primary' : 'border-border hover:border-foreground/40',
+                        )}
+                    >
+                        <svg viewBox="0 0 64 44" className="h-11 w-16 shrink-0 rounded bg-muted text-foreground" aria-hidden>
+                            {THEME_THUMBS[t.id]}
+                        </svg>
+                        <span className="min-w-0">
+                            <span className="block text-[14px] font-medium">{t.name}</span>
+                            <span className="block text-[12px] leading-snug text-muted-foreground">{t.description}</span>
+                        </span>
+                    </button>
+                ))}
+            </div>
+            {suggested.length > 0 && (
+                <p className="mt-2 text-[13px] text-muted-foreground">Goes well with: {suggested.join(', ')}.</p>
+            )}
+        </section>
     )
 }
 

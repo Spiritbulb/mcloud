@@ -10,6 +10,7 @@ import { webUrl } from '@/lib/host'
 import { loginUrlWithReturn } from '@mcloud/auth/routes'
 import { defaultHomeSections } from '@/lib/sections'
 import { storefrontUrl } from '@mcloud/merchant/storefront-url'
+import { isStoreThemeId } from '@/lib/store-themes'
 
 /**
  * The Editor: one surface for the home page's sections, their content and the
@@ -20,10 +21,15 @@ import { storefrontUrl } from '@mcloud/merchant/storefront-url'
  */
 export default async function EditorPage({
     params,
+    searchParams,
 }: {
     params: Promise<{ orgSlug: string; storeSlug: string }>
+    searchParams: Promise<{ theme?: string }>
 }) {
     const { orgSlug, storeSlug } = await params
+    // The dashboard's Preview button links here with ?theme=<id>. Only a known id is used.
+    const { theme: requestedTheme } = await searchParams
+    const startTheme = isStoreThemeId(requestedTheme) ? requestedTheme : undefined
 
     const session = await getSession()
     if (!session?.user) redirect(webUrl(loginUrlWithReturn(`/org/${orgSlug}/${storeSlug}/settings`)))
@@ -83,6 +89,7 @@ export default async function EditorPage({
             storeSettings={settings}
             plan={plan}
             liveUrl={storefrontUrl(store.slug, store.custom_domain)}
+            startTheme={startTheme}
         />
     )
 }

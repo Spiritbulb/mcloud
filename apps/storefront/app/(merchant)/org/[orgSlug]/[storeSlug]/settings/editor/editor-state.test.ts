@@ -183,3 +183,14 @@ test('applying a preset that changes nothing adds no history', () => {
     const s = initEditor(doc())
     assert.equal(editorReducer(s, { type: 'theme-set', values: { primary_color: '#111111' } }), s)
 })
+
+test('picking a layout is one undo step and is saved as a settings key', () => {
+    let s = initEditor(doc({ settings: { themeId: 'classic', other: 'kept' } }))
+    s = editorReducer(s, { type: 'setting', key: 'themeId', value: 'studio' })
+    assert.deepEqual(settingsPatch(s.saved.settings, s.present.settings), { themeId: 'studio' })
+    s = editorReducer(s, { type: 'setting', key: 'themeId', value: 'soft' })
+    assert.equal(s.past.length, 1, 'switching again coalesces into the same step')
+    s = editorReducer(s, { type: 'undo' })
+    assert.equal(s.present.settings.themeId, 'classic')
+    assert.equal(isDocDirty(s), false)
+})
