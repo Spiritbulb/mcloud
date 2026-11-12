@@ -51,7 +51,7 @@ function StepRow({ step, settingsHref, onShare }: { step: ChecklistStep; setting
         ? <Button size="sm" variant={step.done ? 'ghost' : 'secondary'} onClick={onShare}>Copy link</Button>
         : !step.done && <Link href={settingsHref(step.tab)} className={buttonClass('secondary', 'sm')}>Start</Link>
     return (
-        <li className="flex items-start gap-3 px-4 py-3">
+        <li className="flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3">
             <span
                 className={step.done
                     ? 'mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground'
@@ -66,7 +66,8 @@ function StepRow({ step, settingsHref, onShare }: { step: ChecklistStep; setting
                 </span>
                 {!step.done && <span className="mt-0.5 block text-[13px] text-muted-foreground">{step.description}</span>}
             </span>
-            <span className="flex shrink-0 flex-wrap items-center justify-end gap-3">
+            {/* Under the text on phones (indented past the tick), beside it from sm up. */}
+            <span className="flex w-full shrink-0 items-center gap-3 pl-8 sm:w-auto sm:justify-end sm:pl-0">
                 {!step.done && <LearnHow path={step.docPath} />}
                 {action}
             </span>

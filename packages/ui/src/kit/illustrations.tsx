@@ -54,7 +54,8 @@ const ART: Record<IllustrationName, ReactNode> = {
             <path d="M32 40 h46 l1 10 h-48 z" fill={TINT} />
             <path d="M44 46 v-10 a11 11 0 0 1 22 0 v10" fill="none" />
             <circle cx="88" cy="28" r="11" fill={SOFT} />
-            <path d="M88 22 v12 M85 25 h5 a2.5 2.5 0 0 1 0 5 h-4 a2.5 2.5 0 0 0 0 5 h5" />
+            <circle cx="88" cy="28" r="6" />
+            <path d="M85 25.5 a4 4 0 0 1 4 -2" />
             <path d="M48 64 h14" />
         </>
     ),
