@@ -7,7 +7,7 @@ export type DailyPoint = { date: string; amount: number; count: number }
 export type SeriesOrder = {
     total: number | null
     status: string | null
-    created_at: string
+    created_at: string | null
     metadata?: unknown
 }
 
@@ -42,7 +42,7 @@ export function dailySeries(
     for (const o of orders) {
         const counts = commerce ? PAID_STATUSES.has(o.status ?? '') : isCompletedDonation(o.metadata)
         if (!counts) continue
-        const ms = Date.parse(o.created_at)
+        const ms = o.created_at ? Date.parse(o.created_at) : NaN
         if (Number.isNaN(ms)) continue
         const point = index.get(nairobiDay(ms))
         if (!point) continue

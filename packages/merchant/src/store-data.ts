@@ -6,6 +6,8 @@
 import { createClient } from '@mcloud/db/server'
 import { isPaidPlan } from './plans'
 import { getStorePlan } from './plans-server'
+import { getVertical } from '@mcloud/verticals'
+import { dailySeries } from './overview-series'
 
 export type StoreSettingsResult =
     | { error: 'forbidden' | 'not_found' | 'unknown'; data: null }
@@ -166,6 +168,7 @@ export async function getStoreOverview(
         { data: funnelRows },
         { data: topProductRows },
         { count: orders7dCount },
+        { count: deliveryZoneCount },
     ] = await Promise.all([
         supabase
             .from('stores')
@@ -184,7 +187,8 @@ export async function getStoreOverview(
             .from('orders')
             // `metadata` is needed to identify donations (isDonation) and attribute
             // them to a campaign (campaignId). See the donation aggregation below.
-            .select('total, status, metadata')
+            // `created_at` feeds the 14-day trend (dailySeries).
+            .select('total, status, metadata, created_at')
             .eq('store_id', storeId),
         supabase
             .from('orders')
@@ -215,6 +219,11 @@ export async function getStoreOverview(
             .eq('store_id', storeId)
             .gte('created_at', since7d)
             .not('status', 'in', '(cancelled,refunded)'),
+        // Setup checklist: has the shop said where it delivers?
+        supabase
+            .from('delivery_zones')
+            .select('*', { count: 'exact', head: true })
+            .eq('store_id', storeId),
     ])
 
     if (!store) return { error: 'not_found', data: null }
@@ -319,6 +328,7 @@ export async function getStoreOverview(
         error: null,
         data: {
             store: {
+                id: store.id,
                 name: store.name,
                 slug: store.slug,
                 logo_url: store.logo_url,
@@ -338,6 +348,9 @@ export async function getStoreOverview(
 custom_domain: store.custom_domain ?? null,
                 custom_domain_set: !!store.custom_domain,
                 notifications_enabled: false,
+                delivery_zone_count: deliveryZoneCount ?? 0,
+                // Raw; the storefront reads it with readChecklistState().
+                setup_checklist: settings.setup_checklist ?? null,
             },
             recent_orders: (recentOrders ?? []).map(o => ({
                 id: o.id,
@@ -351,6 +364,7 @@ custom_domain: store.custom_domain ?? null,
             total_raised: totalRaised,
             donation_count: donationCount,
             campaign_progress: campaignProgress,
+            daily: dailySeries(orderAgg ?? [], { days: 14, now, commerce: getVertical(store.type).commerce }),
         },
     }
 }

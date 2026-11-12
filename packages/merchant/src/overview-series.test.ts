@@ -46,6 +46,7 @@ test('orders outside the window and unreadable totals are ignored', () => {
         { total: 100, status: 'paid', created_at: '2026-10-29T12:00:00Z' },
         { total: null, status: 'paid', created_at: '2026-11-12T05:00:00Z' },
         { total: 50, status: 'paid', created_at: 'not a date' },
+        { total: 70, status: 'paid', created_at: null },
     ]
     const s = dailySeries(rows, { days: 14, now, commerce: true })
     assert.equal(s.reduce((n, d) => n + d.amount, 0), 0)
