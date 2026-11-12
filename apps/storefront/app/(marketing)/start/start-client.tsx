@@ -10,7 +10,7 @@ import { launchProblem, nextSlug, type SiteType } from './onboarding-logic'
 
 const TYPES: { id: SiteType; title: string; body: string; icon: typeof ShoppingBag }[] = [
     { id: 'shop', title: 'A shop', body: 'Sell products or services and take orders with M-PESA.', icon: ShoppingBag },
-    { id: 'ngo', title: 'An NGO or cause', body: 'Share your mission, programs and impact, and take donations.', icon: HeartHandshake },
+    { id: 'ngo', title: 'A non-profit or cause', body: 'Share your mission, programs and impact, and take donations.', icon: HeartHandshake },
 ]
 
 type Availability = 'idle' | 'checking' | 'ok' | { reason: string }

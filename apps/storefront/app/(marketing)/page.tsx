@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 }
 
 const STEPS = [
-    { n: '01', title: 'Create your site', body: 'Pick shop or NGO, name it, and choose its address. It is live right away on a free address.' },
+    { n: '01', title: 'Create your site', body: 'Pick a shop or a non-profit site, name it, and choose its address. It is live right away on a free address.' },
     { n: '02', title: 'Make it yours', body: 'Use the visual editor to set your brand, arrange sections and add your products, programs or campaigns.' },
     { n: '03', title: 'Get paid', body: 'Connect M-PESA and start taking orders or donations. Add your own domain when you are ready.' },
 ]

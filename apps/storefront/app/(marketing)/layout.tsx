@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin']
 export const metadata: Metadata = {
     metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_ORIGIN ?? 'https://app.mcloud.co.ke'),
     title: {
-        default: 'Menengai Storefronts. Your shop or NGO site, live in minutes',
+        default: 'Menengai Storefronts. Your shop or non-profit site, live in minutes',
         template: '%s | Menengai Storefronts',
     },
     description:
-        'Hosted websites for Kenyan merchants and NGOs, with M-PESA checkout, donations, a visual editor and your own domain.',
+        'Hosted websites for Kenyan merchants and non-profits, with M-PESA checkout, donations, a visual editor and your own domain.',
     icons: { icon: '/icons/icon-192.png', apple: '/icons/apple-touch-icon.png' },
 }
 

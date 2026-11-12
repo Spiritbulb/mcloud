@@ -46,7 +46,7 @@ export const VERTICALS: Record<VerticalId, Vertical> = {
   },
   ngo: {
     id: 'ngo',
-    label: 'NGO',
+    label: 'Non-profit',
     commerce: false,
     defaultPages: [
       {
