@@ -29,10 +29,10 @@ export function settingsSections(groups: readonly NavSection[], orgSlug: string,
 }
 
 // Pages that manage their own scrolling and bleed to the edges.
-export const BARE_TABS = new Set(['editor', 'appearance'])
+export const BARE_TABS = new Set(['editor'])
 
 // Routes that exist but have no nav entry: no item is highlighted, and the breadcrumb says where you are.
-export const UNLISTED_LABELS: Record<string, string> = { account: 'Account', appearance: 'Design', content: 'Content' }
+export const UNLISTED_LABELS: Record<string, string> = { account: 'Account', content: 'Content' }
 
 /** The settings tab a path is on: "/org/a/s/settings/integrations/payments" -> "integrations". */
 export function tabFromPath(pathname: string): string {

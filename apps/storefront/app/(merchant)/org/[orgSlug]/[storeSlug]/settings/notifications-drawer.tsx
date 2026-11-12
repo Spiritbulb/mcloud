@@ -31,9 +31,9 @@ export const WIZARD_STEPS: WizardStep[] = [
     },
     {
         id: 'appearance',
-        title: 'Customise appearance',
-        description: 'Choose a theme, set your brand colours and fonts.',
-        tab: 'appearance',
+        title: 'Add your logo and brand',
+        description: 'Upload a logo and icon, then pick your colours and fonts in the Editor.',
+        tab: 'brand',
         isDone: (s) => !!(s?.primary_color || s?.theme),
     },
     {

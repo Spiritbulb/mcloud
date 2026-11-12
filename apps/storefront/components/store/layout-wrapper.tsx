@@ -10,6 +10,7 @@ import CartIsland from './CartIsland'
 import WishlistIsland from './WishlistIsland'
 import { resolveThemeId, type StoreThemeId } from '@/lib/store-themes'
 import { layoutThemeFrom } from '@/lib/layout-message'
+import { colorModeFrom } from '@/lib/brand'
 
 function LiquidScriptRunner() {
     const pathname = usePathname()
@@ -70,6 +71,7 @@ export default function LayoutWrapper({
             className="storefront-root"
             data-sf-css
             data-sf-theme={theme}
+            data-sf-mode={colorModeFrom(settings)}
             style={cssVars}
         >
             <StoreNav store={store} pages={pages} theme={theme} />

@@ -9,7 +9,7 @@ interface CustomerAuthContextType {
     user: User | null
     session: Session | null
     loading: boolean
-    signUp: (email: string, password: string) => Promise<{ error: Error | null }>
+    signUp: (email: string, password: string, redirectTo?: string) => Promise<{ error: Error | null }>
     signIn: (email: string, password: string) => Promise<{ error: Error | null }>
     signOut: () => Promise<void>
     refreshUser: () => Promise<void>
@@ -43,11 +43,17 @@ export function CustomerAuthProvider({ children }: { children: React.ReactNode }
         setUser(user)
     }, [])
 
-    const signUp = useCallback(async (email: string, password: string) => {
+    const signUp = useCallback(async (email: string, password: string, redirectTo?: string) => {
         // Auth signup only. The customers row is provisioned lazily on the first
         // authenticated load (getStoreCustomer), since email confirmation means
         // there's no session here to authorize a write.
-        const { error } = await supabase.auth.signUp({ email, password })
+        // redirectTo brings the shopper back to the store they signed up on; without it the
+        // confirmation link lands on the Supabase project's default Site URL.
+        const { error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: redirectTo ? { emailRedirectTo: redirectTo } : undefined,
+        })
         if (error) return { error }
         return { error: null }
     }, [])

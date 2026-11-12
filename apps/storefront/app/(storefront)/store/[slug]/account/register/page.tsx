@@ -26,7 +26,9 @@ export default function RegisterPage() {
         setLoading(true)
         setError(null)
 
-        const { error } = await signUp(email, password)
+        // Back to this store's sign-in (keeping a pending return path) after the email is confirmed.
+        const back = `${window.location.origin}${href('/account/login')}${next ? `?next=${encodeURIComponent(next)}` : ''}`
+        const { error } = await signUp(email, password, back)
         if (error) {
             setError(error.message)
             setLoading(false)

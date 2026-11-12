@@ -127,7 +127,7 @@ scripts/verify-google-jwt.ts   scripts/verify-google-play.ts   (manual scripts, 
 Verify: for each, `grep -rn "<name>" apps packages` (also check `next.config`, scripts,
 docs). Delete in batches and run `tsc --noEmit` + a web build after each batch.
 
-### 2.2 ~~Unreferenced files in `apps/storefront`~~ *(done: removed `Storefront`, `blog`, `StoreSettingsAppearance`, `blog/{list-shell,post-shell,list-inner,post-inner}`. **Kept** `MdxContent` and `animate-ui/.../buttons/copy`: `packages/themes` imports them by relative path, see 2.9. `appearance-settings` is used by the appearance page.)* — original list:
+### 2.2 ~~Unreferenced files in `apps/storefront`~~ *(done: removed `Storefront`, `blog`, `StoreSettingsAppearance`, `blog/{list-shell,post-shell,list-inner,post-inner}`. **Kept** `MdxContent` and `animate-ui/.../buttons/copy`: `packages/themes` imports them by relative path, see 2.9. `appearance-settings` was later removed too: Appearance became the Brand page (logo, icon) plus the Editor.)* — original list:
 ```
 components/MdxContent.tsx   components/animate-ui/components/buttons/copy.tsx
 components/store/Storefront.tsx   components/store/blog.tsx

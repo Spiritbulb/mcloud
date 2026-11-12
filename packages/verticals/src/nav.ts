@@ -32,6 +32,7 @@ const SITE: NavSection = {
   tabs: [
     { id: 'home', label: 'Overview', icon: 'home' },
     { id: 'general', label: 'General', icon: 'storefront' },
+    { id: 'brand', label: 'Brand', icon: 'palette' },
     // One Editor: theme and content are the same job ("make my site look right").
     // Future customisation surfaces land here as rail entries, not as new nav tabs.
     { id: 'editor', label: 'Editor', icon: 'edit_note' },
@@ -118,12 +119,13 @@ export function sectionsFor(vertical: Vertical): NavSection[] {
 /**
  * Every tab id any vertical can show. Keeps routing/active-tab exhaustive.
  *
- * `appearance` and `content` are no longer in any nav group, but their routes
- * still exist and are still reachable by URL. They stay listed until those pages
- * are retired, so nothing that resolves a tab id from a path falls off the type.
+ * `content` is no longer in any nav group, but its route still exists and is still
+ * reachable by URL. It stays listed until that page is retired, so nothing that
+ * resolves a tab id from a path falls off the type. `appearance` was retired into
+ * `brand` (logo, icon) and the Editor (colours, fonts, slides); its URL redirects.
  */
 export const ALL_TAB_IDS = [
-  'home', 'general', 'appearance', 'editor',
+  'home', 'general', 'brand', 'editor',
   'products', 'services',
   'orders', 'analytics', 'customers', 'blog',
   'content',

@@ -9,6 +9,7 @@ import { useCustomerAuth } from '@/contexts/CustomerAuthContext'
 import { useStoreHref } from '@/contexts/StoreContext'
 import { useWishlist } from '@/contexts/WishlistContext'
 import type { StoreThemeId } from '@/lib/store-themes'
+import { darkLogoFrom, logoSizeFrom, logoStyle } from '@/lib/brand'
 
 interface Store {
     id: string
@@ -16,6 +17,7 @@ interface Store {
     slug: string
     logo_url: string | null
     type?: string | null
+    settings?: Record<string, unknown> | null
 }
 
 /** A published page of this store, linked from the nav. */
@@ -45,6 +47,7 @@ export default function StoreNav({ store, pages = [], theme = 'classic' }: { sto
     // Non-commerce verticals (NGO) have no basket or customer account — donations
     // go through the campaigns section, so the shop chrome is dead weight there.
     const commerce = getVertical(store.type).commerce
+    const darkLogo = darkLogoFrom(store.logo_url, store.settings)
 
     return (
         <nav className="sf-nav sticky top-0 z-40" data-sf-nav={theme}>
@@ -52,12 +55,23 @@ export default function StoreNav({ store, pages = [], theme = 'classic' }: { sto
 
                 <Link href={href('/')} className="sf-nav__logo flex items-center gap-3">
                     {store.logo_url ? (
-                        <img
-                            src={store.logo_url}
-                            alt={store.name}
-                            className="h-10 w-auto max-w-[160px] object-contain object-left"
-                            style={{ borderRadius: 'var(--sf-border-radius)' }}
-                        />
+                        <>
+                            <img
+                                src={store.logo_url}
+                                alt={store.name}
+                                className="sf-logo--light w-auto object-contain object-left"
+                                style={{ ...logoStyle(logoSizeFrom(store.settings)), borderRadius: 'var(--sf-border-radius)' }}
+                            />
+                            {darkLogo && (
+                                <img
+                                    src={darkLogo}
+                                    alt={store.name}
+                                    loading="lazy"
+                                    className="sf-logo--dark w-auto object-contain object-left"
+                                    style={{ ...logoStyle(logoSizeFrom(store.settings)), borderRadius: 'var(--sf-border-radius)' }}
+                                />
+                            )}
+                        </>
                     ) : (
                         <div
                             className="sf-logo-fallback w-7 h-7 flex items-center justify-center text-xs font-bold"

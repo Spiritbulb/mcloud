@@ -83,14 +83,17 @@ export async function POST(
         return NextResponse.json({ error: 'You have already reviewed this product' }, { status: 409 })
     }
 
-    // Verified purchase check — direct, no fuzzy matching
-    const { data: orderItem } = await supabase
+    // Verified purchase check: a paid/fulfilled order of this customer, in this store,
+    // containing the product. limit(1) because repeat buyers have several matches.
+    const { data: orderItems } = await supabase
         .from('order_items')
-        .select('order_id, order:orders!inner(customer_id, status)')
+        .select('order_id, order:orders!inner(customer_id, status, store_id)')
         .eq('product_id', product_id)
         .eq('order.customer_id', customer_id)
+        .eq('order.store_id', store.id)
         .in('order.status', ['paid', 'fulfilled'])
-        .maybeSingle()
+        .limit(1)
+    const orderItem = orderItems?.[0]
 
     const isVerifiedPurchase = !!orderItem
     const orderId = orderItem?.order_id ?? null

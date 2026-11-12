@@ -8,6 +8,7 @@ import { PLAN_LIMITS, isOverLimit, limitMessage } from '@mcloud/merchant/plans'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
 import { requireManagedStore, type ActionResult } from './access'
 import { revalidateStoreById } from '@/lib/revalidate-store'
+import { sanitizeOptions } from '@/components/store/variant-options'
 
 const MAX_JSON_BYTES = 200_000
 
@@ -128,7 +129,7 @@ export async function saveProduct(
             compare_at_price: num(v.compare_at_price),
             inventory_quantity: Math.max(0, Math.floor(num(v.inventory_quantity) ?? 0)),
             is_active: !!v.is_active,
-            options: (v.options && typeof v.options === 'object' ? v.options : {}) as Json,
+            options: sanitizeOptions(v.options) as Json,
             position: i,
             updated_at: new Date().toISOString(),
         }

@@ -26,8 +26,26 @@
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────────────────── */
+/* data-sf-mode comes from the Brand page: "auto" (or unset) follows the visitor's
+   device, "dark" and "light" force it. The dark rules are written twice because a
+   media query cannot be combined with an attribute test in one selector list. */
+.storefront-root[data-sf-mode="dark"] {
+    color-scheme: dark;
+    --sf-primary: var(--sf-dark-primary, #e8e0d8);
+    --sf-background: var(--sf-dark-background, #0f0f10);
+    --sf-foreground: var(--sf-dark-foreground, #f0ece6);
+    --sf-muted: var(--sf-dark-muted, #1e1e20);
+    --sf-accent: var(--sf-dark-accent, #c9a96e);
+    --sf-secondary: var(--sf-dark-secondary, #27272a);
+
+    /* Re-derive these for dark mode so they stay readable */
+    --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 80%, var(--sf-background));
+    --sf-border: color-mix(in srgb, var(--sf-foreground) 18%, transparent);
+    --sf-border-strong: color-mix(in srgb, var(--sf-foreground) 35%, transparent);
+}
+
 @media (prefers-color-scheme: dark) {
-    .storefront-root {
+    .storefront-root:not([data-sf-mode="light"]):not([data-sf-mode="dark"]) {
         --sf-primary: var(--sf-dark-primary, #e8e0d8);
         --sf-background: var(--sf-dark-background, #0f0f10);
         --sf-foreground: var(--sf-dark-foreground, #f0ece6);
@@ -40,6 +58,15 @@
         --sf-border: color-mix(in srgb, var(--sf-foreground) 18%, transparent);
         --sf-border-strong: color-mix(in srgb, var(--sf-foreground) 35%, transparent);
     }
+}
+
+/* Optional dark-mode logo: the header renders both, the active mode shows one. */
+.storefront-root .sf-logo--dark { display: none; }
+.storefront-root[data-sf-mode="dark"] .sf-logo--light { display: none; }
+.storefront-root[data-sf-mode="dark"] .sf-logo--dark { display: block; }
+@media (prefers-color-scheme: dark) {
+    .storefront-root:not([data-sf-mode="light"]):not([data-sf-mode="dark"]) .sf-logo--light { display: none; }
+    .storefront-root:not([data-sf-mode="light"]):not([data-sf-mode="dark"]) .sf-logo--dark { display: block; }
 }
 
 /* ── Force all text within storefront to use sf tokens, not shadcn defaults ── */

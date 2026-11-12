@@ -1,22 +1,12 @@
-import { getStore, createClient } from '@mcloud/db/server'
-import { notFound } from 'next/navigation'
-import AppearanceSettingsPage from './appearance-settings-page'
+import { redirect } from 'next/navigation'
 
+// Appearance was split up: logo and icon moved to Brand, colours, fonts, slides and
+// gallery are edited in the Editor. Kept so old links and bookmarks still land somewhere.
 export default async function AppearancePage({
     params,
 }: {
     params: Promise<{ orgSlug: string; storeSlug: string }>
 }) {
-    const { storeSlug: slug } = await params
-    const store = await getStore(slug)
-    if (!store) notFound()
-
-    const supabase = await createClient()
-    const { data: theme } = await supabase
-        .from('store_themes')
-        .select('*')
-        .eq('store_id', store.id)
-        .single()
-
-    return <AppearanceSettingsPage store={{ ...store, theme }} />
+    const { orgSlug, storeSlug } = await params
+    redirect(`/org/${orgSlug}/${storeSlug}/settings/brand`)
 }

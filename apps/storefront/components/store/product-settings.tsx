@@ -16,6 +16,7 @@ import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
 import ImageUpload from './image-upload'
 import { Product, Variant } from '@mcloud/themes/types'
+import { formatOptions, optionsEqual, parseOptions, type VariantOptions } from './variant-options'
 
 const EMPTY_VARIANT: Variant = {
     id: '',
@@ -27,6 +28,26 @@ const EMPTY_VARIANT: Variant = {
     is_active: true,
     image_url: '',
     options: {},
+}
+
+// Keeps what the merchant is typing ("Size: ") separate from the parsed options, so a
+// half-typed pair isn't wiped on every keystroke.
+function OptionsInput({ value, onChange }: { value: VariantOptions; onChange: (o: VariantOptions) => void }) {
+    const [text, setText] = useState(formatOptions(value))
+    const [seen, setSeen] = useState(value)
+    // The variant list changed under us (one above was removed): re-sync, unless this is our own edit echoing back.
+    if (value !== seen) {
+        setSeen(value)
+        if (!optionsEqual(parseOptions(text), value)) setText(formatOptions(value))
+    }
+    return (
+        <TextInput
+            value={text}
+            placeholder="Size: M, Colour: Red"
+            className="h-8"
+            onChange={(e) => { setText(e.target.value); onChange(parseOptions(e.target.value)) }}
+        />
+    )
 }
 
 type VariantField = 'name' | 'sku' | 'price' | 'inventory_quantity'
@@ -245,7 +266,7 @@ function ProductForm({
 
             <Panel
                 title={`Variants (${variants.length})`}
-                description="Each variant overrides the base price."
+                description="Each variant overrides the base price. Add options so shoppers can pick a size, colour and so on."
                 footer={
                     <Button size="sm" onClick={() => setVariants((prev) => [...prev, { ...EMPTY_VARIANT }])}>
                         <Icon name="add" size={15} />
@@ -285,6 +306,11 @@ function ProductForm({
                                         </Field>
                                     ))}
                                 </FormGrid>
+                                <div className="mt-3">
+                                    <Field label="Options" hint="Shown to shoppers as choices, e.g. Size: M, Colour: Red. Use the same names across variants.">
+                                        <OptionsInput value={v.options ?? {}} onChange={(options) => updateVariant(i, { options })} />
+                                    </Field>
+                                </div>
                             </div>
                         ))}
                     </div>
