@@ -1,4 +1,5 @@
 import type { Metadata } from 'next'
+import Image from 'next/image'
 import Link from 'next/link'
 import { Check, Globe, Palette, Smartphone, BarChart3, Users, HeartHandshake, ShoppingBag } from 'lucide-react'
 import { PLAN_LIMITS, PLAN_PRICE_KES } from '@mcloud/merchant/plans'
@@ -22,6 +23,12 @@ const FEATURES: { icon: typeof Smartphone; title: string; body: string; plan?: s
     { icon: Globe, title: 'Your own domain', body: 'Use yourbrand.co.ke, with the security certificate handled for you.', plan: 'Hobby' },
     { icon: BarChart3, title: 'See what sells', body: 'Visits, orders and where customers drop off before paying.', plan: 'Hobby' },
     { icon: Users, title: 'Bring your team', body: 'Invite people to help run the site, as owners or admins.', plan: 'Hobby' },
+]
+
+const PHONES = [
+    { src: '/marketing/phone-shop.webp', alt: 'A shop home page on a phone', caption: 'Your shop' },
+    { src: '/marketing/phone-product.webp', alt: 'A product page on a phone with price and sale badge', caption: 'Each product' },
+    { src: '/marketing/phone-checkout.webp', alt: 'Checkout on a phone with M-PESA payment steps', caption: 'M-PESA checkout' },
 ]
 
 const FAQ = [
@@ -77,6 +84,15 @@ export default function Home() {
                     </Link>
                 </div>
                 <p className="mt-3 text-sm text-muted-foreground">No card needed for the Free plan.</p>
+                <Image
+                    src="/marketing/storefront-hero.webp"
+                    alt="A shop built on MCloud Storefronts in a browser, with its M-PESA checkout open on a phone"
+                    width={1400}
+                    height={900}
+                    priority
+                    sizes="(min-width: 1280px) 1200px, 100vw"
+                    className="mt-10 h-auto w-full max-w-5xl"
+                />
             </section>
 
             <section className="mx-auto grid max-w-page gap-4 px-6 pb-16 sm:grid-cols-2 md:px-12">
@@ -113,6 +129,24 @@ export default function Home() {
                 </div>
             </section>
 
+            <section className="border-b border-border">
+                <div className="mx-auto max-w-page px-6 py-16 md:px-12">
+                    <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Built for the phone in your customer&rsquo;s hand</h2>
+                    <p className="mt-2 max-w-2xl text-muted-foreground">
+                        Most people will find your shop from a link on WhatsApp or Instagram. Every page is made for a phone
+                        first, right through to paying with M-PESA.
+                    </p>
+                    <div className="mt-8 grid grid-cols-3 gap-3 sm:gap-6">
+                        {PHONES.map((p) => (
+                            <figure key={p.src} className="min-w-0">
+                                <Image src={p.src} alt={p.alt} width={420} height={828} sizes="(min-width: 768px) 30vw, 33vw" className="h-auto w-full" />
+                                <figcaption className="mt-2 text-center text-sm text-muted-foreground">{p.caption}</figcaption>
+                            </figure>
+                        ))}
+                    </div>
+                </div>
+            </section>
+
             <section className="mx-auto max-w-page px-6 py-16 md:px-12">
                 <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">What you get</h2>
                 <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -130,6 +164,19 @@ export default function Home() {
                             <p className="mt-1 text-muted-foreground">{body}</p>
                         </div>
                     ))}
+                </div>
+            </section>
+
+            <section className="border-t border-border">
+                <div className="mx-auto max-w-page px-6 py-16 md:px-12">
+                    <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">Run it all from one dashboard</h2>
+                    <p className="mt-2 max-w-2xl text-muted-foreground">
+                        A setup checklist tells you what to do next, and the editor shows your real site as you change it.
+                    </p>
+                    <div className="mt-8 grid gap-6 lg:grid-cols-2">
+                        <Image src="/marketing/dashboard-overview.webp" alt="The store dashboard with its setup checklist and seven-day visit numbers" width={1200} height={818} sizes="(min-width: 1024px) 50vw, 100vw" className="h-auto w-full" />
+                        <Image src="/marketing/dashboard-editor.webp" alt="The visual editor with a live preview of the shop and its list of page sections" width={1200} height={818} sizes="(min-width: 1024px) 50vw, 100vw" className="h-auto w-full" />
+                    </div>
                 </div>
             </section>
 

@@ -48,7 +48,7 @@ export const STORE_FEATURES: Feature[] = [
         eyebrow: 'Ready to sell',
         title: 'A shop your customers can trust.',
         body: 'Products, services, cart, checkout and orders in one place, on a site that looks like your business. You bring what you sell; the rest is already connected.',
-        image: '/digital-warehouse.webp',
+        image: '/marketing/storefront-grid.webp',
         points: [
             'Products, services and collections',
             'A checkout built for your store',
@@ -60,7 +60,7 @@ export const STORE_FEATURES: Feature[] = [
         eyebrow: 'Your brand',
         title: 'It looks like you, not a template.',
         body: 'Your logo, colours, photos and words, and your own domain when you are ready. Customers see your business, not ours.',
-        image: '/make-it-yours.webp',
+        image: '/marketing/dashboard-editor.webp',
         points: [
             'Themes, colours and fonts in a visual editor',
             'Your own domain with the certificate handled (Hobby and up)',
@@ -72,7 +72,7 @@ export const STORE_FEATURES: Feature[] = [
         eyebrow: 'Paid by M-PESA',
         title: 'Money straight to your till.',
         body: 'Customers pay your own M-PESA till or paybill. On Hobby and up, they get an STK prompt on their phone and the order marks itself paid once Safaricom confirms it.',
-        image: '/run-it-online.webp',
+        image: '/marketing/phone-checkout.webp',
         points: [
             'Your till or paybill, your money',
             'Automatic STK prompts on Hobby and up',
@@ -84,7 +84,7 @@ export const STORE_FEATURES: Feature[] = [
         eyebrow: 'What is working',
         title: 'See what sells.',
         body: 'Visits, orders, your best products and where customers drop off before paying, so your next promotion is a decision, not a guess.',
-        image: '/see-what-works.webp',
+        image: '/marketing/dashboard-overview.webp',
         points: [
             'Sales and visits in one view',
             'Your best sellers at a glance',
