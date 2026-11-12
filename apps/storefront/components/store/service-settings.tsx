@@ -11,6 +11,7 @@ import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
@@ -454,7 +455,7 @@ export default function ServiceSettings({ storeId, currency }: { storeId: string
 
     return (
         <div className="space-y-6">
-            <PageHeader
+            <PageHeader help={helpFor('services')}
                 title="Services"
                 description={loading ? 'Loading…' : `${services.length} service${services.length === 1 ? '' : 's'} in your store`}
                 actions={

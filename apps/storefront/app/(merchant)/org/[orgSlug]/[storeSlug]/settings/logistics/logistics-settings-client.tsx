@@ -11,6 +11,7 @@ import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SaveBar, SaveStatus } from '@mcloud/ui/kit/save-bar'
 import { isDirty } from '@mcloud/ui/kit/ui-logic'
@@ -145,7 +146,7 @@ export default function LogisticsSettingsClient({
     const [error, setError] = useState<string | null>(null)
 
     const header = (
-        <PageHeader
+        <PageHeader help={helpFor('logistics')}
             title="Delivery options"
             description="Couriers you use and the places you deliver to. Every zone needs a rate: enter 0 for free delivery."
         />

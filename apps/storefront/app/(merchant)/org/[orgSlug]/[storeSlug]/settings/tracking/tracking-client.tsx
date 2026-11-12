@@ -11,6 +11,7 @@ import { Select, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
 import { FULFILLMENT_STATUSES, statusLabel } from '@/components/store/order-logic'
@@ -167,7 +168,7 @@ export default function TrackingClient({
 
     return (
         <div className="space-y-6">
-            <PageHeader
+            <PageHeader help={helpFor('tracking')}
                 title="Track orders"
                 description="Orders with a courier or delivery zone. Add the waybill number once the courier picks up."
             />

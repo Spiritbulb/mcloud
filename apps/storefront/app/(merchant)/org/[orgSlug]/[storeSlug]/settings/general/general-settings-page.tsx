@@ -9,6 +9,7 @@ import { Field, FormGrid, Select, Switch, TextArea, TextInput } from '@mcloud/ui
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SaveBar, SaveStatus } from '@mcloud/ui/kit/save-bar'
 import { isDirty } from '@mcloud/ui/kit/ui-logic'
@@ -95,7 +96,7 @@ export default function GeneralSettingsPage({ store }: { store: Store }) {
 
     return (
         <div className="space-y-6">
-            <PageHeader title="General" description="Your store's name, locale and whether it is open." />
+            <PageHeader help={helpFor('general')} title="General" description="Your store's name, locale and whether it is open." />
 
             {error && <Notice tone="error">{error}</Notice>}
 
