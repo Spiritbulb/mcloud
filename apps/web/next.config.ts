@@ -2,9 +2,11 @@ import type { NextConfig } from 'next'
 import createMDX from '@next/mdx'
 
 // Guide articles (content/guides/*.mdx). Plugins are named by string so the
-// options stay serializable for Turbopack.
+// options stay serializable for Turbopack, and as bare strings, never ['name']:
+// @next/mdx resolves an array entry in place, which mutates this config and sends
+// `next dev` into an endless reload loop (next-config.test.ts).
 const withMDX = createMDX({
-    options: { remarkPlugins: [['remark-gfm']] },
+    options: { remarkPlugins: ['remark-gfm'] },
 })
 
 const nextConfig: NextConfig = {
