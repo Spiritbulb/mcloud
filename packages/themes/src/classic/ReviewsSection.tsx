@@ -132,10 +132,9 @@ function RatingSummary({ reviews }: { reviews: Review[] }) {
     )
 }
 
-function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel, apiBaseUrl }: {
+function ReviewForm({ storeSlug, productId, onSubmitted, onCancel, apiBaseUrl }: {
     storeSlug: string
     productId: string
-    customerId: string
     onSubmitted: () => void
     onCancel: () => void
     apiBaseUrl: string
@@ -160,7 +159,6 @@ function ReviewForm({ storeSlug, productId, customerId, onSubmitted, onCancel, a
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     product_id: productId,
-                    customer_id: customerId,
                     rating,
                     title: title.trim() || undefined,
                     review_body: body.trim(),
@@ -304,7 +302,6 @@ export function ReviewsSection({ productId, storeSlug, onReviewSubmitted, apiBas
                 <ReviewForm
                     storeSlug={storeSlug}
                     productId={productId}
-                    customerId={user.id}
                     apiBaseUrl={apiBaseUrl}
                     onSubmitted={() => {
                         setShowForm(false)

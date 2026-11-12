@@ -1,7 +1,9 @@
-// @route-kind: public — public shopper action; server re-prices and validates, scoped to the store
+// @route-kind: customer
+// GET lists published reviews (public). POST resolves the reviewer from the VERIFIED session, never the body.
 // app/api/store/[slug]/reviews/route.ts
 import { createClient } from '@mcloud/db/server'
 import { NextRequest, NextResponse } from 'next/server'
+import { getStoreCustomer } from '@/lib/customer-auth'
 
 export async function GET(
     req: NextRequest,
@@ -47,8 +49,8 @@ export async function POST(
 ) {
     const { slug } = await params
     const body = await req.json()
-    const { product_id, customer_id, rating, title, review_body } = body
-    if (!product_id || !customer_id || !rating || !review_body) {
+    const { product_id, rating, title, review_body } = body
+    if (!product_id || !rating || !review_body) {
         return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -63,7 +65,10 @@ export async function POST(
 
     if (!store) return NextResponse.json({ error: 'Store not found' }, { status: 404 })
 
-
+    // customers.id for this store, from the verified session (not the request body)
+    const customer = await getStoreCustomer(store.id).catch(() => null)
+    if (!customer) return NextResponse.json({ error: 'Sign in to write a review' }, { status: 401 })
+    const customer_id = customer.id
 
     // Duplicate check
     const { data: existing } = await supabase
