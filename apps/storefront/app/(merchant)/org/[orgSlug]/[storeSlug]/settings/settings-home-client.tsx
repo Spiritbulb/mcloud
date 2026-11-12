@@ -26,7 +26,7 @@ import ThemeUpgradePanel from './theme-upgrade-panel'
 import type { StoreThemeId } from '@/lib/store-themes'
 import { formatCurrency, funnelRate, overviewHeadline, overviewSummary } from './overview-logic'
 import { SetupChecklist } from './setup-checklist'
-import { checklistSteps, readChecklistState } from './setup-checklist-logic'
+import { checklistSteps, parseChecklistState } from './setup-checklist-logic'
 import { TrendPanel } from './trend-panel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -62,7 +62,7 @@ type StoreOverview = {
     theme?: string | null
     notifications_enabled?: boolean
     delivery_zone_count?: number
-    /** Raw stores.settings.setup_checklist; read with readChecklistState(). */
+    /** Raw stores.settings.setup_checklist; read with parseChecklistState(). */
     setup_checklist?: unknown
 }
 
@@ -243,7 +243,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
 
     // Setup checklist. "Link copied" is remembered locally too, so the share step ticks at once.
     const [linkCopied, setLinkCopied] = useState(false)
-    const checklist = store ? readChecklistState(store.setup_checklist) : {}
+    const checklist = store ? parseChecklistState(store.setup_checklist) : {}
     const linkShared = linkCopied || !!checklist.link_shared
     const steps = store
         ? checklistSteps({

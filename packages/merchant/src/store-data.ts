@@ -357,7 +357,7 @@ custom_domain: store.custom_domain ?? null,
                 custom_domain_set: !!store.custom_domain,
                 notifications_enabled: false,
                 delivery_zone_count: deliveryZoneCount ?? 0,
-                // Raw; the storefront reads it with readChecklistState().
+                // Raw flags object; the storefront reads it with parseChecklistState().
                 setup_checklist: settings.setup_checklist ?? null,
             },
             recent_orders: (recentOrders ?? []).map(o => ({

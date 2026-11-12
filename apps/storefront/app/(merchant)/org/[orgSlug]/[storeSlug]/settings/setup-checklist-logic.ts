@@ -132,9 +132,16 @@ export function checklistProgress(steps: ChecklistStep[]): { done: number; total
     return { done, total: counted.length, complete: done === counted.length }
 }
 
-/** The stored checklist flags, reading only `true` booleans so stray values never hide it. */
+/** The stored checklist flags from a whole `stores.settings` value. */
 export function readChecklistState(settings: unknown): ChecklistState {
-    const raw = (settings as Record<string, unknown> | null)?.setup_checklist
+    return parseChecklistState((settings as Record<string, unknown> | null)?.setup_checklist)
+}
+
+/**
+ * The flags object itself (`settings.setup_checklist`, which is what the overview returns), reading
+ * only `true` booleans so stray values never hide the checklist.
+ */
+export function parseChecklistState(raw: unknown): ChecklistState {
     if (!raw || typeof raw !== 'object') return {}
     const r = raw as Record<string, unknown>
     const state: ChecklistState = {}

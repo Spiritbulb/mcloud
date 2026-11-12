@@ -5,6 +5,7 @@ import {
     checklistProgress,
     checklistSteps,
     mergeChecklistState,
+    parseChecklistState,
     readChecklistState,
     runChecklistSave,
     stepLabels,
@@ -100,4 +101,11 @@ test('hiding reports an error whether the save fails or throws', async () => {
     assert.equal(await runChecklistSave(async () => ({ ok: true })), null)
     assert.equal(await runChecklistSave(async () => ({ ok: false, error: 'No permission' })), 'No permission')
     assert.match(String(await runChecklistSave(async () => { throw new Error('network') })), /Could not save/)
+})
+
+test('the overview hands over the stored flags themselves, and they are read as such', () => {
+    // getStoreOverview returns settings.setup_checklist (the inner object), not the whole settings.
+    assert.deepEqual(parseChecklistState({ link_shared: true }), { link_shared: true })
+    assert.deepEqual(parseChecklistState({ hidden: true, link_shared: 'yes' }), { hidden: true })
+    assert.deepEqual(parseChecklistState(null), {})
 })
