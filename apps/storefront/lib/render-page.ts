@@ -29,7 +29,7 @@ export async function renderPage(sections: PageSection[], ctx: PageRenderContext
     const key = templateKeyFor(theme, def.file, hasTemplate)
     if (theme !== 'classic' && key.startsWith('classic/')) fellBack.push(def.file)
     const html = await renderTemplate(key, {
-      ...def.pickContext(ctx),
+      ...def.pickContext(ctx, s.settings),
       // `settings` is kept as-is: five templates reassign it to store.settings and
       // rely on that. The section's OWN config therefore needs an unambiguous name,
       // or it is silently shadowed in exactly those five.

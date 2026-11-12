@@ -526,6 +526,7 @@ export default function EditorClient({
                             settings={doc.settings}
                             plan={plan}
                             pickImage={pickImage}
+                            storeId={storeId}
                             dispatch={sidebarDispatch}
                             onShowRecord={(list, i) => { if (list === 'heroSlides') showSlide(i) }}
                             onBack={closeSectionPanel}
@@ -696,7 +697,7 @@ function SectionList({
 // ── Sidebar: one section's settings ─────────────────────────────────────────────
 
 function SectionPanel({
-    index, section, count, settings, plan, pickImage, dispatch, onShowRecord, onBack, onOp,
+    index, section, count, settings, plan, pickImage, storeId, dispatch, onShowRecord, onBack, onOp,
 }: {
     index: number
     section: Section
@@ -704,6 +705,7 @@ function SectionPanel({
     settings: Record<string, unknown>
     plan: Plan
     pickImage: PickImage
+    storeId: string
     dispatch: (a: EditorAction) => void
     onShowRecord: (list: string, index: number) => void
     onBack: () => void
@@ -738,6 +740,7 @@ function SectionPanel({
                         schema={schema}
                         values={section.settings ?? {}}
                         pickImage={pickImage}
+                        storeId={storeId}
                         onChange={(field, value) => dispatch({ type: 'section-field', index, field, value })}
                     />
                 )}

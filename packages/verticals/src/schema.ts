@@ -12,6 +12,8 @@ export type SettingField =
   | { id: string; type: 'number';   label: string; default?: number; min?: number; max?: number; step?: number }
   | { id: string; type: 'select';   label: string; options: { value: string; label: string }[]; default?: string }
   | { id: string; type: 'toggle';   label: string; default?: boolean }
+  /** An ordered list of product ids the merchant picks (stored as a string array). No default: empty means "let the section choose". */
+  | { id: string; type: 'products'; label: string; max?: number }
 
 /** The values a schema's fields hold, keyed by field id. */
 export type SettingValues = Record<string, unknown>

@@ -4,6 +4,7 @@ import { useId } from 'react'
 import { Field, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import type { SettingField, SettingValues } from '@mcloud/verticals'
 import ImageField, { type PickImage } from './image-field'
+import ProductPicker from './product-picker'
 
 /** Families offered for a font field. Any other name can still be typed. */
 const FONT_SUGGESTIONS = [
@@ -26,17 +27,20 @@ export default function SettingsFields({
     values,
     onChange,
     pickImage,
+    storeId,
 }: {
     schema: readonly SettingField[]
     values: SettingValues
     onChange: (id: string, value: unknown) => void
     pickImage: PickImage
+    /** Needed by a `products` field, which lists the store's products. */
+    storeId?: string
 }) {
     if (schema.length === 0) return null
     return (
         <div className="space-y-4">
             {schema.map((f) => (
-                <SettingControl key={f.id} field={f} raw={values[f.id]} onChange={(v) => onChange(f.id, v)} pickImage={pickImage} />
+                <SettingControl key={f.id} field={f} raw={values[f.id]} onChange={(v) => onChange(f.id, v)} pickImage={pickImage} storeId={storeId} />
             ))}
         </div>
     )
@@ -47,11 +51,13 @@ function SettingControl({
     raw,
     onChange,
     pickImage,
+    storeId,
 }: {
     field: SettingField
     raw: unknown
     onChange: (value: unknown) => void
     pickImage: PickImage
+    storeId?: string
 }) {
     const id = useId()
     const str = typeof raw === 'string' ? raw : raw === undefined || raw === null ? '' : String(raw)
@@ -150,6 +156,12 @@ function SettingControl({
                     <ImageField value={str} onChange={onChange} pickImage={pickImage} />
                 </Field>
             )
+        case 'products':
+            return storeId ? (
+                <Field label={f.label} as="div">
+                    <ProductPicker storeId={storeId} value={raw} max={f.max} onChange={onChange} />
+                </Field>
+            ) : null
         default:
             return null
     }

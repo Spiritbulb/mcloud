@@ -8,6 +8,7 @@
 import { getVertical } from '@mcloud/verticals'
 import type { SettingField } from '@mcloud/verticals'
 import { heroSlides } from './hero'
+import { MAX_PICKED_PRODUCTS, selectProducts } from './product-selection'
 
 export type SectionType =
   | 'hero'
@@ -42,7 +43,8 @@ export interface SectionDef {
    * renderPage picks the folder from the store's theme (lib/store-themes.ts).
    */
   file: string
-  pickContext: (ctx: PageRenderContext) => Record<string, unknown>
+  /** `settings` is this section's own config, for sections whose content depends on it (picked products). */
+  pickContext: (ctx: PageRenderContext, settings?: Record<string, unknown>) => Record<string, unknown>
   /** Human name, shown in the Editor's section list. */
   label: string
   /** One line for the Editor's "Add section" picker. */
@@ -154,9 +156,24 @@ export const SECTION_REGISTRY: Record<SectionType, SectionDef> = {
   featured: {
     file: 'featured-products',
     label: 'Featured products',
-    description: 'A handful of products you have marked as featured.',
-    pickContext: (ctx) => ({ store: ctx.store, products: ctx.featuredProducts }),
-    schema: [...copy('Top Picks', 'Featured Collection'), columns, cardStyle],
+    description: 'Products you choose, or your featured ones if you have not chosen any.',
+    // Picked products win; with none picked this is what it always was (the featured
+    // collection, else the newest). ctx.products is every active product, so a pick
+    // that was hidden or deleted simply drops out.
+    pickContext: (ctx, settings) => ({
+      store: ctx.store,
+      products: selectProducts(
+        settings?.productIds,
+        ctx.products as { id: string }[],
+        ctx.featuredProducts as { id: string }[],
+      ),
+    }),
+    schema: [
+      ...copy('Top Picks', 'Featured Collection'),
+      { id: 'productIds', type: 'products', label: 'Products to show', max: MAX_PICKED_PRODUCTS },
+      columns,
+      cardStyle,
+    ],
   },
   'all-products': {
     file: 'all-products',

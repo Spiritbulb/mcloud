@@ -45,6 +45,20 @@ assert.equal(heroCtx.slides[0].title, 'Test Store', 'which DISPLAYS the store na
 assert.deepEqual(Object.keys(SECTION_REGISTRY.collections.pickContext(ctx)).sort(), ['collections', 'store'])
 const feat = SECTION_REGISTRY.featured.pickContext(ctx)
 assert.deepEqual((feat as any).products, ctx.featuredProducts, 'featured maps featuredProducts -> products')
+// Picked products: the merchant's order, from every active product; a missing pick drops out
+const productsOf = (c: unknown) => (c as { products: unknown[] }).products
+const pickCtx = { ...ctx, products: [{ id: 'p1' }, { id: 'p2' }, { id: 'p3' }], featuredProducts: [{ id: 'p1' }] }
+assert.deepEqual(
+  productsOf(SECTION_REGISTRY.featured.pickContext(pickCtx, { productIds: ['p3', 'gone', 'p2'] })),
+  [{ id: 'p3' }, { id: 'p2' }],
+  'featured shows picked products in order and skips missing ones',
+)
+assert.deepEqual(
+  productsOf(SECTION_REGISTRY.featured.pickContext(pickCtx, { productIds: [] })),
+  pickCtx.featuredProducts,
+  'no picks -> the old behaviour',
+)
+assert.ok(SECTION_REGISTRY.featured.schema?.some((f) => f.id === 'productIds' && f.type === 'products'), 'featured declares the picker')
 const all = SECTION_REGISTRY['all-products'].pickContext(ctx)
 assert.deepEqual((all as any).products, ctx.products, 'all-products maps products -> products')
 
