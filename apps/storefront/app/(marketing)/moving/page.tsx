@@ -5,7 +5,7 @@ import { webUrl } from '@/lib/host'
 export const metadata: Metadata = {
     title: 'Storefronts are getting their own home',
     description:
-        'Menengai Storefronts is moving out of the mcloud.co.ke dashboard. What changes, what stays the same, and what you need to do.',
+        'MCloud Storefronts is moving out of the mcloud.co.ke dashboard. What changes, what stays the same, and what you need to do.',
     alternates: { canonical: '/moving' },
 }
 
@@ -36,7 +36,7 @@ export default function MovingPage() {
             <p className="text-sm font-medium text-primary">What&rsquo;s changing</p>
             <h1 className="mt-3 text-4xl font-semibold tracking-tight sm:text-5xl">Storefronts are getting their own home</h1>
             <p className="mt-5 text-lg text-muted-foreground">
-                Menengai Storefronts, the part of Menengai Cloud that runs your shop or non-profit site, is separating from the
+                MCloud Storefronts, the part of Menengai Cloud that runs your shop or non-profit site, is separating from the
                 mcloud.co.ke dashboard. The dashboard keeps your organisation, billing, wallet and servers. Storefronts
                 get a home focused on running your site.
             </p>

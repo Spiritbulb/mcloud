@@ -6,6 +6,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getVertical } from '@mcloud/verticals'
+import { PLAN_PRICE_KES } from '@mcloud/merchant/plans'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
 import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button, buttonClass } from '@mcloud/ui/kit/button'
@@ -439,11 +440,11 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
 
                     {!loading && store && !store.is_pro && (
                         <Panel
-                            title="Grow with Pro"
-                            description="Your own domain, advanced analytics, a blog, and your branding out front."
+                            title="Get your own domain"
+                            description={`Hobby gives you yourbrand.co.ke, automatic M-PESA prompts and analytics for ${formatCurrency(PLAN_PRICE_KES.hobby, 'KES')} a month.`}
                             footer={<a href={webUrl(`/org/${orgSlug}/billing`)} className={buttonClass('primary', 'sm')}>See plans</a>}
                         >
-                            <p className="text-[13px] text-muted-foreground">Plans are paid from your organization wallet in Billing.</p>
+                            <p className="text-[13px] text-muted-foreground">Top up with M-PESA in Billing; your plan renews from that balance each month.</p>
                         </Panel>
                     )}
                 </div>

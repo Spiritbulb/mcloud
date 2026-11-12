@@ -9,8 +9,8 @@ import { checkSlug, launchStore } from './actions'
 import { launchProblem, nextSlug, type SiteType } from './onboarding-logic'
 
 const TYPES: { id: SiteType; title: string; body: string; icon: typeof ShoppingBag }[] = [
-    { id: 'shop', title: 'A shop', body: 'Sell products or services and take orders with M-PESA.', icon: ShoppingBag },
-    { id: 'ngo', title: 'A non-profit or cause', body: 'Share your mission, programs and impact, and take donations.', icon: HeartHandshake },
+    { id: 'shop', title: 'A shop', body: 'Sell products or services and get paid by M-PESA.', icon: ShoppingBag },
+    { id: 'ngo', title: 'A non-profit or cause', body: 'Tell your story, show your programmes and take donations by M-PESA.', icon: HeartHandshake },
 ]
 
 type Availability = 'idle' | 'checking' | 'ok' | { reason: string }
@@ -69,23 +69,23 @@ export default function StartClient({ firstName }: { firstName: string | null })
                 </div>
                 <h1 className="text-3xl font-semibold tracking-tight">Your site is live</h1>
                 <p className="mt-2 text-muted-foreground">
-                    Share it now, or make it yours first. It is at{' '}
+                    It&rsquo;s already online at{' '}
                     <a className="font-medium text-foreground underline underline-offset-4" href={storefrontUrl(done.storeSlug)}>
                         {storefrontDisplayUrl(done.storeSlug)}
                     </a>
-                    .
+                    . Three things to do next, in any order:
                 </p>
                 <ol className="mt-8 divide-y divide-border rounded-2xl border border-border bg-card">
-                    <NextStep href={`${base}/editor`} title="Design your site" body="Set your brand and arrange your sections with a live preview." />
                     <NextStep
                         href={`${base}/${type === 'ngo' ? 'content' : 'products'}`}
-                        title={type === 'ngo' ? 'Add your programs and campaigns' : 'Add your first products'}
-                        body={type === 'ngo' ? 'Tell visitors what you do and how to give.' : 'List what you sell so customers can order.'}
+                        title={type === 'ngo' ? 'Add a campaign' : 'Add your first product'}
+                        body={type === 'ngo' ? 'Say what you are raising money for, so supporters can give.' : 'A name, a price and a photo are enough to take an order.'}
                     />
-                    <NextStep href={`${base}/integrations/payments`} title="Connect M-PESA" body="Be ready to get paid the moment someone orders or donates." />
+                    <NextStep href={`${base}/integrations/payments`} title="Add your M-PESA till or paybill" body="So the money lands in your account the moment someone pays." />
+                    <NextStep href={`${base}/editor`} title="Make it look like you" body="Your logo, colours and photos, with a live preview." />
                 </ol>
                 <Link href={base} className="mt-6 inline-block text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
-                    Skip to my dashboard
+                    Go to my dashboard
                 </Link>
             </div>
         )
