@@ -104,7 +104,7 @@ export default function ImageUpload({
                     </button>
                 </div>
             ) : (
-                <div className={aspectRatio === 'wide' ? 'aspect-video w-full' : aspectRatio === 'free' ? 'h-32 w-full' : 'aspect-square w-48'}>
+                <div className={aspectRatio === 'wide' ? 'aspect-video w-full' : aspectRatio === 'free' ? 'min-h-32 w-full' : 'aspect-square w-48'}>
                     <Dropzone {...uploadProps}>
                         <DropzoneEmptyState />
                         <DropzoneContent />

@@ -26,17 +26,19 @@
 }
 
 /* ── Dark mode ──────────────────────────────────────────────────────────────── */
-/* data-sf-mode comes from the Brand page: "auto" (or unset) follows the visitor's
+/* The layout sets the light colours inline on .storefront-root, and an inline style beats any
+   stylesheet rule, so the six colour declarations below need !important or dark mode never applies.
+   data-sf-mode comes from the Brand page: "auto" (or unset) follows the visitor's
    device, "dark" and "light" force it. The dark rules are written twice because a
    media query cannot be combined with an attribute test in one selector list. */
 .storefront-root[data-sf-mode="dark"] {
     color-scheme: dark;
-    --sf-primary: var(--sf-dark-primary, #e8e0d8);
-    --sf-background: var(--sf-dark-background, #0f0f10);
-    --sf-foreground: var(--sf-dark-foreground, #f0ece6);
-    --sf-muted: var(--sf-dark-muted, #1e1e20);
-    --sf-accent: var(--sf-dark-accent, #c9a96e);
-    --sf-secondary: var(--sf-dark-secondary, #27272a);
+    --sf-primary: var(--sf-dark-primary, #e8e0d8) !important;
+    --sf-background: var(--sf-dark-background, #0f0f10) !important;
+    --sf-foreground: var(--sf-dark-foreground, #f0ece6) !important;
+    --sf-muted: var(--sf-dark-muted, #1e1e20) !important;
+    --sf-accent: var(--sf-dark-accent, #c9a96e) !important;
+    --sf-secondary: var(--sf-dark-secondary, #27272a) !important;
 
     /* Re-derive these for dark mode so they stay readable */
     --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 80%, var(--sf-background));
@@ -46,18 +48,28 @@
 
 @media (prefers-color-scheme: dark) {
     .storefront-root:not([data-sf-mode="light"]):not([data-sf-mode="dark"]) {
-        --sf-primary: var(--sf-dark-primary, #e8e0d8);
-        --sf-background: var(--sf-dark-background, #0f0f10);
-        --sf-foreground: var(--sf-dark-foreground, #f0ece6);
-        --sf-muted: var(--sf-dark-muted, #1e1e20);
-        --sf-accent: var(--sf-dark-accent, #c9a96e);
-        --sf-secondary: var(--sf-dark-secondary, #27272a);
+        --sf-primary: var(--sf-dark-primary, #e8e0d8) !important;
+        --sf-background: var(--sf-dark-background, #0f0f10) !important;
+        --sf-foreground: var(--sf-dark-foreground, #f0ece6) !important;
+        --sf-muted: var(--sf-dark-muted, #1e1e20) !important;
+        --sf-accent: var(--sf-dark-accent, #c9a96e) !important;
+        --sf-secondary: var(--sf-dark-secondary, #27272a) !important;
 
         /* Re-derive these for dark mode so they stay readable */
         --sf-foreground-subtle: color-mix(in srgb, var(--sf-foreground) 80%, var(--sf-background));
         --sf-border: color-mix(in srgb, var(--sf-foreground) 18%, transparent);
         --sf-border-strong: color-mix(in srgb, var(--sf-foreground) 35%, transparent);
     }
+}
+
+/* The page behind the storefront (overscroll, a short page) is the browser's canvas, which
+   follows color-scheme, so it is set from the same mode. The root is also at least
+   viewport-tall, so a short page never shows the canvas under the footer. */
+.storefront-root { min-height: 100dvh; }
+html:has(.storefront-root[data-sf-mode="dark"]) { color-scheme: dark; }
+html:has(.storefront-root[data-sf-mode="light"]) { color-scheme: light; }
+@media (prefers-color-scheme: dark) {
+    html:has(.storefront-root:not([data-sf-mode="light"]):not([data-sf-mode="dark"])) { color-scheme: dark; }
 }
 
 /* Optional dark-mode logo: the header renders both, the active mode shows one. */

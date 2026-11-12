@@ -75,6 +75,7 @@ const COMMERCE: NavSection = {
   label: 'Commerce',
   tabs: [
     { id: 'orders', label: 'Orders', icon: 'receipt_long' },
+    { id: 'reviews', label: 'Reviews', icon: 'reviews' },
     { id: 'analytics', label: 'Analytics', icon: 'bar_chart' },
     { id: 'reach', label: 'Reach marketplace', icon: 'hub', image: '/brand/reach.png' },
     { id: 'customers', label: 'Customers', icon: 'person', pro: true },
@@ -127,7 +128,7 @@ export function sectionsFor(vertical: Vertical): NavSection[] {
 export const ALL_TAB_IDS = [
   'home', 'general', 'brand', 'editor',
   'products', 'services',
-  'orders', 'analytics', 'customers', 'blog',
+  'orders', 'reviews', 'analytics', 'customers', 'blog',
   'content',
   'members', 'domain', 'integrations',
   'billing',
