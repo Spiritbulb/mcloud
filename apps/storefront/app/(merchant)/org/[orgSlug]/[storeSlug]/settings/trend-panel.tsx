@@ -2,7 +2,7 @@
 
 // "Last 14 days" on the Overview: takings per day as a sparkline, with the period total.
 
-import type { DailyPoint } from '@mcloud/merchant/overview-series'
+import { seriesIsEmpty, type DailyPoint } from '@mcloud/merchant/overview-series'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Sparkline } from '@mcloud/ui/kit/sparkline'
 import { formatCurrency } from './overview-logic'
@@ -22,16 +22,24 @@ export function TrendPanel({ daily, currency, commerce }: { daily: DailyPoint[];
                 <p className="text-2xl font-semibold tabular-nums text-foreground">{formatCurrency(total, currency)}</p>
                 <p className="text-[13px] text-muted-foreground">{count} {noun}</p>
             </div>
-            <Sparkline
-                values={daily.map((d) => d.amount)}
-                label={`${commerce ? 'Sales' : 'Donations'} per day, ${shortDate(daily[0].date)} to ${shortDate(daily[daily.length - 1].date)}`}
-                height={72}
-                className="mt-3 text-primary"
-            />
-            <div className="mt-1 flex justify-between text-[12px] text-muted-foreground">
-                <span>{shortDate(daily[0].date)}</span>
-                <span>Today</span>
-            </div>
+            {seriesIsEmpty(daily) ? (
+                <p className="mt-3 text-[14px] text-muted-foreground">
+                    {commerce ? 'No paid orders in the last 14 days.' : 'No donations in the last 14 days.'}
+                </p>
+            ) : (
+                <>
+                    <Sparkline
+                        values={daily.map((d) => d.amount)}
+                        label={`${commerce ? 'Sales' : 'Donations'} per day, ${shortDate(daily[0].date)} to ${shortDate(daily[daily.length - 1].date)}`}
+                        height={72}
+                        className="mt-3 text-primary"
+                    />
+                    <div className="mt-1 flex justify-between text-[12px] text-muted-foreground">
+                        <span>{shortDate(daily[0].date)}</span>
+                        <span>Today</span>
+                    </div>
+                </>
+            )}
         </Panel>
     )
 }

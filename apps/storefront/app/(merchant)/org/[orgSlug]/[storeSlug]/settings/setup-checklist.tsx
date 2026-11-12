@@ -12,7 +12,7 @@ import { Illustration } from '@mcloud/ui/kit/illustrations'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { docUrl } from '@/lib/help-links'
 import { updateSetupChecklist } from '@/lib/admin/setup-checklist-actions'
-import { checklistProgress, type ChecklistStep } from './setup-checklist-logic'
+import { checklistProgress, runChecklistSave, stepLabels, type ChecklistStep } from './setup-checklist-logic'
 
 function ProgressRing({ done, total }: { done: number; total: number }) {
     const r = 15
@@ -30,7 +30,7 @@ function ProgressRing({ done, total }: { done: number; total: number }) {
     )
 }
 
-function LearnHow({ path }: { path: string }) {
+function LearnHow({ path, label }: { path: string; label: string }) {
     const href = docUrl(path)
     return (
         <a
@@ -39,6 +39,7 @@ function LearnHow({ path }: { path: string }) {
             rel="noopener noreferrer"
             // Docs live on web; leave the TWA shell for the browser.
             onClick={(e) => { e.preventDefault(); openExternal(href) }}
+            aria-label={label}
             className="whitespace-nowrap text-[13px] text-muted-foreground hover:text-foreground hover:underline"
         >
             Learn how →
@@ -47,9 +48,10 @@ function LearnHow({ path }: { path: string }) {
 }
 
 function StepRow({ step, settingsHref, onShare }: { step: ChecklistStep; settingsHref: (tab: string) => string; onShare: () => void }) {
+    const labels = stepLabels(step)
     const action = step.tab === null
         ? <Button size="sm" variant={step.done ? 'ghost' : 'secondary'} onClick={onShare}>Copy link</Button>
-        : !step.done && <Link href={settingsHref(step.tab)} className={buttonClass('secondary', 'sm')}>Start</Link>
+        : !step.done && <Link href={settingsHref(step.tab)} className={buttonClass('secondary', 'sm')} aria-label={labels.start}>Start</Link>
     return (
         <li className="flex flex-wrap items-start gap-x-3 gap-y-2 px-4 py-3">
             <span
@@ -60,6 +62,7 @@ function StepRow({ step, settingsHref, onShare }: { step: ChecklistStep; setting
                 {step.done && <Icon name="check" size={13} />}
             </span>
             <span className="min-w-0 flex-1">
+                <span className="sr-only">{labels.status}: </span>
                 <span className={step.done ? 'block text-[14px] text-muted-foreground line-through decoration-muted-foreground/50' : 'block text-[14px] font-medium text-foreground'}>
                     {step.title}
                     {step.optional && <span className="ml-1.5 text-[12px] font-normal text-muted-foreground no-underline">Optional</span>}
@@ -68,7 +71,7 @@ function StepRow({ step, settingsHref, onShare }: { step: ChecklistStep; setting
             </span>
             {/* Under the text on phones (indented past the tick), beside it from sm up. */}
             <span className="flex w-full shrink-0 items-center gap-3 pl-8 sm:w-auto sm:justify-end sm:pl-0">
-                {!step.done && <LearnHow path={step.docPath} />}
+                {!step.done && <LearnHow path={step.docPath} label={labels.learn} />}
                 {action}
             </span>
         </li>
@@ -92,11 +95,11 @@ export function SetupChecklist({ storeId, steps, commerce, settingsHref, onCopyL
     const hide = async () => {
         setHidden(true)
         setError(null)
-        const res = await updateSetupChecklist(storeId, { hidden: true })
-        // Put it back if the save failed (e.g. a staff member who cannot change the store).
-        if (!res.ok) {
+        // Put it back if the save failed or threw (no permission, network down).
+        const failure = await runChecklistSave(() => updateSetupChecklist(storeId, { hidden: true }))
+        if (failure) {
             setHidden(false)
-            setError(res.error)
+            setError(failure)
         }
     }
 
@@ -112,7 +115,7 @@ export function SetupChecklist({ storeId, steps, commerce, settingsHref, onCopyL
                         <p className="text-[14px] text-muted-foreground">
                             {commerce ? 'Your store is ready for customers.' : 'Your site is ready for supporters.'}
                         </p>
-                        {error && <p className="mt-1 text-[13px] text-destructive">{error}</p>}
+                        {error && <p role="alert" className="mt-1 text-[13px] text-destructive">{error}</p>}
                     </div>
                     {hideButton}
                 </div>
@@ -129,7 +132,7 @@ export function SetupChecklist({ storeId, steps, commerce, settingsHref, onCopyL
                         {commerce ? 'Get your store ready' : 'Get your site ready'}
                     </p>
                     <p className="text-[13px] text-muted-foreground">{done} of {total} done</p>
-                    {error && <p className="mt-1 text-[13px] text-destructive">{error}</p>}
+                    {error && <p role="alert" className="mt-1 text-[13px] text-destructive">{error}</p>}
                 </div>
                 <ProgressRing done={done} total={total} />
                 {hideButton}

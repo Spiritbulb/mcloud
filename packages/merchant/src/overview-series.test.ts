@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { dailySeries } from './overview-series.ts'
+import { dailySeries, seriesIsEmpty } from './overview-series.ts'
 
 // 2026-11-12 10:00 in Nairobi (UTC+3).
 const now = new Date('2026-11-12T07:00:00Z')
@@ -51,4 +51,17 @@ test('orders outside the window and unreadable totals are ignored', () => {
     const s = dailySeries(rows, { days: 14, now, commerce: true })
     assert.equal(s.reduce((n, d) => n + d.amount, 0), 0)
     assert.equal(s[13].count, 1)
+})
+
+test('getStoreOverview feeds the trend from a date-bounded query, not every order', async () => {
+    const { readFileSync } = await import('node:fs')
+    const src = readFileSync(new URL('./store-data.ts', import.meta.url), 'utf8')
+    // A store with more than 1000 orders would get an arbitrary capped slice from an unbounded select.
+    assert.match(src, /dailySeries\(trendOrders \?\? \[\]/)
+    assert.match(src, /\.gte\('created_at', sinceTrend\)/)
+})
+
+test('a window with no takings is reported as empty, not drawn as a flat line', () => {
+    assert.equal(seriesIsEmpty(dailySeries([], { days: 14, now, commerce: true })), true)
+    assert.equal(seriesIsEmpty(dailySeries([{ total: 5, status: 'paid', created_at: '2026-11-12T05:00:00Z' }], { days: 14, now, commerce: true })), false)
 })

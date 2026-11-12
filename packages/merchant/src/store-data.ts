@@ -147,6 +147,8 @@ export async function getStoreOverview(
     const storeId = currentMembership.store_id
 
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    // 15 days back covers the 14 Nairobi days of the trend whatever the server's time zone.
+    const sinceTrend = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
@@ -169,6 +171,7 @@ export async function getStoreOverview(
         { data: topProductRows },
         { count: orders7dCount },
         { count: deliveryZoneCount },
+        { data: trendOrders },
     ] = await Promise.all([
         supabase
             .from('stores')
@@ -187,8 +190,7 @@ export async function getStoreOverview(
             .from('orders')
             // `metadata` is needed to identify donations (isDonation) and attribute
             // them to a campaign (campaignId). See the donation aggregation below.
-            // `created_at` feeds the 14-day trend (dailySeries).
-            .select('total, status, metadata, created_at')
+            .select('total, status, metadata')
             .eq('store_id', storeId),
         supabase
             .from('orders')
@@ -224,6 +226,12 @@ export async function getStoreOverview(
             .from('delivery_zones')
             .select('*', { count: 'exact', head: true })
             .eq('store_id', storeId),
+        // The 14-day trend reads only its own window, so a busy store's row cap cannot cut it short.
+        supabase
+            .from('orders')
+            .select('total, status, metadata, created_at')
+            .eq('store_id', storeId)
+            .gte('created_at', sinceTrend),
     ])
 
     if (!store) return { error: 'not_found', data: null }
@@ -364,7 +372,7 @@ custom_domain: store.custom_domain ?? null,
             total_raised: totalRaised,
             donation_count: donationCount,
             campaign_progress: campaignProgress,
-            daily: dailySeries(orderAgg ?? [], { days: 14, now, commerce: getVertical(store.type).commerce }),
+            daily: dailySeries(trendOrders ?? [], { days: 14, now, commerce: getVertical(store.type).commerce }),
         },
     }
 }

@@ -51,3 +51,8 @@ export function dailySeries(
     }
     return series
 }
+
+/** True when nothing came in over the whole window (draw a message, not a flat line). */
+export function seriesIsEmpty(series: DailyPoint[]): boolean {
+    return series.every((d) => d.amount === 0)
+}

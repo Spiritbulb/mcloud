@@ -145,6 +145,25 @@ export function readChecklistState(settings: unknown): ChecklistState {
 
 /** `settings` with `patch` merged into setup_checklist; every other key is kept. */
 export function mergeChecklistState(settings: unknown, patch: ChecklistState): Record<string, unknown> {
-    const base = settings && typeof settings === 'object' ? (settings as Record<string, unknown>) : {}
+    const base = settings && typeof settings === 'object' && !Array.isArray(settings) ? (settings as Record<string, unknown>) : {}
     return { ...base, setup_checklist: { ...readChecklistState(base), ...readChecklistState({ setup_checklist: patch }) } }
+}
+
+/** Screen-reader text for a step: its status, and link names that say which step they act on. */
+export function stepLabels(step: ChecklistStep): { status: 'Done' | 'To do'; start: string; learn: string } {
+    return {
+        status: step.done ? 'Done' : 'To do',
+        start: `Start: ${step.title}`,
+        learn: `Learn how: ${step.title} (opens in a new tab)`,
+    }
+}
+
+/** Runs a checklist save; resolves to an error message, or null when it saved. Never rejects. */
+export async function runChecklistSave(save: () => Promise<{ ok: true } | { ok: false; error: string }>): Promise<string | null> {
+    try {
+        const res = await save()
+        return res.ok ? null : res.error
+    } catch {
+        return 'Could not save. Check your connection and try again.'
+    }
 }

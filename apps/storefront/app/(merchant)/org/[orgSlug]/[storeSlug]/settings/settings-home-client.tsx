@@ -260,7 +260,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
         if (!store || linkShared) return
         setLinkCopied(true)
         // Best effort: if it fails the step simply ticks again on the next copy.
-        void updateSetupChecklist(store.id, { link_shared: true })
+        updateSetupChecklist(store.id, { link_shared: true }).catch(() => {})
     }
     const copyLink = () => {
         navigator.clipboard?.writeText(siteUrl).then(onLinkCopied)

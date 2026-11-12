@@ -6,6 +6,8 @@ import {
     checklistSteps,
     mergeChecklistState,
     readChecklistState,
+    runChecklistSave,
+    stepLabels,
     type ChecklistInput,
 } from './setup-checklist-logic.ts'
 
@@ -83,4 +85,19 @@ test('merging keeps the other settings and earlier flags', () => {
         themeId: 'classic-2',
         setup_checklist: { link_shared: true, hidden: true },
     })
+})
+
+test('each step has a screen-reader status and distinct link names', () => {
+    const [product] = checklistSteps({ ...empty, productCount: 1 }, true)
+    const [, payments] = checklistSteps(empty, true)
+    assert.equal(stepLabels(product).status, 'Done')
+    assert.equal(stepLabels(payments).status, 'To do')
+    assert.equal(stepLabels(payments).start, 'Start: Set up payments')
+    assert.equal(stepLabels(payments).learn, 'Learn how: Set up payments (opens in a new tab)')
+})
+
+test('hiding reports an error whether the save fails or throws', async () => {
+    assert.equal(await runChecklistSave(async () => ({ ok: true })), null)
+    assert.equal(await runChecklistSave(async () => ({ ok: false, error: 'No permission' })), 'No permission')
+    assert.match(String(await runChecklistSave(async () => { throw new Error('network') })), /Could not save/)
 })
