@@ -2,15 +2,16 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Check, Globe, Palette, Smartphone, BarChart3, Users, HeartHandshake, ShoppingBag } from 'lucide-react'
 import { PLAN_LIMITS, PLAN_PRICE_KES } from '@mcloud/merchant/plans'
+import { Scene, type SceneName } from './_components/scenes'
 
 export const metadata: Metadata = {
     alternates: { canonical: '/' },
 }
 
-const STEPS = [
-    { n: '01', title: 'Name your site', body: 'Choose a shop or a non-profit site and pick its address. It goes live straight away on a free mcloud.co.ke address.' },
-    { n: '02', title: 'Make it look like you', body: 'Add your logo, colours and photos in the visual editor, then your products, services or campaigns.' },
-    { n: '03', title: 'Share it and get paid', body: 'Add your till or paybill and share your link on WhatsApp and Instagram. Customers pay you by M-PESA.' },
+const STEPS: { n: string; title: string; body: string; scene: SceneName }[] = [
+    { n: '01', title: 'Name your site', body: 'Choose a shop or a non-profit site and pick its address. It goes live straight away on a free mcloud.co.ke address.', scene: 'shop-live' },
+    { n: '02', title: 'Make it look like you', body: 'Add your logo, colours and photos in the visual editor, then your products, services or campaigns.', scene: 'editor' },
+    { n: '03', title: 'Share it and get paid', body: 'Add your till or paybill and share your link on WhatsApp and Instagram. Customers pay you by M-PESA.', scene: 'mpesa-prompt' },
 ]
 
 /** `plan` marks features a paid plan unlocks, so nobody meets a lock they were not told about. */
@@ -86,7 +87,8 @@ export default function Home() {
                         Products, services, a cart and M-PESA checkout, with your orders and customers in one place.
                     </p>
                 </div>
-                <div className="rounded-2xl border border-border bg-card p-6">
+                <div className="relative overflow-hidden rounded-2xl border border-border bg-card p-6 sm:pr-36">
+                    <Scene name="nonprofit" className="absolute -bottom-3 -right-3 h-24 opacity-90 max-sm:hidden" />
                     <HeartHandshake className="mb-4 size-6 text-primary" aria-hidden />
                     <h2 className="text-xl font-semibold">For non-profits</h2>
                     <p className="mt-2 text-muted-foreground">
@@ -101,6 +103,7 @@ export default function Home() {
                     <ol className="mt-8 grid gap-6 sm:grid-cols-3">
                         {STEPS.map((s) => (
                             <li key={s.n}>
+                                <Scene name={s.scene} className="mb-4" />
                                 <span className="font-mono text-sm text-primary">{s.n}</span>
                                 <h3 className="mt-2 text-lg font-semibold">{s.title}</h3>
                                 <p className="mt-1 text-muted-foreground">{s.body}</p>
