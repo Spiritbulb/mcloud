@@ -8,6 +8,7 @@ import { getSession } from '@mcloud/auth/server'
 import { createClient } from '@mcloud/db/server'
 import { getOrgRole } from '@/lib/servers-db'
 import { createPendingTopup, attachPalplussTransaction, markTopupFailed, MIN_TOPUP_KES, kesToCents } from '@/lib/wallet'
+import { topupChargeKes } from '@/lib/wallet-math'
 import { initiateStkPush } from '@/lib/palpluss'
 
 async function resolveOrg(orgSlug: string) {
@@ -62,8 +63,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ org
   const shortRef = topup.id.replace(/-/g, '').slice(0, 12)
 
   try {
+    // The prompt adds PalPluss's fee; the wallet is credited amountKes (see the webhook).
     const stk = await initiateStkPush({
-      amountKes,
+      amountKes: topupChargeKes(amountKes),
       phone,
       accountReference: shortRef,
       transactionDesc: 'VPS credits',

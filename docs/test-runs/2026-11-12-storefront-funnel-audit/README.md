@@ -101,5 +101,5 @@ screen, right over the hero buttons. *Fix:* use a slim bottom bar on small scree
 - **Out of the copy pass, needing code or another repo:**
   - B1 (Spiritbulb sign-in);
   - B2 (home toggle);
-  - F1 and F2 (Billing);
+  - ~~F1 and F2 (Billing)~~ done 2026-11-13 (shortfall top-up, plans panel, priced buttons; plus a KSh 3 top-up fee);
   - F10 and P1 (mcloud.co.ke styles).
