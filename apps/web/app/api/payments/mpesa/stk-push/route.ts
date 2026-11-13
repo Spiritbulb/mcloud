@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { mpesaAmountDue, normalizeKenyanPhone, orderIsPayable } from '@mcloud/merchant/payments'
+import { mpesaCallbackUrl } from '@mcloud/merchant/deploy-env'
 import { initiateStkPush } from '@/lib/palpluss'
 import { ensureChannel, palplussSpecForStore } from '@/lib/palpluss-store-payments'
 
@@ -131,7 +132,7 @@ export async function POST(req: NextRequest) {
         const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)
         const password = Buffer.from(`${cfg.shortcode}${cfg.passkey}${timestamp}`).toString('base64')
 
-        const callbackUrl = 'https://mcloud.co.ke/api/payments/mpesa/callback'
+        const callbackUrl = mpesaCallbackUrl(process.env.NEXT_PUBLIC_ADMIN_ORIGIN)
 
         const body = {
             BusinessShortCode: cfg.shortcode,

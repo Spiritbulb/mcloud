@@ -9,6 +9,8 @@ import { Geist, Geist_Mono, Lora } from "next/font/google";
 import { ThemeProvider } from "@/components/theme-provider";
 import { ThemeColorSync } from "@/components/theme-color-sync";
 import StatusBanner from '@mcloud/ui/status-banner'
+import { isStaging } from "@mcloud/merchant/deploy-env";
+import { StagingBar } from "@/components/staging-bar";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -45,17 +47,19 @@ export const metadata: Metadata = {
     description:
       "Focus on running your business. Menengai Cloud keeps your website online, secure, fast, and looking sharp, every single day.",
   },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
-      index: true,
-      follow: true,
-      "max-video-preview": -1,
-      "max-image-preview": "large",
-      "max-snippet": -1,
-    },
-  },
+  robots: isStaging()
+    ? { index: false, follow: false }
+    : {
+        index: true,
+        follow: true,
+        googleBot: {
+          index: true,
+          follow: true,
+          "max-video-preview": -1,
+          "max-image-preview": "large",
+          "max-snippet": -1,
+        },
+      },
 };
 
 export const viewport: Viewport = {
@@ -97,6 +101,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased">
+        {isStaging() && <StagingBar />}
         <Script
           id="sw-reg"
           strategy="afterInteractive"

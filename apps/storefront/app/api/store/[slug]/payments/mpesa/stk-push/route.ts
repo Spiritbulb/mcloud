@@ -2,6 +2,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@mcloud/db/server'
 import { mpesaAmountDue, normalizeKenyanPhone, orderIsPayable } from '@mcloud/merchant/payments'
+import { mpesaCallbackUrl } from '@mcloud/merchant/deploy-env'
+import { webAppOrigin } from '@/lib/host'
 
 const DARAJA_BASE = process.env.DARAJA_ENV === 'production'
     ? 'https://api.safaricom.co.ke'
@@ -85,7 +87,7 @@ export async function POST(req: NextRequest) {
         const timestamp = new Date().toISOString().replace(/[^0-9]/g, '').slice(0, 14)
         const password = Buffer.from(`${cfg.shortcode}${cfg.passkey}${timestamp}`).toString('base64')
 
-        const callbackUrl = 'https://mcloud.co.ke/api/payments/mpesa/callback'
+        const callbackUrl = mpesaCallbackUrl(webAppOrigin())
 
         const body = {
             BusinessShortCode: cfg.shortcode,
