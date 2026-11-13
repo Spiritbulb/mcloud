@@ -76,3 +76,14 @@ export function planBenefits(plan: PaidPlan): string[] {
         `${countLabel(limits.products, 'products')}, ${limits.members} team members, priority support`,
     ]
 }
+
+export type PollStep = 'confirm' | 'balance-ready' | 'timeout' | 'wait'
+
+/**
+ * One balance check after a shortfall top-up. `busy` means another confirm or purchase is open or
+ * running: then the plan's confirm must not replace it, so the row is told the balance is ready.
+ */
+export function pollStep(balanceCents: number | null, priceKes: number, tries: number, maxTries: number, busy: boolean): PollStep {
+    if (balanceCents !== null && balanceCents / 100 >= priceKes) return busy ? 'balance-ready' : 'confirm'
+    return tries >= maxTries ? 'timeout' : 'wait'
+}

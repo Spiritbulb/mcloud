@@ -25,6 +25,7 @@ import {
     planBenefits,
     planButtonLabel,
     planLabel,
+    pollStep,
     shortfallMessage,
     topupAmountFor,
     type PaidPlan,
@@ -48,6 +49,7 @@ type RowError = { message: string; plan?: PaidPlan; shortfall?: boolean }
 /** Check the balance this often, this many times, after a shortfall top-up prompt (2 minutes). */
 const POLL_MS = 5_000
 const POLL_TRIES = 24
+const BALANCE_READY = 'Your balance is updated. Choose the plan again to pay.'
 const PAYMENT_NOT_ARRIVED =
     "We haven't received the payment yet. It can take a minute; try the plan again once your balance updates."
 
@@ -84,6 +86,12 @@ export default function BillingClient({
         if (pollRef.current) clearInterval(pollRef.current)
     }, [])
 
+    // The poll runs in an interval, so it reads "is another confirm or purchase open?" from a ref.
+    const busyRef = useRef(false)
+    useEffect(() => {
+        busyRef.current = confirming !== null || pendingPurchase !== null
+    }, [confirming, pendingPurchase])
+
     /** Re-reads the wallet; returns the new balance in cents, or null when it could not be read. */
     async function refreshBalance(): Promise<number | null> {
         const res = await fetch(`/api/org/${orgSlug}/wallet/balance`, { cache: 'no-store' })
@@ -102,22 +110,26 @@ export default function BillingClient({
         setWaitingStoreId(storeId)
         let tries = 0
         let checking = false
-        pollRef.current = setInterval(async () => {
+        const id = setInterval(async () => {
             if (checking) return
             checking = true
             tries += 1
             const cents = await refreshBalance()
             checking = false
-            if (!pollRef.current) return
-            if (cents !== null && cents / 100 >= PLAN_PRICE_KES[plan]) {
-                stopPolling()
+            // A newer poll (or unmount) replaced this one while the balance was being read.
+            if (pollRef.current !== id) return
+            const step = pollStep(cents, PLAN_PRICE_KES[plan], tries, POLL_TRIES, busyRef.current)
+            if (step === 'wait') return
+            stopPolling()
+            if (step === 'confirm') {
                 setErrors((current) => ({ ...current, [storeId]: { message: '' } }))
                 setConfirming({ store, plan })
-            } else if (tries >= POLL_TRIES) {
-                stopPolling()
-                setErrors((current) => ({ ...current, [storeId]: { message: PAYMENT_NOT_ARRIVED } }))
+            } else {
+                const message = step === 'balance-ready' ? BALANCE_READY : PAYMENT_NOT_ARRIVED
+                setErrors((current) => ({ ...current, [storeId]: { message } }))
             }
         }, POLL_MS)
+        pollRef.current = id
     }
 
     const balanceKes = balance / 100
@@ -216,7 +228,7 @@ export default function BillingClient({
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name}</p>
                                                     {error?.message && <p role="alert" className="mt-0.5 max-w-sm text-[13px] text-red-700 dark:text-red-300">{error.message}</p>}
-                                                    {canManage && error?.shortfall && error.plan && waitingStoreId !== store.id && (
+                                                    {canManage && error?.shortfall && error.plan && waitingStoreId === null && (
                                                         <Button
                                                             size="sm"
                                                             variant="secondary"

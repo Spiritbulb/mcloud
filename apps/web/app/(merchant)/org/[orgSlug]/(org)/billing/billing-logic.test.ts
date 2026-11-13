@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { currentPlanOf, formatDate, formatKes, isPaidPlanName, planActionLabel, planBenefits, planButtonLabel, planLabel, shortfallMessage, topupAmountFor } from './billing-logic.ts'
+import { currentPlanOf, formatDate, formatKes, isPaidPlanName, planActionLabel, planBenefits, planButtonLabel, planLabel, shortfallMessage, pollStep, topupAmountFor } from './billing-logic.ts'
 
 test('plan names and labels', () => {
     assert.equal(isPaidPlanName('pro'), true)
@@ -66,4 +66,13 @@ test('planButtonLabel shows the action and the monthly price', () => {
     assert.equal(planButtonLabel(null, 'hobby'), 'Choose Hobby · KSh 795/mo')
     assert.equal(planButtonLabel('hobby', 'pro'), 'Upgrade to Pro · KSh 2,795/mo')
     assert.equal(planButtonLabel('pro', 'pro'), 'Renew plan · KSh 2,795/mo')
+})
+
+test('pollStep opens the confirm only when funded and nothing else is in progress', () => {
+    assert.equal(pollStep(80_000, 795, 1, 24, false), 'confirm')
+    assert.equal(pollStep(80_000, 795, 1, 24, true), 'balance-ready')
+    assert.equal(pollStep(50_000, 795, 3, 24, false), 'wait')
+    assert.equal(pollStep(null, 795, 3, 24, false), 'wait')
+    assert.equal(pollStep(50_000, 795, 24, 24, false), 'timeout')
+    assert.equal(pollStep(null, 795, 24, 24, true), 'timeout')
 })
