@@ -27,6 +27,7 @@ add it here.
 | `PAYPAL_CLIENT_ID`, `PAYPAL_CLIENT_SECRET`, `PAYPAL_MODE` | PayPal (`live` or sandbox) |
 | `NEXT_PUBLIC_APP_URL`, `NEXT_PUBLIC_API_BASE_URL`, `NEXT_PUBLIC_STORE_NAME` | Used to build payment return URLs and client calls to the provider endpoints |
 | `NEXT_PUBLIC_STOREFRONT_ORIGIN` | Where web redirects store traffic |
+| `NEXT_PUBLIC_DEPLOY_ENV` | `staging` on the staging deployment (`staging.mcloud.co.ke`): robots and sitemap shut crawlers out, every response says `noindex`, a "Staging" bar shows on every page, and the Daraja callback goes to the app's own origin. Unset in production. Inlined at build. A staging build also needs `NEXT_PUBLIC_ADMIN_ORIGIN=https://staging.mcloud.co.ke` and a sandbox `DARAJA_ENV`. Web only for now; the storefront reads it when it moves to staging. |
 
 ## `apps/web` only
 

@@ -2,6 +2,7 @@ import type { MetadataRoute } from "next"
 import { getDocs } from "@/lib/docs-data"
 import { docsSitemapEntries } from "@/lib/docs-logic"
 import { GUIDES } from "@/lib/guides"
+import { isStaging } from "@mcloud/merchant/deploy-env"
 
 // Public, indexable marketing routes only. The merchant dashboard, admin, and
 // API are not listed (auth-gated / non-content). Keep in sync with the pages
@@ -11,6 +12,7 @@ const BASE = "https://mcloud.co.ke"
 export const revalidate = 3600
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (isStaging()) return []
   const routes = ["", "/beta", "/contact", "/docs", "/support"]
   const pages: MetadataRoute.Sitemap = routes.map((path) => ({
     url: `${BASE}${path}`,

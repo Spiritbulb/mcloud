@@ -27,6 +27,12 @@ const nextConfig: NextConfig = {
     // is excluded so the page can show the error. The page still does this in development,
     // where it goes to /dev-login, and for anything these rules don't match.
     // `to` is forwarded as-is: the handoff mint sanitizes it (api/_handoff/tickets.ts).
+    // Staging (NEXT_PUBLIC_DEPLOY_ENV=staging) tells every crawler to stay away. Inlined here rather
+    // than imported from @mcloud/merchant/deploy-env: the config file loads before transpilePackages.
+    async headers() {
+        if (process.env.NEXT_PUBLIC_DEPLOY_ENV !== 'staging') return []
+        return [{ source: '/:path*', headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow' }] }]
+    },
     async redirects() {
         // Docs used to be one page switched by ?page=<id>; ids are the slugs now.
         const docs = [{
