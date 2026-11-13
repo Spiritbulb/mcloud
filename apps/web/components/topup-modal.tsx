@@ -9,13 +9,16 @@ export function WalletTopupModal({
   open,
   onClose,
   onTopupInitiated,
+  initialAmountKes,
 }: {
   orgSlug: string
   open: boolean
   onClose: () => void
   onTopupInitiated?: () => void
+  /** Starting amount (e.g. a plan shortfall). Read on mount: mount the modal only while open to reset it. */
+  initialAmountKes?: number
 }) {
-  const [amount, setAmount] = useState('750')
+  const [amount, setAmount] = useState(String(initialAmountKes ?? 750))
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')

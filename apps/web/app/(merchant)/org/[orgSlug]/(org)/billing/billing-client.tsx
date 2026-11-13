@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { PLAN_PRICE_KES } from '@mcloud/merchant/plans'
 import { Avatar } from '@mcloud/ui/kit/avatar'
 import { Button } from '@mcloud/ui/kit/button'
@@ -22,8 +22,11 @@ import {
     formatKes,
     isPaidPlanName,
     planActionLabel,
+    planBenefits,
+    planButtonLabel,
     planLabel,
     shortfallMessage,
+    topupAmountFor,
     type PaidPlan,
     type StoreSubscription,
 } from './billing-logic'
@@ -38,6 +41,15 @@ type StoreRow = {
     pro_expires_at: string | null
     subscription: StoreSubscription
 }
+
+/** A message under a store row. `shortfall` ones offer a top-up for `plan`. */
+type RowError = { message: string; plan?: PaidPlan; shortfall?: boolean }
+
+/** Check the balance this often, this many times, after a shortfall top-up prompt (2 minutes). */
+const POLL_MS = 5_000
+const POLL_TRIES = 24
+const PAYMENT_NOT_ARRIVED =
+    "We haven't received the payment yet. It can take a minute; try the plan again once your balance updates."
 
 export default function BillingClient({
     orgSlug,
@@ -55,15 +67,57 @@ export default function BillingClient({
     const [balance, setBalance] = useState(balanceCents)
     const [pendingPurchase, setPendingPurchase] = useState<{ storeId: string; plan: PaidPlan } | null>(null)
     const [confirming, setConfirming] = useState<{ store: StoreRow; plan: PaidPlan } | null>(null)
-    const [errors, setErrors] = useState<Record<string, string>>({})
+    const [errors, setErrors] = useState<Record<string, RowError>>({})
     const [isPending, startTransition] = useTransition()
-    const [showTopup, setShowTopup] = useState(false)
+    // The top-up box, when open. `awaiting` is the plan purchase to resume once the money lands.
+    const [topup, setTopup] = useState<{ amountKes?: number; awaiting?: { storeId: string; plan: PaidPlan } } | null>(null)
+    const [waitingStoreId, setWaitingStoreId] = useState<string | null>(null)
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-    async function refreshBalance() {
+    function stopPolling() {
+        if (pollRef.current) clearInterval(pollRef.current)
+        pollRef.current = null
+        setWaitingStoreId(null)
+    }
+
+    useEffect(() => () => {
+        if (pollRef.current) clearInterval(pollRef.current)
+    }, [])
+
+    /** Re-reads the wallet; returns the new balance in cents, or null when it could not be read. */
+    async function refreshBalance(): Promise<number | null> {
         const res = await fetch(`/api/org/${orgSlug}/wallet/balance`, { cache: 'no-store' })
-        if (!res.ok) return
+        if (!res.ok) return null
         const data = await res.json()
-        if (typeof data.balanceCents === 'number') setBalance(data.balanceCents)
+        if (typeof data.balanceCents !== 'number') return null
+        setBalance(data.balanceCents)
+        return data.balanceCents
+    }
+
+    /** After a shortfall top-up: wait for the money, then ask to confirm the plan it was for. */
+    function resumeWhenFunded(storeId: string, plan: PaidPlan) {
+        const store = stores.find((s) => s.id === storeId)
+        if (!store) return
+        if (pollRef.current) clearInterval(pollRef.current)
+        setWaitingStoreId(storeId)
+        let tries = 0
+        let checking = false
+        pollRef.current = setInterval(async () => {
+            if (checking) return
+            checking = true
+            tries += 1
+            const cents = await refreshBalance()
+            checking = false
+            if (!pollRef.current) return
+            if (cents !== null && cents / 100 >= PLAN_PRICE_KES[plan]) {
+                stopPolling()
+                setErrors((current) => ({ ...current, [storeId]: { message: '' } }))
+                setConfirming({ store, plan })
+            } else if (tries >= POLL_TRIES) {
+                stopPolling()
+                setErrors((current) => ({ ...current, [storeId]: { message: PAYMENT_NOT_ARRIVED } }))
+            }
+        }, POLL_MS)
     }
 
     const balanceKes = balance / 100
@@ -78,7 +132,7 @@ export default function BillingClient({
     /** First step: check the wallet, then ask before charging it. */
     function requestPurchase(store: StoreRow, plan: PaidPlan) {
         const shortfall = shortfallMessage(balanceKes, plan, PLAN_PRICE_KES[plan])
-        setErrors((current) => ({ ...current, [store.id]: shortfall ?? '' }))
+        setErrors((current) => ({ ...current, [store.id]: { message: shortfall ?? '', plan, shortfall: !!shortfall } }))
         if (!shortfall) setConfirming({ store, plan })
     }
 
@@ -89,7 +143,7 @@ export default function BillingClient({
             setPendingPurchase(null)
             setConfirming(null)
             if (!result.ok) {
-                setErrors((current) => ({ ...current, [storeId]: result.error }))
+                setErrors((current) => ({ ...current, [storeId]: { message: result.error } }))
                 return
             }
             setBalance(result.newBalanceCents)
@@ -102,7 +156,7 @@ export default function BillingClient({
                 title="Billing"
                 description={<>Plans for stores in <span className="font-medium text-foreground">{orgName}</span> are paid from the organization wallet.</>}
                 actions={canManage && (
-                    <Button variant="primary" onClick={() => setShowTopup(true)}>
+                    <Button variant="primary" onClick={() => setTopup({})}>
                         <Icon name="add" size={16} />
                         Add funds
                     </Button>
@@ -116,6 +170,22 @@ export default function BillingClient({
             </StatStrip>
 
             {isLowBalance && <Notice tone="warning">Add funds to your wallet before buying or renewing a plan.</Notice>}
+
+            <Panel title="Plans" description="Each store is on its own plan, paid monthly from the wallet.">
+                <div className="grid gap-3 sm:grid-cols-2">
+                    {(['hobby', 'pro'] as const).map((plan) => (
+                        <div key={plan} className="border border-border p-4">
+                            <div className="flex items-baseline justify-between gap-2">
+                                <p className="font-semibold">{planLabel(plan)}</p>
+                                <p className="text-[14px] font-medium">{formatKes(PLAN_PRICE_KES[plan])}<span className="text-muted-foreground">/mo</span></p>
+                            </div>
+                            <ul className="mt-2 space-y-1 text-[13px] text-muted-foreground">
+                                {planBenefits(plan).map((line) => <li key={line}>{line}</li>)}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            </Panel>
 
             <Panel title="Store plans" description="Each store has its own plan and billing cycle." flush>
                 {stores.length === 0 ? (
@@ -145,13 +215,31 @@ export default function BillingClient({
                                                 <Avatar name={store.name} src={store.icon_url ?? store.logo_url} />
                                                 <div className="min-w-0">
                                                     <p className="truncate font-medium">{store.name}</p>
-                                                    {error && <p role="alert" className="mt-0.5 max-w-sm text-[13px] text-red-700 dark:text-red-300">{error}</p>}
+                                                    {error?.message && <p role="alert" className="mt-0.5 max-w-sm text-[13px] text-red-700 dark:text-red-300">{error.message}</p>}
+                                                    {canManage && error?.shortfall && error.plan && waitingStoreId !== store.id && (
+                                                        <Button
+                                                            size="sm"
+                                                            variant="secondary"
+                                                            className="mt-1.5"
+                                                            onClick={() => setTopup({
+                                                                amountKes: topupAmountFor(balanceKes, PLAN_PRICE_KES[error.plan!]),
+                                                                awaiting: { storeId: store.id, plan: error.plan! },
+                                                            })}
+                                                        >
+                                                            Top up {formatKes(topupAmountFor(balanceKes, PLAN_PRICE_KES[error.plan]))} with M-PESA
+                                                        </Button>
+                                                    )}
+                                                    {waitingStoreId === store.id && (
+                                                        <p role="status" className="mt-1 inline-flex items-center gap-1.5 text-[13px] text-muted-foreground">
+                                                            <Spinner size={11} /> Waiting for your M-PESA payment…
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </div>
                                         </Td>
                                         <Td label="Plan"><PlanBadge plan={currentPlan} /></Td>
                                         <Td label="Renews" muted>{paid ? formatDate(renewal ?? null) : '—'}</Td>
-                                        <Td label="Cost" align="right">{paid ? `${formatKes(PLAN_PRICE_KES[currentPlan])}/mo` : '—'}</Td>
+                                        <Td label="Cost" align="right"><span className="whitespace-nowrap">{paid ? `${formatKes(PLAN_PRICE_KES[currentPlan])}/mo` : '—'}</span></Td>
                                         {canManage && (
                                             <Td align="right" label="Change plan">
                                                 <div className="inline-flex flex-wrap justify-end gap-1.5">
@@ -161,11 +249,10 @@ export default function BillingClient({
                                                             size="sm"
                                                             variant={plan === 'pro' ? 'primary' : 'secondary'}
                                                             disabled={storePending}
-                                                            title={`${formatKes(PLAN_PRICE_KES[plan])}/mo`}
                                                             onClick={() => requestPurchase(store, plan)}
                                                         >
                                                             {storePending && pendingPurchase?.plan === plan && <Spinner size={11} />}
-                                                            {planActionLabel(currentPlan, plan)}
+                                                            {planButtonLabel(currentPlan, plan)}
                                                         </Button>
                                                     ))}
                                                 </div>
@@ -198,16 +285,23 @@ export default function BillingClient({
                 onCancel={() => setConfirming(null)}
             />
 
-            <WalletTopupModal
-                orgSlug={orgSlug}
-                open={showTopup}
-                onClose={() => setShowTopup(false)}
-                onTopupInitiated={() => {
-                    window.setTimeout(() => {
-                        void refreshBalance()
-                    }, 15_000)
-                }}
-            />
+            {topup && (
+                <WalletTopupModal
+                    orgSlug={orgSlug}
+                    open
+                    initialAmountKes={topup.amountKes}
+                    onClose={() => setTopup(null)}
+                    onTopupInitiated={() => {
+                        if (topup.awaiting) {
+                            resumeWhenFunded(topup.awaiting.storeId, topup.awaiting.plan)
+                            return
+                        }
+                        window.setTimeout(() => {
+                            void refreshBalance()
+                        }, 15_000)
+                    }}
+                />
+            )}
         </div>
     )
 }
