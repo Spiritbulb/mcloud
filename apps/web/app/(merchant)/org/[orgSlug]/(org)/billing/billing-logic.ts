@@ -1,6 +1,9 @@
 // Display rules for the org Billing screen. The server (purchaseStorePlan) decides what is charged;
 // these only label buttons and pre-check the wallet. Pure, tested in billing-logic.test.ts.
 
+import { MIN_TOPUP_KES } from '@/lib/wallet-math'
+import { PLAN_LIMITS, PLAN_PRICE_KES } from '@mcloud/merchant/plans'
+
 export type PaidPlan = 'hobby' | 'pro'
 
 export type StoreSubscription = { plan: string | null; status: string; period_end: string | null } | null
@@ -42,4 +45,34 @@ export function planActionLabel(current: string | null | undefined, plan: PaidPl
 export function shortfallMessage(balanceKes: number, plan: PaidPlan, priceKes: number): string | null {
     if (balanceKes >= priceKes) return null
     return `Your wallet balance is too low for the ${planLabel(plan)} plan. Add at least ${formatKes(priceKes - balanceKes)} to continue.`
+}
+
+/** The action label with the monthly price, e.g. "Choose Hobby · KSh 795/mo". */
+export function planButtonLabel(current: string | null | undefined, plan: PaidPlan): string {
+    return `${planActionLabel(current, plan)} · ${formatKes(PLAN_PRICE_KES[plan])}/mo`
+}
+
+/** KSh to add so the wallet covers `priceKes`: 0 when it already does, never below the top-up minimum. */
+export function topupAmountFor(balanceKes: number, priceKes: number): number {
+    if (balanceKes >= priceKes) return 0
+    return Math.max(MIN_TOPUP_KES, Math.ceil(priceKes - balanceKes))
+}
+
+function countLabel(n: number, noun: string): string {
+    return n === Infinity ? `Unlimited ${noun}` : `Up to ${n} ${noun}`
+}
+
+/** Two short lines on what a plan gives, built from PLAN_LIMITS so they match what the app unlocks. */
+export function planBenefits(plan: PaidPlan): string[] {
+    const limits = PLAN_LIMITS[plan]
+    if (plan === 'hobby') {
+        return [
+            'Your own domain, analytics and a blog',
+            `${countLabel(limits.products, 'products')} and ${limits.members} team members`,
+        ]
+    }
+    return [
+        'Everything in Hobby, without our branding',
+        `${countLabel(limits.products, 'products')}, ${limits.members} team members, priority support`,
+    ]
 }

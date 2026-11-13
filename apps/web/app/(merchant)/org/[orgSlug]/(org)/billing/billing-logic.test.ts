@@ -1,6 +1,6 @@
 import { test } from 'node:test'
 import assert from 'node:assert/strict'
-import { currentPlanOf, formatDate, formatKes, isPaidPlanName, planActionLabel, planLabel, shortfallMessage } from './billing-logic.ts'
+import { currentPlanOf, formatDate, formatKes, isPaidPlanName, planActionLabel, planBenefits, planButtonLabel, planLabel, shortfallMessage, topupAmountFor } from './billing-logic.ts'
 
 test('plan names and labels', () => {
     assert.equal(isPaidPlanName('pro'), true)
@@ -40,4 +40,30 @@ test('money and dates format for Kenya, with a dash for blanks', () => {
     assert.equal(formatDate(null), '—')
     assert.equal(formatDate('not a date'), '—')
     assert.match(formatDate('2026-10-25T00:00:00Z'), /2026/)
+})
+
+test('topupAmountFor covers the shortfall, at least the KSh 20 minimum', () => {
+    assert.equal(topupAmountFor(500, 795), 295)
+    assert.equal(topupAmountFor(792, 795), 20)
+    assert.equal(topupAmountFor(800, 795), 0)
+    assert.equal(topupAmountFor(795, 795), 0)
+    assert.equal(topupAmountFor(0, 795.4), 796)
+})
+
+test('planBenefits gives two lines per plan, from the plan limits', () => {
+    const hobby = planBenefits('hobby')
+    const pro = planBenefits('pro')
+    assert.equal(hobby.length, 2)
+    assert.equal(pro.length, 2)
+    assert.match(hobby.join(' '), /domain/)
+    assert.match(hobby.join(' '), /200 products/)
+    assert.match(pro.join(' '), /Unlimited products/)
+    assert.match(pro.join(' '), /branding/)
+    for (const line of [...hobby, ...pro]) assert.doesNotMatch(line, /NGO/)
+})
+
+test('planButtonLabel shows the action and the monthly price', () => {
+    assert.equal(planButtonLabel(null, 'hobby'), 'Choose Hobby · KSh 795/mo')
+    assert.equal(planButtonLabel('hobby', 'pro'), 'Upgrade to Pro · KSh 2,795/mo')
+    assert.equal(planButtonLabel('pro', 'pro'), 'Renew plan · KSh 2,795/mo')
 })
