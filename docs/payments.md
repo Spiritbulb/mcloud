@@ -114,6 +114,12 @@ as a hint about *which* transaction changed. Status and amount are re-fetched fr
 PalPluss (`getTransaction`) before any credit or settlement, and a resolved top-up is
 never processed twice.
 
+**Top-up fee.** PalPluss charges KSh 3 per top-up (`TOPUP_FEE_KES`, `apps/web/lib/wallet-math.ts`).
+The person topping up pays it: the STK prompt asks for the amount plus KSh 3, `wallet_topups.amount_cents`
+stores the amount without it, and the webhook credits `topupCreditCents(confirmed, requested)`. That
+keeps as the fee only what was paid above the requested amount, up to KSh 3, so a top-up
+started before the fee existed is credited in full and an underpayment credits what was paid.
+
 ## Invariants (do not break)
 
 - An order becomes `paid` only from a provider-confirmed amount that covers its total.

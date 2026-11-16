@@ -7,6 +7,7 @@ import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { SearchField, Toolbar } from '@mcloud/ui/kit/fields'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SkeletonRows } from '@mcloud/ui/kit/skeleton'
 import { Table, Td, Th, Tr } from '@mcloud/ui/kit/table'
@@ -71,7 +72,7 @@ export default function CustomersPage({ slug, plan, currency }: { slug: string; 
             description="Manage your customer base on the Hobby plan and higher."
         >
             <div className="space-y-6">
-                <PageHeader title="Customers" description={loading && total === 0 ? 'Loading…' : `${total} ${total === 1 ? 'customer' : 'customers'}`} />
+                <PageHeader help={helpFor('customers')} title="Customers" description={loading && total === 0 ? 'Loading…' : `${total} ${total === 1 ? 'customer' : 'customers'}`} />
 
                 <Toolbar>
                     {/* A new search starts from the first page. */}

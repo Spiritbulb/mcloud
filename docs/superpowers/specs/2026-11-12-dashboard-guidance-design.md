@@ -40,9 +40,9 @@ Steps (derived, never stored):
 | Add a campaign | | ✓ | `campaign_progress.length > 0` | `content` | guide `collect-donations-online-for-your-ngo` |
 | Set up payments | ✓ | ✓ | `payments_enabled` | `integrations/payments` | `/docs/payments` |
 | Set delivery zones | ✓ | | `delivery_zone_count > 0` | `logistics` | `/docs/delivery` |
-| Add your logo | ✓ | ✓ | `logo_url` set | `general` | `/docs/general` |
+| Add your logo | ✓ | ✓ | `logo_url` set | `brand` | `/docs/general` |
 | Share your link | ✓ | ✓ | `order_count > 0` (incl. donations) or `link_shared` | copy-link action | guide `start-an-online-shop-in-kenya` / donations guide |
-| Connect a domain (optional) | | ✓ | `custom_domain_set` | `domain` | guide `custom-domain-for-your-business-website` |
+| Connect a domain (optional) | | ✓ | `custom_domain_set` | `domain` | `/docs/domain` |
 
 Optional steps do not count toward "N of M".
 
@@ -70,7 +70,7 @@ Data: `getStoreOverview` (`packages/merchant/src/store-data.ts`) adds `delivery_
 rendered as a small "Help ↗" link beside the description. A single map in
 `apps/storefront/lib/help-links.ts` (+ test) goes from settings tab to doc URL; the checklist
 reads the same map so the two never disagree. Initial map: products, orders, customers,
-payments, logistics→delivery, general, domain→custom-domain guide, editor, analytics, blog,
+payments, logistics→delivery, general, domain, editor, analytics, blog, services, tracking, reach, socials,
 members. Only slugs that exist are mapped; the test pins the list against the known doc and
 guide slugs (`apps/web/content/guides/index.ts` cannot be imported across apps, so the test
 holds an explicit allow-list and a comment to update it).

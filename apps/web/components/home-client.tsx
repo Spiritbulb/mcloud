@@ -4,39 +4,8 @@ import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
 import { cn } from '@mcloud/ui/utils'
 import { BetaSignupForm } from '@/app/(marketing)/beta/beta-signup-form'
+import { STORE_FAQS, STORE_FEATURES, STORE_MATRIX, STORE_PLANS, STORE_STEPS, type FaqEntry, type Feature, type FeatureRow, type PlanTier, type Step } from './home-storefront-data'
 
-type FaqEntry = { q: string; a: string }
-
-type Feature = {
-    icon: string
-    eyebrow: string
-    title: string
-    body: string
-    image?: string
-    points: string[]
-}
-
-type Step = {
-    step: string
-    title: string
-    body: string
-}
-
-type PlanTier = {
-    name: string
-    price: string
-    cadence?: string
-    blurb: string
-    cta: string
-    href: string
-    highlight?: boolean
-    features: string[]
-}
-
-type FeatureRow = {
-    label: string
-    values: (string | boolean)[]
-}
 
 type Product = 'servers' | 'storefronts'
 
@@ -468,162 +437,6 @@ const SERVER_FAQS: FaqEntry[] = [
     },
 ]
 
-const STORE_FEATURES: Feature[] = [
-    {
-        icon: 'storefront',
-        eyebrow: 'Ready to sell',
-        title: 'Your shop, ready for real customers.',
-        body: 'Products, services, checkout, orders, and the pages that make people trust your business all live together. You focus on the offer; the platform is already connected.',
-        image: '/digital-warehouse.webp',
-        points: [
-            'Add products, services, and collections as you grow',
-            'Take orders through a checkout built for your store',
-            'Publish the pages that tell your brand story',
-        ],
-    },
-    {
-        icon: 'palette',
-        eyebrow: 'Your brand',
-        title: 'It should feel unmistakably yours.',
-        body: 'Use your logo, colours, words, and—when you are ready—your own domain. Customers see a shop that belongs to your business, not a generic template with someone else’s name on it.',
-        image: '/make-it-yours.webp',
-        points: [
-            'Custom themes, colours, and brand voice',
-            'Connect your own domain with SSL included',
-            'Remove Menengai Cloud branding on Pro',
-        ],
-    },
-    {
-        icon: 'payments',
-        eyebrow: 'Built for local checkout',
-        title: 'Make paying feel easy.',
-        body: 'Give customers a familiar way to complete an order. M-PESA STK Push is built into checkout, so payment requests go to the customer’s phone and paid orders can be confirmed automatically.',
-        image: '/run-it-online.webp',
-        points: [
-            'M-PESA STK Push at checkout',
-            'Clear order management in one place',
-            'Less manual follow-up after a customer pays',
-        ],
-    },
-    {
-        icon: 'insights',
-        eyebrow: 'What is working',
-        title: 'Know where to put your energy.',
-        body: 'See the products and pages attracting attention, follow the sales that matter, and make the next promotion with more confidence than guesswork.',
-        image: '/see-what-works.webp',
-        points: [
-            'Sales and traffic in one clear view',
-            'Your best-performing products at a glance',
-            'Useful signals for your next promotion',
-        ],
-    },
-]
-
-const STORE_STEPS: Step[] = [
-    {
-        step: '01',
-        title: 'Make it yours',
-        body: 'Create your account, add your brand, and build the shop you want customers to see.',
-    },
-    {
-        step: '02',
-        title: 'Add what you sell',
-        body: 'List products or services, set up the essentials, and prepare the details customers need to buy with confidence.',
-    },
-    {
-        step: '03',
-        title: 'Start selling',
-        body: 'Share your storefront, take orders, and connect your own domain when you are ready for your name in the address bar.',
-    },
-]
-
-// The /org/* CTAs on this page are plain <a>s: those paths redirect from route handlers,
-// which client navigation can't follow.
-const STORE_PLANS: PlanTier[] = [
-    {
-        name: 'Free',
-        price: 'KES 0',
-        cadence: 'forever',
-        blurb: 'Launch your first shop and start taking orders.',
-        cta: 'Start free',
-        href: '/org/stores?new=1',
-        features: [
-            'Hosted storefront on a mcloud.co.ke address',
-            'Unlimited products and services',
-            'M-PESA STK Push checkout',
-            'Order management',
-        ],
-    },
-    {
-        name: 'Hobby',
-        price: 'KES 1,499',
-        cadence: 'per month',
-        blurb: 'Bring your own domain and make the experience fully yours.',
-        cta: 'Choose Hobby',
-        href: '/org/stores?new=1',
-        features: [
-            'Everything in Free',
-            'Connect your own domain',
-            'Basic analytics',
-            'Email support',
-        ],
-    },
-    {
-        name: 'Pro',
-        price: 'KES 2,999',
-        cadence: 'per month',
-        blurb: 'Grow with deeper insight, richer content, and no platform branding.',
-        cta: 'Choose Pro',
-        href: '/org/stores?new=1',
-        highlight: true,
-        features: [
-            'Everything in Hobby',
-            'Advanced analytics and funnel data',
-            'No Menengai Cloud branding',
-            'Blog and content pages',
-            'Priority support',
-        ],
-    },
-]
-
-const STORE_MATRIX: { plans: string[]; rows: FeatureRow[] } = {
-    plans: ['Free', 'Hobby', 'Pro'],
-    rows: [
-        { label: 'Hosted storefront', values: [true, true, true] },
-        { label: 'Unlimited products', values: [true, true, true] },
-        { label: 'M-PESA STK Push checkout', values: [true, true, true] },
-        { label: 'Order management', values: [true, true, true] },
-        { label: 'Your own domain', values: [false, true, true] },
-        { label: 'Analytics', values: [false, 'Basic', 'Advanced'] },
-        { label: 'Blog and content pages', values: [false, false, true] },
-        { label: 'Remove our branding', values: [false, false, true] },
-        { label: 'Support', values: ['Community', 'Email', 'Priority'] },
-    ],
-}
-
-const STORE_FAQS: FaqEntry[] = [
-    {
-        q: 'What does managed mean for a storefront?',
-        a: 'Your storefront runs on Menengai Cloud infrastructure, and we take care of the underlying operational work that keeps the service available. You configure the shop, own the brand, and serve your customers without having to build or maintain a hosting stack.',
-    },
-    {
-        q: 'Can I use my own domain?',
-        a: 'Yes. From the Hobby plan up, you can point your domain to your storefront and complete the connection from your dashboard. SSL is provisioned automatically once the domain is configured correctly.',
-    },
-    {
-        q: 'How do payments work?',
-        a: 'M-PESA STK Push is built into checkout. Your customer receives a payment request on their phone, enters their PIN, and the order can be marked paid once the payment is confirmed.',
-    },
-    {
-        q: 'Can I run more than one shop?',
-        a: 'Yes. An organisation can contain multiple storefronts, each with its own settings and team members, all managed from one account.',
-    },
-    {
-        q: 'Can I start for free?',
-        a: 'Yes. The Free plan has no card requirement or trial countdown. You can launch a storefront on a mcloud.co.ke address, then upgrade when you need a custom domain, analytics, richer content, or additional support.',
-    },
-]
-
 function ProductSelector({ active, onChange }: { active: Product; onChange: (product: Product) => void }) {
     const products: { id: Product; label: string; detail: string; accent: string; icon: string }[] = [
         {
@@ -814,9 +627,9 @@ function Storefronts() {
                                     />
                 <div className="relative z-10 mx-auto max-w-page px-6 py-28 md:px-12 md:py-40">
                     <SectionHeading
-                        eyebrow="MCloud storefronts"
+                        eyebrow="MCloud Storefronts"
                         accent={STORE_ACCENT}
-                        title={<>The fastest way<br />to start selling properly.</>}
+                        title={<>A shop website<br />that takes M-PESA.</>}
                         sub="Not every business needs a server dashboard. If you want a branded shop with products, M-PESA checkout, orders, and a path to your own domain, start here instead."
                     />
                     <FeatureShowcase items={STORE_FEATURES} accent={STORE_ACCENT} />
@@ -855,7 +668,7 @@ function Storefronts() {
 
             <section className="py-28 md:py-36">
                 <div className="mx-auto w-full max-w-3xl px-6 md:px-12">
-                    <SectionHeading eyebrow="Frequently Asked Questions" accent={STORE_ACCENT} title="Getting curious?" />
+                    <SectionHeading eyebrow="Questions" accent={STORE_ACCENT} title="Questions people ask first" />
                     <FaqBlock faqs={STORE_FAQS} />
                 </div>
             </section>

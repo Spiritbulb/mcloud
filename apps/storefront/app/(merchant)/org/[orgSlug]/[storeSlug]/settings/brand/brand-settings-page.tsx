@@ -10,6 +10,7 @@ import { Field, Select } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SaveBar, SaveStatus } from '@mcloud/ui/kit/save-bar'
 import { brandPatch, isBrandDirty, themeSummary, type BrandDraft } from './brand-logic'
@@ -64,7 +65,7 @@ export default function BrandSettingsPage({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Brand" description="Your logo, icon and light or dark look. Colours and fonts live in the Editor, next to a live preview." />
+            <PageHeader help={helpFor('brand')} title="Brand" description="Your logo, icon and light or dark look. Colours and fonts live in the Editor, next to a live preview." />
 
             {error && <Notice tone="error">{error}</Notice>}
 

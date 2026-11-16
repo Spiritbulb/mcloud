@@ -2,6 +2,7 @@
 
 import { usePathname } from 'next/navigation'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Tabs } from '@mcloud/ui/kit/tabs'
 
 const INTEGRATION_TABS = [
@@ -21,7 +22,7 @@ export default function IntegrationsLayout({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Integrations" description="Your store's social links, payment providers and notifications." />
+            <PageHeader help={helpFor(active)} title="Integrations" description="Your store's social links, payment providers and notifications." />
             <Tabs
                 label="Integrations"
                 value={active}

@@ -5,16 +5,16 @@ export function SiteHeader() {
     return (
         <header className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur">
             <div className="mx-auto flex h-14 max-w-page items-center justify-between px-6 md:px-12">
-                <Link href="/" className="flex items-center gap-2" aria-label="Menengai Storefronts home">
+                <Link href="/" className="flex items-center gap-2" aria-label="MCloud Storefronts home">
                     <ThemedLogo className="h-6 w-auto" />
-                    <span className="hidden text-sm font-semibold tracking-tight sm:inline">Storefronts</span>
+                    <span className="hidden text-sm font-semibold tracking-tight sm:inline">MCloud Storefronts</span>
                 </Link>
                 <nav className="flex items-center gap-1 text-sm sm:gap-2">
                     <Link href="/#pricing" className="hidden px-3 py-2 text-muted-foreground hover:text-foreground sm:inline">
                         Pricing
                     </Link>
-                    <Link href="/moving" className="hidden px-3 py-2 text-muted-foreground hover:text-foreground sm:inline">
-                        What&rsquo;s changing
+                    <Link href="/#faq" className="hidden px-3 py-2 text-muted-foreground hover:text-foreground sm:inline">
+                        Questions
                     </Link>
                     <Link href="/login" className="px-3 py-2 text-muted-foreground hover:text-foreground">
                         Log in

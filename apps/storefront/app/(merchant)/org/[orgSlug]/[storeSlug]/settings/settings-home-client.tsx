@@ -6,21 +6,28 @@
 import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getVertical } from '@mcloud/verticals'
+import { PLAN_PRICE_KES } from '@mcloud/merchant/plans'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
 import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button, buttonClass } from '@mcloud/ui/kit/button'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Icon } from '@mcloud/ui/kit/icon'
+import { Illustration } from '@mcloud/ui/kit/illustrations'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Skeleton, SkeletonLines } from '@mcloud/ui/kit/skeleton'
 import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
 import { timeAgo } from '@mcloud/ui/kit/ui-logic'
+import type { DailyPoint } from '@mcloud/merchant/overview-series'
 import { webUrl } from '@/lib/host'
+import { updateSetupChecklist } from '@/lib/admin/setup-checklist-actions'
 import ThemeUpgradePanel from './theme-upgrade-panel'
 import type { StoreThemeId } from '@/lib/store-themes'
 import { formatCurrency, funnelRate, overviewHeadline, overviewSummary } from './overview-logic'
+import { SetupChecklist } from './setup-checklist'
+import { checklistSteps, parseChecklistState } from './setup-checklist-logic'
+import { TrendPanel } from './trend-panel'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -33,6 +40,7 @@ type Order = {
 }
 
 type StoreOverview = {
+    id: string
     name: string
     slug: string
     logo_url?: string
@@ -53,6 +61,9 @@ type StoreOverview = {
     primary_color?: string | null
     theme?: string | null
     notifications_enabled?: boolean
+    delivery_zone_count?: number
+    /** Raw stores.settings.setup_checklist; read with parseChecklistState(). */
+    setup_checklist?: unknown
 }
 
 type CampaignProgress = {
@@ -86,6 +97,7 @@ type OverviewData = {
     total_raised?: number
     donation_count?: number
     campaign_progress?: CampaignProgress[]
+    daily?: DailyPoint[]
 }
 
 const STATUS_TONE: Record<Order['status'], BadgeTone> = {
@@ -104,11 +116,12 @@ function statusText(s: string) {
 
 // ─── Pieces ───────────────────────────────────────────────────────────────────
 
-function CopyLink({ url }: { url: string }) {
+function CopyLink({ url, onCopied }: { url: string; onCopied: () => void }) {
     const [copied, setCopied] = useState(false)
     const copy = () => {
         navigator.clipboard?.writeText(url).then(() => {
             setCopied(true)
+            onCopied()
             setTimeout(() => setCopied(false), 1800)
         })
     }
@@ -226,8 +239,33 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
     const raised = data?.total_raised ?? 0
     const hasMoney = commerce ? (store?.revenue_total ?? 0) > 0 : raised > 0
     // payments_enabled already aggregates mpesa || paypal || stripe (set server-side)
-    const paymentsNeeded = !loading && store && !store.payments_enabled
     const siteUrl = store ? storefrontUrl(store.slug, store.custom_domain) : ''
+
+    // Setup checklist. "Link copied" is remembered locally too, so the share step ticks at once.
+    const [linkCopied, setLinkCopied] = useState(false)
+    const checklist = store ? parseChecklistState(store.setup_checklist) : {}
+    const linkShared = linkCopied || !!checklist.link_shared
+    const steps = store
+        ? checklistSteps({
+            productCount: store.product_count,
+            campaignCount: campaigns.length,
+            paymentsEnabled: !!store.payments_enabled,
+            deliveryZoneCount: store.delivery_zone_count ?? 0,
+            hasLogo: !!store.logo_url,
+            orderCount: store.order_count,
+            customDomainSet: !!store.custom_domain_set,
+            linkShared,
+        }, commerce)
+        : []
+    const onLinkCopied = () => {
+        if (!store || linkShared) return
+        setLinkCopied(true)
+        // Best effort: if it fails the step simply ticks again on the next copy.
+        updateSetupChecklist(store.id, { link_shared: true }).catch(() => {})
+    }
+    const copyLink = () => {
+        navigator.clipboard?.writeText(siteUrl).then(onLinkCopied)
+    }
 
     if (error && !store) {
         return (
@@ -250,7 +288,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
                     }
                     actions={
                         <>
-                            <CopyLink url={siteUrl} />
+                            <CopyLink url={siteUrl} onCopied={onLinkCopied} />
                             <a
                                 href={siteUrl}
                                 target="_blank"
@@ -295,19 +333,20 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
                 )}
             </StatStrip>
 
+            {store && !loading && !checklist.hidden && (
+                <SetupChecklist
+                    storeId={store.id}
+                    steps={steps}
+                    commerce={commerce}
+                    settingsHref={settings}
+                    onCopyLink={copyLink}
+                />
+            )}
+
             {themeId && <ThemeUpgradePanel slug={slug} orgSlug={orgSlug} themeId={themeId} />}
 
-            {paymentsNeeded && (
-                <Panel title="Set up payments">
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                        <p className="text-[14px] text-muted-foreground">
-                            {commerce
-                                ? 'Connect M-Pesa or PayPal so customers can check out. Takes about 2 minutes.'
-                                : 'Connect M-Pesa or PayPal so people can donate. Takes about 2 minutes.'}
-                        </p>
-                        <Link href={settings('integrations/payments')} className={buttonClass('primary', 'sm')}>Set up payments</Link>
-                    </div>
-                </Panel>
+            {store && store.order_count > 0 && data?.daily && (
+                <TrendPanel daily={data.daily} currency={currency} commerce={commerce} />
             )}
 
             {/* The funnel is commerce only: an NGO's visitors never add to cart. */}
@@ -323,7 +362,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
                         <div className="p-4"><SkeletonLines lines={4} /></div>
                     ) : orders.length === 0 ? (
                         <EmptyState
-                            icon={commerce ? 'rocket_launch' : 'volunteer_activism'}
+                            illustration={<Illustration name={commerce ? 'first-sale' : 'first-donation'} />}
                             title={commerce ? 'Your first sale is close' : 'Your first donation is close'}
                             description={commerce
                                 ? (store && store.product_count > 0
@@ -401,11 +440,11 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
 
                     {!loading && store && !store.is_pro && (
                         <Panel
-                            title="Grow with Pro"
-                            description="Your own domain, advanced analytics, a blog, and your branding out front."
+                            title="Get your own domain"
+                            description={`Hobby gives you yourbrand.co.ke, automatic M-PESA prompts and analytics for ${formatCurrency(PLAN_PRICE_KES.hobby, 'KES')} a month.`}
                             footer={<a href={webUrl(`/org/${orgSlug}/billing`)} className={buttonClass('primary', 'sm')}>See plans</a>}
                         >
-                            <p className="text-[13px] text-muted-foreground">Plans are paid from your organization wallet in Billing.</p>
+                            <p className="text-[13px] text-muted-foreground">Top up with M-PESA in Billing; your plan renews from that balance each month.</p>
                         </Panel>
                     )}
                 </div>

@@ -15,6 +15,7 @@ import { Field, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SaveStatus } from '@mcloud/ui/kit/save-bar'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
@@ -294,7 +295,7 @@ export function BlogSettingsClient({ storeId, storeSlug, posts: initialPosts, au
             <div className="space-y-6">
                 {view === 'list' ? (
                     <>
-                        <PageHeader
+                        <PageHeader help={helpFor('blog')}
                             title="Blog"
                             description={`${posts.length} post${posts.length === 1 ? '' : 's'}, ${published} published.`}
                             actions={

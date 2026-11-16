@@ -8,6 +8,7 @@ import { Field, Select } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { SkeletonRows, Spinner } from '@mcloud/ui/kit/skeleton'
 import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
@@ -231,7 +232,7 @@ export default function OrderSettings({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Orders" description="Manage and fulfil incoming orders." />
+            <PageHeader help={helpFor('orders')} title="Orders" description="Manage and fulfil incoming orders." />
 
             <StatStrip className="grid-cols-2 md:grid-cols-4">
                 <Stat label="Total orders" value={String(stats.total)} loading={loading} />

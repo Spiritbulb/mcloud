@@ -7,6 +7,7 @@ import { NextResponse, after, type NextRequest } from 'next/server'
 import { adjustWallet, getTopupByPalplussTransactionId, resolveTopup } from '@/lib/wallet'
 import { getTransaction, type PalplussWebhookPayload } from '@/lib/palpluss'
 import { notifyWalletTopup } from '@/lib/billing-notify'
+import { topupCreditCents } from '@/lib/wallet-math'
 
 export async function POST(req: NextRequest) {
   const payload = (await req.json().catch(() => null)) as PalplussWebhookPayload | null
@@ -42,8 +43,9 @@ export async function POST(req: NextRequest) {
   if (confirmed.status === 'PENDING') return NextResponse.json({ ok: true })
 
   if (confirmed.status === 'SUCCESS') {
-    // Credit what PalPluss confirmed was actually paid, not what we requested.
-    const amountCents = Math.round(confirmed.amount * 100)
+    // Credit what PalPluss confirmed was actually paid, not what we requested, less the KSh 3 fee
+    // the person paid on top (only what was paid above the requested amount counts as the fee).
+    const amountCents = topupCreditCents(Math.round(confirmed.amount * 100), topup.amount_cents)
     const balanceCents = await adjustWallet({
       orgId: topup.org_id,
       amountCents,

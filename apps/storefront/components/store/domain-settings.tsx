@@ -8,6 +8,7 @@ import { Field, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
 import { ProGateInline } from '../pro'
@@ -139,7 +140,7 @@ export default function DomainSettings({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Domain" description="Serve your store from your own domain." />
+            <PageHeader help={helpFor('domain')} title="Domain" description="Serve your store from your own domain." />
 
             <ProGateInline
                 plan={plan}

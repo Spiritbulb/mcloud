@@ -19,5 +19,10 @@
     "additionalDirectories": [
       "c:\\Users\\busie\\mcloud-1\\app\\org\\[slug]"
     ]
+  },
+  "attribution": {
+    "commit": "",
+    "pr": "",
+    "sessionUrl": false
   }
 }

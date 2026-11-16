@@ -1,5 +1,5 @@
 // Dev-only previews of the admin list screens with fixture data (no login, no database).
-// /dev-ui/stores, /orders, /users, /subs, /webhooks, /recovery. 404s in production.
+// /dev-ui/stores, /orders, /users, /subs, /webhooks, /recovery, /billing. 404s in production.
 import { notFound } from "next/navigation"
 import AdminShell from "@/components/admin/admin-shell"
 import StoresClient from "@/components/admin/stores-client"
@@ -8,6 +8,7 @@ import UsersClient from "@/components/admin/users-client"
 import WebhooksClient from "@/components/admin/webhooks-client"
 import SubscriptionsClient from "@/components/subscriptions-client"
 import RecoveryClient from "../../admin/handoff-recovery/recovery-client"
+import BillingClient from "../../(merchant)/org/[orgSlug]/(org)/billing/billing-client"
 
 export const dynamic = "force-dynamic"
 
@@ -92,6 +93,20 @@ function screen(name: string) {
                         { id: "a", email: "elsie@gmail.com", name: "Elsie M.", lastSignInAt: iso(30), recent: true },
                         { id: "b", email: "victor@gmail.com", name: null, lastSignInAt: iso(60), recent: true },
                         { id: "c", email: "chebet@gmail.com", name: null, lastSignInAt: iso(24 * 45), recent: false },
+                    ]}
+                />
+            )
+        case "billing":
+            // Wallet below both plans, so choosing a plan shows the shortfall and its top-up button.
+            return (
+                <BillingClient
+                    orgSlug="preview"
+                    orgName="Preview Org"
+                    balanceCents={50_000}
+                    canManage
+                    stores={[
+                        { id: "1", name: "Loc'd Essence", slug: "locd26", logo_url: null, is_pro: true, pro_expires_at: null, subscription: { plan: "hobby", status: "active", period_end: iso(-24 * 20) } },
+                        { id: "2", name: "Techtunes", slug: "techtunes", logo_url: null, is_pro: false, pro_expires_at: null, subscription: null },
                     ]}
                 />
             )

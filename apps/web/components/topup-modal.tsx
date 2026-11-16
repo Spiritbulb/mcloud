@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { TOPUP_FEE_KES, topupChargeKes } from '@/lib/wallet-math'
 
 const TOP_UP_AMOUNTS = [200, 500, 750, 1500]
 
@@ -9,13 +10,16 @@ export function WalletTopupModal({
   open,
   onClose,
   onTopupInitiated,
+  initialAmountKes,
 }: {
   orgSlug: string
   open: boolean
   onClose: () => void
   onTopupInitiated?: () => void
+  /** Starting amount (e.g. a plan shortfall). Read on mount: mount the modal only while open to reset it. */
+  initialAmountKes?: number
 }) {
-  const [amount, setAmount] = useState('750')
+  const [amount, setAmount] = useState(String(initialAmountKes ?? 750))
   const [phone, setPhone] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
@@ -120,6 +124,10 @@ export function WalletTopupModal({
               />
             </label>
 
+            <p className="mt-1.5 text-[12px] text-muted-foreground">
+              M-PESA fee KSh {TOPUP_FEE_KES} · You pay KSh {(topupChargeKes(Number(amount) || 0)).toLocaleString()}
+            </p>
+
             <label className="mt-3 block text-[13px] font-medium text-foreground">
               M-Pesa phone number
               <input
@@ -149,7 +157,7 @@ export function WalletTopupModal({
                 disabled={submitting || Number(amount) < 20}
                 className="flex-1 bg-primary px-4 py-2.5 text-[14px] font-semibold text-primary-foreground disabled:opacity-40"
               >
-                {submitting ? 'Sending…' : 'Done'}
+                {submitting ? 'Sending…' : `Pay KSh ${topupChargeKes(Number(amount) || 0).toLocaleString()}`}
               </button>
             </div>
           </form>

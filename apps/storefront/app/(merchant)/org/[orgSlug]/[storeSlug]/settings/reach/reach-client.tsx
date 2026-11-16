@@ -9,6 +9,7 @@ import { Field, Select, TextInput } from '@mcloud/ui/kit/form'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { cn } from '@mcloud/ui/utils'
 import { maskStoreKey } from '@mcloud/merchant/reach'
@@ -255,7 +256,7 @@ export default function ReachClient({
             await refresh()
         })
 
-    const header = <PageHeader title="Reach marketplace" description="Sell on the Reach app alongside other stores nearby." />
+    const header = <PageHeader help={helpFor('reach')} title="Reach marketplace" description="Sell on the Reach app alongside other stores nearby." />
 
     if (!status) {
         return (

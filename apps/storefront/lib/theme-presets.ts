@@ -84,7 +84,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     { primary: '#e8c9ad', secondary: '#2a211b', accent: '#f0874f', background: '#1a1410', foreground: '#f3e9df', muted: '#2a211b' },
     { heading: 'Lora', body: 'Source Sans 3' }, '4px'),
 
-  preset('giving', 'Giving', 'Friendly teal, rounded corners and one warm accent for NGOs.',
+  preset('giving', 'Giving', 'Friendly teal, rounded corners and one warm accent for causes.',
     { primary: '#0f766e', secondary: '#ecfdf5', accent: '#f59e0b', background: '#ffffff', foreground: '#134e4a', muted: '#f0fdfa' },
     { primary: '#5eead4', secondary: '#0f3f3c', accent: '#fbbf24', background: '#042f2e', foreground: '#ecfeff', muted: '#0f3f3c' },
     { heading: 'Nunito', body: 'Nunito' }, '16px'),

@@ -10,6 +10,7 @@ import { Field, FormGrid, Select, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Spinner } from '@mcloud/ui/kit/skeleton'
 import {
@@ -281,7 +282,7 @@ export default function MembersPage({
 
     return (
         <div className="space-y-6">
-            <PageHeader title="Members" description="Who has access to this store and what they can do." />
+            <PageHeader help={helpFor('members')} title="Members" description="Who has access to this store and what they can do." />
 
             <InviteForm storeId={storeId} />
 

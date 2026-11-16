@@ -6,6 +6,7 @@ import { Button } from '@mcloud/ui/kit/button'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
+import { helpFor } from '@/lib/help-links'
 import { Panel } from '@mcloud/ui/kit/panel'
 import { Skeleton } from '@mcloud/ui/kit/skeleton'
 import { Stat, StatStrip } from '@mcloud/ui/kit/stat-strip'
@@ -251,7 +252,7 @@ export default function AnalyticsClient({ slug, storeName, plan }: { slug: strin
 
     return (
         <div className="space-y-6">
-            <PageHeader
+            <PageHeader help={helpFor('analytics')}
                 title="Analytics"
                 description={`Visits, orders and revenue for ${storeName}.`}
                 actions={

@@ -6,6 +6,8 @@
 import { createClient } from '@mcloud/db/server'
 import { isPaidPlan } from './plans'
 import { getStorePlan } from './plans-server'
+import { getVertical } from '@mcloud/verticals'
+import { dailySeries } from './overview-series'
 
 export type StoreSettingsResult =
     | { error: 'forbidden' | 'not_found' | 'unknown'; data: null }
@@ -145,6 +147,8 @@ export async function getStoreOverview(
     const storeId = currentMembership.store_id
 
     const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    // 15 days back covers the 14 Nairobi days of the trend whatever the server's time zone.
+    const sinceTrend = new Date(Date.now() - 15 * 24 * 60 * 60 * 1000).toISOString()
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
@@ -166,6 +170,8 @@ export async function getStoreOverview(
         { data: funnelRows },
         { data: topProductRows },
         { count: orders7dCount },
+        { count: deliveryZoneCount },
+        { data: trendOrders },
     ] = await Promise.all([
         supabase
             .from('stores')
@@ -215,6 +221,17 @@ export async function getStoreOverview(
             .eq('store_id', storeId)
             .gte('created_at', since7d)
             .not('status', 'in', '(cancelled,refunded)'),
+        // Setup checklist: has the shop said where it delivers?
+        supabase
+            .from('delivery_zones')
+            .select('*', { count: 'exact', head: true })
+            .eq('store_id', storeId),
+        // The 14-day trend reads only its own window, so a busy store's row cap cannot cut it short.
+        supabase
+            .from('orders')
+            .select('total, status, metadata, created_at')
+            .eq('store_id', storeId)
+            .gte('created_at', sinceTrend),
     ])
 
     if (!store) return { error: 'not_found', data: null }
@@ -319,6 +336,7 @@ export async function getStoreOverview(
         error: null,
         data: {
             store: {
+                id: store.id,
                 name: store.name,
                 slug: store.slug,
                 logo_url: store.logo_url,
@@ -338,6 +356,9 @@ export async function getStoreOverview(
 custom_domain: store.custom_domain ?? null,
                 custom_domain_set: !!store.custom_domain,
                 notifications_enabled: false,
+                delivery_zone_count: deliveryZoneCount ?? 0,
+                // Raw flags object; the storefront reads it with parseChecklistState().
+                setup_checklist: settings.setup_checklist ?? null,
             },
             recent_orders: (recentOrders ?? []).map(o => ({
                 id: o.id,
@@ -351,6 +372,7 @@ custom_domain: store.custom_domain ?? null,
             total_raised: totalRaised,
             donation_count: donationCount,
             campaign_progress: campaignProgress,
+            daily: dailySeries(trendOrders ?? [], { days: 14, now, commerce: getVertical(store.type).commerce }),
         },
     }
 }

@@ -16,7 +16,7 @@ assert.equal(getVertical(undefined).id, 'shop', 'undefined -> shop')
 
 // labels are exact
 assert.equal(VERTICALS.shop.label, 'Shop')
-assert.equal(VERTICALS.ngo.label, 'NGO')
+assert.equal(VERTICALS.ngo.label, 'Non-profit')
 
 // shop default pages: one Home page with the shop sections in order
 const shopHome = VERTICALS.shop.defaultPages.find(p => p.slug === '')
