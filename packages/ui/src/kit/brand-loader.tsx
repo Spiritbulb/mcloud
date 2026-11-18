@@ -5,7 +5,8 @@ import { cn } from '../utils'
 // flashes it. The icon is served from each app's `public/icons/` (both apps ship a copy).
 //
 // `fullscreen` covers the viewport (use it above a layout that renders no chrome yet);
-// otherwise it fills the content area of a shell that is already on screen.
+// otherwise it fills the content area of a shell that is already on screen: the viewport minus
+// AppShell's 3rem header and the page padding (py-6, md:py-8), so it centres in what is visible.
 
 const css = `
 @keyframes mc-loader-in { from { opacity: 0 } to { opacity: 1 } }
@@ -39,7 +40,7 @@ export function BrandLoader({
             aria-live="polite"
             className={cn(
                 'mc-loader flex flex-col items-center justify-center gap-6',
-                fullscreen ? 'fixed inset-0 z-50 bg-background' : 'min-h-[60vh] w-full',
+                fullscreen ? 'fixed inset-0 z-50 bg-background' : 'min-h-[calc(100dvh-6rem)] w-full md:min-h-[calc(100dvh-7rem)]',
                 className,
             )}
         >

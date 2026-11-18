@@ -1,18 +1,13 @@
-// Instant skeleton for the store settings overview while the shell + overview load.
-function Sk({ className }: { className?: string }) {
-    return <span className={`block animate-pulse rounded-lg bg-muted ${className ?? ''}`} />
-}
+'use client'
 
+import { usePathname } from 'next/navigation'
+import { PageSkeleton } from '@mcloud/ui/kit/page-skeleton'
+
+// Shown inside the settings shell (sidebar and header already on screen) while a settings page
+// loads. Drawn from the kit's own PageHeader/StatStrip/Panel shapes; only the Overview, which opens
+// with headline numbers, gets the stat strip. Before the shell exists, ../../../loading.tsx shows
+// the brand loader instead.
 export default function Loading() {
-    return (
-        <div className="max-w-2xl mx-auto space-y-6 pb-16 pt-2">
-            <Sk className="h-36 rounded-2xl" />
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                {Array.from({ length: 3 }).map((_, i) => <Sk key={i} className="h-24 rounded-2xl" />)}
-            </div>
-            <Sk className="h-28 rounded-2xl" />
-            <Sk className="h-20 rounded-2xl" />
-            <Sk className="h-48 rounded-2xl" />
-        </div>
-    )
+    const isOverview = /^\/org\/[^/]+\/[^/]+\/settings\/?$/.test(usePathname() ?? '')
+    return <PageSkeleton stats={isOverview ? 3 : 0} panels={2} />
 }
