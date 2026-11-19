@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Field, FormGrid, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
+import { isRetiredImageUrl, RetiredImageNotice, RetiredThumb } from './retired-image'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
@@ -58,6 +59,7 @@ function slugify(str: string) {
 }
 
 function Thumb({ src, alt }: { src?: string; alt: string }) {
+    if (isRetiredImageUrl(src)) return <RetiredThumb />
     return (
         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
             {src
@@ -244,7 +246,9 @@ function ProductForm({
                                 {images.map((img, i) => (
                                     <li key={i} className="flex items-center gap-3 rounded-md border border-border p-2">
                                         <Thumb src={img} alt="" />
-                                        <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted-foreground">{img}</span>
+                                        {isRetiredImageUrl(img)
+                                            ? <RetiredImageNotice className="min-w-0 flex-1" />
+                                            : <span className="min-w-0 flex-1 truncate font-mono text-[13px] text-muted-foreground">{img}</span>}
                                         <Button variant="ghost" size="sm" aria-label="Remove image" onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}>
                                             <Icon name="delete" size={15} />
                                         </Button>

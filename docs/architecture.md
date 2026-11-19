@@ -21,7 +21,7 @@
  │ custom domains             │  rewritten onto /store/{slug}
  └────────────────────────────┘
         │
-        ▼ Cloudflare R2 worker (uploads), Safaricom Daraja, PayPal, PalPluss
+        ▼ Backblaze B2 (uploads), Safaricom Daraja, PayPal, PalPluss
 ```
 
 Two Next.js apps, one database (Supabase), shared packages (plus `apps/nuru`, which is isolated; see
@@ -42,7 +42,7 @@ storefront's `/org/*`.
 | Storefront marketing (`/`), the `/moving` explainer, `/start` onboarding, `/login` and `/signup` entry points | `apps/storefront` (`app/(marketing)`) |
 | Public stores (home, products, services, blog, cart, checkout, accounts) | `apps/storefront` (`app/(storefront)`) |
 | Store settings UI, the Editor, and the `/api/store/*` routes | `apps/storefront` (`app/(merchant)`, `app/api/store`) |
-| Uploads to R2 | `apps/storefront` (`app/api/upload`) |
+| Uploads to B2 | `apps/storefront` (`app/api/upload`, `lib/b2.ts`) |
 | Logic needed by both apps | `packages/merchant` (plans, stores, store data, payments rules, seed pages) |
 | Nuru (study feed, PDF notes) | `apps/nuru`, a separate app with its own Neon database and B2 bucket; see [nuru.md](nuru.md) |
 | Sending email | `packages/mail` (`sendEmail`, which never throws, and escaped templates in `@mcloud/mail/templates`) |
@@ -159,9 +159,23 @@ tests (`settings/editor/*-ops.ts`).
 
 ## Uploads
 
-Browser → `PUT /api/upload?key=…` (storefront) → R2 worker. The key must be
-`<bucket>/<storeId>/<path>`; the route checks the caller can manage that store, that the
-body is a raster image, and its size. See `lib/upload-key.ts`.
+Browser → `PUT /api/upload?key=…` (storefront) → Backblaze B2 bucket (`lib/b2.ts`, S3 API,
+written server-side, so the bucket needs no CORS). The key must be `<bucket>/<storeId>/<path>`;
+the route checks the caller can manage that store, that the body is a raster image, and its
+size (`lib/upload-key.ts`), then stores it under a unique key (`<tag>-<file name>`). It returns
+`{ key, url }`; `url` is what gets saved on the row.
+
+The bucket is private for now (`docs/CLEANUP.md` §3.8), so `url` is
+`<origin>/api/media/<key>`: `app/api/media/[...key]` reads the object with the B2 key and
+serves it with a one-year immutable cache and a sandboxing CSP. Only raster images under a
+valid upload key are served. Set `B2_PUBLIC_URL` once the bucket is public and new uploads link
+to B2 directly.
+
+Uploads before 2026-11 went to Cloudflare R2 (`pub-….r2.dev`), which no longer serves them.
+Those URLs were left in the database: public pages drop them (`dropRetiredImages()` in
+`lib/db-cast.ts` and `lib/store-queries.ts`) and settings asks the merchant to upload them
+again (`components/store/retired-image.tsx`). Both use `@mcloud/merchant/retired-images`.
+Mobile uploads (`apps/web/app/api/mobile/upload`, avatars) use Supabase Storage, not B2.
 
 ## Mobile apps
 

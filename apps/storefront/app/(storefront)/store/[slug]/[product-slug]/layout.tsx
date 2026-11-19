@@ -1,5 +1,6 @@
 import { createPublicClient } from '@mcloud/db/server'
 import type { Metadata } from 'next'
+import { dropRetiredImages } from '@mcloud/merchant/retired-images'
 
 interface Props {
     params: Promise<{ slug: string; 'product-slug': string }>
@@ -19,7 +20,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         .eq('store_id', store.id).eq('slug', productSlug).single()
     if (!product) return { title: store.name }
 
-    const image = (product.images as string[] | null)?.[0] ?? null
+    const image = dropRetiredImages((product.images as string[] | null) ?? [])[0] ?? null
 
     return {
         title: `${product.name} — ${store.name}`,

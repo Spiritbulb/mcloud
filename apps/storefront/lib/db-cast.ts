@@ -7,6 +7,7 @@ import type {
     Store, Product, ProductItem, Collection,
     ServiceItem, ServiceMediaItem, ServicePackage,
 } from '@mcloud/themes/types'
+import { dropRetiredImages } from '@mcloud/merchant/retired-images'
 
 // ─── Store ────────────────────────────────────────────────────────────────────
 
@@ -21,7 +22,9 @@ type RawStore = {
     [key: string]: unknown
 }
 
-export function castStore(raw: RawStore): Store {
+export function castStore(input: RawStore): Store {
+    // Images on the retired R2 storage no longer load; leave them out (see retired-images.ts).
+    const raw = dropRetiredImages(input)
     const settings = (raw.settings && typeof raw.settings === 'object' && !Array.isArray(raw.settings))
         ? raw.settings as Record<string, unknown>
         : {}
@@ -68,7 +71,8 @@ type RawProduct = {
     track_inventory: boolean | null
 }
 
-export function castProduct(raw: RawProduct): Product {
+export function castProduct(input: RawProduct): Product {
+    const raw = dropRetiredImages(input)
     return {
         id: raw.id,
         name: raw.name,
@@ -97,7 +101,8 @@ type RawProductItem = RawProduct & {
     metadata: unknown
 }
 
-export function castProductItem(raw: RawProductItem): ProductItem {
+export function castProductItem(input: RawProductItem): ProductItem {
+    const raw = dropRetiredImages(input)
     return {
         ...castProduct(raw),
         is_active: raw.is_active ?? true,
@@ -120,7 +125,8 @@ type RawCollection = {
     image_url: string | null
 }
 
-export function castCollection(raw: RawCollection): Collection {
+export function castCollection(input: RawCollection): Collection {
+    const raw = dropRetiredImages(input)
     return {
         id: raw.id,
         name: raw.name,
@@ -161,7 +167,8 @@ function isAvailability(v: unknown): v is ServiceItem['availability'] {
     return v === 'available' || v === 'busy' || v === 'unavailable'
 }
 
-export function castService(raw: RawService): ServiceItem {
+export function castService(input: RawService): ServiceItem {
+    const raw = dropRetiredImages(input)
     const metadata = (raw.metadata && typeof raw.metadata === 'object' && !Array.isArray(raw.metadata))
         ? raw.metadata as Record<string, unknown>
         : {}

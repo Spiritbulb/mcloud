@@ -2,12 +2,14 @@
 import { getSession } from '@mcloud/auth/server'
 import { canManage, requireStoreAccessById } from '@mcloud/merchant/stores'
 import { NextRequest } from 'next/server'
-import { checkUploadHeaders, parseUploadKey } from '@/lib/upload-key'
+import { b2Configured, objectUrl, putObject } from '@/lib/b2'
+import { checkUploadHeaders, MAX_UPLOAD_BYTES, parseUploadKey, uniqueUploadKey } from '@/lib/upload-key'
 
-// Streams a merchant upload to the R2 worker. Settings uploads (logos, product and
-// gallery images) are the only caller, so unlike the old copy in apps/web this requires
-// a signed-in session AND management access to the store named in the key: the storefront
-// is publicly reachable on every custom domain, and the R2 bucket is shared by all stores.
+// Stores a merchant upload in the B2 bucket under a new, unique key. Settings uploads (logos, product and
+// gallery images) are the only caller, so this requires a signed-in session AND management
+// access to the store named in the key: the storefront is publicly reachable on every custom
+// domain, and the bucket is shared by all stores. Responds { success, key, url }: callers save
+// `url` (an /api/media link on this origin while the bucket is private; see lib/b2.ts).
 export async function PUT(req: NextRequest) {
   const session = await getSession(req)
   if (!session?.user) {
@@ -27,20 +29,24 @@ export async function PUT(req: NextRequest) {
   const headerCheck = checkUploadHeaders(contentType, req.headers.get('Content-Length'))
   if (!headerCheck.ok) return Response.json({ error: headerCheck.error }, { status: headerCheck.status })
 
-  const res = await fetch(`${process.env.R2_WORKER_URL}/upload?key=${encodeURIComponent(parsed.key)}`, {
-    method: 'PUT',
-    headers: {
-      'Authorization': `Bearer ${process.env.R2_AUTH_SECRET}`,
-      'Content-Type': contentType!,
-    },
-    body: req.body,
-    // @ts-expect-error - needed for streaming body in Node runtime
-    duplex: 'half',
-  })
+  if (!b2Configured()) {
+    console.error('[upload] B2 is not configured')
+    return Response.json({ error: 'Uploads are unavailable right now' }, { status: 503 })
+  }
 
-  const text = await res.text()
-  return new Response(text, {
-    status: res.status,
-    headers: { 'Content-Type': res.headers.get('Content-Type') || 'application/json' },
-  })
+  // At most 5 MB (checked above), so buffer it: B2 needs the exact length up front, and this
+  // also enforces the limit on what actually arrived, not just on the header.
+  const body = new Uint8Array(await req.arrayBuffer())
+  if (body.byteLength === 0) return Response.json({ error: 'Empty file' }, { status: 400 })
+  if (body.byteLength > MAX_UPLOAD_BYTES) return Response.json({ error: 'File too large (5 MB max)' }, { status: 413 })
+
+  const key = uniqueUploadKey(parsed.key, crypto.randomUUID().slice(0, 8))
+  try {
+    await putObject(key, body, contentType!.split(';')[0].trim().toLowerCase())
+    return Response.json({ success: true, key, url: objectUrl(new URL(req.url).origin, key) })
+  } catch (err) {
+    const e = err as { name?: string; message?: string }
+    console.error('[upload] B2 put failed', e.name, e.message)
+    return Response.json({ error: 'Upload failed. Try again.' }, { status: 502 })
+  }
 }

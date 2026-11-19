@@ -2,6 +2,7 @@
 
 import { Button } from '@mcloud/ui/kit/button'
 import { Icon } from '@mcloud/ui/kit/icon'
+import { isRetiredImageUrl, RetiredImageNotice } from '@/components/store/retired-image'
 
 /** Opens the Editor's one image picker on `current`; `apply` receives the chosen URL ('' removes it). */
 export type PickImage = (current: string, apply: (url: string) => void) => void
@@ -28,6 +29,7 @@ export default function ImageField({
             </button>
         )
     }
+    const retired = isRetiredImageUrl(value)
     return (
         <div className="flex items-center gap-3">
             <button
@@ -36,12 +38,17 @@ export default function ImageField({
                 className="h-14 w-20 shrink-0 overflow-hidden rounded-md border border-border bg-muted"
                 aria-label="Change image"
             >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={value} alt="" className="h-full w-full object-cover" />
+                {retired
+                    ? <span className="flex h-full w-full items-center justify-center bg-amber-500/10"><Icon name="warning" size={18} className="text-amber-600 dark:text-amber-400" /></span>
+                    // eslint-disable-next-line @next/next/no-img-element
+                    : <img src={value} alt="" className="h-full w-full object-cover" />}
             </button>
-            <div className="flex flex-wrap gap-1.5">
-                <Button size="sm" onClick={() => pickImage(value, onChange)}>Change</Button>
-                <Button size="sm" variant="ghost" onClick={() => onChange('')}>Remove</Button>
+            <div className="min-w-0 space-y-1.5">
+                <div className="flex flex-wrap gap-1.5">
+                    <Button size="sm" onClick={() => pickImage(value, onChange)}>{retired ? 'Upload again' : 'Change'}</Button>
+                    <Button size="sm" variant="ghost" onClick={() => onChange('')}>Remove</Button>
+                </div>
+                {retired && <RetiredImageNotice />}
             </div>
         </div>
     )

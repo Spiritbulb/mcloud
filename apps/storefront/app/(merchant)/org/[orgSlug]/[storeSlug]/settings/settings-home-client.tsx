@@ -7,6 +7,7 @@ import { useEffect, useState, useCallback } from 'react'
 import Link from 'next/link'
 import { getVertical } from '@mcloud/verticals'
 import { PLAN_PRICE_KES } from '@mcloud/merchant/plans'
+import { isRetiredImageUrl } from '@mcloud/merchant/retired-images'
 import { storefrontUrl, storefrontDisplayUrl, openExternal } from '@mcloud/merchant/storefront-url'
 import { Status, type BadgeTone } from '@mcloud/ui/kit/badge'
 import { Button, buttonClass } from '@mcloud/ui/kit/button'
@@ -408,7 +409,7 @@ export default function SettingsHomeClient({ slug, orgSlug, initialData = null, 
                                 ) : (
                                     <HighlightRow
                                         icon="inventory_2"
-                                        image={data.top_product.image_url}
+                                        image={isRetiredImageUrl(data.top_product.image_url) ? undefined : data.top_product.image_url}
                                         eyebrow="Best seller this month"
                                         title={data.top_product.name}
                                         detail={`${data.top_product.units_sold} sold this month`}

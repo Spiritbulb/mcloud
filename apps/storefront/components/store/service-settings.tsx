@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@mcloud/ui/kit/confirm-dialog'
 import { EmptyState } from '@mcloud/ui/kit/empty-state'
 import { Field, FormGrid, Select, Switch, TextArea, TextInput } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
+import { isRetiredImageUrl, RetiredImageNotice, RetiredThumb } from './retired-image'
 import { LoadError } from '@mcloud/ui/kit/load-error'
 import { Notice } from '@mcloud/ui/kit/notice'
 import { PageHeader } from '@mcloud/ui/kit/page-header'
@@ -63,6 +64,7 @@ function Segmented<T extends string>({ value, options, onChange, label }: {
 }
 
 function Thumb({ src }: { src?: string }) {
+    if (isRetiredImageUrl(src)) return <RetiredThumb />
     return (
         <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md border border-border bg-muted">
             {src
@@ -332,7 +334,9 @@ function ServiceForm({ storeId, currency, service, onSaved, onCancel }: {
                                         <li key={item.id} className="flex items-center gap-2 rounded-md border border-border p-1.5">
                                             {item.type === 'image' ? <Thumb src={item.url} /> : <span className="flex h-9 w-9 items-center justify-center rounded-md bg-muted"><Icon name="movie" size={16} className="text-muted-foreground" /></span>}
                                             <span className="min-w-0 flex-1">
-                                                <span className="block truncate font-mono text-[12px] text-muted-foreground">{item.url}</span>
+                                                {isRetiredImageUrl(item.url)
+                                                    ? <RetiredImageNotice />
+                                                    : <span className="block truncate font-mono text-[12px] text-muted-foreground">{item.url}</span>}
                                                 <span className="text-[12px] text-muted-foreground">{item.type === 'video' ? 'Video' : i === 0 ? 'Image · thumbnail' : 'Image'}</span>
                                             </span>
                                             <Button size="sm" variant="ghost" aria-label="Remove" onClick={() => set({ media: draft.media.filter((m) => m.id !== item.id) })}>

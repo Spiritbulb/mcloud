@@ -6,9 +6,9 @@ interface FileWithPreview extends File {
   errors: readonly FileError[]
 }
 
-type UseR2UploadOptions = {
+type UseUploadOptions = {
   /**
-   * R2 "bucket" — really just a key prefix, since it's one physical bucket behind the worker
+   * Top-level key prefix (`store-assets` or `product-images`); it is one physical B2 bucket.
    */
   bucketName: string
   /**
@@ -34,18 +34,19 @@ type UseR2UploadOptions = {
    */
   maxFiles?: number
   /**
-   * When set to true, the file is overwritten if it exists (R2 .put() overwrites by default,
-   * so this is mostly kept for interface parity — set to false to error on collision instead).
+   * Kept for interface parity: /api/upload always overwrites an existing key.
    */
   upsert?: boolean
 }
 
-type UseR2UploadReturn = ReturnType<typeof useR2Upload>
+type UseUploadReturn = ReturnType<typeof useUpload>
 
 type UploadResponse = {
   name: string
   message?: string
   url?: string
+  /** The key the server stored it under (unique per upload, so not the file name). */
+  key?: string
 }
 
 /**
@@ -65,6 +66,7 @@ type State = {
   errors: { name: string; message: string }[]
   successes: string[]
   uploadedUrls: Record<string, string>
+  uploadedKeys: Record<string, string>
 }
 
 const initialState: State = {
@@ -73,6 +75,7 @@ const initialState: State = {
   errors: [],
   successes: [],
   uploadedUrls: {},
+  uploadedKeys: {},
 }
 
 type Action =
@@ -104,18 +107,20 @@ function reducer(state: State, action: Action): State {
       )
 
       const uploadedUrls = { ...state.uploadedUrls }
+      const uploadedKeys = { ...state.uploadedKeys }
       for (const r of succeeded) {
         if (r.url) uploadedUrls[r.name] = r.url
+        if (r.key) uploadedKeys[r.name] = r.key
       }
 
-      return { ...state, loading: false, errors, successes, uploadedUrls }
+      return { ...state, loading: false, errors, successes, uploadedUrls, uploadedKeys }
     }
     default:
       return state
   }
 }
 
-const useR2Upload = (options: UseR2UploadOptions) => {
+const useUpload = (options: UseUploadOptions) => {
   const {
     bucketName,
     path,
@@ -126,7 +131,7 @@ const useR2Upload = (options: UseR2UploadOptions) => {
   } = options
 
   const [state, dispatch] = useReducer(reducer, initialState)
-  const { files, loading, errors, successes, uploadedUrls } = state
+  const { files, loading, errors, successes, uploadedUrls, uploadedKeys } = state
 
   // isSuccess and uploadedUrls now always come from the SAME state snapshot,
   // so a consumer reading both in one effect can never see one updated
@@ -205,20 +210,22 @@ const useR2Upload = (options: UseR2UploadOptions) => {
             return { name: file.name, message: message || `Upload failed (${res.status})` }
           }
 
-          // The worker responds with { success, key, url } — url is the real,
-          // publicly-servable R2 URL. Capture it so callers don't have to
+          // /api/upload responds with { success, key, url }; url is the object's
+          // public B2 URL. Capture it so callers don't have to
           // reconstruct (and potentially get wrong) the public URL themselves.
           let url: string | undefined
+          let storedKey: string | undefined
           try {
             const body = await res.json()
             url = body?.url
+            storedKey = typeof body?.key === 'string' ? body.key : undefined
           } catch {
-            // Worker didn't return JSON for some reason — fall back to
+            // No JSON body for some reason — fall back to
             // undefined; caller treats this as "upload succeeded, URL
             // unknown" (surfaced via a console.error in ImageUpload).
           }
 
-          return { name: file.name, message: undefined, url }
+          return { name: file.name, message: undefined, url, key: storedKey }
         } catch (err) {
           return { name: file.name, message: err instanceof Error ? err.message : 'Upload failed' }
         }
@@ -257,6 +264,7 @@ const useR2Upload = (options: UseR2UploadOptions) => {
     setFiles: (f: FileWithPreview[]) => dispatch({ type: 'FILES_SET', files: f }),
     successes,
     uploadedUrls,
+    uploadedKeys,
     isSuccess,
     loading,
     errors,
@@ -270,4 +278,4 @@ const useR2Upload = (options: UseR2UploadOptions) => {
   }
 }
 
-export { useR2Upload, type UseR2UploadOptions, type UseR2UploadReturn }
+export { useUpload, type UseUploadOptions, type UseUploadReturn }

@@ -3500,6 +3500,10 @@ export type Database = {
         Args: { p_store_id: string }
         Returns: boolean
       }
+      store_overview_totals: {
+        Args: { p_since: string; p_store_id: string }
+        Returns: Json
+      }
       whatsapp_redeem_link_code: {
         Args: { p_code_hash: string; p_wa_id: string }
         Returns: Json

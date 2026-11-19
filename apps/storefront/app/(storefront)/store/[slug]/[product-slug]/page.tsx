@@ -7,6 +7,7 @@ import ProductDetailClient from './product-detail-client'
 import { getPublishedPage } from '@/lib/pages'
 import { renderPage } from '@/lib/render-page'
 import { castStore, castProducts, castCollections } from '@/lib/db-cast'
+import { dropRetiredImages } from '@mcloud/merchant/retired-images'
 
 // Served from the CDN; merchant edits call revalidateStore(), this is the backstop.
 export const revalidate = 3600
@@ -94,7 +95,8 @@ export default async function ProductDetailPage({ params }: Props) {
 
     const product: ProductDetailData = {
         ...productData,
-        images: (productData.images ?? []) as string[],
+        // Images on the retired R2 storage no longer load (retired-images.ts).
+        images: dropRetiredImages((productData.images ?? []) as string[]),
         inventory_quantity: productData.inventory_quantity ?? 0,
         is_active: productData.is_active ?? false,
         metadata: (productData.metadata ?? {}) as ProductDetailData['metadata'],

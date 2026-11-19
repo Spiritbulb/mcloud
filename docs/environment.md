@@ -58,7 +58,8 @@ add it here.
 | Variable | Purpose |
 |---|---|
 | `NEXT_PUBLIC_WEB_ORIGIN` | Where login, the org hub and billing live (`https://mcloud.co.ke`) |
-| `R2_WORKER_URL`, `R2_AUTH_SECRET` | The Cloudflare R2 upload worker and its bearer secret |
+| `B2_ENDPOINT`, `B2_REGION`, `B2_BUCKET`, `B2_KEY_ID`, `B2_APPLICATION_KEY` | The Backblaze B2 bucket for merchant uploads (`lib/b2.ts`); same names as Nuru's, different bucket and key |
+| `B2_PUBLIC_URL` (optional) | Set only once the bucket is **public**: the base URL new uploads link to (e.g. `<B2_ENDPOINT>/<B2_BUCKET>` or a CDN). Unset: uploads are served through the app's `/api/media` proxy |
 | `VERCEL_TOKEN`, `VERCEL_PROJECT_ID`, `VERCEL_TEAM_ID` | Custom-domain management (`/api/store/domain`); the project id is the **storefront** project |
 
 `apps/storefront/ENV.md` is the older per-app checklist; this file supersedes it where they differ.

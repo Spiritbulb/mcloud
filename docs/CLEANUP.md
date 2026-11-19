@@ -244,6 +244,18 @@ imports (and `@mcloud/verticals` has extensionless internal imports). Either use
 contain `[...]` or `(...)` must be run with `node ./path/to/file.ts`, since the runner
 treats brackets as globs. All 32 editor/actions tests pass.
 
+### 3.8 Uploads: private B2 bucket behind a temporary proxy *(new, 2026-11-19; revisit ~2026-11-24)*
+R2 was cut off, so merchant uploads moved to Backblaze B2. The bucket is **private** for now
+(making it public needs account access we don't have yet), so images are served through
+`apps/storefront/app/api/media/[...key]` and saved as `https://app.mcloud.co.ke/api/media/<key>`.
+Keys are unique per upload, so responses are cached for a year at the CDN.
+- When the bucket can be public: set `B2_PUBLIC_URL` (storefront) so new uploads link to B2
+  directly. Keep `/api/media` for URLs already saved, or rewrite those rows and then delete it.
+- Or keep it private on purpose and gate draft-product images in `/api/media` (see `docs/architecture.md` § Uploads).
+- Old R2 URLs (`pub-….r2.dev`) were left in the rows; public pages drop them and settings asks
+  for a re-upload (`@mcloud/merchant/retired-images`). Once none are left
+  (`select … where images::text like '%r2.dev%'`), delete that handling.
+
 ### 3.7 Vercel project settings (outside the repo)
 - Domains on the `mcloud` (storefront) project include `shop.mcloud.co.ke`,
   `locdessence.com`, `locdessence.shop`: confirm each is intended. `shop.mcloud.co.ke`

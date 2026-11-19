@@ -40,3 +40,32 @@ export function checkUploadHeaders(contentType: string | null, contentLength: st
     if (len > MAX_UPLOAD_BYTES) return { ok: false, status: 413, error: 'File too large (5 MB max)' }
     return { ok: true }
 }
+
+/**
+ * The public URL of an uploaded object. `base` is B2_PUBLIC_URL when set (a CDN or the bucket's
+ * friendly URL), otherwise the bucket's S3 path-style URL, which B2 serves to anyone for a
+ * public bucket. Each key segment is encoded: file names keep spaces and brackets.
+ */
+export function publicObjectUrl(base: string, key: string): string {
+    return `${base.replace(/\/+$/, '')}/${key.split('/').map(encodeURIComponent).join('/')}`
+}
+
+/**
+ * `key` with `tag` in front of its file name (`…/products/<tag>-photo.jpg`), so every upload is a
+ * new object: an object never changes once written, which lets /api/media cache it for good, and a
+ * second `photo.jpg` cannot replace one a live page still shows. The name is shortened from the
+ * front if needed to stay a valid segment, keeping the extension.
+ */
+export function uniqueUploadKey(key: string, tag: string): string {
+    const parts = key.split('/')
+    const file = parts.pop()!
+    const room = 120 - tag.length - 1
+    parts.push(`${tag}-${file.length > room ? file.slice(file.length - room).replace(/^[^A-Za-z0-9]+/, '') : file}`)
+    return parts.join('/')
+}
+
+/** Content types /api/media will serve: what checkUploadHeaders let in (raster images, no SVG). */
+export function isServableImageType(contentType: string | null | undefined): boolean {
+    const mime = (contentType ?? '').split(';')[0].trim().toLowerCase()
+    return /^image\/[a-z0-9.+-]+$/.test(mime) && mime !== 'image/svg+xml'
+}

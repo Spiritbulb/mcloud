@@ -46,8 +46,6 @@
         "REVIEW_ACCOUNT_EMAIL",
         "REVIEW_ACCOUNT_PASSWORD",
         "HANDOFF_ENC_KEY",
-        "R2_WORKER_URL",
-        "R2_AUTH_SECRET",
         "PALPLUSS_API_KEY",
         "PAYPAL_CLIENT_ID",
         "PAYPAL_CLIENT_SECRET",
@@ -58,6 +56,7 @@
         "B2_BUCKET",
         "B2_KEY_ID",
         "B2_APPLICATION_KEY",
+        "B2_PUBLIC_URL",
         "IP_HASH_SALT"
       ]
     },

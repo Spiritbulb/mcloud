@@ -2,7 +2,8 @@
 
 import { useEffect, useRef } from 'react'
 import { Dropzone, DropzoneContent, DropzoneEmptyState } from '@/components/dropzone'
-import { useR2Upload } from '@/hooks/use-r2-upload'
+import { useUpload } from '@/hooks/use-upload'
+import { isRetiredImageUrl, RetiredImageNotice } from './retired-image'
 import { X } from 'lucide-react'
 
 interface ImageUploadProps {
@@ -31,7 +32,7 @@ export default function ImageUpload({
     // double-slash paths like "storeId/logo//photo.webp".
     const normalizedPrefix = pathPrefix.replace(/\/+$/, '')
 
-    const uploadProps = useR2Upload({
+    const uploadProps = useUpload({
         bucketName: bucket,
         // The hook uploads to: `${path}/${file.name}`.
         // Pass the normalised prefix so the final path is clean.
@@ -54,11 +55,11 @@ export default function ImageUpload({
 
         // successes[0] is the plain file name (e.g. "photo.webp")
         const fileName = uploadProps.successes[0]
-        const fullPath = `${normalizedPrefix}/${fileName}`
+        // The stored key minus its bucket (`<storeId>/logo/<tag>-photo.webp`), like paths saved before.
+        const storedKey = uploadProps.uploadedKeys[fileName]
+        const fullPath = storedKey ? storedKey.split('/').slice(1).join('/') : `${normalizedPrefix}/${fileName}`
 
-        // FIX: use the real public R2 URL the worker returned on upload,
-        // instead of asking Supabase to build one (which pointed at a bucket
-        // the file was never actually in).
+        // The public URL /api/upload returned for the stored object.
         const publicUrl = uploadProps.uploadedUrls[fileName]
 
         if (publicUrl) {
@@ -69,13 +70,16 @@ export default function ImageUpload({
             // surface this loudly rather than silently keeping a stale/blank value.
             console.error('ImageUpload: upload succeeded but no public URL was returned', { fileName, fullPath })
         }
-    }, [uploadProps.isSuccess, uploadProps.successes, uploadProps.uploadedUrls])
+    }, [uploadProps.isSuccess, uploadProps.successes, uploadProps.uploadedUrls, uploadProps.uploadedKeys])
 
-    const showExisting = !!value && !uploadProps.loading && uploadProps.files.length === 0
+    // An image on the retired R2 storage can't be shown: offer the upload box with a notice instead.
+    const retired = isRetiredImageUrl(value)
+    const showExisting = !!value && !retired && !uploadProps.loading && uploadProps.files.length === 0
 
     return (
         <div className="space-y-2 max-w-sm">
             {label && <p className="text-sm font-medium">{label}</p>}
+            {retired && uploadProps.files.length === 0 && <RetiredImageNotice />}
 
             {showExisting ? (
                 <div className={`relative border ${aspectRatio === 'wide' ? 'aspect-video w-full' : aspectRatio === 'free' ? 'h-24 w-full' : 'aspect-square w-32'
@@ -89,12 +93,7 @@ export default function ImageUpload({
                     <button
                         type="button"
                         onClick={() => {
-                            // NOTE: this only clears the reference in the UI/DB — the R2 worker
-                            // doesn't currently expose a delete route, so the old file stays in
-                            // the bucket. Not a functional bug (nothing points at it anymore),
-                            // just means R2 storage isn't reclaimed on replace/remove yet.
-                            // Add a DELETE handler to the worker + call it here if that matters
-                            // for your storage costs later.
+                            // Clears the reference only; the object stays in the bucket (no delete route).
                             previousPathRef.current = ''
                             onChange('', '')
                         }}

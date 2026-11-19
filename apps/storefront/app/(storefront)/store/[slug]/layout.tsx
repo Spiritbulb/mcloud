@@ -40,7 +40,8 @@ export async function generateMetadata({
 
     // The square icon when set; otherwise the logo, which browsers fit (and shrink) into a square.
     // A store with neither shows the Menengai Cloud icon, unless its plan hides our branding.
-    const icon = store?.icon_url ?? store?.logo_url ?? (store?.hideBranding ? null : '/icons/icon-192.png')
+    // `||`, not `??`: a retired R2 image is blanked to '' (store-queries.ts), and should fall through too.
+    const icon = store?.icon_url || store?.logo_url || (store?.hideBranding ? null : '/icons/icon-192.png')
 
     return {
         title: store?.name ?? 'Store',

@@ -37,6 +37,15 @@ NEXT_PUBLIC_STOREFRONT_ORIGIN=       # used by web redirects; listed here for pa
 # --- PalPluss store checkout ---
 PALPLUSS_STORE_PAYMENTS=             # "1" = Pro stores' shoppers get a PalPluss STK push (web does the push). Must match apps/web
 
+# --- Uploads (Backblaze B2, lib/b2.ts). No CORS needed (server-side PUT). Private bucket: served via /api/media ---
+B2_ENDPOINT=                         # https://s3.<region>.backblazeb2.com
+B2_REGION=
+B2_BUCKET=
+B2_KEY_ID=
+B2_APPLICATION_KEY=
+B2_PUBLIC_URL=                       # leave unset while the bucket is private; set once it is public
+# R2_WORKER_URL / R2_AUTH_SECRET are no longer read and can be deleted.
+
 # --- Possibly needed (confirm during Phase 3) ---
 # HANDOFF_ENC_KEY (only if settings code paths touch the SSO handoff). No AUTH0_* vars (Auth0 is gone).
 ```

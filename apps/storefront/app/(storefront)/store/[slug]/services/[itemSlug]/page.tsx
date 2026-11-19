@@ -3,6 +3,7 @@ import { createPublicClient } from '@mcloud/db/server'
 import { notFound } from 'next/navigation'
 import { resolveTheme } from '@mcloud/themes/resolver'
 import type { ServiceItem } from '@mcloud/themes/types'
+import { dropRetiredImages } from '@mcloud/merchant/retired-images'
 import ServiceDetailClient from './service-detail-client'
 
 // Served from the CDN; merchant edits call revalidateStore(), this is the backstop.
@@ -28,14 +29,16 @@ export default async function ServiceDetailPage({ params }: Props) {
         .single()
     if (!rawStore) notFound()
 
-    const { data: raw } = await (supabase as any)
+    const { data: rawRow } = await (supabase as any)
         .from('services')
         .select('id, name, slug, description, price, is_active, sku, metadata')
         .eq('store_id', rawStore.id)
         .eq('slug', itemSlug)
         .eq('is_active', true)
         .single()
-    if (!raw) notFound()
+    if (!rawRow) notFound()
+    // Media on the retired R2 storage no longer loads (retired-images.ts).
+    const raw = dropRetiredImages(rawRow)
 
     const service: ServiceItem = {
         id: raw.id,

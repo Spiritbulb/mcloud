@@ -6,17 +6,20 @@ import { MAX_PICKED_PRODUCTS, addId, moveId, removeId, pickedIds } from '@/lib/p
 import { Button } from '@mcloud/ui/kit/button'
 import { Icon } from '@mcloud/ui/kit/icon'
 import { TextInput } from '@mcloud/ui/kit/form'
+import { isRetiredImageUrl } from '@mcloud/merchant/retired-images'
 
 type Product = { id: string; name: string; price: number; is_active: boolean | null; images: unknown }
 
-const firstImage = (p: Product): string | null => (Array.isArray(p.images) && typeof p.images[0] === 'string' ? p.images[0] : null)
+// An image on the retired R2 storage no longer loads: show the placeholder instead.
+const firstImage = (p: Product): string | null =>
+    Array.isArray(p.images) && typeof p.images[0] === 'string' && !isRetiredImageUrl(p.images[0]) ? p.images[0] : null
 
 function Row({ product, children }: { product: Product | null; children: React.ReactNode }) {
     const img = product ? firstImage(product) : null
     return (
         <li className="flex items-center gap-2 rounded-md border border-border p-1.5">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded bg-muted">
-                {/* eslint-disable-next-line @next/next/no-img-element -- merchant upload on R2 */}
+                {/* eslint-disable-next-line @next/next/no-img-element -- merchant upload on B2 */}
                 {img ? <img src={img} alt="" className="h-full w-full object-cover" /> : <Icon name="inventory_2" size={15} className="text-muted-foreground" />}
             </span>
             <span className="min-w-0 flex-1">

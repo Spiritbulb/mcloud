@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { updateStoreSettings, patchStoreSettings } from '../actions'
 import { settingsPath } from '../settings-nav-logic'
 import ImageUpload from '@/components/store/image-upload'
+import { isRetiredImageUrl } from '@mcloud/merchant/retired-images'
 import { buttonClass } from '@mcloud/ui/kit/button'
 import { Field, Select } from '@mcloud/ui/kit/form'
 import { Icon } from '@mcloud/ui/kit/icon'
@@ -23,7 +24,7 @@ const MODE_LABELS: Record<ColorMode, string> = {
     dark: 'Always dark',
 }
 
-/* eslint-disable @next/next/no-img-element -- merchant uploads on R2; next/image would need the host allow-listed */
+/* eslint-disable @next/next/no-img-element -- merchant uploads on B2; next/image would need the host allow-listed */
 
 function Initials({ name }: { name: string }) {
     return <span className="text-[13px] font-bold uppercase tracking-widest text-muted-foreground">{name.slice(0, 2)}</span>
@@ -47,7 +48,9 @@ export default function BrandSettingsPage({
 
     const dirty = isBrandDirty(draft, saved)
     const summary = themeSummary(theme)
-    const iconSrc = draft.iconUrl || draft.logoUrl
+    // Previews skip images on the retired R2 storage (the upload boxes above say to re-upload them).
+    const shown = (url: string | null | undefined) => (url && !isRetiredImageUrl(url) ? url : '')
+    const iconSrc = shown(draft.iconUrl) || shown(draft.logoUrl)
 
     const handleSave = async () => {
         setSaving(true)
@@ -102,8 +105,8 @@ export default function BrandSettingsPage({
                     <div className="space-y-2">
                         <p className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">Preview</p>
                         {[
-                            { label: 'Light', bg: '#ffffff', fg: '#111111', src: draft.logoUrl },
-                            { label: 'Dark', bg: '#111111', fg: '#ffffff', src: draft.logoDarkUrl || draft.logoUrl },
+                            { label: 'Light', bg: '#ffffff', fg: '#111111', src: shown(draft.logoUrl) },
+                            { label: 'Dark', bg: '#111111', fg: '#ffffff', src: shown(draft.logoDarkUrl) || shown(draft.logoUrl) },
                         ].map((s) => (
                             <div key={s.label} className="flex h-14 items-center overflow-hidden rounded-md border border-border px-4" style={{ background: s.bg, color: s.fg }}>
                                 {s.src

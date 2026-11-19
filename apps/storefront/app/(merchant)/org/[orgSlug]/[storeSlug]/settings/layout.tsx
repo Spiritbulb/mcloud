@@ -29,16 +29,17 @@ export default async function SettingsLayout({
         if (result.error === 'forbidden' || result.error === 'not_found') initialError = 'forbidden'
         else if (result.error) initialError = 'unknown'
         else {
+            // The loader's result is shared within the request, so build a new object.
             const data = result.data
-            if (!data.user?.name) {
-                data.user = {
+            initialStore = data.user?.name ? data : {
+                ...data,
+                user: {
                     ...data.user,
                     name: data.user?.name || session.user.name || 'Account',
                     email: data.user?.email || session.user.email || '',
                     avatar_url: data.user?.avatar_url ?? session.user.avatarUrl ?? null,
-                }
+                },
             }
-            initialStore = data
         }
     }
 

@@ -9,6 +9,7 @@ import { cache } from 'react'
 import { unstable_cache } from 'next/cache'
 import { createPublicClient } from '@mcloud/db/server'
 import { getStorePlan } from '@mcloud/merchant/plans-server'
+import { dropRetiredImages } from '@mcloud/merchant/retired-images'
 
 /** The cache tag every cached page of a store carries. One tag purges all of them. */
 export const storeTag = (slug: string) => `store:${slug}`
@@ -29,7 +30,8 @@ const loadStoreRow = (slug: string) =>
                 .select('*')
                 .eq('slug', slug)
                 .single()
-            return data
+            // Logo, icon and settings images on the retired R2 storage no longer load.
+            return data ? dropRetiredImages(data) : data
         },
         ['store-row', slug],
         // Must not be shorter than the pages' own `revalidate` (3600): Next gives a page the

@@ -3,7 +3,9 @@
 // /api/store/[slug] (so client components keep working). Querying Supabase
 // directly removes a full network round-trip on every settings page load.
 
-import { createClient } from '@mcloud/db/server'
+import { cache } from 'react'
+import { unstable_cache } from 'next/cache'
+import { createClient, createPublicClient } from '@mcloud/db/server'
 import { isPaidPlan } from './plans'
 import { getStorePlan } from './plans-server'
 import { getVertical } from '@mcloud/verticals'
@@ -16,7 +18,7 @@ export type StoreSettingsResult =
     | { error: 'wrong_org'; data: null; correctOrgSlug: string }
     | { error: null; data: any }
 
-export async function getStoreSettingsData(
+async function loadStoreSettingsData(
     userId: string,
     slug: string,
     orgSlug: string
@@ -59,25 +61,26 @@ export async function getStoreSettingsData(
 
     const currentMembership = bySlug
 
-    const { data: storeData, error } = await supabase
-        .from('stores')
-        .select(`*, theme:store_themes(*)`)
-        .eq('id', currentMembership.store_id)
-        .single()
+    // The store, its org and its plan are independent of each other, so they go out together
+    // (the org rides along as an embed instead of a second round trip).
+    const [{ data: storeRow, error }, plan] = await Promise.all([
+        supabase
+            .from('stores')
+            .select(`*, theme:store_themes(*), org:orgs(id, name, slug, logo_url, icon_url)`)
+            .eq('id', currentMembership.store_id)
+            .single(),
+        // `stores.is_pro` is a legacy cache that drifts; the plan comes from the subscription rows.
+        getStorePlan(currentMembership.store_id),
+    ])
 
     if (error) console.error('[store fetch]', error.code, error.message)
-    if (!storeData) return { error: 'not_found', data: null }
+    if (!storeRow) return { error: 'not_found', data: null }
 
-    // Optional org layer — null for stores not associated with an org.
-    let org: { id: string; name: string; slug: string; logo_url: string | null; icon_url: string | null } | null = null
-    if (storeData.org_id) {
-        const { data: orgData } = await supabase
-            .from('orgs')
-            .select('id, name, slug, logo_url, icon_url')
-            .eq('id', storeData.org_id)
-            .single()
-        org = orgData ?? null
-    }
+    // Optional org layer: null for stores not associated with an org.
+    const { org: orgEmbed, ...storeData } = storeRow as typeof storeRow & { org?: unknown }
+    const org = ((Array.isArray(orgEmbed) ? orgEmbed[0] : orgEmbed) ?? null) as
+        | { id: string; name: string; slug: string; logo_url: string | null; icon_url: string | null }
+        | null
 
     const allStores = memberships.map((m) => {
         const memberStore = Array.isArray(m.store) ? m.store[0] : m.store
@@ -92,9 +95,6 @@ export async function getStoreSettingsData(
             org_slug: memberOrg?.slug ?? null,
         }
     })
-
-    // `stores.is_pro` is a legacy cache that drifts; the plan comes from the subscription rows.
-    const plan = await getStorePlan(storeData.id)
 
     return {
         error: null,
@@ -115,10 +115,63 @@ export async function getStoreSettingsData(
     }
 }
 
+/**
+ * Memoised per request: the settings layout, the page under it and the editor/content pages all
+ * ask for the same store, and one render should hit the database once. Treat the result as
+ * read-only; it is shared between callers.
+ */
+export const getStoreSettingsData = cache(loadStoreSettingsData)
+
+/** What store_overview_totals() returns (migrations/20261118_store_overview_totals.sql). */
+type OverviewTotals = {
+    order_count: number
+    revenue_total: number
+    total_raised: number
+    donation_count: number
+    raised_by_campaign: Record<string, number>
+    events: { view: number; add_to_cart: number; checkout_started: number; order_placed: number }
+}
+
+const EMPTY_TOTALS: OverviewTotals = {
+    order_count: 0,
+    revenue_total: 0,
+    total_raised: 0,
+    donation_count: 0,
+    raised_by_campaign: {},
+    events: { view: 0, add_to_cart: 0, checkout_started: 0, order_placed: 0 },
+}
+
+/** How stale the Overview's lifetime and 7-day totals may be. Recent orders and the trend are live. */
+export const OVERVIEW_TOTALS_TTL_S = 60
+
+/**
+ * The store's lifetime totals and 7-day event counts, summed in the database and kept in the data
+ * cache for a minute, so reopening the dashboard does not re-aggregate every order each time.
+ *
+ * Callers authorise the store before asking (the membership check in the loader). This runs
+ * without cookies, as `unstable_cache` requires, so it uses the same service-role client minus the
+ * `cookies()` read. A failed call is not cached: it throws out of the cache and the caller falls
+ * back to zeros, so one bad minute does not stick.
+ */
+const loadOverviewTotals = (storeId: string) =>
+    unstable_cache(
+        async (): Promise<OverviewTotals> => {
+            const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+            const { data, error } = await createPublicClient().rpc('store_overview_totals', {
+                p_store_id: storeId,
+                p_since: since,
+            })
+            if (error || !data) throw new Error(error?.message ?? 'store_overview_totals returned nothing')
+            return { ...EMPTY_TOTALS, ...(data as Partial<OverviewTotals>) }
+        },
+        ['store-overview-totals', storeId],
+        { revalidate: OVERVIEW_TOTALS_TTL_S, tags: [`store-overview:${storeId}`] },
+    )()
+
 // ── Store overview (dashboard KPIs, funnel, recent orders, top product) ──────
 // Extracted so it can run during the page's server render (initial data arrives
 // with the page) instead of a post-mount client fetch.
-export async function getStoreOverview(
+async function loadStoreOverview(
     userId: string,
     slug: string,
     orgSlug: string
@@ -152,27 +205,19 @@ export async function getStoreOverview(
     const now = new Date()
     const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
 
-    // Order IDs for this store this month — needed to scope order_items.
-    const { data: monthOrderIds } = await supabase
-        .from('orders')
-        .select('id')
-        .eq('store_id', storeId)
-        .gte('created_at', monthStart)
-
-    const plan = await getStorePlan(storeId)
-
     const [
+        plan,
         { data: store },
         { count: productCount },
-        { data: orderAgg },
+        totals,
         { data: recentOrders },
         { data: integrations },
-        { data: funnelRows },
         { data: topProductRows },
         { count: orders7dCount },
         { count: deliveryZoneCount },
         { data: trendOrders },
     ] = await Promise.all([
+        getStorePlan(storeId),
         supabase
             .from('stores')
             // `type` carries the vertical through to the Overview. Without it the
@@ -186,12 +231,10 @@ export async function getStoreOverview(
             .select('*', { count: 'exact', head: true })
             .eq('store_id', storeId)
             .eq('is_active', true),
-        supabase
-            .from('orders')
-            // `metadata` is needed to identify donations (isDonation) and attribute
-            // them to a campaign (campaignId). See the donation aggregation below.
-            .select('total, status, metadata')
-            .eq('store_id', storeId),
+        loadOverviewTotals(storeId).catch((err) => {
+            console.error('[overview totals]', err)
+            return EMPTY_TOTALS
+        }),
         supabase
             .from('orders')
             .select('id, customer_email, customer_phone, total, status, created_at, order_number')
@@ -203,15 +246,13 @@ export async function getStoreOverview(
             .select('provider, is_active')
             .eq('store_id', storeId),
         supabase
-            .from('store_analytics')
-            .select('event')
-            .eq('store_id', storeId)
-            .gte('created_at', since7d),
-        supabase
             .from('order_items')
-            .select(`quantity, price, total, product:products ( id, name, images )`)
+            // Scoped to the store through the order (an inner join), not a pre-fetched id list: that
+            // needed its own round trip first and put every order id into the URL.
+            .select(`quantity, price, total, product:products ( id, name, images ), order:orders!inner ( store_id, created_at )`)
             .gte('created_at', monthStart)
-            .in('order_id', monthOrderIds?.map(o => o.id) ?? []),
+            .eq('order.store_id', storeId)
+            .gte('order.created_at', monthStart),
         // Real 7-day order count for the funnel's Orders step. Sourced from the
         // orders table, not order_placed events (which are unreliable), and
         // windowed to match the 7-day event slice above.
@@ -237,20 +278,14 @@ export async function getStoreOverview(
     if (!store) return { error: 'not_found', data: null }
 
     const settings = (store.settings ?? {}) as Record<string, unknown>
-    const revenueTotal = (orderAgg ?? []).reduce((sum, o) => sum + (o.total ?? 0), 0)
-    const orderCount = orderAgg?.length ?? 0
+    const revenueTotal = Number(totals.revenue_total) || 0
+    const orderCount = Number(totals.order_count) || 0
 
     const mpesaEnabled = integrations?.some(i => i.provider === 'mpesa' && i.is_active) ?? false
     const paypalEnabled = integrations?.some(i => i.provider === 'paypal' && i.is_active) ?? false
     const stripeEnabled = integrations?.some(i => i.provider === 'stripe' && i.is_active) ?? false
 
-    const eventCounts = (funnelRows ?? []).reduce(
-        (acc, row) => {
-            if (row.event in acc) acc[row.event as keyof typeof acc]++
-            return acc
-        },
-        { view: 0, add_to_cart: 0, checkout_started: 0, order_placed: 0 }
-    )
+    const eventCounts = totals.events
 
     // Funnel — every step from the SAME 7-day window so rates are comparable.
     // Views use 7-day view events (not the lifetime store.views counter), and
@@ -292,35 +327,24 @@ export async function getStoreOverview(
     // filters at the DB with `metadata->>isDonation = 'true'` and
     // `metadata->>payment_status = 'completed'`, then sums `total` by campaignId.
     // `->>` renders JSON to text, so the boolean `true` written by
-    // buildDonationMetadata matches the string 'true'; the in-memory check below
-    // accepts both so the two readers can never disagree on what counts as a
-    // completed donation. If they diverged, the Overview and the storefront
-    // progress bars would show different numbers.
+    // buildDonationMetadata matches the string 'true'. store_overview_totals() applies the same
+    // filter, so the two readers cannot disagree on what counts as a completed donation (if they
+    // did, the Overview and the storefront progress bars would show different numbers).
     const campaigns = Array.isArray((settings as any).campaigns)
         ? ((settings as any).campaigns as any[])
         : []
 
-    const raisedById: Record<string, number> = {}
-    let totalRaised = 0
-    let donationCount = 0
-
-    for (const o of orderAgg ?? []) {
-        const md = ((o as any).metadata ?? {}) as Record<string, unknown>
-        if (md.isDonation !== 'true' && md.isDonation !== true) continue
-        if (md.payment_status !== 'completed') continue
-        const amount = Number(o.total ?? 0)
-        totalRaised += amount
-        donationCount++
-        const cid = typeof md.campaignId === 'string' ? md.campaignId : null
-        if (cid) raisedById[cid] = (raisedById[cid] ?? 0) + amount
-    }
+    // Summed by store_overview_totals(); same rule as lib/campaigns.ts (isDonation true + completed).
+    const raisedById = totals.raised_by_campaign ?? {}
+    const totalRaised = Number(totals.total_raised) || 0
+    const donationCount = Number(totals.donation_count) || 0
 
     // Same tolerance as readCampaigns(): a campaign without a string id AND title
     // is not a campaign the storefront would render, so do not report on it.
     const campaignProgress = campaigns
         .filter((c) => c && typeof c.id === 'string' && typeof c.title === 'string')
         .map((c) => {
-            const raised = raisedById[c.id] ?? 0
+            const raised = Number(raisedById[c.id]) || 0
             const goal = typeof c.goalAmount === 'number' && c.goalAmount > 0 ? c.goalAmount : 0
             return {
                 id: c.id as string,
@@ -376,3 +400,6 @@ custom_domain: store.custom_domain ?? null,
         },
     }
 }
+
+/** Memoised per request, like getStoreSettingsData. Treat the result as read-only. */
+export const getStoreOverview = cache(loadStoreOverview)
