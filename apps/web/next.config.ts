@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     transpilePackages: ['@mcloud/db', '@mcloud/ui', '@mcloud/auth', '@mcloud/themes', '@mcloud/merchant', '@mcloud/mail', '@mcloud/whatsapp'],
     turbopack: {},
     agentRules: false,
+    experimental: { agentUpgrade: 'security' },
     allowedDevOrigins: ['http://localhost:3000', '192.168.1.*', '192.168.0.*', '10.0.0.*'],
     images: {
         remotePatterns: [

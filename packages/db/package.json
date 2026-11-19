@@ -18,7 +18,7 @@
     "@supabase/supabase-js": "^2.117.2"
   },
   "peerDependencies": {
-    "next": "^16.4.3",
+    "next": "^16.4.6",
     "react": "^19.3.0"
   },
   "devDependencies": {
